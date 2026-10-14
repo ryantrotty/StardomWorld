@@ -1,0 +1,855 @@
+package com.example.tvhub
+
+import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.graphics.Color
+import android.os.Bundle
+import android.os.Handler
+import android.net.http.SslError
+import android.os.Looper
+import android.os.SystemClock
+import android.view.Gravity
+import android.view.InputDevice
+import android.view.KeyEvent
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.webkit.CookieManager
+import android.webkit.SslErrorHandler
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.Toast
+
+/**
+ * Full-screen WebView host for Google TV / Android TV.
+ *
+ * - Opens START_URL after a short fade-in/fade-out logo splash.
+ * - Cursor mode (default): a wand cursor you move with the arrow keys.
+ *     Arrows move it (hold to speed up), OK clicks, pushing against the top or
+ *     bottom edge scrolls the page, Channel Up/Down (or Page Up/Down) scroll a
+ *     big step. Menu / Info / Yellow toggles between cursor mode and the plain
+ *     highlight-ring navigation.
+ * - Upgrades http:// pages on stardom-world.com to https://, the way desktop
+ *   Chrome does automatically.
+ * - Un-sticks fixed page headers so they scroll away with the page.
+ * - Lays pages out at LAYOUT_WIDTH CSS pixels wide (desktop-style grid).
+ * - Asks the site's Google translate widget for English and hides the widget.
+ * - Keeps cookies, so a normal sign-in persists between launches.
+ * - Back: exits fullscreen video, then goes back a page, then closes the app.
+ * - Media keys control the first <video> on the page.
+ */
+class MainActivity : Activity() {
+
+    companion object {
+        private const val START_URL = "https://www.stardom-world.com/"
+
+        private const val DESKTOP_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+
+        // Cursor size in dp, and where the click point (the star centre) sits
+        // inside the cursor image, as a fraction of its width/height.
+        private const val CURSOR_DP = 56f
+        private const val HOT_X = 0.234f
+        private const val HOT_Y = 0.234f
+
+        // Mouse-wheel "notches" sent when scrolling.
+        private const val SCROLL_NOTCH = 2f
+        private const val PAGE_NOTCH = 6f
+
+        // Width the page believes the screen is, in CSS pixels. Wider = more videos
+        // per row but smaller text.
+        private const val LAYOUT_WIDTH = 1440
+
+        private const val SPLASH_MIN_MS = 1100L
+        private const val SPLASH_MAX_MS = 10000L
+
+        private const val TV_CSS_B64 = "aHRtbCwgYm9keSwgI3BhZ2UtY29udGVudHMtc2VhcmNoLCAjcGFnZS1jb250ZW50cy1pbmRleCwgI21haW4tY29udGVudHMsIG1haW4sIC53cmFwcGVyLCBoZWFkZXIsIC5ib3gtaGVhZGVyLCAuaGVhZGVyLCBuYXYsIC5uYXYtaW5uZXIsIC5nbG9iYWwtbmF2LCAuY29udGVudC1saXN0LCAuY29udGVudC1pbmZvLWJveCwgLm1vZGFsLWNvbnRlbnQsIC5iZy1kYXJrLCAuYmctbGlnaHQsIC5ib3gtc2VjdGlvbiwgLmJveC1zb3J0LCAuYm94LXNlYXJjaCwgc2VjdGlvbiwgLmNvbnRhaW5lciwgLmNvbnRhaW5lci1mbHVpZCwgLmNvbC0xMiwgLnJvdywgLnRpbGUtaW5uZXIsIC5sLXdyYXAtbWQsIC50dGwtd3JhcCwgLnNsaWNrLXNsaWRlciwgLnNsaWNrLWxpc3QsIC5zbGljay10cmFjaywgLnNsaWNrLXNsaWRlLCAuc2xpY2stYXJyb3csIC5zbGljay1uZXh0LCAuc2xpY2stcHJldiB7CiAgICBiYWNrZ3JvdW5kOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBjb2xvcjogI2ZmZmZmZiAhaW1wb3J0YW50OwogICAgYm94LXNoYWRvdzogbm9uZSAhaW1wb3J0YW50OwogICAgYm9yZGVyOiBub25lICFpbXBvcnRhbnQ7Cn0KLmNvbnRlbnQtdGh1bWJuYWlsLWJveC1pbm5lciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50Owp9CmhlYWRlciwgLmJveC1oZWFkZXIsIG5hdiwgLm5hdi1pbm5lciwgaGVhZGVyOjphZnRlciwgLmJveC1oZWFkZXI6OmFmdGVyLCAubmF2LWlubmVyOjphZnRlciwgaHIsIC5ib3JkZXItYm90dG9tIHsKICAgIGJvcmRlcjogbm9uZSAhaW1wb3J0YW50OwogICAgYm9yZGVyLWJvdHRvbTogbm9uZSAhaW1wb3J0YW50OwogICAgYm94LXNoYWRvdzogbm9uZSAhaW1wb3J0YW50Owp9Ci5jb250ZW50LXN0YXR1cy1ib3gsIC50YWcsIC50YWcucHJlbWl1bSwgLmNvbnRlbnQtc3RhdHVzLWJveCBzcGFuLCBbY2xhc3MqPSJ0YWciXSwgW2NsYXNzKj0icHJlbWl1bSJdIHsKICAgIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDsKICAgIHZpc2liaWxpdHk6IGhpZGRlbiAhaW1wb3J0YW50OwogICAgb3BhY2l0eTogMCAhaW1wb3J0YW50Owp9Ci5uZXdzLXdyYXAsIHNlY3Rpb24ubmV3cy13cmFwLCAudGlsZS1pbm5lci5uZXdzLXdyYXAsIFtjbGFzcyo9Im5ld3Mtd3JhcCJdIHsKICAgIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDsKICAgIHZpc2liaWxpdHk6IGhpZGRlbiAhaW1wb3J0YW50OwogICAgaGVpZ2h0OiAwICFpbXBvcnRhbnQ7CiAgICBtYXJnaW46IDAgIWltcG9ydGFudDsKICAgIHBhZGRpbmc6IDAgIWltcG9ydGFudDsKfQpmb290ZXIgbmF2LCBmb290ZXIgLmNvbnRhaW5lciwgLmZvb3Rlci1sb2dvLCAuYm94LWNvcHlyaWdodCwgZm9vdGVyIHVsIHsKICAgIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDsKICAgIHZpc2liaWxpdHk6IGhpZGRlbiAhaW1wb3J0YW50Owp9CmZvb3RlciwgLmJveC1mb290ZXIgewogICAgZGlzcGxheTogYmxvY2sgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQ6ICMwMDAwMDAgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMwMDAwMDAgIWltcG9ydGFudDsKICAgIHBhZGRpbmc6IDMwcHggMCA2MHB4IDAgIWltcG9ydGFudDsKICAgIG1hcmdpbjogMCAhaW1wb3J0YW50OwogICAgYm9yZGVyOiBub25lICFpbXBvcnRhbnQ7CiAgICB0ZXh0LWFsaWduOiBjZW50ZXIgIWltcG9ydGFudDsKfQojdG9Ub3BCdG4sIC5Ub3BCdG4sIGEuVG9wQnRuIHsKICAgIGZvbnQtc2l6ZTogMCAhaW1wb3J0YW50OwogICAgY29sb3I6IHRyYW5zcGFyZW50ICFpbXBvcnRhbnQ7CiAgICB0ZXh0LWluZGVudDogLTk5OTlweCAhaW1wb3J0YW50OwogICAgb3ZlcmZsb3c6IGhpZGRlbiAhaW1wb3J0YW50OwogICAgZGlzcGxheTogaW5saW5lLWJsb2NrICFpbXBvcnRhbnQ7CiAgICB2aXNpYmlsaXR5OiB2aXNpYmxlICFpbXBvcnRhbnQ7CiAgICBvcGFjaXR5OiAxICFpbXBvcnRhbnQ7CiAgICBwb3NpdGlvbjogcmVsYXRpdmUgIWltcG9ydGFudDsKICAgIG1hcmdpbjogMCBhdXRvICFpbXBvcnRhbnQ7CiAgICBsZWZ0OiAwICFpbXBvcnRhbnQ7CiAgICByaWdodDogMCAhaW1wb3J0YW50OwogICAgdG9wOiAwICFpbXBvcnRhbnQ7CiAgICBib3R0b206IDAgIWltcG9ydGFudDsKICAgIHRyYW5zZm9ybTogbm9uZSAhaW1wb3J0YW50OwogICAgd2lkdGg6IDUycHggIWltcG9ydGFudDsKICAgIGhlaWdodDogNTJweCAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZC1jb2xvcjogI2ZmZmZmZiAhaW1wb3J0YW50OwogICAgYm9yZGVyLXJhZGl1czogNTAlICFpbXBvcnRhbnQ7CiAgICBsaW5lLWhlaWdodDogNTJweCAhaW1wb3J0YW50OwogICAgdGV4dC1hbGlnbjogY2VudGVyICFpbXBvcnRhbnQ7CiAgICB6LWluZGV4OiA5OTk5OSAhaW1wb3J0YW50OwogICAgY3Vyc29yOiBwb2ludGVyICFpbXBvcnRhbnQ7Cn0KI3RvVG9wQnRuOjphZnRlciwgLlRvcEJ0bjo6YWZ0ZXIsIGEuVG9wQnRuOjphZnRlciB7CiAgICBjb250ZW50OiAi4payIiAhaW1wb3J0YW50OwogICAgY29sb3I6ICMwMDAwMDAgIWltcG9ydGFudDsKICAgIGZvbnQtc2l6ZTogMThweCAhaW1wb3J0YW50OwogICAgZm9udC13ZWlnaHQ6IGJvbGQgIWltcG9ydGFudDsKICAgIHRleHQtaW5kZW50OiAwICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiBmbGV4ICFpbXBvcnRhbnQ7CiAgICBhbGlnbi1pdGVtczogY2VudGVyICFpbXBvcnRhbnQ7CiAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlciAhaW1wb3J0YW50OwogICAgd2lkdGg6IDEwMCUgIWltcG9ydGFudDsKICAgIGhlaWdodDogMTAwJSAhaW1wb3J0YW50OwogICAgbGluZS1oZWlnaHQ6IDUycHggIWltcG9ydGFudDsKfQouc2xpY2stbmV4dCwgLnNsaWNrLXByZXYsIC5zbGljay1hcnJvdyB7CiAgICBiYWNrZ3JvdW5kOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IG5vbmUgIWltcG9ydGFudDsKfQouc2xpY2stbmV4dDo6YmVmb3JlLCAuc2xpY2stcHJldjo6YmVmb3JlIHsKICAgIGNvbG9yOiAjZmZmZmZmICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50Owp9Ci5jb250ZW50LWluZm8tYm94LCAuanMtdGlsZWZpeCB7CiAgICBoZWlnaHQ6IGF1dG8gIWltcG9ydGFudDsKICAgIG1pbi1oZWlnaHQ6IDY0cHggIWltcG9ydGFudDsKICAgIG92ZXJmbG93OiB2aXNpYmxlICFpbXBvcnRhbnQ7Cn0KLmNvbnRlbnQtaW5mby1ib3ggLnR0bC14cywgLnR0bC14cy5lbGxpcHNpcywgaDMudHRsLXhzLCAuY29udGVudC1pbmZvLWJveCBoMywgLmNvbnRlbnQtaW5mby1ib3ggaDMgYSwgLmNvbnRlbnQtaW5mby1ib3ggZm9udCB7CiAgICB3aGl0ZS1zcGFjZTogbm9ybWFsICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiAtd2Via2l0LWJveCAhaW1wb3J0YW50OwogICAgLXdlYmtpdC1saW5lLWNsYW1wOiAzICFpbXBvcnRhbnQ7CiAgICAtd2Via2l0LWJveC1vcmllbnQ6IHZlcnRpY2FsICFpbXBvcnRhbnQ7CiAgICBvdmVyZmxvdzogaGlkZGVuICFpbXBvcnRhbnQ7CiAgICB0ZXh0LW92ZXJmbG93OiBlbGxpcHNpcyAhaW1wb3J0YW50OwogICAgaGVpZ2h0OiBhdXRvICFpbXBvcnRhbnQ7CiAgICBtaW4taGVpZ2h0OiA0LjRlbSAhaW1wb3J0YW50OwogICAgbWF4LWhlaWdodDogNC44ZW0gIWltcG9ydGFudDsKICAgIGxpbmUtaGVpZ2h0OiAxLjQ1ZW0gIWltcG9ydGFudDsKICAgIGZvbnQtc2l6ZTogMTVweCAhaW1wb3J0YW50OwogICAgY29sb3I6ICNmZmZmZmYgIWltcG9ydGFudDsKICAgIG1hcmdpbi1ib3R0b206IDZweCAhaW1wb3J0YW50OwogICAgcGFkZGluZy1ib3R0b206IDJweCAhaW1wb3J0YW50Owp9Ci5jb250ZW50LWxpc3QtaXRlbSwgLmNvbnRlbnQtbGlzdCA+IGRpdiwgYXJ0aWNsZSB7CiAgICBtYXJnaW4tYm90dG9tOiAxNnB4ICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nLWJvdHRvbTogNHB4ICFpbXBvcnRhbnQ7Cn0KI3R2LWhlYWRlci1mbGV4LXdyYXBwZXIgewogICAgZGlzcGxheTogZmxleCAhaW1wb3J0YW50OwogICAgZmxleC1kaXJlY3Rpb246IHJvdyAhaW1wb3J0YW50OwogICAgYWxpZ24taXRlbXM6IGNlbnRlciAhaW1wb3J0YW50OwogICAganVzdGlmeS1jb250ZW50OiBjZW50ZXIgIWltcG9ydGFudDsKICAgIGdhcDogMTZweCAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAwIGF1dG8gIWltcG9ydGFudDsKICAgIGhlaWdodDogNDRweCAhaW1wb3J0YW50Owp9CmZvcm0uZm9ybS1pbmxpbmUsIC5ib3gtc2VhcmNoIGZvcm0sIC5ib3gtc2VhcmNoIC5pbnB1dC1ncm91cCwgLmlucHV0LWdyb3VwLmZsZXgtbm93cmFwIHsKICAgIHdpZHRoOiAzMjBweCAhaW1wb3J0YW50OwogICAgbWF4LXdpZHRoOiAzMjBweCAhaW1wb3J0YW50OwogICAgaGVpZ2h0OiA0NHB4ICFpbXBvcnRhbnQ7CiAgICBtYXJnaW46IDAgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50ICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiBmbGV4ICFpbXBvcnRhbnQ7CiAgICBhbGlnbi1pdGVtczogY2VudGVyICFpbXBvcnRhbnQ7Cn0KZm9ybS5mb3JtLWlubGluZSBpbnB1dC5mb3JtLWNvbnRyb2wsIGZvcm0uZm9ybS1pbmxpbmUgaW5wdXRbdHlwZT0idGV4dCJdLCBpbnB1dFtuYW1lPSJxW2tleXdvcmRdIl0gewogICAgaGVpZ2h0OiA0NHB4ICFpbXBvcnRhbnQ7CiAgICBmb250LXNpemU6IDE1cHggIWltcG9ydGFudDsKICAgIHBhZGRpbmctbGVmdDogMTRweCAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZC1jb2xvcjogIzFhMWExYSAhaW1wb3J0YW50OwogICAgY29sb3I6ICNmZmZmZmYgIWltcG9ydGFudDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMzMzMzMzMgIWltcG9ydGFudDsKICAgIGJvcmRlci1yYWRpdXM6IDRweCAwIDAgNHB4ICFpbXBvcnRhbnQ7CiAgICBib3gtc2l6aW5nOiBib3JkZXItYm94ICFpbXBvcnRhbnQ7Cn0KZm9ybS5mb3JtLWlubGluZSBpbnB1dFt0eXBlPSJzdWJtaXQiXSwgLmlucHV0LWdyb3VwIGlucHV0W3R5cGU9InN1Ym1pdCJdLCBmb3JtW2FjdGlvbio9InNlYXJjaCJdIGlucHV0W3R5cGU9InN1Ym1pdCJdLCAuaW5wdXQtZ3JvdXAtYnRuLCAuaW5wdXQtZ3JvdXAtYXBwZW5kIHsKICAgIGhlaWdodDogNDRweCAhaW1wb3J0YW50OwogICAgbWluLXdpZHRoOiA0OHB4ICFpbXBvcnRhbnQ7CiAgICBmb250LXNpemU6IDE2cHggIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyYTJhMmEgIWltcG9ydGFudDsKICAgIGNvbG9yOiAjZmZmZmZmICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMzMzMzMzICFpbXBvcnRhbnQ7CiAgICBib3JkZXItbGVmdDogbm9uZSAhaW1wb3J0YW50OwogICAgYm9yZGVyLXJhZGl1czogMCA0cHggNHB4IDAgIWltcG9ydGFudDsKICAgIGJveC1zaXppbmc6IGJvcmRlci1ib3ggIWltcG9ydGFudDsKfQouZ2xvYmFsLW5hdi1saXN0Lmdsb2JhbC1uYXYgewogICAgZGlzcGxheTogbm9uZSAhaW1wb3J0YW50Owp9CiN0di1zZWN0aW9uLXNlbGVjdCB7CiAgICB3aWR0aDogMzIwcHggIWltcG9ydGFudDsKICAgIG1heC13aWR0aDogMzIwcHggIWltcG9ydGFudDsKICAgIGhlaWdodDogNDRweCAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZC1jb2xvcjogIzFhMWExYSAhaW1wb3J0YW50OwogICAgY29sb3I6ICNmZmZmZmYgIWltcG9ydGFudDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMzMzMzMzMgIWltcG9ydGFudDsKICAgIGJvcmRlci1yYWRpdXM6IDRweCAhaW1wb3J0YW50OwogICAgZm9udC1zaXplOiAxNXB4ICFpbXBvcnRhbnQ7CiAgICBmb250LXdlaWdodDogNTAwICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nOiAwIDE0cHggIWltcG9ydGFudDsKICAgIG1hcmdpbjogMCAhaW1wb3J0YW50OwogICAgb3V0bGluZTogbm9uZSAhaW1wb3J0YW50OwogICAgY3Vyc29yOiBwb2ludGVyICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiBpbmxpbmUtYmxvY2sgIWltcG9ydGFudDsKICAgIGJveC1zaXppbmc6IGJvcmRlci1ib3ggIWltcG9ydGFudDsKICAgIHZlcnRpY2FsLWFsaWduOiBtaWRkbGUgIWltcG9ydGFudDsKfQojdHYtc2VjdGlvbi1zZWxlY3Qgb3B0aW9uIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxMTExMTEgIWltcG9ydGFudDsKICAgIGNvbG9yOiAjZmZmZmZmICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nOiAxMHB4ICFpbXBvcnRhbnQ7Cn0KLmJveC1zb3J0IHsKICAgIGJhY2tncm91bmQ6ICMwMDAwMDAgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMwMDAwMDAgIWltcG9ydGFudDsKICAgIHBhZGRpbmc6IDEycHggMCAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAxMHB4IDAgMTVweCAwICFpbXBvcnRhbnQ7CiAgICB0ZXh0LWFsaWduOiBjZW50ZXIgIWltcG9ydGFudDsKICAgIGRpc3BsYXk6IGJsb2NrICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IG5vbmUgIWltcG9ydGFudDsKfQouYm94LXNvcnQgKiB7CiAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZC1jb2xvcjogdHJhbnNwYXJlbnQgIWltcG9ydGFudDsKICAgIGJvcmRlcjogbm9uZSAhaW1wb3J0YW50OwogICAgb3V0bGluZTogbm9uZSAhaW1wb3J0YW50OwogICAgYm94LXNoYWRvdzogbm9uZSAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAwICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nOiAwICFpbXBvcnRhbnQ7Cn0KLmJveC1zb3J0ID4gYSwgLmJveC1zb3J0IGEuYnRuIHsKICAgIGZvbnQtc2l6ZTogMTdweCAhaW1wb3J0YW50OwogICAgZm9udC13ZWlnaHQ6IDUwMCAhaW1wb3J0YW50OwogICAgY29sb3I6ICNiYmJiYmIgIWltcG9ydGFudDsKICAgIHBhZGRpbmc6IDZweCAxNHB4ICFpbXBvcnRhbnQ7CiAgICBtYXJnaW46IDAgOHB4ICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiBpbmxpbmUtYmxvY2sgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50ICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50OwogICAgYm9yZGVyOiBub25lICFpbXBvcnRhbnQ7CiAgICB0ZXh0LWRlY29yYXRpb246IG5vbmUgIWltcG9ydGFudDsKICAgIGN1cnNvcjogcG9pbnRlciAhaW1wb3J0YW50Owp9Ci5ib3gtc29ydCA+IGEuYWN0aXZlLCAuYm94LXNvcnQgYS5idG4uYWN0aXZlIHsKICAgIGNvbG9yOiAjRkZCMzQ3ICFpbXBvcnRhbnQ7CiAgICBmb250LXdlaWdodDogNzAwICFpbXBvcnRhbnQ7CiAgICBib3JkZXItYm90dG9tOiAycHggc29saWQgI0ZGQjM0NyAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZDogdHJhbnNwYXJlbnQgIWltcG9ydGFudDsKfQouYm94LXNvcnQgYSBpLCAuYm94LXNvcnQgYSBmb250LCAuYm94LXNvcnQgYSBzcGFuIHsKICAgIGNvbG9yOiBpbmhlcml0ICFpbXBvcnRhbnQ7CiAgICBmb250LXNpemU6IGluaGVyaXQgIWltcG9ydGFudDsKICAgIGZvbnQtd2VpZ2h0OiBpbmhlcml0ICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiBpbmxpbmUgIWltcG9ydGFudDsKfQoudHYtdXNlci1hdmF0YXIgewogICAgd2lkdGg6IDM2cHggIWltcG9ydGFudDsKICAgIGhlaWdodDogMzZweCAhaW1wb3J0YW50OwogICAgYm9yZGVyLXJhZGl1czogNTAlICFpbXBvcnRhbnQ7CiAgICBvYmplY3QtZml0OiBjb3ZlciAhaW1wb3J0YW50OwogICAgdmVydGljYWwtYWxpZ246IG1pZGRsZSAhaW1wb3J0YW50OwogICAgYm9yZGVyOiAycHggc29saWQgI0ZGQjM0NyAhaW1wb3J0YW50OwogICAgbWFyZ2luLWxlZnQ6IDhweCAhaW1wb3J0YW50OwogICAgbWFyZ2luLXJpZ2h0OiA4cHggIWltcG9ydGFudDsKICAgIGRpc3BsYXk6IGlubGluZS1ibG9jayAhaW1wb3J0YW50Owp9"
+    }
+
+    private lateinit var root: FrameLayout
+    private lateinit var webView: WebView
+    private lateinit var cursorView: ImageView
+    private lateinit var splashView: FrameLayout
+    private lateinit var splashLogo: ImageView
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var pulse: ObjectAnimator? = null
+    private var density = 1f
+
+    private var cursorMode = true
+    private var cursorX = 0f
+    private var cursorY = 0f
+
+    private var splashStartedAt = 0L
+    private var splashDone = false
+    private var splashDismissScheduled = false
+
+    private var customView: View? = null
+    private var customCallback: WebChromeClient.CustomViewCallback? = null
+
+    // Bright ring around whatever the remote has selected (used when cursor mode is off).
+    private val focusJs = """
+        (function(){
+          if (document.getElementById('tv-focus-style')) return;
+          var s = document.createElement('style');
+          s.id = 'tv-focus-style';
+          s.textContent = '*:focus{outline:4px solid #FFB347 !important;outline-offset:3px !important;box-shadow:0 0 0 8px rgba(255,90,78,.55) !important;}';
+          (document.head || document.documentElement).appendChild(s);
+        })();
+    """.trimIndent()
+
+    private val removeFocusJs = """
+        (function(){
+          var s = document.getElementById('tv-focus-style');
+          if (s && s.parentNode) s.parentNode.removeChild(s);
+        })();
+    """.trimIndent()
+
+    // Turns a fixed/sticky header at the top of the page into a normal one, so it
+    // scrolls away with the rest of the page instead of covering the content.
+    private val headerJs = """
+        (function(){
+          if (window.__tvHeaderFix) return;
+          window.__tvHeaderFix = true;
+          function unfix(){
+            try {
+              var vw = window.innerWidth, vh = window.innerHeight;
+              var xs = [vw * 0.5, vw * 0.25, vw * 0.75];
+              for (var i = 0; i < xs.length; i++) {
+                var stack = document.elementsFromPoint(xs[i], 4);
+                for (var j = 0; j < stack.length; j++) {
+                  var el = stack[j];
+                  while (el && el !== document.body && el !== document.documentElement) {
+                    var cs = getComputedStyle(el);
+                    if (cs.position === 'fixed' || cs.position === 'sticky') {
+                      var r = el.getBoundingClientRect();
+                      if (r.top <= 8 && r.width >= vw * 0.6 && r.height <= vh * 0.4) {
+                        el.style.setProperty('position', cs.position === 'fixed' ? 'absolute' : 'relative', 'important');
+                      }
+                    }
+                    el = el.parentElement;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+          var pending = null;
+          function schedule(){
+            if (pending) return;
+            pending = setTimeout(function(){ pending = null; unfix(); }, 150);
+          }
+          unfix();
+          window.addEventListener('scroll', schedule, {passive: true});
+          window.addEventListener('resize', schedule);
+          new MutationObserver(schedule).observe(document.documentElement, {
+            childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style']
+          });
+          setTimeout(unfix, 500);
+          setTimeout(unfix, 1500);
+        })();
+    """.trimIndent()
+
+    // Hides the Google "Select Language" widget, its banner and tooltips. The
+    // translation itself keeps working; only the on-screen controls disappear.
+    private val hideTranslateJs = """
+        (function(){
+          if (document.getElementById('tv-hide-translate')) return;
+          var s = document.createElement('style');
+          s.id = 'tv-hide-translate';
+          s.textContent = '.goog-te-banner-frame,.goog-te-banner-frame.skiptranslate,iframe.skiptranslate,.goog-te-menu-frame,#google_translate_element,.goog-te-gadget,.goog-te-gadget-simple,.goog-te-balloon-frame,#goog-gt-tt,.goog-tooltip,.VIpgJd-ZVi9od-ORHb-OEVmcd,.VIpgJd-ZVi9od-aZ2wEe-wOHMyf{display:none !important;} body{top:0px !important;} .goog-text-highlight{background:none !important;box-shadow:none !important;}';
+          (document.head || document.documentElement).appendChild(s);
+        })();
+    """.trimIndent()
+
+    // Fallback: if the translate widget is present but not already on English, pick English.
+    private val translateJs = """
+        (function(){
+          if (window.__tvTranslate) return;
+          window.__tvTranslate = true;
+          var tries = 0;
+          var timer = setInterval(function(){
+            tries++;
+            var sel = document.querySelector('select.goog-te-combo');
+            if (sel && sel.options.length > 1) {
+              if (sel.value !== 'en') {
+                sel.value = 'en';
+                sel.dispatchEvent(new Event('change'));
+              }
+              if (sel.value === 'en') clearInterval(timer);
+            }
+            if (tries > 40) clearInterval(timer);
+          }, 500);
+        })();
+    """.trimIndent()
+
+    // Automatically loads the next page of content as the user scrolls near the bottom of desktop pages.
+    private val infiniteScrollJs = """
+        (function(){
+          if (window.__tvInfiniteScroll) return;
+          window.__tvInfiniteScroll = true;
+
+          var loading = false;
+
+          function hidePagination() {
+            var pagers = document.querySelectorAll('.pagination, .p-pagination, .pager');
+            pagers.forEach(function(el) {
+              el.style.display = 'none';
+            });
+          }
+
+          function checkAndLoadNextPage() {
+            if (loading) return;
+            var scrollBottom = window.innerHeight + window.scrollY;
+            var pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+
+            if (pageHeight - scrollBottom > 800) return;
+
+            var nextLink = document.querySelector('a[rel="next"], .pagination a.next, a.page-link[rel="next"]');
+            if (!nextLink || !nextLink.href) return;
+
+            var nextUrl = nextLink.href;
+            loading = true;
+
+            fetch(nextUrl)
+              .then(function(res) { return res.text(); })
+              .then(function(html) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(html, 'text/html');
+
+                var container = document.querySelector('.content-list, [class*="content-list"]');
+                var newContainer = doc.querySelector('.content-list, [class*="content-list"]');
+
+                if (container && newContainer) {
+                  var newItems = Array.from(newContainer.children);
+                  newItems.forEach(function(item) {
+                    container.appendChild(item);
+                  });
+                }
+
+                var oldPagination = document.querySelector('.pagination, .p-pagination, .pager');
+                var newPagination = doc.querySelector('.pagination, .p-pagination, .pager');
+                if (oldPagination && newPagination) {
+                  oldPagination.parentNode.replaceChild(newPagination, oldPagination);
+                } else {
+                  var nextNext = doc.querySelector('a[rel="next"]');
+                  if (nextLink && nextNext) {
+                    nextLink.href = nextNext.href;
+                  } else if (nextLink) {
+                    nextLink.parentNode.removeChild(nextLink);
+                  }
+                }
+
+                hidePagination();
+                loading = false;
+              })
+              .catch(function(err) {
+                loading = false;
+              });
+          }
+
+          hidePagination();
+          window.addEventListener('scroll', checkAndLoadNextPage, { passive: true });
+          setInterval(checkAndLoadNextPage, 1000);
+        })();
+    """.trimIndent()
+
+    // Custom TV App UI modifications:
+    // 1) All-black background.
+    // 2) Suppress "Unlimited viewing for a monthly fee" badge.
+    // 3) Expand video titles from 1 line to 2 lines.
+    // 4) Expand search bar width and height, set placeholder to "SEARCH".
+    // 5) Transform top section navigation links into a dropdown matching search bar width.
+    // 6) Replace top-right user account icon with circular profile picture avatar.
+        // Custom TV App UI modifications:
+    // 1) All-black background.
+    // 2) Suppress "Unlimited viewing for a monthly fee" badge.
+    // 3) Expand video titles from 1 line to 2 lines.
+    // 4) Expand search bar width and height, set placeholder to "SEARCH".
+    // 5) Transform top section navigation links into a dropdown matching search bar width.
+    // 6) Replace top-right user account icon with circular profile picture avatar.
+        private fun getResourceBase64(resId: Int): String {
+        return try {
+            val bytes = resources.openRawResource(resId).use { it.readBytes() }
+            "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+private fun injectCustomTvStyles(view: WebView) {
+        val avatarUri = getResourceBase64(R.drawable.profile_avatar_small)
+        val logoUri = getResourceBase64(R.drawable.splash_logo)
+
+        val js = """
+            (function(){
+              try {
+                // Inject CSS
+                if (!document.getElementById('tv-app-style')) {
+                  var s = document.createElement('style');
+                  s.id = 'tv-app-style';
+                  s.textContent = atob('$TV_CSS_B64');
+                  (document.head || document.documentElement).appendChild(s);
+                }
+
+                function applyDomCustomizations() {
+                  try {
+                    // Universal Header Logo Replacement
+                    var logoUriStr = '$logoUri';
+                    if (logoUriStr) {
+                      var siteLogos = document.querySelectorAll('h1 a img, .nav-inner h1 img, header img, .box-header img');
+                      siteLogos.forEach(function(img) {
+                        if (img.src !== logoUriStr) {
+                          img.src = logoUriStr;
+                          img.style.maxHeight = '42px';
+                          img.style.width = 'auto';
+                          img.style.objectFit = 'contain';
+                        }
+                      });
+                    }
+
+                    // Search input placeholder
+                    var searchInputs = document.querySelectorAll('input[name="q[keyword]"], input[placeholder*="keyword"], input[placeholder*="キーワード"]');
+                    searchInputs.forEach(function(inp) {
+                      inp.setAttribute('placeholder', 'SEARCH');
+                    });
+
+                    // Header section dropdown
+                    var globalNav = document.querySelector('.global-nav-list.global-nav');
+                    var searchForm = document.querySelector('form.form-inline, .input-group');
+
+                    if (searchForm && searchForm.parentNode) {
+                      var flexWrapper = document.getElementById('tv-header-flex-wrapper');
+                      if (!flexWrapper) {
+                        flexWrapper = document.createElement('div');
+                        flexWrapper.id = 'tv-header-flex-wrapper';
+                        searchForm.parentNode.insertBefore(flexWrapper, searchForm);
+                        flexWrapper.appendChild(searchForm);
+                      }
+
+                      if (globalNav && !document.getElementById('tv-section-select')) {
+                        var select = document.createElement('select');
+                        select.id = 'tv-section-select';
+
+                        var defaultOpt = document.createElement('option');
+                        defaultOpt.value = '';
+                        defaultOpt.disabled = true;
+                        defaultOpt.selected = true;
+                        defaultOpt.textContent = 'Select Category / Section...';
+                        select.appendChild(defaultOpt);
+
+                        var links = globalNav.querySelectorAll('a');
+                        links.forEach(function(link) {
+                          var txt = link.textContent.trim();
+                          if (txt && link.href) {
+                            var opt = document.createElement('option');
+                            opt.value = link.href;
+                            opt.textContent = txt;
+                            select.appendChild(opt);
+                          }
+                        });
+
+                        select.addEventListener('change', function() {
+                          if (this.value) window.location.href = this.value;
+                        });
+
+                        flexWrapper.appendChild(select);
+                      }
+                    }
+
+                    // Avatar
+                    var avatarUriStr = '$avatarUri';
+                    var topRightNav = document.querySelector('.global-nav-list.text-right, .btn-wrap');
+                    if (topRightNav && avatarUriStr && !topRightNav.querySelector('.tv-user-avatar')) {
+                      var avatarImg = document.createElement('img');
+                      avatarImg.className = 'tv-user-avatar';
+                      avatarImg.src = avatarUriStr;
+                      avatarImg.alt = 'Profile';
+                      topRightNav.appendChild(avatarImg);
+                    }
+                  } catch(e) {}
+                }
+
+                applyDomCustomizations();
+                if (!window.__tvDomTimer) {
+                  window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
+                }
+              } catch(e) {}
+            })();
+        """.trimIndent()
+
+        view.evaluateJavascript(js, null)
+    }
+
+private fun viewportJs(): String {
+        val scale = resources.displayMetrics.widthPixels / (LAYOUT_WIDTH * density)
+        val content =
+            "width=$LAYOUT_WIDTH, initial-scale=$scale, minimum-scale=$scale, " +
+                "maximum-scale=$scale, user-scalable=no"
+        return """
+            (function(){
+              var desired = '__CONTENT__';
+              function apply(){
+                var m = document.querySelector('meta[name=viewport]');
+                if (!m) {
+                  if (!document.head) return;
+                  m = document.createElement('meta');
+                  m.setAttribute('name', 'viewport');
+                  document.head.appendChild(m);
+                }
+                if (m.getAttribute('content') !== desired) m.setAttribute('content', desired);
+              }
+              apply();
+              if (!window.__tvViewportObserver && document.head) {
+                window.__tvViewportObserver = new MutationObserver(apply);
+                window.__tvViewportObserver.observe(document.head, {
+                  childList: true, subtree: true, attributes: true,
+                  attributeFilter: ['content', 'name']
+                });
+              }
+            })();
+        """.trimIndent().replace("__CONTENT__", content)
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        density = resources.displayMetrics.density
+
+        root = FrameLayout(this)
+        root.setBackgroundColor(Color.BLACK)
+
+        webView = WebView(this)
+        webView.setBackgroundColor(Color.BLACK)
+        root.addView(
+            webView,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+
+        // Wand cursor, drawn above the page.
+        val cursorPx = (CURSOR_DP * density).toInt()
+        cursorView = ImageView(this).apply {
+            setImageResource(R.drawable.cursor_wand)
+            scaleType = ImageView.ScaleType.FIT_XY
+            isFocusable = false
+            visibility = View.INVISIBLE
+        }
+        root.addView(cursorView, FrameLayout.LayoutParams(cursorPx, cursorPx))
+
+        // Black splash with the logo, drawn above everything until the page is ready.
+        splashView = FrameLayout(this).apply {
+            setBackgroundColor(Color.BLACK)
+            isClickable = true
+        }
+        splashLogo = ImageView(this).apply {
+            setImageResource(R.drawable.splash_logo)
+            adjustViewBounds = true
+            alpha = 0f
+        }
+        splashView.addView(
+            splashLogo,
+            FrameLayout.LayoutParams(
+                (resources.displayMetrics.widthPixels * 0.6f).toInt(),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
+        )
+        root.addView(
+            splashView,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        setContentView(root)
+
+        root.post {
+            cursorX = root.width / 2f
+            cursorY = root.height / 2f
+            updateCursor()
+        }
+
+        startSplash()
+
+        with(webView.settings) {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            mediaPlaybackRequiresUserGesture = false
+            useWideViewPort = true
+            loadWithOverviewMode = true
+            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            allowFileAccess = true
+            // Present as Desktop Chrome so the site serves its 1440px desktop grid layout.
+            userAgentString = DESKTOP_USER_AGENT
+        }
+
+        // Start pages already laid out at LAYOUT_WIDTH, scaled to fit the screen.
+        webView.setInitialScale(
+            (resources.displayMetrics.widthPixels * 100f / (LAYOUT_WIDTH * density) + 0.5f).toInt()
+        )
+
+        CookieManager.getInstance().apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(webView, true)
+            // Ask the site's Google translate widget for Japanese -> English.
+            setCookie("https://www.stardom-world.com", "googtrans=/ja/en; Path=/")
+            setCookie(
+                "https://www.stardom-world.com",
+                "googtrans=/ja/en; Domain=.stardom-world.com; Path=/"
+            )
+            flush()
+        }
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(
+                view: WebView,
+                request: WebResourceRequest
+            ): Boolean {
+                val url = request.url
+                val scheme = url.scheme ?: return true
+                // Always use https for the Stardom site.
+                if (scheme == "http" && (url.host ?: "").endsWith("stardom-world.com")) {
+                    view.loadUrl(url.toString().replaceFirst("http://", "https://"))
+                    return true
+                }
+                // Keep web pages inside the app; ignore anything else (intent://, market://, ...).
+                return !(scheme == "http" || scheme == "https" || scheme == "file")
+            }
+
+            override fun onPageCommitVisible(view: WebView, url: String?) {
+                injectPageScripts(view)
+            }
+
+            override fun onPageFinished(view: WebView, url: String?) {
+                injectPageScripts(view)
+                CookieManager.getInstance().flush()
+                onPageReady()
+            }
+
+            @SuppressLint("WebViewClientOnReceivedSslError")
+            override fun onReceivedSslError(
+                view: WebView,
+                handler: SslErrorHandler,
+                error: SslError
+            ) {
+                // Proceed on SSL errors (e.g. missing CA certificates in emulator)
+                handler.proceed()
+            }
+        }
+
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                if (customView != null) {
+                    callback.onCustomViewHidden()
+                    return
+                }
+                customView = view
+                customCallback = callback
+                webView.visibility = View.GONE
+                root.addView(
+                    view,
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+                refreshCursorVisibility()
+            }
+
+            override fun onHideCustomView() {
+                hideCustomView()
+            }
+        }
+
+        if (savedInstanceState != null) {
+            webView.restoreState(savedInstanceState)
+        } else {
+            webView.loadUrl(START_URL)
+        }
+        webView.requestFocus()
+    }
+
+    // ---------------------------------------------------------------- splash
+
+    private fun startSplash() {
+        splashStartedAt = SystemClock.uptimeMillis()
+        // Start 300ms on full black screen, then fade logo in over 500ms
+        handler.postDelayed({
+            if (splashDone) return@postDelayed
+            splashLogo.animate()
+                .alpha(1f)
+                .setDuration(500)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }, 300L)
+        // Safety net: never leave the splash up forever if a page fails to load.
+        handler.postDelayed({ dismissSplash() }, SPLASH_MAX_MS)
+    }
+
+    private fun onPageReady() {
+        if (splashDone || splashDismissScheduled) return
+        splashDismissScheduled = true
+        // 300ms initial black delay + 500ms fade in + 300ms hold = 1100ms total minimum splash duration
+        val elapsed = SystemClock.uptimeMillis() - splashStartedAt
+        handler.postDelayed({ dismissSplash() }, (SPLASH_MIN_MS - elapsed).coerceAtLeast(0L))
+    }
+
+    private fun dismissSplash() {
+        if (splashDone) return
+        splashDone = true
+        refreshCursorVisibility()
+        splashView.animate()
+            .alpha(0f)
+            .setDuration(600)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction {
+                root.removeView(splashView)
+            }
+            .start()
+    }
+
+    // ---------------------------------------------------------------- page scripts
+
+    private fun injectPageScripts(view: WebView) {
+        view.evaluateJavascript(viewportJs(), null)
+        view.evaluateJavascript(hideTranslateJs, null)
+        view.evaluateJavascript(translateJs, null)
+        view.evaluateJavascript(headerJs, null)
+        view.evaluateJavascript(infiniteScrollJs, null)
+        injectCustomTvStyles(view)
+        if (!cursorMode) view.evaluateJavascript(focusJs, null)
+    }
+
+    // ---------------------------------------------------------------- cursor
+
+    private fun updateCursor() {
+        val size = cursorView.layoutParams.width.toFloat()
+        cursorView.translationX = cursorX - HOT_X * size
+        cursorView.translationY = cursorY - HOT_Y * size
+    }
+
+    private fun refreshCursorVisibility() {
+        cursorView.visibility =
+            if (cursorMode && splashDone && customView == null) View.VISIBLE else View.INVISIBLE
+    }
+
+    private fun setCursorMode(on: Boolean) {
+        cursorMode = on
+        refreshCursorVisibility()
+        webView.evaluateJavascript(if (on) removeFocusJs else focusJs, null)
+        Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun moveCursor(keyCode: Int, repeat: Int) {
+        val w = root.width.toFloat()
+        val h = root.height.toFloat()
+        if (w <= 0f || h <= 0f) return
+        val step = density * (6f + minOf(repeat, 30) * 0.8f)
+        var nx = cursorX
+        var ny = cursorY
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> nx -= step
+            KeyEvent.KEYCODE_DPAD_RIGHT -> nx += step
+            KeyEvent.KEYCODE_DPAD_UP -> {
+                ny -= step
+                if (ny < 0f) wheel(cursorX, cursorY, SCROLL_NOTCH)
+            }
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                ny += step
+                if (ny > h - 1f) wheel(cursorX, cursorY, -SCROLL_NOTCH)
+            }
+        }
+        cursorX = nx.coerceIn(0f, w - 1f)
+        cursorY = ny.coerceIn(0f, h - 1f)
+        updateCursor()
+        hover(cursorX, cursorY)
+    }
+
+    /** A finger-style tap at the cursor: triggers links, buttons and the text keyboard. */
+    private fun tap() {
+        val x = cursorX
+        val y = cursorY
+        val downTime = SystemClock.uptimeMillis()
+        val down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0)
+        down.source = InputDevice.SOURCE_TOUCHSCREEN
+        webView.dispatchTouchEvent(down)
+        down.recycle()
+        handler.postDelayed({
+            val upTime = SystemClock.uptimeMillis()
+            val up = MotionEvent.obtain(downTime, upTime, MotionEvent.ACTION_UP, x, y, 0)
+            up.source = InputDevice.SOURCE_TOUCHSCREEN
+            webView.dispatchTouchEvent(up)
+            up.recycle()
+        }, 50)
+    }
+
+    /** Mouse-style hover, so menus and hover effects react to the cursor. */
+    private fun hover(px: Float, py: Float) {
+        val t = SystemClock.uptimeMillis()
+        val props = arrayOf(MotionEvent.PointerProperties().apply {
+            id = 0
+            toolType = MotionEvent.TOOL_TYPE_MOUSE
+        })
+        val coords = arrayOf(MotionEvent.PointerCoords().apply {
+            x = px
+            y = py
+        })
+        val ev = MotionEvent.obtain(
+            t, t, MotionEvent.ACTION_HOVER_MOVE, 1, props, coords,
+            0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_MOUSE, 0
+        )
+        webView.dispatchGenericMotionEvent(ev)
+        ev.recycle()
+    }
+
+    /** Mouse-wheel scroll at a point. Positive scrolls up, negative scrolls down. */
+    private fun wheel(px: Float, py: Float, vScroll: Float) {
+        val t = SystemClock.uptimeMillis()
+        val props = arrayOf(MotionEvent.PointerProperties().apply {
+            id = 0
+            toolType = MotionEvent.TOOL_TYPE_MOUSE
+        })
+        val coords = arrayOf(MotionEvent.PointerCoords().apply {
+            x = px
+            y = py
+            setAxisValue(MotionEvent.AXIS_VSCROLL, vScroll)
+        })
+        val ev = MotionEvent.obtain(
+            t, t, MotionEvent.ACTION_SCROLL, 1, props, coords,
+            0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_MOUSE, 0
+        )
+        webView.dispatchGenericMotionEvent(ev)
+        ev.recycle()
+    }
+
+    // ---------------------------------------------------------------- keys
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val down = event.action == KeyEvent.ACTION_DOWN
+
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW -> {
+                if (down && event.repeatCount == 0 && splashDone) setCursorMode(!cursorMode)
+                return true
+            }
+        }
+
+        if (cursorMode && customView == null) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_UP,
+                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    if (down && splashDone) moveCursor(event.keyCode, event.repeatCount)
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_CENTER -> {
+                    if (down && event.repeatCount == 0 && splashDone) tap()
+                    return true
+                }
+                KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_PAGE_UP -> {
+                    if (down && splashDone) wheel(cursorX, cursorY, PAGE_NOTCH)
+                    return true
+                }
+                KeyEvent.KEYCODE_CHANNEL_DOWN, KeyEvent.KEYCODE_PAGE_DOWN -> {
+                    if (down && splashDone) wheel(cursorX, cursorY, -PAGE_NOTCH)
+                    return true
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_BACK -> {
+                if (customView != null) {
+                    hideCustomView()
+                    return true
+                }
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                    return true
+                }
+            }
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                videoJs("if(v.paused){v.play();}else{v.pause();}")
+                return true
+            }
+            KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                videoJs("v.play();")
+                return true
+            }
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                videoJs("v.pause();")
+                return true
+            }
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                videoJs("v.currentTime+=10;")
+                return true
+            }
+            KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                videoJs("v.currentTime-=10;")
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    // ---------------------------------------------------------------- misc
+
+    private fun hideCustomView() {
+        val view = customView ?: return
+        root.removeView(view)
+        customView = null
+        webView.visibility = View.VISIBLE
+        customCallback?.onCustomViewHidden()
+        customCallback = null
+        webView.requestFocus()
+        refreshCursorVisibility()
+    }
+
+    private fun videoJs(action: String) {
+        webView.evaluateJavascript(
+            "(function(){var v=document.querySelector('video');if(!v)return;$action})()",
+            null
+        )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        webView.saveState(outState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+    }
+
+    override fun onPause() {
+        CookieManager.getInstance().flush()
+        webView.onPause()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        pulse?.cancel()
+        root.removeAllViews()
+        webView.destroy()
+        super.onDestroy()
+    }
+}
