@@ -1546,7 +1546,7 @@ class MainActivity : Activity() {
                     val cssX = cursorX / density
                     val cssY = cursorY / density
                     webView.evaluateJavascript(
-                        "(function(){ var el = document.elementFromPoint(" + cssX + ", " + cssY + ") || document.activeElement; if(el && window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(el); } return false; })()",
+                        "(function(){ var list = document.elementsFromPoint(" + cssX + ", " + cssY + ") || [document.activeElement]; if(window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(list); } return false; })()",
                         null
                     )
                     return true
