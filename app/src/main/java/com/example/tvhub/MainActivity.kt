@@ -1391,12 +1391,13 @@ class MainActivity : Activity() {
 
           function toggleCardFavorite(card) {
             var $ = window.jQuery || window.$;
-            var link = card.querySelector('a[href*="/contents/"]');
-            if (!link) return;
+            var link = card.querySelector('a[href*="/contents/"], a[href*="/set/"]') || card.closest('a[href*="/contents/"], a[href*="/set/"]');
+            if (!link && card.tagName === 'A') link = card;
+            if (!link) return false;
 
-            var href = link.href;
-            var match = href.match(/\/contents\/(\d+)/);
-            if (!match) return;
+            var href = link.href || '';
+            var match = href.match(/\/(?:contents|set)\/(\d+)/);
+            if (!match) return false;
 
             var contentId = match[1];
             var isFav = !card.__isFavorited;
@@ -1417,6 +1418,7 @@ class MainActivity : Activity() {
                 }
               });
             }
+            return true;
           }
 
           window.__tvToggleCardFavorite = toggleCardFavorite;
@@ -1498,7 +1500,7 @@ class MainActivity : Activity() {
                     val cssX = cursorX / density
                     val cssY = cursorY / density
                     webView.evaluateJavascript(
-                        "(function(){ var el = document.elementFromPoint(" + cssX + ", " + cssY + ") || document.activeElement; if(el){ var card = el.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite){ window.__tvToggleCardFavorite(card); return true; } } return false; })()",
+                        "(function(){ var el = document.elementFromPoint(" + cssX + ", " + cssY + ") || document.activeElement; if(el){ var card = el.closest('article, .content-list-item, .tile-inner, .content-thumbnail, .content-thumbnail-box, .box-content') || el; if(card && window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(card); } } return false; })()",
                         null
                     )
                     return true
