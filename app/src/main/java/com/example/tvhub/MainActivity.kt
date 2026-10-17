@@ -1393,13 +1393,14 @@ class MainActivity : Activity() {
             var $ = window.jQuery || window.$;
             if (!el) return false;
 
-            var card = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail, .content-thumbnail-box, .content-info-box, .box-content') || el;
-            var link = card.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                       (card.parentNode ? card.parentNode.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
-                       card.closest('a[href*="/contents/"], a[href*="/set/"]');
+            // Target ONLY the thumbnail image box itself
+            var thumb = el.closest('.content-thumbnail-box, .content-thumbnail');
+            if (!thumb) return false;
 
-            if (!link && el.tagName === 'A') link = el;
-            if (!link && el.closest) link = el.closest('a[href]');
+            var link = thumb.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
+                       thumb.closest('a[href*="/contents/"], a[href*="/set/"]');
+
+            if (!link && thumb.tagName === 'A') link = thumb;
             if (!link || !link.href) return false;
 
             var href = link.href || '';
@@ -1407,15 +1408,21 @@ class MainActivity : Activity() {
             if (!match) return false;
 
             var contentId = match[1];
-            var isFav = !card.__isFavorited;
-            card.__isFavorited = isFav;
+            var isFavPage = window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1;
+            var apiType = isFavPage ? 'DELETE' : 'POST';
 
             if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-              window.AndroidHost.logDebug(isFav ? '♥ Added to Favorites!' : 'Removed from Favorites');
+              window.AndroidHost.logDebug(isFavPage ? 'Removed from Favorites' : '♥ Added to Favorites!');
+            }
+
+            if (isFavPage) {
+              var parentCard = thumb.closest('article, .content-list-item, .tile-inner, .slick-slide');
+              if (parentCard) {
+                parentCard.style.setProperty('opacity', '0.3', 'important');
+              }
             }
 
             if ($ && $.apiCall) {
-              var apiType = isFav ? 'POST' : 'DELETE';
               $.apiCall({
                 url: '/user_api/contents/' + contentId + '/favorites',
                 type: apiType
