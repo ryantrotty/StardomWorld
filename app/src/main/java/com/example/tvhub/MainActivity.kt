@@ -105,6 +105,12 @@ class MainActivity : Activity() {
         h1.ttl-lg, .box-content > h1 {
             display: none !important;
         }
+        /* Collapse empty in-between description wrappers */
+        .content-ttl-wrap, .detail-wrap {
+            margin: 0px !important;
+            padding: 0px !important;
+            min-height: 0px !important;
+        }
         /* Ensure set titles and category headings (h2.ttl-md, .ttl-sub) remain fully visible */
         .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-list, .box-contents-sub, .sub-category-ttl {
             display: block !important;
