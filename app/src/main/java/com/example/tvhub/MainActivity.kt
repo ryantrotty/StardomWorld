@@ -101,19 +101,8 @@ class MainActivity : Activity() {
             margin: 0 !important;
             padding: 0 !important;
         }
-        .col-12.box-content h1, .col-12.box-content h2, .col-12.box-content h3, .col-12.box-content .box-contents-title, .box-content .ttl-contents, .box-content .ttl-main {
-            display: none !important;
-        }
-        /* Hide 'Related Videos' / '関連動画' text heading */
-        .ttl-related, .related-title, .box-related-ttl, h2.ttl-related, h3.ttl-related, [class*="related"] h1, [class*="related"] h2, [class*="related"] h3, [class*="related"] h4 {
-            display: none !important;
-            visibility: hidden !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        /* Retain row of text directly above video thumbnails (Set Title / Category heading) */
-        .ttl-sub, .box-ttl-sub, .sub-category-list, .box-contents-sub, .sub-category-ttl {
+        /* Ensure set titles and category headings (h2.ttl-md, .ttl-sub) remain fully visible */
+        .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-list, .box-contents-sub, .sub-category-ttl {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
