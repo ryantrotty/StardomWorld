@@ -940,10 +940,140 @@ class MainActivity : Activity() {
                         }
                       });
                     }
+                    // 1. Create On-Screen Retained Debugger Panel
+                    var debugPanel = document.getElementById('tv-debug-overlay');
+                    if (!debugPanel) {
+                      var parentNode = document.body || document.documentElement;
+                      if (parentNode) {
+                        debugPanel = document.createElement('div');
+                        debugPanel.id = 'tv-debug-overlay';
+                        debugPanel.style.cssText = 'position:fixed; bottom:12px; left:12px; width:520px; max-height:220px; background:rgba(0,0,0,0.92); color:#00FF66; font-family:monospace; font-size:12px; padding:10px 14px; border-radius:6px; border:2px solid #00FF66; z-index:999999; overflow-y:auto; pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.9); line-height:1.4;';
+                        debugPanel.innerHTML = '<div id="tv-debug-hover" style="color:#FFD700; font-weight:bold; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:4px;">HOVER: Move cursor to inspect...</div><div id="tv-debug-logs"></div>';
+                        parentNode.appendChild(debugPanel);
+                      }
+                    }
+
+                    // 2. Real-time hover inspector under cursor
+                    if (!window.__tvHoverInspectorAttached) {
+                      window.__tvHoverInspectorAttached = true;
+                      document.addEventListener('mousemove', function(e) {
+                        var hoverBox = document.getElementById('tv-debug-hover');
+                        if (!hoverBox) return;
+                        var el = document.elementFromPoint(e.clientX, e.clientY);
+                        if (el) {
+                          var tag = el.tagName.toLowerCase();
+                          var cls = el.className ? '.' + String(el.className).substring(0, 30).replace(/\s+/g, '.') : '';
+                          var link = el.closest('a[href]');
+                          var href = link ? link.getAttribute('href') : 'no-link';
+                          hoverBox.textContent = 'HOVER: <' + tag + cls + '> | href: ' + href;
+                        }
+                      }, true);
+                    }
+
+                    // 3. Favorites Toggle Function
+                    window.__tvToggleCardFavorite = function(list) {
+                      function logToScreen(msg, color) {
+                        var logs = document.getElementById('tv-debug-logs');
+                        if (!logs) return;
+                        var line = document.createElement('div');
+                        line.style.color = color || '#00FF66';
+                        line.style.borderBottom = '1px solid #222';
+                        line.style.padding = '2px 0';
+                        var timeStr = new Date().toTimeString().split(' ')[0];
+                        line.textContent = '[' + timeStr + '] ' + msg;
+                        logs.insertBefore(line, logs.firstChild);
+                      }
+
+                      var $ = window.jQuery || window.$;
+                      if (!list) {
+                        logToScreen('ERROR: Empty element list received', '#FF4444');
+                        return false;
+                      }
+                      if (!Array.isArray(list)) list = [list];
+
+                      logToScreen('--- Options Pressed ---', '#FFD700');
+                      logToScreen('Elements under pointer: ' + list.length + ' items');
+
+                      var targetContentId = null;
+                      var targetCard = null;
+                      var isSetUrl = false;
+                      var matchedHref = '';
+
+                      for (var i = 0; i < list.length; i++) {
+                        var el = list[i];
+                        if (!el) continue;
+                        if (el.closest('.slick-cloned')) {
+                          logToScreen('Skipped slick-cloned element', '#888888');
+                          continue;
+                        }
+
+                        var link = el.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
+                                   el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
+                                   el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail, .content-thumbnail-box, .content-info-box')?.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+
+                        if (link && link.href) {
+                          var match = link.href.match(/\/(?:contents|set)\/(\d+)/);
+                          if (match && match[1]) {
+                            targetContentId = match[1];
+                            matchedHref = link.href;
+                            isSetUrl = link.href.indexOf('/set/') !== -1;
+                            targetCard = el.closest('article, .content-list-item, .tile-inner, .slick-slide') || el;
+                            break;
+                          }
+                        }
+                      }
+
+                      if (!targetContentId) {
+                        logToScreen('FAILED: No /contents/ or /set/ ID found under cursor', '#FF4444');
+                        return false;
+                      }
+
+                      logToScreen('MATCH: ID=' + targetContentId + ' | Type=' + (isSetUrl ? 'Set' : 'Content'), '#00FFFF');
+                      logToScreen('URL: ' + matchedHref.substring(0, 50) + '...', '#88FF88');
+
+                      var isFavPage = window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1;
+                      var apiType = isFavPage ? 'DELETE' : 'POST';
+
+                      if (isFavPage && targetCard) {
+                        targetCard.style.setProperty('opacity', '0.3', 'important');
+                      }
+
+                      if ($ && $.apiCall) {
+                        var endpointUrl = isSetUrl ? '/user_api/set/' + targetContentId + '/favorites' : '/user_api/contents/' + targetContentId + '/favorites';
+                        logToScreen('API: Sending ' + apiType + ' ' + endpointUrl, '#FFFF00');
+
+                        $.apiCall({
+                          url: endpointUrl,
+                          type: apiType
+                        }).done(function(data) {
+                          logToScreen('SUCCESS 200 OK: ' + (isFavPage ? 'Removed' : 'Added to Favorites!'), '#00FF66');
+                          if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                            window.AndroidHost.logDebug(isFavPage ? 'Removed from Favorites' : '♥ Added to Favorites!');
+                          }
+                        }).fail(function(jqXHR) {
+                          logToScreen('API FAIL HTTP ' + jqXHR.status + ': ' + (jqXHR.responseText || ''), '#FF4444');
+                          if (isSetUrl) {
+                            logToScreen('Retrying with /user_api/contents/ fallback...', '#FFBB00');
+                            $.apiCall({
+                              url: '/user_api/contents/' + targetContentId + '/favorites',
+                              type: apiType
+                            }).done(function() {
+                              logToScreen('FALLBACK SUCCESS 200 OK!', '#00FF66');
+                            }).fail(function(err) {
+                              logToScreen('FALLBACK FAIL HTTP ' + err.status, '#FF4444');
+                            });
+                          }
+                        });
+                      } else {
+                        logToScreen('ERROR: jQuery $.apiCall not available', '#FF4444');
+                      }
+                      return true;
+                    };
+
                     applyDomCustomizations();
-                if (!window.__tvDomTimer) {
-                  window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
-                }
+                    if (!window.__tvDomTimer) {
+                      window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
+                    }
               } catch(e) {}
             })();
         """.trimIndent()
