@@ -273,6 +273,30 @@ class MainActivity : Activity() {
             background-color: transparent !important;
             border: none !important;
         }
+        #tv-fav-header-btn {
+            height: 38px !important;
+            line-height: 36px !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            color: #FFB347 !important;
+            border: 1px solid #333333 !important;
+            border-radius: 4px !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            padding: 0 12px !important;
+            margin-left: 4px !important;
+            outline: none !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            box-sizing: border-box !important;
+            vertical-align: middle !important;
+            text-decoration: none !important;
+        }
+        #tv-fav-header-btn:focus, #tv-fav-header-btn:hover {
+            color: #ffffff !important;
+            background-color: #2a2a2a !important;
+            border-color: #FFB347 !important;
+        }
         .box-sort {
             background: #000000 !important;
             background-color: #000000 !important;
@@ -747,17 +771,41 @@ class MainActivity : Activity() {
 
                       var btnWrap = document.querySelector('.global-nav-list.btn-wrap, .btn-wrap, header .text-right.float-r');
                       if (btnWrap) {
+                        var currentLang = '$activeLang';
+
+                        // Favorites button
+                        var favLi = document.getElementById('tv-fav-li');
+                        if (!favLi) {
+                          favLi = document.createElement('li');
+                          favLi.id = 'tv-fav-li';
+                          favLi.style.setProperty('display', 'inline-block', 'important');
+                          favLi.style.setProperty('vertical-align', 'middle', 'important');
+                          favLi.style.setProperty('margin-left', '8px', 'important');
+                          btnWrap.appendChild(favLi);
+                        }
+
+                        var favBtn = document.getElementById('tv-fav-header-btn');
+                        if (!favBtn) {
+                          favBtn = document.createElement('a');
+                          favBtn.id = 'tv-fav-header-btn';
+                          favBtn.className = 'notranslate';
+                          favBtn.setAttribute('translate', 'no');
+                          favBtn.href = 'https://www.stardom-world.com/mypage/favorites';
+                          favLi.appendChild(favBtn);
+                        }
+                        favBtn.textContent = (currentLang === 'ja') ? '★ お気に入り' : '★ Favorites';
+
+                        // Language toggle button
                         var langLi = document.getElementById('tv-lang-li');
                         if (!langLi) {
                           langLi = document.createElement('li');
                           langLi.id = 'tv-lang-li';
                           langLi.style.setProperty('display', 'inline-block', 'important');
                           langLi.style.setProperty('vertical-align', 'middle', 'important');
-                          langLi.style.setProperty('margin-left', '10px', 'important');
+                          langLi.style.setProperty('margin-left', '8px', 'important');
                           btnWrap.appendChild(langLi);
                         }
 
-                        var currentLang = '$activeLang';
                         var langBtn = document.getElementById('tv-lang-toggle-btn');
                         if (!langBtn) {
                           langBtn = document.createElement('button');
