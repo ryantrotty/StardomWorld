@@ -1030,6 +1030,12 @@ class MainActivity : Activity() {
         }
 
         webView.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
+                handler.post {
+                    request.grant(request.resources)
+                }
+            }
+
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
                 if (newProgress >= 90) {
@@ -1128,14 +1134,28 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
-        fun requestFullScreen() {
+        fun triggerFullScreen() {
             handler.post {
-                if (customView == null) {
+                if (customView != null) return@post
+
+                // Dispatch synthetic touch gesture onto player area to satisfy WebKit user gesture requirement
+                val now = SystemClock.uptimeMillis()
+                val centerX = webView.width / 2f
+                val centerY = webView.height * 0.35f
+
+                val down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, centerX, centerY, 0)
+                val up = MotionEvent.obtain(now, now + 50, MotionEvent.ACTION_UP, centerX, centerY, 0)
+                webView.dispatchTouchEvent(down)
+                webView.dispatchTouchEvent(up)
+                down.recycle()
+                up.recycle()
+
+                handler.postDelayed({
                     webView.evaluateJavascript(
-                        "(function(){ var v=document.querySelector('video')||document.querySelector('iframe'); if(v && typeof v.webkitRequestFullscreen === 'function') v.webkitRequestFullscreen(); })()",
+                        "(function(){ var iframe=document.querySelector('iframe[src*=\\'vimeo.com\\']'); if(iframe && typeof Vimeo!=='undefined' && Vimeo.Player){ var p=new Vimeo.Player(iframe); p.requestFullscreen().catch(function(){ if(iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen(); }); } else { var v=document.querySelector('video')||document.querySelector('iframe'); if(v && v.webkitRequestFullscreen) v.webkitRequestFullscreen(); } })()",
                         null
                     )
-                }
+                }, 100)
             }
         }
     }
