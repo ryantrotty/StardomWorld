@@ -67,8 +67,8 @@ class MainActivity : Activity() {
         // per row but smaller text.
         private const val LAYOUT_WIDTH = 1440
 
-        private const val SPLASH_MIN_MS = 3100L
-        private const val SPLASH_MAX_MS = 5000L
+        private const val SPLASH_MIN_MS = 1200L
+        private const val SPLASH_MAX_MS = 4000L
 
             private val TV_RAW_CSS = """
         html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
@@ -939,6 +939,7 @@ class MainActivity : Activity() {
 
             override fun onPageCommitVisible(view: WebView, url: String?) {
                 injectPageScripts(view)
+                onPageReady()
             }
 
             override fun onPageFinished(view: WebView, url: String?) {
@@ -1019,7 +1020,7 @@ class MainActivity : Activity() {
         refreshCursorVisibility()
         splashView.animate()
             .alpha(0f)
-            .setDuration(600)
+            .setDuration(800)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction {
                 root.removeView(splashView)
