@@ -1051,7 +1051,6 @@ class MainActivity : Activity() {
                 customView = view
                 customCallback = callback
                 webView.visibility = View.GONE
-                Toast.makeText(this@MainActivity, "TV LOG: Entering Fullscreen!", Toast.LENGTH_SHORT).show()
                 view.alpha = 0f
                 root.addView(
                     view,
@@ -1269,11 +1268,7 @@ class MainActivity : Activity() {
           if (window.__tvAutoFullScreenAttached) return;
           window.__tvAutoFullScreenAttached = true;
 
-          function tvLog(msg) {
-            if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-              window.AndroidHost.logDebug(msg);
-            }
-          }
+          function tvLog(msg) {}
 
           var fsTimer = null;
 
