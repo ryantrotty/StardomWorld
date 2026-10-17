@@ -875,6 +875,42 @@ class MainActivity : Activity() {
                       }
                     });
 
+                    // Normalize card elements so ONLY the thumbnail image box is interactive
+                    var allArticles = document.querySelectorAll('article, .content-list-item');
+                    allArticles.forEach(function(art) {
+                      art.setAttribute('tabindex', '-1');
+
+                      var thumbBox = art.querySelector('.content-thumbnail-box, .content-thumbnail');
+                      var thumbLink = art.querySelector('.content-thumbnail a[href], a[href*="/contents/"], a[href*="/set/"]');
+
+                      if (thumbLink) {
+                        thumbLink.classList.add('tv-thumbnail-link');
+                        thumbLink.setAttribute('tabindex', '0');
+                        thumbLink.style.setProperty('display', 'block', 'important');
+                      }
+
+                      if (thumbBox) {
+                        thumbBox.setAttribute('tabindex', '0');
+                      }
+
+                      var infoBox = art.querySelector('.content-info-box');
+                      if (infoBox) {
+                        infoBox.setAttribute('tabindex', '-1');
+                        infoBox.style.setProperty('pointer-events', 'none', 'important');
+                        var titleLinks = infoBox.querySelectorAll('a, h1, h2, h3, h4');
+                        titleLinks.forEach(function(tl) {
+                          tl.setAttribute('tabindex', '-1');
+                          tl.style.setProperty('pointer-events', 'none', 'important');
+                        });
+                      }
+
+                      var badges = art.querySelectorAll('.label-set, .tag, [class*="label"], [class*="tag"]');
+                      badges.forEach(function(b) {
+                        b.setAttribute('tabindex', '-1');
+                        b.style.setProperty('pointer-events', 'none', 'important');
+                      });
+                    });
+
                     // Remove Return-To-Top button completely
                     var topBtns = document.querySelectorAll('#toTopBtn, .TopBtn, a.TopBtn, [class*="TopBtn"], [class*="topBtn"], [id*="toTop"], [id*="ToTop"]');
                     topBtns.forEach(function(btn) {
@@ -1393,14 +1429,13 @@ class MainActivity : Activity() {
             var $ = window.jQuery || window.$;
             if (!el) return false;
 
-            // Target ONLY the thumbnail image box itself
-            var thumb = el.closest('.content-thumbnail-box, .content-thumbnail');
-            if (!thumb) return false;
+            var card = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .box-content') || el;
+            var thumbBox = card.querySelector('.content-thumbnail-box, .content-thumbnail');
+            var link = (thumbBox ? thumbBox.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
+                       card.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
+                       card.closest('a[href*="/contents/"], a[href*="/set/"]');
 
-            var link = thumb.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                       thumb.closest('a[href*="/contents/"], a[href*="/set/"]');
-
-            if (!link && thumb.tagName === 'A') link = thumb;
+            if (!link && el.tagName === 'A') link = el;
             if (!link || !link.href) return false;
 
             var href = link.href || '';
@@ -1416,10 +1451,7 @@ class MainActivity : Activity() {
             }
 
             if (isFavPage) {
-              var parentCard = thumb.closest('article, .content-list-item, .tile-inner, .slick-slide');
-              if (parentCard) {
-                parentCard.style.setProperty('opacity', '0.3', 'important');
-              }
+              card.style.setProperty('opacity', '0.3', 'important');
             }
 
             if ($ && $.apiCall) {
