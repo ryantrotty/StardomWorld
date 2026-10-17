@@ -115,8 +115,8 @@ class MainActivity : Activity() {
             padding-top: 0px !important;
             padding-bottom: 0px !important;
         }
-        /* Completely hide second category carousel section (e.g. '2026') on content pages */
-        .box-related-content {
+        /* Completely hide second/subsequent category carousel section (e.g. '2026') on content pages, keeping Row 1 intact */
+        .box-related-content ~ .box-related-content {
             display: none !important;
             visibility: hidden !important;
             height: 0px !important;
