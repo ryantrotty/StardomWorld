@@ -115,8 +115,17 @@ class MainActivity : Activity() {
             padding-top: 0px !important;
             padding-bottom: 0px !important;
         }
+        /* Completely hide second category carousel section (e.g. '2026') on content pages */
+        .box-related-content {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0px !important;
+            min-height: 0px !important;
+            margin: 0px !important;
+            padding: 0px !important;
+        }
         /* Reduce top margin above set title text tag (.ttl-md, h2.ttl-md) */
-        .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-ttl, .sub-category-list, .box-contents-sub, .box-related-content {
+        .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-ttl, .sub-category-list, .box-contents-sub {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
