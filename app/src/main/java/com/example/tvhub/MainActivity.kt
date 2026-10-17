@@ -542,7 +542,19 @@ class MainActivity : Activity() {
                   } catch(e) {}
                 }
 
-                applyDomCustomizations();
+                                    // Scoped content page gap tightening
+                    if (window.location.pathname.indexOf('/contents/') !== -1) {
+                      var playerEl = document.querySelector('.col-12.box-content, .box-content, .video-wrap');
+                      if (playerEl) {
+                        playerEl.style.setProperty('margin-bottom', '0px', 'important');
+                        playerEl.style.setProperty('padding-bottom', '0px', 'important');
+                      }
+                      var relHeadings = document.querySelectorAll('.ttl-related, .related-title, .box-related-ttl, h2.ttl-related, h3.ttl-related');
+                      relHeadings.forEach(function(el) {
+                        el.style.setProperty('display', 'none', 'important');
+                      });
+                    }
+                    applyDomCustomizations();
                 if (!window.__tvDomTimer) {
                   window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
                 }
