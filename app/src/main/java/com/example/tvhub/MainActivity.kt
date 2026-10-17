@@ -274,18 +274,18 @@ class MainActivity : Activity() {
             border: none !important;
         }
         #tv-fav-header-btn {
-            height: 38px !important;
-            line-height: 36px !important;
+            height: 44px !important;
+            line-height: 44px !important;
             background: transparent !important;
             background-color: transparent !important;
             color: #FFB347 !important;
-            border: 1px solid #333333 !important;
-            border-radius: 4px !important;
-            font-size: 15px !important;
-            font-weight: 700 !important;
-            padding: 0 12px !important;
-            margin-left: 4px !important;
+            border: none !important;
+            box-shadow: none !important;
             outline: none !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            padding: 0 10px !important;
+            margin-left: 12px !important;
             cursor: pointer !important;
             display: inline-block !important;
             box-sizing: border-box !important;
@@ -294,6 +294,11 @@ class MainActivity : Activity() {
         }
         #tv-fav-header-btn:focus, #tv-fav-header-btn:hover {
             color: #ffffff !important;
+            text-shadow: 0 0 8px rgba(255, 179, 71, 0.8) !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+        }
             background-color: #2a2a2a !important;
             border-color: #FFB347 !important;
         }
