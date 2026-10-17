@@ -1451,28 +1451,31 @@ class MainActivity : Activity() {
           function toggleCardFavorite(card) {
             var $ = window.jQuery || window.$;
             var contentId = card.__tvContentId;
-            if (!contentId || !$) return;
+            if (!contentId) return;
 
-            var isFav = !!card.__isFavorited;
-            var apiType = isFav ? 'DELETE' : 'POST';
+            var isFav = !card.__isFavorited;
+            card.__isFavorited = isFav;
 
-            $.apiCall({
-              url: '/user_api/contents/' + contentId + '/favorites',
-              type: apiType
-            }).done(function(res) {
-              card.__isFavorited = !isFav;
-              var badge = card.querySelector('.tv-fav-badge');
-              if (badge) {
-                badge.style.display = (!isFav) ? 'block' : 'none';
-              }
-              if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                window.AndroidHost.logDebug((!isFav) ? '♥ Added to Favorites!' : 'Removed from Favorites');
-              }
-            }).fail(function(jqXHR) {
-              if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                window.AndroidHost.logDebug('Please log in to add favorites');
-              }
-            });
+            var badge = card.querySelector('.tv-fav-badge');
+            if (badge) {
+              badge.style.display = isFav ? 'block' : 'none';
+            }
+
+            if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+              window.AndroidHost.logDebug(isFav ? '♥ Added to Favorites!' : 'Removed from Favorites');
+            }
+
+            if ($ && $.apiCall) {
+              var apiType = isFav ? 'POST' : 'DELETE';
+              $.apiCall({
+                url: '/user_api/contents/' + contentId + '/favorites',
+                type: apiType
+              }).fail(function(jqXHR) {
+                if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                  window.AndroidHost.logDebug('Please log in on Stardom World to sync favorites');
+                }
+              });
+            }
           }
 
           var longPressTimer = null;
