@@ -970,19 +970,9 @@ class MainActivity : Activity() {
                       }, true);
                     }
 
-                    // 3. Favorites Toggle Function
+                    // Favorites Toggle Function
                     window.__tvToggleCardFavorite = function(list) {
-                      function logToScreen(msg, color) {
-                        var logs = document.getElementById('tv-debug-logs');
-                        if (!logs) return;
-                        var line = document.createElement('div');
-                        line.style.color = color || '#00FF66';
-                        line.style.borderBottom = '1px solid #222';
-                        line.style.padding = '2px 0';
-                        var timeStr = new Date().toTimeString().split(' ')[0];
-                        line.textContent = '[' + timeStr + '] ' + msg;
-                        logs.insertBefore(line, logs.firstChild);
-                      }
+                      function logToScreen(msg, color) {}
 
                       var $ = window.jQuery || window.$;
                       if (!list) {
@@ -1002,14 +992,12 @@ class MainActivity : Activity() {
                       for (var i = 0; i < list.length; i++) {
                         var el = list[i];
                         if (!el) continue;
-                        if (el.closest('.slick-cloned')) {
-                          logToScreen('Skipped slick-cloned element', '#888888');
-                          continue;
-                        }
+                        if (el.closest && el.closest('.slick-cloned')) continue;
 
-                        var link = el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
-                                   el.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                                   el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail, .content-thumbnail-box, .content-info-box, .box-content')?.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+                        var parentBox = el.closest('.content-thumbnail-box, .content-thumbnail, article, .content-list-item, .tile-inner, .slick-slide, .content-info-box, .box-content') || (el.parentNode ? el.parentNode : el);
+                        var link = (parentBox ? parentBox.querySelector('a[href*="/contents/"], a[href*="/set/"], a[href]') : null) ||
+                                   el.closest('a[href*="/contents/"], a[href*="/set/"], a[href]') ||
+                                   el.querySelector('a[href*="/contents/"], a[href*="/set/"], a[href]');
 
                         if (link) {
                           var rawHref = link.getAttribute('href') || link.href || '';
