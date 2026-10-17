@@ -1325,6 +1325,145 @@ class MainActivity : Activity() {
     """.trimIndent()
 
 
+    private val cardFavoriteLongPressJs = """
+        (function(){
+          if (window.__tvCardFavoriteAttached) return;
+          window.__tvCardFavoriteAttached = true;
+
+          function updateCardFavoriteBadges() {
+            var $ = window.jQuery || window.$;
+            if (!$) return;
+
+            var cards = document.querySelectorAll('article, .content-list-item');
+            var uncheckedCards = [];
+            cards.forEach(function(card) {
+              var link = card.querySelector('a[href*="/contents/"]');
+              if (!link) return;
+
+              var href = link.href;
+              var match = href.match(/\/contents\/(\d+)/);
+              if (!match) return;
+
+              var contentId = match[1];
+              card.__tvContentId = contentId;
+
+              var thumbBox = card.querySelector('.content-thumbnail-box') || card.querySelector('.content-thumbnail');
+              if (thumbBox && !thumbBox.querySelector('.tv-fav-badge')) {
+                var badge = document.createElement('span');
+                badge.className = 'tv-fav-badge notranslate';
+                badge.setAttribute('translate', 'no');
+                badge.innerHTML = '♥';
+                badge.style.cssText = 'position:absolute; top:6px; right:6px; font-size:18px; color:#FFB347; display:none; z-index:10; text-shadow:0 2px 6px rgba(0,0,0,0.9); pointer-events:none;';
+                thumbBox.appendChild(badge);
+              }
+
+              if (!card.__tvFavChecked) {
+                card.__tvFavChecked = true;
+                uncheckedCards.push(card);
+              }
+            });
+
+            var ids = [];
+            uncheckedCards.forEach(function(c) {
+              if (c.__tvContentId) ids.push(c.__tvContentId);
+            });
+
+            if (ids.length > 0 && $ && $.apiCall) {
+              $.apiCall({
+                url: '/user_api/favorites',
+                type: 'GET',
+                data: { ids: ids }
+              }).done(function(data) {
+                if (!data || !data.length) return;
+                data.forEach(function(item) {
+                  var targetCard = Array.from(cards).find(function(c) { return c.__tvContentId == item.target_id; });
+                  if (targetCard) {
+                    targetCard.__isFavorited = !!item.checked;
+                    var b = targetCard.querySelector('.tv-fav-badge');
+                    if (b) {
+                      b.style.display = item.checked ? 'block' : 'none';
+                    }
+                  }
+                });
+              }).fail(function(){});
+            }
+          }
+
+          function toggleCardFavorite(card) {
+            var $ = window.jQuery || window.$;
+            var contentId = card.__tvContentId;
+            if (!contentId || !$) return;
+
+            var isFav = !!card.__isFavorited;
+            var apiType = isFav ? 'DELETE' : 'POST';
+
+            $.apiCall({
+              url: '/user_api/contents/' + contentId + '/favorites',
+              type: apiType
+            }).done(function(res) {
+              card.__isFavorited = !isFav;
+              var badge = card.querySelector('.tv-fav-badge');
+              if (badge) {
+                badge.style.display = (!isFav) ? 'block' : 'none';
+              }
+              if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                window.AndroidHost.logDebug((!isFav) ? '♥ Added to Favorites!' : 'Removed from Favorites');
+              }
+            }).fail(function(jqXHR) {
+              if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                window.AndroidHost.logDebug('Please log in to add favorites');
+              }
+            });
+          }
+
+          var longPressTimer = null;
+          var longPressTriggered = false;
+
+          document.addEventListener('keydown', function(e) {
+            if (e.keyCode === 13 || e.keyCode === 32 || e.key === 'Enter') {
+              var active = document.activeElement;
+              if (!active) return;
+
+              var card = active.closest('article, .content-list-item');
+              if (!card) return;
+
+              if (!longPressTimer && !longPressTriggered) {
+                longPressTimer = setTimeout(function() {
+                  longPressTriggered = true;
+                  toggleCardFavorite(card);
+                }, 600);
+              }
+            }
+          }, true);
+
+          document.addEventListener('keyup', function(e) {
+            if (e.keyCode === 13 || e.keyCode === 32 || e.key === 'Enter') {
+              if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+              }
+              if (longPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+                setTimeout(function() { longPressTriggered = false; }, 300);
+              }
+            }
+          }, true);
+
+          document.addEventListener('click', function(e) {
+            if (longPressTriggered) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              return false;
+            }
+          }, true);
+
+          setInterval(updateCardFavoriteBadges, 2000);
+        })();
+    """.trimIndent()
+
+
     private fun injectPageScripts(view: WebView) {
         view.evaluateJavascript(viewportJs(), null)
         view.evaluateJavascript(hideTranslateJs, null)
@@ -1334,6 +1473,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
+        view.evaluateJavascript(cardFavoriteLongPressJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
