@@ -281,6 +281,14 @@ class MainActivity : Activity() {
             font-weight: inherit !important;
             display: inline !important;
         }
+        /* Enable smooth site hover transitions on video thumbnail cards and links */
+        .content-thumbnail-box, .tile-inner, .content-list-item article {
+            transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
+        }
+        .content-thumbnail-box:hover, .content-list-item article:hover {
+            transform: scale(1.03) !important;
+            opacity: 0.85 !important;
+        }
     """.trimIndent()
 
     }
@@ -1039,6 +1047,26 @@ class MainActivity : Activity() {
         val size = cursorView.layoutParams.width.toFloat()
         cursorView.translationX = cursorX - HOT_X * size
         cursorView.translationY = cursorY - HOT_Y * size
+        hoverAtCursor()
+    }
+
+    private fun hoverAtCursor() {
+        val now = SystemClock.uptimeMillis()
+        val props = arrayOf(MotionEvent.PointerProperties().apply {
+            id = 0
+            toolType = MotionEvent.TOOL_TYPE_MOUSE
+        })
+        val coords = arrayOf(MotionEvent.PointerCoords().apply {
+            x = cursorX
+            y = cursorY
+        })
+        val ev = MotionEvent.obtain(
+            now, now, MotionEvent.ACTION_HOVER_MOVE, 1,
+            props, coords, 0, 0, 1f, 1f, 0, 0,
+            InputDevice.SOURCE_CLASS_POINTER, 0
+        )
+        webView.dispatchGenericMotionEvent(ev)
+        ev.recycle()
     }
 
     private fun refreshCursorVisibility() {
