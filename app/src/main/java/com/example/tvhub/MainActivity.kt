@@ -101,6 +101,21 @@ class MainActivity : Activity() {
             margin: 0 !important;
             padding: 0 !important;
         }
+        /* Hide individual match title directly below video player */
+        h1.ttl-lg, .col-12.box-content h1, .box-content h1, .ttl-lg {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Collapse vertical gap below video player */
+        .box-content, .set-movie-area, .movieWrap, .video-wrap, iframe, video, .embed-responsive, .col-12.box-content {
+            margin-top: 0px !important;
+            margin-bottom: 0px !important;
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+        }
         /* Ensure set titles and category headings (h2.ttl-md, .ttl-sub) remain fully visible */
         .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-list, .box-contents-sub, .sub-category-ttl {
             display: block !important;
@@ -108,7 +123,7 @@ class MainActivity : Activity() {
             opacity: 1 !important;
             color: #ffffff !important;
             font-weight: bold !important;
-            margin-top: 8px !important;
+            margin-top: 2px !important;
             margin-bottom: 4px !important;
         }
         footer, .box-footer {
@@ -731,13 +746,21 @@ class MainActivity : Activity() {
                   } catch(e) {}
                 }
 
-                    // Scoped content page gap tightening & Related Videos heading removal
+                    // Scoped content page gap tightening & Match Title / Related Videos heading removal
                     if (window.location.pathname.indexOf('/contents/') !== -1) {
-                      var playerEl = document.querySelector('.col-12.box-content, .box-content, .video-wrap');
-                      if (playerEl) {
-                        playerEl.style.setProperty('margin-bottom', '0px', 'important');
-                        playerEl.style.setProperty('padding-bottom', '0px', 'important');
-                      }
+                      var matchH1s = document.querySelectorAll('h1.ttl-lg, .col-12.box-content h1, .box-content h1, .ttl-lg');
+                      matchH1s.forEach(function(h1) {
+                        h1.style.setProperty('display', 'none', 'important');
+                      });
+
+                      var pCols = document.querySelectorAll('.col-12.box-content, .box-content, .set-movie-area, .movieWrap, .video-wrap, iframe, video, .embed-responsive');
+                      pCols.forEach(function(c) {
+                        c.style.setProperty('margin-top', '0px', 'important');
+                        c.style.setProperty('margin-bottom', '0px', 'important');
+                        c.style.setProperty('padding-top', '0px', 'important');
+                        c.style.setProperty('padding-bottom', '0px', 'important');
+                      });
+
                       var allH2s = document.querySelectorAll('h1, h2, h3, h4, .ttl-md, .ttl-related, .related-title, .box-related-ttl');
                       allH2s.forEach(function(el) {
                         var txt = (el.textContent || '').trim().toLowerCase();
