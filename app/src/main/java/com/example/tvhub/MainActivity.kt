@@ -774,32 +774,38 @@ class MainActivity : Activity() {
                         flexWrapper.appendChild(select);
                       }
 
+                      // Favorites Heart Button (To the right of Category Dropdown and left of Login/Profile)
+                      var sectionSelect = document.getElementById('tv-section-select');
+                      var favBtn = document.getElementById('tv-fav-header-btn');
+                      if (!favBtn) {
+                        favBtn = document.createElement('a');
+                        favBtn.id = 'tv-fav-header-btn';
+                        favBtn.className = 'notranslate';
+                        favBtn.setAttribute('translate', 'no');
+                        favBtn.href = 'https://www.stardom-world.com/mypage/favorites';
+                        if (sectionSelect && sectionSelect.nextSibling) {
+                          flexWrapper.insertBefore(favBtn, sectionSelect.nextSibling);
+                        } else {
+                          flexWrapper.appendChild(favBtn);
+                        }
+                      } else if (sectionSelect && favBtn.previousSibling !== sectionSelect) {
+                        if (sectionSelect.nextSibling) {
+                          flexWrapper.insertBefore(favBtn, sectionSelect.nextSibling);
+                        } else {
+                          flexWrapper.appendChild(favBtn);
+                        }
+                      }
+                      var currentLang = '$activeLang';
+                      favBtn.innerHTML = (currentLang === 'ja') ? '♥ お気に入り' : '♥ Favorites';
+
+                      // Remove old favLi if present
+                      var oldFavLi = document.getElementById('tv-fav-li');
+                      if (oldFavLi && oldFavLi.parentNode) {
+                        oldFavLi.parentNode.removeChild(oldFavLi);
+                      }
+
                       var btnWrap = document.querySelector('.global-nav-list.btn-wrap, .btn-wrap, header .text-right.float-r');
                       if (btnWrap) {
-                        var currentLang = '$activeLang';
-
-                        // Favorites button
-                        var favLi = document.getElementById('tv-fav-li');
-                        if (!favLi) {
-                          favLi = document.createElement('li');
-                          favLi.id = 'tv-fav-li';
-                          favLi.style.setProperty('display', 'inline-block', 'important');
-                          favLi.style.setProperty('vertical-align', 'middle', 'important');
-                          favLi.style.setProperty('margin-left', '8px', 'important');
-                          btnWrap.appendChild(favLi);
-                        }
-
-                        var favBtn = document.getElementById('tv-fav-header-btn');
-                        if (!favBtn) {
-                          favBtn = document.createElement('a');
-                          favBtn.id = 'tv-fav-header-btn';
-                          favBtn.className = 'notranslate';
-                          favBtn.setAttribute('translate', 'no');
-                          favBtn.href = 'https://www.stardom-world.com/mypage/favorites';
-                          favLi.appendChild(favBtn);
-                        }
-                        favBtn.textContent = (currentLang === 'ja') ? '★ お気に入り' : '★ Favorites';
-
                         // Language toggle button
                         var langLi = document.getElementById('tv-lang-li');
                         if (!langLi) {
