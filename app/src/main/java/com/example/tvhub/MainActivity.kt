@@ -1195,7 +1195,7 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun logDebug(msg: String) {
             handler.post {
-                Toast.makeText(this@MainActivity, "TV LOG: " + msg, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -1389,73 +1389,18 @@ class MainActivity : Activity() {
           if (window.__tvCardFavoriteAttached) return;
           window.__tvCardFavoriteAttached = true;
 
-          function applyCardTitleColor(card, isFav) {
-            var titleEls = card.querySelectorAll('h3, .ttl-xs, .content-info-box a, .content-info-box h3, h3 a');
-            titleEls.forEach(function(t) {
-              if (isFav) {
-                t.style.setProperty('color', '#FFB347', 'important');
-                t.style.setProperty('font-weight', 'bold', 'important');
-              } else {
-                t.style.setProperty('color', '#ffffff', 'important');
-                t.style.setProperty('font-weight', 'normal', 'important');
-              }
-            });
-          }
-
-          function updateCardFavoriteTitles() {
-            var $ = window.jQuery || window.$;
-            if (!$) return;
-
-            var cards = document.querySelectorAll('article, .content-list-item');
-            var uncheckedCards = [];
-            cards.forEach(function(card) {
-              var link = card.querySelector('a[href*="/contents/"]');
-              if (!link) return;
-
-              var href = link.href;
-              var match = href.match(/\/contents\/(\d+)/);
-              if (!match) return;
-
-              card.__tvContentId = match[1];
-
-              if (!card.__tvFavChecked) {
-                card.__tvFavChecked = true;
-                uncheckedCards.push(card);
-              }
-            });
-
-            var ids = [];
-            uncheckedCards.forEach(function(c) {
-              if (c.__tvContentId) ids.push(c.__tvContentId);
-            });
-
-            if (ids.length > 0 && $ && $.apiCall) {
-              $.apiCall({
-                url: '/user_api/favorites',
-                type: 'GET',
-                data: { ids: ids }
-              }).done(function(data) {
-                if (!data || !data.length) return;
-                data.forEach(function(item) {
-                  var targetCard = Array.from(cards).find(function(c) { return c.__tvContentId == item.target_id; });
-                  if (targetCard) {
-                    targetCard.__isFavorited = !!item.checked;
-                    applyCardTitleColor(targetCard, !!item.checked);
-                  }
-                });
-              }).fail(function(){});
-            }
-          }
-
           function toggleCardFavorite(card) {
             var $ = window.jQuery || window.$;
-            var contentId = card.__tvContentId;
-            if (!contentId) return;
+            var link = card.querySelector('a[href*="/contents/"]');
+            if (!link) return;
 
+            var href = link.href;
+            var match = href.match(/\/contents\/(\d+)/);
+            if (!match) return;
+
+            var contentId = match[1];
             var isFav = !card.__isFavorited;
             card.__isFavorited = isFav;
-
-            applyCardTitleColor(card, isFav);
 
             if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
               window.AndroidHost.logDebug(isFav ? '♥ Added to Favorites!' : 'Removed from Favorites');
@@ -1475,8 +1420,6 @@ class MainActivity : Activity() {
           }
 
           window.__tvToggleCardFavorite = toggleCardFavorite;
-
-          setInterval(updateCardFavoriteTitles, 2000);
         })();
     """.trimIndent()
 
@@ -1553,12 +1496,8 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
                 KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
                     webView.evaluateJavascript(
-                        "(function(){ var active=document.activeElement; if(active){ var card=active.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite) { window.__tvToggleCardFavorite(card); return true; } } return false; })()",
-                        { res ->
-                            if (res == "false" || res == "null") {
-                                setCursorMode(!cursorMode)
-                            }
-                        }
+                        "(function(){ var active=document.activeElement; if(active){ var card=active.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite) { window.__tvToggleCardFavorite(card); } } })()",
+                        null
                     )
                     return true
                 }
