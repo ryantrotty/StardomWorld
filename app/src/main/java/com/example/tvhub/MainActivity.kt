@@ -48,6 +48,16 @@ import android.widget.Toast
  */
 class MainActivity : Activity() {
 
+    private fun getSavedLanguage(): String {
+        val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
+        return prefs.getString("user_lang", "en") ?: "en"
+    }
+
+    private fun saveLanguage(lang: String) {
+        val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
+        prefs.edit().putString("user_lang", lang).apply()
+    }
+
     companion object {
         private const val START_URL = "https://www.stardom-world.com/"
 
@@ -237,6 +247,27 @@ class MainActivity : Activity() {
             background-color: #111111 !important;
             color: #ffffff !important;
             padding: 10px !important;
+        }
+        #tv-lang-toggle-btn {
+            height: 44px !important;
+            min-width: 68px !important;
+            background-color: #1a1a1a !important;
+            color: #FFB347 !important;
+            border: 1px solid #333333 !important;
+            border-radius: 4px !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            padding: 0 12px !important;
+            margin-left: 8px !important;
+            outline: none !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            box-sizing: border-box !important;
+            vertical-align: middle !important;
+        }
+        #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
+            background-color: #2a2a2a !important;
+            border-color: #FFB347 !important;
         }
         .box-sort {
             background: #000000 !important;
@@ -623,6 +654,7 @@ class MainActivity : Activity() {
     private fun injectCustomTvStyles(view: WebView) {
         val logoUri = getResourceBase64(R.drawable.header_logo)
         val encodedCss = java.net.URLEncoder.encode(TV_RAW_CSS, "UTF-8").replace("+", "%20")
+        val activeLang = getSavedLanguage()
 
         val js = """
             (function(){
@@ -706,6 +738,21 @@ class MainActivity : Activity() {
 
                         flexWrapper.appendChild(select);
                       }
+
+                      var currentLang = '$activeLang';
+                      var langBtn = document.getElementById('tv-lang-toggle-btn');
+                      if (!langBtn) {
+                        langBtn = document.createElement('button');
+                        langBtn.id = 'tv-lang-toggle-btn';
+                        flexWrapper.appendChild(langBtn);
+                      }
+                      langBtn.textContent = (currentLang === 'ja') ? 'EN' : '日本語';
+                      langBtn.onclick = function() {
+                        var nextLang = (currentLang === 'ja') ? 'en' : 'ja';
+                        if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') {
+                          window.AndroidHost.toggleLanguage(nextLang);
+                        }
+                      };
                     }
 
                     // Auto-play video (HTML5 video & Vimeo iframe)
@@ -901,15 +948,13 @@ class MainActivity : Activity() {
             (resources.displayMetrics.widthPixels * 100f / (LAYOUT_WIDTH * density) + 0.5f).toInt()
         )
 
+        val initLang = getSavedLanguage()
+        val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true)
-            // Ask the site's Google translate widget for Japanese -> English.
-            setCookie("https://www.stardom-world.com", "googtrans=/ja/en; Path=/")
-            setCookie(
-                "https://www.stardom-world.com",
-                "googtrans=/ja/en; Domain=.stardom-world.com; Path=/"
-            )
+            setCookie("https://www.stardom-world.com", "googtrans=" + initGoogtrans + "; Path=/")
+            setCookie("https://www.stardom-world.com", "googtrans=" + initGoogtrans + "; Domain=.stardom-world.com; Path=/")
             flush()
         }
 
@@ -1036,6 +1081,20 @@ class MainActivity : Activity() {
         fun onPageFullyLoaded() {
             handler.post {
                 dismissSplash()
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun toggleLanguage(targetLang: String) {
+            handler.post {
+                saveLanguage(targetLang)
+                val googtransVal = if (targetLang == "ja") "/ja/ja" else "/ja/en"
+                CookieManager.getInstance().apply {
+                    setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Path=/")
+                    setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Domain=.stardom-world.com; Path=/")
+                    flush()
+                }
+                webView.reload()
             }
         }
     }
