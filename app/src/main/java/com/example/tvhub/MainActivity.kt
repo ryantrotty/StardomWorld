@@ -374,9 +374,7 @@ class MainActivity : Activity() {
     private var splashDone = false
     private var splashDismissScheduled = false
 
-        private var isLongPressTriggered = false
-    private var longPressRunnable: Runnable? = null
-    private var customView: View? = null
+        private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
 
     // Bright ring around whatever the remote has selected (used when cursor mode is off).
@@ -1386,12 +1384,25 @@ class MainActivity : Activity() {
     """.trimIndent()
 
 
-    private val cardFavoriteLongPressJs = """
+    private val cardFavoriteToggleJs = """
         (function(){
           if (window.__tvCardFavoriteAttached) return;
           window.__tvCardFavoriteAttached = true;
 
-          function updateCardFavoriteBadges() {
+          function applyCardTitleColor(card, isFav) {
+            var titleEls = card.querySelectorAll('h3, .ttl-xs, .content-info-box a, .content-info-box h3, h3 a');
+            titleEls.forEach(function(t) {
+              if (isFav) {
+                t.style.setProperty('color', '#FFB347', 'important');
+                t.style.setProperty('font-weight', 'bold', 'important');
+              } else {
+                t.style.setProperty('color', '#ffffff', 'important');
+                t.style.setProperty('font-weight', 'normal', 'important');
+              }
+            });
+          }
+
+          function updateCardFavoriteTitles() {
             var $ = window.jQuery || window.$;
             if (!$) return;
 
@@ -1405,18 +1416,7 @@ class MainActivity : Activity() {
               var match = href.match(/\/contents\/(\d+)/);
               if (!match) return;
 
-              var contentId = match[1];
-              card.__tvContentId = contentId;
-
-              var thumbBox = card.querySelector('.content-thumbnail-box') || card.querySelector('.content-thumbnail');
-              if (thumbBox && !thumbBox.querySelector('.tv-fav-badge')) {
-                var badge = document.createElement('span');
-                badge.className = 'tv-fav-badge notranslate';
-                badge.setAttribute('translate', 'no');
-                badge.innerHTML = '♥';
-                badge.style.cssText = 'position:absolute; top:6px; right:6px; font-size:18px; color:#FFB347; display:none; z-index:10; text-shadow:0 2px 6px rgba(0,0,0,0.9); pointer-events:none;';
-                thumbBox.appendChild(badge);
-              }
+              card.__tvContentId = match[1];
 
               if (!card.__tvFavChecked) {
                 card.__tvFavChecked = true;
@@ -1440,10 +1440,7 @@ class MainActivity : Activity() {
                   var targetCard = Array.from(cards).find(function(c) { return c.__tvContentId == item.target_id; });
                   if (targetCard) {
                     targetCard.__isFavorited = !!item.checked;
-                    var b = targetCard.querySelector('.tv-fav-badge');
-                    if (b) {
-                      b.style.display = item.checked ? 'block' : 'none';
-                    }
+                    applyCardTitleColor(targetCard, !!item.checked);
                   }
                 });
               }).fail(function(){});
@@ -1451,7 +1448,6 @@ class MainActivity : Activity() {
           }
 
           function toggleCardFavorite(card) {
-          window.__tvToggleCardFavorite = toggleCardFavorite;
             var $ = window.jQuery || window.$;
             var contentId = card.__tvContentId;
             if (!contentId) return;
@@ -1459,10 +1455,7 @@ class MainActivity : Activity() {
             var isFav = !card.__isFavorited;
             card.__isFavorited = isFav;
 
-            var badge = card.querySelector('.tv-fav-badge');
-            if (badge) {
-              badge.style.display = isFav ? 'block' : 'none';
-            }
+            applyCardTitleColor(card, isFav);
 
             if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
               window.AndroidHost.logDebug(isFav ? '♥ Added to Favorites!' : 'Removed from Favorites');
@@ -1481,53 +1474,11 @@ class MainActivity : Activity() {
             }
           }
 
-          var longPressTimer = null;
-          var longPressTriggered = false;
+          window.__tvToggleCardFavorite = toggleCardFavorite;
 
-          document.addEventListener('keydown', function(e) {
-            if (e.keyCode === 13 || e.keyCode === 32 || e.key === 'Enter') {
-              var active = document.activeElement;
-              if (!active) return;
-
-              var card = active.closest('article, .content-list-item');
-              if (!card) return;
-
-              if (!longPressTimer && !longPressTriggered) {
-                longPressTimer = setTimeout(function() {
-                  longPressTriggered = true;
-                  toggleCardFavorite(card);
-                }, 600);
-              }
-            }
-          }, true);
-
-          document.addEventListener('keyup', function(e) {
-            if (e.keyCode === 13 || e.keyCode === 32 || e.key === 'Enter') {
-              if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-              }
-              if (longPressTriggered) {
-                e.preventDefault();
-                e.stopPropagation();
-                setTimeout(function() { longPressTriggered = false; }, 300);
-              }
-            }
-          }, true);
-
-          document.addEventListener('click', function(e) {
-            if (longPressTriggered) {
-              e.preventDefault();
-              e.stopPropagation();
-              e.stopImmediatePropagation();
-              return false;
-            }
-          }, true);
-
-          setInterval(updateCardFavoriteBadges, 2000);
+          setInterval(updateCardFavoriteTitles, 2000);
         })();
     """.trimIndent()
-
 
     private fun injectPageScripts(view: WebView) {
         view.evaluateJavascript(viewportJs(), null)
@@ -1538,7 +1489,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
-        view.evaluateJavascript(cardFavoriteLongPressJs, null)
+        view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
@@ -1599,8 +1550,16 @@ class MainActivity : Activity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
-                KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW -> {
-                    setCursorMode(!cursorMode)
+                KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
+                KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
+                    webView.evaluateJavascript(
+                        "(function(){ var active=document.activeElement; if(active){ var card=active.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite) { window.__tvToggleCardFavorite(card); return true; } } return false; })()",
+                        { res ->
+                            if (res == "false" || res == "null") {
+                                setCursorMode(!cursorMode)
+                            }
+                        }
+                    )
                     return true
                 }
 
@@ -1613,32 +1572,6 @@ class MainActivity : Activity() {
                         webView.goBack()
                         return true
                     }
-                }
-            }
-
-            if (!cursorMode && (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)) {
-                if (event.repeatCount == 0) {
-                    isLongPressTriggered = false
-                    longPressRunnable?.let { handler.removeCallbacks(it) }
-                    longPressRunnable = Runnable {
-                        isLongPressTriggered = true
-                        webView.evaluateJavascript(
-                            "(function(){ var active=document.activeElement; if(active){ var card=active.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite) window.__tvToggleCardFavorite(card); } })()",
-                            null
-                        )
-                    }
-                    handler.postDelayed(longPressRunnable!!, 600L)
-                }
-            }
-        } else if (event.action == KeyEvent.ACTION_UP) {
-            if (!cursorMode && (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)) {
-                longPressRunnable?.let {
-                    handler.removeCallbacks(it)
-                    longPressRunnable = null
-                }
-                if (isLongPressTriggered) {
-                    isLongPressTriggered = false
-                    return true
                 }
             }
         }
