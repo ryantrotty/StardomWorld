@@ -1051,6 +1051,7 @@ class MainActivity : Activity() {
                 customView = view
                 customCallback = callback
                 webView.visibility = View.GONE
+                Toast.makeText(this@MainActivity, "TV LOG: Entering Fullscreen!", Toast.LENGTH_SHORT).show()
                 view.alpha = 0f
                 root.addView(
                     view,
@@ -1130,6 +1131,13 @@ class MainActivity : Activity() {
                     flush()
                 }
                 webView.reload()
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun logDebug(msg: String) {
+            handler.post {
+                Toast.makeText(this@MainActivity, "TV LOG: " + msg, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -1261,18 +1269,21 @@ class MainActivity : Activity() {
           if (window.__tvAutoFullScreenAttached) return;
           window.__tvAutoFullScreenAttached = true;
 
+          function tvLog(msg) {
+            if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+              window.AndroidHost.logDebug(msg);
+            }
+          }
+
           var fsTimer = null;
 
           function scheduleFullScreenIn5Sec() {
             if (fsTimer) return;
+            tvLog("Playback detected! Scheduling fullscreen in 5s...");
             fsTimer = setTimeout(function() {
-              if (window.AndroidHost && typeof window.AndroidHost.requestFullScreen === 'function') {
-                window.AndroidHost.requestFullScreen();
-              } else {
-                var v = document.querySelector('video') || document.querySelector('iframe');
-                if (v && typeof v.webkitRequestFullscreen === 'function') {
-                  try { v.webkitRequestFullscreen(); } catch(e) {}
-                }
+              tvLog("5s passed! Triggering Fullscreen...");
+              if (window.AndroidHost && typeof window.AndroidHost.triggerFullScreen === 'function') {
+                window.AndroidHost.triggerFullScreen();
               }
             }, 5000);
           }
@@ -1282,8 +1293,6 @@ class MainActivity : Activity() {
             vList.forEach(function(v) {
               if (!v.__tvPlayListenerAttached) {
                 v.__tvPlayListenerAttached = true;
-                v.autoplay = true;
-                v.play().catch(function(){});
                 v.addEventListener('play', scheduleFullScreenIn5Sec);
                 v.addEventListener('playing', scheduleFullScreenIn5Sec);
               }
@@ -1292,10 +1301,13 @@ class MainActivity : Activity() {
               }
             });
 
-            var vimeoIframes = document.querySelectorAll('iframe[src*="vimeo.com"], iframe[src*="player"]');
+            var vimeoIframes = document.querySelectorAll('iframe[src*="vimeo.com"]');
             vimeoIframes.forEach(function(iframe) {
+              iframe.setAttribute('allow', 'autoplay; fullscreen');
+              iframe.setAttribute('allowfullscreen', 'true');
               if (!iframe.__tvInitSent && iframe.contentWindow) {
                 iframe.__tvInitSent = true;
+                tvLog("Vimeo iframe found & initialized!");
                 try {
                   iframe.contentWindow.postMessage('{"method":"addEventListener", "value":"play"}', '*');
                   iframe.contentWindow.postMessage('{"method":"play"}', '*');
