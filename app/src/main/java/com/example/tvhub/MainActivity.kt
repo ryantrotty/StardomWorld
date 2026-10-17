@@ -558,6 +558,8 @@ class MainActivity : Activity() {
                   speed: 300,
                   slidesToShow: 4,
                   slidesToScroll: 2,
+                  prevArrow: '<a class="custum-prevBtn btn-theme" href="#"><i class="fa fa-angle-left"></i></a>',
+                  nextArrow: '<a class="custum-nextBtn btn-theme" href="#"><i class="fa fa-angle-right"></i></a>',
                   responsive: [
                     { breakpoint: 1200, settings: { slidesToShow: 3, slidesToScroll: 2 } },
                     { breakpoint: 768, settings: { slidesToShow: 2, slidesToScroll: 1 } }
