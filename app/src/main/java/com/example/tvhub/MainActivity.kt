@@ -957,6 +957,8 @@ class MainActivity : Activity() {
                     if (!window.__tvHoverInspectorAttached) {
                       window.__tvHoverInspectorAttached = true;
                       document.addEventListener('mousemove', function(e) {
+                        window.__tvLastMouseX = e.clientX;
+                        window.__tvLastMouseY = e.clientY;
                         var hoverBox = document.getElementById('tv-debug-hover');
                         if (!hoverBox) return;
                         var el = document.elementFromPoint(e.clientX, e.clientY);
@@ -1655,10 +1657,8 @@ class MainActivity : Activity() {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
                 KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
-                    val cssX = cursorX / density
-                    val cssY = cursorY / density
                     webView.evaluateJavascript(
-                        "(function(){ var list = document.elementsFromPoint(" + cssX + ", " + cssY + ") || [document.activeElement]; if(window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(list); } return false; })()",
+                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y) || [document.activeElement]; if(window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(list); } return false; })()",
                         null
                     )
                     return true
