@@ -91,7 +91,8 @@ class MainActivity : Activity() {
             visibility: hidden !important;
             opacity: 0 !important;
         }
-        .detail-wrap, .box-contents-detail, .box-set-detail, .box-detail, .box-contents-info, .box-contents-head, div[class*="detail"], .btn-share, .box-share, .social-btn, .box-favorite, .btn-favorite, [class*="favorite"], [class*="share"], a[href*="previous"] {
+        /* Hide grey description text, purchase banners, and social buttons */
+        .movieMessage, .inner-sm, .fav-wrap, .box-set-detail, .box-contents-info, .box-contents-head, .btn-share, .box-share, .social-btn, .box-favorite, .btn-favorite, [class*="favorite"], [class*="share"], a[href*="previous"] {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
@@ -103,21 +104,15 @@ class MainActivity : Activity() {
         h1.ttl-lg, .box-content > h1 {
             display: none !important;
         }
-        /* Collapse empty in-between description wrappers */
-        .content-ttl-wrap, .detail-wrap {
-            margin: 0px !important;
-            padding: 0px !important;
-            min-height: 0px !important;
-        }
-        /* Ensure set titles and category headings (h2.ttl-md, .ttl-sub) remain fully visible */
-        .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-list, .box-contents-sub, .sub-category-ttl {
+        /* Ensure second thumbnail row (under 2026) and set title containers remain fully visible */
+        .detail-wrap, .box-contents-detail, .sub-category-list, .box-contents-sub, .sub-category-ttl, .box-related-content, .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             color: #ffffff !important;
             font-weight: bold !important;
-            margin-top: 2px !important;
-            margin-bottom: 4px !important;
+            height: auto !important;
+            min-height: unset !important;
         }
         footer, .box-footer {
             display: block !important;
