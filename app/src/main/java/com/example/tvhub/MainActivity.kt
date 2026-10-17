@@ -1007,16 +1007,16 @@ class MainActivity : Activity() {
                           continue;
                         }
 
-                        var link = el.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                                   el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
-                                   el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail, .content-thumbnail-box, .content-info-box')?.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+                        var link = el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
+                                   el.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
+                                   el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail, .content-thumbnail-box, .content-info-box, .box-content')?.querySelector('a[href*="/contents/"], a[href*="/set/"]');
 
-                        if (link && link.href) {
-                          var match = link.href.match(/\/(?:contents|set)\/(\d+)/);
+                        if (link) {
+                          var rawHref = link.getAttribute('href') || link.href || '';
+                          var match = rawHref.match(/(?:contents|set)\/(\d+)/);
                           if (match && match[1]) {
                             targetContentId = match[1];
-                            matchedHref = link.href;
-                            isSetUrl = link.href.indexOf('/set/') !== -1;
+                            matchedHref = rawHref;
                             targetCard = el.closest('article, .content-list-item, .tile-inner, .slick-slide') || el;
                             break;
                           }
@@ -1039,7 +1039,7 @@ class MainActivity : Activity() {
                       }
 
                       if ($ && $.apiCall) {
-                        var endpointUrl = isSetUrl ? '/user_api/set/' + targetContentId + '/favorites' : '/user_api/contents/' + targetContentId + '/favorites';
+                        var endpointUrl = '/user_api/contents/' + targetContentId + '/favorites';
                         logToScreen('API: Sending ' + apiType + ' ' + endpointUrl, '#FFFF00');
 
                         $.apiCall({
@@ -1052,16 +1052,8 @@ class MainActivity : Activity() {
                           }
                         }).fail(function(jqXHR) {
                           logToScreen('API FAIL HTTP ' + jqXHR.status + ': ' + (jqXHR.responseText || ''), '#FF4444');
-                          if (isSetUrl) {
-                            logToScreen('Retrying with /user_api/contents/ fallback...', '#FFBB00');
-                            $.apiCall({
-                              url: '/user_api/contents/' + targetContentId + '/favorites',
-                              type: apiType
-                            }).done(function() {
-                              logToScreen('FALLBACK SUCCESS 200 OK!', '#00FF66');
-                            }).fail(function(err) {
-                              logToScreen('FALLBACK FAIL HTTP ' + err.status, '#FF4444');
-                            });
+                          if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                            window.AndroidHost.logDebug('Please log in on Stardom World to sync favorites');
                           }
                         });
                       } else {
