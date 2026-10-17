@@ -1,6 +1,5 @@
 package com.example.tvhub
 
-import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
@@ -73,7 +72,197 @@ class MainActivity : Activity() {
         private const val APP_VERSION = "v1.0.5"
         private const val SPLASH_MAX_MS = 3000L
 
-        private const val TV_CSS_B64 = "aHRtbCwgYm9keSwgI3BhZ2UtY29udGVudHMtc2VhcmNoLCAjcGFnZS1jb250ZW50cy1pbmRleCwgI21haW4tY29udGVudHMsIG1haW4sIC53cmFwcGVyLCBoZWFkZXIsIC5ib3gtaGVhZGVyLCAuaGVhZGVyLCBuYXYsIC5uYXYtaW5uZXIsIC5nbG9iYWwtbmF2LCAuY29udGVudC1saXN0LCAuY29udGVudC1pbmZvLWJveCwgLm1vZGFsLWNvbnRlbnQsIC5iZy1kYXJrLCAuYmctbGlnaHQsIC5ib3gtc2VjdGlvbiwgLmNvbnQtc29ydCwgLmJveC1zZWFyY2gsIHNlY3Rpb24sIC5jb250YWluZXIsIC5jb250YWluZXItZmx1aWQsIC5jb2wtMTIsIC5yb3csIC50aWxlLWlubmVyLCAubC13cmFwLW1kLCAudHRsLXdyYXAsIC5zbGljay1zbGlkZXIsIC5zbGljay1saXN0LCAuc2xpY2stdHJhY2ssIC5zbGljay1zbGlkZSB7CiAgICBiYWNrZ3JvdW5kOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBjb2xvcjogI2ZmZmZmZiAhaW1wb3J0YW50OwogICAgYm94LXNoYWRvdzogbm9uZSAhaW1wb3J0YW50OwogICAgYm9yZGVyOiBub25lICFpbXBvcnRhbnQ7Cn0KLmNvbnRlbnQtdGh1bWJuYWlsLWJveC1pbm5lciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50Owp9CmhlYWRlciwgLmJveC1oZWFkZXIsIG5hdiwgLm5hdi1pbm5lciwgaGVhZGVyOjphZnRlciwgLmJveC1oZWFkZXI6OmFmdGVyLCAubmF2LWlubmVyOjphZnRlciwgaHIsIC5ib3JkZXItYm90dG9tIHsKICAgIGJvcmRlcjogbm9uZSAhaW1wb3J0YW50OwogICAgYm9yZGVyLWJvdHRvbTogbm9uZSAhaW1wb3J0YW50OwogICAgYm94LXNoYWRvdzogbm9uZSAhaW1wb3J0YW50Owp9Ci5jb250ZW50LXN0YXR1cy1ib3gsIC50YWcsIC50YWcucHJlbWl1bSwgLmNvbnRlbnQtc3RhdHVzLWJveCBzcGFuLCBbY2xhc3MqPSJ0YWciXSwgBbY2xhc3MqPSJwcmVtaXVtIl0sIC5uZXdzLXdyYXAsIHNlY3Rpb24ubmV3cy13cmFwLCAudGlsZS1pbm5lci5uZXdzLXdyYXAsIFtjbGFzcyo9Im5ld3Mtd3JhcCJdLCBuYXYuYm94LWJyZWFkQ3J1bWIsIC5ib3gtYnJlYWRDcnVtYiwgLmxpc3QtYnJlYWRDcnVtYiwgW2NsYXNzKj0iYnJlYWRDcnVtYiJdLCBbY2xhc3MqPSJicmVhZGNydW1iIiBpXSwgLnRvcGljLXBhdGgsIG9sLmJyZWFkY3J1bWIsIHVsLmJyZWFkY3J1bWIsIC53c3dnLXdyYXAsIC5pbm5lci1zbSBwLCBwLnR4dC1nciwgLmJveC1zZXQtaW5mbyBwLCAuc2V0LWluZm8tdGV4dCwgLmxpc3QtYnRuLCBmb290ZXIgbmF2LCBmb290ZXIgLmNvbnRhaW5lciwgLmNvbnRlbnQtbG9nbywgLmNvbnRlbnQtc3RhdHVzLWJveCBoZWFkZXIsIC5ib3gtY29weXJpZ2h0LCBmb290ZXIgdWwsICN0b1RvcEJ0biwgLlRvcEJ0biwgYS5Ub3BCdG4gewogICAgZGlzcGxheTogbm9uZSAhaW1wb3J0YW50OwogICAgdmlzaWJpbGl0eTogaGlkZGVuICFpbXBvcnRhbnQ7CiAgICBvcGFjaXR5OiAwICFpbXBvcnRhbnQ7Cn0KLmRldGFpbC13cmFwLCAuYm94LWNvbnRlbnRzLWRldGFpbCwgLmJveC1zZXQtZGV0YWlsLCAuYm94LWRldGFpbCwgLmJveC1jb250ZW50cy1pbmZvLCAuYm94LWNvbnRlbnRzLWhlYWQsIGRpdltjbGFzcyo9ImRldGFpbCJdLCAuYnRuLXNoYXJlLCAuYm94LXNoYXJlLCAuc29jaWFsLWJ0biwgLmJveC1mYXZvcml0ZSwgLmJ0bi1mYXZvcml0ZSwgW2NsYXNzKj0iZmF2b3JpdGUiXSwgW2NsYXNzKj0ic2hhcmUiXSwgYVtocmVmKj0icHJldmlvdXMiXSB7CiAgICBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7CiAgICB2aXNpYmlsaXR5OiBoaWRkZW4gIWltcG9ydGFudDsKICAgIGhlaWdodDogMCAhaW1wb3J0YW50OwogICAgbWluLWhlaWdodDogMCAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAwICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nOiAwICFpbXBvcnRhbnQ7Cn0KZm9vdGVyLCAuYm94LWZvb3RlciB7CiAgICBkaXNwbGF5OiBibG9jayAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZDogIzAwMDAwMCAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZC1jb2xvcjogIzAwMDAwMCAhaW1wb3J0YW50OwogICAgcGFkZGluZzogMjBweCAwIDQwcHggMCAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAwICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IG5vbmUgIWltcG9ydGFudDsKICAgIHRleHQtYWxpZ246IGNlbnRlciAhaW1wb3J0YW50Owp9Ci5zbGljay1uZXh0LCAuc2xpY2stcHJldiwgLnNsaWNrLWFycm93IHsKICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50ICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50OwogICAgYm9yZGVyOiBub25lICFpbXBvcnRhbnQ7Cn0KLnNsaWNrLW5leHQ6OmJlZm9yZSwgLnNsaWNrLXByZXY6OmJlZm9yZSB7CiAgICBjb2xvcjogI2ZmZmZmZiAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZDogdHJhbnNwYXJlbnQgIWltcG9ydGFudDsKfQouY29udGVudC1pbmZvLWJveCwgLmpzLXRpbGVmaXggewogICAgaGVpZ2h0OiBhdXRvICFpbXBvcnRhbnQ7CiAgICBtaW4taGVpZ2h0OiA2NHB4ICFpbXBvcnRhbnQ7CiAgICBvdmVyZmxvdzogdmlzaWJsZSAhaW1wb3J0YW50Owp9Ci5jb250ZW50LWluZm8tYm94IC50dGwteHMsIC50dGwteHMuZWxsaXBzaXMsIGgzLnR0bC14cywgLmNvbnRlbnQtaW5mby1ib3ggaDMsIC5jb250ZW50LWluZm8tYm94IGgzIGEsIC5jb250ZW50LWluZm8tYm94IGZvbnQgewogICAgd2hpdGUtc3BhY2U6IG5vcm1hbCAhaW1wb3J0YW50OwogICAgZGlzcGxheTogLXdlYmtpdC1ib3ggIWltcG9ydGFudDsKICAgIC13ZWJraXQtbGluZS1jbGFtcDogMyAhaW1wb3J0YW50OwogICAgLXdlYmtpdC1saW5lLWNsYW1wOiB2ZXJ0aWNhbCAhaW1wb3J0YW50OwogICAgb3ZlcmZsb3c6IGhpZGRlbiAhaW1wb3J0YW50OwogICAgdGV4dC1vdmVyZmxvdzogZWxsaXBzaXMgIWltcG9ydGFudDsKICAgIGhlaWdodDogYXV0byAhaW1wb3J0YW50OwogICAgbWluLWhlaWdodDogNC40ZW0gIWltcG9ydGFudDsKICAgIG1heC1oZWlnaHQ6IDQuOGVtICFpbXBvcnRhbnQ7CiAgICBsaW5lLWhlaWdodDogMS40NWVtICFpbXBvcnRhbnQ7CiAgICBmb250LXNpemU6IDE1cHggIWltcG9ydGFudDsKICAgIGNvbG9yOiAjZmZmZmZmICFpbXBvcnRhbnQ7CiAgICBtYXJnaW4tYm90dG9tOiA2cHggIWltcG9ydGFudDsKICAgIHBhZGRpbmctYm90dG9tOiAycHggIWltcG9ydGFudDsKfQouY29udGVudC1saXN0LWl0ZW0sIC5jb250ZW50LWxpc3QgPiBkaXYsIGFydGljbGUgewogICAgbWFyZ2luLWJvdHRvbTogMTJweCAhaW1wb3J0YW50OwogICAgcGFkZGluZy1ib3R0b206IDJweCAhaW1wb3J0YW50Owp9CiN0di1oZWFkZXItZmxleC13cmFwcGVyIHsKICAgIGRpc3BsYXk6IGZsZXggIWltcG9ydGFudDsKICAgIGZsZXgtZGlyZWN0aW9uOiByb3cgIWltcG9ydGFudDsKICAgIGFsaWduLWl0ZW1zOiBjZW50ZXIgIWltcG9ydGFudDsKICAgIGp1c3RpZnktY29udGVudDogY2VudGVyICFpbXBvcnRhbnQ7CiAgICBnYXA6IDE2cHggIWltcG9ydGFudDsKICAgIG1hcmdpbjogMCBhdXRvICFpbXBvcnRhbnQ7CiAgICBoZWlnaHQ6IDQ0cHggIWltcG9ydGFudDsKfQpmb3JtLmZvcm0taW5saW5lLCAuYm94LXNlYXJjaCBmb3JtLCAuYm94LXNlYXJjaCAuaW5wdXQtZ3JvdXAsIC5pbnB1dC1ncm91cC5mbGV4LW5vd3JhcCB7CiAgICB3aWR0aDogMzIwcHggIWltcG9ydGFudDsKICAgIG1heC13aWR0aDogMzIwcHggIWltcG9ydGFudDsKICAgIGhlaWdodDogNDRweCAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAwICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50OwogICAgZGlzcGxheTogZmxleCAhaW1wb3J0YW50OwogICAgYWxpZ24taXRlbXM6IGNlbnRlciAhaW1wb3J0YW50Owp9CmZvcm0uZm9ybS1pbmxpbmUgaW5wdXQuZm9ybS1jb250cm9sLCBmb3JtLmZvcm0taW5saW5lIGlucHV0W3R5cGU9InRleHQiXSwgaW5wdXRbbmFtZT0icVtrZXl3b3JkXSJdIHsKICAgIGhlaWdodDogNDRweCAhaW1wb3J0YW50OwogICAgZm9udC1zaXplOiAxNXB4ICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nLWxlZnQ6IDE0cHggIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxYTFhMWEgIWltcG9ydGFudDsKICAgIGNvbG9yOiAjZmZmZmZmICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMzMzMzMzICFpbXBvcnRhbnQ7CiAgICBib3JkZXItcmFkaXVzOiA0cHggMCAwIDRweCAhaW1wb3J0YW50OwogICAgYm94LXNpemluZzogYm9yZGVyLWJveCAhaW1wb3J0YW50Owp9CmZvcm0uZm9ybS1pbmxpbmUgaW5wdXRbdHlwZT0ic3VibWl0Il0sIC5pbnB1dC1ncm91cCBpbnB1dFt0eXBlPSJzdWJtaXQiXSwgZm9ybVthY3Rpb24qPSJzZWFyY2giXSBpbnB1dFt0eXBlPSJzdWJtaXQiXSwgLmlucHV0LWdyb3VwLWJ0biwgLmlucHV0LWdyb3VwLWFwcGVuZCB7CiAgICBoZWlnaHQ6IDQ0cHggIWltcG9ydGFudDsKICAgIG1pbi13aWR0aDogNDhweCAhaW1wb3J0YW50OwogICAgZm9udC1zaXplOiAxNnB4ICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmEyYTJhICFpbXBvcnRhbnQ7CiAgICBjb2xvcjogI2ZmZmZmZiAhaW1wb3J0YW50OwogICAgYm9yZGVyOiAxcHggc29saWQgIzMzMzMzMyAhaW1wb3J0YW50OwogICAgYm9yZGVyLWxlZnQ6IG5vbmUgIWltcG9ydGFudDsKICAgIGJvcmRlci1yYWRpdXM6IDAgNHB4IDRweCAwICFpbXBvcnRhbnQ7CiAgICBib3gtc2l6aW5nOiBib3JkZXItYm94ICFpbXBvcnRhbnQ7Cn0KLmdsb2JhbC1uYXYtbGlzdC5nbG9iYWwtbmF2IHsKICAgIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDsKfQojdHYtc2VjdGlvbi1zZWxlY3QgewogICAgd2lkdGg6IDMyMHB4ICFpbXBvcnRhbnQ7CiAgICBtYXgtd2lkdGg6IDMyMHB4ICFpbXBvcnRhbnQ7CiAgICBoZWlnaHQ6IDQ0cHggIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxYTFhMWEgIWltcG9ydGFudDsKICAgIGNvbG9yOiAjZmZmZmZmICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMzMzMzMzICFpbXBvcnRhbnQ7CiAgICBib3JkZXItcmFkaXVzOiA0cHggIWltcG9ydGFudDsKICAgIGZvbnQtc2l6ZTogMTVweCAhaW1wb3J0YW50OwogICAgZm9udC13ZWlnaHQ6IDUwMCAhaW1wb3J0YW50OwogICAgcGFkZGluZzogMCAxNHB4ICFpbXBvcnRhbnQ7CiAgICBtYXJnaW46IDAgIWltcG9ydGFudDsKICAgIG91dGxpbmU6IG5vbmUgIWltcG9ydGFudDsKICAgIGN1cnNvcjogcG9pbnRlciAhaW1wb3J0YW50OwogICAgZGlzcGxheTogaW5saW5lLWJsb2NrICFpbXBvcnRhbnQ7CiAgICBib3gtc2l6aW5nOiBib3JkZXItYm94ICFpbXBvcnRhbnQ7CiAgICB2ZXJ0aWNhbC1hbGlnbjogbWlkZGxlICFpbXBvcnRhbnQ7Cn0KI3R2LXNlY3Rpb24tc2VsZWN0IG9wdGlvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTExMTExICFpbXBvcnRhbnQ7CiAgICBjb2xvcjogI2ZmZmZmZiAhaW1wb3J0YW50OwogICAgcGFkZGluZzogMTBweCAhaW1wb3J0YW50Owp9Ci5ib3gtc29ydCB7CiAgICBiYWNrZ3JvdW5kOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMDAwMDAwICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nOiAxMnB4IDAgIWltcG9ydGFudDsKICAgIG1hcmdpbjogMTBweCAwIDE1cHggMCAhaW1wb3J0YW50OwogICAgdGV4dC1hbGlnbjogY2VudGVyICFpbXBvcnRhbnQ7CiAgICBkaXNwbGF5OiBibG9jayAhaW1wb3J0YW50OwogICAgYm9yZGVyOiBub25lICFpbXBvcnRhbnQ7Cn0KLmJveC1zb3J0ICogewogICAgYmFja2dyb3VuZDogdHJhbnNwYXJlbnQgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQtY29sb3I6IHRyYW5zcGFyZW50ICFpbXBvcnRhbnQ7CiAgICBib3JkZXI6IG5vbmUgIWltcG9ydGFudDsKICAgIG91dGxpbmU6IG5vbmUgIWltcG9ydGFudDsKICAgIGJveC1zaGFkb3c6IG5vbmUgIWltcG9ydGFudDsKICAgIG1hcmdpbjogMCAhaW1wb3J0YW50OwogICAgcGFkZGluZzogMCAhaW1wb3J0YW50Owp9Ci5ib3gtc29ydCA+IGEsIC5ib3gtc29ydCBhLmJ0biB7CiAgICBmb250LXNpemU6IDE3cHggIWltcG9ydGFudDsKICAgIGZvbnQtd2VpZ2h0OiA1MDAgIWltcG9ydGFudDsKICAgIGNvbG9yOiAjYmJiYmJiICFpbXBvcnRhbnQ7CiAgICBwYWRkaW5nOiA2cHggMTRweCAhaW1wb3J0YW50OwogICAgbWFyZ2luOiAwIDhweCAhaW1wb3J0YW50OwogICAgZGlzcGxheTogaW5saW5lLWJsb2NrICFpbXBvcnRhbnQ7CiAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudCAhaW1wb3J0YW50OwogICAgYmFja2dyb3VuZC1jb2xvcjogdHJhbnNwYXJlbnQgIWltcG9ydGFudDsKICAgIGJvcmRlcjogbm9uZSAhaW1wb3J0YW50OwogICAgdGV4dC1kZWNvcmF0aW9uOiBub25lICFpbXBvcnRhbnQ7CiAgICBjdXJzb3I6IHBvaW50ZXIgIWltcG9ydGFudDsKfQouYm94LXNvcnQgPiBhLmFjdGl2ZSwgLmJveC1zb3J0IGEuYnRuLmFjdGl2ZSB7CiAgICBjb2xvcjogI0ZGQjM0NyAhaW1wb3J0YW50OwogICAgZm9udC13ZWlnaHQ6IDcwMCAhaW1wb3J0YW50OwogICAgYm9yZGVyLWJvdHRvbTogMnB4IHNvbGlkICNGRkIzNDcgIWltcG9ydGFudDsKICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50ICFpbXBvcnRhbnQ7Cn0KLmJveC1zb3J0IGEgaSwgLmJveC1zb3J0IGEgZm9udCwgLmJveC1zb3J0IGEgc3BhbiB7CiAgICBjb2xvcjogaW5oZXJpdCAhaW1wb3J0YW50OwogICAgZm9udC1zaXplOiBpbmhlcml0ICFpbXBvcnRhbnQ7CiAgICBmb250LXdlaWdodDogaW5oZXJpdCAhaW1wb3J0YW50OwogICAgZGlzcGxheTogaW5saW5lICFpbXBvcnRhbnQ7Cn0="
+            private val TV_RAW_CSS = """
+        html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
+            background: #000000 !important;
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        .content-thumbnail-box-inner {
+            background-color: transparent !important;
+        }
+        header, .box-header, nav, .nav-inner, header::after, .box-header::after, .nav-inner::after, hr, .border-bottom {
+            border: none !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
+        }
+        .content-status-box, .tag, .tag.premium, .content-status-box span, [class*="tag"], [class*="premium"], .news-wrap, section.news-wrap, .tile-inner.news-wrap, [class*="news-wrap"], nav.box-breadCrumb, .box-breadCrumb, .list-breadCrumb, [class*="breadCrumb"], [class*="breadcrumb" i], .topic-path, ol.breadcrumb, ul.breadcrumb, .wswg-wrap, .inner-sm p, p.txt-gr, .box-set-info p, .set-info-text, .list-btn, footer nav, footer .container, .footer-logo, .box-copyright, footer ul, #toTopBtn, .TopBtn, a.TopBtn {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        .detail-wrap, .box-contents-detail, .box-set-detail, .box-detail, .box-contents-info, .box-contents-head, div[class*="detail"], .btn-share, .box-share, .social-btn, .box-favorite, .btn-favorite, [class*="favorite"], [class*="share"], a[href*="previous"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .col-12.box-content h1, .col-12.box-content h2, .col-12.box-content h3, .col-12.box-content .box-contents-title, .box-content .ttl-contents, .box-content .ttl-main {
+            display: none !important;
+        }
+        .ttl-related, .related-title, .box-related-ttl, h2.ttl-related, h3.ttl-related, .ttl-sub, .box-ttl-sub, [class*="related"] h1, [class*="related"] h2, [class*="related"] h3, [class*="related"] h4 {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        footer, .box-footer {
+            display: block !important;
+            background: #000000 !important;
+            background-color: #000000 !important;
+            padding: 20px 0 40px 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            text-align: center !important;
+        }
+        .slick-next, .slick-prev, .slick-arrow {
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+        }
+        .slick-next::before, .slick-prev::before {
+            color: #ffffff !important;
+            background: transparent !important;
+        }
+        .content-info-box, .js-tilefix {
+            height: auto !important;
+            min-height: 64px !important;
+            overflow: visible !important;
+        }
+        .content-info-box .ttl-xs, .ttl-xs.ellipsis, h3.ttl-xs, .content-info-box h3, .content-info-box h3 a, .content-info-box font {
+            white-space: normal !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 3 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            height: auto !important;
+            min-height: 4.4em !important;
+            max-height: 4.8em !important;
+            line-height: 1.45em !important;
+            font-size: 15px !important;
+            color: #ffffff !important;
+            margin-bottom: 6px !important;
+            padding-bottom: 2px !important;
+        }
+        .content-list-item, .content-list > div, article {
+            margin-bottom: 12px !important;
+            padding-bottom: 2px !important;
+        }
+        #tv-header-flex-wrapper {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 16px !important;
+            margin: 0 auto !important;
+            height: 44px !important;
+        }
+        form.form-inline, .box-search form, .box-search .input-group, .input-group.flex-nowrap {
+            width: 320px !important;
+            max-width: 320px !important;
+            height: 44px !important;
+            margin: 0 !important;
+            background: transparent !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        form.form-inline input.form-control, form.form-inline input[type="text"], input[name="q[keyword]"] {
+            height: 44px !important;
+            font-size: 15px !important;
+            padding-left: 14px !important;
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
+            border-radius: 4px 0 0 4px !important;
+            box-sizing: border-box !important;
+        }
+        form.form-inline input[type="submit"], .input-group input[type="submit"], form[action*="search"] input[type="submit"], .input-group-btn, .input-group-append {
+            height: 44px !important;
+            min-width: 48px !important;
+            font-size: 16px !important;
+            background-color: #2a2a2a !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
+            border-left: none !important;
+            border-radius: 0 4px 4px 0 !important;
+            box-sizing: border-box !important;
+        }
+        .global-nav-list.global-nav {
+            display: none !important;
+        }
+        #tv-section-select {
+            width: 320px !important;
+            max-width: 320px !important;
+            height: 44px !important;
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
+            border-radius: 4px !important;
+            font-size: 15px !important;
+            font-weight: 500 !important;
+            padding: 0 14px !important;
+            margin: 0 !important;
+            outline: none !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            box-sizing: border-box !important;
+            vertical-align: middle !important;
+        }
+        #tv-section-select option {
+            background-color: #111111 !important;
+            color: #ffffff !important;
+            padding: 10px !important;
+        }
+        .box-sort {
+            background: #000000 !important;
+            background-color: #000000 !important;
+            padding: 12px 0 !important;
+            margin: 10px 0 15px 0 !important;
+            text-align: center !important;
+            display: block !important;
+            border: none !important;
+        }
+        .box-sort * {
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .box-sort > a, .box-sort a.btn {
+            font-size: 17px !important;
+            font-weight: 500 !important;
+            color: #bbbbbb !important;
+            padding: 6px 14px !important;
+            margin: 0 8px !important;
+            display: inline-block !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            text-decoration: none !important;
+            cursor: pointer !important;
+        }
+        .box-sort > a.active, .box-sort a.btn.active {
+            color: #FFB347 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #FFB347 !important;
+            background: transparent !important;
+        }
+        .box-sort a i, .box-sort a font, .box-sort a span {
+            color: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            display: inline !important;
+        }
+    """.trimIndent()
 
     }
 
@@ -84,7 +273,6 @@ class MainActivity : Activity() {
     private lateinit var splashLogo: ImageView
 
     private val handler = Handler(Looper.getMainLooper())
-    private var pulse: ObjectAnimator? = null
     private var density = 1f
 
     private var cursorMode = true
@@ -405,6 +593,7 @@ class MainActivity : Activity() {
 
     private fun injectCustomTvStyles(view: WebView) {
         val logoUri = getResourceBase64(R.drawable.header_logo)
+        val encodedCss = java.net.URLEncoder.encode(TV_RAW_CSS, "UTF-8").replace("+", "%20")
 
         val js = """
             (function(){
@@ -413,7 +602,7 @@ class MainActivity : Activity() {
                 if (!document.getElementById('tv-app-style')) {
                   var s = document.createElement('style');
                   s.id = 'tv-app-style';
-                  s.textContent = atob('$TV_CSS_B64');
+                  s.textContent = decodeURIComponent('$encodedCss');
                   (document.head || document.documentElement).appendChild(s);
                 }
                 if (!document.getElementById('tv-top-btn-style')) {
@@ -793,26 +982,11 @@ class MainActivity : Activity() {
         splashStartedAt = SystemClock.uptimeMillis()
         splashLogo.animate()
             .alpha(1f)
-            .setDuration(500)
+            .setDuration(400)
             .setInterpolator(DecelerateInterpolator())
             .start()
 
-        pulse = ObjectAnimator.ofFloat(splashLogo, "scaleX", 1f, 1.04f, 1f).apply {
-            duration = 1800
-            repeatCount = ObjectAnimator.INFINITE
-            repeatMode = ObjectAnimator.REVERSE
-            interpolator = AccelerateDecelerateInterpolator()
-            start()
-        }
-        ObjectAnimator.ofFloat(splashLogo, "scaleY", 1f, 1.04f, 1f).apply {
-            duration = 1800
-            repeatCount = ObjectAnimator.INFINITE
-            repeatMode = ObjectAnimator.REVERSE
-            interpolator = AccelerateDecelerateInterpolator()
-            start()
-        }
-
-        // Safety fallback: dismiss splash if page load takes longer than 3 seconds.
+        // Dismiss splash automatically if page load takes longer than 3 seconds.
         handler.postDelayed({ dismissSplash() }, SPLASH_MAX_MS)
     }
 
