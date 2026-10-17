@@ -695,10 +695,11 @@ class MainActivity : Activity() {
                       });
                     }
 
-                    // Search input placeholder
-                    var searchInputs = document.querySelectorAll('input[name="q[keyword]"], input[placeholder*="keyword"], input[placeholder*="キーワード"]');
+                    // Search input placeholder & language adaptation
+                    var isJa = ('$activeLang' === 'ja');
+                    var searchInputs = document.querySelectorAll('input[name="q[keyword]"], input[placeholder*="keyword"], input[placeholder*="キーワード"], input[placeholder*="SEARCH"], input[placeholder*="検索"]');
                     searchInputs.forEach(function(inp) {
-                      inp.setAttribute('placeholder', 'SEARCH');
+                      inp.setAttribute('placeholder', isJa ? '検索' : 'SEARCH');
                     });
 
                     // Header section dropdown
@@ -719,10 +720,11 @@ class MainActivity : Activity() {
                         select.id = 'tv-section-select';
 
                         var defaultOpt = document.createElement('option');
+                        defaultOpt.id = 'tv-section-default-opt';
                         defaultOpt.value = '';
                         defaultOpt.disabled = true;
                         defaultOpt.selected = true;
-                        defaultOpt.textContent = 'Select Category / Section...';
+                        defaultOpt.textContent = isJa ? 'カテゴリー・セクションを選択...' : 'Select Category / Section...';
                         select.appendChild(defaultOpt);
 
                         var links = globalNav.querySelectorAll('a');
