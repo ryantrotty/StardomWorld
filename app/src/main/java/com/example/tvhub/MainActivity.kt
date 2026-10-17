@@ -1429,11 +1429,12 @@ class MainActivity : Activity() {
             var $ = window.jQuery || window.$;
             if (!el) return false;
 
-            var card = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .box-content') || el;
-            var thumbBox = card.querySelector('.content-thumbnail-box, .content-thumbnail');
-            var link = (thumbBox ? thumbBox.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
-                       card.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                       card.closest('a[href*="/contents/"], a[href*="/set/"]');
+            // Strict image-thumbnail check
+            var thumbBox = el.closest('.content-thumbnail-box, .content-thumbnail');
+            if (!thumbBox) return false;
+
+            var link = thumbBox.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
+                       thumbBox.closest('a[href*="/contents/"], a[href*="/set/"]');
 
             if (!link && el.tagName === 'A') link = el;
             if (!link || !link.href) return false;
@@ -1451,7 +1452,8 @@ class MainActivity : Activity() {
             }
 
             if (isFavPage) {
-              card.style.setProperty('opacity', '0.3', 'important');
+              var parentCard = thumbBox.closest('article, .content-list-item, .tile-inner, .slick-slide') || thumbBox;
+              parentCard.style.setProperty('opacity', '0.3', 'important');
             }
 
             if ($ && $.apiCall) {
