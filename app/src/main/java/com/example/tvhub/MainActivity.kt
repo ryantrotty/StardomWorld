@@ -26,7 +26,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 
 /**
@@ -68,9 +67,8 @@ class MainActivity : Activity() {
         // per row but smaller text.
         private const val LAYOUT_WIDTH = 1440
 
-        private const val SPLASH_MIN_MS = 1100L
-        private const val APP_VERSION = "v1.0.5"
-        private const val SPLASH_MAX_MS = 3000L
+        private const val SPLASH_MIN_MS = 3100L
+        private const val SPLASH_MAX_MS = 5000L
 
             private val TV_RAW_CSS = """
         html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
@@ -830,23 +828,6 @@ class MainActivity : Activity() {
             adjustViewBounds = true
             alpha = 0f
         }
-        // Subtle build version display
-        val versionTextView = TextView(this).apply {
-            text = APP_VERSION
-            setTextColor(Color.parseColor("#888888"))
-            textSize = 12f
-            gravity = Gravity.CENTER
-        }
-        splashView.addView(
-            versionTextView,
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            ).apply {
-                bottomMargin = (24 * density).toInt()
-            }
-        )
 
         splashView.addView(
             splashLogo,
