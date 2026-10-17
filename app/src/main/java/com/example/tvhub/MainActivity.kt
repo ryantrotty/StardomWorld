@@ -124,15 +124,7 @@ class MainActivity : Activity() {
             border: none !important;
             text-align: center !important;
         }
-        .slick-next, .slick-prev, .slick-arrow {
-            background: transparent !important;
-            background-color: transparent !important;
-            border: none !important;
-        }
-        .slick-next::before, .slick-prev::before {
-            color: #ffffff !important;
-            background: transparent !important;
-        }
+
         .content-info-box, .js-tilefix {
             height: auto !important;
             min-height: 64px !important;
