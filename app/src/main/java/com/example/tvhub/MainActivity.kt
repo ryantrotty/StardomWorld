@@ -104,12 +104,23 @@ class MainActivity : Activity() {
         .col-12.box-content h1, .col-12.box-content h2, .col-12.box-content h3, .col-12.box-content .box-contents-title, .box-content .ttl-contents, .box-content .ttl-main {
             display: none !important;
         }
-        .ttl-related, .related-title, .box-related-ttl, h2.ttl-related, h3.ttl-related, .ttl-sub, .box-ttl-sub, [class*="related"] h1, [class*="related"] h2, [class*="related"] h3, [class*="related"] h4 {
+        /* Hide 'Related Videos' / '関連動画' text heading */
+        .ttl-related, .related-title, .box-related-ttl, h2.ttl-related, h3.ttl-related, [class*="related"] h1, [class*="related"] h2, [class*="related"] h3, [class*="related"] h4 {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
+        }
+        /* Retain row of text directly above video thumbnails (Set Title / Category heading) */
+        .ttl-sub, .box-ttl-sub, .sub-category-list, .box-contents-sub, .sub-category-ttl {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #ffffff !important;
+            font-weight: bold !important;
+            margin-top: 8px !important;
+            margin-bottom: 4px !important;
         }
         footer, .box-footer {
             display: block !important;
@@ -731,16 +742,19 @@ class MainActivity : Activity() {
                   } catch(e) {}
                 }
 
-                                    // Scoped content page gap tightening
+                    // Scoped content page gap tightening & Related Videos heading removal
                     if (window.location.pathname.indexOf('/contents/') !== -1) {
                       var playerEl = document.querySelector('.col-12.box-content, .box-content, .video-wrap');
                       if (playerEl) {
                         playerEl.style.setProperty('margin-bottom', '0px', 'important');
                         playerEl.style.setProperty('padding-bottom', '0px', 'important');
                       }
-                      var relHeadings = document.querySelectorAll('.ttl-related, .related-title, .box-related-ttl, h2.ttl-related, h3.ttl-related');
-                      relHeadings.forEach(function(el) {
-                        el.style.setProperty('display', 'none', 'important');
+                      var allH2s = document.querySelectorAll('h1, h2, h3, h4, .ttl-md, .ttl-related, .related-title, .box-related-ttl');
+                      allH2s.forEach(function(el) {
+                        var txt = (el.textContent || '').trim().toLowerCase();
+                        if (txt === 'related videos' || txt === '関連動画' || txt === '関連コンテンツ' || txt === 'related content' || el.classList.contains('ttl-related') || el.classList.contains('related-title')) {
+                          el.style.setProperty('display', 'none', 'important');
+                        }
                       });
                     }
                     applyDomCustomizations();
