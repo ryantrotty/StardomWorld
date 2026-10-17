@@ -827,6 +827,8 @@ class MainActivity : Activity() {
 
         webView = WebView(this)
         webView.setBackgroundColor(Color.BLACK)
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        webView.addJavascriptInterface(WebAppInterface(), "AndroidHost")
         root.addView(
             webView,
             ViewGroup.LayoutParams(
@@ -1029,6 +1031,56 @@ class MainActivity : Activity() {
 
     // ---------------------------------------------------------------- page scripts
 
+    inner class WebAppInterface {
+        @android.webkit.JavascriptInterface
+        fun onPageFullyLoaded() {
+            handler.post {
+                dismissSplash()
+            }
+        }
+    }
+
+    private val pageFullyLoadedJs = """
+        (function(){
+          if (window.__tvFullyLoadedNotified) return;
+
+          function checkFullyReady() {
+            if (window.__tvFullyLoadedNotified) return;
+
+            var isLoaded = document.readyState === 'complete';
+            var hasStyle = !!document.getElementById('tv-app-style');
+            var translateDone = true;
+
+            var sel = document.querySelector('select.goog-te-combo');
+            if (sel && sel.options.length > 1) {
+              translateDone = (sel.value === 'en');
+            }
+
+            if (isLoaded && hasStyle && translateDone) {
+              window.__tvFullyLoadedNotified = true;
+              if (window.AndroidHost && typeof window.AndroidHost.onPageFullyLoaded === 'function') {
+                window.AndroidHost.onPageFullyLoaded();
+              }
+            }
+          }
+
+          if (document.readyState === 'complete') {
+            checkFullyReady();
+          } else {
+            window.addEventListener('load', checkFullyReady);
+          }
+
+          var readyCheckTimer = setInterval(checkFullyReady, 250);
+          setTimeout(function() {
+            clearInterval(readyCheckTimer);
+            if (!window.__tvFullyLoadedNotified && window.AndroidHost) {
+              window.__tvFullyLoadedNotified = true;
+              window.AndroidHost.onPageFullyLoaded();
+            }
+          }, 6000);
+        })();
+    """.trimIndent()
+
     private fun injectPageScripts(view: WebView) {
         view.evaluateJavascript(viewportJs(), null)
         view.evaluateJavascript(hideTranslateJs, null)
@@ -1037,6 +1089,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
+        view.evaluateJavascript(pageFullyLoadedJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
     }
