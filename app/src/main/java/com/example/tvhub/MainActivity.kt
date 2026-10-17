@@ -1495,8 +1495,10 @@ class MainActivity : Activity() {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
                 KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
+                    val cssX = cursorX / density
+                    val cssY = cursorY / density
                     webView.evaluateJavascript(
-                        "(function(){ var active=document.activeElement; if(active){ var card=active.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite) { window.__tvToggleCardFavorite(card); } } })()",
+                        "(function(){ var el = document.elementFromPoint(" + cssX + ", " + cssY + ") || document.activeElement; if(el){ var card = el.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite){ window.__tvToggleCardFavorite(card); return true; } } return false; })()",
                         null
                     )
                     return true
