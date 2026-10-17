@@ -1389,16 +1389,18 @@ class MainActivity : Activity() {
           if (window.__tvCardFavoriteAttached) return;
           window.__tvCardFavoriteAttached = true;
 
-          function toggleCardFavorite(card) {
+          function toggleCardFavorite(el) {
             var $ = window.jQuery || window.$;
-            if (!card) return false;
+            if (!el) return false;
 
+            var card = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail, .content-thumbnail-box, .content-info-box, .box-content') || el;
             var link = card.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                       card.closest('article, .content-list-item, .tile-inner, .content-thumbnail, .content-thumbnail-box, .content-list > div, .box-content')?.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
+                       (card.parentNode ? card.parentNode.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
                        card.closest('a[href*="/contents/"], a[href*="/set/"]');
 
-            if (!link && card.tagName === 'A') link = card;
-            if (!link) return false;
+            if (!link && el.tagName === 'A') link = el;
+            if (!link && el.closest) link = el.closest('a[href]');
+            if (!link || !link.href) return false;
 
             var href = link.href || '';
             var match = href.match(/\/(?:contents|set)\/(\d+)/);
@@ -1505,7 +1507,7 @@ class MainActivity : Activity() {
                     val cssX = cursorX / density
                     val cssY = cursorY / density
                     webView.evaluateJavascript(
-                        "(function(){ var el = document.elementFromPoint(" + cssX + ", " + cssY + ") || document.activeElement; if(el){ var card = el.closest('article, .content-list-item, .tile-inner, .content-thumbnail, .content-thumbnail-box, .content-info-box, .box-content') || el; if(card && window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(card); } } return false; })()",
+                        "(function(){ var el = document.elementFromPoint(" + cssX + ", " + cssY + ") || document.activeElement; if(el && window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(el); } return false; })()",
                         null
                     )
                     return true
