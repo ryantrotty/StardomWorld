@@ -1045,6 +1045,7 @@ class MainActivity : Activity() {
                 customView = view
                 customCallback = callback
                 webView.visibility = View.GONE
+                view.alpha = 0f
                 root.addView(
                     view,
                     ViewGroup.LayoutParams(
@@ -1052,6 +1053,11 @@ class MainActivity : Activity() {
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
                 )
+                view.animate()
+                    .alpha(1f)
+                    .setDuration(800)
+                    .setInterpolator(AccelerateDecelerateInterpolator())
+                    .start()
                 refreshCursorVisibility()
             }
 
@@ -1118,6 +1124,18 @@ class MainActivity : Activity() {
                     flush()
                 }
                 webView.reload()
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun requestFullScreen() {
+            handler.post {
+                if (customView == null) {
+                    webView.evaluateJavascript(
+                        "(function(){ var v=document.querySelector('video')||document.querySelector('iframe'); if(v && typeof v.webkitRequestFullscreen === 'function') v.webkitRequestFullscreen(); })()",
+                        null
+                    )
+                }
             }
         }
     }
@@ -1218,6 +1236,68 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    private val autoFullScreenJs = """
+        (function(){
+          if (window.__tvAutoFullScreenAttached) return;
+          window.__tvAutoFullScreenAttached = true;
+
+          var fsTimer = null;
+
+          function scheduleFullScreenIn5Sec() {
+            if (fsTimer) return;
+            fsTimer = setTimeout(function() {
+              if (window.AndroidHost && typeof window.AndroidHost.requestFullScreen === 'function') {
+                window.AndroidHost.requestFullScreen();
+              } else {
+                var v = document.querySelector('video') || document.querySelector('iframe');
+                if (v && typeof v.webkitRequestFullscreen === 'function') {
+                  try { v.webkitRequestFullscreen(); } catch(e) {}
+                }
+              }
+            }, 5000);
+          }
+
+          function monitorPlayback() {
+            var vList = document.querySelectorAll('video');
+            vList.forEach(function(v) {
+              if (!v.__tvPlayListenerAttached) {
+                v.__tvPlayListenerAttached = true;
+                v.autoplay = true;
+                v.play().catch(function(){});
+                v.addEventListener('play', scheduleFullScreenIn5Sec);
+                v.addEventListener('playing', scheduleFullScreenIn5Sec);
+              }
+              if (!v.paused && !fsTimer) {
+                scheduleFullScreenIn5Sec();
+              }
+            });
+
+            var vimeoIframes = document.querySelectorAll('iframe[src*="vimeo.com"], iframe[src*="player"]');
+            vimeoIframes.forEach(function(iframe) {
+              if (!iframe.__tvInitSent && iframe.contentWindow) {
+                iframe.__tvInitSent = true;
+                try {
+                  iframe.contentWindow.postMessage('{"method":"addEventListener", "value":"play"}', '*');
+                  iframe.contentWindow.postMessage('{"method":"play"}', '*');
+                } catch(e) {}
+              }
+            });
+          }
+
+          window.addEventListener('message', function(ev) {
+            try {
+              var data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
+              if (data && (data.event === 'play' || data.event === 'timeupdate')) {
+                scheduleFullScreenIn5Sec();
+              }
+            } catch(e) {}
+          });
+
+          setInterval(monitorPlayback, 1000);
+        })();
+    """.trimIndent()
+
+
     private fun injectPageScripts(view: WebView) {
         view.evaluateJavascript(viewportJs(), null)
         view.evaluateJavascript(hideTranslateJs, null)
@@ -1227,6 +1307,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
+        view.evaluateJavascript(autoFullScreenJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
     }
