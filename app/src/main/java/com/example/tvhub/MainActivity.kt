@@ -249,25 +249,29 @@ class MainActivity : Activity() {
             padding: 10px !important;
         }
         #tv-lang-toggle-btn {
-            height: 44px !important;
-            min-width: 68px !important;
-            background-color: #1a1a1a !important;
+            height: 38px !important;
+            min-width: 50px !important;
+            background: transparent !important;
+            background-color: transparent !important;
             color: #FFB347 !important;
-            border: 1px solid #333333 !important;
-            border-radius: 4px !important;
-            font-size: 15px !important;
-            font-weight: 700 !important;
-            padding: 0 12px !important;
-            margin-left: 8px !important;
+            border: none !important;
+            box-shadow: none !important;
             outline: none !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            padding: 0 8px !important;
+            margin-left: 8px !important;
             cursor: pointer !important;
             display: inline-block !important;
             box-sizing: border-box !important;
             vertical-align: middle !important;
         }
         #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
-            background-color: #2a2a2a !important;
-            border-color: #FFB347 !important;
+            color: #ffffff !important;
+            text-shadow: 0 0 8px rgba(255, 179, 71, 0.8) !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
         }
         .box-sort {
             background: #000000 !important;
@@ -739,20 +743,37 @@ class MainActivity : Activity() {
                         flexWrapper.appendChild(select);
                       }
 
-                      var currentLang = '$activeLang';
-                      var langBtn = document.getElementById('tv-lang-toggle-btn');
-                      if (!langBtn) {
-                        langBtn = document.createElement('button');
-                        langBtn.id = 'tv-lang-toggle-btn';
-                        flexWrapper.appendChild(langBtn);
-                      }
-                      langBtn.textContent = (currentLang === 'ja') ? 'EN' : '日本語';
-                      langBtn.onclick = function() {
-                        var nextLang = (currentLang === 'ja') ? 'en' : 'ja';
-                        if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') {
-                          window.AndroidHost.toggleLanguage(nextLang);
+                      var btnWrap = document.querySelector('.global-nav-list.btn-wrap, .btn-wrap, header .text-right.float-r');
+                      if (btnWrap) {
+                        var langLi = document.getElementById('tv-lang-li');
+                        if (!langLi) {
+                          langLi = document.createElement('li');
+                          langLi.id = 'tv-lang-li';
+                          langLi.style.setProperty('display', 'inline-block', 'important');
+                          langLi.style.setProperty('vertical-align', 'middle', 'important');
+                          langLi.style.setProperty('margin-left', '10px', 'important');
+                          btnWrap.appendChild(langLi);
                         }
-                      };
+
+                        var currentLang = '$activeLang';
+                        var langBtn = document.getElementById('tv-lang-toggle-btn');
+                        if (!langBtn) {
+                          langBtn = document.createElement('button');
+                          langBtn.id = 'tv-lang-toggle-btn';
+                          langBtn.className = 'notranslate';
+                          langBtn.setAttribute('translate', 'no');
+                          langLi.appendChild(langBtn);
+                        }
+                        langBtn.textContent = (currentLang === 'ja') ? 'EN' : '日本語';
+                        langBtn.onclick = function(e) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          var nextLang = (currentLang === 'ja') ? 'en' : 'ja';
+                          if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') {
+                            window.AndroidHost.toggleLanguage(nextLang);
+                          }
+                        };
+                      }
                     }
 
                     // Auto-play video (HTML5 video & Vimeo iframe)
