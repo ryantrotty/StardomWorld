@@ -104,13 +104,28 @@ class MainActivity : Activity() {
         h1.ttl-lg, .box-content > h1 {
             display: none !important;
         }
-        /* Ensure second thumbnail row (under 2026) and set title containers remain fully visible */
-        .detail-wrap, .box-contents-detail, .sub-category-list, .box-contents-sub, .sub-category-ttl, .box-related-content, .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub {
+        /* Remove grey background and collapse empty margins on detail-wrap container */
+        .detail-wrap, .box-contents-detail, .content-ttl-wrap {
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin-top: 0px !important;
+            margin-bottom: 0px !important;
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+        }
+        /* Reduce top margin above set title text tag (.ttl-md, h2.ttl-md) */
+        .ttl-md, h2.ttl-md, .ttl-sub, .box-ttl-sub, .sub-category-ttl, .sub-category-list, .box-contents-sub, .box-related-content {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             color: #ffffff !important;
             font-weight: bold !important;
+            margin-top: 2px !important;
+            margin-bottom: 4px !important;
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
             height: auto !important;
             min-height: unset !important;
         }
