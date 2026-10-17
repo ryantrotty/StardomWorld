@@ -374,6 +374,8 @@ class MainActivity : Activity() {
     private var splashDone = false
     private var splashDismissScheduled = false
 
+        private var isLongPressTriggered = false
+    private var longPressRunnable: Runnable? = null
     private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
 
@@ -1449,6 +1451,7 @@ class MainActivity : Activity() {
           }
 
           function toggleCardFavorite(card) {
+          window.__tvToggleCardFavorite = toggleCardFavorite;
             var $ = window.jQuery || window.$;
             var contentId = card.__tvContentId;
             if (!contentId) return;
@@ -1610,6 +1613,32 @@ class MainActivity : Activity() {
                         webView.goBack()
                         return true
                     }
+                }
+            }
+
+            if (!cursorMode && (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)) {
+                if (event.repeatCount == 0) {
+                    isLongPressTriggered = false
+                    longPressRunnable?.let { handler.removeCallbacks(it) }
+                    longPressRunnable = Runnable {
+                        isLongPressTriggered = true
+                        webView.evaluateJavascript(
+                            "(function(){ var active=document.activeElement; if(active){ var card=active.closest('article, .content-list-item'); if(card && window.__tvToggleCardFavorite) window.__tvToggleCardFavorite(card); } })()",
+                            null
+                        )
+                    }
+                    handler.postDelayed(longPressRunnable!!, 600L)
+                }
+            }
+        } else if (event.action == KeyEvent.ACTION_UP) {
+            if (!cursorMode && (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)) {
+                longPressRunnable?.let {
+                    handler.removeCallbacks(it)
+                    longPressRunnable = null
+                }
+                if (isLongPressTriggered) {
+                    isLongPressTriggered = false
+                    return true
                 }
             }
         }
