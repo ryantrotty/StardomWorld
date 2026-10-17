@@ -1044,6 +1044,59 @@ class MainActivity : Activity() {
         (function(){
           if (window.__tvFullyLoadedNotified) return;
 
+          function preloadThumbnails(callback) {
+            var bgEls = document.querySelectorAll('.content-thumbnail-box-inner, [style*="background-image"]');
+            var imgEls = document.querySelectorAll('img');
+            var urls = [];
+
+            bgEls.forEach(function(el) {
+              var bg = el.style.backgroundImage || getComputedStyle(el).backgroundImage;
+              var m = bg.match(/url\(['"]?(.*?)['"]?\)/);
+              if (m && m[1] && m[1].indexOf('data:') === -1) {
+                urls.push(m[1]);
+              }
+            });
+
+            imgEls.forEach(function(img) {
+              if (img.src && img.src.indexOf('data:') === -1) {
+                urls.push(img.src);
+              }
+            });
+
+            if (urls.length === 0) {
+              callback();
+              return;
+            }
+
+            var loadedCount = 0;
+            var total = urls.length;
+            var done = false;
+
+            function doneOne() {
+              if (done) return;
+              loadedCount++;
+              if (loadedCount >= total) {
+                done = true;
+                callback();
+              }
+            }
+
+            urls.forEach(function(u) {
+              var img = new Image();
+              img.onload = doneOne;
+              img.onerror = doneOne;
+              img.src = u;
+              if (img.complete) doneOne();
+            });
+
+            setTimeout(function() {
+              if (!done) {
+                done = true;
+                callback();
+              }
+            }, 2500);
+          }
+
           function checkFullyReady() {
             if (window.__tvFullyLoadedNotified) return;
 
@@ -1058,9 +1111,11 @@ class MainActivity : Activity() {
 
             if (isLoaded && hasStyle && translateDone) {
               window.__tvFullyLoadedNotified = true;
-              if (window.AndroidHost && typeof window.AndroidHost.onPageFullyLoaded === 'function') {
-                window.AndroidHost.onPageFullyLoaded();
-              }
+              preloadThumbnails(function() {
+                if (window.AndroidHost && typeof window.AndroidHost.onPageFullyLoaded === 'function') {
+                  window.AndroidHost.onPageFullyLoaded();
+                }
+              });
             }
           }
 
