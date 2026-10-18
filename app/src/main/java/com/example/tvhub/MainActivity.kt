@@ -940,35 +940,12 @@ class MainActivity : Activity() {
                         }
                       });
                     }
-                    // 1. Create On-Screen Retained Debugger Panel
-                    var debugPanel = document.getElementById('tv-debug-overlay');
-                    if (!debugPanel) {
-                      var parentNode = document.body || document.documentElement;
-                      if (parentNode) {
-                        debugPanel = document.createElement('div');
-                        debugPanel.id = 'tv-debug-overlay';
-                        debugPanel.style.cssText = 'position:fixed; bottom:12px; left:12px; width:520px; max-height:220px; background:rgba(0,0,0,0.92); color:#00FF66; font-family:monospace; font-size:12px; padding:10px 14px; border-radius:6px; border:2px solid #00FF66; z-index:999999; overflow-y:auto; pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.9); line-height:1.4;';
-                        debugPanel.innerHTML = '<div id="tv-debug-hover" style="color:#FFD700; font-weight:bold; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:4px;">HOVER: Move cursor to inspect...</div><div id="tv-debug-logs"></div>';
-                        parentNode.appendChild(debugPanel);
-                      }
-                    }
-
-                    // 2. Real-time hover inspector under cursor
+                    // Track mouse client coordinates
                     if (!window.__tvHoverInspectorAttached) {
                       window.__tvHoverInspectorAttached = true;
                       document.addEventListener('mousemove', function(e) {
                         window.__tvLastMouseX = e.clientX;
                         window.__tvLastMouseY = e.clientY;
-                        var hoverBox = document.getElementById('tv-debug-hover');
-                        if (!hoverBox) return;
-                        var el = document.elementFromPoint(e.clientX, e.clientY);
-                        if (el) {
-                          var tag = el.tagName.toLowerCase();
-                          var cls = el.className ? '.' + String(el.className).substring(0, 30).replace(/\s+/g, '.') : '';
-                          var link = el.closest('a[href]');
-                          var href = link ? link.getAttribute('href') : 'no-link';
-                          hoverBox.textContent = 'HOVER: <' + tag + cls + '> | href: ' + href;
-                        }
                       }, true);
                     }
 
