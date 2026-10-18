@@ -478,6 +478,11 @@ class MainActivity : Activity() {
           if (window.__tvInfiniteScroll) return;
           window.__tvInfiniteScroll = true;
 
+          // Disable infinite scroll on Favorites page to prevent duplicate cards
+          if (window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1) {
+            return;
+          }
+
           var loading = false;
 
           function hidePagination() {
@@ -489,6 +494,10 @@ class MainActivity : Activity() {
 
           function checkAndLoadNextPage() {
             if (loading) return;
+            if (window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1) {
+              return;
+            }
+
             var scrollBottom = window.innerHeight + window.scrollY;
             var pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
 
@@ -512,6 +521,11 @@ class MainActivity : Activity() {
                 if (container && newContainer) {
                   var newItems = Array.from(newContainer.children);
                   newItems.forEach(function(item) {
+                    var itemLink = item.querySelector('a[href]');
+                    if (itemLink && itemLink.href) {
+                      var existing = container.querySelector('a[href="' + itemLink.href + '"]');
+                      if (existing) return;
+                    }
                     container.appendChild(item);
                   });
                 }
