@@ -1578,6 +1578,370 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    private val stage1TestGridJs = """
+        (function(){
+          if (document.getElementById('tv-test-grid')) return;
+
+          function isHomePage() {
+            var path = window.location.pathname;
+            return path === '/' || path === '/index.html' || path === '';
+          }
+
+          function sanitizeTitle(txt) {
+            if (!txt) return 'Stardom World Video';
+            return txt.replace(/月額見放題/g, '')
+                      .replace(/Unlimited viewing for a monthly fee/gi, '')
+                      .replace(/Monthly subscription available/gi, '')
+                      .replace(/Monthly subscription/gi, '')
+                      .replace(/\s+/g, ' ')
+                      .trim();
+          }
+
+          function extractAllHomeRows() {
+            var sections = document.querySelectorAll('.box-section, section, [class*="box-section"]');
+            var result = [];
+            var seenTitles = {};
+
+            sections.forEach(function(sec) {
+              if (sec.closest('header') || sec.id.includes('tv') || sec.id.includes('hero') || sec.classList.contains('box-main')) return;
+
+              var titleEl = sec.querySelector('.ttl-md, .ttl-lg, h2, h1');
+              var title = titleEl ? titleEl.textContent.trim() : '';
+              if (!title || seenTitles[title]) return;
+
+              var items = Array.from(sec.querySelectorAll('.content-list-item, article')).filter(function(el) {
+                return !el.classList.contains('slick-cloned');
+              });
+
+              if (items.length === 0) return;
+
+              var dataList = [];
+              var seenHrefs = {};
+
+              items.forEach(function(item) {
+                var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+                if (!link || !link.href) return;
+
+                var href = link.href;
+                if (seenHrefs[href]) return;
+                seenHrefs[href] = true;
+
+                var thumbInner = item.querySelector('.content-thumbnail-box-inner, [style*="background-image"]');
+                var imgEl = item.querySelector('img');
+                var titleBox = item.querySelector('h3, .ttl-xs, .content-info-box');
+
+                var itemTitle = titleBox ? sanitizeTitle(titleBox.textContent) : 'Stardom World Video';
+
+                var bgUrl = '';
+                if (thumbInner) {
+                  var bg = thumbInner.style.backgroundImage || getComputedStyle(thumbInner).backgroundImage;
+                  var m = bg.match(/url\(['"]?(.*?)['"]?\)/);
+                  if (m && m[1]) bgUrl = m[1];
+                }
+                if (!bgUrl && imgEl) {
+                  bgUrl = imgEl.src;
+                }
+
+                dataList.push({ href: href, title: itemTitle, bgUrl: bgUrl });
+              });
+
+              if (dataList.length > 0) {
+                seenTitles[title] = true;
+                result.push({ title: title, items: dataList });
+              }
+            });
+            return result;
+          }
+
+          function extractHeroBanner() {
+            var heroImg = document.querySelector('.main-visual img, .slider-inner img, [class*="main-visual"] img, [class*="hero"] img');
+            var heroLink = document.querySelector('.main-visual a[href], .slider-inner a[href], [class*="main-visual"] a[href]');
+
+            var href = heroLink ? heroLink.href : (document.querySelector('a[href*="/contents/"], a[href*="/set/"]')?.href || '#');
+            var bgUrl = heroImg ? heroImg.src : '';
+
+            if (!bgUrl) {
+              var bgEl = document.querySelector('.main-visual, .slider-inner, [class*="main-visual"]');
+              if (bgEl) {
+                var bg = bgEl.style.backgroundImage || getComputedStyle(bgEl).backgroundImage;
+                var m = bg.match(/url\(['"]?(.*?)['"]?\)/);
+                if (m && m[1] && m[1].indexOf('data:') === -1) bgUrl = m[1];
+              }
+            }
+
+            if (!bgUrl) {
+              bgUrl = 'https://www.stardom-world.com/file_upload/images/mv_06.jpg';
+            }
+
+            return { href: href, bgUrl: bgUrl };
+          }
+
+          function renderCustomTvGrid() {
+            if (!isHomePage()) return;
+            if (document.getElementById('tv-test-grid')) return;
+
+            var header = document.querySelector('header, .box-header, .nav-inner');
+            if (!header) return;
+
+            // Ensure top header sits in normal block flow at top
+            header.style.setProperty('position', 'relative', 'important');
+            header.style.setProperty('top', '0px', 'important');
+            header.style.setProperty('margin-top', '0px', 'important');
+            header.style.setProperty('margin-bottom', '0px', 'important');
+            header.style.setProperty('border', 'none', 'important');
+            header.style.setProperty('box-shadow', 'none', 'important');
+
+            if (document.body) {
+              document.body.style.setProperty('margin-top', '0px', 'important');
+              document.body.style.setProperty('padding-top', '0px', 'important');
+            }
+
+            // Insert a clean 75px visible spacer element directly under the header
+            var headerSpacer = document.getElementById('tv-header-spacer');
+            if (!headerSpacer) {
+              headerSpacer = document.createElement('div');
+              headerSpacer.id = 'tv-header-spacer';
+              headerSpacer.style.cssText = 'width:100%; height:75px !important; display:block; clear:both; margin:0 0 15px 0 !important; padding:0; border:none; background:transparent;';
+              if (header.nextSibling) {
+                header.parentNode.insertBefore(headerSpacer, header.nextSibling);
+              } else {
+                header.parentNode.appendChild(headerSpacer);
+              }
+            }
+
+            var heroData = extractHeroBanner();
+            var allRowsData = extractAllHomeRows();
+
+            // Hide original desktop site carousels, news lists, and old hero banners ONLY on home page
+            var origContent = document.querySelectorAll('.content-list, .box-section, .main-visual, .slider-inner, .box-main-visual, .container.box-main, .news-wrap, [class*="main-visual"], [class*="slider"]');
+            origContent.forEach(function(el) {
+              if (!el.closest('header') && !el.id.includes('tv')) {
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.style.setProperty('height', '0px', 'important');
+              }
+            });
+
+            var gridDiv = document.createElement('div');
+            gridDiv.id = 'tv-test-grid';
+            gridDiv.style.cssText = 'width:100%; margin:0; padding:0; box-sizing:border-box; relative; z-index:100; border:none;';
+
+            var html = '';
+
+            // 1. Single Un-Cropped Hero Banner Image (With 75px header spacing)
+            if (heroData && heroData.bgUrl) {
+              html += '<div id="tv-hero-container" style="width:100%; height:auto; margin:0 0 35px 0 !important; padding:0 !important; box-sizing:border-box; border:none; clear:both;">' +
+                '<a class="tv-hero-card" tabindex="0" href="' + heroData.href + '" style="display:block; width:100%; height:auto; text-decoration:none; outline:none; border:none; border-radius:0; box-sizing:border-box; cursor:pointer; margin:0; padding:0;"><img src="' + heroData.bgUrl + '" style="width:100%; height:auto; display:block; margin:0 auto; padding:0; border:none; outline:none; box-sizing:border-box;" /></a>' +
+                '</div>';
+            }
+
+            // 2. All Category Video Rows
+            html += '<div style="max-width:1440px; margin:0 auto; padding:0 24px; box-sizing:border-box;">';
+
+            var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+            var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+            var titleCss = 'padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
+
+            if (allRowsData && allRowsData.length > 0) {
+              allRowsData.forEach(function(rowSec) {
+                html += '<div style="margin-bottom:35px;"><h2 style="color:#FFB347; font-size:22px; margin-bottom:14px; font-weight:bold;">' + rowSec.title + '</h2><div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+                rowSec.items.forEach(function(item) {
+                  var bgStyle = item.bgUrl ? 'background-image:url(' + item.bgUrl + ');' : '';
+                  html += '<a class="tv-card" tabindex="0" href="' + item.href + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + item.title + '</div></a>';
+                });
+                html += '</div></div>';
+              });
+            }
+
+            // 3. Return To Top Button at bottom of home grid
+            html += '<div style="text-align:center; margin:40px 0 60px 0;">' +
+              '<button id="tv-return-to-top-btn" class="tv-card notranslate" tabindex="0" style="background:#1a1a1a; color:#FFB347; border:2px solid #FFB347; border-radius:6px; padding:12px 28px; font-size:18px; font-weight:bold; cursor:pointer; outline:none;">▲ Return to Top</button>' +
+              '</div>';
+
+            html += '</div>';
+
+            gridDiv.innerHTML = html;
+
+            // Insert gridDiv directly AFTER headerSpacer
+            var insertTarget = headerSpacer || header;
+            if (insertTarget.nextSibling) {
+              insertTarget.parentNode.insertBefore(gridDiv, insertTarget.nextSibling);
+            } else {
+              insertTarget.parentNode.appendChild(gridDiv);
+            }
+
+            var firstFocus = gridDiv.querySelector('.tv-hero-card, .tv-card');
+            if (firstFocus) firstFocus.focus();
+          }
+
+          if (!window.__tvGridNavHandlerAttached) {
+            window.__tvGridNavHandlerAttached = true;
+
+            // Return to top click handler
+            document.addEventListener('click', function(e) {
+              if (e.target && e.target.id === 'tv-return-to-top-btn') {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                if (firstHeader) firstHeader.focus();
+              }
+            }, true);
+
+            document.addEventListener('keydown', function(e) {
+              var active = document.activeElement;
+              if (!active) return;
+
+              // Return to Top button navigation
+              if (active.id === 'tv-return-to-top-btn') {
+                if (e.keyCode === 13 || e.key === 'Enter') {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                  if (firstHeader) firstHeader.focus();
+                  return;
+                }
+              }
+
+              // A. Navigation on Hero Banner (.tv-hero-card)
+              if (active.classList.contains('tv-hero-card')) {
+                if (e.keyCode === 40 || e.key === 'ArrowDown') {
+                  var row1Card = document.querySelector('.tv-grid-row .tv-card');
+                  if (row1Card) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    row1Card.focus();
+                    row1Card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    return;
+                  }
+                }
+
+                if (e.keyCode === 38 || e.key === 'ArrowUp') {
+                  var searchBtn = document.querySelector('form.form-inline input[type="submit"], .input-group input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                  if (searchBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    searchBtn.focus();
+                    return;
+                  }
+                }
+              }
+
+              // B. Navigation from Header Items -> Down to Hero Banner
+              var inHeader = active.closest('header, .box-header, #tv-header-flex-wrapper, form.form-inline, .nav-inner');
+              if (inHeader && (e.keyCode === 40 || e.key === 'ArrowDown')) {
+                var heroCard = document.querySelector('.tv-hero-card');
+                if (heroCard) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  heroCard.focus();
+                  heroCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  return;
+                } else {
+                  var firstVideo = document.querySelector('.tv-grid-row .tv-card');
+                  if (firstVideo) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    firstVideo.focus();
+                    firstVideo.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    return;
+                  }
+                }
+              }
+
+              // C. Grid Row Navigation (.tv-card)
+              if (!active.classList.contains('tv-card')) return;
+
+              var currentRowDiv = active.closest('.tv-grid-row');
+              if (!currentRowDiv) return;
+
+              var allRows = Array.from(document.querySelectorAll('.tv-grid-row'));
+              var rowIndex = allRows.indexOf(currentRowDiv);
+
+              var rowCards = Array.from(currentRowDiv.querySelectorAll('.tv-card'));
+              var colIndex = rowCards.indexOf(active);
+
+              // 1. Right Arrow -> Next Card
+              if (e.keyCode === 39 || e.key === 'ArrowRight') {
+                e.preventDefault();
+                e.stopPropagation();
+                var nextIndex = (colIndex < rowCards.length - 1) ? colIndex + 1 : 0;
+                var nextCard = rowCards[nextIndex];
+                nextCard.focus();
+                nextCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+              }
+
+              // 2. Left Arrow -> Previous Card
+              if (e.keyCode === 37 || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                e.stopPropagation();
+                var prevIndex = (colIndex > 0) ? colIndex - 1 : rowCards.length - 1;
+                var prevCard = rowCards[prevIndex];
+                prevCard.focus();
+                prevCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+              }
+
+              // 3. Down Arrow -> Same Column in Next Row
+              if (e.keyCode === 40 || e.key === 'ArrowDown') {
+                if (rowIndex >= 0 && rowIndex < allRows.length - 1) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var nextRowCards = Array.from(allRows[rowIndex + 1].querySelectorAll('.tv-card'));
+                  var targetCol = Math.min(colIndex, nextRowCards.length - 1);
+                  if (nextRowCards[targetCol]) {
+                    nextRowCards[targetCol].focus();
+                    nextRowCards[targetCol].scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                  }
+                } else if (rowIndex === allRows.length - 1) {
+                  var topBtn = document.getElementById('tv-return-to-top-btn');
+                  if (topBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    topBtn.focus();
+                    topBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+              }
+
+              // 4. Up Arrow -> Same Column in Previous Row OR Hero Banner
+              if (e.keyCode === 38 || e.key === 'ArrowUp') {
+                if (rowIndex > 0) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var prevRowCards = Array.from(allRows[rowIndex - 1].querySelectorAll('.tv-card'));
+                  var targetColPrev = Math.min(colIndex, prevRowCards.length - 1);
+                  if (prevRowCards[targetColPrev]) {
+                    prevRowCards[targetColPrev].focus();
+                    prevRowCards[targetColPrev].scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                  }
+                } else if (rowIndex === 0) {
+                  var heroTarget = document.querySelector('.tv-hero-card');
+                  if (heroTarget) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    heroTarget.focus();
+                    heroTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  } else {
+                    var headerTarget = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                    if (headerTarget) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      headerTarget.focus();
+                    }
+                  }
+                }
+              }
+            }, true);
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', renderCustomTvGrid);
+          } else {
+            renderCustomTvGrid();
+          }
+          setInterval(renderCustomTvGrid, 1000);
+        })();
+    """.trimIndent()
+
     private fun injectPageScripts(view: WebView) {
         view.evaluateJavascript(viewportJs(), null)
         view.evaluateJavascript(hideTranslateJs, null)
@@ -1587,6 +1951,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
+        view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         injectCustomTvStyles(view)
