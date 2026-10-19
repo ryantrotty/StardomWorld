@@ -1744,7 +1744,7 @@ class MainActivity : Activity() {
 
             if (allRowsData && allRowsData.length > 0) {
               allRowsData.forEach(function(rowSec) {
-                html += '<div style="margin-bottom:35px;"><h2 style="color:#FFB347; font-size:22px; margin-bottom:14px; font-weight:bold;">' + rowSec.title + '</h2><div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+                html += '<div style="margin-bottom:35px;"><h2 tabindex="-1" style="color:#FFB347; font-size:22px; margin-bottom:14px; font-weight:bold; outline:none !important; user-select:none !important;">' + rowSec.title + '</h2><div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
                 rowSec.items.forEach(function(item) {
                   var bgStyle = item.bgUrl ? 'background-image:url(' + item.bgUrl + ');' : '';
                   html += '<a class="tv-card" tabindex="0" href="' + item.href + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + item.title + '</div></a>';
@@ -1798,6 +1798,21 @@ class MainActivity : Activity() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
                   if (firstHeader) firstHeader.focus();
+                  return;
+                }
+                if (e.keyCode === 38 || e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var allRows = Array.from(document.querySelectorAll('.tv-grid-row'));
+                  if (allRows.length > 0) {
+                    var lastRow = allRows[allRows.length - 1];
+                    var lastRowCards = Array.from(lastRow.querySelectorAll('.tv-card'));
+                    if (lastRowCards.length > 0) {
+                      var targetLast = lastRowCards[0];
+                      targetLast.focus();
+                      targetLast.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    }
+                  }
                   return;
                 }
               }
