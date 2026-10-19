@@ -366,7 +366,7 @@ class MainActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var density = 1f
 
-    private var cursorMode = true
+    private var cursorMode = false
     private var cursorX = 0f
     private var cursorY = 0f
 
