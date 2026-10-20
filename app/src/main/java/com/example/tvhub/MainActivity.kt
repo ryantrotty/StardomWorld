@@ -363,7 +363,7 @@ class MainActivity : Activity() {
             box-sizing: border-box !important;
         }
         .content-info-box, .content-list-item h3 {
-            padding: 12px 14px !important;
+            padding: 6px 7px !important;
             color: #ffffff !important;
             font-size: 15px !important;
             font-weight: bold !important;
