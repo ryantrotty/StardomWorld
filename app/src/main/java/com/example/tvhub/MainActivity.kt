@@ -1666,6 +1666,16 @@ class MainActivity : Activity() {
                       .trim();
           }
 
+          function styleSubPageTextBoxes() {
+            if (isHomePage()) return;
+            var boxes = document.querySelectorAll('.content-info-box, .content-info-box *, .content-list-item h3, .tile-inner h3, .box-content h3');
+            boxes.forEach(function(b) {
+              b.style.setProperty('background', '#1a1a1a', 'important');
+              b.style.setProperty('background-color', '#1a1a1a', 'important');
+              b.style.setProperty('color', '#ffffff', 'important');
+            });
+          }
+
           function sanitizeSubPageTitles() {
             var path = window.location.pathname;
             if (path === '/' || path === '/index.html' || path === '' || path === '/contents') return;
@@ -2052,7 +2062,7 @@ class MainActivity : Activity() {
           } else {
             renderCustomTvGrid();
           }
-          setInterval(function() { renderCustomTvGrid(); sanitizeSubPageTitles(); }, 1000);
+          setInterval(function() { renderCustomTvGrid(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
         })();
     """.trimIndent()
 
