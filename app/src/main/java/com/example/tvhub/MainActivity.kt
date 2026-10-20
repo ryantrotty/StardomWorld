@@ -1174,7 +1174,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.2.1 (Element 1: Sub-Page Text Box Background #1a1a1a)"
+            text = "v1.2.2 (feature/subpage-text-box-styling)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
