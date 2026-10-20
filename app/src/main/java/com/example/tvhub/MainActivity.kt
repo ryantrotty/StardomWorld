@@ -1174,7 +1174,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.1.9 (13-bug-non-main-page-video-thumbnails-dont-match-main-page-design)"
+            text = "v1.2.1 (Element 1: Sub-Page Text Box Background #1a1a1a)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
@@ -1682,6 +1682,17 @@ class MainActivity : Activity() {
               if (el.textContent && (el.textContent.indexOf('月額見放題') !== -1 || el.textContent.indexOf('Unlimited viewing') !== -1 || el.textContent.indexOf('Registration date') !== -1 || el.textContent.indexOf('お気に入り登録日') !== -1 || el.textContent.indexOf('登録日') !== -1)) {
                 el.textContent = sanitizeTitle(el.textContent);
               }
+            });
+          }
+
+          function applySubPageCardBackground() {
+            var path = window.location.pathname;
+            if (path === '/' || path === '/index.html' || path === '' || path === '/contents') return;
+
+            var titleBoxes = document.querySelectorAll('.content-info-box, .content-list-item h3');
+            titleBoxes.forEach(function(box) {
+              box.style.setProperty('background', '#1a1a1a', 'important');
+              box.style.setProperty('background-color', '#1a1a1a', 'important');
             });
           }
 
