@@ -26,6 +26,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 
 /**
@@ -345,7 +346,42 @@ class MainActivity : Activity() {
             font-weight: inherit !important;
             display: inline !important;
         }
-        /* Enable smooth site hover transitions on video thumbnail cards and links */
+        /* Unified Sub-Page Video Card & Rounded Thumbnail Styling */
+        .content-thumbnail, .content-thumbnail-box, .content-thumbnail-box-inner, .tile-inner {
+            border-radius: 8px 8px 0 0 !important;
+            overflow: hidden !important;
+        }
+        .content-thumbnail-box-inner {
+            border-radius: 8px 8px 0 0 !important;
+            background-size: cover !important;
+            background-position: center !important;
+        }
+        .content-list-item article, .content-list-item .tile-inner {
+            background: #1a1a1a !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+        .content-info-box, .content-list-item h3 {
+            padding: 12px 14px !important;
+            color: #ffffff !important;
+            font-size: 15px !important;
+            font-weight: bold !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 4 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 1.45em !important;
+            min-height: 5.8em !important;
+        }
+        .content-thumbnail-box:focus, .content-thumbnail a:focus, .content-list-item article:focus, a.tv-thumbnail-link:focus, .tv-card:focus {
+            outline: 3px solid #FFD700 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 16px rgba(255, 215, 0, 0.8) !important;
+            transform: scale(1.03) !important;
+            transition: transform 0.15s ease-in-out, outline 0.15s ease-in-out !important;
+        }
         .content-thumbnail-box, .tile-inner, .content-list-item article {
             transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
         }
@@ -1136,6 +1172,22 @@ class MainActivity : Activity() {
                 Gravity.CENTER
             )
         )
+
+        val branchBadge = TextView(this).apply {
+            text = "v1.1.9 (13-bug-non-main-page-video-thumbnails-dont-match-main-page-design)"
+            setTextColor(Color.parseColor("#FFD700"))
+            textSize = 12f
+            setPadding(0, 0, 30, 25)
+            alpha = 0.85f
+        }
+        splashView.addView(
+            branchBadge,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM or Gravity.END
+            )
+        )
         root.addView(
             splashView,
             FrameLayout.LayoutParams(
@@ -1597,6 +1649,42 @@ class MainActivity : Activity() {
                       .trim();
           }
 
+          function sanitizeTitle(txt) {
+            if (!txt) return 'Stardom World Video';
+            return txt.replace(/月額見放題/g, '')
+                      .replace(/Unlimited viewing for a monthly fee/gi, '')
+                      .replace(/Monthly subscription available/gi, '')
+                      .replace(/Monthly subscription/gi, '')
+                      .replace(/Registration date\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+                      .replace(/お気に入り登録日\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+                      .replace(/登録日\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+                      .replace(/Registration date\s*[:：]?/gi, '')
+                      .replace(/お気に入り登録日\s*[:：]?/g, '')
+                      .replace(/登録日\s*[:：]?/g, '')
+                      .replace(/\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/g, '')
+                      .replace(/\s+/g, ' ')
+                      .trim();
+          }
+
+          function sanitizeSubPageTitles() {
+            var path = window.location.pathname;
+            if (path === '/' || path === '/index.html' || path === '' || path === '/contents') return;
+
+            var dateEls = document.querySelectorAll('.date, .fav-date, .text-sub, [class*="date"]');
+            dateEls.forEach(function(d) {
+              if (d.textContent && (d.textContent.indexOf('登録日') !== -1 || d.textContent.indexOf('Registration') !== -1)) {
+                d.style.setProperty('display', 'none', 'important');
+              }
+            });
+
+            var subTitles = document.querySelectorAll('.content-info-box h3, .content-list-item h3, .content-list-item a, .box-content h3');
+            subTitles.forEach(function(el) {
+              if (el.textContent && (el.textContent.indexOf('月額見放題') !== -1 || el.textContent.indexOf('Unlimited viewing') !== -1 || el.textContent.indexOf('Registration date') !== -1 || el.textContent.indexOf('お気に入り登録日') !== -1 || el.textContent.indexOf('登録日') !== -1)) {
+                el.textContent = sanitizeTitle(el.textContent);
+              }
+            });
+          }
+
           function extractAllHomeRows() {
             var sections = document.querySelectorAll('.box-section, section, [class*="box-section"]');
             var result = [];
@@ -1953,7 +2041,7 @@ class MainActivity : Activity() {
           } else {
             renderCustomTvGrid();
           }
-          setInterval(renderCustomTvGrid, 1000);
+          setInterval(function() { renderCustomTvGrid(); sanitizeSubPageTitles(); }, 1000);
         })();
     """.trimIndent()
 
