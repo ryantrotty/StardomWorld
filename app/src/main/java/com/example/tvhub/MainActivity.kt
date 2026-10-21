@@ -401,6 +401,29 @@ class MainActivity : Activity() {
             transform: scale(1.03) !important;
             opacity: 0.85 !important;
         }
+        /* Same page margins as the home page grid: 1440px max width, 24px side padding,
+           and room around carousels so edge cards (and their focus ring) are never clipped. */
+        .container, .container-fluid {
+            width: 100% !important;
+            max-width: 1440px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+            box-sizing: border-box !important;
+        }
+        .row {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        .content-list, .content-list.js-list-slide {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        .slick-list {
+            padding: 12px 10px !important;
+            margin: 0 -10px !important;
+        }
     """.trimIndent()
 
     }
@@ -1188,7 +1211,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.3.9 (feature/auto-next-patch)"
+            text = "v1.3.10 (feature/page-margins-patch)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
