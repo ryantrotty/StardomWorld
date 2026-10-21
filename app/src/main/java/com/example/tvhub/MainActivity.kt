@@ -375,11 +375,21 @@ class MainActivity : Activity() {
             line-height: 1.45em !important;
             min-height: 5.8em !important;
         }
-        .content-thumbnail-box:focus, .content-thumbnail a:focus, .content-list-item article:focus, a.tv-thumbnail-link:focus, .tv-card:focus {
+        /* Focus ring goes on the WHOLE card (thumbnail + title box), not on the inner
+           thumbnail link. The ring is drawn inset so the card's overflow:hidden and any
+           clipping carousel parents can't cut it down to a single line. */
+        .content-list-item a:focus, .content-list-item .content-thumbnail-box:focus, .content-list-item .content-thumbnail a:focus, a.tv-thumbnail-link:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .content-list-item article:focus-within, .content-list-item .tile-inner:focus-within:not(article *), .content-list-item article:focus, .tv-card:focus {
             outline: 3px solid #FFD700 !important;
-            outline-offset: 2px !important;
+            outline-offset: -3px !important;
             box-shadow: 0 0 16px rgba(255, 215, 0, 0.8) !important;
             transform: scale(1.03) !important;
+            position: relative !important;
+            z-index: 5 !important;
             transition: transform 0.15s ease-in-out, outline 0.15s ease-in-out !important;
         }
         .content-thumbnail-box, .tile-inner, .content-list-item article {
@@ -1174,7 +1184,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.3.5 (feature/rotating-hero-patch)"
+            text = "v1.3.6 (feature/card-focus-patch)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
