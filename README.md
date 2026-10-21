@@ -1,53 +1,74 @@
-# Stardom (Google TV / Android TV app)
+# TV Viewer for Stardom (Android TV / Google TV)
 
-A small personal app that opens stardom-world.com full-screen on your Google TV,
-with its own icon in the apps row.
+An **unofficial, fan-made** Android TV / Google TV app that opens [stardom-world.com](https://www.stardom-world.com)
+full-screen in a WebView and reshapes the site so it works well with a TV remote.
 
-It does not store your username or password. Sign in once on the site itself;
-the app keeps the session cookie between launches.
+> **Not affiliated with Stardom.** You need your own paid account and sign in on the site itself.
+> The app never stores your username or password; it only keeps the normal site session cookie.
+> Stardom's name, logos and artwork are not part of this project (the app ships generic placeholder artwork).
 
-## 1. Build the APK
+## Features
 
-1. Install Android Studio and open this folder.
-2. Let Gradle sync (accept any "upgrade plugin" prompts).
-3. Build > Build Bundle(s) / APK(s) > Build APK(s).
-4. The file is at `app/build/outputs/apk/debug/app-debug.apk`.
-
-## 2. Install it on the TV
-
-1. On the TV: Settings > System > About, press OK on "Android TV OS build" seven times.
-2. Settings > System > Developer options: turn on **USB debugging** and
-   **Wireless debugging** (or "ADB debugging").
-3. Find the TV's IP address (Settings > Network).
-4. On your computer (with Android platform-tools installed):
-
-       adb connect <tv-ip>:5555
-       adb install app-debug.apk
-
-   Accept the prompt on the TV the first time.
-5. Open **Stardom** from the apps row (it may be under "All apps").
-
-No computer handy? Copy the APK to a USB drive and install it with a file
-manager app such as "Send Files to TV" or "X-plore".
+- **Remote-friendly browsing**: D-pad navigation across a home page grid and the sub-pages
+  (favorites, categories, search results, video pages) with a gold focus ring around the whole video card.
+- **Rotating hero banner** built from the site's own featured slides (Left/Right flips slides).
+- **Video pages**: the player autoplays and goes full screen after 5 seconds, the D-pad can move through the
+  player's buttons and back out to the cards below, and the **next video plays automatically** when one ends.
+  At the end of the list it leaves full screen.
+- **English by default** with a language toggle in the header, and the Google translate widget hidden.
+- **Consistent desktop-style layout** (1440 px wide): four cards across, even margins, clean titles.
+- Launch splash screen, header that scrolls with the page, return-to-top button, favorites shortcut.
 
 ## Remote control
 
-- Arrows / OK: the WebView's built-in directional navigation moves between
-  links and buttons.
-- Back: leaves fullscreen video, then goes back a page, then closes the app.
-- Play/Pause, Rewind, Fast-forward: control the first video on the page
-  (rewind and fast-forward jump 10 seconds).
+| Button | Action |
+| --- | --- |
+| D-pad arrows | Move between cards, header items and rows |
+| OK / Select | Open the focused card or press the focused button |
+| Down (in the player) | Leave the player and jump to the cards below |
+| Left / Right (in the player) | Move between the player's buttons |
+| Menu / Info / Yellow | Add or remove the focused card from favorites |
+| Back | Leave full screen, then go back a page, then exit |
+| Play / Pause, Rewind, Fast-forward | Control the video |
 
-## Changing the start page
+## Install (no coding needed)
 
-`gradle.properties` holds `tvhub.startUrl`. Change it and rebuild to open a
-different address.
+1. Download `app-debug.apk` from the [latest release](../../releases/latest).
+2. Copy it to your TV, for example with a file manager such as **X-plore** (its WiFi file sharing works from a
+   computer's web browser) or a USB drive.
+3. On the TV, allow installs from that file manager when prompted, then open the APK to install it.
+4. Open **TV Viewer** from your apps row and sign in to your own account.
 
-## Limits
+If Android says the package is invalid, the file was probably cut short during transfer. Compare the file size on
+the TV with the original and copy it again.
 
-- A WebView has no built-in "translate page" feature. If you need English,
-  open the site in a TV browser with page translation instead, or add a
-  translation script to the app later.
-- Sites that require DRM-protected playback may not play in a plain WebView.
-- The icon and banner use Stardom artwork, so keep this app for your own
-  sideloaded use rather than publishing it.
+## Build it yourself
+
+Requires [Android Studio](https://developer.android.com/studio) (JDK 17 or newer).
+
+1. Open this folder in Android Studio and let Gradle sync.
+2. **Build > Generate App Bundles or APKs > Generate APKs**.
+3. The file is `app/build/outputs/apk/debug/app-debug.apk`.
+
+Pull requests and pushes are also built automatically by GitHub Actions, and tagged versions (`v1.3.12` and so on)
+publish an APK on the Releases page.
+
+### Using your own icon and logos
+
+The repository only contains generic artwork. To use your own images in your own builds without committing them,
+see [docs/PRIVATE_BRANDING.md](docs/PRIVATE_BRANDING.md).
+
+## How it works
+
+Everything is in `app/src/main/java/com/example/tvhub/MainActivity.kt`: a WebView plus injected CSS and JavaScript
+that restyle the pages, rebuild the home grid, drive the focus ring and handle the player and remote keys. The site
+can change at any time, so things may break; please open an issue when they do.
+
+## Contributing
+
+Ideas, bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[changelog](CHANGELOG.md).
+
+## License
+
+Code: [MIT](LICENSE). The license does not cover any third-party names, logos or artwork.

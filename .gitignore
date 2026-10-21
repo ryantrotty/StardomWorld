@@ -1,6 +1,24 @@
-# Project exclude paths
-/.gradle/
-/app/build/
-/app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/app/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes/
-/build/
+# Gradle / build output
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Android Studio / IntelliJ (each developer's own settings)
+.idea/
+*.iml
+
+# Machine-specific (contains your local SDK path)
+local.properties
+
+# macOS / Windows junk
+.DS_Store
+Thumbs.db
+
+# Signing keys: never commit these
+*.jks
+*.keystore
+
+# Your own private artwork (see docs/PRIVATE_BRANDING.md)
+branding-private/

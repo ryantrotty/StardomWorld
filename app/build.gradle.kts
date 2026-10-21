@@ -23,6 +23,18 @@ android {
         buildConfig = true
     }
 
+    // Optional private artwork: if a "branding-private/res" folder exists next to this project,
+    // its images override the generic ones in src/main/res. The folder is git-ignored, so your
+    // own icon/banner/logos stay on your machine and public builds use the generic artwork.
+    // See docs/PRIVATE_BRANDING.md.
+    val privateBranding = rootProject.file("branding-private/res")
+    if (privateBranding.exists()) {
+        sourceSets {
+            getByName("debug") { res.srcDir(privateBranding) }
+            getByName("release") { res.srcDir(privateBranding) }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
