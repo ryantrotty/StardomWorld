@@ -1,0 +1,32 @@
+# Changelog
+
+All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
+
+## Unreleased
+- Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
+  license, contributing guide, issue/PR templates and automatic APK builds.
+
+## 1.3.12
+- Card titles wrap at word boundaries instead of splitting words.
+
+## 1.3.11
+- Sub-pages use the same four-column card grid and gaps as the home page.
+
+## 1.3.10
+- Sub-pages use the same 1440 px width and 24 px side margins as the home page.
+
+## 1.3.9
+- Next video plays automatically when one ends; full screen exits at the end of the list.
+
+## 1.3.8
+- D-pad can navigate the video player's buttons and move out of the player.
+
+## 1.3.7
+- Gold focus ring around the whole video card on sub-pages, matching the home page.
+
+## 1.3.5
+- Rotating hero banner built from the site's live slides.
+
+## Earlier
+- Fixed 1440 px desktop layout, English by default, splash screen, header and cursor tweaks, https login fix,
+  Stardom-style launcher banner and icon.
