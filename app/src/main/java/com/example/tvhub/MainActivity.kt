@@ -1174,7 +1174,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.3.4 (Main Branch)"
+            text = "v1.3.5 (feature/rotating-hero-patch)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
@@ -1762,27 +1762,154 @@ class MainActivity : Activity() {
             return result;
           }
 
+          var HERO_FALLBACK = 'https://www.stardom-world.com/file_upload/images/mv_06.jpg';
+
+          function heroUrlOf(img) {
+            var u = img.getAttribute('data-src') || img.getAttribute('data-lazy') || img.getAttribute('data-original') || img.currentSrc || img.src || '';
+            if (!u || u.indexOf('data:') === 0) u = img.src || '';
+            if (!u || u.indexOf('data:') === 0) return '';
+            try { u = new URL(u, location.href).href; } catch (err) {}
+            return u;
+          }
+
+          function isHeroDup(el) {
+            return !!(el.closest && el.closest('.slick-cloned, .swiper-slide-duplicate, .owl-item.cloned'));
+          }
+
+          // Reads every slide of the site's own hero banner from the live page
+          // (the hero is built late by the site's scripts, so this is re-run
+          // every second) and hides the original so it can't show at the bottom.
+          function collectHeroSlides() {
+            var grid = document.getElementById('tv-test-grid');
+            var slides = [];
+            var seen = {};
+            var sources = [];
+
+            function add(url, link, srcEl) {
+              if (!url || seen[url]) return;
+              seen[url] = true;
+              slides.push({ href: link || '#', bgUrl: url });
+              if (srcEl && sources.indexOf(srcEl) === -1) sources.push(srcEl);
+            }
+
+            var sel = '.main-visual, .box-main-visual, .slider-inner, [class*="main-visual"], [class*="mainvisual"], [class*="mainVisual"], [class*="hero"], [class*="Hero"], [class*="kv"], .swiper, .swiper-container, .slick-slider, [class*="slider"], [class*="carousel"]';
+            var cands = Array.from(document.querySelectorAll(sel)).filter(function(el) {
+              if (grid && grid.contains(el)) return false;
+              if (el.id && el.id.indexOf('tv-') === 0) return false;
+              if (el.closest('header, footer, .box-header, #tv-header-flex-wrapper, #tv-test-grid')) return false;
+              if (el.querySelector('.content-list-item, article, .tile-inner')) return false;
+              return !!el.querySelector('img, [style*="background-image"]');
+            });
+
+            cands.forEach(function(cand) {
+              Array.from(cand.querySelectorAll('img')).forEach(function(img) {
+                if (isHeroDup(img)) return;
+                if (img.naturalWidth > 0 && img.naturalWidth < 500) return;
+                var a = img.closest('a[href]');
+                add(heroUrlOf(img), a ? a.href : '', cand);
+              });
+              var bgEls = Array.from(cand.querySelectorAll('[style*="background-image"]'));
+              if (cand.getAttribute('style') && cand.getAttribute('style').indexOf('background-image') !== -1) bgEls.unshift(cand);
+              bgEls.forEach(function(el) {
+                if (isHeroDup(el)) return;
+                var m = (el.style.backgroundImage || '').match(/url\(['"]?(.*?)['"]?\)/);
+                if (m && m[1] && m[1].indexOf('data:') === -1) {
+                  var a = el.closest('a[href]') || el.querySelector('a[href]');
+                  add(m[1], a ? a.href : '', cand);
+                }
+              });
+            });
+
+            // Last resort: any very wide banner-shaped image outside the grid/header
+            if (slides.length === 0) {
+              Array.from(document.querySelectorAll('img')).forEach(function(img) {
+                if (grid && grid.contains(img)) return;
+                if (img.closest('header, footer, .box-header, #tv-header-flex-wrapper, #tv-test-grid, .content-list-item, article')) return;
+                if (img.naturalWidth >= 1000 && img.naturalWidth / Math.max(img.naturalHeight, 1) >= 1.8) {
+                  var a = img.closest('a[href]');
+                  add(heroUrlOf(img), a ? a.href : '', img.closest('section, .box-section, div') || img);
+                }
+              });
+            }
+
+            return { slides: slides.slice(0, 8), sources: sources };
+          }
+
           function extractHeroBanner() {
-            var heroImg = document.querySelector('.main-visual img, .slider-inner img, [class*="main-visual"] img, [class*="hero"] img');
-            var heroLink = document.querySelector('.main-visual a[href], .slider-inner a[href], [class*="main-visual"] a[href]');
+            var found = collectHeroSlides();
+            if (found.slides.length > 0) return found.slides[0];
+            return { href: '#', bgUrl: HERO_FALLBACK };
+          }
 
-            var href = heroLink ? heroLink.href : (document.querySelector('a[href*="/contents/"], a[href*="/set/"]')?.href || '#');
-            var bgUrl = heroImg ? heroImg.src : '';
+          function showHeroSlide(idx) {
+            var slides = window.__tvHeroSlides || [];
+            if (!slides.length) return;
+            idx = (idx + slides.length) % slides.length;
+            window.__tvHeroIdx = idx;
+            var card = document.querySelector('.tv-hero-card');
+            if (!card) return;
+            var img = card.querySelector('img');
+            if (!img) return;
+            var slide = slides[idx];
+            img.style.transition = 'opacity 0.35s ease';
+            img.style.opacity = '0';
+            setTimeout(function() {
+              img.src = slide.bgUrl;
+              card.href = slide.href || '#';
+              img.style.opacity = '1';
+            }, 350);
+            var dots = document.querySelectorAll('#tv-hero-dots span');
+            dots.forEach(function(d, i) {
+              d.style.background = (i === idx) ? '#FFB347' : 'rgba(255,255,255,0.55)';
+            });
+          }
 
-            if (!bgUrl) {
-              var bgEl = document.querySelector('.main-visual, .slider-inner, [class*="main-visual"]');
-              if (bgEl) {
-                var bg = bgEl.style.backgroundImage || getComputedStyle(bgEl).backgroundImage;
-                var m = bg.match(/url\(['"]?(.*?)['"]?\)/);
-                if (m && m[1] && m[1].indexOf('data:') === -1) bgUrl = m[1];
-              }
+          function updateHero() {
+            if (!isHomePage()) return;
+            var found = collectHeroSlides();
+
+            // Hide the site's original hero (wherever it ended up) every tick
+            found.sources.forEach(function(el) {
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('visibility', 'hidden', 'important');
+              el.style.setProperty('height', '0px', 'important');
+            });
+
+            if (!found.slides.length) return;
+            var sig = found.slides.map(function(x) { return x.bgUrl; }).join('|');
+            if (window.__tvHeroSig === sig) return;
+            window.__tvHeroSig = sig;
+            window.__tvHeroSlides = found.slides;
+
+            var container = document.getElementById('tv-hero-container');
+            if (!container) return;
+            container.style.position = 'relative';
+
+            var dots = document.getElementById('tv-hero-dots');
+            if (dots) dots.remove();
+            if (found.slides.length > 1) {
+              dots = document.createElement('div');
+              dots.id = 'tv-hero-dots';
+              dots.style.cssText = 'position:absolute; left:0; right:0; bottom:14px; text-align:center; pointer-events:none;';
+              found.slides.forEach(function() {
+                var d = document.createElement('span');
+                d.style.cssText = 'display:inline-block; width:12px; height:12px; border-radius:50%; margin:0 6px; background:rgba(255,255,255,0.55);';
+                dots.appendChild(d);
+              });
+              container.appendChild(dots);
             }
 
-            if (!bgUrl) {
-              bgUrl = 'https://www.stardom-world.com/file_upload/images/mv_06.jpg';
-            }
+            window.__tvHeroIdx = 0;
+            showHeroSlide(0);
 
-            return { href: href, bgUrl: bgUrl };
+            if (window.__tvHeroTimer) clearInterval(window.__tvHeroTimer);
+            if (found.slides.length > 1) {
+              window.__tvHeroTimer = setInterval(function() {
+                if (Date.now() < (window.__tvHeroPausedUntil || 0)) return;
+                if (!isHomePage()) return;
+                showHeroSlide((window.__tvHeroIdx || 0) + 1);
+              }, 5000);
+            }
           }
 
           function renderCustomTvGrid() {
@@ -1879,6 +2006,7 @@ class MainActivity : Activity() {
               insertTarget.parentNode.appendChild(gridDiv);
             }
 
+            updateHero();
             var firstFocus = gridDiv.querySelector('.tv-hero-card, .tv-card');
             if (firstFocus) firstFocus.focus();
           }
@@ -1928,6 +2056,17 @@ class MainActivity : Activity() {
 
               // A. Navigation on Hero Banner (.tv-hero-card)
               if (active.classList.contains('tv-hero-card')) {
+                if (e.keyCode === 37 || e.key === 'ArrowLeft' || e.keyCode === 39 || e.key === 'ArrowRight') {
+                  var heroSlides = window.__tvHeroSlides || [];
+                  if (heroSlides.length > 1) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.__tvHeroPausedUntil = Date.now() + 8000;
+                    showHeroSlide((window.__tvHeroIdx || 0) + ((e.keyCode === 37 || e.key === 'ArrowLeft') ? -1 : 1));
+                    return;
+                  }
+                }
+
                 if (e.keyCode === 40 || e.key === 'ArrowDown') {
                   var row1Card = document.querySelector('.tv-grid-row .tv-card');
                   if (row1Card) {
@@ -2062,7 +2201,7 @@ class MainActivity : Activity() {
           } else {
             renderCustomTvGrid();
           }
-          setInterval(function() { renderCustomTvGrid(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
+          setInterval(function() { renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
         })();
     """.trimIndent()
 
