@@ -375,19 +375,21 @@ class MainActivity : Activity() {
             line-height: 1.45em !important;
             min-height: 5.8em !important;
         }
-        /* Focus ring goes on the WHOLE card (thumbnail + title box), not on the inner
-           thumbnail link. The ring is drawn inset so the card's overflow:hidden and any
-           clipping carousel parents can't cut it down to a single line. */
-        .content-list-item a:focus, .content-list-item .content-thumbnail-box:focus, .content-list-item .content-thumbnail a:focus, a.tv-thumbnail-link:focus {
+        /* Focus ring goes on the WHOLE card (thumbnail + title box), identical to the
+           home page cards. Anything focusable INSIDE a card gets no ring of its own
+           (this also beats the generic orange/red *:focus ring from focusJs). */
+        .content-list-item *:focus, article *:focus, .tile-inner *:focus, a.tv-thumbnail-link:focus {
             outline: none !important;
             box-shadow: none !important;
             transform: none !important;
+            border: none !important;
         }
         .content-list-item article:focus-within, .content-list-item .tile-inner:focus-within:not(article *), .content-list-item article:focus, .tv-card:focus {
             outline: 3px solid #FFD700 !important;
-            outline-offset: -3px !important;
+            outline-offset: 2px !important;
             box-shadow: 0 0 16px rgba(255, 215, 0, 0.8) !important;
             transform: scale(1.03) !important;
+            opacity: 1 !important;
             position: relative !important;
             z-index: 5 !important;
             transition: transform 0.15s ease-in-out, outline 0.15s ease-in-out !important;
@@ -395,7 +397,7 @@ class MainActivity : Activity() {
         .content-thumbnail-box, .tile-inner, .content-list-item article {
             transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
         }
-        .content-thumbnail-box:hover, .content-list-item article:hover {
+        .content-list-item article:hover:not(:focus-within) {
             transform: scale(1.03) !important;
             opacity: 0.85 !important;
         }
@@ -1184,7 +1186,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.3.6 (feature/card-focus-patch)"
+            text = "v1.3.7 (card-focus-v2.patch)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
