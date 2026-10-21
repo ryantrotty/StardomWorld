@@ -1174,7 +1174,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.2.3 (feature/subpage-text-padding)"
+            text = "v1.3.4 (Main Branch)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
