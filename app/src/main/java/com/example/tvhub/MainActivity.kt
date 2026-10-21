@@ -420,9 +420,34 @@ class MainActivity : Activity() {
             margin-left: 0 !important;
             margin-right: 0 !important;
         }
+        /* Card grid identical to the home page: 4 across, 24px gaps, left-aligned. */
+        .content-list:not(.slick-initialized) {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: flex-start !important;
+            gap: 24px !important;
+            padding: 12px 0 !important;
+        }
+        .content-list:not(.slick-initialized) > .content-list-item, .content-list:not(.slick-initialized) > div {
+            flex: 0 0 calc(25% - 18px) !important;
+            width: calc(25% - 18px) !important;
+            max-width: calc(25% - 18px) !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            float: none !important;
+            box-sizing: border-box !important;
+        }
+        /* Carousels: 12px padding on each side of every slide = the same 24px gap */
         .slick-list {
-            padding: 12px 10px !important;
-            margin: 0 -10px !important;
+            padding: 12px 0 !important;
+            margin: 0 -12px !important;
+        }
+        .slick-slide {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            box-sizing: border-box !important;
         }
     """.trimIndent()
 
