@@ -1405,6 +1405,17 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
+        fun exitFullScreen() {
+            handler.post {
+                if (customView != null) hideCustomView()
+                webView.evaluateJavascript(
+                    "(function(){ try { if (document.webkitExitFullscreen) document.webkitExitFullscreen(); else if (document.exitFullscreen) document.exitFullscreen(); } catch(e) {} })()",
+                    null
+                )
+            }
+        }
+
+        @android.webkit.JavascriptInterface
         fun logDebug(msg: String) {
             handler.post {
                 Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
@@ -1640,6 +1651,105 @@ class MainActivity : Activity() {
             try { window.AndroidHost.setPlayerFocused(false); } catch (e) {}
             return !!target;
           };
+        })();
+    """.trimIndent()
+
+    // When the current video ends: play the next video in the (chronological) carousel under the
+    // player, or leave fullscreen and stay on the contents page when the list is finished.
+    private val autoNextJs = """
+        (function(){
+          if (window.__tvAutoNextAttached) return;
+          window.__tvAutoNextAttached = true;
+
+          function pathOf(h) {
+            try { return new URL(h, location.href).pathname.replace(/\/+$/, ''); } catch (e) { return ''; }
+          }
+          function idOf(h) {
+            var m = pathOf(h).match(/(\d+)$/);
+            return m ? m[1] : pathOf(h);
+          }
+
+          // Ordered hrefs of the first carousel under the player (already reversed to chronological)
+          function carouselList() {
+            var carousels = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide');
+            if (!carousels.length) return [];
+            var items = Array.from(carousels[0].querySelectorAll('.content-list-item, .sub-category-list-item')).filter(function(el) {
+              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned');
+            });
+            var out = [];
+            items.forEach(function(it) {
+              var a = it.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+              if (a && a.href && out.indexOf(a.href) === -1) out.push(a.href);
+            });
+            return out;
+          }
+
+          function indexIn(list, href) {
+            var id = idOf(href);
+            for (var i = 0; i < list.length; i++) {
+              if (idOf(list[i]) === id) return i;
+            }
+            return -1;
+          }
+
+          function onEnded() {
+            if (window.__tvAutoNextFired) return;
+            window.__tvAutoNextFired = true;
+
+            var list = carouselList();
+            var pos = indexIn(list, location.href);
+            var stored = null;
+            try { stored = JSON.parse(sessionStorage.getItem('tvAutoNextList') || 'null'); } catch (e) {}
+
+            // This page's carousel may not contain the current video (or be empty): use the
+            // list remembered from the previous auto-advance instead.
+            if (pos < 0 && stored && stored.length) {
+              var sp = indexIn(stored, location.href);
+              if (sp >= 0) { list = stored; pos = sp; }
+            }
+
+            var next = list[pos + 1];
+            if (next) {
+              try { sessionStorage.setItem('tvAutoNextList', JSON.stringify(list)); } catch (e) {}
+              location.href = next;
+            } else {
+              try { sessionStorage.removeItem('tvAutoNextList'); } catch (e) {}
+              try { window.AndroidHost.exitFullScreen(); } catch (e) {}
+            }
+          }
+
+          function hook() {
+            // HTML5 video
+            Array.from(document.querySelectorAll('video')).forEach(function(v) {
+              if (!v.__tvEndedHooked) {
+                v.__tvEndedHooked = true;
+                v.addEventListener('ended', onEnded);
+              }
+            });
+
+            // Vimeo iframe: official Player API when the page loaded it, otherwise raw postMessage
+            Array.from(document.querySelectorAll('iframe[src*="vimeo.com"]')).forEach(function(iframe) {
+              if (!iframe.__tvFinishHooked && typeof Vimeo !== 'undefined' && Vimeo.Player) {
+                try {
+                  var player = new Vimeo.Player(iframe);
+                  player.on('ended', onEnded);
+                  iframe.__tvFinishHooked = true;
+                } catch (e) {}
+              }
+              try {
+                iframe.contentWindow.postMessage('{"method":"addEventListener","value":"finish"}', '*');
+              } catch (e) {}
+            });
+          }
+
+          window.addEventListener('message', function(ev) {
+            try {
+              var data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
+              if (data && (data.event === 'finish' || data.event === 'ended')) onEnded();
+            } catch (e) {}
+          });
+
+          setInterval(hook, 1500);
         })();
     """.trimIndent()
 
@@ -2284,6 +2394,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
+        view.evaluateJavascript(autoNextJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
     }
