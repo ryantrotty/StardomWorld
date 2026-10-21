@@ -415,6 +415,8 @@ class MainActivity : Activity() {
     private var density = 1f
 
     private var cursorMode = false
+    // True while keyboard focus is inside the embedded video player iframe (set by playerNavJs)
+    @Volatile private var playerFocused = false
     private var cursorX = 0f
     private var cursorY = 0f
 
@@ -1398,6 +1400,11 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
+        fun setPlayerFocused(focused: Boolean) {
+            playerFocused = focused
+        }
+
+        @android.webkit.JavascriptInterface
         fun logDebug(msg: String) {
             handler.post {
                 Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
@@ -1588,6 +1595,53 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+
+    // Lets the D-pad escape the cross-origin video player (Vimeo iframe). The page cannot see keys
+    // pressed inside the iframe, so the page only reports "player has focus" to Android, and
+    // dispatchKeyEvent then handles Up/Down/Left/Right itself while that flag is set.
+    private val playerNavJs = """
+        (function(){
+          if (window.__tvPlayerNavAttached) return;
+          window.__tvPlayerNavAttached = true;
+
+          var last = false;
+          function check() {
+            var ae = document.activeElement;
+            var inPlayer = !!(ae && ae.tagName === 'IFRAME' && /vimeo|player/.test(ae.src || ''));
+            if (inPlayer !== last) {
+              last = inPlayer;
+              try { window.AndroidHost.setPlayerFocused(inPlayer); } catch (e) {}
+            }
+          }
+          setInterval(check, 150);
+          window.addEventListener('blur', check);
+          window.addEventListener('focus', check);
+
+          window.__tvLeavePlayer = function(dir) {
+            var iframe = document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]');
+            var target = null;
+            if (dir === 'down') {
+              var cards = Array.from(document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"], .content-list-item a[href*="/set/"]')).filter(function(a) {
+                if (a.closest('.slick-cloned')) return false;
+                var r = a.getBoundingClientRect();
+                if (r.width === 0 && r.height === 0) return false;
+                return !iframe || (iframe.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING);
+              });
+              target = cards[0] || null;
+            } else {
+              target = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+            }
+            try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
+            if (target) {
+              target.focus();
+              target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+            last = false;
+            try { window.AndroidHost.setPlayerFocused(false); } catch (e) {}
+            return !!target;
+          };
+        })();
+    """.trimIndent()
 
     private val cardFavoriteToggleJs = """
         (function(){
@@ -2229,6 +2283,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
+        view.evaluateJavascript(playerNavJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
     }
@@ -2306,6 +2361,31 @@ class MainActivity : Activity() {
                         webView.goBack()
                         return true
                     }
+                }
+            }
+        }
+
+        // Focus is inside the video player: Up/Down leave it, Left/Right walk the player's
+        // own buttons (sent to the player as Tab / Shift+Tab). OK passes through to the button.
+        if (!cursorMode && playerFocused && customView == null) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
+                    if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                        val dir = if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) "down" else "up"
+                        playerFocused = false
+                        webView.evaluateJavascript("window.__tvLeavePlayer && window.__tvLeavePlayer('" + dir + "')", null)
+                    }
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    val meta = if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                        KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON
+                    } else 0
+                    val tab = KeyEvent(
+                        event.downTime, event.eventTime, event.action,
+                        KeyEvent.KEYCODE_TAB, event.repeatCount, meta
+                    )
+                    return super.dispatchKeyEvent(tab)
                 }
             }
         }
