@@ -1047,86 +1047,6 @@ class MainActivity : Activity() {
                       }, true);
                     }
 
-                    // Favorites Toggle Function
-                    window.__tvToggleCardFavorite = function(list) {
-                      function logToScreen(msg, color) {}
-
-                      var $ = window.jQuery || window.$;
-                      if (!list) {
-                        logToScreen('ERROR: Empty element list received', '#FF4444');
-                        return false;
-                      }
-                      if (!Array.isArray(list)) list = [list];
-
-                      logToScreen('--- Options Pressed ---', '#FFD700');
-                      logToScreen('Elements under pointer: ' + list.length + ' items');
-
-                      var targetContentId = null;
-                      var targetCard = null;
-                      var isSetUrl = false;
-                      var matchedHref = '';
-
-                      for (var i = 0; i < list.length; i++) {
-                        var el = list[i];
-                        if (!el) continue;
-                        if (el.closest && el.closest('.slick-cloned')) continue;
-
-                        var parentBox = el.closest('.content-thumbnail-box, .content-thumbnail, article, .content-list-item, .tile-inner, .slick-slide, .content-info-box, .box-content') || (el.parentNode ? el.parentNode : el);
-                        var link = (parentBox ? parentBox.querySelector('a[href*="/contents/"], a[href*="/set/"], a[href]') : null) ||
-                                   el.closest('a[href*="/contents/"], a[href*="/set/"], a[href]') ||
-                                   el.querySelector('a[href*="/contents/"], a[href*="/set/"], a[href]');
-
-                        if (link) {
-                          var rawHref = link.getAttribute('href') || link.href || '';
-                          var match = rawHref.match(/(?:contents|set)\/(\d+)/);
-                          if (match && match[1]) {
-                            targetContentId = match[1];
-                            matchedHref = rawHref;
-                            targetCard = el.closest('article, .content-list-item, .tile-inner, .slick-slide') || el;
-                            break;
-                          }
-                        }
-                      }
-
-                      if (!targetContentId) {
-                        logToScreen('FAILED: No /contents/ or /set/ ID found under cursor', '#FF4444');
-                        return false;
-                      }
-
-                      logToScreen('MATCH: ID=' + targetContentId + ' | Type=' + (isSetUrl ? 'Set' : 'Content'), '#00FFFF');
-                      logToScreen('URL: ' + matchedHref.substring(0, 50) + '...', '#88FF88');
-
-                      var isFavPage = window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1;
-                      var apiType = isFavPage ? 'DELETE' : 'POST';
-
-                      if (isFavPage && targetCard) {
-                        targetCard.style.setProperty('opacity', '0.3', 'important');
-                      }
-
-                      if ($ && $.apiCall) {
-                        var endpointUrl = '/user_api/contents/' + targetContentId + '/favorites';
-                        logToScreen('API: Sending ' + apiType + ' ' + endpointUrl, '#FFFF00');
-
-                        $.apiCall({
-                          url: endpointUrl,
-                          type: apiType
-                        }).done(function(data) {
-                          logToScreen('SUCCESS 200 OK: ' + (isFavPage ? 'Removed' : 'Added to Favorites!'), '#00FF66');
-                          if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                            window.AndroidHost.logDebug(isFavPage ? 'Removed from Favorites' : '♥ Added to Favorites!');
-                          }
-                        }).fail(function(jqXHR) {
-                          logToScreen('API FAIL HTTP ' + jqXHR.status + ': ' + (jqXHR.responseText || ''), '#FF4444');
-                          if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                            window.AndroidHost.logDebug('Please log in on Stardom World to sync favorites');
-                          }
-                        });
-                      } else {
-                        logToScreen('ERROR: jQuery $.apiCall not available', '#FF4444');
-                      }
-                      return true;
-                    };
-
                     applyDomCustomizations();
                     if (!window.__tvDomTimer) {
                       window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
@@ -1790,46 +1710,111 @@ class MainActivity : Activity() {
           if (window.__tvCardFavoriteAttached) return;
           window.__tvCardFavoriteAttached = true;
 
-          function toggleCardFavorite(el) {
+          function toggleCardFavorite(input) {
             var $ = window.jQuery || window.$;
-            if (!el) return false;
+            var targets = [];
 
-            // Strict image-thumbnail check
-            var thumbBox = el.closest('.content-thumbnail-box, .content-thumbnail');
-            if (!thumbBox) return false;
+            if (Array.isArray(input) || (input && typeof input.length === 'number' && !(input instanceof HTMLElement))) {
+              for (var i = 0; i < input.length; i++) {
+                if (input[i]) targets.push(input[i]);
+              }
+            } else if (input) {
+              targets.push(input);
+            }
 
-            var link = thumbBox.querySelector('a[href*="/contents/"], a[href*="/set/"]') ||
-                       thumbBox.closest('a[href*="/contents/"], a[href*="/set/"]');
+            if (document.activeElement && targets.indexOf(document.activeElement) === -1) {
+              targets.push(document.activeElement);
+            }
 
-            if (!link && el.tagName === 'A') link = el;
-            if (!link || !link.href) return false;
+            var targetContentId = null;
+            var targetCard = null;
 
-            var href = link.href || '';
-            var match = href.match(/\/(?:contents|set)\/(\d+)/);
-            if (!match) return false;
+            for (var j = 0; j < targets.length; j++) {
+              var el = targets[j];
+              if (!el || typeof el.closest !== 'function') continue;
+              if (el.closest('.slick-cloned')) continue;
 
-            var contentId = match[1];
+              var cardContainer = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail-box, .content-thumbnail, .tv-card, .box-content') || el;
+              var link = (cardContainer ? cardContainer.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
+                         el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
+                         el.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+
+              if (link) {
+                var href = link.getAttribute('href') || link.href || '';
+                var match = href.match(/(?:contents|set)\/(\d+)/);
+                if (match && match[1]) {
+                  targetContentId = match[1];
+                  targetCard = cardContainer;
+                  break;
+                }
+              }
+            }
+
+            if (!targetContentId) return false;
+
             var isFavPage = window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1;
-            var apiType = isFavPage ? 'DELETE' : 'POST';
-
-            if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-              window.AndroidHost.logDebug(isFavPage ? 'Removed from Favorites' : '♥ Added to Favorites!');
-            }
-
-            if (isFavPage) {
-              var parentCard = thumbBox.closest('article, .content-list-item, .tile-inner, .slick-slide') || thumbBox;
-              parentCard.style.setProperty('opacity', '0.3', 'important');
-            }
+            var isFavorited = isFavPage || (targetCard && (targetCard.classList.contains('is-favorite') || targetCard.dataset.isFav === 'true'));
+            var apiType = isFavorited ? 'DELETE' : 'POST';
 
             if ($ && $.apiCall) {
               $.apiCall({
-                url: '/user_api/contents/' + contentId + '/favorites',
+                url: '/user_api/contents/' + targetContentId + '/favorites',
                 type: apiType
+              }).done(function(data) {
+                if (apiType === 'DELETE') {
+                  if (targetCard) {
+                    targetCard.classList.remove('is-favorite');
+                    targetCard.dataset.isFav = 'false';
+                    if (isFavPage) targetCard.style.setProperty('opacity', '0.3', 'important');
+                  }
+                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                    window.AndroidHost.logDebug('Removed from Favorites');
+                  }
+                } else {
+                  if (targetCard) {
+                    targetCard.classList.add('is-favorite');
+                    targetCard.dataset.isFav = 'true';
+                  }
+                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                    window.AndroidHost.logDebug('♥ Added to Favorites!');
+                  }
+                }
               }).fail(function(jqXHR) {
                 if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
                   window.AndroidHost.logDebug('Please log in on Stardom World to sync favorites');
+                } else if (jqXHR.status === 409 || (jqXHR.responseJSON && jqXHR.responseJSON.message === 'Already favorited')) {
+                  $.apiCall({
+                    url: '/user_api/contents/' + targetContentId + '/favorites',
+                    type: 'DELETE'
+                  }).done(function() {
+                    if (targetCard) {
+                      targetCard.classList.remove('is-favorite');
+                      targetCard.dataset.isFav = 'false';
+                    }
+                    if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                      window.AndroidHost.logDebug('Removed from Favorites');
+                    }
+                  });
+                } else {
+                  var newFavState = !isFavorited;
+                  if (targetCard) {
+                    if (newFavState) {
+                      targetCard.classList.add('is-favorite');
+                      targetCard.dataset.isFav = 'true';
+                    } else {
+                      targetCard.classList.remove('is-favorite');
+                      targetCard.dataset.isFav = 'false';
+                    }
+                  }
+                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                    window.AndroidHost.logDebug(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
+                  }
                 }
               });
+            } else {
+              if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
+                window.AndroidHost.logDebug('Favorites API not available');
+              }
             }
             return true;
           }
@@ -2488,10 +2473,12 @@ class MainActivity : Activity() {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
                 KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
-                    webView.evaluateJavascript(
-                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y) || [document.activeElement]; if(window.__tvToggleCardFavorite){ return window.__tvToggleCardFavorite(list); } return false; })()",
-                        null
-                    )
+                    val evalJs = if (cursorMode) {
+                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y); return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(list) : false; })()"
+                    } else {
+                        "(function(){ return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(document.activeElement) : false; })()"
+                    }
+                    webView.evaluateJavascript(evalJs, null)
                     return true
                 }
 
