@@ -401,6 +401,15 @@ class MainActivity : Activity() {
             transform: scale(1.03) !important;
             opacity: 0.85 !important;
         }
+        /* Wrap titles at word boundaries only (the site's Japanese-oriented CSS can break
+           English words mid-word). A single over-long word still wraps instead of overflowing. */
+        .content-info-box, .content-info-box *, .content-list-item h3, .content-list-item h3 *, .ttl-xs, .ttl-xs * {
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+            word-wrap: break-word !important;
+            hyphens: none !important;
+            -webkit-hyphens: none !important;
+        }
         /* Same page margins as the home page grid: 1440px max width, 24px side padding,
            and room around carousels so edge cards (and their focus ring) are never clipped. */
         .container, .container-fluid {
@@ -1211,7 +1220,7 @@ class MainActivity : Activity() {
         )
 
         val branchBadge = TextView(this).apply {
-            text = "v1.3.10 (feature/page-margins-patch)"
+            text = "v1.3.12 (feature/title-wrap-patch)"
             setTextColor(Color.parseColor("#FFD700"))
             textSize = 12f
             setPadding(0, 0, 30, 25)
@@ -2175,7 +2184,7 @@ class MainActivity : Activity() {
 
             var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
             var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
-            var titleCss = 'padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
+            var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
 
             if (allRowsData && allRowsData.length > 0) {
               allRowsData.forEach(function(rowSec) {
