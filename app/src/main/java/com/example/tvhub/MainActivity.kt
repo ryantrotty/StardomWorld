@@ -26,7 +26,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 
 /**
@@ -1139,21 +1138,6 @@ class MainActivity : Activity() {
             )
         )
 
-        val branchBadge = TextView(this).apply {
-            text = "v1.3.12 (feature/title-wrap-patch)"
-            setTextColor(Color.parseColor("#FFD700"))
-            textSize = 12f
-            setPadding(0, 0, 30, 25)
-            alpha = 0.85f
-        }
-        splashView.addView(
-            branchBadge,
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM or Gravity.END
-            )
-        )
         root.addView(
             splashView,
             FrameLayout.LayoutParams(

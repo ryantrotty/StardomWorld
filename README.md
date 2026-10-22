@@ -53,10 +53,17 @@ Requires [Android Studio](https://developer.android.com/studio) (JDK 17 or newer
 Pull requests and pushes are also built automatically by GitHub Actions, and tagged versions (`v1.3.12` and so on)
 publish an APK on the Releases page.
 
-### Using your own icon and logos
+### Customizing Artwork & Logos
 
-The repository only contains generic artwork. To use your own images in your own builds without committing them,
-see [docs/PRIVATE_BRANDING.md](docs/PRIVATE_BRANDING.md).
+The repository ships with generic artwork ("TV VIEWER" gold star). If you build the app yourself and want to use custom logos, app icon, or title, add them to `branding-private/` (which is git-ignored):
+
+- **`branding-private/res/drawable-nodpi/ic_launcher.png`** (App Icon, 512 × 512 px)
+- **`branding-private/res/drawable-nodpi/banner.png`** (TV Banner, 1000 × 562 px)
+- **`branding-private/res/drawable-nodpi/header_logo.png`** (Header Logo, 1100 × 200 px transparent)
+- **`branding-private/res/drawable-nodpi/splash_logo.png`** (Splash Screen Logo, 1100 × 271 px)
+- **`branding-private/res/values/strings.xml`** (`<string name="app_name">Your App Name</string>`)
+
+For full setup instructions and image specifications, see [docs/PRIVATE_BRANDING.md](docs/PRIVATE_BRANDING.md).
 
 ## How it works
 

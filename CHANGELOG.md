@@ -6,6 +6,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.15
+- Restored remote Options button (`Menu`, `Info`, `Yellow`) to add or remove focused video cards to/from Favorites with Toast confirmation.
+- Removed version number and branch badge from the launch splash screen.
+- Added clear custom artwork branding specifications to documentation.
+
 ## 1.3.12
 - Card titles wrap at word boundaries instead of splitting words.
 

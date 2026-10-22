@@ -1,40 +1,62 @@
-# Using your own artwork (kept out of git)
+# Custom Artwork & Private Branding Guide
 
-The public repository ships **generic placeholder** images (a gold star and the words "TV VIEWER").
-If you want your own icon, banner or logos in *your* builds, put them in a folder that git ignores:
+The public repository ships with **generic placeholder artwork** (a gold star and the name "TV VIEWER").
+If you build the app yourself and want to use your own private logos, app icon, home-screen banner, and app title, you can add them to a local `branding-private/` directory. 
 
+Because `branding-private/` is listed in `.gitignore`, your custom images remain private on your computer and will **never** be committed or pushed to Git.
+
+---
+
+## Folder Structure
+
+Create a directory named `branding-private` at the root of the project (next to `app/` and `gradle/`):
+
+```text
+stardom-tv/
+└── branding-private/
+    └── res/
+        ├── drawable-nodpi/
+        │   ├── ic_launcher.png
+        │   ├── banner.png
+        │   ├── header_logo.png
+        │   └── splash_logo.png
+        └── values/
+            └── strings.xml
 ```
-branding-private/
-  res/
-    drawable-nodpi/
-      ic_launcher.png   app icon (512 x 512)
-      banner.png        Android TV home-screen banner (about 1000 x 562)
-      header_logo.png   logo injected into the site header (about 1100 x 200, transparent)
-      splash_logo.png   launch splash image (about 1100 x 271, black background)
-```
 
-```
-branding-private/
-  res/
-    values/
-      strings.xml       optional: your own app name (see below)
-```
+---
 
-- Use the **same file names** as in `app/src/main/res/drawable-nodpi/`. Any file you provide
-  replaces the generic one; any you leave out falls back to the generic one.
-- `branding-private/` is listed in `.gitignore`, so it is never committed or pushed.
-- The folder sits at the top level of the project, next to `app/` and `gradle/`.
-- After adding or changing files, run **Build > Clean Project**, then build as usual.
-- Please only use artwork you have the right to use, and don't publish it.
+## Image Specifications & File Names
 
-## Your own app name
+Place your custom PNG images into `branding-private/res/drawable-nodpi/` using these exact file names and recommended specs:
 
-The generic build is called "TV Viewer". To label your own build differently, create
-`branding-private/res/values/strings.xml`:
+| File Name | Description | Recommended Specs & Dimensions |
+| :--- | :--- | :--- |
+| **`ic_launcher.png`** | App Grid Icon | **512 × 512 px** (PNG, square icon for Android TV app grid) |
+| **`banner.png`** | Android TV Home Banner | **1000 × 562 px** or **1280 × 720 px** (16:9 aspect ratio PNG) |
+| **`header_logo.png`** | Site Header Logo | **1100 × 200 px** (Transparent PNG, placed top-left in web header) |
+| **`splash_logo.png`** | Launch Splash Screen Logo | **1100 × 271 px** (PNG on black background, centered on app start) |
+
+*Note: Any image file you provide in `branding-private/` overrides the generic version. Any file you omit automatically falls back to the generic build artwork.*
+
+---
+
+## Custom App Name Label
+
+By default, the generic build app name is **"TV Viewer"**. To customize the app title on your TV home screen, create `branding-private/res/values/strings.xml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Your App Name</string>
+    <string name="app_name">Stardom</string>
 </resources>
 ```
+
+---
+
+## How to Build with Your Private Branding
+
+1. Add your files to `branding-private/res/drawable-nodpi/` and `branding-private/res/values/strings.xml`.
+2. Open Android Studio and click **Build** ➔ **Clean Project**.
+3. Click **Build** ➔ **Generate App Bundles or APKs** ➔ **Build APK(s)** (or click the green **Run** button).
+4. Gradle will automatically detect `branding-private/res` and compile the APK with your custom logos and app title!
