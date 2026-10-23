@@ -8,7 +8,7 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 ## 1.3.20
 - Video player controls automatically hide after 8 seconds without input, or immediately when focus or cursor moves off the player.
-- Pressing OK, Left, or Right on the player restores the control overlay.
+- Fullscreen player handles Left/Right (seek 10 s, 30 s held), OK/Media Play-Pause (toggle play/pause) directly and auto-fades controls after 8 seconds.
 
 ## 1.3.18
 - User account names in the header display on a single line without wrapping.
