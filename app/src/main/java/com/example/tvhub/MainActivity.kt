@@ -418,6 +418,21 @@ class MainActivity : Activity() {
             transform: scale(1.03) !important;
             opacity: 0.85 !important;
         }
+        /* Home hero banner: focus is shown by the outline only, never by dimming the image.
+           (Covers site rules like a:hover/a:focus { opacity } and darkening overlays.) */
+        #tv-hero-container, #tv-hero-container a, a.tv-hero-card,
+        a.tv-hero-card:hover, a.tv-hero-card:focus, a.tv-hero-card:active,
+        a.tv-hero-card:hover img, a.tv-hero-card:focus img, a.tv-hero-card:active img {
+            opacity: 1 !important;
+            filter: none !important;
+            mix-blend-mode: normal !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        #tv-hero-container::before, #tv-hero-container::after,
+        a.tv-hero-card::before, a.tv-hero-card::after {
+            content: none !important;
+            display: none !important;
+        }
         /* Wrap titles at word boundaries only (the site's Japanese-oriented CSS can break
            English words mid-word). A single over-long word still wraps instead of overflowing. */
         .content-info-box, .content-info-box *, .content-list-item h3, .content-list-item h3 *, .ttl-xs, .ttl-xs * {
@@ -2229,11 +2244,11 @@ class MainActivity : Activity() {
             if (!img) return;
             var slide = slides[idx];
             img.style.transition = 'opacity 0.35s ease';
-            img.style.opacity = '0';
+            img.style.setProperty('opacity', '0', 'important');
             setTimeout(function() {
               img.src = slide.bgUrl;
               card.href = slide.href || '#';
-              img.style.opacity = '1';
+              img.style.setProperty('opacity', '1', 'important');
             }, 350);
             var dots = document.querySelectorAll('#tv-hero-dots span');
             dots.forEach(function(d, i) {
