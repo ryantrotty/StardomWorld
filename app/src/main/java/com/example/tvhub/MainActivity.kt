@@ -230,6 +230,17 @@ class MainActivity : Activity() {
         .global-nav-list.global-nav {
             display: none !important;
         }
+        .btn-wrap, .btn-wrap *, .box-header-btn, .box-header-btn *, [class*="user"], [class*="account"], .dropdown-toggle {
+            white-space: nowrap !important;
+            max-width: none !important;
+            width: auto !important;
+            overflow: visible !important;
+            word-break: normal !important;
+        }
+        #tv-lang-li {
+            margin-left: auto !important;
+            padding-left: 16px !important;
+        }
         #tv-section-select {
             width: 320px !important;
             max-width: 320px !important;
@@ -1004,8 +1015,23 @@ class MainActivity : Activity() {
                         bs.setProperty('list-style', 'none', 'important');
                         Array.from(btnWrap.children).forEach(function(li) {
                           li.style.setProperty('float', 'none', 'important');
-                          li.style.setProperty('margin', '0 4px', 'important');
+                          li.style.setProperty('margin', '0 6px', 'important');
                           li.style.setProperty('white-space', 'nowrap', 'important');
+                          li.style.setProperty('max-width', 'none', 'important');
+                          li.style.setProperty('width', 'auto', 'important');
+
+                          Array.from(li.querySelectorAll('*')).forEach(function(sub) {
+                            sub.style.setProperty('white-space', 'nowrap', 'important');
+                            sub.style.setProperty('max-width', 'none', 'important');
+                            sub.style.setProperty('width', 'auto', 'important');
+                            sub.style.setProperty('overflow', 'visible', 'important');
+                            sub.style.setProperty('word-break', 'normal', 'important');
+                          });
+
+                          if (li.id === 'tv-lang-li' || li.querySelector('#tv-lang-toggle-btn')) {
+                            li.style.setProperty('margin-left', 'auto', 'important');
+                            li.style.setProperty('padding-left', '16px', 'important');
+                          }
                         });
                       }
                     }

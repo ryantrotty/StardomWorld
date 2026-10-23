@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.18
+- User account names in the header display on a single line without wrapping.
+- Language toggle button is right-justified to accommodate longer user account names.
+
 ## 1.3.17
 - Header fits on a single row (logo, search, category menu, account buttons). The Favorites button only
   shows when you are signed in.
