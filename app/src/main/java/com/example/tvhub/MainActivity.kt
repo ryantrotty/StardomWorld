@@ -2,7 +2,19 @@ package com.example.tvhub
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Shader
 import android.os.Bundle
 import android.os.Handler
 import android.net.http.SslError
@@ -79,6 +91,8 @@ class MainActivity : Activity() {
 
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
+        // The splash never finishes sooner than this, so the progress bar always visibly travels.
+        private const val SPLASH_MIN_FILL_MS = 2600L
 
             private val TV_RAW_CSS = """
         html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
@@ -474,6 +488,8 @@ class MainActivity : Activity() {
     private lateinit var cursorView: ImageView
     private lateinit var splashView: FrameLayout
     private lateinit var splashLogo: ImageView
+    private lateinit var splashProgress: SplashProgressView
+    private var splashFinishing = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var density = 1f
@@ -1240,6 +1256,7 @@ class MainActivity : Activity() {
         splashView = FrameLayout(this).apply {
             setBackgroundColor(Color.BLACK)
             isClickable = true
+            clipChildren = false
         }
         splashLogo = ImageView(this).apply {
             setImageResource(R.drawable.splash_logo)
@@ -1254,6 +1271,32 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER
             )
+        )
+
+        // Gold progress bar with the wand riding its tip, directly under the logo.
+        val splashLogoW = (resources.displayMetrics.widthPixels * 0.6f).toInt()
+        val logoDrawable = splashLogo.drawable
+        val splashLogoH = if (logoDrawable != null && logoDrawable.intrinsicWidth > 0) {
+            splashLogoW * logoDrawable.intrinsicHeight / logoDrawable.intrinsicWidth
+        } else {
+            (splashLogoW * 0.25f).toInt()
+        }
+        splashProgress = SplashProgressView(
+            this,
+            BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
+            density,
+            HOT_X,
+            HOT_Y
+        ).apply { alpha = 0f }
+        splashView.addView(
+            splashProgress,
+            FrameLayout.LayoutParams(
+                splashLogoW,
+                (88 * density).toInt(),
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            ).apply {
+                topMargin = resources.displayMetrics.heightPixels / 2 + splashLogoH / 2 + (20 * density).toInt()
+            }
         )
 
         root.addView(
@@ -1403,16 +1446,29 @@ class MainActivity : Activity() {
             .setInterpolator(DecelerateInterpolator())
             .start()
 
-        // Dismiss splash automatically if page load takes longer than 3 seconds.
-        handler.postDelayed({ dismissSplash() }, SPLASH_MAX_MS)
+        splashProgress.animate().alpha(1f).setDuration(400).setInterpolator(DecelerateInterpolator()).start()
+        splashProgress.start()
+
+        // Safety net: if the page never reports ready, still finish (with the full animation).
+        handler.postDelayed({ requestSplashFinish() }, SPLASH_MAX_MS)
+    }
+
+    // Called when the page is ready. Waits until the bar has had a minimum time to travel, then runs
+    // the finish sequence (bar fills to the end, sparkle burst) and only then fades the splash out.
+    private fun requestSplashFinish() {
+        if (splashDone || splashFinishing) return
+        splashFinishing = true
+        val elapsed = SystemClock.uptimeMillis() - splashStartedAt
+        handler.postDelayed({
+            splashProgress.finish { dismissSplash() }
+        }, (SPLASH_MIN_FILL_MS - elapsed).coerceAtLeast(0L))
     }
 
     private fun onPageReady() {
         if (splashDone || splashDismissScheduled) return
         splashDismissScheduled = true
-        // 300ms initial black delay + 500ms fade in + 300ms hold = 1100ms total minimum splash duration
         val elapsed = SystemClock.uptimeMillis() - splashStartedAt
-        handler.postDelayed({ dismissSplash() }, (SPLASH_MIN_MS - elapsed).coerceAtLeast(0L))
+        handler.postDelayed({ requestSplashFinish() }, (SPLASH_MIN_MS - elapsed).coerceAtLeast(0L))
     }
 
     private fun dismissSplash() {
@@ -1435,7 +1491,7 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
-                dismissSplash()
+                requestSplashFinish()
             }
         }
 
@@ -3038,5 +3094,204 @@ class MainActivity : Activity() {
                 cursorView.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
             }
             .start()
+    }
+}
+
+
+/**
+ * Splash progress bar: a gold bar that fills toward ~92% while the page loads (fast at first, then
+ * slowing), with the wand riding the tip and a few twinkles trailing behind it. [finish] runs the
+ * ending: fill to 100%, a gold flash and a sparkle burst, then calls back so the splash can fade.
+ */
+private class SplashProgressView(
+    context: android.content.Context,
+    private val wand: Bitmap,
+    private val density: Float,
+    private val hotX: Float,
+    private val hotY: Float
+) : View(context) {
+
+    private var progress = 0f
+    private var burst = 0f          // 0..1 sparkle burst at the end
+    private var flash = 0f          // 0..1 bar brightening at the end
+    private var finishing = false
+    private var travel: ValueAnimator? = null
+    private val startTime = SystemClock.uptimeMillis()
+
+    private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x33FFFFFF }
+    private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        color = 0x55FFB347
+    }
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val shimmerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val sparklePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFE9A8.toInt() }
+    private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFB347.toInt() }
+    private val wandPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val clip = Path()
+    private val star = Path()
+    private val wandMatrix = Matrix()
+    private val rect = RectF()
+
+    // Fixed burst pattern (angle in radians, distance factor, size factor)
+    private val particles = Array(14) { i ->
+        val a = (i / 14f) * 6.2831855f + (i % 3) * 0.21f
+        floatArrayOf(a, 0.55f + (i * 37 % 10) / 14f, 0.55f + (i * 53 % 10) / 16f)
+    }
+
+    fun start() {
+        travel = ValueAnimator.ofFloat(0f, 0.92f).apply {
+            duration = 12000L
+            interpolator = DecelerateInterpolator(2.2f)
+            addUpdateListener {
+                progress = it.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    fun finish(onDone: () -> Unit) {
+        if (finishing) return
+        finishing = true
+        travel?.cancel()
+        val from = progress
+        ValueAnimator.ofFloat(from, 1f).apply {
+            duration = 520L
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener {
+                progress = it.animatedValue as Float
+                flash = ((progress - from) / (1f - from).coerceAtLeast(0.01f)).coerceIn(0f, 1f)
+                invalidate()
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    progress = 1f
+                    ValueAnimator.ofFloat(0f, 1f).apply {
+                        duration = 900L
+                        addUpdateListener {
+                            burst = it.animatedValue as Float
+                            invalidate()
+                        }
+                        addListener(object : AnimatorListenerAdapter() {
+                            override fun onAnimationEnd(animation: Animator) {
+                                postDelayed({ onDone() }, 250L)
+                            }
+                        })
+                        start()
+                    }
+                }
+            })
+            start()
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        travel?.cancel()
+        super.onDetachedFromWindow()
+    }
+
+    private fun drawSparkle(canvas: Canvas, cx: Float, cy: Float, r: Float, alpha: Int) {
+        if (r <= 0.5f || alpha <= 0) return
+        star.reset()
+        star.moveTo(cx, cy - r)
+        star.quadTo(cx, cy, cx + r, cy)
+        star.quadTo(cx, cy, cx, cy + r)
+        star.quadTo(cx, cy, cx - r, cy)
+        star.quadTo(cx, cy, cx, cy - r)
+        star.close()
+        sparklePaint.alpha = alpha.coerceIn(0, 255)
+        canvas.drawPath(star, sparklePaint)
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        val w = width.toFloat()
+        val cy = height / 2f
+        val barH = 10f * density
+        val padX = 44f * density
+        val barW = w - 2f * padX
+        val radius = barH / 2f
+        val now = SystemClock.uptimeMillis()
+
+        rect.set(padX, cy - barH / 2f, padX + barW, cy + barH / 2f)
+
+        // Soft gold halo while finishing
+        if (flash > 0f) {
+            for (i in 3 downTo 1) {
+                glowPaint.alpha = (flash * (1f - burst * 0.6f) * 28f / i).toInt().coerceIn(0, 255)
+                canvas.drawRoundRect(
+                    rect.left - i * 3f * density, rect.top - i * 3f * density,
+                    rect.right + i * 3f * density, rect.bottom + i * 3f * density,
+                    radius + i * 3f * density, radius + i * 3f * density, glowPaint
+                )
+            }
+        }
+
+        // Track
+        canvas.drawRoundRect(rect, radius, radius, trackPaint)
+        edgePaint.strokeWidth = 1f * density
+        canvas.drawRoundRect(rect, radius, radius, edgePaint)
+
+        // Gold fill, clipped to the rounded track
+        val fillW = barW * progress
+        if (fillW > 0.5f) {
+            clip.reset()
+            clip.addRoundRect(rect, radius, radius, Path.Direction.CW)
+            canvas.save()
+            canvas.clipPath(clip)
+            fillPaint.shader = LinearGradient(
+                padX, 0f, padX + barW, 0f,
+                intArrayOf(0xFFB8741A.toInt(), 0xFFFFB347.toInt(), 0xFFFFD700.toInt(), 0xFFFFF1B0.toInt()),
+                null, Shader.TileMode.CLAMP
+            )
+            canvas.drawRect(padX, rect.top, padX + fillW, rect.bottom, fillPaint)
+
+            // Moving highlight
+            val sx = padX + ((now - startTime) % 1100L) / 1100f * (barW + 80f * density) - 80f * density
+            shimmerPaint.shader = LinearGradient(
+                sx, 0f, sx + 80f * density, 0f,
+                intArrayOf(0x00FFFFFF, 0x66FFFFFF, 0x00FFFFFF), null, Shader.TileMode.CLAMP
+            )
+            canvas.drawRect(padX, rect.top, padX + fillW, rect.bottom, shimmerPaint)
+            canvas.restore()
+        }
+
+        val tipX = padX + fillW
+
+        // Twinkles trailing behind the wand while travelling
+        if (!finishing || burst < 1f) {
+            for (i in 0 until 6) {
+                val t = (now - startTime) / 380f + i * 1.7f
+                val tw = (Math.sin(t.toDouble()).toFloat() + 1f) / 2f
+                val x = tipX - (10f + i * 13f) * density
+                if (x > padX) {
+                    val y = cy + (if (i % 2 == 0) -1f else 1f) * (7f + (i % 3) * 3f) * density
+                    drawSparkle(canvas, x, y, (2f + 3f * tw) * density, (200 * tw * (1f - i / 7f)).toInt())
+                }
+            }
+        }
+
+        // Wand: the star at its top-left tip sits on the end of the fill
+        val wandSize = 52f * density
+        val bob = Math.sin(((now - startTime) / 260f).toDouble()).toFloat() * 2f * density
+        wandMatrix.reset()
+        wandMatrix.postScale(wandSize / wand.width, wandSize / wand.height)
+        wandMatrix.postTranslate(tipX - hotX * wandSize, cy - hotY * wandSize + bob)
+        canvas.drawBitmap(wand, wandMatrix, wandPaint)
+
+        // Sparkle burst at the finish
+        if (burst > 0f && burst < 1f) {
+            val ease = 1f - (1f - burst) * (1f - burst)
+            for (p in particles) {
+                val dist = p[1] * 90f * density * ease
+                val px = tipX + Math.cos(p[0].toDouble()).toFloat() * dist
+                val py = cy + Math.sin(p[0].toDouble()).toFloat() * dist
+                val size = p[2] * 9f * density * (1f - burst * 0.7f)
+                drawSparkle(canvas, px, py, size, (255 * (1f - burst)).toInt())
+            }
+            drawSparkle(canvas, tipX, cy, 26f * density * (1f - burst * 0.5f), (255 * (1f - burst)).toInt())
+        }
+
+        postInvalidateOnAnimation()
     }
 }

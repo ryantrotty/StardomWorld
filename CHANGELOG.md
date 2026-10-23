@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.22
+- Launch splash shows a gold progress bar under the logo with the wand riding its tip. When the page is ready the
+  bar fills, bursts into sparkles, and only then does the splash fade out.
+
 ## 1.3.21
 - Home hero banner is no longer dimmed when focused; focus is shown by the outline only.
 
