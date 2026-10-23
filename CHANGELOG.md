@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.18
+- Video player controls put themselves away after 8 seconds without a button press, or straight away when focus
+  or the cursor moves off the player. OK, Left or Right on the player brings them back.
+
 ## 1.3.17
 - Header fits on a single row (logo, search, category menu, account buttons). The Favorites button only
   shows when you are signed in.
