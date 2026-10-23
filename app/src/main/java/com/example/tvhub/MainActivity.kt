@@ -190,9 +190,9 @@ class MainActivity : Activity() {
             align-items: center !important;
             justify-content: flex-start !important;
             gap: 16px !important;
-            margin: 0 !important;
+            margin: 0 24px 0 0 !important;
             height: 44px !important;
-            flex: 1 1 auto !important;
+            flex: 0 1 auto !important;
             min-width: 0 !important;
         }
         form.form-inline, .box-search form, .box-search .input-group, .input-group.flex-nowrap {
@@ -243,7 +243,7 @@ class MainActivity : Activity() {
             font-size: 15px !important;
             font-weight: 500 !important;
             padding: 0 14px !important;
-            margin: 0 !important;
+            margin: 0 16px 0 0 !important;
             outline: none !important;
             cursor: pointer !important;
             display: inline-block !important;
@@ -979,14 +979,17 @@ class MainActivity : Activity() {
                           child.style.setProperty('margin-bottom', '0', 'important');
                           child.style.setProperty('width', 'auto', 'important');
                           if (child.contains(flexWrapper)) {
-                            child.style.setProperty('flex', '1 1 auto', 'important');
+                            child.style.setProperty('flex', '0 1 auto', 'important');
                             child.style.setProperty('min-width', '0', 'important');
+                            child.style.setProperty('margin-right', '24px', 'important');
                           } else if (child.contains(btnWrap)) {
                             child.style.setProperty('flex', '0 0 auto', 'important');
                             child.style.setProperty('margin-left', 'auto', 'important');
-                            child.style.setProperty('text-align', 'left', 'important');
+                            child.style.setProperty('padding-left', '24px', 'important');
+                            child.style.setProperty('text-align', 'right', 'important');
                           } else {
                             child.style.setProperty('flex', '0 0 auto', 'important');
+                            child.style.setProperty('margin-right', '24px', 'important');
                           }
                         });
 
@@ -994,14 +997,14 @@ class MainActivity : Activity() {
                         bs.setProperty('display', 'flex', 'important');
                         bs.setProperty('flex-wrap', 'nowrap', 'important');
                         bs.setProperty('align-items', 'center', 'important');
-                        bs.setProperty('gap', '8px', 'important');
+                        bs.setProperty('gap', '12px', 'important');
                         bs.setProperty('float', 'none', 'important');
-                        bs.setProperty('margin', '0', 'important');
+                        bs.setProperty('margin', '0 0 0 24px', 'important');
                         bs.setProperty('padding', '0', 'important');
                         bs.setProperty('list-style', 'none', 'important');
                         Array.from(btnWrap.children).forEach(function(li) {
                           li.style.setProperty('float', 'none', 'important');
-                          li.style.setProperty('margin', '0', 'important');
+                          li.style.setProperty('margin', '0 4px', 'important');
                           li.style.setProperty('white-space', 'nowrap', 'important');
                         });
                       }
