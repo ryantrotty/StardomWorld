@@ -448,6 +448,8 @@ class MainActivity : Activity() {
     private var cursorMode = false
     // True while keyboard focus is inside the embedded video player iframe (set by playerNavJs)
     @Volatile private var playerFocused = false
+    private var okPending = false
+    private var okLongFired = false
     private var cursorX = 0f
     private var cursorY = 0f
 
@@ -2475,6 +2477,49 @@ class MainActivity : Activity() {
                         webView.goBack()
                         return true
                     }
+                }
+            }
+        }
+
+        // Hold OK (about half a second) to turn the on-screen cursor on or off, e.g. to tick a
+        // "Verify you are human" box inside the player. A quick press still acts as a normal OK:
+        // it is held back until the button is released, then replayed (or tapped at the cursor).
+        if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) &&
+            customView == null
+        ) {
+            when (event.action) {
+                KeyEvent.ACTION_DOWN -> {
+                    if (event.repeatCount == 0) {
+                        okPending = true
+                        okLongFired = false
+                    } else if (okPending && !okLongFired) {
+                        okLongFired = true
+                        setCursorMode(!cursorMode)
+                    }
+                    return true
+                }
+                KeyEvent.ACTION_UP -> {
+                    val shortPress = okPending && !okLongFired
+                    okPending = false
+                    okLongFired = false
+                    if (shortPress) {
+                        if (cursorMode) {
+                            clickAtCursor()
+                        } else {
+                            val t = SystemClock.uptimeMillis()
+                            val down = KeyEvent(
+                                t, t, KeyEvent.ACTION_DOWN, event.keyCode, 0,
+                                event.metaState, event.deviceId, event.scanCode, event.flags, event.source
+                            )
+                            val up = KeyEvent(
+                                t, t + 40, KeyEvent.ACTION_UP, event.keyCode, 0,
+                                event.metaState, event.deviceId, event.scanCode, event.flags, event.source
+                            )
+                            super.dispatchKeyEvent(down)
+                            super.dispatchKeyEvent(up)
+                        }
+                    }
+                    return true
                 }
             }
         }
