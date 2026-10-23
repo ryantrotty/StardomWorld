@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.20
+- Video player controls automatically hide after 8 seconds without input, or immediately when focus or cursor moves off the player.
+- Fullscreen player handles Left/Right (seek 10 s, 30 s held), OK/Media Play-Pause (toggle play/pause) directly and auto-fades controls after 8 seconds.
+
 ## 1.3.18
 - User account names in the header display on a single line without wrapping.
 - Language toggle button is right-justified to accommodate longer user account names.
