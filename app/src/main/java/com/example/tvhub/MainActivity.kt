@@ -1341,7 +1341,6 @@ class MainActivity : Activity() {
                     .setInterpolator(AccelerateDecelerateInterpolator())
                     .start()
                 refreshCursorVisibility()
-                armControlsIdleTimer()
             }
 
             override fun onHideCustomView() {
@@ -1788,6 +1787,54 @@ class MainActivity : Activity() {
             if (!holder.hasAttribute('tabindex')) holder.setAttribute('tabindex', '-1');
             holder.__tvControlsHidden = true;
             try { holder.focus({ preventScroll: true }); } catch (e) { holder.focus(); }
+            return true;
+          };
+
+          // ---- Commands from the app while the player is full screen (seek / play-pause) ----
+          var tvTime = 0, tvPaused = false;
+          window.addEventListener('message', function(ev) {
+            try {
+              var d = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
+              if (!d) return;
+              if (d.event === 'timeupdate' && d.data) tvTime = d.data.seconds || 0;
+              else if (d.event === 'play') tvPaused = false;
+              else if (d.event === 'pause') tvPaused = true;
+            } catch (err) {}
+          });
+          function post(f, obj) {
+            try { f.contentWindow.postMessage(JSON.stringify(obj), '*'); } catch (err) {}
+          }
+          setInterval(function() {
+            var f = playerFrame();
+            if (!f) return;
+            post(f, { method: 'addEventListener', value: 'timeupdate' });
+            post(f, { method: 'addEventListener', value: 'pause' });
+            post(f, { method: 'addEventListener', value: 'play' });
+          }, 2000);
+
+          window.__tvPlayerCmd = function(cmd, val) {
+            var f = playerFrame();
+            if (!f) return false;
+            var p = null;
+            if (typeof Vimeo !== 'undefined' && Vimeo.Player) {
+              try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
+            }
+            if (cmd === 'seek') {
+              if (p) {
+                Promise.all([p.getCurrentTime(), p.getDuration()]).then(function(r) {
+                  var t = Math.min(Math.max(0, r[0] + val), Math.max(0, r[1] - 1));
+                  return p.setCurrentTime(t);
+                }).catch(function() {});
+              } else {
+                post(f, { method: 'setCurrentTime', value: Math.max(0, tvTime + val) });
+              }
+            } else if (cmd === 'toggle') {
+              if (p) {
+                p.getPaused().then(function(paused) { return paused ? p.play() : p.pause(); }).catch(function() {});
+              } else {
+                post(f, { method: tvPaused ? 'play' : 'pause' });
+              }
+            }
             return true;
           };
 
@@ -2532,7 +2579,7 @@ class MainActivity : Activity() {
     // (Re)starts the 8 second countdown after which the player's control overlay is put away.
     private fun armControlsIdleTimer() {
         handler.removeCallbacks(hideControlsRunnable)
-        if (playerFocused || customView != null) {
+        if (playerFocused && customView == null) {
             handler.postDelayed(hideControlsRunnable, CONTROLS_IDLE_MS)
         }
     }
@@ -2548,24 +2595,70 @@ class MainActivity : Activity() {
                 )
             }
         } else {
-            // Full screen: tell the player the pointer has left so it can hide its controls.
-            val now = SystemClock.uptimeMillis()
-            val props = arrayOf(MotionEvent.PointerProperties().apply {
-                id = 0
-                toolType = MotionEvent.TOOL_TYPE_MOUSE
-            })
-            val coords = arrayOf(MotionEvent.PointerCoords().apply {
-                x = 0f
-                y = 0f
-            })
-            val ev = MotionEvent.obtain(
-                now, now, MotionEvent.ACTION_HOVER_EXIT, 1,
-                props, coords, 0, 0, 1f, 1f, 0, 0,
-                InputDevice.SOURCE_CLASS_POINTER, 0
-            )
-            cv.dispatchGenericMotionEvent(ev)
-            ev.recycle()
+            // Full screen: tell the player the pointer has left so it hides its controls.
+            fsPulseRunning = false
+            handler.removeCallbacks(fsPulse)
+            sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
         }
+    }
+
+    // ---- Full screen: the app drives the player (the player's own keyboard handling is bypassed,
+    // so its controls only show when we ask for them and then go away on their own).
+
+    private var fsLastInteraction = 0L
+    private var fsPulseRunning = false
+    private var fsPulseFlip = false
+
+    private val fsPulse: Runnable = object : Runnable {
+        override fun run() {
+            val cv = customView ?: run { fsPulseRunning = false; return }
+            if (SystemClock.uptimeMillis() - fsLastInteraction < CONTROLS_IDLE_MS) {
+                fsPulseFlip = !fsPulseFlip
+                sendFullScreenHover(
+                    MotionEvent.ACTION_HOVER_MOVE,
+                    cv.width / 2f + if (fsPulseFlip) 3f else -3f,
+                    cv.height * 0.4f
+                )
+                handler.postDelayed(this, 600)
+            } else {
+                hidePlayerControls()
+            }
+        }
+    }
+
+    // Shows the player's controls and keeps them up until 8 seconds after the last remote press.
+    private fun fullScreenInteraction() {
+        fsLastInteraction = SystemClock.uptimeMillis()
+        if (!fsPulseRunning && customView != null) {
+            fsPulseRunning = true
+            handler.post(fsPulse)
+        }
+    }
+
+    private fun sendFullScreenHover(action: Int, x: Float, y: Float) {
+        val cv = customView ?: return
+        val now = SystemClock.uptimeMillis()
+        val props = arrayOf(MotionEvent.PointerProperties().apply {
+            id = 0
+            toolType = MotionEvent.TOOL_TYPE_MOUSE
+        })
+        val coords = arrayOf(MotionEvent.PointerCoords().apply {
+            this.x = x
+            this.y = y
+        })
+        val ev = MotionEvent.obtain(
+            now, now, action, 1,
+            props, coords, 0, 0, 1f, 1f, 0, 0,
+            InputDevice.SOURCE_MOUSE, 0
+        )
+        cv.dispatchGenericMotionEvent(ev)
+        ev.recycle()
+    }
+
+    private fun playerCommand(cmd: String, value: Int) {
+        webView.evaluateJavascript(
+            "window.__tvPlayerCmd && window.__tvPlayerCmd('" + cmd + "'," + value + ")", null
+        )
     }
 
     // ---------------------------------------------------------------- cursor
@@ -2616,6 +2709,8 @@ class MainActivity : Activity() {
         customCallback?.onCustomViewHidden()
         customCallback = null
         handler.removeCallbacks(hideControlsRunnable)
+        handler.removeCallbacks(fsPulse)
+        fsPulseRunning = false
         refreshCursorVisibility()
     }
 
@@ -2647,6 +2742,38 @@ class MainActivity : Activity() {
                         webView.goBack()
                         return true
                     }
+                }
+            }
+        }
+
+        // Full screen: Left/Right skip 10 s (30 s while held or with the FF/RW keys), OK plays/pauses.
+        // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
+        if (customView != null) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                    if (event.action == KeyEvent.ACTION_DOWN) {
+                        val forward = event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
+                            event.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
+                        val media = event.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ||
+                            event.keyCode == KeyEvent.KEYCODE_MEDIA_REWIND
+                        val step = if (media || event.repeatCount > 0) 30 else 10
+                        playerCommand("seek", if (forward) step else -step)
+                        fullScreenInteraction()
+                    }
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY,
+                KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                    if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                        playerCommand("toggle", 0)
+                        fullScreenInteraction()
+                    }
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    if (event.action == KeyEvent.ACTION_DOWN) fullScreenInteraction()
                 }
             }
         }

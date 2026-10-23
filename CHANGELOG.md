@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.19
+- Full screen: the app now handles Left/Right (skip 10 s, 30 s while held), OK (play/pause) and the FF/RW keys
+  itself and shows the player controls for 8 seconds after each press, so they no longer stay stuck on screen.
+
 ## 1.3.18
 - Video player controls put themselves away after 8 seconds without a button press, or straight away when focus
   or the cursor moves off the player. OK, Left or Right on the player brings them back.
