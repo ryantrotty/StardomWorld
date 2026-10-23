@@ -186,15 +186,20 @@ class MainActivity : Activity() {
         #tv-header-flex-wrapper {
             display: flex !important;
             flex-direction: row !important;
+            flex-wrap: nowrap !important;
             align-items: center !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             gap: 16px !important;
-            margin: 0 auto !important;
+            margin: 0 24px 0 0 !important;
             height: 44px !important;
+            flex: 0 1 auto !important;
+            min-width: 0 !important;
         }
         form.form-inline, .box-search form, .box-search .input-group, .input-group.flex-nowrap {
             width: 320px !important;
             max-width: 320px !important;
+            flex: 0 1 320px !important;
+            min-width: 200px !important;
             height: 44px !important;
             margin: 0 !important;
             background: transparent !important;
@@ -228,6 +233,8 @@ class MainActivity : Activity() {
         #tv-section-select {
             width: 320px !important;
             max-width: 320px !important;
+            flex: 0 1 320px !important;
+            min-width: 200px !important;
             height: 44px !important;
             background-color: #1a1a1a !important;
             color: #ffffff !important;
@@ -236,7 +243,7 @@ class MainActivity : Activity() {
             font-size: 15px !important;
             font-weight: 500 !important;
             padding: 0 14px !important;
-            margin: 0 !important;
+            margin: 0 16px 0 0 !important;
             outline: none !important;
             cursor: pointer !important;
             display: inline-block !important;
@@ -933,6 +940,73 @@ class MainActivity : Activity() {
                             window.AndroidHost.toggleLanguage(nextLang);
                           }
                         };
+                      }
+                    }
+
+                    // ---- Single-row header: logo | search + category + favorites | account buttons ----
+                    if (flexWrapper && btnWrap) {
+                      // Favorites only when signed in (the "Log in" / "New registration" buttons mean signed out)
+                      var hdrText = btnWrap.textContent || '';
+                      var loggedOut = /log\s*in|ログイン|new registration|新規/i.test(hdrText) ||
+                        !!btnWrap.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]');
+                      if (favBtn) {
+                        if (loggedOut) favBtn.style.setProperty('display', 'none', 'important');
+                        else favBtn.style.removeProperty('display');
+                      }
+
+                      var commonAncestor = function(x, y) {
+                        var n = x;
+                        while (n && !n.contains(y)) n = n.parentElement;
+                        return n;
+                      };
+                      var rowEl = commonAncestor(flexWrapper, btnWrap);
+                      var logoEl = document.querySelector('h1 a img, .nav-inner h1 img, header a img, .logo img');
+                      if (rowEl && logoEl) rowEl = commonAncestor(rowEl, logoEl) || rowEl;
+
+                      if (rowEl && rowEl !== document.body && rowEl !== document.documentElement && rowEl.closest('header, .box-header, .nav-inner, .header')) {
+                        var rs = rowEl.style;
+                        rs.setProperty('display', 'flex', 'important');
+                        rs.setProperty('flex-wrap', 'nowrap', 'important');
+                        rs.setProperty('align-items', 'center', 'important');
+                        rs.setProperty('gap', '16px', 'important');
+                        rs.setProperty('height', 'auto', 'important');
+                        rs.setProperty('min-height', '64px', 'important');
+
+                        Array.from(rowEl.children).forEach(function(child) {
+                          child.style.setProperty('float', 'none', 'important');
+                          child.style.setProperty('position', 'static', 'important');
+                          child.style.setProperty('margin-top', '0', 'important');
+                          child.style.setProperty('margin-bottom', '0', 'important');
+                          child.style.setProperty('width', 'auto', 'important');
+                          if (child.contains(flexWrapper)) {
+                            child.style.setProperty('flex', '0 1 auto', 'important');
+                            child.style.setProperty('min-width', '0', 'important');
+                            child.style.setProperty('margin-right', '24px', 'important');
+                          } else if (child.contains(btnWrap)) {
+                            child.style.setProperty('flex', '0 0 auto', 'important');
+                            child.style.setProperty('margin-left', 'auto', 'important');
+                            child.style.setProperty('padding-left', '24px', 'important');
+                            child.style.setProperty('text-align', 'right', 'important');
+                          } else {
+                            child.style.setProperty('flex', '0 0 auto', 'important');
+                            child.style.setProperty('margin-right', '24px', 'important');
+                          }
+                        });
+
+                        var bs = btnWrap.style;
+                        bs.setProperty('display', 'flex', 'important');
+                        bs.setProperty('flex-wrap', 'nowrap', 'important');
+                        bs.setProperty('align-items', 'center', 'important');
+                        bs.setProperty('gap', '12px', 'important');
+                        bs.setProperty('float', 'none', 'important');
+                        bs.setProperty('margin', '0 0 0 24px', 'important');
+                        bs.setProperty('padding', '0', 'important');
+                        bs.setProperty('list-style', 'none', 'important');
+                        Array.from(btnWrap.children).forEach(function(li) {
+                          li.style.setProperty('float', 'none', 'important');
+                          li.style.setProperty('margin', '0 4px', 'important');
+                          li.style.setProperty('white-space', 'nowrap', 'important');
+                        });
                       }
                     }
 
