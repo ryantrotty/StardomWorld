@@ -491,6 +491,11 @@ class MainActivity : Activity() {
     private lateinit var splashProgress: SplashProgressView
     private var splashFinishing = false
 
+    private lateinit var transitionOverlay: FrameLayout
+    private lateinit var transitionView: TransitionOverlayView
+    private var transitionShowing = false
+    private var lastNavigatedUrl: String? = null
+
     private val handler = Handler(Looper.getMainLooper())
     private var density = 1f
 
@@ -1252,6 +1257,35 @@ class MainActivity : Activity() {
         }
         root.addView(cursorView, FrameLayout.LayoutParams(cursorPx, cursorPx))
 
+        // Transition overlay for page loading
+        transitionOverlay = FrameLayout(this).apply {
+            setBackgroundColor(Color.BLACK)
+            isClickable = true
+            visibility = View.GONE
+            alpha = 0f
+        }
+        transitionView = TransitionOverlayView(
+            this,
+            BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
+            density,
+            HOT_X,
+            HOT_Y
+        )
+        transitionOverlay.addView(
+            transitionView,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        root.addView(
+            transitionOverlay,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+
         // Black splash with the logo, drawn above everything until the page is ready.
         splashView = FrameLayout(this).apply {
             setBackgroundColor(Color.BLACK)
@@ -1347,6 +1381,10 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                if (url != null && url != lastNavigatedUrl) {
+                    lastNavigatedUrl = url
+                    showPageTransitionOverlay()
+                }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
                     if (!path.contains("/contents/") && (path.contains("/set/") || path.contains("/box-contents-index/") || path.contains("/series/") || path.contains("/contents-set/"))) {
@@ -1481,6 +1519,34 @@ class MainActivity : Activity() {
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction {
                 root.removeView(splashView)
+            }
+            .start()
+    }
+
+    private fun showPageTransitionOverlay() {
+        if (!splashDone || transitionShowing) return
+        transitionShowing = true
+        handler.removeCallbacks(hideTransitionRunnable)
+
+        transitionOverlay.visibility = View.VISIBLE
+        transitionOverlay.alpha = 1f
+        root.bringChildToFront(transitionOverlay)
+        if (::cursorView.isInitialized) {
+            root.bringChildToFront(cursorView)
+        }
+        transitionView.startAnimation()
+
+        handler.postDelayed(hideTransitionRunnable, 5000L)
+    }
+
+    private val hideTransitionRunnable = Runnable {
+        if (!transitionShowing) return@Runnable
+        transitionOverlay.animate()
+            .alpha(0f)
+            .setDuration(500L)
+            .withEndAction {
+                transitionOverlay.visibility = View.GONE
+                transitionShowing = false
             }
             .start()
     }
@@ -3293,5 +3359,118 @@ private class SplashProgressView(
         }
 
         postInvalidateOnAnimation()
+    }
+}
+
+
+/**
+ * Page transition overlay view: solid black background with the wand cursor moving in a loop (0s..3s)
+ * with trailing sparkles, followed by a sparkle burst (3s..4s). Entire overlay stays up for 5 seconds total.
+ */
+private class TransitionOverlayView(
+    context: android.content.Context,
+    private val wand: Bitmap,
+    private val density: Float,
+    private val hotX: Float,
+    private val hotY: Float
+) : View(context) {
+
+    private var animStart = 0L
+    private var isAnimating = false
+
+    private val wandPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val sparklePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFE9A8.toInt() }
+    private val wandMatrix = Matrix()
+    private val star = Path()
+
+    private val particles = Array(16) { i ->
+        val a = (i / 16f) * 6.2831855f + (i % 3) * 0.18f
+        floatArrayOf(a, 0.6f + (i * 37 % 10) / 14f, 0.6f + (i * 53 % 10) / 16f)
+    }
+
+    fun startAnimation() {
+        animStart = SystemClock.uptimeMillis()
+        isAnimating = true
+        invalidate()
+    }
+
+    private fun drawSparkle(canvas: Canvas, cx: Float, cy: Float, r: Float, alpha: Int) {
+        if (r <= 0.5f || alpha <= 0) return
+        star.reset()
+        star.moveTo(cx, cy - r)
+        star.quadTo(cx, cy, cx + r, cy)
+        star.quadTo(cx, cy, cx, cy + r)
+        star.quadTo(cx, cy, cx - r, cy)
+        star.quadTo(cx, cy, cx, cy - r)
+        star.close()
+        sparklePaint.alpha = alpha.coerceIn(0, 255)
+        canvas.drawPath(star, sparklePaint)
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        if (!isAnimating) return
+
+        val w = width.toFloat()
+        val h = height.toFloat()
+        if (w <= 0f || h <= 0f) return
+
+        val cx = w / 2f
+        val cy = h / 2f
+        val now = SystemClock.uptimeMillis()
+        val elapsedSec = (now - animStart) / 1000f
+
+        val wandSize = 76f * density
+
+        val xOffset: Float
+        val yOffset: Float
+
+        if (elapsedSec < 3.0f) {
+            val t = elapsedSec * 2.8f
+            xOffset = Math.sin(t.toDouble()).toFloat() * 70f * density
+            yOffset = Math.sin((t * 2f).toDouble()).toFloat() * 28f * density
+        } else {
+            xOffset = 0f
+            yOffset = -20f * density
+        }
+
+        val wandX = cx + xOffset
+        val wandY = cy + yOffset
+
+        // Trailing sparkles behind moving wand
+        if (elapsedSec < 3.2f) {
+            for (i in 1..8) {
+                val lag = i * 0.12f
+                val tLag = (elapsedSec - lag).coerceAtLeast(0f) * 2.8f
+                val sx = cx + Math.sin(tLag.toDouble()).toFloat() * 70f * density
+                val sy = cy + Math.sin((tLag * 2f).toDouble()).toFloat() * 28f * density
+                val alpha = (220 * (1f - i / 9f)).toInt()
+                val size = (6f - i * 0.6f).coerceAtLeast(2.5f) * density
+                drawSparkle(canvas, sx, sy, size, alpha)
+            }
+        }
+
+        // Draw wand
+        wandMatrix.reset()
+        wandMatrix.postScale(wandSize / wand.width, wandSize / wand.height)
+        wandMatrix.postTranslate(wandX - hotX * wandSize, wandY - hotY * wandSize)
+        canvas.drawBitmap(wand, wandMatrix, wandPaint)
+
+        // Sparkle burst at 3s to 4s
+        if (elapsedSec in 3.0f..4.2f) {
+            val burstProgress = ((elapsedSec - 3.0f) / 1.0f).coerceIn(0f, 1f)
+            val ease = 1f - (1f - burstProgress) * (1f - burstProgress)
+            for (p in particles) {
+                val dist = p[1] * 110f * density * ease
+                val px = wandX + Math.cos(p[0].toDouble()).toFloat() * dist
+                val py = wandY + Math.sin(p[0].toDouble()).toFloat() * dist
+                val size = p[2] * 12f * density * (1f - burstProgress * 0.7f)
+                drawSparkle(canvas, px, py, size, (255 * (1f - burstProgress)).toInt())
+            }
+            drawSparkle(canvas, wandX, wandY, 32f * density * (1f - burstProgress * 0.5f), (255 * (1f - burstProgress)).toInt())
+        }
+
+        if (elapsedSec < 5.2f) {
+            postInvalidateOnAnimation()
+        }
     }
 }

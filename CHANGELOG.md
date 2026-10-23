@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.23
+- Page transition overlay: displays a black background with a looping wand cursor animation (4s) ending in a sparkle burst, shown for 5 seconds on every page load to seamlessly mask CSS/layout rendering in the background.
+
 ## 1.3.22
 - Launch splash shows a gold progress bar under the logo with the wand riding its tip. When the page is ready the
   bar fills, bursts into sparkles, and only then does the splash fade out.
