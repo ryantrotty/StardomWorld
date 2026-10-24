@@ -2072,7 +2072,39 @@ class MainActivity : Activity() {
                 post(f, { method: tvPaused ? 'play' : 'pause' });
               }
             }
+            else if (cmd === 'mute' && p) {
+              p.getVolume().then(function(v) { return p.setVolume(v > 0 ? 0 : 1); }).catch(function() {});
+            } else if (cmd === 'speed' && p) {
+              p.getPlaybackRate().then(function(r) {
+                var rates = [0.75, 1, 1.25, 1.5, 2];
+                var i = rates.indexOf(r);
+                return p.setPlaybackRate(rates[(i + 1) % rates.length]);
+              }).catch(function() {});
+            } else if (cmd === 'captions' && p) {
+              p.getTextTracks().then(function(tr) {
+                if (!tr || !tr.length) return;
+                var cur = -1;
+                for (var i = 0; i < tr.length; i++) { if (tr[i].mode === 'showing') cur = i; }
+                if (cur + 1 >= tr.length) return p.disableTextTrack();
+                return p.enableTextTrack(tr[cur + 1].language, tr[cur + 1].kind);
+              }).catch(function() {});
+            }
             return true;
+          };
+
+          // Latest player state for the app's own full-screen button bar.
+          window.__tvRefreshStatus = function() {
+            var f = playerFrame();
+            if (!f || typeof Vimeo === 'undefined' || !Vimeo.Player) return;
+            var p = null;
+            try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
+            if (!p) return;
+            Promise.all([p.getPaused(), p.getCurrentTime(), p.getDuration(), p.getVolume(), p.getPlaybackRate(), p.getTextTracks()]).then(function(r) {
+              var cc = 'Off';
+              var tr = r[5] || [];
+              for (var i = 0; i < tr.length; i++) { if (tr[i].mode === 'showing') cc = tr[i].label || tr[i].language; }
+              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length });
+            }).catch(function() {});
           };
 
           document.addEventListener('keydown', function(e) {
@@ -2833,7 +2865,7 @@ class MainActivity : Activity() {
         } else {
             // Full screen: tell the player the pointer has left so it hides its controls.
             fsPulseRunning = false
-            fsControlsMode = false
+            hideFsOverlay()
             handler.removeCallbacks(fsPulse)
             sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
         }
@@ -2842,30 +2874,174 @@ class MainActivity : Activity() {
     // ---- Full screen: the app drives the player (the player's own keyboard handling is bypassed,
     // so its controls only show when we ask for them and then go away on their own).
 
-    // Full screen "controls mode": Down enters it, Left/Right then walk the player's own buttons
-    // (sent to the player as Tab / Shift+Tab), OK presses the focused button, Up / Back leave it.
+    // Full screen: Down opens the app's own button bar (play, skip, mute, captions, speed, exit).
+    // The player's own buttons can't be reached from outside its frame, so these drive it instead.
     private var fsControlsMode = false
+    private var fsOverlay: android.widget.LinearLayout? = null
+    private var fsTimeText: android.widget.TextView? = null
+    private var fsProgress: android.widget.ProgressBar? = null
+    private var fsBtnPlay: android.widget.TextView? = null
+    private var fsBtnMute: android.widget.TextView? = null
+    private var fsBtnCc: android.widget.TextView? = null
+    private var fsBtnSpeed: android.widget.TextView? = null
 
-    private fun sendFullScreenKey(keyCode: Int, shift: Boolean = false) {
-        val cv = fullScreenView() ?: return
-        cv.requestFocus()
-        val t = SystemClock.uptimeMillis()
-        val meta = if (shift) KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON else 0
-        cv.dispatchKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_DOWN, keyCode, 0, meta))
-        cv.dispatchKeyEvent(KeyEvent(t, t + 30, KeyEvent.ACTION_UP, keyCode, 0, meta))
+    private val fsStatusRunnable: Runnable = object : Runnable {
+        override fun run() {
+            if (!fsControlsMode) return
+            pollFsStatus()
+            handler.postDelayed(this, 500)
+        }
     }
 
-    private fun enterFsControlsMode() {
-        // One pointer move wakes the controls, then the keyboard keeps them up.
-        sendFullScreenHover(MotionEvent.ACTION_HOVER_MOVE, 40f, 40f)
+    private fun fsButton(label: String, onClick: () -> Unit): android.widget.TextView {
+        val tv = android.widget.TextView(this)
+        tv.text = label
+        tv.setTextColor(Color.WHITE)
+        tv.textSize = 18f
+        tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
+        tv.gravity = Gravity.CENTER
+        val padH = (22 * density).toInt()
+        val padV = (12 * density).toInt()
+        tv.setPadding(padH, padV, padH, padV)
+        tv.isFocusable = true
+        tv.isClickable = true
+        fun paint(focused: Boolean) {
+            val d = android.graphics.drawable.GradientDrawable()
+            d.cornerRadius = 10 * density
+            if (focused) {
+                d.setColor(0xFFFFB347.toInt())
+                tv.setTextColor(0xFF1A1A1A.toInt())
+            } else {
+                d.setColor(0x66000000)
+                d.setStroke((2 * density).toInt(), 0x88FFFFFF.toInt())
+                tv.setTextColor(Color.WHITE)
+            }
+            tv.background = d
+        }
+        paint(false)
+        tv.setOnFocusChangeListener { _, focused -> paint(focused) }
+        tv.setOnClickListener {
+            onClick()
+            fullScreenInteraction()
+            handler.postDelayed({ pollFsStatus() }, 250)
+        }
+        return tv
+    }
+
+    private fun buildFsOverlay(): android.widget.LinearLayout {
+        val o = android.widget.LinearLayout(this)
+        o.orientation = android.widget.LinearLayout.VERTICAL
+        o.setBackgroundColor(0xCC000000.toInt())
+        val pad = (28 * density).toInt()
+        o.setPadding(pad, (18 * density).toInt(), pad, (22 * density).toInt())
+
+        val time = android.widget.TextView(this)
+        time.setTextColor(Color.WHITE)
+        time.textSize = 16f
+        time.text = "0:00 / 0:00"
+        o.addView(time)
+        fsTimeText = time
+
+        val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
+        bar.max = 1000
+        bar.progressDrawable.setColorFilter(0xFFFFB347.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
+        o.addView(
+            bar,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                (10 * density).toInt()
+            ).apply { topMargin = (6 * density).toInt(); bottomMargin = (14 * density).toInt() }
+        )
+        fsProgress = bar
+
+        val row = android.widget.LinearLayout(this)
+        row.orientation = android.widget.LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        fun add(b: android.widget.TextView) {
+            row.addView(
+                b,
+                android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { rightMargin = (12 * density).toInt() }
+            )
+        }
+        fsBtnPlay = fsButton("Pause") { playerCommand("toggle", 0) }
+        add(fsBtnPlay!!)
+        add(fsButton("-10s") { playerCommand("seek", -10) })
+        add(fsButton("+10s") { playerCommand("seek", 10) })
+        fsBtnMute = fsButton("Mute") { playerCommand("mute", 0) }
+        add(fsBtnMute!!)
+        fsBtnCc = fsButton("CC: Off") { playerCommand("captions", 0) }
+        add(fsBtnCc!!)
+        fsBtnSpeed = fsButton("Speed 1x") { playerCommand("speed", 0) }
+        add(fsBtnSpeed!!)
+        add(fsButton("Exit full screen") {
+            hideFsOverlay()
+            if (customView != null) hideCustomView() else if (cssFullScreen) exitCssFullScreen()
+        })
+        o.addView(row)
+
+        o.visibility = View.GONE
+        root.addView(
+            o,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM
+            )
+        )
+        fsOverlay = o
+        return o
+    }
+
+    private fun showFsOverlay() {
+        val o = fsOverlay ?: buildFsOverlay()
         fsControlsMode = true
+        // Hide the player's own bar so there is only one set of controls on screen.
+        sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
+        o.visibility = View.VISIBLE
+        root.bringChildToFront(o)
+        fsBtnPlay?.requestFocus()
         fullScreenInteraction()
-        handler.postDelayed({ if (fsControlsMode) sendFullScreenKey(KeyEvent.KEYCODE_TAB) }, 400)
+        handler.removeCallbacks(fsStatusRunnable)
+        handler.post(fsStatusRunnable)
     }
 
-    private fun exitFsControlsMode() {
+    private fun hideFsOverlay() {
         fsControlsMode = false
-        fsPulseFlip = !fsPulseFlip
+        handler.removeCallbacks(fsStatusRunnable)
+        fsOverlay?.visibility = View.GONE
+    }
+
+    private fun fmtTime(sec: Double): String {
+        val t = sec.toInt().coerceAtLeast(0)
+        val h = t / 3600
+        val m = (t % 3600) / 60
+        val sc = t % 60
+        return if (h > 0) String.format("%d:%02d:%02d", h, m, sc) else String.format("%d:%02d", m, sc)
+    }
+
+    private fun pollFsStatus() {
+        webView.evaluateJavascript(
+            "(window.__tvRefreshStatus && window.__tvRefreshStatus(), window.__tvStatusJson || '')"
+        ) { raw ->
+            if (!fsControlsMode || raw == null || raw == "null") return@evaluateJavascript
+            try {
+                val str = org.json.JSONTokener(raw).nextValue() as? String ?: return@evaluateJavascript
+                if (str.isEmpty()) return@evaluateJavascript
+                val j = org.json.JSONObject(str)
+                val t = j.optDouble("t", 0.0)
+                val d = j.optDouble("d", 0.0)
+                fsBtnPlay?.text = if (j.optBoolean("paused")) "Play" else "Pause"
+                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) "Unmute" else "Mute"
+                fsBtnCc?.text = "CC: " + j.optString("cc", "Off")
+                fsBtnSpeed?.text = "Speed " + j.optDouble("rate", 1.0) + "x"
+                fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
+                fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private var fsLastInteraction = 0L
@@ -3077,7 +3253,7 @@ class MainActivity : Activity() {
         customView = null
         customCallback?.onCustomViewHidden()
         customCallback = null
-        fsControlsMode = false
+        hideFsOverlay()
         handler.removeCallbacks(fsNudgeRunnable)
         handler.removeCallbacks(hideControlsRunnable)
         handler.removeCallbacks(fsPulse)
@@ -3106,7 +3282,7 @@ class MainActivity : Activity() {
 
                 KeyEvent.KEYCODE_BACK -> {
                     if (fsControlsMode && fullScreenActive()) {
-                        exitFsControlsMode()
+                        hideFsOverlay()
                         return true
                     }
                     if (cssFullScreen) {
@@ -3129,31 +3305,21 @@ class MainActivity : Activity() {
         // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
         if (fullScreenActive()) {
             if (fsControlsMode) {
+                // The button bar is showing: the remote moves between its buttons and OK presses one.
                 when (event.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                        if (event.action == KeyEvent.ACTION_DOWN) {
-                            sendFullScreenKey(KeyEvent.KEYCODE_TAB, event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT)
-                            fullScreenInteraction()
-                        }
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        if (event.action == KeyEvent.ACTION_DOWN) hideFsOverlay()
                         return true
                     }
+                    KeyEvent.KEYCODE_DPAD_DOWN -> return true
+                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                            sendFullScreenKey(KeyEvent.KEYCODE_ENTER)
-                            fullScreenInteraction()
-                        }
-                        return true
-                    }
-                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        if (event.action == KeyEvent.ACTION_DOWN) {
-                            exitFsControlsMode()
-                            fullScreenInteraction()
-                        }
-                        return true
+                        if (event.action == KeyEvent.ACTION_DOWN) fullScreenInteraction()
+                        return super.dispatchKeyEvent(event)
                     }
                 }
             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) enterFsControlsMode()
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) showFsOverlay()
                 return true
             }
             when (event.keyCode) {
