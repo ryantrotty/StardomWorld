@@ -63,12 +63,26 @@ class MainActivity : Activity() {
 
     private fun getSavedLanguage(): String {
         val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
-        return prefs.getString("user_lang", "en") ?: "en"
+        // Until the person picks one, follow the device language.
+        return prefs.getString("user_lang", null)
+            ?: (if (java.util.Locale.getDefault().language == "ja") "ja" else "en")
+    }
+
+    // Saves the language and points the site's translation at it. The caller reloads whatever it needs.
+    private fun applyLanguage(lang: String) {
+        saveLanguage(lang)
+        val googtransVal = if (lang == "ja") "/ja/ja" else "/ja/en"
+        CookieManager.getInstance().apply {
+            setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Path=/")
+            setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Domain=.stardom-world.com; Path=/")
+            flush()
+        }
     }
 
     private fun saveLanguage(lang: String) {
         val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
         prefs.edit().putString("user_lang", lang).apply()
+        appJa = lang == "ja"
     }
 
     companion object {
@@ -1582,6 +1596,7 @@ class MainActivity : Activity() {
         )
 
         val initLang = getSavedLanguage()
+        appJa = initLang == "ja"
         val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
@@ -1791,7 +1806,12 @@ class MainActivity : Activity() {
             density,
             BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
             { startWebLogin() },
-            { exitGuideToSite() }
+            { exitGuideToSite() },
+            { lang ->
+                // Chosen on the guide's first screen: remember it and reload the (hidden) login page in it.
+                applyLanguage(lang)
+                webView.loadUrl(LOGIN_URL)
+            }
         )
         onboardingView = v
         val lp = FrameLayout.LayoutParams(
@@ -1964,13 +1984,7 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun toggleLanguage(targetLang: String) {
             handler.post {
-                saveLanguage(targetLang)
-                val googtransVal = if (targetLang == "ja") "/ja/ja" else "/ja/en"
-                CookieManager.getInstance().apply {
-                    setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Path=/")
-                    setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Domain=.stardom-world.com; Path=/")
-                    flush()
-                }
+                applyLanguage(targetLang)
                 webView.reload()
             }
         }
@@ -4205,7 +4219,8 @@ private class TransitionOverlayView(
 }
 
 // The app follows the device language: Japanese when the TV is set to Japanese, English otherwise.
-private val isJa: Boolean = java.util.Locale.getDefault().language == "ja"
+private var appJa = false
+private val isJa: Boolean get() = appJa
 private fun tr(en: String, ja: String): String = if (isJa) ja else en
 
 // Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
@@ -4216,12 +4231,13 @@ private class OnboardingView(
     private val density: Float,
     private val wand: Bitmap,
     private val onLogin: () -> Unit,
-    private val onBrowse: () -> Unit
+    private val onBrowse: () -> Unit,
+    private val onLanguage: (String) -> Unit
 ) : FrameLayout(context) {
 
     private class Slide(val title: String, val body: String)
 
-    private val slides = if (isJa) listOf(
+    private fun buildSlides() = if (isJa) listOf(
         Slide(
             "テレビで Stardom World へようこそ",
             "リモコンでの操作方法をかんたんにご紹介します。"
@@ -4273,8 +4289,13 @@ private class OnboardingView(
         )
     )
 
+    private var slides = buildSlides()
+
     private val gold = 0xFFFFB347.toInt()
     private var index = 0
+
+    // The first screen asks which language to use; the device language is pre-selected.
+    private var langStep = true
 
     private fun p(v: Int): Int = (v * density).toInt()
 
@@ -4285,7 +4306,7 @@ private class OnboardingView(
     private val skipBtn = android.widget.TextView(context)
     private val backBtn = android.widget.TextView(context)
     private val nextBtn = android.widget.TextView(context)
-    private var focused: android.widget.TextView = nextBtn
+    private var focused: android.widget.TextView = if (isJa) nextBtn else skipBtn
 
     // The splash logo, at the splash's own size and position.
     private val logoView = android.widget.ImageView(context)
@@ -4374,8 +4395,6 @@ private class OnboardingView(
                 ).apply { leftMargin = p(10); rightMargin = p(10) }
             )
         }
-        skipBtn.text = tr("Skip to log in", "スキップしてログイン")
-        backBtn.text = tr("Back", "戻る")
         col.addView(
             row,
             android.widget.LinearLayout.LayoutParams(
@@ -4389,7 +4408,7 @@ private class OnboardingView(
     }
 
     private fun visibleButtons(): List<android.widget.TextView> =
-        if (index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
+        if (!langStep && index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
 
     private fun paintButton(b: android.widget.TextView, isFocused: Boolean) {
         val d = android.graphics.drawable.GradientDrawable()
@@ -4407,17 +4426,28 @@ private class OnboardingView(
     }
 
     private fun render() {
-        val s = slides[index]
-        titleView.text = s.title
-        bodyView.text = s.body
-        counter.text = (index + 1).toString() + " / " + slides.size
-        backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
-        nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
+        if (langStep) {
+            titleView.text = "Language  /  言語"
+            bodyView.text = "Choose your language\n言語を選択してください"
+            counter.text = ""
+            skipBtn.text = "English"
+            nextBtn.text = "日本語"
+            backBtn.visibility = View.GONE
+        } else {
+            val s = slides[index]
+            titleView.text = s.title
+            bodyView.text = s.body
+            counter.text = (index + 1).toString() + " / " + slides.size
+            skipBtn.text = tr("Skip to log in", "スキップしてログイン")
+            backBtn.text = tr("Back", "戻る")
+            backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
+            nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
+        }
         if (!visibleButtons().contains(focused)) focused = nextBtn
         for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
 
         val lp = art.layoutParams as android.widget.LinearLayout.LayoutParams
-        if (index == 0) {
+        if (langStep || index == 0) {
             // Leave exactly the splash logo's space (it is centred on the screen) above the title.
             logoView.visibility = View.VISIBLE
             counter.visibility = View.GONE
@@ -4430,7 +4460,7 @@ private class OnboardingView(
             lp.height = 0
         }
         art.layoutParams = lp
-        art.type = index
+        art.type = if (langStep) 0 else index
         art.invalidate()
     }
 
@@ -4442,6 +4472,15 @@ private class OnboardingView(
     }
 
     private fun activate() {
+        if (langStep) {
+            onLanguage(if (focused === skipBtn) "en" else "ja")
+            slides = buildSlides()
+            langStep = false
+            index = 0
+            focused = nextBtn
+            render()
+            return
+        }
         when {
             focused === skipBtn -> onLogin()
             focused === backBtn -> { index -= 1; render() }
@@ -4455,7 +4494,11 @@ private class OnboardingView(
             KeyEvent.KEYCODE_DPAD_LEFT -> moveFocus(-1)
             KeyEvent.KEYCODE_DPAD_RIGHT -> moveFocus(1)
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> activate()
-            KeyEvent.KEYCODE_BACK -> if (index > 0) { index -= 1; render() } else onBrowse()
+            KeyEvent.KEYCODE_BACK -> when {
+                langStep -> onBrowse()
+                index > 0 -> { index -= 1; render() }
+                else -> { langStep = true; focused = if (isJa) nextBtn else skipBtn; render() }
+            }
         }
         return true
     }
