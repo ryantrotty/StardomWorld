@@ -73,6 +73,9 @@ class MainActivity : Activity() {
 
     companion object {
         private const val START_URL = "https://www.stardom-world.com/"
+        private const val LOGIN_LOGO_FRACTION = 0.26f
+        private const val LOGIN_URL =
+            "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
 
         private const val DESKTOP_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -511,6 +514,21 @@ class MainActivity : Activity() {
 
     private var splashStartedAt = 0L
     private var splashDone = false
+
+    // First-run guide (shown once, only to people who are not signed in), then the login page.
+    private var onboardingView: OnboardingView? = null
+    private var onboardingShowing = false
+    private var authLoggedOut: Boolean? = null
+    private var awaitingLogin = false
+    private var authPending = false
+    private var loginStarting = false
+    private var loginRevealing = false
+    private val authTimeoutRunnable = Runnable {
+        if (authPending) {
+            authPending = false
+            beginGuide()
+        }
+    }
     private var splashDismissScheduled = false
 
         private var customView: View? = null
@@ -536,6 +554,194 @@ class MainActivity : Activity() {
 
     // Turns a fixed/sticky header at the top of the page into a normal one, so it
     // scrolls away with the rest of the page instead of covering the content.
+    // Reports whether the page looks signed out (a login link in the header or a password box).
+    // Polls because the header can appear late on slow devices; "signed in" must hold for a few checks.
+    private val authJs = """
+        (function() {
+          try {
+            if (!window.AndroidHost || !window.AndroidHost.reportAuth) return;
+            if (window.__tvAuthTimer) clearInterval(window.__tvAuthTimer);
+            var tries = 0, inStreak = 0;
+            window.__tvAuthTimer = setInterval(function() {
+              tries++;
+              var out = !!document.querySelector('input[type=password]');
+              var hdr = document.querySelector('header, .box-header, .nav-inner, .header');
+              if (!out && hdr) {
+                if (hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]')) out = true;
+                var els = hdr.querySelectorAll('a, button');
+                for (var i = 0; i < els.length && !out; i++) {
+                  var t = (els[i].textContent || '').trim();
+                  if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) out = true;
+                }
+              }
+              if (out) {
+                clearInterval(window.__tvAuthTimer);
+                window.AndroidHost.reportAuth(true, location.pathname);
+              } else if (hdr) {
+                inStreak++;
+                if (inStreak >= 4) {
+                  clearInterval(window.__tvAuthTimer);
+                  window.AndroidHost.reportAuth(false, location.pathname);
+                }
+              }
+              if (tries > 100) clearInterval(window.__tvAuthTimer);
+            }, 500);
+          } catch (e) {}
+        })();
+    """
+
+    // The site's login page, restyled to match the guide (same colours, fonts and sizes): no header,
+    // large fields, a clear gold focus highlight, Down/Up through email -> password -> Log in ->
+    // Continue without logging in, Enter submits. The page's own login logic and error messages are
+    // untouched, so failed attempts and retries behave as on the site.
+    private fun loginPageJs(): String {
+        val screenW = resources.displayMetrics.widthPixels.toFloat()
+        val screenH = resources.displayMetrics.heightPixels.toFloat()
+        val cssPerPx = LAYOUT_WIDTH.toFloat() / screenW
+        val unit = density * cssPerPx   // CSS pixels in one dp
+        val d = resources.getDrawable(R.drawable.splash_logo, null)
+        val ratio = if (d != null && d.intrinsicWidth > 0) d.intrinsicHeight.toFloat() / d.intrinsicWidth else 0.25f
+        val top = (screenH * 0.04f + screenW * LOGIN_LOGO_FRACTION * ratio + 16f * density) * cssPerPx
+        return "var U = " + unit + "; var TOP = " + top + ";" + LOGIN_PAGE_JS_BODY
+    }
+
+    private val LOGIN_PAGE_JS_BODY = """
+        (function() {
+          try {
+            if (location.pathname.indexOf('/login') !== 0) {
+              if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(false);
+              return;
+            }
+            var gold = '#FFB347';
+            function f(n) { return (n * U).toFixed(1) + 'px'; }
+            if (!document.getElementById('tv-login-style')) {
+              var st = document.createElement('style');
+              st.id = 'tv-login-style';
+              st.textContent =
+                'html,body{background:#000 !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'header,.box-header,.nav-inner,.header,footer,.footer,.breadcrumb,.breadcrumbs,#header,#footer{display:none !important;}' +
+                'body{padding-top:' + TOP.toFixed(1) + 'px !important;}' +
+                'form{width:' + f(620) + ' !important;max-width:100% !important;margin:0 auto !important;}' +
+                'label{color:' + gold + ' !important;font-size:' + f(16) + ' !important;font-weight:bold !important;}' +
+                'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(2) + ' solid rgba(255,179,71,.4) !important;border-radius:' + f(12) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
+                'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2210 !important;border:' + f(5) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
+                'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:rgba(0,0,0,.2) !important;color:#fff !important;border:' + f(2) + ' solid ' + gold + ' !important;border-radius:' + f(12) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#1a1a1a !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
+                'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
+                'p,li,span,div{font-size:' + f(18) + ';}' +
+                '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]{color:#FF7A66 !important;font-size:' + f(20) + ' !important;text-align:center !important;}' +
+                '.tv-login-title{color:' + gold + ';font-size:' + f(34) + ';font-weight:bold;text-align:center;margin:0 0 ' + f(8) + ' 0;}' +
+                '.tv-login-hint{color:#fff;font-size:' + f(22) + ';text-align:center;margin:0 0 ' + f(10) + ' 0;}';
+              document.head.appendChild(st);
+            }
+
+            function pwInput() { return document.querySelector('input[type=password]'); }
+            function scope() { var pw = pwInput(); return (pw && pw.closest('form')) || document; }
+            function visible(e) { var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.disabled; }
+            function inputs() {
+              return [].slice.call(scope().querySelectorAll('input')).filter(function(e) {
+                var t = (e.type || 'text').toLowerCase();
+                return ['hidden', 'checkbox', 'radio', 'submit', 'button', 'image'].indexOf(t) < 0 && visible(e);
+              });
+            }
+            function submitBtn() {
+              var sc = scope();
+              var b = sc.querySelector('button[type=submit], input[type=submit]');
+              if (b && visible(b)) return b;
+              var all = [].slice.call(sc.querySelectorAll('button, input[type=button], a.btn'));
+              for (var i = 0; i < all.length; i++) {
+                if (all[i].classList.contains('tv-btn')) continue;
+                var t = (all[i].textContent || all[i].value || '').trim();
+                if (/log\s*in|ログイン|sign\s*in/i.test(t) && visible(all[i])) return all[i];
+              }
+              return null;
+            }
+            function contBtn() { return document.querySelector('.tv-continue'); }
+            function order() {
+              var list = inputs();
+              var b = submitBtn();
+              if (b) list.push(b);
+              var c = contBtn();
+              if (c) list.push(c);
+              return list;
+            }
+            function doSubmit() {
+              var b = submitBtn();
+              if (b) { b.click(); return; }
+              var pw = pwInput();
+              var fm = pw && pw.closest('form');
+              if (fm) { if (fm.requestSubmit) fm.requestSubmit(); else fm.submit(); }
+            }
+
+            // Title, hint and the "continue without logging in" button, added around the site's form.
+            var pw0 = pwInput();
+            var f0 = pw0 && pw0.closest('form');
+            if (f0 && f0.parentNode) {
+              if (!document.querySelector('.tv-login-title')) {
+                var ttl = document.createElement('div');
+                ttl.className = 'tv-login-title';
+                ttl.textContent = 'Log in to Stardom World';
+                var hint = document.createElement('div');
+                hint.className = 'tv-login-hint';
+                hint.textContent = 'Use your Stardom World account, or carry on without one.';
+                f0.parentNode.insertBefore(ttl, f0);
+                f0.parentNode.insertBefore(hint, f0);
+              }
+              if (!document.querySelector('.tv-continue')) {
+                var cb = document.createElement('button');
+                cb.type = 'button';
+                cb.className = 'tv-btn tv-continue';
+                cb.textContent = 'Continue without logging in';
+                cb.onclick = function() { if (window.AndroidHost && window.AndroidHost.browseWithoutLogin) window.AndroidHost.browseWithoutLogin(); };
+                f0.parentNode.insertBefore(cb, f0.nextSibling);
+              }
+            }
+
+            if (!window.__tvLoginKeys) {
+              window.__tvLoginKeys = true;
+              document.addEventListener('keydown', function(e) {
+                if (location.pathname.indexOf('/login') !== 0) return;
+                var list = order();
+                var i = list.indexOf(document.activeElement);
+                if (i < 0) return;
+                if (e.keyCode === 40 || e.keyCode === 38) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var n = e.keyCode === 40 ? Math.min(i + 1, list.length - 1) : Math.max(i - 1, 0);
+                  list[n].focus();
+                } else if (e.keyCode === 13 && document.activeElement.tagName === 'INPUT') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var ins = inputs();
+                  var k = ins.indexOf(document.activeElement);
+                  if (k >= 0 && k < ins.length - 1) ins[k + 1].focus(); else doSubmit();
+                }
+              }, true);
+            }
+
+            // Tell the app the page is ready, and put the focus on the first field.
+            var tries = 0, reported = false;
+            var timer = setInterval(function() {
+              tries++;
+              var ins = inputs();
+              if (ins.length) {
+                if (!reported) {
+                  reported = true;
+                  if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(true);
+                }
+                if (order().indexOf(document.activeElement) < 0) {
+                  try { ins[0].focus({ preventScroll: true }); } catch (e) { ins[0].focus(); }
+                  try { window.scrollTo(0, 0); } catch (e) {}
+                }
+                if (tries > 8) clearInterval(timer);
+              } else if (tries > 30) {
+                clearInterval(timer);
+              }
+            }, 300);
+          } catch (e) {}
+        })();
+    """
+
     private val headerJs = """
         (function(){
           if (window.__tvHeaderFix) return;
@@ -1350,7 +1556,12 @@ class MainActivity : Activity() {
             updateCursor()
         }
 
+        // 1. The splash logo comes first (no loading bar yet). 2. We check whether the person is signed
+        // in. 3. Signed in: the bar appears under the logo and the splash finishes onto the main page.
+        // 4. Signed out: the guide takes over with the logo in the same place.
         startSplash()
+        authPending = true
+        handler.postDelayed(authTimeoutRunnable, 8000L)
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -1489,13 +1700,16 @@ class MainActivity : Activity() {
     }
 
     private fun startSplash() {
-        splashStartedAt = SystemClock.uptimeMillis()
         splashLogo.animate()
             .alpha(1f)
             .setDuration(400)
             .setInterpolator(DecelerateInterpolator())
             .start()
+    }
 
+    // Signed in: the loading bar appears under the logo and starts travelling.
+    private fun showSplashProgress() {
+        splashStartedAt = SystemClock.uptimeMillis()
         splashProgress.animate().alpha(1f).setDuration(400).setInterpolator(DecelerateInterpolator()).start()
         splashProgress.start()
 
@@ -1506,7 +1720,7 @@ class MainActivity : Activity() {
     // Called when the page is ready. Waits until the bar has had a minimum time to travel, then runs
     // the finish sequence (bar fills to the end, sparkle burst) and only then fades the splash out.
     private fun requestSplashFinish() {
-        if (splashDone || splashFinishing) return
+        if (splashDone || splashFinishing || authPending) return
         splashFinishing = true
         val elapsed = SystemClock.uptimeMillis() - splashStartedAt
         handler.postDelayed({
@@ -1515,7 +1729,7 @@ class MainActivity : Activity() {
     }
 
     private fun onPageReady() {
-        if (splashDone || splashDismissScheduled) return
+        if (splashDone || splashDismissScheduled || authPending) return
         splashDismissScheduled = true
         val elapsed = SystemClock.uptimeMillis() - splashStartedAt
         handler.postDelayed({ requestSplashFinish() }, (SPLASH_MIN_MS - elapsed).coerceAtLeast(0L))
@@ -1535,8 +1749,160 @@ class MainActivity : Activity() {
             .start()
     }
 
+    // ---------------------------------------------------------------- first-run guide and login
+
+    // Hands over from the splash to the guide: the guide is put underneath, then the splash fades away
+    // (its logo sits exactly where the guide's logo is, so only the bar disappears and the text arrives).
+    private fun beginGuide() {
+        splashDone = true
+        showOnboarding()
+        // Load the site's login page quietly now, so it is ready by the time "Log in" is pressed.
+        awaitingLogin = true
+        webView.loadUrl(LOGIN_URL)
+    }
+
+    // The page reports whether it looks signed in or out. The first answer of a launch decides between
+    // the guide and the normal start; once the guide is up, a "signed in" answer from the login page
+    // means the login worked.
+    private fun onAuthReported(loggedOut: Boolean, path: String) {
+        authLoggedOut = loggedOut
+        if (authPending) {
+            authPending = false
+            handler.removeCallbacks(authTimeoutRunnable)
+            if (loggedOut) {
+                beginGuide()
+            } else {
+                showSplashProgress()
+                onPageReady()
+            }
+            return
+        }
+        if (awaitingLogin && !loggedOut) loginSucceeded(path)
+    }
+
+    private fun showOnboarding() {
+        onboardingShowing = true
+        if (cursorMode) setCursorMode(false)
+        // Keep the remote's focus inside the guide: nothing underneath may take it.
+        webView.isFocusable = false
+        webView.isFocusableInTouchMode = false
+        val v = OnboardingView(
+            this,
+            density,
+            BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
+            { startWebLogin() },
+            { exitGuideToSite() }
+        )
+        onboardingView = v
+        val lp = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        if (splashView.parent != null) {
+            // Under the splash, then the splash fades out.
+            root.addView(v, root.indexOfChild(splashView), lp)
+            splashView.animate().cancel()
+            splashProgress.animate().alpha(0f).setDuration(250).start()
+            splashView.animate()
+                .alpha(0f)
+                .setStartDelay(150)
+                .setDuration(600)
+                .withEndAction {
+                    if (splashView.parent != null) root.removeView(splashView)
+                    splashView.animate().setStartDelay(0)
+                }
+                .start()
+        } else {
+            v.alpha = 0f
+            root.addView(v, lp)
+            v.animate().alpha(1f).setDuration(400).start()
+        }
+        refreshCursorVisibility()
+    }
+
+    private fun closeOnboarding() {
+        onboardingView?.let { root.removeView(it) }
+        onboardingView = null
+        onboardingShowing = false
+        loginStarting = false
+        loginRevealing = false
+        webView.isFocusable = true
+        webView.isFocusableInTouchMode = true
+        webView.requestFocus()
+        refreshCursorVisibility()
+    }
+
+    // Back out of the experience: the transition screen, then the signed-out main page.
+    private fun exitGuideToSite() {
+        awaitingLogin = false
+        showLoginLogo(false)
+        closeOnboarding()
+        showPageTransitionOverlay()
+        webView.loadUrl(START_URL)
+    }
+
+    // "Log in": fade the guide away onto the login page straight away, in whatever state it is in
+    // (it has been loading quietly underneath since the guide appeared).
+    private fun startWebLogin() {
+        if (loginStarting) return
+        loginStarting = true
+        revealLogin()
+    }
+
+    private fun revealLogin() {
+        val v = onboardingView ?: return
+        if (loginRevealing) return
+        loginRevealing = true
+        v.animate().alpha(0f).setDuration(400).withEndAction {
+            closeOnboarding()
+            showLoginLogo(awaitingLogin)
+        }.start()
+    }
+
+    // A small copy of the logo above the login page, in the same style as the guide.
+    private var loginLogoView: ImageView? = null
+
+    private fun showLoginLogo(show: Boolean) {
+        if (!show) {
+            loginLogoView?.visibility = View.GONE
+            return
+        }
+        var v = loginLogoView
+        if (v == null) {
+            v = ImageView(this).apply {
+                setImageResource(R.drawable.splash_logo)
+                adjustViewBounds = true
+                isFocusable = false
+            }
+            loginLogoView = v
+            root.addView(
+                v,
+                FrameLayout.LayoutParams(
+                    (resources.displayMetrics.widthPixels * LOGIN_LOGO_FRACTION).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                ).apply { topMargin = (resources.displayMetrics.heightPixels * 0.04f).toInt() }
+            )
+        }
+        v.visibility = View.VISIBLE
+        root.bringChildToFront(v)
+        if (::cursorView.isInitialized) root.bringChildToFront(cursorView)
+    }
+
+    // Signed in from the login page: the transition screen, then the main page (no second splash).
+    // If the site already moved on to a page of its own, that page is simply left showing.
+    private fun loginSucceeded(path: String) {
+        awaitingLogin = false
+        showLoginLogo(false)
+        closeOnboarding()
+        if (path.startsWith("/login")) {
+            showPageTransitionOverlay()
+            webView.loadUrl(START_URL)
+        }
+    }
+
     private fun showPageTransitionOverlay() {
-        if (!splashDone || transitionShowing) return
+        if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
         handler.removeCallbacks(hideTransitionRunnable)
 
@@ -1571,6 +1937,28 @@ class MainActivity : Activity() {
             handler.post {
                 requestSplashFinish()
             }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun reportAuth(loggedOut: Boolean, path: String) {
+            handler.post { onAuthReported(loggedOut, path) }
+        }
+
+        // The login page has been restyled and is ready to be shown (or the page is not a login page).
+        @android.webkit.JavascriptInterface
+        fun loginPageReady(show: Boolean) {
+            handler.post {
+                if (show) {
+                    if (!onboardingShowing) showLoginLogo(awaitingLogin)
+                } else {
+                    showLoginLogo(false)
+                }
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun browseWithoutLogin() {
+            handler.post { exitGuideToSite() }
         }
 
         @android.webkit.JavascriptInterface
@@ -2768,6 +3156,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript(hideTranslateJs, null)
         view.evaluateJavascript(translateJs, null)
         view.evaluateJavascript(headerJs, null)
+        view.evaluateJavascript(authJs, null)
+        view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
@@ -3083,7 +3473,7 @@ class MainActivity : Activity() {
 
     private fun refreshCursorVisibility() {
         cursorView.visibility =
-            if (cursorMode && splashDone && customView == null) View.VISIBLE else View.INVISIBLE
+            if (cursorMode && splashDone && customView == null && !onboardingShowing) View.VISIBLE else View.INVISIBLE
     }
 
     private fun setCursorMode(on: Boolean) {
@@ -3171,6 +3561,10 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- remote keys
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (onboardingShowing) {
+            if (onboardingView?.handleKey(event) != false) return true
+            return super.dispatchKeyEvent(event)
+        }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
         }
@@ -3188,6 +3582,11 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (awaitingLogin && !onboardingShowing) {
+                        // Backing out of the login page: the normal signed-out start.
+                        exitGuideToSite()
+                        return true
+                    }
                     if (fsControlsMode && fullScreenActive()) {
                         hideFsOverlay()
                         return true
@@ -3530,6 +3929,15 @@ private class SplashProgressView(
         }
     }
 
+    fun reset() {
+        travel?.cancel()
+        progress = 0f
+        burst = 0f
+        flash = 0f
+        finishing = false
+        invalidate()
+    }
+
     fun finish(onDone: () -> Unit) {
         if (finishing) return
         finishing = true
@@ -3784,6 +4192,352 @@ private class TransitionOverlayView(
 
         if (elapsedSec < 5.2f) {
             postInvalidateOnAnimation()
+        }
+    }
+}
+
+// Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
+// the splash logo exactly where the splash drew it, so the two flow into each other. The last
+// button opens the site's own login page (restyled to match).
+private class OnboardingView(
+    context: android.content.Context,
+    private val density: Float,
+    private val wand: Bitmap,
+    private val onLogin: () -> Unit,
+    private val onBrowse: () -> Unit
+) : FrameLayout(context) {
+
+    private class Slide(val title: String, val body: String)
+
+    private val slides = listOf(
+        Slide(
+            "Welcome to Stardom World on TV",
+            "A quick tour of getting around with your remote."
+        ),
+        Slide(
+            "Moving around",
+            "Use the arrow buttons to move between videos and menus. OK opens what is highlighted, and Back returns to the previous page."
+        ),
+        Slide(
+            "Add to favorites",
+            "Highlight a video and press the Options (menu) button on your remote to add it to, or remove it from, your favorites. You need to be signed in."
+        ),
+        Slide(
+            "Cursor mode",
+            "Hold OK for about half a second to turn on a pointer, for things like the \"Verify you are human\" box. Hold OK again to turn it off."
+        ),
+        Slide(
+            "Videos and full screen",
+            "Videos open in full screen and the next one plays by itself. Press Down for the controls bar, Left and Right to skip, and Back to leave full screen."
+        ),
+        Slide(
+            "English or Japanese",
+            "Use the EN / JA button at the top of the page to switch language at any time."
+        )
+    )
+
+    private val gold = 0xFFFFB347.toInt()
+    private var index = 0
+
+    private fun p(v: Int): Int = (v * density).toInt()
+
+    private val art = ArtView(context)
+    private val titleView = android.widget.TextView(context)
+    private val bodyView = android.widget.TextView(context)
+    private val counter = android.widget.TextView(context)
+    private val skipBtn = android.widget.TextView(context)
+    private val backBtn = android.widget.TextView(context)
+    private val nextBtn = android.widget.TextView(context)
+    private var focused: android.widget.TextView = nextBtn
+
+    // The splash logo, at the splash's own size and position.
+    private val logoView = android.widget.ImageView(context)
+    private val screenW = context.resources.displayMetrics.widthPixels
+    private val screenH = context.resources.displayMetrics.heightPixels
+    private val logoH: Int
+
+    init {
+        setBackgroundColor(Color.BLACK)
+        isClickable = true
+
+        logoView.setImageResource(R.drawable.splash_logo)
+        logoView.adjustViewBounds = true
+        val ld = logoView.drawable
+        val logoW = (screenW * 0.6f).toInt()
+        logoH = if (ld != null && ld.intrinsicWidth > 0) {
+            logoW * ld.intrinsicHeight / ld.intrinsicWidth
+        } else {
+            (logoW * 0.25f).toInt()
+        }
+        addView(
+            logoView,
+            FrameLayout.LayoutParams(logoW, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER)
+        )
+
+        val col = android.widget.LinearLayout(context)
+        col.orientation = android.widget.LinearLayout.VERTICAL
+        col.gravity = Gravity.CENTER_HORIZONTAL
+        col.setPadding(p(72), p(32), p(72), p(30))
+
+        col.addView(
+            art,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.25f
+            )
+        )
+
+        titleView.setTextColor(gold)
+        titleView.textSize = 34f
+        titleView.setTypeface(titleView.typeface, android.graphics.Typeface.BOLD)
+        titleView.gravity = Gravity.CENTER
+        col.addView(
+            titleView,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        bodyView.setTextColor(Color.WHITE)
+        bodyView.textSize = 22f
+        bodyView.gravity = Gravity.CENTER
+        bodyView.setLineSpacing(0f, 1.15f)
+        col.addView(
+            bodyView,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = p(10); bottomMargin = p(8) }
+        )
+
+        counter.setTextColor(0x99FFFFFF.toInt())
+        counter.textSize = 16f
+        counter.gravity = Gravity.CENTER
+        col.addView(
+            counter,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = p(10) }
+        )
+
+        val row = android.widget.LinearLayout(context)
+        row.orientation = android.widget.LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER
+        for (b in listOf(skipBtn, backBtn, nextBtn)) {
+            b.textSize = 20f
+            b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
+            b.gravity = Gravity.CENTER
+            b.setPadding(p(30), p(12), p(30), p(12))
+            row.addView(
+                b,
+                android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { leftMargin = p(10); rightMargin = p(10) }
+            )
+        }
+        skipBtn.text = "Skip to log in"
+        backBtn.text = "Back"
+        col.addView(
+            row,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        render()
+    }
+
+    private fun visibleButtons(): List<android.widget.TextView> =
+        if (index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
+
+    private fun paintButton(b: android.widget.TextView, isFocused: Boolean) {
+        val d = android.graphics.drawable.GradientDrawable()
+        d.cornerRadius = 12 * density
+        if (isFocused) {
+            d.setColor(gold)
+            d.setStroke((4 * density).toInt(), Color.WHITE)
+            b.setTextColor(0xFF1A1A1A.toInt())
+        } else {
+            d.setColor(0x33000000)
+            d.setStroke((2 * density).toInt(), gold)
+            b.setTextColor(Color.WHITE)
+        }
+        b.background = d
+    }
+
+    private fun render() {
+        val s = slides[index]
+        titleView.text = s.title
+        bodyView.text = s.body
+        counter.text = (index + 1).toString() + " / " + slides.size
+        backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
+        nextBtn.text = if (index == slides.size - 1) "Log in" else "Next"
+        if (!visibleButtons().contains(focused)) focused = nextBtn
+        for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
+
+        val lp = art.layoutParams as android.widget.LinearLayout.LayoutParams
+        if (index == 0) {
+            // Leave exactly the splash logo's space (it is centred on the screen) above the title.
+            logoView.visibility = View.VISIBLE
+            counter.visibility = View.GONE
+            lp.weight = 0f
+            lp.height = ((screenH + logoH) / 2f + 10 * density - 32 * density).toInt().coerceAtLeast(0)
+        } else {
+            logoView.visibility = View.GONE
+            counter.visibility = View.VISIBLE
+            lp.weight = 1.25f
+            lp.height = 0
+        }
+        art.layoutParams = lp
+        art.type = index
+        art.invalidate()
+    }
+
+    private fun moveFocus(step: Int) {
+        val list = visibleButtons()
+        val i = list.indexOf(focused).coerceAtLeast(0)
+        focused = list[(i + step).coerceIn(0, list.size - 1)]
+        render()
+    }
+
+    private fun activate() {
+        when {
+            focused === skipBtn -> onLogin()
+            focused === backBtn -> { index -= 1; render() }
+            else -> if (index >= slides.size - 1) onLogin() else { index += 1; render() }
+        }
+    }
+
+    fun handleKey(e: KeyEvent): Boolean {
+        if (e.action != KeyEvent.ACTION_DOWN) return true
+        when (e.keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> moveFocus(-1)
+            KeyEvent.KEYCODE_DPAD_RIGHT -> moveFocus(1)
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> activate()
+            KeyEvent.KEYCODE_BACK -> if (index > 0) { index -= 1; render() } else onBrowse()
+        }
+        return true
+    }
+
+    // Simple line drawings, one per slide.
+    private inner class ArtView(c: android.content.Context) : View(c) {
+        var type = 0
+        private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = gold
+            strokeWidth = 3f * density
+        }
+        private val fillGold = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
+        private val fillWhite = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+        private val fillDim = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x22FFFFFF }
+        private val fillShade = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x66000000 }
+        private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textAlign = Paint.Align.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        private val tmp = RectF()
+        private val path = Path()
+
+        private fun triangle(canvas: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, paint: Paint) {
+            path.reset()
+            path.moveTo(x1, y1)
+            path.lineTo(x2, y2)
+            path.lineTo(x3, y3)
+            path.close()
+            canvas.drawPath(path, paint)
+        }
+
+        private fun heart(canvas: Canvas, cx: Float, cy: Float, r: Float, paint: Paint) {
+            canvas.drawCircle(cx - r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
+            canvas.drawCircle(cx + r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
+            triangle(canvas, cx - r * 1.02f, cy - r * 0.05f, cx + r * 1.02f, cy - r * 0.05f, cx, cy + r * 1.1f, paint)
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            val u = minOf(width, height) / 100f
+            val cx = width / 2f
+            val cy = height / 2f
+            when (type) {
+                0 -> {}
+                1 -> {
+                    canvas.drawCircle(cx, cy, 44f * u, fillDim)
+                    canvas.drawCircle(cx, cy, 44f * u, line)
+                    triangle(canvas, cx, cy - 36f * u, cx - 9f * u, cy - 24f * u, cx + 9f * u, cy - 24f * u, fillWhite)
+                    triangle(canvas, cx, cy + 36f * u, cx - 9f * u, cy + 24f * u, cx + 9f * u, cy + 24f * u, fillWhite)
+                    triangle(canvas, cx - 36f * u, cy, cx - 24f * u, cy - 9f * u, cx - 24f * u, cy + 9f * u, fillWhite)
+                    triangle(canvas, cx + 36f * u, cy, cx + 24f * u, cy - 9f * u, cx + 24f * u, cy + 9f * u, fillWhite)
+                    canvas.drawCircle(cx, cy, 15f * u, fillGold)
+                    text.color = 0xFF1A1A1A.toInt()
+                    text.textSize = 11f * u
+                    canvas.drawText("OK", cx, cy + 4f * u, text)
+                }
+                2 -> {
+                    // A video card with a heart, and the remote's Options button pointing at it.
+                    tmp.set(cx - 82f * u, cy - 30f * u, cx + 8f * u, cy + 30f * u)
+                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, line)
+                    heart(canvas, cx - 8f * u, cy - 14f * u, 9f * u, fillGold)
+                    tmp.set(cx - 74f * u, cy + 8f * u, cx, cy + 14f * u)
+                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillWhite)
+                    tmp.set(cx - 74f * u, cy + 19f * u, cx - 30f * u, cy + 24f * u)
+                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillDim)
+                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, fillDim)
+                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, line)
+                    for (k in -1..1) {
+                        canvas.drawLine(cx + 49f * u, cy + k * 6f * u, cx + 67f * u, cy + k * 6f * u, line)
+                    }
+                    canvas.drawLine(cx + 34f * u, cy, cx + 14f * u, cy - 8f * u, line)
+                }
+                3 -> {
+                    tmp.set(cx - 84f * u, cy - 14f * u, cx - 56f * u, cy + 14f * u)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
+                    text.color = Color.WHITE
+                    text.textSize = 9f * u
+                    text.textAlign = Paint.Align.LEFT
+                    canvas.drawText("Verify you are human", cx - 48f * u, cy + 4f * u, text)
+                    text.textAlign = Paint.Align.CENTER
+                    val ws = 30f * u
+                    val ratio = wand.height.toFloat() / wand.width.toFloat()
+                    tmp.set(cx - 70f * u, cy - 2f * u, cx - 70f * u + ws, cy - 2f * u + ws * ratio)
+                    canvas.drawBitmap(wand, null, tmp, null)
+                    canvas.drawCircle(cx + 62f * u, cy, 22f * u, fillDim)
+                    tmp.set(cx + 62f * u - 22f * u, cy - 22f * u, cx + 62f * u + 22f * u, cy + 22f * u)
+                    canvas.drawArc(tmp, -90f, 270f, false, line)
+                    text.color = Color.WHITE
+                    text.textSize = 10f * u
+                    canvas.drawText("hold OK", cx + 62f * u, cy + 4f * u, text)
+                }
+                4 -> {
+                    tmp.set(cx - 70f * u, cy - 42f * u, cx + 70f * u, cy + 22f * u)
+                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, line)
+                    tmp.set(cx - 62f * u, cy + 8f * u, cx + 62f * u, cy + 16f * u)
+                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillShade)
+                    for (k in 0..4) {
+                        tmp.set(cx - 58f * u + k * 24f * u, cy + 10f * u, cx - 44f * u + k * 24f * u, cy + 14f * u)
+                        canvas.drawRoundRect(tmp, 2f * u, 2f * u, if (k == 1) fillGold else fillWhite)
+                    }
+                    triangle(canvas, cx, cy + 46f * u, cx - 9f * u, cy + 34f * u, cx + 9f * u, cy + 34f * u, fillGold)
+                    triangle(canvas, cx - 18f * u, cy - 14f * u, cx - 18f * u, cy - 2f * u, cx - 7f * u, cy - 8f * u, fillWhite)
+                }
+                else -> {
+                    tmp.set(cx - 34f * u, cy - 14f * u, cx + 34f * u, cy + 14f * u)
+                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, line)
+                    tmp.set(cx - 32f * u, cy - 12f * u, cx, cy + 12f * u)
+                    canvas.drawRoundRect(tmp, 12f * u, 12f * u, fillGold)
+                    text.textSize = 13f * u
+                    text.color = 0xFF1A1A1A.toInt()
+                    canvas.drawText("EN", cx - 16f * u, cy + 5f * u, text)
+                    text.color = Color.WHITE
+                    canvas.drawText("JA", cx + 17f * u, cy + 5f * u, text)
+                }
+            }
         }
     }
 }
