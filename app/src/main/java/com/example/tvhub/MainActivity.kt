@@ -602,7 +602,7 @@ class MainActivity : Activity() {
         val d = resources.getDrawable(R.drawable.splash_logo, null)
         val ratio = if (d != null && d.intrinsicWidth > 0) d.intrinsicHeight.toFloat() / d.intrinsicWidth else 0.25f
         val top = (screenH * 0.04f + screenW * LOGIN_LOGO_FRACTION * ratio + 16f * density) * cssPerPx
-        return "var U = " + unit + "; var TOP = " + top + ";" + LOGIN_PAGE_JS_BODY
+        return "var U = " + unit + "; var TOP = " + top + "; var JA = " + isJa + ";" + LOGIN_PAGE_JS_BODY
     }
 
     private val LOGIN_PAGE_JS_BODY = """
@@ -680,10 +680,10 @@ class MainActivity : Activity() {
               if (!document.querySelector('.tv-login-title')) {
                 var ttl = document.createElement('div');
                 ttl.className = 'tv-login-title';
-                ttl.textContent = 'Log in to Stardom World';
+                ttl.textContent = JA ? 'Stardom World にログイン' : 'Log in to Stardom World';
                 var hint = document.createElement('div');
                 hint.className = 'tv-login-hint';
-                hint.textContent = 'Use your Stardom World account, or carry on without one.';
+                hint.textContent = JA ? 'Stardom World のアカウントでログインするか、ログインせずに続けられます。' : 'Use your Stardom World account, or carry on without one.';
                 f0.parentNode.insertBefore(ttl, f0);
                 f0.parentNode.insertBefore(hint, f0);
               }
@@ -691,7 +691,7 @@ class MainActivity : Activity() {
                 var cb = document.createElement('button');
                 cb.type = 'button';
                 cb.className = 'tv-btn tv-continue';
-                cb.textContent = 'Continue without logging in';
+                cb.textContent = JA ? 'ログインせずに続ける' : 'Continue without logging in';
                 cb.onclick = function() { if (window.AndroidHost && window.AndroidHost.browseWithoutLogin) window.AndroidHost.browseWithoutLogin(); };
                 f0.parentNode.insertBefore(cb, f0.nextSibling);
               }
@@ -1997,7 +1997,14 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun logDebug(msg: String) {
             handler.post {
-                Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                val shown = if (!isJa) msg else when (msg) {
+                    "Favorites API not available" -> "お気に入り機能は利用できません"
+                    "Please log in on Stardom World to sync favorites" -> "お気に入りを同期するには Stardom World にログインしてください"
+                    "Removed from Favorites" -> "お気に入りから削除しました"
+                    "♥ Added to Favorites!" -> "♥ お気に入りに追加しました"
+                    else -> msg
+                }
+                Toast.makeText(this@MainActivity, shown, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -3298,17 +3305,17 @@ class MainActivity : Activity() {
                 ).apply { rightMargin = (12 * density).toInt() }
             )
         }
-        fsBtnPlay = fsButton("Pause") { playerCommand("toggle", 0) }
+        fsBtnPlay = fsButton(tr("Pause", "一時停止")) { playerCommand("toggle", 0) }
         add(fsBtnPlay!!)
-        add(fsButton("-10s") { playerCommand("seek", -10) })
-        add(fsButton("+10s") { playerCommand("seek", 10) })
-        fsBtnMute = fsButton("Mute") { playerCommand("mute", 0) }
+        add(fsButton(tr("-10s", "-10秒")) { playerCommand("seek", -10) })
+        add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
+        fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
         add(fsBtnMute!!)
-        fsBtnCc = fsButton("CC: Off") { playerCommand("captions", 0) }
+        fsBtnCc = fsButton(tr("CC: Off", "字幕: オフ")) { playerCommand("captions", 0) }
         add(fsBtnCc!!)
-        fsBtnSpeed = fsButton("Speed 1x") { playerCommand("speed", 0) }
+        fsBtnSpeed = fsButton(tr("Speed 1x", "速度 1x")) { playerCommand("speed", 0) }
         add(fsBtnSpeed!!)
-        add(fsButton("Exit full screen") {
+        add(fsButton(tr("Exit full screen", "全画面を終了")) {
             hideFsOverlay()
             hideCustomView()
         })
@@ -3365,10 +3372,11 @@ class MainActivity : Activity() {
                 val j = org.json.JSONObject(str)
                 val t = j.optDouble("t", 0.0)
                 val d = j.optDouble("d", 0.0)
-                fsBtnPlay?.text = if (j.optBoolean("paused")) "Play" else "Pause"
-                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) "Unmute" else "Mute"
-                fsBtnCc?.text = "CC: " + j.optString("cc", "Off")
-                fsBtnSpeed?.text = "Speed " + j.optDouble("rate", 1.0) + "x"
+                fsBtnPlay?.text = if (j.optBoolean("paused")) tr("Play", "再生") else tr("Pause", "一時停止")
+                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
+                val ccName = j.optString("cc", "Off")
+                fsBtnCc?.text = tr("CC: ", "字幕: ") + (if (ccName == "Off") tr("Off", "オフ") else ccName)
+                fsBtnSpeed?.text = tr("Speed ", "速度 ") + j.optDouble("rate", 1.0) + "x"
                 fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
                 fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
             } catch (_: Exception) {
@@ -3480,7 +3488,7 @@ class MainActivity : Activity() {
         cursorMode = on
         refreshCursorVisibility()
         webView.evaluateJavascript(if (on) removeFocusJs else focusJs, null)
-        Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, if (on) tr("Cursor on", "カーソル オン") else tr("Cursor off", "カーソル オフ"), Toast.LENGTH_SHORT).show()
     }
 
     // ---- Fire TV specifics. Fire OS needs a few full-screen tweaks (see the Fire TV notes in CHANGELOG);
@@ -4196,6 +4204,10 @@ private class TransitionOverlayView(
     }
 }
 
+// The app follows the device language: Japanese when the TV is set to Japanese, English otherwise.
+private val isJa: Boolean = java.util.Locale.getDefault().language == "ja"
+private fun tr(en: String, ja: String): String = if (isJa) ja else en
+
 // Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
 // the splash logo exactly where the splash drew it, so the two flow into each other. The last
 // button opens the site's own login page (restyled to match).
@@ -4209,7 +4221,32 @@ private class OnboardingView(
 
     private class Slide(val title: String, val body: String)
 
-    private val slides = listOf(
+    private val slides = if (isJa) listOf(
+        Slide(
+            "テレビで Stardom World へようこそ",
+            "リモコンでの操作方法をかんたんにご紹介します。"
+        ),
+        Slide(
+            "移動のしかた",
+            "矢印ボタンで動画やメニューを移動します。OKで選択した項目を開き、戻るボタンで前のページに戻ります。"
+        ),
+        Slide(
+            "お気に入りに追加",
+            "動画を選択して、リモコンのオプション(メニュー)ボタンを押すと、お気に入りに追加・削除できます。ログインが必要です。"
+        ),
+        Slide(
+            "カーソルモード",
+            "OKを約0.5秒長押しするとポインターが表示されます。「人間であることを確認」のチェックなどに使えます。もう一度長押しすると解除されます。"
+        ),
+        Slide(
+            "動画と全画面表示",
+            "動画は全画面で開き、次の動画が自動で再生されます。下ボタンでコントロールバー、左右ボタンでスキップ、戻るボタンで全画面を終了します。"
+        ),
+        Slide(
+            "日本語と英語",
+            "ページ上部の EN / JA ボタンで、いつでも言語を切り替えられます。"
+        )
+    ) else listOf(
         Slide(
             "Welcome to Stardom World on TV",
             "A quick tour of getting around with your remote."
@@ -4337,8 +4374,8 @@ private class OnboardingView(
                 ).apply { leftMargin = p(10); rightMargin = p(10) }
             )
         }
-        skipBtn.text = "Skip to log in"
-        backBtn.text = "Back"
+        skipBtn.text = tr("Skip to log in", "スキップしてログイン")
+        backBtn.text = tr("Back", "戻る")
         col.addView(
             row,
             android.widget.LinearLayout.LayoutParams(
@@ -4375,7 +4412,7 @@ private class OnboardingView(
         bodyView.text = s.body
         counter.text = (index + 1).toString() + " / " + slides.size
         backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
-        nextBtn.text = if (index == slides.size - 1) "Log in" else "Next"
+        nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
         if (!visibleButtons().contains(focused)) focused = nextBtn
         for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
 
