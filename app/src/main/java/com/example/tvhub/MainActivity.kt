@@ -1971,25 +1971,43 @@ class MainActivity : Activity() {
           };
 
           // ---- "Page full screen" (Fire TV): stretch the player iframe over the whole page ----
+          // Sized with explicit pixel values taken from the visible window (not vw/vh), and without
+          // touching the page's own overflow or giving the frame a background of its own.
+          function sizeCssFullScreen() {
+            var f = playerFrame();
+            if (!f || f.__tvSavedStyle === undefined) return;
+            var w = window.innerWidth || document.documentElement.clientWidth;
+            var h = window.innerHeight || document.documentElement.clientHeight;
+            f.style.cssText = f.__tvSavedStyle +
+              ';position:fixed !important;top:0 !important;left:0 !important;right:auto !important;bottom:auto !important;' +
+              'width:' + w + 'px !important;height:' + h + 'px !important;' +
+              'max-width:none !important;max-height:none !important;min-width:0 !important;min-height:0 !important;' +
+              'margin:0 !important;border:0 !important;padding:0 !important;transform:none !important;' +
+              'opacity:1 !important;visibility:visible !important;display:block !important;z-index:999999 !important;';
+          }
+          window.addEventListener('resize', sizeCssFullScreen);
+
           window.__tvCssFullScreen = function(on) {
             var f = playerFrame();
             if (!f) return false;
-            var root = document.documentElement;
             if (on) {
               if (f.__tvSavedStyle === undefined) f.__tvSavedStyle = f.getAttribute('style') || '';
-              f.style.cssText = f.__tvSavedStyle +
-                ';position:fixed !important;top:0 !important;left:0 !important;width:100vw !important;' +
-                'height:100vh !important;max-width:none !important;max-height:none !important;' +
-                'margin:0 !important;border:0 !important;z-index:2147483647 !important;background:#000 !important;';
-              root.style.setProperty('overflow', 'hidden', 'important');
+              sizeCssFullScreen();
               try { window.scrollTo(0, 0); } catch (e) {}
               try { f.focus(); } catch (e) {}
+              setTimeout(function() {
+                try {
+                  var r = f.getBoundingClientRect();
+                  window.AndroidHost.logDebug('FS ' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' +
+                    Math.round(r.width) + 'x' + Math.round(r.height) + ' win ' + window.innerWidth + 'x' +
+                    window.innerHeight + ' dpr ' + window.devicePixelRatio);
+                } catch (e) {}
+              }, 800);
             } else {
               if (f.__tvSavedStyle !== undefined) {
                 if (f.__tvSavedStyle) f.setAttribute('style', f.__tvSavedStyle); else f.removeAttribute('style');
                 f.__tvSavedStyle = undefined;
               }
-              root.style.removeProperty('overflow');
             }
             return true;
           };

@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.26
+- Fire TV page full screen: sized from the visible window in pixels, no frame background, page overflow left alone.
+  Shows a short "FS ..." debug message when entering full screen (temporary, for diagnosing a black picture).
+
 ## 1.3.25
 - Fire TV: video "full screen" now stretches the player over the whole page instead of using the system full-screen
   mode, which left the picture in the top-left corner. Remote keys, controls and Back work the same.
