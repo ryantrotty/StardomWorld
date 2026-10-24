@@ -806,7 +806,7 @@ class MainActivity : Activity() {
             } else if (e.keyCode === 37 && ae === lang) {
               e.preventDefault();
               e.stopPropagation();
-              var t = last.querySelector('a, button');
+              var t = last.querySelector('.box-dropdown-key, [tabindex]') || last.querySelector('a, button');
               if (t) t.focus();
             }
           }, true);
@@ -1319,7 +1319,8 @@ class MainActivity : Activity() {
                           var tgl = Array.prototype.filter.call(acctLi.querySelectorAll('a, button, [tabindex]'), function(x) {
                             return !acctMenu.contains(x);
                           });
-                          acctToggle = tgl[0] || acctLi;
+                          acctToggle = acctLi.querySelector('.box-dropdown-key') || tgl[0] || acctLi;
+                          if (!acctToggle.hasAttribute('tabindex')) acctToggle.setAttribute('tabindex', '0');
                         }
                         if (!acctMenu && !window.__tvAcctWarned && document.getElementById('tv-fav-header-btn') &&
                             document.getElementById('tv-fav-header-btn').style.display !== 'none' && window.AndroidHost && window.AndroidHost.logDebug) {
@@ -2150,7 +2151,7 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun pickAccountItem(labelsJson: String) {
-            handler.post { showSectionPicker(labelsJson, "__tvPickAccount", "li[data-tv-acct] a, li[data-tv-acct] button") }
+            handler.post { showSectionPicker(labelsJson, "__tvPickAccount", "[data-tv-acct] .box-dropdown-key, [data-tv-acct] a, [data-tv-acct] button") }
         }
 
         @android.webkit.JavascriptInterface
