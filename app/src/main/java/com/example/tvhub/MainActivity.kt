@@ -3209,8 +3209,7 @@ class MainActivity : Activity() {
                         return super.dispatchKeyEvent(event)
                     }
                 }
-            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && isFireTv()) {
-                // Fire TV only: other devices keep the player's own controls.
+            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                 if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) showFsOverlay()
                 return true
             }
@@ -3238,7 +3237,10 @@ class MainActivity : Activity() {
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    // Never let Up/Down reach the player: they would put its keyboard focus on its own
+                    // buttons, where the remote can't leave and its bar never fades.
                     if (event.action == KeyEvent.ACTION_DOWN) fullScreenInteraction()
+                    return true
                 }
             }
         }
