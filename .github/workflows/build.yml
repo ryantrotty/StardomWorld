@@ -2,12 +2,16 @@ name: Build APK
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     tags: ['v*']
   pull_request:
 
 permissions:
   contents: write   # needed to attach the APK to a release
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -37,3 +41,18 @@ jobs:
         with:
           files: app/build/outputs/apk/debug/app-debug.apk
           generate_release_notes: true
+
+      # Every branch push updates one rolling "test build" release, so the Firestick / TV can
+      # always download the newest test APK from the same short link:
+      # https://github.com/ryantrotty/StardomWorld/releases/download/test-build/app-debug.apk
+      - name: Publish rolling test build (branch pushes)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-build
+          target_commitish: ${{ github.sha }}
+          name: Test build (${{ github.ref_name }})
+          body: "Newest test build, from branch `${{ github.ref_name }}` (commit ${{ github.sha }})."
+          prerelease: true
+          make_latest: false
+          files: app/build/outputs/apk/debug/app-debug.apk

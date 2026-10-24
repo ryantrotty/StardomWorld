@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 53
-        versionName = "1.3.23"
+        versionCode = 67
+        versionName = "1.3.37"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -32,6 +32,20 @@ android {
         sourceSets {
             getByName("debug") { res.srcDir(privateBranding) }
             getByName("release") { res.srcDir(privateBranding) }
+        }
+    }
+
+    // GitHub's test builds are signed with a fixed, public debug key so each new test build can be
+    // installed over the previous one. Only used on GitHub (CI); your own builds keep your usual key.
+    val ciKeystore = file("ci-debug.keystore")
+    if (System.getenv("CI") == "true" && ciKeystore.exists()) {
+        signingConfigs {
+            getByName("debug") {
+                storeFile = ciKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
         }
     }
 
