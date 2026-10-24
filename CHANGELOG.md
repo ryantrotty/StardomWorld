@@ -6,6 +6,31 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.59
+- Account menu: fixed the account name disappearing from the header (the whole account block was being hidden instead of just its panel), and removed the false "menu not found" note when signed out.
+
+## 1.3.58
+- Account menu: the account name (a plain label on the site, not a link) is now made focusable and is what opens the menu list; Left from the language switch lands back on it.
+
+## 1.3.57
+- Account menu: hide the site's whole dropdown panel (not just the list inside it), using the markup of the site's account menu.
+
+## 1.3.56
+- Account menu: more flexible detection of the site's menu. Temporary: if it still cannot be found while signed in, a short note lists what the header contains.
+
+## 1.3.55
+- Account menu: it no longer drops down by itself. Press OK on your account name to open the menu as a list in the middle of the screen (same as the category list), move with Up/Down, OK to choose, Back to close.
+
+## 1.3.54
+- Header: Right from the account menu now reaches the language switch (it was stuck inside the account menu), and Left from the switch goes back to the account.
+
+## 1.3.53
+- Language switch: smaller text and box; grey outline when idle and gold with a glow when focused (previously the other way round).
+- The page no longer scrolls sideways when focus reaches the far right of the header, which exposed the right edge of the hero banner after switching language.
+
+## 1.3.52
+- Header language button is now a two-position switch (EN | 日本語) in the same gold style as the language screen, with the active language filled in gold.
+
 ## 1.3.51
 - Fire TV: the header's category list now opens as an app list with a clearly lighter highlight on the focused row and no radio buttons, matching the Sony TV. Other devices are unchanged.
 

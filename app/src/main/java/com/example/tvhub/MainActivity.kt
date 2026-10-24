@@ -269,6 +269,7 @@ class MainActivity : Activity() {
             overflow: visible !important;
             word-break: normal !important;
         }
+        .tv-acct-menu { display: none !important; }
         #tv-lang-li {
             margin-left: auto !important;
             padding-left: 16px !important;
@@ -299,29 +300,41 @@ class MainActivity : Activity() {
             padding: 10px !important;
         }
         #tv-lang-toggle-btn {
-            height: 38px !important;
-            min-width: 50px !important;
-            background: transparent !important;
-            background-color: transparent !important;
-            color: #FFB347 !important;
-            border: none !important;
+            height: 32px !important;
+            background: rgba(0, 0, 0, 0.25) !important;
+            background-color: rgba(0, 0, 0, 0.25) !important;
+            border: 2px solid rgba(255, 255, 255, 0.35) !important;
+            border-radius: 16px !important;
             box-shadow: none !important;
             outline: none !important;
-            font-size: 16px !important;
-            font-weight: 700 !important;
-            padding: 0 8px !important;
+            padding: 2px !important;
             margin-left: 8px !important;
             cursor: pointer !important;
-            display: inline-block !important;
+            display: inline-flex !important;
+            align-items: center !important;
             box-sizing: border-box !important;
             vertical-align: middle !important;
         }
-        #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
+        #tv-lang-toggle-btn .tv-lang-opt {
+            display: inline-block !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            padding: 0 10px !important;
+            border-radius: 12px !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
             color: #ffffff !important;
-            text-shadow: 0 0 8px rgba(255, 179, 71, 0.8) !important;
             background: transparent !important;
-            background-color: transparent !important;
-            border: none !important;
+            white-space: nowrap !important;
+        }
+        #tv-lang-toggle-btn .tv-lang-opt.tv-lang-on {
+            background: #FFB347 !important;
+            color: #1a1a1a !important;
+        }
+        #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
+            border-color: #FFB347 !important;
+            box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.55), 0 0 14px rgba(255, 179, 71, 0.6) !important;
+            outline: none !important;
         }
         #tv-fav-header-btn {
             height: 44px !important;
@@ -765,6 +778,38 @@ class MainActivity : Activity() {
         (function(){
           if (window.__tvHeaderFix) return;
           window.__tvHeaderFix = true;
+          // The page is laid out at a fixed width, so it should never scroll sideways: if focusing
+          // something at the far right nudges it, put it straight back.
+          window.addEventListener('scroll', function() {
+            if (window.scrollX) window.scrollTo(0, window.scrollY);
+          }, {passive: true});
+
+          // Left/Right between the account menu and the language switch. The account menu opens when it
+          // is focused and its items trap sideways movement, so step across explicitly.
+          document.addEventListener('keydown', function(e) {
+            if (e.keyCode !== 37 && e.keyCode !== 39) return;
+            var lang = document.getElementById('tv-lang-toggle-btn');
+            var ae = document.activeElement;
+            if (!lang || !ae) return;
+            var wrap = lang.closest('ul, .btn-wrap');
+            if (!wrap) return;
+            function shown(el) { var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }
+            var lis = Array.prototype.filter.call(wrap.children, function(li) {
+              return li.id !== 'tv-lang-li' && shown(li) && li.querySelector('a, button');
+            });
+            if (!lis.length) return;
+            var last = lis[lis.length - 1];
+            if (e.keyCode === 39 && ae !== lang && last.contains(ae)) {
+              e.preventDefault();
+              e.stopPropagation();
+              lang.focus();
+            } else if (e.keyCode === 37 && ae === lang) {
+              e.preventDefault();
+              e.stopPropagation();
+              var t = last.querySelector('.box-dropdown-key, [tabindex]') || last.querySelector('a, button');
+              if (t) t.focus();
+            }
+          }, true);
           function unfix(){
             try {
               var vw = window.innerWidth, vh = window.innerHeight;
@@ -1239,7 +1284,67 @@ class MainActivity : Activity() {
                           langBtn.setAttribute('translate', 'no');
                           langLi.appendChild(langBtn);
                         }
-                        langBtn.textContent = (currentLang === 'ja') ? 'EN' : '日本語';
+                        // A two-position switch: EN | 日本語, the active language filled in gold.
+                        if (langBtn.getAttribute('data-lang') !== currentLang) {
+                          langBtn.setAttribute('data-lang', currentLang);
+                          while (langBtn.firstChild) langBtn.removeChild(langBtn.firstChild);
+                          var optEn = document.createElement('span');
+                          optEn.className = 'tv-lang-opt' + (currentLang === 'ja' ? '' : ' tv-lang-on');
+                          optEn.textContent = 'EN';
+                          var optJa = document.createElement('span');
+                          optJa.className = 'tv-lang-opt' + (currentLang === 'ja' ? ' tv-lang-on' : '');
+                          optJa.textContent = '日本語';
+                          langBtn.appendChild(optEn);
+                          langBtn.appendChild(optJa);
+                        }
+                        // Account menu: never drops down by itself; OK / click on the name opens the app's
+                        // list (same as the category list), shown in the middle of the page.
+                        // The account menu exists only when signed in: a name label (.box-dropdown-key) and a
+                        // hidden panel (.dropdown-container) holding the links.
+                        var acctLi = null;
+                        var acctMenu = null;
+                        var acctToggle = btnWrap.querySelector('.box-dropdown-key');
+                        if (acctToggle) {
+                          var host = acctToggle.parentElement;
+                          while (host && host.parentElement !== btnWrap && host !== btnWrap) host = host.parentElement;
+                          acctLi = (host && host !== btnWrap) ? host : acctToggle.parentElement;
+                          acctMenu = acctLi.querySelector('.dropdown-container') ||
+                            Array.prototype.filter.call(acctLi.querySelectorAll('ul, div'), function(x) {
+                              return x.querySelectorAll('a').length >= 2 && !x.contains(acctToggle);
+                            }).pop() || null;
+                          if (!acctMenu && !window.__tvAcctWarned && window.AndroidHost && window.AndroidHost.logDebug) {
+                            window.__tvAcctWarned = true;
+                            window.AndroidHost.logDebug('Account menu list not found');
+                          }
+                        }
+                        if (acctLi && acctMenu && acctToggle && !acctLi.getAttribute('data-tv-acct') && window.AndroidHost && window.AndroidHost.pickAccountItem) {
+                          {
+                            acctLi.setAttribute('data-tv-acct', '1');
+                            acctMenu.classList.add('tv-acct-menu');
+                            if (!acctToggle.hasAttribute('tabindex')) acctToggle.setAttribute('tabindex', '0');
+                            var openAcct = function(e) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              var nowA = Date.now();
+                              if (window.__tvAcctAt && nowA - window.__tvAcctAt < 600) return;
+                              window.__tvAcctAt = nowA;
+                              var items = Array.prototype.filter.call(acctMenu.querySelectorAll('a'), function(x) {
+                                return (x.textContent || '').trim().length > 0;
+                              });
+                              window.__tvAcctItems = items;
+                              window.AndroidHost.pickAccountItem(JSON.stringify(items.map(function(x) { return x.textContent.trim(); })));
+                            };
+                            acctToggle.addEventListener('mousedown', openAcct, true);
+                            acctToggle.addEventListener('click', openAcct, true);
+                            acctToggle.addEventListener('keydown', function(e) {
+                              if (e.keyCode === 13 || e.keyCode === 23 || e.keyCode === 32) openAcct(e);
+                            }, true);
+                            window.__tvPickAccount = function(n) {
+                              var it = (window.__tvAcctItems || [])[n];
+                              if (it) it.click();
+                            };
+                          }
+                        }
                         langBtn.onclick = function(e) {
                           e.preventDefault();
                           e.stopPropagation();
@@ -2030,7 +2135,12 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun pickSection(labelsJson: String) {
-            handler.post { showSectionPicker(labelsJson) }
+            handler.post { showSectionPicker(labelsJson, "__tvPickSection", "#tv-section-select") }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun pickAccountItem(labelsJson: String) {
+            handler.post { showSectionPicker(labelsJson, "__tvPickAccount", "[data-tv-acct] .box-dropdown-key, [data-tv-acct] a, [data-tv-acct] button") }
         }
 
         @android.webkit.JavascriptInterface
@@ -3562,7 +3672,7 @@ class MainActivity : Activity() {
 
     // The header's category list as an app dialog: dark panel, clearly lighter highlight on the focused
     // row, no radio buttons. Choosing a row hands the choice back to the page's own list.
-    private fun showSectionPicker(labelsJson: String) {
+    private fun showSectionPicker(labelsJson: String, pickFn: String, focusSelector: String) {
         val labels = ArrayList<String>()
         try {
             val arr = org.json.JSONArray(labelsJson)
@@ -3602,11 +3712,11 @@ class MainActivity : Activity() {
         }
         list.setOnItemClickListener { _, _, position, _ ->
             dialog.dismiss()
-            webView.evaluateJavascript("if (window.__tvPickSection) window.__tvPickSection(" + position + ");", null)
+            webView.evaluateJavascript("if (window." + pickFn + ") window." + pickFn + "(" + position + ");", null)
         }
         dialog.setOnDismissListener {
             webView.evaluateJavascript(
-                "(function(){ var s = document.getElementById('tv-section-select'); if (s) s.focus(); })();", null
+                "(function(){ var s = document.querySelector(" + org.json.JSONObject.quote(focusSelector) + "); if (s) s.focus(); })();", null
             )
         }
         panel.addView(list, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
