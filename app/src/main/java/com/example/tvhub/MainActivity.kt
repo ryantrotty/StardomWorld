@@ -540,6 +540,7 @@ class MainActivity : Activity() {
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
             authPending = false
+            Toast.makeText(this, "Sign-in check timed out", Toast.LENGTH_LONG).show()
             beginGuide()
         }
     }
@@ -578,18 +579,22 @@ class MainActivity : Activity() {
             var tries = 0, inStreak = 0;
             window.__tvAuthTimer = setInterval(function() {
               tries++;
+              var why = '';
               var out = !!document.querySelector('input[type=password]');
+              if (out) why = 'password field';
               var hdr = document.querySelector('header, .box-header, .nav-inner, .header');
               if (!out && hdr) {
-                if (hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]')) out = true;
+                var lk = hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]');
+                if (lk) { out = true; why = 'link ' + (lk.getAttribute('href') || '') + ' / ' + (lk.textContent || '').trim().slice(0, 20); }
                 var els = hdr.querySelectorAll('a, button');
                 for (var i = 0; i < els.length && !out; i++) {
                   var t = (els[i].textContent || '').trim();
-                  if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) out = true;
+                  if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) { out = true; why = 'text ' + t; }
                 }
               }
               if (out) {
                 clearInterval(window.__tvAuthTimer);
+                try { if (window.AndroidHost.logDebug) window.AndroidHost.logDebug('Signed out: ' + why); } catch (e2) {}
                 window.AndroidHost.reportAuth(true, location.pathname);
               } else if (hdr) {
                 inStreak++;
@@ -4428,7 +4433,7 @@ private class OnboardingView(
     private fun render() {
         if (langStep) {
             titleView.text = "Language  /  言語"
-            bodyView.text = "Choose your language\n言語を選択してください"
+            bodyView.text = "Choose your language  ·  言語を選択してください"
             counter.text = ""
             skipBtn.text = "English"
             nextBtn.text = "日本語"
