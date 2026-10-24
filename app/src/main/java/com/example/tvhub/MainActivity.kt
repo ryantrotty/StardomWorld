@@ -1466,6 +1466,7 @@ class MainActivity : Activity() {
                     .setInterpolator(AccelerateDecelerateInterpolator())
                     .start()
                 refreshCursorVisibility()
+                scheduleFullScreenResizeNudges()
             }
 
             override fun onHideCustomView() {
@@ -2867,6 +2868,26 @@ class MainActivity : Activity() {
         Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
     }
 
+    // Some devices (notably Fire TV sticks) leave the video drawn at its small inline size inside the
+    // full-screen player: the controls span the screen but the picture stays in the top-left corner,
+    // because the player never learns the window changed size. Briefly changing the full-screen view's
+    // size by a couple of pixels, and back, makes the browser send the player a resize so it re-lays
+    // out at full size. Harmless where the first layout was already right.
+    private val fsNudgeRunnable = Runnable { nudgeFullScreenLayout() }
+
+    private fun scheduleFullScreenResizeNudges() {
+        handler.removeCallbacks(fsNudgeRunnable)
+        for (delay in longArrayOf(500L, 1300L, 2600L, 4500L)) {
+            handler.postDelayed(fsNudgeRunnable, delay)
+        }
+    }
+
+    private fun nudgeFullScreenLayout() {
+        val v = customView ?: return
+        v.setPadding(0, 0, 2, 2)
+        handler.postDelayed({ customView?.setPadding(0, 0, 0, 0) }, 150L)
+    }
+
     private fun hideCustomView() {
         val view = customView ?: return
         webView.visibility = View.VISIBLE
@@ -2874,6 +2895,7 @@ class MainActivity : Activity() {
         customView = null
         customCallback?.onCustomViewHidden()
         customCallback = null
+        handler.removeCallbacks(fsNudgeRunnable)
         handler.removeCallbacks(hideControlsRunnable)
         handler.removeCallbacks(fsPulse)
         fsPulseRunning = false

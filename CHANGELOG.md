@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.24
+- Fire TV: full screen video now fills the screen instead of sitting in the top-left corner (the player is nudged to
+  re-measure itself after entering full screen).
+
 ## 1.3.23
 - Page transition overlay: displays a black background with a looping wand cursor animation (4s) ending in a sparkle burst, shown for 5 seconds on every page load to seamlessly mask CSS/layout rendering in the background.
 
