@@ -18,6 +18,7 @@ import android.graphics.Shader
 import android.os.Bundle
 import android.os.Handler
 import android.net.http.SslError
+import android.os.Build
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Gravity
@@ -1381,6 +1382,11 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                if (cssFullScreen) {
+                    cssFullScreen = false
+                    handler.removeCallbacks(fsPulse)
+                    fsPulseRunning = false
+                }
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
@@ -1588,6 +1594,7 @@ class MainActivity : Activity() {
         fun exitFullScreen() {
             handler.post {
                 if (customView != null) hideCustomView()
+                if (cssFullScreen) exitCssFullScreen()
                 webView.evaluateJavascript(
                     "(function(){ try { if (document.webkitExitFullscreen) document.webkitExitFullscreen(); else if (document.exitFullscreen) document.exitFullscreen(); } catch(e) {} })()",
                     null
@@ -1606,6 +1613,12 @@ class MainActivity : Activity() {
         fun triggerFullScreen() {
             handler.post {
                 if (customView != null) return@post
+
+                // Fire TV: the system full-screen mode leaves the picture small, so make the player fill the page instead.
+                if (useCssFullScreen) {
+                    if (!cssFullScreen) enterCssFullScreen()
+                    return@post
+                }
 
                 // Dispatch synthetic touch gesture onto player area to satisfy WebKit user gesture requirement
                 val now = SystemClock.uptimeMillis()
@@ -1954,6 +1967,30 @@ class MainActivity : Activity() {
             if (!holder.hasAttribute('tabindex')) holder.setAttribute('tabindex', '-1');
             holder.__tvControlsHidden = true;
             try { holder.focus({ preventScroll: true }); } catch (e) { holder.focus(); }
+            return true;
+          };
+
+          // ---- "Page full screen" (Fire TV): stretch the player iframe over the whole page ----
+          window.__tvCssFullScreen = function(on) {
+            var f = playerFrame();
+            if (!f) return false;
+            var root = document.documentElement;
+            if (on) {
+              if (f.__tvSavedStyle === undefined) f.__tvSavedStyle = f.getAttribute('style') || '';
+              f.style.cssText = f.__tvSavedStyle +
+                ';position:fixed !important;top:0 !important;left:0 !important;width:100vw !important;' +
+                'height:100vh !important;max-width:none !important;max-height:none !important;' +
+                'margin:0 !important;border:0 !important;z-index:2147483647 !important;background:#000 !important;';
+              root.style.setProperty('overflow', 'hidden', 'important');
+              try { window.scrollTo(0, 0); } catch (e) {}
+              try { f.focus(); } catch (e) {}
+            } else {
+              if (f.__tvSavedStyle !== undefined) {
+                if (f.__tvSavedStyle) f.setAttribute('style', f.__tvSavedStyle); else f.removeAttribute('style');
+                f.__tvSavedStyle = undefined;
+              }
+              root.style.removeProperty('overflow');
+            }
             return true;
           };
 
@@ -2746,14 +2783,13 @@ class MainActivity : Activity() {
     // (Re)starts the 8 second countdown after which the player's control overlay is put away.
     private fun armControlsIdleTimer() {
         handler.removeCallbacks(hideControlsRunnable)
-        if (playerFocused && customView == null) {
+        if (playerFocused && !fullScreenActive()) {
             handler.postDelayed(hideControlsRunnable, CONTROLS_IDLE_MS)
         }
     }
 
     private fun hidePlayerControls() {
-        val cv = customView
-        if (cv == null) {
+        if (!fullScreenActive()) {
             // Inline player: move keyboard focus off the player so its controls fade away.
             // Pressing OK / Left / Right on the player again brings them back.
             if (playerFocused) {
@@ -2778,7 +2814,7 @@ class MainActivity : Activity() {
 
     private val fsPulse: Runnable = object : Runnable {
         override fun run() {
-            val cv = customView ?: run { fsPulseRunning = false; return }
+            val cv = fullScreenView() ?: run { fsPulseRunning = false; return }
             if (SystemClock.uptimeMillis() - fsLastInteraction < CONTROLS_IDLE_MS) {
                 fsPulseFlip = !fsPulseFlip
                 sendFullScreenHover(
@@ -2796,14 +2832,14 @@ class MainActivity : Activity() {
     // Shows the player's controls and keeps them up until 8 seconds after the last remote press.
     private fun fullScreenInteraction() {
         fsLastInteraction = SystemClock.uptimeMillis()
-        if (!fsPulseRunning && customView != null) {
+        if (!fsPulseRunning && fullScreenActive()) {
             fsPulseRunning = true
             handler.post(fsPulse)
         }
     }
 
     private fun sendFullScreenHover(action: Int, x: Float, y: Float) {
-        val cv = customView ?: return
+        val cv = fullScreenView() ?: return
         val now = SystemClock.uptimeMillis()
         val props = arrayOf(MotionEvent.PointerProperties().apply {
             id = 0
@@ -2868,6 +2904,34 @@ class MainActivity : Activity() {
         Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
     }
 
+    // ---- Fire TV: "page full screen". The browser's own full-screen mode leaves the picture in the
+    // top-left corner on these devices, so the player's iframe is simply stretched over the whole page
+    // instead (the player lays itself out normally because its frame changed size). The rest of the app
+    // treats this exactly like full screen (remote keys, controls, Back).
+
+    private val useCssFullScreen: Boolean by lazy {
+        Build.MANUFACTURER.equals("Amazon", ignoreCase = true) ||
+            packageManager.hasSystemFeature("amazon.hardware.fire_tv")
+    }
+    private var cssFullScreen = false
+
+    private fun fullScreenActive(): Boolean = customView != null || cssFullScreen
+
+    private fun fullScreenView(): View? = customView ?: if (cssFullScreen) webView else null
+
+    private fun enterCssFullScreen() {
+        cssFullScreen = true
+        webView.evaluateJavascript("window.__tvCssFullScreen && window.__tvCssFullScreen(true)", null)
+        fullScreenInteraction()
+    }
+
+    private fun exitCssFullScreen() {
+        cssFullScreen = false
+        handler.removeCallbacks(fsPulse)
+        fsPulseRunning = false
+        webView.evaluateJavascript("window.__tvCssFullScreen && window.__tvCssFullScreen(false)", null)
+    }
+
     // Some devices (notably Fire TV sticks) leave the video drawn at its small inline size inside the
     // full-screen player: the controls span the screen but the picture stays in the top-left corner,
     // because the player never learns the window changed size. Briefly changing the full-screen view's
@@ -2905,7 +2969,7 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- remote keys
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || customView != null)) {
+        if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
@@ -2922,6 +2986,10 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (cssFullScreen) {
+                        exitCssFullScreen()
+                        return true
+                    }
                     if (customView != null) {
                         hideCustomView()
                         return true
@@ -2936,7 +3004,7 @@ class MainActivity : Activity() {
 
         // Full screen: Left/Right skip 10 s (30 s while held or with the FF/RW keys), OK plays/pauses.
         // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
-        if (customView != null) {
+        if (fullScreenActive()) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT,
                 KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND -> {
@@ -2970,7 +3038,7 @@ class MainActivity : Activity() {
         // "Verify you are human" box inside the player. A quick press still acts as a normal OK:
         // it is held back until the button is released, then replayed (or tapped at the cursor).
         if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) &&
-            customView == null
+            !fullScreenActive()
         ) {
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
@@ -3011,7 +3079,7 @@ class MainActivity : Activity() {
 
         // Focus is inside the video player: Up/Down leave it, Left/Right walk the player's
         // own buttons (sent to the player as Tab / Shift+Tab). OK passes through to the button.
-        if (!cursorMode && playerFocused && customView == null) {
+        if (!cursorMode && playerFocused && !fullScreenActive()) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
                     if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
@@ -3048,7 +3116,7 @@ class MainActivity : Activity() {
     }
 
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
-        if (playerFocused || customView != null) armControlsIdleTimer()
+        if (playerFocused || fullScreenActive()) armControlsIdleTimer()
         if (cursorMode && (event.source and InputDevice.SOURCE_CLASS_POINTER) != 0) {
             if (event.action == MotionEvent.ACTION_HOVER_MOVE) {
                 cursorX = event.x

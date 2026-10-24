@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.25
+- Fire TV: video "full screen" now stretches the player over the whole page instead of using the system full-screen
+  mode, which left the picture in the top-left corner. Remote keys, controls and Back work the same.
+
 ## 1.3.24
 - Fire TV: full screen video now fills the screen instead of sitting in the top-left corner (the player is nudged to
   re-measure itself after entering full screen).
