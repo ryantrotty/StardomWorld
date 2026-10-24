@@ -521,8 +521,8 @@ class MainActivity : Activity() {
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
     private var authPending = false
-    private var authHandled = false
     private var loginStarting = false
+    private var loginReady = false
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
             authPending = false
@@ -584,8 +584,8 @@ class MainActivity : Activity() {
                   window.AndroidHost.reportAuth(false, location.pathname);
                 }
               }
-              if (tries > 60) clearInterval(window.__tvAuthTimer);
-            }, 800);
+              if (tries > 100) clearInterval(window.__tvAuthTimer);
+            }, 500);
           } catch (e) {}
         })();
     """
@@ -1556,15 +1556,12 @@ class MainActivity : Activity() {
             updateCursor()
         }
 
-        // The splash always comes first. If the person was not signed in last time, the splash waits
-        // (bar creeping) until we know: signed out -> the guide takes over from the splash logo,
-        // signed in -> the splash finishes as usual. If they were signed in we do not wait, but still
-        // check quietly and switch to the guide if the session has ended.
+        // 1. The splash logo comes first (no loading bar yet). 2. We check whether the person is signed
+        // in. 3. Signed in: the bar appears under the logo and the splash finishes onto the main page.
+        // 4. Signed out: the guide takes over with the logo in the same place.
         startSplash()
-        if (!lastSignedIn()) {
-            authPending = true
-            handler.postDelayed(authTimeoutRunnable, 8000L)
-        }
+        authPending = true
+        handler.postDelayed(authTimeoutRunnable, 8000L)
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -1703,13 +1700,16 @@ class MainActivity : Activity() {
     }
 
     private fun startSplash() {
-        splashStartedAt = SystemClock.uptimeMillis()
         splashLogo.animate()
             .alpha(1f)
             .setDuration(400)
             .setInterpolator(DecelerateInterpolator())
             .start()
+    }
 
+    // Signed in: the loading bar appears under the logo and starts travelling.
+    private fun showSplashProgress() {
+        splashStartedAt = SystemClock.uptimeMillis()
         splashProgress.animate().alpha(1f).setDuration(400).setInterpolator(DecelerateInterpolator()).start()
         splashProgress.start()
 
@@ -1756,40 +1756,29 @@ class MainActivity : Activity() {
     private fun beginGuide() {
         splashDone = true
         showOnboarding()
-    }
-
-    private fun lastSignedIn(): Boolean =
-        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).getBoolean("last_signed_in", false)
-
-    private fun setLastSignedIn(v: Boolean) {
-        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).edit().putBoolean("last_signed_in", v).apply()
+        // Load the site's login page quietly now, so it is ready by the time "Log in" is pressed.
+        awaitingLogin = true
+        loginReady = false
+        webView.loadUrl(LOGIN_URL)
     }
 
     // The page reports whether it looks signed in or out. The first answer of a launch decides between
-    // the sign-in experience and the normal start; while a login is in progress it also ends it.
-    private fun onAuthReported(loggedOut: Boolean) {
+    // the guide and the normal start; once the guide is up, a "signed in" answer from the login page
+    // means the login worked.
+    private fun onAuthReported(loggedOut: Boolean, path: String) {
         authLoggedOut = loggedOut
-        setLastSignedIn(!loggedOut)
-        if (awaitingLogin) {
-            if (!loggedOut) loginSucceeded()
-            return
-        }
-        if (authHandled) return
-        authHandled = true
         if (authPending) {
             authPending = false
             handler.removeCallbacks(authTimeoutRunnable)
-            if (loggedOut) beginGuide() else onPageReady()
+            if (loggedOut) {
+                beginGuide()
+            } else {
+                showSplashProgress()
+                onPageReady()
+            }
             return
         }
-        // The splash was started on the assumption that the person is still signed in (or the wait timed out).
-        if (loggedOut) {
-            if (!onboardingShowing) beginGuide()
-        } else if (onboardingShowing) {
-            closeOnboarding()
-            replaySplash()
-            onPageReady()
-        }
+        if (awaitingLogin && !loggedOut) loginSucceeded(path)
     }
 
     private fun showOnboarding() {
@@ -1843,27 +1832,30 @@ class MainActivity : Activity() {
         refreshCursorVisibility()
     }
 
-    // Back out of the experience: the normal start, signed out.
+    // Back out of the experience: the transition screen, then the signed-out main page.
     private fun exitGuideToSite() {
         awaitingLogin = false
+        loginReady = false
         showLoginLogo(false)
         closeOnboarding()
-        replaySplash()
+        showPageTransitionOverlay()
         webView.loadUrl(START_URL)
     }
 
-    // "Log in": load the site's login page quietly under the guide, then fade the guide away onto it.
+    // "Log in": the login page is already loading underneath; fade the guide away onto it.
     private fun startWebLogin() {
         if (loginStarting) return
         loginStarting = true
-        awaitingLogin = true
-        webView.loadUrl(LOGIN_URL)
-        handler.postDelayed({ if (onboardingShowing) revealLogin() }, 7000L)
+        if (loginReady) revealLogin()
+        else handler.postDelayed({ if (onboardingShowing) revealLogin() }, 7000L)
     }
 
     private fun revealLogin() {
         val v = onboardingView ?: return
-        v.animate().alpha(0f).setDuration(500).withEndAction { closeOnboarding() }.start()
+        v.animate().alpha(0f).setDuration(500).withEndAction {
+            closeOnboarding()
+            showLoginLogo(awaitingLogin)
+        }.start()
     }
 
     // A small copy of the logo above the login page, in the same style as the guide.
@@ -1896,36 +1888,17 @@ class MainActivity : Activity() {
         if (::cursorView.isInitialized) root.bringChildToFront(cursorView)
     }
 
-    // Signed in: run the splash again, then show the signed-in home page.
-    private fun loginSucceeded() {
+    // Signed in from the login page: the transition screen, then the main page (no second splash).
+    // If the site already moved on to a page of its own, that page is simply left showing.
+    private fun loginSucceeded(path: String) {
         awaitingLogin = false
+        loginReady = false
         showLoginLogo(false)
         closeOnboarding()
-        replaySplash()
-        webView.loadUrl(START_URL)
-    }
-
-    private fun replaySplash() {
-        splashDone = false
-        splashFinishing = false
-        splashDismissScheduled = false
-        splashProgress.reset()
-        splashLogo.alpha = 0f
-        splashProgress.alpha = 0f
-        splashView.animate().cancel()
-        splashView.alpha = 1f
-        if (splashView.parent == null) {
-            root.addView(
-                splashView,
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            )
+        if (path.startsWith("/login")) {
+            showPageTransitionOverlay()
+            webView.loadUrl(START_URL)
         }
-        root.bringChildToFront(splashView)
-        startSplash()
-        refreshCursorVisibility()
     }
 
     private fun showPageTransitionOverlay() {
@@ -1968,15 +1941,23 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun reportAuth(loggedOut: Boolean, path: String) {
-            handler.post { onAuthReported(loggedOut) }
+            handler.post { onAuthReported(loggedOut, path) }
         }
 
         // The login page has been restyled and is ready to be shown (or the page is not a login page).
         @android.webkit.JavascriptInterface
         fun loginPageReady(show: Boolean) {
             handler.post {
-                showLoginLogo(show && awaitingLogin)
-                if (show && awaitingLogin && onboardingShowing) revealLogin()
+                if (show) {
+                    loginReady = true
+                    if (onboardingShowing) {
+                        if (loginStarting) revealLogin()   // "Log in" was pressed before the page was ready
+                    } else {
+                        showLoginLogo(awaitingLogin)
+                    }
+                } else {
+                    showLoginLogo(false)
+                }
             }
         }
 

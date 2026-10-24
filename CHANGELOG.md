@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.43
+- New start sequence: splash logo alone, sign-in check, then either the loading bar under the logo and the main page (signed in) or the guide with the logo in the same place (signed out). The login page loads quietly behind the guide so "Log in" opens it without a wait. After signing in: transition screen, then the main page (no second splash). Backing out goes through the transition screen to the signed-out main page.
+
 ## 1.3.42
 - Start: the splash logo is always on screen first. When signed out, the guide takes over from the splash with the logo in exactly the same place.
 - Login: the site's own login page, restyled to match the guide (colours, fonts, sizes, gold focus highlight, Down/Up between email, password, Log in and Continue without logging in). The earlier built-in login screen is gone, so the site's own checks, errors and retries apply. Back leaves to the normal signed-out start.
