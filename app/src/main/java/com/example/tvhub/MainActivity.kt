@@ -2850,20 +2850,22 @@ class MainActivity : Activity() {
         val cv = fullScreenView() ?: return
         cv.requestFocus()
         val t = SystemClock.uptimeMillis()
-        val meta = if (shift) KeyEvent.META_SHIFT_ON else 0
+        val meta = if (shift) KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON else 0
         cv.dispatchKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_DOWN, keyCode, 0, meta))
         cv.dispatchKeyEvent(KeyEvent(t, t + 30, KeyEvent.ACTION_UP, keyCode, 0, meta))
     }
 
     private fun enterFsControlsMode() {
+        // One pointer move wakes the controls, then the keyboard keeps them up.
+        sendFullScreenHover(MotionEvent.ACTION_HOVER_MOVE, 40f, 40f)
         fsControlsMode = true
         fullScreenInteraction()
-        // Let the controls appear first, then move focus onto the first button.
-        handler.postDelayed({ if (fsControlsMode) sendFullScreenKey(KeyEvent.KEYCODE_TAB) }, 250)
+        handler.postDelayed({ if (fsControlsMode) sendFullScreenKey(KeyEvent.KEYCODE_TAB) }, 400)
     }
 
     private fun exitFsControlsMode() {
         fsControlsMode = false
+        fsPulseFlip = !fsPulseFlip
     }
 
     private var fsLastInteraction = 0L
@@ -2874,12 +2876,16 @@ class MainActivity : Activity() {
         override fun run() {
             val cv = fullScreenView() ?: run { fsPulseRunning = false; return }
             if (SystemClock.uptimeMillis() - fsLastInteraction < CONTROLS_IDLE_MS) {
-                fsPulseFlip = !fsPulseFlip
-                sendFullScreenHover(
-                    MotionEvent.ACTION_HOVER_MOVE,
-                    cv.width / 2f + if (fsPulseFlip) 3f else -3f,
-                    cv.height * 0.4f
-                )
+                // While the player's buttons are being walked, the pointer pulses stop: they made
+                // the controls flicker and knocked the keyboard focus back to the first button.
+                if (!fsControlsMode) {
+                    fsPulseFlip = !fsPulseFlip
+                    sendFullScreenHover(
+                        MotionEvent.ACTION_HOVER_MOVE,
+                        cv.width / 2f + if (fsPulseFlip) 3f else -3f,
+                        cv.height * 0.4f
+                    )
+                }
                 handler.postDelayed(this, 600)
             } else {
                 hidePlayerControls()
