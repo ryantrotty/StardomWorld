@@ -523,6 +523,11 @@ class MainActivity : Activity() {
     private var authPending = false
     private var loginStarting = false
     private var loginReady = false
+    private var loginRevealing = false
+    private var loginLoadStartedAt = 0L
+    private var loginReadyAt = 0L
+    private var loginPressedAt = 0L
+    private var loginReadyBy = "-"
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
             authPending = false
@@ -1630,6 +1635,18 @@ class MainActivity : Activity() {
                 injectPageScripts(view)
                 CookieManager.getInstance().flush()
                 onPageReady()
+                // Backstop: if the login page finished loading but its own "ready" signal never came,
+                // do not keep the person waiting on the guide.
+                if (awaitingLogin && onboardingShowing && (url ?: "").contains("/login")) {
+                    handler.postDelayed({
+                        if (onboardingShowing && !loginReady) {
+                            loginReady = true
+                            loginReadyAt = SystemClock.elapsedRealtime()
+                            loginReadyBy = "page"
+                            if (loginStarting) revealLogin()
+                        }
+                    }, 1500L)
+                }
             }
 
             @SuppressLint("WebViewClientOnReceivedSslError")
@@ -1759,6 +1776,9 @@ class MainActivity : Activity() {
         // Load the site's login page quietly now, so it is ready by the time "Log in" is pressed.
         awaitingLogin = true
         loginReady = false
+        loginLoadStartedAt = SystemClock.elapsedRealtime()
+        loginReadyAt = 0L
+        loginReadyBy = "-"
         webView.loadUrl(LOGIN_URL)
     }
 
@@ -1826,6 +1846,7 @@ class MainActivity : Activity() {
         onboardingView = null
         onboardingShowing = false
         loginStarting = false
+        loginRevealing = false
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
         webView.requestFocus()
@@ -1846,12 +1867,25 @@ class MainActivity : Activity() {
     private fun startWebLogin() {
         if (loginStarting) return
         loginStarting = true
+        loginPressedAt = SystemClock.elapsedRealtime()
+        onboardingView?.showOpening()
         if (loginReady) revealLogin()
-        else handler.postDelayed({ if (onboardingShowing) revealLogin() }, 7000L)
+        else handler.postDelayed({ if (onboardingShowing) revealLogin() }, 12000L)
     }
 
     private fun revealLogin() {
         val v = onboardingView ?: return
+        if (loginRevealing) return
+        loginRevealing = true
+        // Temporary timing note (seconds after the login page started loading) to find where time goes.
+        val now = SystemClock.elapsedRealtime()
+        fun sec(t: Long): String = if (t <= 0L) "never" else String.format("%.1f", (t - loginLoadStartedAt) / 1000f)
+        Toast.makeText(
+            this,
+            "Login page: ready " + sec(loginReadyAt) + "s (" + loginReadyBy + "), pressed " +
+                sec(loginPressedAt) + "s, shown " + sec(now) + "s",
+            Toast.LENGTH_LONG
+        ).show()
         v.animate().alpha(0f).setDuration(500).withEndAction {
             closeOnboarding()
             showLoginLogo(awaitingLogin)
@@ -1949,7 +1983,11 @@ class MainActivity : Activity() {
         fun loginPageReady(show: Boolean) {
             handler.post {
                 if (show) {
-                    loginReady = true
+                    if (!loginReady) {
+                        loginReady = true
+                        loginReadyAt = SystemClock.elapsedRealtime()
+                        loginReadyBy = "js"
+                    }
                     if (onboardingShowing) {
                         if (loginStarting) revealLogin()   // "Log in" was pressed before the page was ready
                     } else {
@@ -4400,6 +4438,12 @@ private class OnboardingView(
         art.layoutParams = lp
         art.type = index
         art.invalidate()
+    }
+
+    // "Log in" was pressed while the login page is still getting ready.
+    fun showOpening() {
+        nextBtn.text = "Opening log in..."
+        nextBtn.alpha = 0.6f
     }
 
     private fun moveFocus(step: Int) {
