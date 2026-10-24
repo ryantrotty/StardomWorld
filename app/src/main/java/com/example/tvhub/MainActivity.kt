@@ -95,6 +95,8 @@ class MainActivity : Activity() {
         // Fire TV: both full-screen modes drew the video wrongly (small, then black), so for now Fire TV
         // stays in the page. Set to true to retry the page full screen (needs a fix first).
         private const val FIRE_TV_AUTO_FULLSCREEN = false
+        // The page-stretch full screen drew black on Fire TV, so Fire TV uses the system full screen again.
+        private const val FIRE_TV_CSS_FULLSCREEN = false
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
         private const val SPLASH_MIN_FILL_MS = 2600L
 
@@ -1241,7 +1243,8 @@ class MainActivity : Activity() {
 
         webView = WebView(this)
         webView.setBackgroundColor(Color.BLACK)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
+        if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView.addJavascriptInterface(WebAppInterface(), "AndroidHost")
         root.addView(
             webView,
@@ -1372,6 +1375,14 @@ class MainActivity : Activity() {
             (resources.displayMetrics.widthPixels * 100f / (LAYOUT_WIDTH * density) + 0.5f).toInt()
         )
 
+        if (isFireTv()) {
+            Toast.makeText(
+                this,
+                "Stardom " + BuildConfig.VERSION_NAME + " FireTV " + Build.MODEL,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
         val initLang = getSavedLanguage()
         val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
@@ -1476,6 +1487,10 @@ class MainActivity : Activity() {
                     .start()
                 refreshCursorVisibility()
                 scheduleFullScreenResizeNudges()
+                if (isFireTv()) {
+                    handler.postDelayed({ fixFireTvCustomView(view) }, 300)
+                    handler.postDelayed({ fixFireTvCustomView(view) }, 1500)
+                }
             }
 
             override fun onHideCustomView() {
@@ -2934,15 +2949,44 @@ class MainActivity : Activity() {
     // instead (the player lays itself out normally because its frame changed size). The rest of the app
     // treats this exactly like full screen (remote keys, controls, Back).
 
-    private val useCssFullScreen: Boolean by lazy {
+    private fun isFireTv(): Boolean =
         Build.MANUFACTURER.equals("Amazon", ignoreCase = true) ||
             packageManager.hasSystemFeature("amazon.hardware.fire_tv")
+
+    private val useCssFullScreen: Boolean by lazy {
+        FIRE_TV_CSS_FULLSCREEN && isFireTv()
     }
+
     private var cssFullScreen = false
 
     private fun fullScreenActive(): Boolean = customView != null || cssFullScreen
 
     private fun fullScreenView(): View? = customView ?: if (cssFullScreen) webView else null
+
+    // Fire TV: make every layer of the system full-screen video view fill the screen, unscaled.
+    private fun fixFireTvCustomView(view: View) {
+        if (customView !== view) return
+        val sb = StringBuilder("FS view " + view.width + "x" + view.height)
+        fun walk(v: View, depth: Int) {
+            v.scaleX = 1f
+            v.scaleY = 1f
+            v.translationX = 0f
+            v.translationY = 0f
+            if (depth > 0) {
+                val lp = v.layoutParams
+                if (lp != null && (lp.width != ViewGroup.LayoutParams.MATCH_PARENT || lp.height != ViewGroup.LayoutParams.MATCH_PARENT)) {
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+                    v.layoutParams = lp
+                }
+            }
+            sb.append(" | ").append(v.javaClass.simpleName).append(' ').append(v.width).append('x').append(v.height)
+            if (v is ViewGroup) for (i in 0 until v.childCount) walk(v.getChildAt(i), depth + 1)
+        }
+        walk(view, 0)
+        view.requestLayout()
+        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show()
+    }
 
     // Temporary: shows the screen/WebView numbers needed to fix full screen on Fire TV (once per launch).
     private var fireDiagShown = false
