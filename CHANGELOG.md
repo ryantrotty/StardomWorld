@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.54
+- Header: Right from the account menu now reaches the language switch (it was stuck inside the account menu), and Left from the switch goes back to the account.
+
 ## 1.3.53
 - Language switch: smaller text and box; grey outline when idle and gold with a glow when focused (previously the other way round).
 - The page no longer scrolls sideways when focus reaches the far right of the header, which exposed the right edge of the hero banner after switching language.

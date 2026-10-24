@@ -782,6 +782,33 @@ class MainActivity : Activity() {
           window.addEventListener('scroll', function() {
             if (window.scrollX) window.scrollTo(0, window.scrollY);
           }, {passive: true});
+
+          // Left/Right between the account menu and the language switch. The account menu opens when it
+          // is focused and its items trap sideways movement, so step across explicitly.
+          document.addEventListener('keydown', function(e) {
+            if (e.keyCode !== 37 && e.keyCode !== 39) return;
+            var lang = document.getElementById('tv-lang-toggle-btn');
+            var ae = document.activeElement;
+            if (!lang || !ae) return;
+            var wrap = lang.closest('ul, .btn-wrap');
+            if (!wrap) return;
+            function shown(el) { var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }
+            var lis = Array.prototype.filter.call(wrap.children, function(li) {
+              return li.id !== 'tv-lang-li' && shown(li) && li.querySelector('a, button');
+            });
+            if (!lis.length) return;
+            var last = lis[lis.length - 1];
+            if (e.keyCode === 39 && ae !== lang && last.contains(ae)) {
+              e.preventDefault();
+              e.stopPropagation();
+              lang.focus();
+            } else if (e.keyCode === 37 && ae === lang) {
+              e.preventDefault();
+              e.stopPropagation();
+              var t = last.querySelector('a, button');
+              if (t) t.focus();
+            }
+          }, true);
           function unfix(){
             try {
               var vw = window.innerWidth, vh = window.innerHeight;
