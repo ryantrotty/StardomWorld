@@ -35,6 +35,20 @@ android {
         }
     }
 
+    // GitHub's test builds are signed with a fixed, public debug key so each new test build can be
+    // installed over the previous one. Only used on GitHub (CI); your own builds keep your usual key.
+    val ciKeystore = file("ci-debug.keystore")
+    if (System.getenv("CI") == "true" && ciKeystore.exists()) {
+        signingConfigs {
+            getByName("debug") {
+                storeFile = ciKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
