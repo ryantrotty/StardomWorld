@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.59
+- Account menu: fixed the account name disappearing from the header (the whole account block was being hidden instead of just its panel), and removed the false "menu not found" note when signed out.
+
 ## 1.3.58
 - Account menu: the account name (a plain label on the site, not a link) is now made focusable and is what opens the menu list; Left from the language switch lands back on it.
 

@@ -1299,40 +1299,29 @@ class MainActivity : Activity() {
                         }
                         // Account menu: never drops down by itself; OK / click on the name opens the app's
                         // list (same as the category list), shown in the middle of the page.
-                        // Find the account menu: a list of 2+ links (hidden until opened) next to a toggle.
+                        // The account menu exists only when signed in: a name label (.box-dropdown-key) and a
+                        // hidden panel (.dropdown-container) holding the links.
                         var acctLi = null;
                         var acctMenu = null;
-                        var acctToggle = null;
-                        var langLiEl = document.getElementById('tv-lang-li');
-                        var favEl = document.getElementById('tv-fav-header-btn');
-                        var signedInHdr = !!favEl && favEl.style.display !== 'none';
-                        var cands = !signedInHdr ? [] : Array.prototype.filter.call(btnWrap.querySelectorAll('ul, ol, div, nav'), function(x) {
-                          return x.querySelectorAll('a').length >= 2 && !(langLiEl && (langLiEl.contains(x) || x.contains(langLiEl)));
-                        });
-                        if (cands.length) {
-                          // The site's own panel (div.dropdown-container) if there is one, so the whole box is hidden.
-                          var pref = cands.filter(function(x) { return /dropdown/i.test(x.className || ''); });
-                          acctMenu = pref.length ? pref[0] : cands[cands.length - 1];
-                          var host = acctMenu.parentElement;
+                        var acctToggle = btnWrap.querySelector('.box-dropdown-key');
+                        if (acctToggle) {
+                          var host = acctToggle.parentElement;
                           while (host && host.parentElement !== btnWrap && host !== btnWrap) host = host.parentElement;
-                          acctLi = (host && host !== btnWrap) ? host : acctMenu.parentElement;
-                          var tgl = Array.prototype.filter.call(acctLi.querySelectorAll('a, button, [tabindex]'), function(x) {
-                            return !acctMenu.contains(x);
-                          });
-                          acctToggle = acctLi.querySelector('.box-dropdown-key') || tgl[0] || acctLi;
-                          if (!acctToggle.hasAttribute('tabindex')) acctToggle.setAttribute('tabindex', '0');
-                        }
-                        if (!acctMenu && !window.__tvAcctWarned && document.getElementById('tv-fav-header-btn') &&
-                            document.getElementById('tv-fav-header-btn').style.display !== 'none' && window.AndroidHost && window.AndroidHost.logDebug) {
-                          window.__tvAcctWarned = true;
-                          window.AndroidHost.logDebug('Account menu not found: ' + Array.prototype.map.call(btnWrap.children, function(c) {
-                            return c.tagName + '.' + (c.className || '') + '[' + c.querySelectorAll('a').length + ']';
-                          }).join(' '));
+                          acctLi = (host && host !== btnWrap) ? host : acctToggle.parentElement;
+                          acctMenu = acctLi.querySelector('.dropdown-container') ||
+                            Array.prototype.filter.call(acctLi.querySelectorAll('ul, div'), function(x) {
+                              return x.querySelectorAll('a').length >= 2 && !x.contains(acctToggle);
+                            }).pop() || null;
+                          if (!acctMenu && !window.__tvAcctWarned && window.AndroidHost && window.AndroidHost.logDebug) {
+                            window.__tvAcctWarned = true;
+                            window.AndroidHost.logDebug('Account menu list not found');
+                          }
                         }
                         if (acctLi && acctMenu && acctToggle && !acctLi.getAttribute('data-tv-acct') && window.AndroidHost && window.AndroidHost.pickAccountItem) {
                           {
                             acctLi.setAttribute('data-tv-acct', '1');
                             acctMenu.classList.add('tv-acct-menu');
+                            if (!acctToggle.hasAttribute('tabindex')) acctToggle.setAttribute('tabindex', '0');
                             var openAcct = function(e) {
                               e.preventDefault();
                               e.stopPropagation();
