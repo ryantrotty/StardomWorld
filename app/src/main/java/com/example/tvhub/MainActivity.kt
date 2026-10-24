@@ -73,6 +73,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val START_URL = "https://www.stardom-world.com/"
+        private const val LOGIN_LOGO_FRACTION = 0.26f
         private const val LOGIN_URL =
             "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
 
@@ -521,6 +522,7 @@ class MainActivity : Activity() {
     private var awaitingLogin = false
     private var authPending = false
     private var authHandled = false
+    private var loginStarting = false
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
             authPending = false
@@ -588,29 +590,48 @@ class MainActivity : Activity() {
         })();
     """
 
-    // The site's login page, restyled for the TV: no header, large gold-and-black fields, D-pad order
-    // (first field focused, Down/Up move between fields and the button, Enter submits). The page's own
-    // login logic and error messages are untouched, so failed attempts and retries behave as on the site.
-    private val loginPageJs = """
+    // The site's login page, restyled to match the guide (same colours, fonts and sizes): no header,
+    // large fields, a clear gold focus highlight, Down/Up through email -> password -> Log in ->
+    // Continue without logging in, Enter submits. The page's own login logic and error messages are
+    // untouched, so failed attempts and retries behave as on the site.
+    private fun loginPageJs(): String {
+        val screenW = resources.displayMetrics.widthPixels.toFloat()
+        val screenH = resources.displayMetrics.heightPixels.toFloat()
+        val cssPerPx = LAYOUT_WIDTH.toFloat() / screenW
+        val unit = density * cssPerPx   // CSS pixels in one dp
+        val d = resources.getDrawable(R.drawable.splash_logo, null)
+        val ratio = if (d != null && d.intrinsicWidth > 0) d.intrinsicHeight.toFloat() / d.intrinsicWidth else 0.25f
+        val top = (screenH * 0.04f + screenW * LOGIN_LOGO_FRACTION * ratio + 16f * density) * cssPerPx
+        return "var U = " + unit + "; var TOP = " + top + ";" + LOGIN_PAGE_JS_BODY
+    }
+
+    private val LOGIN_PAGE_JS_BODY = """
         (function() {
           try {
-            if (location.pathname.indexOf('/login') !== 0) return;
+            if (location.pathname.indexOf('/login') !== 0) {
+              if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(false);
+              return;
+            }
+            var gold = '#FFB347';
+            function f(n) { return (n * U).toFixed(1) + 'px'; }
             if (!document.getElementById('tv-login-style')) {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background:#000 !important;color:#fff !important;}' +
+                'html,body{background:#000 !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
                 'header,.box-header,.nav-inner,.header,footer,.footer,.breadcrumb,.breadcrumbs,#header,#footer{display:none !important;}' +
-                'body{padding-top:40px !important;}' +
-                'form{max-width:760px !important;margin:0 auto !important;}' +
-                'input[type=text],input[type=email],input[type=password],input:not([type]){height:68px !important;font-size:26px !important;padding:0 22px !important;background:#111 !important;color:#fff !important;border:2px solid rgba(255,179,71,.45) !important;border-radius:12px !important;width:100% !important;box-sizing:border-box !important;}' +
-                'input:focus{outline:4px solid #FFB347 !important;outline-offset:2px !important;border-color:#FFB347 !important;}' +
-                'button[type=submit],input[type=submit]{height:68px !important;font-size:26px !important;font-weight:bold !important;background:#FFB347 !important;color:#1a1a1a !important;border:none !important;border-radius:12px !important;width:100% !important;}' +
-                'button:focus,input[type=submit]:focus{outline:4px solid #fff !important;outline-offset:3px !important;}' +
-                'label,h1,h2,h3{color:#FFB347 !important;font-size:26px !important;}' +
-                'a{color:#FFB347 !important;font-size:20px !important;}' +
-                'p,li,.error,.alert,.message,[class*=error],[class*=alert]{font-size:22px !important;}' +
-                '.tv-login-title{color:#FFB347;font-size:44px;font-weight:bold;text-align:center;margin:0 0 28px 0;}';
+                'body{padding-top:' + TOP.toFixed(1) + 'px !important;}' +
+                'form{width:' + f(620) + ' !important;max-width:100% !important;margin:0 auto !important;}' +
+                'label{color:' + gold + ' !important;font-size:' + f(16) + ' !important;font-weight:bold !important;}' +
+                'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(2) + ' solid rgba(255,179,71,.4) !important;border-radius:' + f(12) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
+                'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2210 !important;border:' + f(5) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
+                'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:rgba(0,0,0,.2) !important;color:#fff !important;border:' + f(2) + ' solid ' + gold + ' !important;border-radius:' + f(12) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#1a1a1a !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
+                'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
+                'p,li,span,div{font-size:' + f(18) + ';}' +
+                '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]{color:#FF7A66 !important;font-size:' + f(20) + ' !important;text-align:center !important;}' +
+                '.tv-login-title{color:' + gold + ';font-size:' + f(34) + ';font-weight:bold;text-align:center;margin:0 0 ' + f(8) + ' 0;}' +
+                '.tv-login-hint{color:#fff;font-size:' + f(22) + ';text-align:center;margin:0 0 ' + f(10) + ' 0;}';
               document.head.appendChild(st);
             }
 
@@ -629,33 +650,50 @@ class MainActivity : Activity() {
               if (b && visible(b)) return b;
               var all = [].slice.call(sc.querySelectorAll('button, input[type=button], a.btn'));
               for (var i = 0; i < all.length; i++) {
+                if (all[i].classList.contains('tv-btn')) continue;
                 var t = (all[i].textContent || all[i].value || '').trim();
                 if (/log\s*in|ログイン|sign\s*in/i.test(t) && visible(all[i])) return all[i];
               }
               return null;
             }
+            function contBtn() { return document.querySelector('.tv-continue'); }
             function order() {
               var list = inputs();
               var b = submitBtn();
               if (b) list.push(b);
+              var c = contBtn();
+              if (c) list.push(c);
               return list;
             }
             function doSubmit() {
               var b = submitBtn();
               if (b) { b.click(); return; }
               var pw = pwInput();
-              var f = pw && pw.closest('form');
-              if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); }
+              var fm = pw && pw.closest('form');
+              if (fm) { if (fm.requestSubmit) fm.requestSubmit(); else fm.submit(); }
             }
 
-            if (!document.querySelector('.tv-login-title')) {
-              var pw0 = pwInput();
-              var f0 = pw0 && pw0.closest('form');
-              if (f0 && f0.parentNode) {
+            // Title, hint and the "continue without logging in" button, added around the site's form.
+            var pw0 = pwInput();
+            var f0 = pw0 && pw0.closest('form');
+            if (f0 && f0.parentNode) {
+              if (!document.querySelector('.tv-login-title')) {
                 var ttl = document.createElement('div');
                 ttl.className = 'tv-login-title';
                 ttl.textContent = 'Log in to Stardom World';
+                var hint = document.createElement('div');
+                hint.className = 'tv-login-hint';
+                hint.textContent = 'Use your Stardom World account, or carry on without one.';
                 f0.parentNode.insertBefore(ttl, f0);
+                f0.parentNode.insertBefore(hint, f0);
+              }
+              if (!document.querySelector('.tv-continue')) {
+                var cb = document.createElement('button');
+                cb.type = 'button';
+                cb.className = 'tv-btn tv-continue';
+                cb.textContent = 'Continue without logging in';
+                cb.onclick = function() { if (window.AndroidHost && window.AndroidHost.browseWithoutLogin) window.AndroidHost.browseWithoutLogin(); };
+                f0.parentNode.insertBefore(cb, f0.nextSibling);
               }
             }
 
@@ -681,103 +719,25 @@ class MainActivity : Activity() {
               }, true);
             }
 
-            // First field gets the focus as soon as the form exists (and again after a failed attempt).
-            var focusTries = 0;
-            var focusTimer = setInterval(function() {
-              focusTries++;
+            // Tell the app the page is ready, and put the focus on the first field.
+            var tries = 0, reported = false;
+            var timer = setInterval(function() {
+              tries++;
               var ins = inputs();
               if (ins.length) {
-                clearInterval(focusTimer);
-                if (list_has_focus()) return;
-                ins[0].focus();
-              } else if (focusTries > 25) {
-                clearInterval(focusTimer);
+                if (!reported) {
+                  reported = true;
+                  if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(true);
+                }
+                if (order().indexOf(document.activeElement) < 0) {
+                  try { ins[0].focus({ preventScroll: true }); } catch (e) { ins[0].focus(); }
+                  try { window.scrollTo(0, 0); } catch (e) {}
+                }
+                if (tries > 8) clearInterval(timer);
+              } else if (tries > 30) {
+                clearInterval(timer);
               }
             }, 300);
-            function list_has_focus() { return order().indexOf(document.activeElement) >= 0; }
-          } catch (e) {}
-        })();
-    """
-
-    // Lets the app sign in through the site's own login form (filled in and submitted on the app's
-    // behalf) and reports back what the site said.
-    private val loginDriverJs = """
-        (function() {
-          try {
-            function pwInput() { return document.querySelector('input[type=password]'); }
-            function visible(e) { var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.disabled; }
-            function formScope() { var pw = pwInput(); return (pw && pw.closest('form')) || document; }
-            function userInput() {
-              var list = [].slice.call(formScope().querySelectorAll('input')).filter(function(e) {
-                var t = (e.type || 'text').toLowerCase();
-                return ['hidden', 'checkbox', 'radio', 'submit', 'button', 'image', 'password'].indexOf(t) < 0 && visible(e);
-              });
-              return list[0] || null;
-            }
-            function submitBtn() {
-              var sc = formScope();
-              var b = sc.querySelector('button[type=submit], input[type=submit]');
-              if (b && visible(b)) return b;
-              var all = [].slice.call(sc.querySelectorAll('button, input[type=button], a.btn'));
-              for (var i = 0; i < all.length; i++) {
-                var t = (all[i].textContent || all[i].value || '').trim();
-                if (/log\s*in|ログイン|sign\s*in/i.test(t) && visible(all[i])) return all[i];
-              }
-              return null;
-            }
-            function setVal(el, v) {
-              var d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value');
-              if (d && d.set) d.set.call(el, v); else el.value = v;
-              el.dispatchEvent(new Event('input', { bubbles: true }));
-              el.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-            function errorText() {
-              var sel = '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]';
-              var els = document.querySelectorAll(sel);
-              for (var i = 0; i < els.length; i++) {
-                var t = (els[i].innerText || '').trim();
-                if (t && t.length < 300 && visible(els[i])) return t;
-              }
-              return '';
-            }
-            function needsCheck() {
-              return !!document.querySelector('iframe[src*="challenges.cloudflare.com"], .cf-turnstile, [data-sitekey], .g-recaptcha, iframe[src*="recaptcha"], iframe[src*="hcaptcha"]');
-            }
-            function finish(kind, msg) {
-              try {
-                if (sessionStorage.getItem('tvLoginAttempt') === null) return;
-                sessionStorage.removeItem('tvLoginAttempt');
-              } catch (e) {}
-              if (kind === 'fail') window.AndroidHost.loginFailed(msg || '');
-              else window.AndroidHost.loginCheckNeeded();
-            }
-            window.__tvDoLogin = function(user, pass) {
-              var pw = pwInput(), ui = userInput(), b = submitBtn();
-              if (!pw || !ui || !b) return false;
-              if (needsCheck()) return 'check';
-              try { sessionStorage.setItem('tvLoginAttempt', String(Date.now())); } catch (e) {}
-              var before = errorText();
-              setVal(ui, user);
-              setVal(pw, pass);
-              b.click();
-              var t0 = Date.now();
-              var iv = setInterval(function() {
-                var msg = errorText();
-                if (msg && msg !== before) { clearInterval(iv); finish('fail', msg); return; }
-                if (Date.now() - t0 > 12000) { clearInterval(iv); finish('fail', msg); }
-              }, 600);
-              return true;
-            };
-            // The login page loaded again right after a submit: the sign-in did not go through.
-            var att = null;
-            try { att = sessionStorage.getItem('tvLoginAttempt'); } catch (e) {}
-            if (att) {
-              if (!pwInput()) {
-                try { sessionStorage.removeItem('tvLoginAttempt'); } catch (e) {}
-              } else if (Date.now() - parseInt(att, 10) < 60000 && location.pathname.indexOf('/login') === 0) {
-                setTimeout(function() { finish('fail', errorText()); }, 700);
-              }
-            }
           } catch (e) {}
         })();
     """
@@ -1596,13 +1556,12 @@ class MainActivity : Activity() {
             updateCursor()
         }
 
-        if (lastSignedIn()) {
-            // Signed in last time: splash straight away; we still check quietly and switch to the
-            // sign-in experience if the session has ended.
-            startSplash()
-        } else {
-            // Plain black screen while the site loads quietly and we find out whether the person is
-            // signed in. Signed out -> the sign-in experience, signed in -> splash.
+        // The splash always comes first. If the person was not signed in last time, the splash waits
+        // (bar creeping) until we know: signed out -> the guide takes over from the splash logo,
+        // signed in -> the splash finishes as usual. If they were signed in we do not wait, but still
+        // check quietly and switch to the guide if the session has ended.
+        startSplash()
+        if (!lastSignedIn()) {
             authPending = true
             handler.postDelayed(authTimeoutRunnable, 8000L)
         }
@@ -1792,9 +1751,9 @@ class MainActivity : Activity() {
 
     // ---------------------------------------------------------------- first-run guide and login
 
+    // Hands over from the splash to the guide: the guide is put underneath, then the splash fades away
+    // (its logo sits exactly where the guide's logo is, so only the bar disappears and the text arrives).
     private fun beginGuide() {
-        splashView.animate().cancel()
-        if (splashView.parent != null) root.removeView(splashView)
         splashDone = true
         showOnboarding()
     }
@@ -1820,15 +1779,10 @@ class MainActivity : Activity() {
         if (authPending) {
             authPending = false
             handler.removeCallbacks(authTimeoutRunnable)
-            if (loggedOut) {
-                beginGuide()
-            } else {
-                startSplash()
-                onPageReady()
-            }
+            if (loggedOut) beginGuide() else onPageReady()
             return
         }
-        // Splash was started on the assumption that the person is still signed in (or the wait timed out).
+        // The splash was started on the assumption that the person is still signed in (or the wait timed out).
         if (loggedOut) {
             if (!onboardingShowing) beginGuide()
         } else if (onboardingShowing) {
@@ -1848,22 +1802,33 @@ class MainActivity : Activity() {
             this,
             density,
             BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
-            { user, pass -> submitLogin(user, pass, 0) },
-            { exitGuideToSite() },
-            {
-                // The login screen is showing: load the site's login form quietly behind the guide.
-                awaitingLogin = true
-                webView.loadUrl(LOGIN_URL)
-            }
+            { startWebLogin() },
+            { exitGuideToSite() }
         )
         onboardingView = v
-        root.addView(
-            v,
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
+        val lp = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
         )
+        if (splashView.parent != null) {
+            // Under the splash, then the splash fades out.
+            root.addView(v, root.indexOfChild(splashView), lp)
+            splashView.animate().cancel()
+            splashProgress.animate().alpha(0f).setDuration(250).start()
+            splashView.animate()
+                .alpha(0f)
+                .setStartDelay(150)
+                .setDuration(600)
+                .withEndAction {
+                    if (splashView.parent != null) root.removeView(splashView)
+                    splashView.animate().setStartDelay(0)
+                }
+                .start()
+        } else {
+            v.alpha = 0f
+            root.addView(v, lp)
+            v.animate().alpha(1f).setDuration(400).start()
+        }
         refreshCursorVisibility()
     }
 
@@ -1871,6 +1836,7 @@ class MainActivity : Activity() {
         onboardingView?.let { root.removeView(it) }
         onboardingView = null
         onboardingShowing = false
+        loginStarting = false
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
         webView.requestFocus()
@@ -1880,48 +1846,60 @@ class MainActivity : Activity() {
     // Back out of the experience: the normal start, signed out.
     private fun exitGuideToSite() {
         awaitingLogin = false
+        showLoginLogo(false)
         closeOnboarding()
         replaySplash()
         webView.loadUrl(START_URL)
     }
 
-    // Fills in the site's own login form (hidden behind the guide) and presses its button.
-    private fun submitLogin(user: String, pass: String, attempt: Int) {
-        val js = "window.__tvDoLogin ? window.__tvDoLogin(" + org.json.JSONObject.quote(user) + "," +
-            org.json.JSONObject.quote(pass) + ") : null"
-        webView.evaluateJavascript(js) { r ->
-            if (onboardingView == null) return@evaluateJavascript
-            when (r) {
-                "true" -> {}   // submitted: the result arrives as loginFailed(), or the page signs in
-                "\"check\"" -> fallbackToWebLogin()
-                else -> {
-                    // The login form is not ready (still loading) or not recognised.
-                    if (attempt < 6) {
-                        handler.postDelayed({ submitLogin(user, pass, attempt + 1) }, 1000L)
-                    } else {
-                        fallbackToWebLogin()
-                    }
-                }
-            }
+    // "Log in": load the site's login page quietly under the guide, then fade the guide away onto it.
+    private fun startWebLogin() {
+        if (loginStarting) return
+        loginStarting = true
+        awaitingLogin = true
+        webView.loadUrl(LOGIN_URL)
+        handler.postDelayed({ if (onboardingShowing) revealLogin() }, 7000L)
+    }
+
+    private fun revealLogin() {
+        val v = onboardingView ?: return
+        v.animate().alpha(0f).setDuration(500).withEndAction { closeOnboarding() }.start()
+    }
+
+    // A small copy of the logo above the login page, in the same style as the guide.
+    private var loginLogoView: ImageView? = null
+
+    private fun showLoginLogo(show: Boolean) {
+        if (!show) {
+            loginLogoView?.visibility = View.GONE
+            return
         }
-    }
-
-    // The site wants something we can't do in our own form (a human check, or an unexpected page):
-    // show its login page itself, restyled for the TV.
-    private fun fallbackToWebLogin() {
-        Toast.makeText(this, "Please log in on this page", Toast.LENGTH_LONG).show()
-        closeOnboarding()
-    }
-
-    private fun loginFailedFromPage(msg: String) {
-        onboardingView?.loginFailed(
-            if (msg.isBlank()) "Sign-in did not work. Please check your details and try again." else msg
-        )
+        var v = loginLogoView
+        if (v == null) {
+            v = ImageView(this).apply {
+                setImageResource(R.drawable.splash_logo)
+                adjustViewBounds = true
+                isFocusable = false
+            }
+            loginLogoView = v
+            root.addView(
+                v,
+                FrameLayout.LayoutParams(
+                    (resources.displayMetrics.widthPixels * LOGIN_LOGO_FRACTION).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                ).apply { topMargin = (resources.displayMetrics.heightPixels * 0.04f).toInt() }
+            )
+        }
+        v.visibility = View.VISIBLE
+        root.bringChildToFront(v)
+        if (::cursorView.isInitialized) root.bringChildToFront(cursorView)
     }
 
     // Signed in: run the splash again, then show the signed-in home page.
     private fun loginSucceeded() {
         awaitingLogin = false
+        showLoginLogo(false)
         closeOnboarding()
         replaySplash()
         webView.loadUrl(START_URL)
@@ -1993,14 +1971,18 @@ class MainActivity : Activity() {
             handler.post { onAuthReported(loggedOut) }
         }
 
+        // The login page has been restyled and is ready to be shown (or the page is not a login page).
         @android.webkit.JavascriptInterface
-        fun loginFailed(msg: String) {
-            handler.post { loginFailedFromPage(msg) }
+        fun loginPageReady(show: Boolean) {
+            handler.post {
+                showLoginLogo(show && awaitingLogin)
+                if (show && awaitingLogin && onboardingShowing) revealLogin()
+            }
         }
 
         @android.webkit.JavascriptInterface
-        fun loginCheckNeeded() {
-            handler.post { fallbackToWebLogin() }
+        fun browseWithoutLogin() {
+            handler.post { exitGuideToSite() }
         }
 
         @android.webkit.JavascriptInterface
@@ -3199,8 +3181,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(translateJs, null)
         view.evaluateJavascript(headerJs, null)
         view.evaluateJavascript(authJs, null)
-        view.evaluateJavascript(loginPageJs, null)
-        view.evaluateJavascript(loginDriverJs, null)
+        view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
@@ -3625,6 +3606,11 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (awaitingLogin && !onboardingShowing) {
+                        // Backing out of the login page: the normal signed-out start.
+                        exitGuideToSite()
+                        return true
+                    }
                     if (fsControlsMode && fullScreenActive()) {
                         hideFsOverlay()
                         return true
@@ -4234,16 +4220,15 @@ private class TransitionOverlayView(
     }
 }
 
-// Unauthenticated experience: a few full-screen slides explaining the remote, then a native
-// login screen (the sign-in itself is carried out on the site's own login form behind the scenes,
-// so the site's checks and error messages still apply).
+// Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
+// the splash logo exactly where the splash drew it, so the two flow into each other. The last
+// button opens the site's own login page (restyled to match).
 private class OnboardingView(
     context: android.content.Context,
     private val density: Float,
     private val wand: Bitmap,
-    private val onLogin: (String, String) -> Unit,
-    private val onBrowse: () -> Unit,
-    private val onEnterLogin: () -> Unit
+    private val onLogin: () -> Unit,
+    private val onBrowse: () -> Unit
 ) : FrameLayout(context) {
 
     private class Slide(val title: String, val body: String)
@@ -4251,7 +4236,7 @@ private class OnboardingView(
     private val slides = listOf(
         Slide(
             "Welcome to Stardom World on TV",
-            "A quick tour of getting around with your remote. You can skip it at any time."
+            "A quick tour of getting around with your remote."
         ),
         Slide(
             "Moving around",
@@ -4275,11 +4260,8 @@ private class OnboardingView(
         )
     )
 
-    private val loginIndex: Int = slides.size
     private val gold = 0xFFFFB347.toInt()
     private var index = 0
-    private var busy = false
-    private var enteredLogin = false
 
     private fun p(v: Int): Int = (v * density).toInt()
 
@@ -4290,25 +4272,36 @@ private class OnboardingView(
     private val skipBtn = android.widget.TextView(context)
     private val backBtn = android.widget.TextView(context)
     private val nextBtn = android.widget.TextView(context)
-    private val row = android.widget.LinearLayout(context)
     private var focused: android.widget.TextView = nextBtn
 
-    // Login screen
-    private val loginBox = android.widget.LinearLayout(context)
-    private val emailField = android.widget.EditText(context)
-    private val passField = android.widget.EditText(context)
-    private val errorView = android.widget.TextView(context)
-    private val loginBtn = android.widget.TextView(context)
-    private val browseBtn = android.widget.TextView(context)
+    // The splash logo, at the splash's own size and position.
+    private val logoView = android.widget.ImageView(context)
+    private val screenW = context.resources.displayMetrics.widthPixels
+    private val screenH = context.resources.displayMetrics.heightPixels
+    private val logoH: Int
 
     init {
         setBackgroundColor(Color.BLACK)
         isClickable = true
 
+        logoView.setImageResource(R.drawable.splash_logo)
+        logoView.adjustViewBounds = true
+        val ld = logoView.drawable
+        val logoW = (screenW * 0.6f).toInt()
+        logoH = if (ld != null && ld.intrinsicWidth > 0) {
+            logoW * ld.intrinsicHeight / ld.intrinsicWidth
+        } else {
+            (logoW * 0.25f).toInt()
+        }
+        addView(
+            logoView,
+            FrameLayout.LayoutParams(logoW, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER)
+        )
+
         val col = android.widget.LinearLayout(context)
         col.orientation = android.widget.LinearLayout.VERTICAL
         col.gravity = Gravity.CENTER_HORIZONTAL
-        col.setPadding(p(72), p(32), p(72), p(36))
+        col.setPadding(p(72), p(32), p(72), p(30))
 
         col.addView(
             art,
@@ -4338,7 +4331,7 @@ private class OnboardingView(
             android.widget.LinearLayout.LayoutParams(
                 android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = p(14); bottomMargin = p(10) }
+            ).apply { topMargin = p(10); bottomMargin = p(8) }
         )
 
         counter.setTextColor(0x99FFFFFF.toInt())
@@ -4349,16 +4342,17 @@ private class OnboardingView(
             android.widget.LinearLayout.LayoutParams(
                 android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = p(14) }
+            ).apply { bottomMargin = p(10) }
         )
 
+        val row = android.widget.LinearLayout(context)
         row.orientation = android.widget.LinearLayout.HORIZONTAL
         row.gravity = Gravity.CENTER
         for (b in listOf(skipBtn, backBtn, nextBtn)) {
             b.textSize = 20f
             b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
             b.gravity = Gravity.CENTER
-            b.setPadding(p(30), p(14), p(30), p(14))
+            b.setPadding(p(30), p(12), p(30), p(12))
             row.addView(
                 b,
                 android.widget.LinearLayout.LayoutParams(
@@ -4377,102 +4371,8 @@ private class OnboardingView(
             )
         )
 
-        // ---- login fields and buttons (hidden until the last screen)
-        loginBox.orientation = android.widget.LinearLayout.VERTICAL
-        loginBox.gravity = Gravity.CENTER_HORIZONTAL
-        loginBox.visibility = View.GONE
-        fun styleField(f: android.widget.EditText, hint: String, inputType: Int, action: Int) {
-            f.hint = hint
-            f.setHintTextColor(0x88FFFFFF.toInt())
-            f.setTextColor(Color.WHITE)
-            f.textSize = 24f
-            f.inputType = inputType
-            f.setSingleLine(true)
-            f.imeOptions = action
-            f.setPadding(p(24), 0, p(24), 0)
-            f.isFocusableInTouchMode = true
-            paintField(f, false)
-            f.setOnFocusChangeListener { v, has -> paintField(v as android.widget.EditText, has) }
-        }
-        styleField(
-            emailField, "Email or username",
-            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
-            android.view.inputmethod.EditorInfo.IME_ACTION_NEXT
-        )
-        styleField(
-            passField, "Password",
-            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD,
-            android.view.inputmethod.EditorInfo.IME_ACTION_DONE
-        )
-        emailField.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_NEXT) {
-                passField.requestFocus()
-                true
-            } else false
-        }
-        passField.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
-                submit()
-                true
-            } else false
-        }
-        for (f in listOf(emailField, passField)) {
-            loginBox.addView(
-                f,
-                android.widget.LinearLayout.LayoutParams(p(620), p(64)).apply { topMargin = p(12) }
-            )
-        }
-
-        errorView.setTextColor(0xFFFF7A66.toInt())
-        errorView.textSize = 20f
-        errorView.gravity = Gravity.CENTER
-        errorView.visibility = View.GONE
-        loginBox.addView(
-            errorView,
-            android.widget.LinearLayout.LayoutParams(
-                p(620), android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = p(12) }
-        )
-
-        for (b in listOf(loginBtn, browseBtn)) {
-            b.textSize = 20f
-            b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
-            b.gravity = Gravity.CENTER
-            b.isFocusable = true
-            b.isFocusableInTouchMode = true
-            b.setOnFocusChangeListener { v, has -> paintButton(v as android.widget.TextView, has) }
-            paintButton(b, false)
-            loginBox.addView(
-                b,
-                android.widget.LinearLayout.LayoutParams(p(620), p(60)).apply { topMargin = p(14) }
-            )
-        }
-        loginBtn.text = "Log in"
-        browseBtn.text = "Continue without logging in"
-
-        col.addView(
-            loginBox,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
         addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         render()
-    }
-
-    private fun paintField(f: android.widget.EditText, isFocused: Boolean) {
-        val d = android.graphics.drawable.GradientDrawable()
-        d.cornerRadius = 12 * density
-        if (isFocused) {
-            d.setColor(0xFF2A2210.toInt())
-            d.setStroke((5 * density).toInt(), gold)
-        } else {
-            d.setColor(0xFF111111.toInt())
-            d.setStroke((2 * density).toInt(), 0x66FFB347)
-        }
-        f.background = d
     }
 
     private fun visibleButtons(): List<android.widget.TextView> =
@@ -4494,27 +4394,6 @@ private class OnboardingView(
     }
 
     private fun render() {
-        val inLogin = index >= loginIndex
-        (art.layoutParams as android.widget.LinearLayout.LayoutParams).weight = if (inLogin) 0.55f else 1.25f
-        art.requestLayout()
-        if (inLogin) {
-            titleView.text = "Log in to Stardom World"
-            bodyView.text = "Use your Stardom World account, or carry on without one."
-            counter.visibility = View.GONE
-            row.visibility = View.GONE
-            loginBox.visibility = View.VISIBLE
-            art.type = 0
-            art.invalidate()
-            if (!enteredLogin) {
-                enteredLogin = true
-                onEnterLogin()
-                emailField.requestFocus()
-            }
-            return
-        }
-        counter.visibility = View.VISIBLE
-        row.visibility = View.VISIBLE
-        loginBox.visibility = View.GONE
         val s = slides[index]
         titleView.text = s.title
         bodyView.text = s.body
@@ -4523,6 +4402,21 @@ private class OnboardingView(
         nextBtn.text = if (index == slides.size - 1) "Log in" else "Next"
         if (!visibleButtons().contains(focused)) focused = nextBtn
         for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
+
+        val lp = art.layoutParams as android.widget.LinearLayout.LayoutParams
+        if (index == 0) {
+            // Leave exactly the splash logo's space (it is centred on the screen) above the title.
+            logoView.visibility = View.VISIBLE
+            counter.visibility = View.GONE
+            lp.weight = 0f
+            lp.height = ((screenH + logoH) / 2f + 10 * density - 32 * density).toInt().coerceAtLeast(0)
+        } else {
+            logoView.visibility = View.GONE
+            counter.visibility = View.VISIBLE
+            lp.weight = 1.25f
+            lp.height = 0
+        }
+        art.layoutParams = lp
         art.type = index
         art.invalidate()
     }
@@ -4536,64 +4430,13 @@ private class OnboardingView(
 
     private fun activate() {
         when {
-            focused === skipBtn -> { index = loginIndex; render() }
+            focused === skipBtn -> onLogin()
             focused === backBtn -> { index -= 1; render() }
-            else -> { index += 1; render() }
+            else -> if (index >= slides.size - 1) onLogin() else { index += 1; render() }
         }
-    }
-
-    private fun moveLogin(step: Int) {
-        val items = listOf<View>(emailField, passField, loginBtn, browseBtn)
-        val i = items.indexOfFirst { it.isFocused }.coerceAtLeast(0)
-        items[(i + step).coerceIn(0, items.size - 1)].requestFocus()
-    }
-
-    private fun hideKeyboard() {
-        val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        imm.hideSoftInputFromWindow(windowToken, 0)
-    }
-
-    private fun submit() {
-        if (busy) return
-        val user = emailField.text.toString().trim()
-        val pass = passField.text.toString()
-        if (user.isEmpty()) {
-            showError("Enter your email or username.")
-            emailField.requestFocus()
-            return
-        }
-        if (pass.isEmpty()) {
-            showError("Enter your password.")
-            passField.requestFocus()
-            return
-        }
-        hideKeyboard()
-        errorView.visibility = View.GONE
-        setBusy(true)
-        onLogin(user, pass)
-    }
-
-    private fun setBusy(b: Boolean) {
-        busy = b
-        loginBtn.text = if (b) "Signing in..." else "Log in"
-        loginBtn.alpha = if (b) 0.6f else 1f
-    }
-
-    private fun showError(msg: String) {
-        errorView.text = msg
-        errorView.visibility = View.VISIBLE
-    }
-
-    // Called by the app when the site rejected the sign-in (or it could not be completed).
-    fun loginFailed(msg: String) {
-        setBusy(false)
-        showError(msg)
-        passField.setText("")
-        passField.requestFocus()
     }
 
     fun handleKey(e: KeyEvent): Boolean {
-        if (index >= loginIndex) return handleLoginKey(e)
         if (e.action != KeyEvent.ACTION_DOWN) return true
         when (e.keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> moveFocus(-1)
@@ -4602,33 +4445,6 @@ private class OnboardingView(
             KeyEvent.KEYCODE_BACK -> if (index > 0) { index -= 1; render() } else onBrowse()
         }
         return true
-    }
-
-    // Login screen: Up/Down walk email -> password -> Log in -> Continue; everything else (typing,
-    // the on-screen keyboard, OK on a field) goes to the field itself.
-    private fun handleLoginKey(e: KeyEvent): Boolean {
-        if (busy) return true
-        when (e.keyCode) {
-            KeyEvent.KEYCODE_BACK -> {
-                if (e.action == KeyEvent.ACTION_DOWN) onBrowse()
-                return true
-            }
-            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                if (e.action == KeyEvent.ACTION_DOWN) moveLogin(if (e.keyCode == KeyEvent.KEYCODE_DPAD_UP) -1 else 1)
-                return true
-            }
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                if (loginBtn.isFocused) {
-                    if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0) submit()
-                    return true
-                }
-                if (browseBtn.isFocused) {
-                    if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0) onBrowse()
-                    return true
-                }
-            }
-        }
-        return false
     }
 
     // Simple line drawings, one per slide.
@@ -4670,15 +4486,7 @@ private class OnboardingView(
             val cx = width / 2f
             val cy = height / 2f
             when (type) {
-                0 -> {
-                    val d = context.getDrawable(R.drawable.splash_logo)
-                    if (d != null && d.intrinsicWidth > 0) {
-                        val w = minOf(width * 0.62f, 150f * u)
-                        val h = w * d.intrinsicHeight / d.intrinsicWidth
-                        d.setBounds((cx - w / 2).toInt(), (cy - h / 2).toInt(), (cx + w / 2).toInt(), (cy + h / 2).toInt())
-                        d.draw(canvas)
-                    }
-                }
+                0 -> {}
                 1 -> {
                     canvas.drawCircle(cx, cy, 44f * u, fillDim)
                     canvas.drawCircle(cx, cy, 44f * u, line)
