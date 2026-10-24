@@ -3234,6 +3234,7 @@ class MainActivity : Activity() {
     private val fsNudgeRunnable = Runnable { nudgeFullScreenLayout() }
 
     private fun scheduleFullScreenResizeNudges() {
+        if (!isFireTv()) return
         handler.removeCallbacks(fsNudgeRunnable)
         for (delay in longArrayOf(500L, 1300L, 2600L, 4500L)) {
             handler.postDelayed(fsNudgeRunnable, delay)

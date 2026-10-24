@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.34
+- The Fire TV full-screen size nudges no longer run on other devices, so the Sony TV behaves exactly as before.
+
 ## 1.3.33
 - The full-screen button bar is shown on Fire TV only; other devices keep the player's own controls.
 
