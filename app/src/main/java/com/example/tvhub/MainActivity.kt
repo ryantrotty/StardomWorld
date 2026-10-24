@@ -1375,14 +1375,6 @@ class MainActivity : Activity() {
             (resources.displayMetrics.widthPixels * 100f / (LAYOUT_WIDTH * density) + 0.5f).toInt()
         )
 
-        if (isFireTv()) {
-            Toast.makeText(
-                this,
-                "Stardom " + BuildConfig.VERSION_NAME + " FireTV " + Build.MODEL,
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
         val initLang = getSavedLanguage()
         val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
@@ -2841,6 +2833,7 @@ class MainActivity : Activity() {
         } else {
             // Full screen: tell the player the pointer has left so it hides its controls.
             fsPulseRunning = false
+            fsControlsMode = false
             handler.removeCallbacks(fsPulse)
             sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
         }
@@ -2848,6 +2841,30 @@ class MainActivity : Activity() {
 
     // ---- Full screen: the app drives the player (the player's own keyboard handling is bypassed,
     // so its controls only show when we ask for them and then go away on their own).
+
+    // Full screen "controls mode": Down enters it, Left/Right then walk the player's own buttons
+    // (sent to the player as Tab / Shift+Tab), OK presses the focused button, Up / Back leave it.
+    private var fsControlsMode = false
+
+    private fun sendFullScreenKey(keyCode: Int, shift: Boolean = false) {
+        val cv = fullScreenView() ?: return
+        cv.requestFocus()
+        val t = SystemClock.uptimeMillis()
+        val meta = if (shift) KeyEvent.META_SHIFT_ON else 0
+        cv.dispatchKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_DOWN, keyCode, 0, meta))
+        cv.dispatchKeyEvent(KeyEvent(t, t + 30, KeyEvent.ACTION_UP, keyCode, 0, meta))
+    }
+
+    private fun enterFsControlsMode() {
+        fsControlsMode = true
+        fullScreenInteraction()
+        // Let the controls appear first, then move focus onto the first button.
+        handler.postDelayed({ if (fsControlsMode) sendFullScreenKey(KeyEvent.KEYCODE_TAB) }, 250)
+    }
+
+    private fun exitFsControlsMode() {
+        fsControlsMode = false
+    }
 
     private var fsLastInteraction = 0L
     private var fsPulseRunning = false
@@ -2990,7 +3007,6 @@ class MainActivity : Activity() {
         }
         walk(view, 0)
         view.requestLayout()
-        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show()
     }
 
     // Temporary: shows the screen/WebView numbers needed to fix full screen on Fire TV (once per launch).
@@ -3055,6 +3071,7 @@ class MainActivity : Activity() {
         customView = null
         customCallback?.onCustomViewHidden()
         customCallback = null
+        fsControlsMode = false
         handler.removeCallbacks(fsNudgeRunnable)
         handler.removeCallbacks(hideControlsRunnable)
         handler.removeCallbacks(fsPulse)
@@ -3082,6 +3099,10 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (fsControlsMode && fullScreenActive()) {
+                        exitFsControlsMode()
+                        return true
+                    }
                     if (cssFullScreen) {
                         exitCssFullScreen()
                         return true
@@ -3101,6 +3122,34 @@ class MainActivity : Activity() {
         // Full screen: Left/Right skip 10 s (30 s while held or with the FF/RW keys), OK plays/pauses.
         // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
         if (fullScreenActive()) {
+            if (fsControlsMode) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        if (event.action == KeyEvent.ACTION_DOWN) {
+                            sendFullScreenKey(KeyEvent.KEYCODE_TAB, event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT)
+                            fullScreenInteraction()
+                        }
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                            sendFullScreenKey(KeyEvent.KEYCODE_ENTER)
+                            fullScreenInteraction()
+                        }
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        if (event.action == KeyEvent.ACTION_DOWN) {
+                            exitFsControlsMode()
+                            fullScreenInteraction()
+                        }
+                        return true
+                    }
+                }
+            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) enterFsControlsMode()
+                return true
+            }
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT,
                 KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND -> {
