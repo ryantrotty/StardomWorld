@@ -522,12 +522,7 @@ class MainActivity : Activity() {
     private var awaitingLogin = false
     private var authPending = false
     private var loginStarting = false
-    private var loginReady = false
     private var loginRevealing = false
-    private var loginLoadStartedAt = 0L
-    private var loginReadyAt = 0L
-    private var loginPressedAt = 0L
-    private var loginReadyBy = "-"
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
             authPending = false
@@ -1635,18 +1630,6 @@ class MainActivity : Activity() {
                 injectPageScripts(view)
                 CookieManager.getInstance().flush()
                 onPageReady()
-                // Backstop: if the login page finished loading but its own "ready" signal never came,
-                // do not keep the person waiting on the guide.
-                if (awaitingLogin && onboardingShowing && (url ?: "").contains("/login")) {
-                    handler.postDelayed({
-                        if (onboardingShowing && !loginReady) {
-                            loginReady = true
-                            loginReadyAt = SystemClock.elapsedRealtime()
-                            loginReadyBy = "page"
-                            if (loginStarting) revealLogin()
-                        }
-                    }, 1500L)
-                }
             }
 
             @SuppressLint("WebViewClientOnReceivedSslError")
@@ -1775,10 +1758,6 @@ class MainActivity : Activity() {
         showOnboarding()
         // Load the site's login page quietly now, so it is ready by the time "Log in" is pressed.
         awaitingLogin = true
-        loginReady = false
-        loginLoadStartedAt = SystemClock.elapsedRealtime()
-        loginReadyAt = 0L
-        loginReadyBy = "-"
         webView.loadUrl(LOGIN_URL)
     }
 
@@ -1856,37 +1835,25 @@ class MainActivity : Activity() {
     // Back out of the experience: the transition screen, then the signed-out main page.
     private fun exitGuideToSite() {
         awaitingLogin = false
-        loginReady = false
         showLoginLogo(false)
         closeOnboarding()
         showPageTransitionOverlay()
         webView.loadUrl(START_URL)
     }
 
-    // "Log in": the login page is already loading underneath; fade the guide away onto it.
+    // "Log in": fade the guide away onto the login page straight away, in whatever state it is in
+    // (it has been loading quietly underneath since the guide appeared).
     private fun startWebLogin() {
         if (loginStarting) return
         loginStarting = true
-        loginPressedAt = SystemClock.elapsedRealtime()
-        onboardingView?.showOpening()
-        if (loginReady) revealLogin()
-        else handler.postDelayed({ if (onboardingShowing) revealLogin() }, 12000L)
+        revealLogin()
     }
 
     private fun revealLogin() {
         val v = onboardingView ?: return
         if (loginRevealing) return
         loginRevealing = true
-        // Temporary timing note (seconds after the login page started loading) to find where time goes.
-        val now = SystemClock.elapsedRealtime()
-        fun sec(t: Long): String = if (t <= 0L) "never" else String.format("%.1f", (t - loginLoadStartedAt) / 1000f)
-        Toast.makeText(
-            this,
-            "Login page: ready " + sec(loginReadyAt) + "s (" + loginReadyBy + "), pressed " +
-                sec(loginPressedAt) + "s, shown " + sec(now) + "s",
-            Toast.LENGTH_LONG
-        ).show()
-        v.animate().alpha(0f).setDuration(500).withEndAction {
+        v.animate().alpha(0f).setDuration(400).withEndAction {
             closeOnboarding()
             showLoginLogo(awaitingLogin)
         }.start()
@@ -1926,7 +1893,6 @@ class MainActivity : Activity() {
     // If the site already moved on to a page of its own, that page is simply left showing.
     private fun loginSucceeded(path: String) {
         awaitingLogin = false
-        loginReady = false
         showLoginLogo(false)
         closeOnboarding()
         if (path.startsWith("/login")) {
@@ -1983,16 +1949,7 @@ class MainActivity : Activity() {
         fun loginPageReady(show: Boolean) {
             handler.post {
                 if (show) {
-                    if (!loginReady) {
-                        loginReady = true
-                        loginReadyAt = SystemClock.elapsedRealtime()
-                        loginReadyBy = "js"
-                    }
-                    if (onboardingShowing) {
-                        if (loginStarting) revealLogin()   // "Log in" was pressed before the page was ready
-                    } else {
-                        showLoginLogo(awaitingLogin)
-                    }
+                    if (!onboardingShowing) showLoginLogo(awaitingLogin)
                 } else {
                     showLoginLogo(false)
                 }
@@ -4438,12 +4395,6 @@ private class OnboardingView(
         art.layoutParams = lp
         art.type = index
         art.invalidate()
-    }
-
-    // "Log in" was pressed while the login page is still getting ready.
-    fun showOpening() {
-        nextBtn.text = "Opening log in..."
-        nextBtn.alpha = 0.6f
     }
 
     private fun moveFocus(step: Int) {
