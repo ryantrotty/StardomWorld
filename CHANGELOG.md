@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.53
+- Language switch: smaller text and box; grey outline when idle and gold with a glow when focused (previously the other way round).
+- The page no longer scrolls sideways when focus reaches the far right of the header, which exposed the right edge of the hero banner after switching language.
+
 ## 1.3.52
 - Header language button is now a two-position switch (EN | 日本語) in the same gold style as the language screen, with the active language filled in gold.
 

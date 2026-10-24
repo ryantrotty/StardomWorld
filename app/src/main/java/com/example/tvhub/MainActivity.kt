@@ -299,14 +299,14 @@ class MainActivity : Activity() {
             padding: 10px !important;
         }
         #tv-lang-toggle-btn {
-            height: 40px !important;
+            height: 32px !important;
             background: rgba(0, 0, 0, 0.25) !important;
             background-color: rgba(0, 0, 0, 0.25) !important;
-            border: 2px solid #FFB347 !important;
-            border-radius: 20px !important;
+            border: 2px solid rgba(255, 255, 255, 0.35) !important;
+            border-radius: 16px !important;
             box-shadow: none !important;
             outline: none !important;
-            padding: 3px !important;
+            padding: 2px !important;
             margin-left: 8px !important;
             cursor: pointer !important;
             display: inline-flex !important;
@@ -316,11 +316,11 @@ class MainActivity : Activity() {
         }
         #tv-lang-toggle-btn .tv-lang-opt {
             display: inline-block !important;
-            height: 30px !important;
-            line-height: 30px !important;
-            padding: 0 14px !important;
-            border-radius: 15px !important;
-            font-size: 15px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            padding: 0 10px !important;
+            border-radius: 12px !important;
+            font-size: 12px !important;
             font-weight: 700 !important;
             color: #ffffff !important;
             background: transparent !important;
@@ -331,8 +331,8 @@ class MainActivity : Activity() {
             color: #1a1a1a !important;
         }
         #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
-            border-color: #ffffff !important;
-            box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.65) !important;
+            border-color: #FFB347 !important;
+            box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.55), 0 0 14px rgba(255, 179, 71, 0.6) !important;
             outline: none !important;
         }
         #tv-fav-header-btn {
@@ -777,6 +777,11 @@ class MainActivity : Activity() {
         (function(){
           if (window.__tvHeaderFix) return;
           window.__tvHeaderFix = true;
+          // The page is laid out at a fixed width, so it should never scroll sideways: if focusing
+          // something at the far right nudges it, put it straight back.
+          window.addEventListener('scroll', function() {
+            if (window.scrollX) window.scrollTo(0, window.scrollY);
+          }, {passive: true});
           function unfix(){
             try {
               var vw = window.innerWidth, vh = window.innerHeight;
