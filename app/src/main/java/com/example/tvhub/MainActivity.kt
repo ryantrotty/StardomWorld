@@ -3318,7 +3318,8 @@ class MainActivity : Activity() {
                         return super.dispatchKeyEvent(event)
                     }
                 }
-            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && isFireTv()) {
+                // Fire TV only: other devices keep the player's own controls.
                 if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) showFsOverlay()
                 return true
             }
