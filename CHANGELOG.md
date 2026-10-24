@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.57
+- Account menu: hide the site's whole dropdown panel (not just the list inside it), using the markup of the site's account menu.
+
 ## 1.3.56
 - Account menu: more flexible detection of the site's menu. Temporary: if it still cannot be found while signed in, a short note lists what the header contains.
 

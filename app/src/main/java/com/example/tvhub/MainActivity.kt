@@ -1310,7 +1310,9 @@ class MainActivity : Activity() {
                           return x.querySelectorAll('a').length >= 2 && !(langLiEl && (langLiEl.contains(x) || x.contains(langLiEl)));
                         });
                         if (cands.length) {
-                          acctMenu = cands[cands.length - 1];   // innermost list of links
+                          // The site's own panel (div.dropdown-container) if there is one, so the whole box is hidden.
+                          var pref = cands.filter(function(x) { return /dropdown/i.test(x.className || ''); });
+                          acctMenu = pref.length ? pref[0] : cands[cands.length - 1];
                           var host = acctMenu.parentElement;
                           while (host && host.parentElement !== btnWrap && host !== btnWrap) host = host.parentElement;
                           acctLi = (host && host !== btnWrap) ? host : acctMenu.parentElement;
