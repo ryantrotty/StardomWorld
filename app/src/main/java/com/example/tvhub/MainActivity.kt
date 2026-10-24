@@ -545,15 +545,18 @@ class MainActivity : Activity() {
     // Turns a fixed/sticky header at the top of the page into a normal one, so it
     // scrolls away with the rest of the page instead of covering the content.
     // Reports whether the page looks signed out (a login link in the header or a password box).
+    // Polls because the header can appear late on slow devices; "signed in" must hold for a few checks.
     private val authJs = """
         (function() {
           try {
             if (!window.AndroidHost || !window.AndroidHost.reportAuth) return;
-            function check() {
+            if (window.__tvAuthTimer) clearInterval(window.__tvAuthTimer);
+            var tries = 0, inStreak = 0;
+            window.__tvAuthTimer = setInterval(function() {
+              tries++;
               var out = !!document.querySelector('input[type=password]');
               var hdr = document.querySelector('header, .box-header, .nav-inner, .header');
-              if (!out && !hdr) return;
-              if (!out) {
+              if (!out && hdr) {
                 if (hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]')) out = true;
                 var els = hdr.querySelectorAll('a, button');
                 for (var i = 0; i < els.length && !out; i++) {
@@ -561,11 +564,129 @@ class MainActivity : Activity() {
                   if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) out = true;
                 }
               }
-              window.AndroidHost.reportAuth(out, location.pathname);
+              if (out) {
+                clearInterval(window.__tvAuthTimer);
+                window.AndroidHost.reportAuth(true, location.pathname);
+              } else if (hdr) {
+                inStreak++;
+                if (inStreak >= 4) {
+                  clearInterval(window.__tvAuthTimer);
+                  window.AndroidHost.reportAuth(false, location.pathname);
+                }
+              }
+              if (tries > 60) clearInterval(window.__tvAuthTimer);
+            }, 800);
+          } catch (e) {}
+        })();
+    """
+
+    // The site's login page, restyled for the TV: no header, large gold-and-black fields, D-pad order
+    // (first field focused, Down/Up move between fields and the button, Enter submits). The page's own
+    // login logic and error messages are untouched, so failed attempts and retries behave as on the site.
+    private val loginPageJs = """
+        (function() {
+          try {
+            if (location.pathname.indexOf('/login') !== 0) return;
+            if (!document.getElementById('tv-login-style')) {
+              var st = document.createElement('style');
+              st.id = 'tv-login-style';
+              st.textContent =
+                'html,body{background:#000 !important;color:#fff !important;}' +
+                'header,.box-header,.nav-inner,.header,footer,.footer,.breadcrumb,.breadcrumbs,#header,#footer{display:none !important;}' +
+                'body{padding-top:40px !important;}' +
+                'form{max-width:760px !important;margin:0 auto !important;}' +
+                'input[type=text],input[type=email],input[type=password],input:not([type]){height:68px !important;font-size:26px !important;padding:0 22px !important;background:#111 !important;color:#fff !important;border:2px solid rgba(255,179,71,.45) !important;border-radius:12px !important;width:100% !important;box-sizing:border-box !important;}' +
+                'input:focus{outline:4px solid #FFB347 !important;outline-offset:2px !important;border-color:#FFB347 !important;}' +
+                'button[type=submit],input[type=submit]{height:68px !important;font-size:26px !important;font-weight:bold !important;background:#FFB347 !important;color:#1a1a1a !important;border:none !important;border-radius:12px !important;width:100% !important;}' +
+                'button:focus,input[type=submit]:focus{outline:4px solid #fff !important;outline-offset:3px !important;}' +
+                'label,h1,h2,h3{color:#FFB347 !important;font-size:26px !important;}' +
+                'a{color:#FFB347 !important;font-size:20px !important;}' +
+                'p,li,.error,.alert,.message,[class*=error],[class*=alert]{font-size:22px !important;}' +
+                '.tv-login-title{color:#FFB347;font-size:44px;font-weight:bold;text-align:center;margin:0 0 28px 0;}';
+              document.head.appendChild(st);
             }
-            check();
-            setTimeout(check, 1500);
-            setTimeout(check, 4000);
+
+            function pwInput() { return document.querySelector('input[type=password]'); }
+            function scope() { var pw = pwInput(); return (pw && pw.closest('form')) || document; }
+            function visible(e) { var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.disabled; }
+            function inputs() {
+              return [].slice.call(scope().querySelectorAll('input')).filter(function(e) {
+                var t = (e.type || 'text').toLowerCase();
+                return ['hidden', 'checkbox', 'radio', 'submit', 'button', 'image'].indexOf(t) < 0 && visible(e);
+              });
+            }
+            function submitBtn() {
+              var sc = scope();
+              var b = sc.querySelector('button[type=submit], input[type=submit]');
+              if (b && visible(b)) return b;
+              var all = [].slice.call(sc.querySelectorAll('button, input[type=button], a.btn'));
+              for (var i = 0; i < all.length; i++) {
+                var t = (all[i].textContent || all[i].value || '').trim();
+                if (/log\s*in|ログイン|sign\s*in/i.test(t) && visible(all[i])) return all[i];
+              }
+              return null;
+            }
+            function order() {
+              var list = inputs();
+              var b = submitBtn();
+              if (b) list.push(b);
+              return list;
+            }
+            function doSubmit() {
+              var b = submitBtn();
+              if (b) { b.click(); return; }
+              var pw = pwInput();
+              var f = pw && pw.closest('form');
+              if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); }
+            }
+
+            if (!document.querySelector('.tv-login-title')) {
+              var pw0 = pwInput();
+              var f0 = pw0 && pw0.closest('form');
+              if (f0 && f0.parentNode) {
+                var ttl = document.createElement('div');
+                ttl.className = 'tv-login-title';
+                ttl.textContent = 'Log in to Stardom World';
+                f0.parentNode.insertBefore(ttl, f0);
+              }
+            }
+
+            if (!window.__tvLoginKeys) {
+              window.__tvLoginKeys = true;
+              document.addEventListener('keydown', function(e) {
+                if (location.pathname.indexOf('/login') !== 0) return;
+                var list = order();
+                var i = list.indexOf(document.activeElement);
+                if (i < 0) return;
+                if (e.keyCode === 40 || e.keyCode === 38) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var n = e.keyCode === 40 ? Math.min(i + 1, list.length - 1) : Math.max(i - 1, 0);
+                  list[n].focus();
+                } else if (e.keyCode === 13 && document.activeElement.tagName === 'INPUT') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  var ins = inputs();
+                  var k = ins.indexOf(document.activeElement);
+                  if (k >= 0 && k < ins.length - 1) ins[k + 1].focus(); else doSubmit();
+                }
+              }, true);
+            }
+
+            // First field gets the focus as soon as the form exists (and again after a failed attempt).
+            var focusTries = 0;
+            var focusTimer = setInterval(function() {
+              focusTries++;
+              var ins = inputs();
+              if (ins.length) {
+                clearInterval(focusTimer);
+                if (list_has_focus()) return;
+                ins[0].focus();
+              } else if (focusTries > 25) {
+                clearInterval(focusTimer);
+              }
+            }, 300);
+            function list_has_focus() { return order().indexOf(document.activeElement) >= 0; }
           } catch (e) {}
         })();
     """
@@ -1384,7 +1505,14 @@ class MainActivity : Activity() {
             updateCursor()
         }
 
-        startSplash()
+        if (onboardingDone()) {
+            startSplash()
+        } else {
+            // First run: no splash, start with the guide (the site loads quietly behind it).
+            splashDone = true
+            root.removeView(splashView)
+            showOnboarding()
+        }
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -1565,7 +1693,6 @@ class MainActivity : Activity() {
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction {
                 root.removeView(splashView)
-                checkFirstRun()
             }
             .start()
     }
@@ -1581,20 +1708,15 @@ class MainActivity : Activity() {
 
     private fun onAuthReported(loggedOut: Boolean) {
         authLoggedOut = loggedOut
-        if (awaitingLogin && !loggedOut) {
+        if (loggedOut) return
+        if (awaitingLogin) {
             loginSucceeded()
-        } else {
-            checkFirstRun()
-        }
-    }
-
-    // Shows the guide once, after the splash, to someone who is not signed in.
-    private fun checkFirstRun() {
-        if (!splashDone || onboardingShowing || awaitingLogin || onboardingDone()) return
-        when (authLoggedOut) {
-            true -> showOnboarding()
-            false -> setOnboardingDone()   // already signed in (e.g. updated from an older version)
-            null -> {}
+        } else if (onboardingShowing) {
+            // Already signed in (for example updated from an older version): skip the guide.
+            setOnboardingDone()
+            closeOnboarding()
+            replaySplash()
+            onPageReady()
         }
     }
 
@@ -1617,13 +1739,17 @@ class MainActivity : Activity() {
         refreshCursorVisibility()
     }
 
-    private fun finishOnboarding() {
-        setOnboardingDone()
+    private fun closeOnboarding() {
         onboardingView?.let { root.removeView(it) }
         onboardingView = null
         onboardingShowing = false
-        awaitingLogin = true
         refreshCursorVisibility()
+    }
+
+    private fun finishOnboarding() {
+        setOnboardingDone()
+        closeOnboarding()
+        awaitingLogin = true
         webView.loadUrl(LOGIN_URL)
     }
 
@@ -1658,7 +1784,7 @@ class MainActivity : Activity() {
     }
 
     private fun showPageTransitionOverlay() {
-        if (!splashDone || transitionShowing) return
+        if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
         handler.removeCallbacks(hideTransitionRunnable)
 
@@ -2896,6 +3022,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(translateJs, null)
         view.evaluateJavascript(headerJs, null)
         view.evaluateJavascript(authJs, null)
+        view.evaluateJavascript(loginPageJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
