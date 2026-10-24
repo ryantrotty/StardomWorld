@@ -19,6 +19,7 @@ Thumbs.db
 # Signing keys: never commit these
 *.jks
 *.keystore
+!app/ci-debug.keystore
 
 # Your own private artwork (see docs/PRIVATE_BRANDING.md)
 branding-private/
