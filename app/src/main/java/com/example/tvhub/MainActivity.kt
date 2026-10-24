@@ -540,7 +540,6 @@ class MainActivity : Activity() {
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
             authPending = false
-            Toast.makeText(this, "Sign-in check timed out", Toast.LENGTH_LONG).show()
             beginGuide()
         }
     }
@@ -575,7 +574,7 @@ class MainActivity : Activity() {
         (function() {
           try {
             if (!window.AndroidHost || !window.AndroidHost.reportAuth) return;
-            if (window.__tvAuthTimer) clearInterval(window.__tvAuthTimer);
+            if (window.__tvAuthTimer) return;   // already checking on this page
             var tries = 0, inStreak = 0;
             window.__tvAuthTimer = setInterval(function() {
               tries++;
@@ -594,7 +593,6 @@ class MainActivity : Activity() {
               }
               if (out) {
                 clearInterval(window.__tvAuthTimer);
-                try { if (window.AndroidHost.logDebug) window.AndroidHost.logDebug('Signed out: ' + why); } catch (e2) {}
                 window.AndroidHost.reportAuth(true, location.pathname);
               } else if (hdr) {
                 inStreak++;
@@ -1580,7 +1578,7 @@ class MainActivity : Activity() {
         // 4. Signed out: the guide takes over with the logo in the same place.
         startSplash()
         authPending = true
-        handler.postDelayed(authTimeoutRunnable, 8000L)
+        handler.postDelayed(authTimeoutRunnable, 25000L)
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -1672,6 +1670,11 @@ class MainActivity : Activity() {
 
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
+                // Start the sign-in check as soon as the page is mostly drawn, not only once every
+                // image has finished (slow on Fire TV).
+                if (newProgress >= 50 && view != null && (authPending || awaitingLogin)) {
+                    view.evaluateJavascript(authJs, null)
+                }
                 if (newProgress >= 90) {
                     onPageReady()
                 }

@@ -6,9 +6,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.49
+- Signed-in launches no longer open the guide by mistake on slow devices: the sign-in check now starts as soon as the page is mostly drawn and is given 25 seconds before the app gives up.
+
 ## 1.3.48
 - Language screen: the buttons were being squeezed off the bottom of the screen, so the prompt is now a single line.
-- Temporary: when the guide opens, a short note says why the app thought you were signed out (to track down a guide showing for signed-in users).
 
 ## 1.3.47
 - Language: the guide now starts with a choice of English or 日本語 (your device language is pre-selected). The choice is saved and used everywhere: the guide, the login page, the site, the language button and the full screen controls. Until a choice is made the app follows the device language.
