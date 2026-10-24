@@ -519,6 +519,13 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
+    private var authPending = false
+    private val authTimeoutRunnable = Runnable {
+        if (authPending) {
+            authPending = false
+            beginGuide()
+        }
+    }
     private var splashDismissScheduled = false
 
         private var customView: View? = null
@@ -1508,10 +1515,10 @@ class MainActivity : Activity() {
         if (onboardingDone()) {
             startSplash()
         } else {
-            // First run: no splash, start with the guide (the site loads quietly behind it).
-            splashDone = true
-            root.removeView(splashView)
-            showOnboarding()
+            // Not seen the guide yet: stay on a plain black screen while the site loads quietly and
+            // we find out whether the person is signed in. Signed out -> the guide, signed in -> splash.
+            authPending = true
+            handler.postDelayed(authTimeoutRunnable, 8000L)
         }
 
         with(webView.settings) {
@@ -1668,7 +1675,7 @@ class MainActivity : Activity() {
     // Called when the page is ready. Waits until the bar has had a minimum time to travel, then runs
     // the finish sequence (bar fills to the end, sparkle burst) and only then fades the splash out.
     private fun requestSplashFinish() {
-        if (splashDone || splashFinishing) return
+        if (splashDone || splashFinishing || authPending) return
         splashFinishing = true
         val elapsed = SystemClock.uptimeMillis() - splashStartedAt
         handler.postDelayed({
@@ -1677,7 +1684,7 @@ class MainActivity : Activity() {
     }
 
     private fun onPageReady() {
-        if (splashDone || splashDismissScheduled) return
+        if (splashDone || splashDismissScheduled || authPending) return
         splashDismissScheduled = true
         val elapsed = SystemClock.uptimeMillis() - splashStartedAt
         handler.postDelayed({ requestSplashFinish() }, (SPLASH_MIN_MS - elapsed).coerceAtLeast(0L))
@@ -1700,14 +1707,32 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- first-run guide and login
 
     private fun onboardingDone(): Boolean =
-        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).getBoolean("onboarding_done", false)
+        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).getBoolean("onboarding_seen", false)
 
     private fun setOnboardingDone() {
-        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).edit().putBoolean("onboarding_done", true).apply()
+        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).edit().putBoolean("onboarding_seen", true).apply()
+    }
+
+    private fun beginGuide() {
+        splashDone = true
+        root.removeView(splashView)
+        showOnboarding()
     }
 
     private fun onAuthReported(loggedOut: Boolean) {
         authLoggedOut = loggedOut
+        if (authPending) {
+            authPending = false
+            handler.removeCallbacks(authTimeoutRunnable)
+            if (loggedOut) {
+                beginGuide()
+            } else {
+                setOnboardingDone()
+                startSplash()
+                onPageReady()
+            }
+            return
+        }
         if (loggedOut) return
         if (awaitingLogin) {
             loginSucceeded()
