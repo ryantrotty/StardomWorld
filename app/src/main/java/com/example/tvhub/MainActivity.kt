@@ -73,6 +73,8 @@ class MainActivity : Activity() {
 
     companion object {
         private const val START_URL = "https://www.stardom-world.com/"
+        private const val LOGIN_URL =
+            "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
 
         private const val DESKTOP_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -511,6 +513,12 @@ class MainActivity : Activity() {
 
     private var splashStartedAt = 0L
     private var splashDone = false
+
+    // First-run guide (shown once, only to people who are not signed in), then the login page.
+    private var onboardingView: OnboardingView? = null
+    private var onboardingShowing = false
+    private var authLoggedOut: Boolean? = null
+    private var awaitingLogin = false
     private var splashDismissScheduled = false
 
         private var customView: View? = null
@@ -536,6 +544,32 @@ class MainActivity : Activity() {
 
     // Turns a fixed/sticky header at the top of the page into a normal one, so it
     // scrolls away with the rest of the page instead of covering the content.
+    // Reports whether the page looks signed out (a login link in the header or a password box).
+    private val authJs = """
+        (function() {
+          try {
+            if (!window.AndroidHost || !window.AndroidHost.reportAuth) return;
+            function check() {
+              var out = !!document.querySelector('input[type=password]');
+              var hdr = document.querySelector('header, .box-header, .nav-inner, .header');
+              if (!out && !hdr) return;
+              if (!out) {
+                if (hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]')) out = true;
+                var els = hdr.querySelectorAll('a, button');
+                for (var i = 0; i < els.length && !out; i++) {
+                  var t = (els[i].textContent || '').trim();
+                  if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) out = true;
+                }
+              }
+              window.AndroidHost.reportAuth(out, location.pathname);
+            }
+            check();
+            setTimeout(check, 1500);
+            setTimeout(check, 4000);
+          } catch (e) {}
+        })();
+    """
+
     private val headerJs = """
         (function(){
           if (window.__tvHeaderFix) return;
@@ -1531,8 +1565,96 @@ class MainActivity : Activity() {
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction {
                 root.removeView(splashView)
+                checkFirstRun()
             }
             .start()
+    }
+
+    // ---------------------------------------------------------------- first-run guide and login
+
+    private fun onboardingDone(): Boolean =
+        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).getBoolean("onboarding_done", false)
+
+    private fun setOnboardingDone() {
+        getSharedPreferences("tvhub_prefs", MODE_PRIVATE).edit().putBoolean("onboarding_done", true).apply()
+    }
+
+    private fun onAuthReported(loggedOut: Boolean) {
+        authLoggedOut = loggedOut
+        if (awaitingLogin && !loggedOut) {
+            loginSucceeded()
+        } else {
+            checkFirstRun()
+        }
+    }
+
+    // Shows the guide once, after the splash, to someone who is not signed in.
+    private fun checkFirstRun() {
+        if (!splashDone || onboardingShowing || awaitingLogin || onboardingDone()) return
+        when (authLoggedOut) {
+            true -> showOnboarding()
+            false -> setOnboardingDone()   // already signed in (e.g. updated from an older version)
+            null -> {}
+        }
+    }
+
+    private fun showOnboarding() {
+        onboardingShowing = true
+        if (cursorMode) setCursorMode(false)
+        val v = OnboardingView(
+            this,
+            density,
+            BitmapFactory.decodeResource(resources, R.drawable.cursor_wand)
+        ) { finishOnboarding() }
+        onboardingView = v
+        root.addView(
+            v,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        refreshCursorVisibility()
+    }
+
+    private fun finishOnboarding() {
+        setOnboardingDone()
+        onboardingView?.let { root.removeView(it) }
+        onboardingView = null
+        onboardingShowing = false
+        awaitingLogin = true
+        refreshCursorVisibility()
+        webView.loadUrl(LOGIN_URL)
+    }
+
+    // Signed in from the login page: run the splash again, then show the signed-in home page.
+    private fun loginSucceeded() {
+        awaitingLogin = false
+        replaySplash()
+        webView.loadUrl(START_URL)
+    }
+
+    private fun replaySplash() {
+        splashDone = false
+        splashFinishing = false
+        splashDismissScheduled = false
+        splashProgress.reset()
+        splashLogo.alpha = 0f
+        splashProgress.alpha = 0f
+        splashView.animate().cancel()
+        splashView.alpha = 1f
+        if (splashView.parent == null) {
+            root.addView(
+                splashView,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            )
+        }
+        root.bringChildToFront(splashView)
+        startSplash()
+        refreshCursorVisibility()
     }
 
     private fun showPageTransitionOverlay() {
@@ -1571,6 +1693,11 @@ class MainActivity : Activity() {
             handler.post {
                 requestSplashFinish()
             }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun reportAuth(loggedOut: Boolean, path: String) {
+            handler.post { onAuthReported(loggedOut) }
         }
 
         @android.webkit.JavascriptInterface
@@ -2768,6 +2895,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(hideTranslateJs, null)
         view.evaluateJavascript(translateJs, null)
         view.evaluateJavascript(headerJs, null)
+        view.evaluateJavascript(authJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
@@ -3083,7 +3211,7 @@ class MainActivity : Activity() {
 
     private fun refreshCursorVisibility() {
         cursorView.visibility =
-            if (cursorMode && splashDone && customView == null) View.VISIBLE else View.INVISIBLE
+            if (cursorMode && splashDone && customView == null && !onboardingShowing) View.VISIBLE else View.INVISIBLE
     }
 
     private fun setCursorMode(on: Boolean) {
@@ -3171,6 +3299,10 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- remote keys
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (onboardingShowing) {
+            onboardingView?.handleKey(event)
+            return true
+        }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
         }
@@ -3530,6 +3662,15 @@ private class SplashProgressView(
         }
     }
 
+    fun reset() {
+        travel?.cancel()
+        progress = 0f
+        burst = 0f
+        flash = 0f
+        finishing = false
+        invalidate()
+    }
+
     fun finish(onDone: () -> Unit) {
         if (finishing) return
         finishing = true
@@ -3784,6 +3925,322 @@ private class TransitionOverlayView(
 
         if (elapsedSec < 5.2f) {
             postInvalidateOnAnimation()
+        }
+    }
+}
+
+// First-run guide: a few full-screen slides explaining the remote. Handles its own keys
+// (Left/Right choose a button, OK presses it, Back = previous slide, or skip on the first one).
+private class OnboardingView(
+    context: android.content.Context,
+    private val density: Float,
+    private val wand: Bitmap,
+    private val onDone: () -> Unit
+) : FrameLayout(context) {
+
+    private class Slide(val title: String, val body: String)
+
+    private val slides = listOf(
+        Slide(
+            "Welcome to Stardom World on TV",
+            "A quick tour of getting around with your remote. You can skip it at any time."
+        ),
+        Slide(
+            "Moving around",
+            "Use the arrow buttons to move between videos and menus. OK opens what is highlighted, and Back returns to the previous page."
+        ),
+        Slide(
+            "Add to favorites",
+            "Highlight a video and press the Options (menu) button on your remote to add it to, or remove it from, your favorites. You need to be signed in."
+        ),
+        Slide(
+            "Cursor mode",
+            "Hold OK for about half a second to turn on a pointer, for things like the \"Verify you are human\" box. Hold OK again to turn it off."
+        ),
+        Slide(
+            "Videos and full screen",
+            "Videos open in full screen and the next one plays by itself. Press Down for the controls bar, Left and Right to skip, and Back to leave full screen."
+        ),
+        Slide(
+            "English or Japanese",
+            "Use the EN / JA button at the top of the page to switch language at any time."
+        )
+    )
+
+    private val gold = 0xFFFFB347.toInt()
+    private var index = 0
+
+    private fun p(v: Int): Int = (v * density).toInt()
+
+    private val art = ArtView(context)
+    private val titleView = android.widget.TextView(context)
+    private val bodyView = android.widget.TextView(context)
+    private val counter = android.widget.TextView(context)
+    private val skipBtn = android.widget.TextView(context)
+    private val backBtn = android.widget.TextView(context)
+    private val nextBtn = android.widget.TextView(context)
+    private var focused: android.widget.TextView = nextBtn
+
+    init {
+        setBackgroundColor(Color.BLACK)
+        isClickable = true
+
+        val col = android.widget.LinearLayout(context)
+        col.orientation = android.widget.LinearLayout.VERTICAL
+        col.gravity = Gravity.CENTER_HORIZONTAL
+        col.setPadding(p(72), p(32), p(72), p(36))
+
+        col.addView(
+            art,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.25f
+            )
+        )
+
+        titleView.setTextColor(gold)
+        titleView.textSize = 34f
+        titleView.setTypeface(titleView.typeface, android.graphics.Typeface.BOLD)
+        titleView.gravity = Gravity.CENTER
+        col.addView(
+            titleView,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        bodyView.setTextColor(Color.WHITE)
+        bodyView.textSize = 22f
+        bodyView.gravity = Gravity.CENTER
+        bodyView.setLineSpacing(0f, 1.15f)
+        col.addView(
+            bodyView,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = p(14); bottomMargin = p(10) }
+        )
+
+        counter.setTextColor(0x99FFFFFF.toInt())
+        counter.textSize = 16f
+        counter.gravity = Gravity.CENTER
+        col.addView(
+            counter,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = p(14) }
+        )
+
+        val row = android.widget.LinearLayout(context)
+        row.orientation = android.widget.LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER
+        for (b in listOf(skipBtn, backBtn, nextBtn)) {
+            b.textSize = 20f
+            b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
+            b.gravity = Gravity.CENTER
+            b.setPadding(p(30), p(14), p(30), p(14))
+            row.addView(
+                b,
+                android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { leftMargin = p(10); rightMargin = p(10) }
+            )
+        }
+        skipBtn.text = "Skip and log in"
+        backBtn.text = "Back"
+        col.addView(
+            row,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        render()
+    }
+
+    private fun visibleButtons(): List<android.widget.TextView> =
+        if (index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
+
+    private fun paintButton(b: android.widget.TextView, isFocused: Boolean) {
+        val d = android.graphics.drawable.GradientDrawable()
+        d.cornerRadius = 12 * density
+        if (isFocused) {
+            d.setColor(gold)
+            b.setTextColor(0xFF1A1A1A.toInt())
+        } else {
+            d.setColor(0x33000000)
+            d.setStroke((2 * density).toInt(), gold)
+            b.setTextColor(Color.WHITE)
+        }
+        b.background = d
+    }
+
+    private fun render() {
+        val s = slides[index]
+        titleView.text = s.title
+        bodyView.text = s.body
+        counter.text = (index + 1).toString() + " / " + slides.size
+        backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
+        nextBtn.text = if (index == slides.size - 1) "Log in" else "Next"
+        if (!visibleButtons().contains(focused)) focused = nextBtn
+        for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
+        art.type = index
+        art.invalidate()
+    }
+
+    private fun moveFocus(step: Int) {
+        val list = visibleButtons()
+        val i = list.indexOf(focused).coerceAtLeast(0)
+        focused = list[(i + step).coerceIn(0, list.size - 1)]
+        render()
+    }
+
+    private fun activate() {
+        when {
+            focused === skipBtn -> onDone()
+            focused === backBtn -> { index -= 1; render() }
+            else -> if (index >= slides.size - 1) onDone() else { index += 1; render() }
+        }
+    }
+
+    fun handleKey(e: KeyEvent): Boolean {
+        if (e.action != KeyEvent.ACTION_DOWN) return true
+        when (e.keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> moveFocus(-1)
+            KeyEvent.KEYCODE_DPAD_RIGHT -> moveFocus(1)
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> activate()
+            KeyEvent.KEYCODE_BACK -> if (index > 0) { index -= 1; render() } else onDone()
+        }
+        return true
+    }
+
+    // Simple line drawings, one per slide.
+    private inner class ArtView(c: android.content.Context) : View(c) {
+        var type = 0
+        private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = gold
+            strokeWidth = 3f * density
+        }
+        private val fillGold = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
+        private val fillWhite = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+        private val fillDim = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x22FFFFFF }
+        private val fillShade = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x66000000 }
+        private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textAlign = Paint.Align.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        private val tmp = RectF()
+        private val path = Path()
+
+        private fun triangle(canvas: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, paint: Paint) {
+            path.reset()
+            path.moveTo(x1, y1)
+            path.lineTo(x2, y2)
+            path.lineTo(x3, y3)
+            path.close()
+            canvas.drawPath(path, paint)
+        }
+
+        private fun heart(canvas: Canvas, cx: Float, cy: Float, r: Float, paint: Paint) {
+            canvas.drawCircle(cx - r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
+            canvas.drawCircle(cx + r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
+            triangle(canvas, cx - r * 1.02f, cy - r * 0.05f, cx + r * 1.02f, cy - r * 0.05f, cx, cy + r * 1.1f, paint)
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            val u = minOf(width, height) / 100f
+            val cx = width / 2f
+            val cy = height / 2f
+            when (type) {
+                0 -> {
+                    val d = context.getDrawable(R.drawable.splash_logo)
+                    if (d != null && d.intrinsicWidth > 0) {
+                        val w = minOf(width * 0.62f, 150f * u)
+                        val h = w * d.intrinsicHeight / d.intrinsicWidth
+                        d.setBounds((cx - w / 2).toInt(), (cy - h / 2).toInt(), (cx + w / 2).toInt(), (cy + h / 2).toInt())
+                        d.draw(canvas)
+                    }
+                }
+                1 -> {
+                    canvas.drawCircle(cx, cy, 44f * u, fillDim)
+                    canvas.drawCircle(cx, cy, 44f * u, line)
+                    triangle(canvas, cx, cy - 36f * u, cx - 9f * u, cy - 24f * u, cx + 9f * u, cy - 24f * u, fillWhite)
+                    triangle(canvas, cx, cy + 36f * u, cx - 9f * u, cy + 24f * u, cx + 9f * u, cy + 24f * u, fillWhite)
+                    triangle(canvas, cx - 36f * u, cy, cx - 24f * u, cy - 9f * u, cx - 24f * u, cy + 9f * u, fillWhite)
+                    triangle(canvas, cx + 36f * u, cy, cx + 24f * u, cy - 9f * u, cx + 24f * u, cy + 9f * u, fillWhite)
+                    canvas.drawCircle(cx, cy, 15f * u, fillGold)
+                    text.color = 0xFF1A1A1A.toInt()
+                    text.textSize = 11f * u
+                    canvas.drawText("OK", cx, cy + 4f * u, text)
+                }
+                2 -> {
+                    // A video card with a heart, and the remote's Options button pointing at it.
+                    tmp.set(cx - 82f * u, cy - 30f * u, cx + 8f * u, cy + 30f * u)
+                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, line)
+                    heart(canvas, cx - 8f * u, cy - 14f * u, 9f * u, fillGold)
+                    tmp.set(cx - 74f * u, cy + 8f * u, cx, cy + 14f * u)
+                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillWhite)
+                    tmp.set(cx - 74f * u, cy + 19f * u, cx - 30f * u, cy + 24f * u)
+                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillDim)
+                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, fillDim)
+                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, line)
+                    for (k in -1..1) {
+                        canvas.drawLine(cx + 49f * u, cy + k * 6f * u, cx + 67f * u, cy + k * 6f * u, line)
+                    }
+                    canvas.drawLine(cx + 34f * u, cy, cx + 14f * u, cy - 8f * u, line)
+                }
+                3 -> {
+                    tmp.set(cx - 84f * u, cy - 14f * u, cx - 56f * u, cy + 14f * u)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
+                    text.color = Color.WHITE
+                    text.textSize = 9f * u
+                    text.textAlign = Paint.Align.LEFT
+                    canvas.drawText("Verify you are human", cx - 48f * u, cy + 4f * u, text)
+                    text.textAlign = Paint.Align.CENTER
+                    val ws = 30f * u
+                    val ratio = wand.height.toFloat() / wand.width.toFloat()
+                    tmp.set(cx - 70f * u, cy - 2f * u, cx - 70f * u + ws, cy - 2f * u + ws * ratio)
+                    canvas.drawBitmap(wand, null, tmp, null)
+                    canvas.drawCircle(cx + 62f * u, cy, 22f * u, fillDim)
+                    tmp.set(cx + 62f * u - 22f * u, cy - 22f * u, cx + 62f * u + 22f * u, cy + 22f * u)
+                    canvas.drawArc(tmp, -90f, 270f, false, line)
+                    text.color = Color.WHITE
+                    text.textSize = 10f * u
+                    canvas.drawText("hold OK", cx + 62f * u, cy + 4f * u, text)
+                }
+                4 -> {
+                    tmp.set(cx - 70f * u, cy - 42f * u, cx + 70f * u, cy + 22f * u)
+                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, line)
+                    tmp.set(cx - 62f * u, cy + 8f * u, cx + 62f * u, cy + 16f * u)
+                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillShade)
+                    for (k in 0..4) {
+                        tmp.set(cx - 58f * u + k * 24f * u, cy + 10f * u, cx - 44f * u + k * 24f * u, cy + 14f * u)
+                        canvas.drawRoundRect(tmp, 2f * u, 2f * u, if (k == 1) fillGold else fillWhite)
+                    }
+                    triangle(canvas, cx, cy + 46f * u, cx - 9f * u, cy + 34f * u, cx + 9f * u, cy + 34f * u, fillGold)
+                    triangle(canvas, cx - 18f * u, cy - 14f * u, cx - 18f * u, cy - 2f * u, cx - 7f * u, cy - 8f * u, fillWhite)
+                }
+                else -> {
+                    tmp.set(cx - 34f * u, cy - 14f * u, cx + 34f * u, cy + 14f * u)
+                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, line)
+                    tmp.set(cx - 32f * u, cy - 12f * u, cx, cy + 12f * u)
+                    canvas.drawRoundRect(tmp, 12f * u, 12f * u, fillGold)
+                    text.textSize = 13f * u
+                    text.color = 0xFF1A1A1A.toInt()
+                    canvas.drawText("EN", cx - 16f * u, cy + 5f * u, text)
+                    text.color = Color.WHITE
+                    canvas.drawText("JA", cx + 17f * u, cy + 5f * u, text)
+                }
+            }
         }
     }
 }
