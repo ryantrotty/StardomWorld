@@ -92,11 +92,6 @@ class MainActivity : Activity() {
 
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
-        // Fire TV: both full-screen modes drew the video wrongly (small, then black), so for now Fire TV
-        // stays in the page. Set to true to retry the page full screen (needs a fix first).
-        private const val FIRE_TV_AUTO_FULLSCREEN = false
-        // The page-stretch full screen drew black on Fire TV, so Fire TV uses the system full screen again.
-        private const val FIRE_TV_CSS_FULLSCREEN = false
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
         private const val SPLASH_MIN_FILL_MS = 2600L
 
@@ -1388,11 +1383,6 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
-                if (cssFullScreen) {
-                    cssFullScreen = false
-                    handler.removeCallbacks(fsPulse)
-                    fsPulseRunning = false
-                }
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
@@ -1605,7 +1595,6 @@ class MainActivity : Activity() {
         fun exitFullScreen() {
             handler.post {
                 if (customView != null) hideCustomView()
-                if (cssFullScreen) exitCssFullScreen()
                 webView.evaluateJavascript(
                     "(function(){ try { if (document.webkitExitFullscreen) document.webkitExitFullscreen(); else if (document.exitFullscreen) document.exitFullscreen(); } catch(e) {} })()",
                     null
@@ -1624,16 +1613,6 @@ class MainActivity : Activity() {
         fun triggerFullScreen() {
             handler.post {
                 if (customView != null) return@post
-
-                // Fire TV: the system full-screen mode leaves the picture small, so make the player fill the page instead.
-                if (useCssFullScreen) {
-                    if (!FIRE_TV_AUTO_FULLSCREEN) {
-                        showFireTvDiagnostics()
-                        return@post
-                    }
-                    if (!cssFullScreen) enterCssFullScreen()
-                    return@post
-                }
 
                 // Dispatch synthetic touch gesture onto player area to satisfy WebKit user gesture requirement
                 val now = SystemClock.uptimeMillis()
@@ -1982,48 +1961,6 @@ class MainActivity : Activity() {
             if (!holder.hasAttribute('tabindex')) holder.setAttribute('tabindex', '-1');
             holder.__tvControlsHidden = true;
             try { holder.focus({ preventScroll: true }); } catch (e) { holder.focus(); }
-            return true;
-          };
-
-          // ---- "Page full screen" (Fire TV): stretch the player iframe over the whole page ----
-          // Sized with explicit pixel values taken from the visible window (not vw/vh), and without
-          // touching the page's own overflow or giving the frame a background of its own.
-          function sizeCssFullScreen() {
-            var f = playerFrame();
-            if (!f || f.__tvSavedStyle === undefined) return;
-            var w = window.innerWidth || document.documentElement.clientWidth;
-            var h = window.innerHeight || document.documentElement.clientHeight;
-            f.style.cssText = f.__tvSavedStyle +
-              ';position:fixed !important;top:0 !important;left:0 !important;right:auto !important;bottom:auto !important;' +
-              'width:' + w + 'px !important;height:' + h + 'px !important;' +
-              'max-width:none !important;max-height:none !important;min-width:0 !important;min-height:0 !important;' +
-              'margin:0 !important;border:0 !important;padding:0 !important;transform:none !important;' +
-              'opacity:1 !important;visibility:visible !important;display:block !important;z-index:999999 !important;';
-          }
-          window.addEventListener('resize', sizeCssFullScreen);
-
-          window.__tvCssFullScreen = function(on) {
-            var f = playerFrame();
-            if (!f) return false;
-            if (on) {
-              if (f.__tvSavedStyle === undefined) f.__tvSavedStyle = f.getAttribute('style') || '';
-              sizeCssFullScreen();
-              try { window.scrollTo(0, 0); } catch (e) {}
-              try { f.focus(); } catch (e) {}
-              setTimeout(function() {
-                try {
-                  var r = f.getBoundingClientRect();
-                  window.AndroidHost.logDebug('FS ' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' +
-                    Math.round(r.width) + 'x' + Math.round(r.height) + ' win ' + window.innerWidth + 'x' +
-                    window.innerHeight + ' dpr ' + window.devicePixelRatio);
-                } catch (e) {}
-              }, 800);
-            } else {
-              if (f.__tvSavedStyle !== undefined) {
-                if (f.__tvSavedStyle) f.setAttribute('style', f.__tvSavedStyle); else f.removeAttribute('style');
-                f.__tvSavedStyle = undefined;
-              }
-            }
             return true;
           };
 
@@ -2978,7 +2915,7 @@ class MainActivity : Activity() {
         add(fsBtnSpeed!!)
         add(fsButton("Exit full screen") {
             hideFsOverlay()
-            if (customView != null) hideCustomView() else if (cssFullScreen) exitCssFullScreen()
+            hideCustomView()
         })
         o.addView(row)
 
@@ -3144,24 +3081,16 @@ class MainActivity : Activity() {
         Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
     }
 
-    // ---- Fire TV: "page full screen". The browser's own full-screen mode leaves the picture in the
-    // top-left corner on these devices, so the player's iframe is simply stretched over the whole page
-    // instead (the player lays itself out normally because its frame changed size). The rest of the app
-    // treats this exactly like full screen (remote keys, controls, Back).
+    // ---- Fire TV specifics. Fire OS needs a few full-screen tweaks (see the Fire TV notes in CHANGELOG);
+    // everything below is guarded so other devices keep the standard behaviour.
 
     private fun isFireTv(): Boolean =
         Build.MANUFACTURER.equals("Amazon", ignoreCase = true) ||
             packageManager.hasSystemFeature("amazon.hardware.fire_tv")
 
-    private val useCssFullScreen: Boolean by lazy {
-        FIRE_TV_CSS_FULLSCREEN && isFireTv()
-    }
+    private fun fullScreenActive(): Boolean = customView != null
 
-    private var cssFullScreen = false
-
-    private fun fullScreenActive(): Boolean = customView != null || cssFullScreen
-
-    private fun fullScreenView(): View? = customView ?: if (cssFullScreen) webView else null
+    private fun fullScreenView(): View? = customView
 
     // Fire TV: make every layer of the system full-screen video view fill the screen, unscaled.
     private fun fixFireTvCustomView(view: View) {
@@ -3189,41 +3118,6 @@ class MainActivity : Activity() {
         }
         walk(view, 0)
         view.requestLayout()
-    }
-
-    // Temporary: shows the screen/WebView numbers needed to fix full screen on Fire TV (once per launch).
-    private var fireDiagShown = false
-
-    private fun showFireTvDiagnostics() {
-        if (fireDiagShown) return
-        fireDiagShown = true
-        val dm = resources.displayMetrics
-        @Suppress("DEPRECATION")
-        val zoom = webView.scale
-        val wv = try {
-            WebView.getCurrentWebViewPackage()?.versionName ?: "?"
-        } catch (_: Exception) {
-            "?"
-        }
-        Toast.makeText(
-            this,
-            "FireTV " + Build.MODEL + " sdk" + Build.VERSION.SDK_INT + " " + dm.widthPixels + "x" +
-                dm.heightPixels + " d" + dm.density + " zoom" + zoom + " wv " + wv,
-            Toast.LENGTH_LONG
-        ).show()
-    }
-
-    private fun enterCssFullScreen() {
-        cssFullScreen = true
-        webView.evaluateJavascript("window.__tvCssFullScreen && window.__tvCssFullScreen(true)", null)
-        fullScreenInteraction()
-    }
-
-    private fun exitCssFullScreen() {
-        cssFullScreen = false
-        handler.removeCallbacks(fsPulse)
-        fsPulseRunning = false
-        webView.evaluateJavascript("window.__tvCssFullScreen && window.__tvCssFullScreen(false)", null)
     }
 
     // Some devices (notably Fire TV sticks) leave the video drawn at its small inline size inside the
@@ -3284,10 +3178,6 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_BACK -> {
                     if (fsControlsMode && fullScreenActive()) {
                         hideFsOverlay()
-                        return true
-                    }
-                    if (cssFullScreen) {
-                        exitCssFullScreen()
                         return true
                     }
                     if (customView != null) {
