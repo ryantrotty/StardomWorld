@@ -18,6 +18,7 @@ import android.graphics.Shader
 import android.os.Bundle
 import android.os.Handler
 import android.net.http.SslError
+import android.os.Build
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Gravity
@@ -1237,7 +1238,8 @@ class MainActivity : Activity() {
 
         webView = WebView(this)
         webView.setBackgroundColor(Color.BLACK)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
+        if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView.addJavascriptInterface(WebAppInterface(), "AndroidHost")
         root.addView(
             webView,
@@ -1451,7 +1453,8 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customCallback = callback
-                webView.visibility = View.GONE
+                // Fire TV: GONE collapses the page to 0x0, which shrinks the video layout; keep its size.
+                webView.visibility = if (isFireTv()) View.INVISIBLE else View.GONE
                 view.alpha = 0f
                 root.addView(
                     view,
@@ -1466,6 +1469,11 @@ class MainActivity : Activity() {
                     .setInterpolator(AccelerateDecelerateInterpolator())
                     .start()
                 refreshCursorVisibility()
+                scheduleFullScreenResizeNudges()
+                if (isFireTv()) {
+                    handler.postDelayed({ fixFireTvCustomView(view) }, 300)
+                    handler.postDelayed({ fixFireTvCustomView(view) }, 1500)
+                }
             }
 
             override fun onHideCustomView() {
@@ -2001,7 +2009,39 @@ class MainActivity : Activity() {
                 post(f, { method: tvPaused ? 'play' : 'pause' });
               }
             }
+            else if (cmd === 'mute' && p) {
+              p.getVolume().then(function(v) { return p.setVolume(v > 0 ? 0 : 1); }).catch(function() {});
+            } else if (cmd === 'speed' && p) {
+              p.getPlaybackRate().then(function(r) {
+                var rates = [0.75, 1, 1.25, 1.5, 2];
+                var i = rates.indexOf(r);
+                return p.setPlaybackRate(rates[(i + 1) % rates.length]);
+              }).catch(function() {});
+            } else if (cmd === 'captions' && p) {
+              p.getTextTracks().then(function(tr) {
+                if (!tr || !tr.length) return;
+                var cur = -1;
+                for (var i = 0; i < tr.length; i++) { if (tr[i].mode === 'showing') cur = i; }
+                if (cur + 1 >= tr.length) return p.disableTextTrack();
+                return p.enableTextTrack(tr[cur + 1].language, tr[cur + 1].kind);
+              }).catch(function() {});
+            }
             return true;
+          };
+
+          // Latest player state for the app's own full-screen button bar.
+          window.__tvRefreshStatus = function() {
+            var f = playerFrame();
+            if (!f || typeof Vimeo === 'undefined' || !Vimeo.Player) return;
+            var p = null;
+            try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
+            if (!p) return;
+            Promise.all([p.getPaused(), p.getCurrentTime(), p.getDuration(), p.getVolume(), p.getPlaybackRate(), p.getTextTracks()]).then(function(r) {
+              var cc = 'Off';
+              var tr = r[5] || [];
+              for (var i = 0; i < tr.length; i++) { if (tr[i].mode === 'showing') cc = tr[i].label || tr[i].language; }
+              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length });
+            }).catch(function() {});
           };
 
           document.addEventListener('keydown', function(e) {
@@ -2745,14 +2785,13 @@ class MainActivity : Activity() {
     // (Re)starts the 8 second countdown after which the player's control overlay is put away.
     private fun armControlsIdleTimer() {
         handler.removeCallbacks(hideControlsRunnable)
-        if (playerFocused && customView == null) {
+        if (playerFocused && !fullScreenActive()) {
             handler.postDelayed(hideControlsRunnable, CONTROLS_IDLE_MS)
         }
     }
 
     private fun hidePlayerControls() {
-        val cv = customView
-        if (cv == null) {
+        if (!fullScreenActive()) {
             // Inline player: move keyboard focus off the player so its controls fade away.
             // Pressing OK / Left / Right on the player again brings them back.
             if (playerFocused) {
@@ -2763,6 +2802,7 @@ class MainActivity : Activity() {
         } else {
             // Full screen: tell the player the pointer has left so it hides its controls.
             fsPulseRunning = false
+            hideFsOverlay()
             handler.removeCallbacks(fsPulse)
             sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
         }
@@ -2771,20 +2811,194 @@ class MainActivity : Activity() {
     // ---- Full screen: the app drives the player (the player's own keyboard handling is bypassed,
     // so its controls only show when we ask for them and then go away on their own).
 
+    // Full screen: Down opens the app's own button bar (play, skip, mute, captions, speed, exit).
+    // The player's own buttons can't be reached from outside its frame, so these drive it instead.
+    private var fsControlsMode = false
+    private var fsOverlay: android.widget.LinearLayout? = null
+    private var fsTimeText: android.widget.TextView? = null
+    private var fsProgress: android.widget.ProgressBar? = null
+    private var fsBtnPlay: android.widget.TextView? = null
+    private var fsBtnMute: android.widget.TextView? = null
+    private var fsBtnCc: android.widget.TextView? = null
+    private var fsBtnSpeed: android.widget.TextView? = null
+
+    private val fsStatusRunnable: Runnable = object : Runnable {
+        override fun run() {
+            if (!fsControlsMode) return
+            pollFsStatus()
+            handler.postDelayed(this, 500)
+        }
+    }
+
+    private fun fsButton(label: String, onClick: () -> Unit): android.widget.TextView {
+        val tv = android.widget.TextView(this)
+        tv.text = label
+        tv.setTextColor(Color.WHITE)
+        tv.textSize = 18f
+        tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
+        tv.gravity = Gravity.CENTER
+        val padH = (22 * density).toInt()
+        val padV = (12 * density).toInt()
+        tv.setPadding(padH, padV, padH, padV)
+        tv.isFocusable = true
+        tv.isClickable = true
+        fun paint(focused: Boolean) {
+            val d = android.graphics.drawable.GradientDrawable()
+            d.cornerRadius = 10 * density
+            if (focused) {
+                d.setColor(0xFFFFB347.toInt())
+                tv.setTextColor(0xFF1A1A1A.toInt())
+            } else {
+                d.setColor(0x66000000)
+                d.setStroke((2 * density).toInt(), 0x88FFFFFF.toInt())
+                tv.setTextColor(Color.WHITE)
+            }
+            tv.background = d
+        }
+        paint(false)
+        tv.setOnFocusChangeListener { _, focused -> paint(focused) }
+        tv.setOnClickListener {
+            onClick()
+            fullScreenInteraction()
+            handler.postDelayed({ pollFsStatus() }, 250)
+        }
+        return tv
+    }
+
+    private fun buildFsOverlay(): android.widget.LinearLayout {
+        val o = android.widget.LinearLayout(this)
+        o.orientation = android.widget.LinearLayout.VERTICAL
+        o.setBackgroundColor(0xCC000000.toInt())
+        val pad = (28 * density).toInt()
+        o.setPadding(pad, (18 * density).toInt(), pad, (22 * density).toInt())
+
+        val time = android.widget.TextView(this)
+        time.setTextColor(Color.WHITE)
+        time.textSize = 16f
+        time.text = "0:00 / 0:00"
+        o.addView(time)
+        fsTimeText = time
+
+        val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
+        bar.max = 1000
+        bar.progressDrawable.setColorFilter(0xFFFFB347.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
+        o.addView(
+            bar,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                (10 * density).toInt()
+            ).apply { topMargin = (6 * density).toInt(); bottomMargin = (14 * density).toInt() }
+        )
+        fsProgress = bar
+
+        val row = android.widget.LinearLayout(this)
+        row.orientation = android.widget.LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        fun add(b: android.widget.TextView) {
+            row.addView(
+                b,
+                android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { rightMargin = (12 * density).toInt() }
+            )
+        }
+        fsBtnPlay = fsButton("Pause") { playerCommand("toggle", 0) }
+        add(fsBtnPlay!!)
+        add(fsButton("-10s") { playerCommand("seek", -10) })
+        add(fsButton("+10s") { playerCommand("seek", 10) })
+        fsBtnMute = fsButton("Mute") { playerCommand("mute", 0) }
+        add(fsBtnMute!!)
+        fsBtnCc = fsButton("CC: Off") { playerCommand("captions", 0) }
+        add(fsBtnCc!!)
+        fsBtnSpeed = fsButton("Speed 1x") { playerCommand("speed", 0) }
+        add(fsBtnSpeed!!)
+        add(fsButton("Exit full screen") {
+            hideFsOverlay()
+            hideCustomView()
+        })
+        o.addView(row)
+
+        o.visibility = View.GONE
+        root.addView(
+            o,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM
+            )
+        )
+        fsOverlay = o
+        return o
+    }
+
+    private fun showFsOverlay() {
+        val o = fsOverlay ?: buildFsOverlay()
+        fsControlsMode = true
+        // Hide the player's own bar so there is only one set of controls on screen.
+        sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
+        o.visibility = View.VISIBLE
+        root.bringChildToFront(o)
+        fsBtnPlay?.requestFocus()
+        fullScreenInteraction()
+        handler.removeCallbacks(fsStatusRunnable)
+        handler.post(fsStatusRunnable)
+    }
+
+    private fun hideFsOverlay() {
+        fsControlsMode = false
+        handler.removeCallbacks(fsStatusRunnable)
+        fsOverlay?.visibility = View.GONE
+    }
+
+    private fun fmtTime(sec: Double): String {
+        val t = sec.toInt().coerceAtLeast(0)
+        val h = t / 3600
+        val m = (t % 3600) / 60
+        val sc = t % 60
+        return if (h > 0) String.format("%d:%02d:%02d", h, m, sc) else String.format("%d:%02d", m, sc)
+    }
+
+    private fun pollFsStatus() {
+        webView.evaluateJavascript(
+            "(window.__tvRefreshStatus && window.__tvRefreshStatus(), window.__tvStatusJson || '')"
+        ) { raw ->
+            if (!fsControlsMode || raw == null || raw == "null") return@evaluateJavascript
+            try {
+                val str = org.json.JSONTokener(raw).nextValue() as? String ?: return@evaluateJavascript
+                if (str.isEmpty()) return@evaluateJavascript
+                val j = org.json.JSONObject(str)
+                val t = j.optDouble("t", 0.0)
+                val d = j.optDouble("d", 0.0)
+                fsBtnPlay?.text = if (j.optBoolean("paused")) "Play" else "Pause"
+                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) "Unmute" else "Mute"
+                fsBtnCc?.text = "CC: " + j.optString("cc", "Off")
+                fsBtnSpeed?.text = "Speed " + j.optDouble("rate", 1.0) + "x"
+                fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
+                fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     private var fsLastInteraction = 0L
     private var fsPulseRunning = false
     private var fsPulseFlip = false
 
     private val fsPulse: Runnable = object : Runnable {
         override fun run() {
-            val cv = customView ?: run { fsPulseRunning = false; return }
+            val cv = fullScreenView() ?: run { fsPulseRunning = false; return }
             if (SystemClock.uptimeMillis() - fsLastInteraction < CONTROLS_IDLE_MS) {
-                fsPulseFlip = !fsPulseFlip
-                sendFullScreenHover(
-                    MotionEvent.ACTION_HOVER_MOVE,
-                    cv.width / 2f + if (fsPulseFlip) 3f else -3f,
-                    cv.height * 0.4f
-                )
+                // While the player's buttons are being walked, the pointer pulses stop: they made
+                // the controls flicker and knocked the keyboard focus back to the first button.
+                if (!fsControlsMode) {
+                    fsPulseFlip = !fsPulseFlip
+                    sendFullScreenHover(
+                        MotionEvent.ACTION_HOVER_MOVE,
+                        cv.width / 2f + if (fsPulseFlip) 3f else -3f,
+                        cv.height * 0.4f
+                    )
+                }
                 handler.postDelayed(this, 600)
             } else {
                 hidePlayerControls()
@@ -2795,14 +3009,14 @@ class MainActivity : Activity() {
     // Shows the player's controls and keeps them up until 8 seconds after the last remote press.
     private fun fullScreenInteraction() {
         fsLastInteraction = SystemClock.uptimeMillis()
-        if (!fsPulseRunning && customView != null) {
+        if (!fsPulseRunning && fullScreenActive()) {
             fsPulseRunning = true
             handler.post(fsPulse)
         }
     }
 
     private fun sendFullScreenHover(action: Int, x: Float, y: Float) {
-        val cv = customView ?: return
+        val cv = fullScreenView() ?: return
         val now = SystemClock.uptimeMillis()
         val props = arrayOf(MotionEvent.PointerProperties().apply {
             id = 0
@@ -2867,6 +3081,66 @@ class MainActivity : Activity() {
         Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
     }
 
+    // ---- Fire TV specifics. Fire OS needs a few full-screen tweaks (see the Fire TV notes in CHANGELOG);
+    // everything below is guarded so other devices keep the standard behaviour.
+
+    private fun isFireTv(): Boolean =
+        Build.MANUFACTURER.equals("Amazon", ignoreCase = true) ||
+            packageManager.hasSystemFeature("amazon.hardware.fire_tv")
+
+    private fun fullScreenActive(): Boolean = customView != null
+
+    private fun fullScreenView(): View? = customView
+
+    // Fire TV: make every layer of the system full-screen video view fill the screen, unscaled.
+    private fun fixFireTvCustomView(view: View) {
+        if (customView !== view) return
+        @Suppress("DEPRECATION")
+        val sb = StringBuilder(
+            "FS view " + view.width + "x" + view.height + " web " + webView.width + "x" + webView.height +
+                " scale " + webView.scale + " d" + density
+        )
+        fun walk(v: View, depth: Int) {
+            v.scaleX = 1f
+            v.scaleY = 1f
+            v.translationX = 0f
+            v.translationY = 0f
+            if (depth > 0) {
+                val lp = v.layoutParams
+                if (lp != null && (lp.width != ViewGroup.LayoutParams.MATCH_PARENT || lp.height != ViewGroup.LayoutParams.MATCH_PARENT)) {
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+                    v.layoutParams = lp
+                }
+            }
+            sb.append(" | ").append(v.javaClass.simpleName).append(' ').append(v.width).append('x').append(v.height)
+            if (v is ViewGroup) for (i in 0 until v.childCount) walk(v.getChildAt(i), depth + 1)
+        }
+        walk(view, 0)
+        view.requestLayout()
+    }
+
+    // Some devices (notably Fire TV sticks) leave the video drawn at its small inline size inside the
+    // full-screen player: the controls span the screen but the picture stays in the top-left corner,
+    // because the player never learns the window changed size. Briefly changing the full-screen view's
+    // size by a couple of pixels, and back, makes the browser send the player a resize so it re-lays
+    // out at full size. Harmless where the first layout was already right.
+    private val fsNudgeRunnable = Runnable { nudgeFullScreenLayout() }
+
+    private fun scheduleFullScreenResizeNudges() {
+        if (!isFireTv()) return
+        handler.removeCallbacks(fsNudgeRunnable)
+        for (delay in longArrayOf(500L, 1300L, 2600L, 4500L)) {
+            handler.postDelayed(fsNudgeRunnable, delay)
+        }
+    }
+
+    private fun nudgeFullScreenLayout() {
+        val v = customView ?: return
+        v.setPadding(0, 0, 2, 2)
+        handler.postDelayed({ customView?.setPadding(0, 0, 0, 0) }, 150L)
+    }
+
     private fun hideCustomView() {
         val view = customView ?: return
         webView.visibility = View.VISIBLE
@@ -2874,6 +3148,8 @@ class MainActivity : Activity() {
         customView = null
         customCallback?.onCustomViewHidden()
         customCallback = null
+        hideFsOverlay()
+        handler.removeCallbacks(fsNudgeRunnable)
         handler.removeCallbacks(hideControlsRunnable)
         handler.removeCallbacks(fsPulse)
         fsPulseRunning = false
@@ -2883,7 +3159,7 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- remote keys
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || customView != null)) {
+        if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
@@ -2900,6 +3176,10 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (fsControlsMode && fullScreenActive()) {
+                        hideFsOverlay()
+                        return true
+                    }
                     if (customView != null) {
                         hideCustomView()
                         return true
@@ -2914,7 +3194,26 @@ class MainActivity : Activity() {
 
         // Full screen: Left/Right skip 10 s (30 s while held or with the FF/RW keys), OK plays/pauses.
         // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
-        if (customView != null) {
+        if (fullScreenActive()) {
+            if (fsControlsMode) {
+                // The button bar is showing: the remote moves between its buttons and OK presses one.
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        if (event.action == KeyEvent.ACTION_DOWN) hideFsOverlay()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_DOWN -> return true
+                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                        if (event.action == KeyEvent.ACTION_DOWN) fullScreenInteraction()
+                        return super.dispatchKeyEvent(event)
+                    }
+                }
+            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && isFireTv()) {
+                // Fire TV only: other devices keep the player's own controls.
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) showFsOverlay()
+                return true
+            }
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_LEFT,
                 KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND -> {
@@ -2948,7 +3247,7 @@ class MainActivity : Activity() {
         // "Verify you are human" box inside the player. A quick press still acts as a normal OK:
         // it is held back until the button is released, then replayed (or tapped at the cursor).
         if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) &&
-            customView == null
+            !fullScreenActive()
         ) {
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
@@ -2989,7 +3288,7 @@ class MainActivity : Activity() {
 
         // Focus is inside the video player: Up/Down leave it, Left/Right walk the player's
         // own buttons (sent to the player as Tab / Shift+Tab). OK passes through to the button.
-        if (!cursorMode && playerFocused && customView == null) {
+        if (!cursorMode && playerFocused && !fullScreenActive()) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
                     if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
@@ -3026,7 +3325,7 @@ class MainActivity : Activity() {
     }
 
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
-        if (playerFocused || customView != null) armControlsIdleTimer()
+        if (playerFocused || fullScreenActive()) armControlsIdleTimer()
         if (cursorMode && (event.source and InputDevice.SOURCE_CLASS_POINTER) != 0) {
             if (event.action == MotionEvent.ACTION_HOVER_MOVE) {
                 cursorX = event.x

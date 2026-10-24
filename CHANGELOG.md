@@ -6,6 +6,46 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.35
+- Clean-up: removed the unused Fire TV experiments (page-stretch full screen, diagnostics). Fire TV keeps: no forced hardware layer, page kept laid out behind the full-screen video, layer size fix, and the on-screen button bar. Nothing here changes other devices.
+
+## 1.3.34
+- The Fire TV full-screen size nudges no longer run on other devices, so the Sony TV behaves exactly as before.
+
+## 1.3.33
+- The full-screen button bar is shown on Fire TV only; other devices keep the player's own controls.
+
+## 1.3.32
+- Full screen: Down opens the app's own button bar (play/pause, -10s, +10s, mute, captions, speed, exit) with time and progress; Left/Right move, OK presses, Up or Back closes it.
+
+## 1.3.31
+- Full screen player buttons: no more flicker, and focus now moves through every button instead of bouncing between the first two.
+
+## 1.3.30
+- Full screen: press Down to reach the player buttons (Left/Right move between them, OK presses, Up or Back returns to skipping). Removed the Fire TV size message.
+
+## 1.3.29
+- Fire TV: keep the page at full size behind the full-screen video so the video is laid out for the whole screen.
+
+## 1.3.28
+- Fire TV: back to the system full screen, no forced hardware layer on the page, and the full-screen video is forced to fill the screen. Shows the app version on launch.
+
+## 1.3.27
+- Fire TV: no automatic full screen for now (it showed the video small, then black); the video stays in the page.
+  Shows a one-time message with the screen and WebView details so full screen can be fixed properly.
+
+## 1.3.26
+- Fire TV page full screen: sized from the visible window in pixels, no frame background, page overflow left alone.
+  Shows a short "FS ..." debug message when entering full screen (temporary, for diagnosing a black picture).
+
+## 1.3.25
+- Fire TV: video "full screen" now stretches the player over the whole page instead of using the system full-screen
+  mode, which left the picture in the top-left corner. Remote keys, controls and Back work the same.
+
+## 1.3.24
+- Fire TV: full screen video now fills the screen instead of sitting in the top-left corner (the player is nudged to
+  re-measure itself after entering full screen).
+
 ## 1.3.23
 - Page transition overlay: displays a black background with a looping wand cursor animation (4s) ending in a sparkle burst, shown for 5 seconds on every page load to seamlessly mask CSS/layout rendering in the background.
 
