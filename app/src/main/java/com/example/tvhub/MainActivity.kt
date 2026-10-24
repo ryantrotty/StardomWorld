@@ -1151,6 +1151,40 @@ class MainActivity : Activity() {
                           if (this.value) window.location.href = this.value;
                         });
 
+                        // Fire TV draws the page's own pop-up list with almost no focus highlight, so it
+                        // uses the app's list instead (same look as the Sony TV's list, no radio buttons).
+                        if (window.AndroidHost && window.AndroidHost.useNativePicker && window.AndroidHost.useNativePicker()) {
+                          var openPicker = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var now = Date.now();
+                            if (window.__tvPickerAt && now - window.__tvPickerAt < 600) return;
+                            window.__tvPickerAt = now;
+                            var labels = [];
+                            for (var oi = 0; oi < select.options.length; oi++) {
+                              if (!select.options[oi].disabled) labels.push(select.options[oi].textContent.trim());
+                            }
+                            window.AndroidHost.pickSection(JSON.stringify(labels));
+                          };
+                          select.addEventListener('mousedown', openPicker, true);
+                          select.addEventListener('click', openPicker, true);
+                          select.addEventListener('keydown', function(e) {
+                            if (e.keyCode === 13 || e.keyCode === 23 || e.keyCode === 32) openPicker(e);
+                          }, true);
+                          window.__tvPickSection = function(n) {
+                            var c = 0;
+                            for (var oi = 0; oi < select.options.length; oi++) {
+                              if (select.options[oi].disabled) continue;
+                              if (c === n) {
+                                select.selectedIndex = oi;
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                                return;
+                              }
+                              c++;
+                            }
+                          };
+                        }
+
                         flexWrapper.appendChild(select);
                       }
 
@@ -1989,6 +2023,14 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun browseWithoutLogin() {
             handler.post { exitGuideToSite() }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun useNativePicker(): Boolean = isFireTv()
+
+        @android.webkit.JavascriptInterface
+        fun pickSection(labelsJson: String) {
+            handler.post { showSectionPicker(labelsJson) }
         }
 
         @android.webkit.JavascriptInterface
@@ -3517,6 +3559,70 @@ class MainActivity : Activity() {
 
     // ---- Fire TV specifics. Fire OS needs a few full-screen tweaks (see the Fire TV notes in CHANGELOG);
     // everything below is guarded so other devices keep the standard behaviour.
+
+    // The header's category list as an app dialog: dark panel, clearly lighter highlight on the focused
+    // row, no radio buttons. Choosing a row hands the choice back to the page's own list.
+    private fun showSectionPicker(labelsJson: String) {
+        val labels = ArrayList<String>()
+        try {
+            val arr = org.json.JSONArray(labelsJson)
+            for (i in 0 until arr.length()) labels.add(arr.getString(i))
+        } catch (_: Exception) {
+            return
+        }
+        if (labels.isEmpty()) return
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        val panel = android.widget.FrameLayout(this)
+        val bg = android.graphics.drawable.GradientDrawable()
+        bg.setColor(0xFF3A4656.toInt())
+        bg.cornerRadius = 14 * density
+        panel.background = bg
+        panel.clipToOutline = true
+
+        val list = android.widget.ListView(this)
+        list.divider = android.graphics.drawable.ColorDrawable(0x33FFFFFF)
+        list.dividerHeight = 1
+        list.selector = android.graphics.drawable.ColorDrawable(0xFF7C8EA3.toInt())
+        list.setDrawSelectorOnTop(false)
+        list.isFocusable = true
+        list.adapter = object : android.widget.BaseAdapter() {
+            override fun getCount() = labels.size
+            override fun getItem(position: Int) = labels[position]
+            override fun getItemId(position: Int) = position.toLong()
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+                val t = (convertView as? android.widget.TextView) ?: android.widget.TextView(this@MainActivity)
+                t.text = labels[position]
+                t.setTextColor(Color.WHITE)
+                t.textSize = 22f
+                t.setPadding((24 * density).toInt(), (16 * density).toInt(), (24 * density).toInt(), (16 * density).toInt())
+                t.setBackgroundColor(Color.TRANSPARENT)
+                return t
+            }
+        }
+        list.setOnItemClickListener { _, _, position, _ ->
+            dialog.dismiss()
+            webView.evaluateJavascript("if (window.__tvPickSection) window.__tvPickSection(" + position + ");", null)
+        }
+        dialog.setOnDismissListener {
+            webView.evaluateJavascript(
+                "(function(){ var s = document.getElementById('tv-section-select'); if (s) s.focus(); })();", null
+            )
+        }
+        panel.addView(list, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+        dialog.setContentView(panel)
+        dialog.window?.let { w ->
+            w.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            val dm = resources.displayMetrics
+            w.setLayout((dm.widthPixels * 0.62f).toInt(), (dm.heightPixels * 0.86f).toInt().coerceAtMost(
+                ((labels.size * 62 + 8) * density).toInt()
+            ))
+            w.setGravity(Gravity.CENTER)
+        }
+        dialog.show()
+        list.requestFocus()
+        list.setSelection(0)
+    }
 
     private fun isFireTv(): Boolean =
         Build.MANUFACTURER.equals("Amazon", ignoreCase = true) ||

@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.51
+- Fire TV: the header's category list now opens as an app list with a clearly lighter highlight on the focused row and no radio buttons, matching the Sony TV. Other devices are unchanged.
+
 ## 1.3.50
 - Sign-in check: starts as soon as the page begins loading and checks every second for up to 10 seconds. If it still cannot tell, the app loads the main page instead of the guide.
 
