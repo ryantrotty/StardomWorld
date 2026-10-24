@@ -1471,7 +1471,8 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customCallback = callback
-                webView.visibility = View.GONE
+                // Fire TV: GONE collapses the page to 0x0, which shrinks the video layout; keep its size.
+                webView.visibility = if (isFireTv()) View.INVISIBLE else View.GONE
                 view.alpha = 0f
                 root.addView(
                     view,
@@ -2966,7 +2967,11 @@ class MainActivity : Activity() {
     // Fire TV: make every layer of the system full-screen video view fill the screen, unscaled.
     private fun fixFireTvCustomView(view: View) {
         if (customView !== view) return
-        val sb = StringBuilder("FS view " + view.width + "x" + view.height)
+        @Suppress("DEPRECATION")
+        val sb = StringBuilder(
+            "FS view " + view.width + "x" + view.height + " web " + webView.width + "x" + webView.height +
+                " scale " + webView.scale + " d" + density
+        )
         fun walk(v: View, depth: Int) {
             v.scaleX = 1f
             v.scaleY = 1f
