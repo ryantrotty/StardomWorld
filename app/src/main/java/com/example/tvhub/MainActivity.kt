@@ -299,29 +299,41 @@ class MainActivity : Activity() {
             padding: 10px !important;
         }
         #tv-lang-toggle-btn {
-            height: 38px !important;
-            min-width: 50px !important;
-            background: transparent !important;
-            background-color: transparent !important;
-            color: #FFB347 !important;
-            border: none !important;
+            height: 40px !important;
+            background: rgba(0, 0, 0, 0.25) !important;
+            background-color: rgba(0, 0, 0, 0.25) !important;
+            border: 2px solid #FFB347 !important;
+            border-radius: 20px !important;
             box-shadow: none !important;
             outline: none !important;
-            font-size: 16px !important;
-            font-weight: 700 !important;
-            padding: 0 8px !important;
+            padding: 3px !important;
             margin-left: 8px !important;
             cursor: pointer !important;
-            display: inline-block !important;
+            display: inline-flex !important;
+            align-items: center !important;
             box-sizing: border-box !important;
             vertical-align: middle !important;
         }
-        #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
+        #tv-lang-toggle-btn .tv-lang-opt {
+            display: inline-block !important;
+            height: 30px !important;
+            line-height: 30px !important;
+            padding: 0 14px !important;
+            border-radius: 15px !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
             color: #ffffff !important;
-            text-shadow: 0 0 8px rgba(255, 179, 71, 0.8) !important;
             background: transparent !important;
-            background-color: transparent !important;
-            border: none !important;
+            white-space: nowrap !important;
+        }
+        #tv-lang-toggle-btn .tv-lang-opt.tv-lang-on {
+            background: #FFB347 !important;
+            color: #1a1a1a !important;
+        }
+        #tv-lang-toggle-btn:focus, #tv-lang-toggle-btn:hover {
+            border-color: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.65) !important;
+            outline: none !important;
         }
         #tv-fav-header-btn {
             height: 44px !important;
@@ -1239,7 +1251,19 @@ class MainActivity : Activity() {
                           langBtn.setAttribute('translate', 'no');
                           langLi.appendChild(langBtn);
                         }
-                        langBtn.textContent = (currentLang === 'ja') ? 'EN' : '日本語';
+                        // A two-position switch: EN | 日本語, the active language filled in gold.
+                        if (langBtn.getAttribute('data-lang') !== currentLang) {
+                          langBtn.setAttribute('data-lang', currentLang);
+                          while (langBtn.firstChild) langBtn.removeChild(langBtn.firstChild);
+                          var optEn = document.createElement('span');
+                          optEn.className = 'tv-lang-opt' + (currentLang === 'ja' ? '' : ' tv-lang-on');
+                          optEn.textContent = 'EN';
+                          var optJa = document.createElement('span');
+                          optJa.className = 'tv-lang-opt' + (currentLang === 'ja' ? ' tv-lang-on' : '');
+                          optJa.textContent = '日本語';
+                          langBtn.appendChild(optEn);
+                          langBtn.appendChild(optJa);
+                        }
                         langBtn.onclick = function(e) {
                           e.preventDefault();
                           e.stopPropagation();
