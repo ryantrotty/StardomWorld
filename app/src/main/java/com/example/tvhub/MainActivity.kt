@@ -92,6 +92,9 @@ class MainActivity : Activity() {
 
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
+        // Fire TV: both full-screen modes drew the video wrongly (small, then black), so for now Fire TV
+        // stays in the page. Set to true to retry the page full screen (needs a fix first).
+        private const val FIRE_TV_AUTO_FULLSCREEN = false
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
         private const val SPLASH_MIN_FILL_MS = 2600L
 
@@ -1616,6 +1619,10 @@ class MainActivity : Activity() {
 
                 // Fire TV: the system full-screen mode leaves the picture small, so make the player fill the page instead.
                 if (useCssFullScreen) {
+                    if (!FIRE_TV_AUTO_FULLSCREEN) {
+                        showFireTvDiagnostics()
+                        return@post
+                    }
                     if (!cssFullScreen) enterCssFullScreen()
                     return@post
                 }
@@ -2936,6 +2943,28 @@ class MainActivity : Activity() {
     private fun fullScreenActive(): Boolean = customView != null || cssFullScreen
 
     private fun fullScreenView(): View? = customView ?: if (cssFullScreen) webView else null
+
+    // Temporary: shows the screen/WebView numbers needed to fix full screen on Fire TV (once per launch).
+    private var fireDiagShown = false
+
+    private fun showFireTvDiagnostics() {
+        if (fireDiagShown) return
+        fireDiagShown = true
+        val dm = resources.displayMetrics
+        @Suppress("DEPRECATION")
+        val zoom = webView.scale
+        val wv = try {
+            WebView.getCurrentWebViewPackage()?.versionName ?: "?"
+        } catch (_: Exception) {
+            "?"
+        }
+        Toast.makeText(
+            this,
+            "FireTV " + Build.MODEL + " sdk" + Build.VERSION.SDK_INT + " " + dm.widthPixels + "x" +
+                dm.heightPixels + " d" + dm.density + " zoom" + zoom + " wv " + wv,
+            Toast.LENGTH_LONG
+        ).show()
+    }
 
     private fun enterCssFullScreen() {
         cssFullScreen = true

@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.27
+- Fire TV: no automatic full screen for now (it showed the video small, then black); the video stays in the page.
+  Shows a one-time message with the screen and WebView details so full screen can be fixed properly.
+
 ## 1.3.26
 - Fire TV page full screen: sized from the visible window in pixels, no frame background, page overflow left alone.
   Shows a short "FS ..." debug message when entering full screen (temporary, for diagnosing a black picture).
