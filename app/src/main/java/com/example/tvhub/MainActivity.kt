@@ -1470,6 +1470,10 @@ class MainActivity : Activity() {
                     .start()
                 refreshCursorVisibility()
                 scheduleFullScreenResizeNudges()
+                // Entered through the player's own full-screen button: start the 8 second countdown and
+                // take keyboard focus off the player, otherwise its controls never fade.
+                fullScreenInteraction()
+                handler.postDelayed({ releasePlayerFocus() }, 500)
                 if (isFireTv()) {
                     handler.postDelayed({ fixFireTvCustomView(view) }, 300)
                     handler.postDelayed({ fixFireTvCustomView(view) }, 1500)
@@ -2804,6 +2808,7 @@ class MainActivity : Activity() {
             fsPulseRunning = false
             hideFsOverlay()
             handler.removeCallbacks(fsPulse)
+            releasePlayerFocus()
             sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
         }
     }
@@ -2979,6 +2984,13 @@ class MainActivity : Activity() {
             } catch (_: Exception) {
             }
         }
+    }
+
+    // Takes keyboard focus off the player frame (a focused player keeps its controls on screen).
+    private fun releasePlayerFocus() {
+        webView.evaluateJavascript(
+            "window.__tvHidePlayerControls && window.__tvHidePlayerControls()", null
+        )
     }
 
     private var fsLastInteraction = 0L
