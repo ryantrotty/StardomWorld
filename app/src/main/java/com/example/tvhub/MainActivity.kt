@@ -269,6 +269,7 @@ class MainActivity : Activity() {
             overflow: visible !important;
             word-break: normal !important;
         }
+        .tv-acct-menu { display: none !important; }
         #tv-lang-li {
             margin-left: auto !important;
             padding-left: 16px !important;
@@ -1296,6 +1297,45 @@ class MainActivity : Activity() {
                           langBtn.appendChild(optEn);
                           langBtn.appendChild(optJa);
                         }
+                        // Account menu: never drops down by itself; OK / click on the name opens the app's
+                        // list (same as the category list), shown in the middle of the page.
+                        var acctLi = null;
+                        Array.prototype.forEach.call(btnWrap.children, function(li) {
+                          if (li.id === 'tv-lang-li') return;
+                          var nm = li.querySelector('ul, .dropdown-menu');
+                          if (nm && nm.querySelectorAll('a').length >= 2) acctLi = li;
+                        });
+                        if (acctLi && !acctLi.getAttribute('data-tv-acct') && window.AndroidHost && window.AndroidHost.pickAccountItem) {
+                          var acctMenu = acctLi.querySelector('ul, .dropdown-menu');
+                          var acctToggle = Array.prototype.filter.call(acctLi.querySelectorAll('a, button'), function(x) {
+                            return !acctMenu.contains(x);
+                          })[0];
+                          if (acctToggle) {
+                            acctLi.setAttribute('data-tv-acct', '1');
+                            acctMenu.classList.add('tv-acct-menu');
+                            var openAcct = function(e) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              var nowA = Date.now();
+                              if (window.__tvAcctAt && nowA - window.__tvAcctAt < 600) return;
+                              window.__tvAcctAt = nowA;
+                              var items = Array.prototype.filter.call(acctMenu.querySelectorAll('a'), function(x) {
+                                return (x.textContent || '').trim().length > 0;
+                              });
+                              window.__tvAcctItems = items;
+                              window.AndroidHost.pickAccountItem(JSON.stringify(items.map(function(x) { return x.textContent.trim(); })));
+                            };
+                            acctToggle.addEventListener('mousedown', openAcct, true);
+                            acctToggle.addEventListener('click', openAcct, true);
+                            acctToggle.addEventListener('keydown', function(e) {
+                              if (e.keyCode === 13 || e.keyCode === 23 || e.keyCode === 32) openAcct(e);
+                            }, true);
+                            window.__tvPickAccount = function(n) {
+                              var it = (window.__tvAcctItems || [])[n];
+                              if (it) it.click();
+                            };
+                          }
+                        }
                         langBtn.onclick = function(e) {
                           e.preventDefault();
                           e.stopPropagation();
@@ -2086,7 +2126,12 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun pickSection(labelsJson: String) {
-            handler.post { showSectionPicker(labelsJson) }
+            handler.post { showSectionPicker(labelsJson, "__tvPickSection", "#tv-section-select") }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun pickAccountItem(labelsJson: String) {
+            handler.post { showSectionPicker(labelsJson, "__tvPickAccount", "li[data-tv-acct] a, li[data-tv-acct] button") }
         }
 
         @android.webkit.JavascriptInterface
@@ -3618,7 +3663,7 @@ class MainActivity : Activity() {
 
     // The header's category list as an app dialog: dark panel, clearly lighter highlight on the focused
     // row, no radio buttons. Choosing a row hands the choice back to the page's own list.
-    private fun showSectionPicker(labelsJson: String) {
+    private fun showSectionPicker(labelsJson: String, pickFn: String, focusSelector: String) {
         val labels = ArrayList<String>()
         try {
             val arr = org.json.JSONArray(labelsJson)
@@ -3658,11 +3703,11 @@ class MainActivity : Activity() {
         }
         list.setOnItemClickListener { _, _, position, _ ->
             dialog.dismiss()
-            webView.evaluateJavascript("if (window.__tvPickSection) window.__tvPickSection(" + position + ");", null)
+            webView.evaluateJavascript("if (window." + pickFn + ") window." + pickFn + "(" + position + ");", null)
         }
         dialog.setOnDismissListener {
             webView.evaluateJavascript(
-                "(function(){ var s = document.getElementById('tv-section-select'); if (s) s.focus(); })();", null
+                "(function(){ var s = document.querySelector(" + org.json.JSONObject.quote(focusSelector) + "); if (s) s.focus(); })();", null
             )
         }
         panel.addView(list, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))

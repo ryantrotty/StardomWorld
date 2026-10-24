@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.55
+- Account menu: it no longer drops down by itself. Press OK on your account name to open the menu as a list in the middle of the screen (same as the category list), move with Up/Down, OK to choose, Back to close.
+
 ## 1.3.54
 - Header: Right from the account menu now reaches the language switch (it was stuck inside the account menu), and Left from the switch goes back to the account.
 
