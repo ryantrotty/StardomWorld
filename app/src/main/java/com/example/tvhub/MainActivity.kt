@@ -63,12 +63,26 @@ class MainActivity : Activity() {
 
     private fun getSavedLanguage(): String {
         val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
-        return prefs.getString("user_lang", "en") ?: "en"
+        // Until the person picks one, follow the device language.
+        return prefs.getString("user_lang", null)
+            ?: (if (java.util.Locale.getDefault().language == "ja") "ja" else "en")
+    }
+
+    // Saves the language and points the site's translation at it. The caller reloads whatever it needs.
+    private fun applyLanguage(lang: String) {
+        saveLanguage(lang)
+        val googtransVal = if (lang == "ja") "/ja/ja" else "/ja/en"
+        CookieManager.getInstance().apply {
+            setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Path=/")
+            setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Domain=.stardom-world.com; Path=/")
+            flush()
+        }
     }
 
     private fun saveLanguage(lang: String) {
         val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
         prefs.edit().putString("user_lang", lang).apply()
+        appJa = lang == "ja"
     }
 
     companion object {
@@ -525,8 +539,10 @@ class MainActivity : Activity() {
     private var loginRevealing = false
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
+            // Could not tell either way in time: carry on to the main page (not the guide).
             authPending = false
-            beginGuide()
+            showSplashProgress()
+            onPageReady()
         }
     }
     private var splashDismissScheduled = false
@@ -560,18 +576,21 @@ class MainActivity : Activity() {
         (function() {
           try {
             if (!window.AndroidHost || !window.AndroidHost.reportAuth) return;
-            if (window.__tvAuthTimer) clearInterval(window.__tvAuthTimer);
+            if (window.__tvAuthTimer) return;   // already checking on this page
             var tries = 0, inStreak = 0;
             window.__tvAuthTimer = setInterval(function() {
               tries++;
+              var why = '';
               var out = !!document.querySelector('input[type=password]');
+              if (out) why = 'password field';
               var hdr = document.querySelector('header, .box-header, .nav-inner, .header');
               if (!out && hdr) {
-                if (hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]')) out = true;
+                var lk = hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]');
+                if (lk) { out = true; why = 'link ' + (lk.getAttribute('href') || '') + ' / ' + (lk.textContent || '').trim().slice(0, 20); }
                 var els = hdr.querySelectorAll('a, button');
                 for (var i = 0; i < els.length && !out; i++) {
                   var t = (els[i].textContent || '').trim();
-                  if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) out = true;
+                  if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) { out = true; why = 'text ' + t; }
                 }
               }
               if (out) {
@@ -579,13 +598,13 @@ class MainActivity : Activity() {
                 window.AndroidHost.reportAuth(true, location.pathname);
               } else if (hdr) {
                 inStreak++;
-                if (inStreak >= 4) {
+                if (inStreak >= 2) {
                   clearInterval(window.__tvAuthTimer);
                   window.AndroidHost.reportAuth(false, location.pathname);
                 }
               }
-              if (tries > 100) clearInterval(window.__tvAuthTimer);
-            }, 500);
+              if (tries >= 12) clearInterval(window.__tvAuthTimer);
+            }, 1000);
           } catch (e) {}
         })();
     """
@@ -602,7 +621,7 @@ class MainActivity : Activity() {
         val d = resources.getDrawable(R.drawable.splash_logo, null)
         val ratio = if (d != null && d.intrinsicWidth > 0) d.intrinsicHeight.toFloat() / d.intrinsicWidth else 0.25f
         val top = (screenH * 0.04f + screenW * LOGIN_LOGO_FRACTION * ratio + 16f * density) * cssPerPx
-        return "var U = " + unit + "; var TOP = " + top + ";" + LOGIN_PAGE_JS_BODY
+        return "var U = " + unit + "; var TOP = " + top + "; var JA = " + isJa + ";" + LOGIN_PAGE_JS_BODY
     }
 
     private val LOGIN_PAGE_JS_BODY = """
@@ -680,10 +699,10 @@ class MainActivity : Activity() {
               if (!document.querySelector('.tv-login-title')) {
                 var ttl = document.createElement('div');
                 ttl.className = 'tv-login-title';
-                ttl.textContent = 'Log in to Stardom World';
+                ttl.textContent = JA ? 'Stardom World にログイン' : 'Log in to Stardom World';
                 var hint = document.createElement('div');
                 hint.className = 'tv-login-hint';
-                hint.textContent = 'Use your Stardom World account, or carry on without one.';
+                hint.textContent = JA ? 'Stardom World のアカウントでログインするか、ログインせずに続けられます。' : 'Use your Stardom World account, or carry on without one.';
                 f0.parentNode.insertBefore(ttl, f0);
                 f0.parentNode.insertBefore(hint, f0);
               }
@@ -691,7 +710,7 @@ class MainActivity : Activity() {
                 var cb = document.createElement('button');
                 cb.type = 'button';
                 cb.className = 'tv-btn tv-continue';
-                cb.textContent = 'Continue without logging in';
+                cb.textContent = JA ? 'ログインせずに続ける' : 'Continue without logging in';
                 cb.onclick = function() { if (window.AndroidHost && window.AndroidHost.browseWithoutLogin) window.AndroidHost.browseWithoutLogin(); };
                 f0.parentNode.insertBefore(cb, f0.nextSibling);
               }
@@ -1561,7 +1580,7 @@ class MainActivity : Activity() {
         // 4. Signed out: the guide takes over with the logo in the same place.
         startSplash()
         authPending = true
-        handler.postDelayed(authTimeoutRunnable, 8000L)
+        handler.postDelayed(authTimeoutRunnable, 10000L)
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -1582,6 +1601,7 @@ class MainActivity : Activity() {
         )
 
         val initLang = getSavedLanguage()
+        appJa = initLang == "ja"
         val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
@@ -1652,6 +1672,11 @@ class MainActivity : Activity() {
 
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
+                // Start the sign-in check as soon as the page is mostly drawn, not only once every
+                // image has finished (slow on Fire TV).
+                if (newProgress >= 10 && view != null && (authPending || awaitingLogin)) {
+                    view.evaluateJavascript(authJs, null)
+                }
                 if (newProgress >= 90) {
                     onPageReady()
                 }
@@ -1791,7 +1816,12 @@ class MainActivity : Activity() {
             density,
             BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
             { startWebLogin() },
-            { exitGuideToSite() }
+            { exitGuideToSite() },
+            { lang ->
+                // Chosen on the guide's first screen: remember it and reload the (hidden) login page in it.
+                applyLanguage(lang)
+                webView.loadUrl(LOGIN_URL)
+            }
         )
         onboardingView = v
         val lp = FrameLayout.LayoutParams(
@@ -1964,13 +1994,7 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun toggleLanguage(targetLang: String) {
             handler.post {
-                saveLanguage(targetLang)
-                val googtransVal = if (targetLang == "ja") "/ja/ja" else "/ja/en"
-                CookieManager.getInstance().apply {
-                    setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Path=/")
-                    setCookie("https://www.stardom-world.com", "googtrans=" + googtransVal + "; Domain=.stardom-world.com; Path=/")
-                    flush()
-                }
+                applyLanguage(targetLang)
                 webView.reload()
             }
         }
@@ -1997,7 +2021,14 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun logDebug(msg: String) {
             handler.post {
-                Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                val shown = if (!isJa) msg else when (msg) {
+                    "Favorites API not available" -> "お気に入り機能は利用できません"
+                    "Please log in on Stardom World to sync favorites" -> "お気に入りを同期するには Stardom World にログインしてください"
+                    "Removed from Favorites" -> "お気に入りから削除しました"
+                    "♥ Added to Favorites!" -> "♥ お気に入りに追加しました"
+                    else -> msg
+                }
+                Toast.makeText(this@MainActivity, shown, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -3298,17 +3329,17 @@ class MainActivity : Activity() {
                 ).apply { rightMargin = (12 * density).toInt() }
             )
         }
-        fsBtnPlay = fsButton("Pause") { playerCommand("toggle", 0) }
+        fsBtnPlay = fsButton(tr("Pause", "一時停止")) { playerCommand("toggle", 0) }
         add(fsBtnPlay!!)
-        add(fsButton("-10s") { playerCommand("seek", -10) })
-        add(fsButton("+10s") { playerCommand("seek", 10) })
-        fsBtnMute = fsButton("Mute") { playerCommand("mute", 0) }
+        add(fsButton(tr("-10s", "-10秒")) { playerCommand("seek", -10) })
+        add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
+        fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
         add(fsBtnMute!!)
-        fsBtnCc = fsButton("CC: Off") { playerCommand("captions", 0) }
+        fsBtnCc = fsButton(tr("CC: Off", "字幕: オフ")) { playerCommand("captions", 0) }
         add(fsBtnCc!!)
-        fsBtnSpeed = fsButton("Speed 1x") { playerCommand("speed", 0) }
+        fsBtnSpeed = fsButton(tr("Speed 1x", "速度 1x")) { playerCommand("speed", 0) }
         add(fsBtnSpeed!!)
-        add(fsButton("Exit full screen") {
+        add(fsButton(tr("Exit full screen", "全画面を終了")) {
             hideFsOverlay()
             hideCustomView()
         })
@@ -3365,10 +3396,11 @@ class MainActivity : Activity() {
                 val j = org.json.JSONObject(str)
                 val t = j.optDouble("t", 0.0)
                 val d = j.optDouble("d", 0.0)
-                fsBtnPlay?.text = if (j.optBoolean("paused")) "Play" else "Pause"
-                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) "Unmute" else "Mute"
-                fsBtnCc?.text = "CC: " + j.optString("cc", "Off")
-                fsBtnSpeed?.text = "Speed " + j.optDouble("rate", 1.0) + "x"
+                fsBtnPlay?.text = if (j.optBoolean("paused")) tr("Play", "再生") else tr("Pause", "一時停止")
+                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
+                val ccName = j.optString("cc", "Off")
+                fsBtnCc?.text = tr("CC: ", "字幕: ") + (if (ccName == "Off") tr("Off", "オフ") else ccName)
+                fsBtnSpeed?.text = tr("Speed ", "速度 ") + j.optDouble("rate", 1.0) + "x"
                 fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
                 fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
             } catch (_: Exception) {
@@ -3480,7 +3512,7 @@ class MainActivity : Activity() {
         cursorMode = on
         refreshCursorVisibility()
         webView.evaluateJavascript(if (on) removeFocusJs else focusJs, null)
-        Toast.makeText(this, if (on) "Cursor on" else "Cursor off", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, if (on) tr("Cursor on", "カーソル オン") else tr("Cursor off", "カーソル オフ"), Toast.LENGTH_SHORT).show()
     }
 
     // ---- Fire TV specifics. Fire OS needs a few full-screen tweaks (see the Fire TV notes in CHANGELOG);
@@ -4196,6 +4228,11 @@ private class TransitionOverlayView(
     }
 }
 
+// The app follows the device language: Japanese when the TV is set to Japanese, English otherwise.
+private var appJa = false
+private val isJa: Boolean get() = appJa
+private fun tr(en: String, ja: String): String = if (isJa) ja else en
+
 // Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
 // the splash logo exactly where the splash drew it, so the two flow into each other. The last
 // button opens the site's own login page (restyled to match).
@@ -4204,12 +4241,38 @@ private class OnboardingView(
     private val density: Float,
     private val wand: Bitmap,
     private val onLogin: () -> Unit,
-    private val onBrowse: () -> Unit
+    private val onBrowse: () -> Unit,
+    private val onLanguage: (String) -> Unit
 ) : FrameLayout(context) {
 
     private class Slide(val title: String, val body: String)
 
-    private val slides = listOf(
+    private fun buildSlides() = if (isJa) listOf(
+        Slide(
+            "テレビで Stardom World へようこそ",
+            "リモコンでの操作方法をかんたんにご紹介します。"
+        ),
+        Slide(
+            "移動のしかた",
+            "矢印ボタンで動画やメニューを移動します。OKで選択した項目を開き、戻るボタンで前のページに戻ります。"
+        ),
+        Slide(
+            "お気に入りに追加",
+            "動画を選択して、リモコンのオプション(メニュー)ボタンを押すと、お気に入りに追加・削除できます。ログインが必要です。"
+        ),
+        Slide(
+            "カーソルモード",
+            "OKを約0.5秒長押しするとポインターが表示されます。「人間であることを確認」のチェックなどに使えます。もう一度長押しすると解除されます。"
+        ),
+        Slide(
+            "動画と全画面表示",
+            "動画は全画面で開き、次の動画が自動で再生されます。下ボタンでコントロールバー、左右ボタンでスキップ、戻るボタンで全画面を終了します。"
+        ),
+        Slide(
+            "日本語と英語",
+            "ページ上部の EN / JA ボタンで、いつでも言語を切り替えられます。"
+        )
+    ) else listOf(
         Slide(
             "Welcome to Stardom World on TV",
             "A quick tour of getting around with your remote."
@@ -4236,8 +4299,13 @@ private class OnboardingView(
         )
     )
 
+    private var slides = buildSlides()
+
     private val gold = 0xFFFFB347.toInt()
     private var index = 0
+
+    // The first screen asks which language to use; the device language is pre-selected.
+    private var langStep = true
 
     private fun p(v: Int): Int = (v * density).toInt()
 
@@ -4248,7 +4316,7 @@ private class OnboardingView(
     private val skipBtn = android.widget.TextView(context)
     private val backBtn = android.widget.TextView(context)
     private val nextBtn = android.widget.TextView(context)
-    private var focused: android.widget.TextView = nextBtn
+    private var focused: android.widget.TextView = if (isJa) nextBtn else skipBtn
 
     // The splash logo, at the splash's own size and position.
     private val logoView = android.widget.ImageView(context)
@@ -4337,8 +4405,6 @@ private class OnboardingView(
                 ).apply { leftMargin = p(10); rightMargin = p(10) }
             )
         }
-        skipBtn.text = "Skip to log in"
-        backBtn.text = "Back"
         col.addView(
             row,
             android.widget.LinearLayout.LayoutParams(
@@ -4352,7 +4418,7 @@ private class OnboardingView(
     }
 
     private fun visibleButtons(): List<android.widget.TextView> =
-        if (index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
+        if (!langStep && index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
 
     private fun paintButton(b: android.widget.TextView, isFocused: Boolean) {
         val d = android.graphics.drawable.GradientDrawable()
@@ -4370,17 +4436,28 @@ private class OnboardingView(
     }
 
     private fun render() {
-        val s = slides[index]
-        titleView.text = s.title
-        bodyView.text = s.body
-        counter.text = (index + 1).toString() + " / " + slides.size
-        backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
-        nextBtn.text = if (index == slides.size - 1) "Log in" else "Next"
+        if (langStep) {
+            titleView.text = "Language  /  言語"
+            bodyView.text = "Choose your language  ·  言語を選択してください"
+            counter.text = ""
+            skipBtn.text = "English"
+            nextBtn.text = "日本語"
+            backBtn.visibility = View.GONE
+        } else {
+            val s = slides[index]
+            titleView.text = s.title
+            bodyView.text = s.body
+            counter.text = (index + 1).toString() + " / " + slides.size
+            skipBtn.text = tr("Skip to log in", "スキップしてログイン")
+            backBtn.text = tr("Back", "戻る")
+            backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
+            nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
+        }
         if (!visibleButtons().contains(focused)) focused = nextBtn
         for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
 
         val lp = art.layoutParams as android.widget.LinearLayout.LayoutParams
-        if (index == 0) {
+        if (langStep || index == 0) {
             // Leave exactly the splash logo's space (it is centred on the screen) above the title.
             logoView.visibility = View.VISIBLE
             counter.visibility = View.GONE
@@ -4393,7 +4470,7 @@ private class OnboardingView(
             lp.height = 0
         }
         art.layoutParams = lp
-        art.type = index
+        art.type = if (langStep) 0 else index
         art.invalidate()
     }
 
@@ -4405,6 +4482,15 @@ private class OnboardingView(
     }
 
     private fun activate() {
+        if (langStep) {
+            onLanguage(if (focused === skipBtn) "en" else "ja")
+            slides = buildSlides()
+            langStep = false
+            index = 0
+            focused = nextBtn
+            render()
+            return
+        }
         when {
             focused === skipBtn -> onLogin()
             focused === backBtn -> { index -= 1; render() }
@@ -4418,7 +4504,11 @@ private class OnboardingView(
             KeyEvent.KEYCODE_DPAD_LEFT -> moveFocus(-1)
             KeyEvent.KEYCODE_DPAD_RIGHT -> moveFocus(1)
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> activate()
-            KeyEvent.KEYCODE_BACK -> if (index > 0) { index -= 1; render() } else onBrowse()
+            KeyEvent.KEYCODE_BACK -> when {
+                langStep -> onBrowse()
+                index > 0 -> { index -= 1; render() }
+                else -> { langStep = true; focused = if (isJa) nextBtn else skipBtn; render() }
+            }
         }
         return true
     }
