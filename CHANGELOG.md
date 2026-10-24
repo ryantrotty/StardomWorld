@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.50
+- Sign-in check: starts as soon as the page begins loading and checks every second for up to 10 seconds. If it still cannot tell, the app loads the main page instead of the guide.
+
 ## 1.3.49
 - Signed-in launches no longer open the guide by mistake on slow devices: the sign-in check now starts as soon as the page is mostly drawn and is given 25 seconds before the app gives up.
 

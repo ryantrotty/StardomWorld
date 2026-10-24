@@ -539,8 +539,10 @@ class MainActivity : Activity() {
     private var loginRevealing = false
     private val authTimeoutRunnable = Runnable {
         if (authPending) {
+            // Could not tell either way in time: carry on to the main page (not the guide).
             authPending = false
-            beginGuide()
+            showSplashProgress()
+            onPageReady()
         }
     }
     private var splashDismissScheduled = false
@@ -596,13 +598,13 @@ class MainActivity : Activity() {
                 window.AndroidHost.reportAuth(true, location.pathname);
               } else if (hdr) {
                 inStreak++;
-                if (inStreak >= 4) {
+                if (inStreak >= 2) {
                   clearInterval(window.__tvAuthTimer);
                   window.AndroidHost.reportAuth(false, location.pathname);
                 }
               }
-              if (tries > 100) clearInterval(window.__tvAuthTimer);
-            }, 500);
+              if (tries >= 12) clearInterval(window.__tvAuthTimer);
+            }, 1000);
           } catch (e) {}
         })();
     """
@@ -1578,7 +1580,7 @@ class MainActivity : Activity() {
         // 4. Signed out: the guide takes over with the logo in the same place.
         startSplash()
         authPending = true
-        handler.postDelayed(authTimeoutRunnable, 25000L)
+        handler.postDelayed(authTimeoutRunnable, 10000L)
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -1672,7 +1674,7 @@ class MainActivity : Activity() {
                 super.onProgressChanged(view, newProgress)
                 // Start the sign-in check as soon as the page is mostly drawn, not only once every
                 // image has finished (slow on Fire TV).
-                if (newProgress >= 50 && view != null && (authPending || awaitingLogin)) {
+                if (newProgress >= 10 && view != null && (authPending || awaitingLogin)) {
                     view.evaluateJavascript(authJs, null)
                 }
                 if (newProgress >= 90) {
