@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.67
+- Home-screen tray tile: 星 + HOSHI★ wordmark only (second line removed). The square ring logo stays as the standalone app icon.
+
 ## 1.3.66
 - HOSHI wordmark now ends with a white star everywhere. The home-screen tile shows the gold 星 on its own followed by the HOSHI★ wordmark on pure black, and the banner is also set as the application icon so Fire TV picks it up.
 
