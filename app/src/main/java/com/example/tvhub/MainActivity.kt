@@ -491,10 +491,10 @@ class MainActivity : Activity() {
             mix-blend-mode: normal !important;
             -webkit-tap-highlight-color: transparent !important;
         }
-        /* Hero banner: 10% smaller (width and, with it, height), centred, rounded, and the focus
+        /* Hero banner: 5% smaller (width and, with it, height), centred, rounded, and the focus
            ring wraps the rounded edge. */
         #tv-hero-container {
-            width: 90% !important;
+            width: 95% !important;
             margin: 0 auto 35px auto !important;
         }
         a.tv-hero-card {
@@ -512,7 +512,7 @@ class MainActivity : Activity() {
         }
         a.tv-hero-card:focus {
             outline: none !important;
-            box-shadow: 0 0 0 3px #000000, 0 0 0 7px #FFD700, 0 0 22px 10px rgba(255, 215, 0, 0.6) !important;
+            box-shadow: 0 0 0 2px #000000, 0 0 0 5px #FFD700, 0 0 16px rgba(255, 215, 0, 0.8) !important;
         }
         #tv-hero-container::before, #tv-hero-container::after,
         a.tv-hero-card::before, a.tv-hero-card::after {
@@ -3181,7 +3181,7 @@ class MainActivity : Activity() {
 
             // 1. Single Un-Cropped Hero Banner Image (With 75px header spacing)
             if (heroData && heroData.bgUrl) {
-              html += '<div id="tv-hero-container" style="width:90%; height:auto; margin:0 auto 35px auto !important; padding:0 !important; box-sizing:border-box; border:none; clear:both;">' +
+              html += '<div id="tv-hero-container" style="width:95%; height:auto; margin:0 auto 35px auto !important; padding:0 !important; box-sizing:border-box; border:none; clear:both;">' +
                 '<a class="tv-hero-card" tabindex="0" href="' + heroData.href + '" style="display:block; width:100%; height:auto; text-decoration:none; outline:none; border:none; border-radius:18px; overflow:hidden; box-sizing:border-box; cursor:pointer; margin:0; padding:0;"><img src="' + heroData.bgUrl + '" style="width:100%; height:auto; display:block; margin:0 auto; padding:0; border:none; outline:none; box-sizing:border-box;" /></a>' +
                 '</div>';
             }

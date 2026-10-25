@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.63
+- Hero banner: 5% smaller (95% width) instead of 10%; its focus glow now matches the video thumbnails (same ring and glow size).
+
 ## 1.3.62
 - Home hero banner: 10% smaller and centred instead of full width, with rounded corners; the gold focus ring now wraps the rounded edge. Banner images still come from the live site as before.
 
