@@ -11,6 +11,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 ## 1.3.65
 - Home video rows: row titles use the site's header style (gold bar, white Arial text) instead of gold lettering, and each row ends with a "View All" box that opens that row's full list.
 
+## 1.3.68
+- Caption debug panel: also handles live-event embeds (vimeo.com/event/...) by reading the embed page for the video's config link.
+
 ## 1.3.67
 - Full-screen player: pressing the CC button now also shows a caption debug panel (the player's caption tracks, how many caption lines it reports, and whether the player's caption files can be read). It hides after a few seconds or when another button is pressed.
 

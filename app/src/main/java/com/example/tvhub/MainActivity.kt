@@ -3798,10 +3798,27 @@ class MainActivity : Activity() {
     private fun ccFileReport(src: String, ua: String): String {
         val out = StringBuilder()
         try {
-            val m = Regex("video/(\\d+)").find(src) ?: return "Caption file: no video id in " + src.take(60)
-            val id = m.groupValues[1]
-            val h = Regex("[?&]h=([0-9a-fA-F]+)").find(src)?.groupValues?.get(1)
-            val cfg = "https://player.vimeo.com/video/" + id + "/config" + (if (h != null) "?h=" + h else "")
+            var cfg: String? = null
+            val m = Regex("video/(\\d+)").find(src)
+            if (m != null) {
+                val h = Regex("[?&]h=([0-9a-fA-F]+)").find(src)?.groupValues?.get(1)
+                cfg = "https://player.vimeo.com/video/" + m.groupValues[1] + "/config" + (if (h != null) "?h=" + h else "")
+            } else {
+                // Live-event style embed (vimeo.com/event/...): look inside the embed page for the video's config link.
+                val (ec, html) = httpGetText(src, 800000, ua)
+                out.append("Embed page: HTTP ").append(ec).append(", ").append(html.length / 1024).append(" KB\n")
+                val cm = Regex("\"config_url\"\\s*:\\s*\"([^\"]+)\"").find(html)
+                if (cm != null) {
+                    cfg = cm.groupValues[1].replace("\\/", "/").replace("\\u0026", "&")
+                } else {
+                    val vm = Regex("player\\.vimeo\\.com\\\\?/video\\\\?/(\\d+)").find(html)
+                    if (vm != null) cfg = "https://player.vimeo.com/video/" + vm.groupValues[1] + "/config"
+                }
+                out.append("Has text_tracks: ").append(html.contains("text_tracks")).append(", .vtt links: ")
+                    .append(Regex("\\.vtt").findAll(html).count()).append(", config link: ")
+                    .append(if (cfg != null) "found" else "not found").append('\n')
+            }
+            if (cfg == null) return out.toString()
             val (code, body) = httpGetText(cfg, 400000, ua)
             out.append("Config: HTTP ").append(code).append('\n')
             if (code != 200) return out.toString()
