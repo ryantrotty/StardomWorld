@@ -576,7 +576,6 @@ class MainActivity : Activity() {
     private lateinit var transitionOverlay: FrameLayout
     private lateinit var transitionView: TransitionOverlayView
     private var transitionShowing = false
-    private var homeDebugView: android.widget.TextView? = null
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -1855,7 +1854,6 @@ class MainActivity : Activity() {
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
-                    homeDebugView?.visibility = View.GONE
                 }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
@@ -2171,25 +2169,6 @@ class MainActivity : Activity() {
         }
     }
 
-    // Stays on screen until Back is pressed, so it can be photographed at leisure.
-    private fun showHomeDebug(text: String) {
-        val v = homeDebugView ?: android.widget.TextView(this).also {
-            it.setTextColor(Color.WHITE)
-            it.typeface = android.graphics.Typeface.MONOSPACE
-            it.textSize = 13f
-            it.setBackgroundColor(0xF0000000.toInt())
-            val pad = (12 * resources.displayMetrics.density).toInt()
-            it.setPadding(pad, pad, pad, pad)
-            it.isFocusable = false
-            root.addView(it, FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.START))
-            homeDebugView = it
-        }
-        v.text = text + "\n(press Back to close)"
-        v.visibility = View.VISIBLE
-        root.bringChildToFront(v)
-    }
-
     private fun showPageTransitionOverlay() {
         if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
@@ -2221,12 +2200,6 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- page scripts
 
     inner class WebAppInterface {
-        // Layout timeline of the home page while it loads (temporary, for tracking down the banner shift).
-        @android.webkit.JavascriptInterface
-        fun homeReport(text: String) {
-            handler.post { showHomeDebug(text) }
-        }
-
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
@@ -2976,66 +2949,6 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
-    // Temporary: records how the home page's header, spacer, banner and the site's own (hidden) content
-    // move while the page loads, and hands the timeline to the app to keep on screen.
-    private val homeSettleJs = """
-        (function(){
-          if (window.__tvHomeRec) return;
-          window.__tvHomeRec = true;
-          var p = location.pathname;
-          if (!(p === '/' || p === '/index.html' || p === '')) return;
-
-          var t0 = performance.now();
-          var lines = [];
-          var prev = '';
-          var origSel = '.content-list, .box-section, .main-visual, .slider-inner, .box-main-visual, .container.box-main, .news-wrap';
-
-          function origHeight() {
-            var sum = 0, n = 0;
-            document.querySelectorAll(origSel).forEach(function(el) {
-              if (el.closest('#tv-test-grid, header, .box-header')) return;
-              var h = el.getBoundingClientRect().height;
-              if (h > 0) { sum += h; n++; }
-            });
-            return Math.round(sum) + 'x' + n;
-          }
-
-          function sample() {
-            var hdr = document.querySelector('header, .box-header, .nav-inner');
-            var spc = document.getElementById('tv-header-spacer');
-            var grid = document.getElementById('tv-test-grid');
-            var hero = document.querySelector('.tv-hero-card');
-            var img = hero && hero.querySelector('img');
-            var fw = document.getElementById('tv-header-flex-wrapper');
-            var parts = [
-              'hdr ' + (hdr ? Math.round(hdr.getBoundingClientRect().height) : '-'),
-              'fw ' + (fw ? Math.round(fw.getBoundingClientRect().height) : '-'),
-              'spc ' + (spc ? Math.round(spc.getBoundingClientRect().height) : '-'),
-              'grid ' + (grid ? Math.round(grid.getBoundingClientRect().top + window.scrollY) : '-'),
-              'hero ' + (hero ? Math.round(hero.getBoundingClientRect().top + window.scrollY) + '+' + Math.round(hero.getBoundingClientRect().height) : '-'),
-              'mt ' + (grid ? Math.round(parseFloat(grid.dataset.tvMt || '0')) : '-'),
-              'img ' + (img ? (img.complete && img.naturalWidth > 0 ? 'ok' : 'wait') : '-'),
-              'orig ' + origHeight(),
-              'cls ' + (document.documentElement.classList.contains('tv-home') ? 'home' : 'nohome')
-            ].join('  ');
-            if (parts !== prev) {
-              prev = parts;
-              lines.push(((performance.now() - t0) / 1000).toFixed(2) + 's  ' + parts);
-            }
-          }
-
-          sample();
-          var timer = setInterval(sample, 40);
-          setTimeout(function() {
-            clearInterval(timer);
-            sample();
-            var head = 'HOME LAYOUT TIMELINE (' + lines.length + ' changes, v' + '${BuildConfig.VERSION_NAME}' + ')';
-            var out = lines.length > 28 ? lines.slice(0, 14).concat(['...'], lines.slice(lines.length - 13)) : lines;
-            try { window.AndroidHost.homeReport(head + '\n' + out.join('\n')); } catch (e) {}
-          }, 8000);
-        })();
-    """.trimIndent()
-
     // Keeps the home page's banner and rows at one fixed distance from the top while the header settles.
     // The header is first drawn two rows tall, and the site sometimes lifts it out of the page flow a few
     // seconds later (e.g. coming back from another page): either one used to push the banner around.
@@ -3746,7 +3659,6 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
-        view.evaluateJavascript(homeSettleJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
@@ -4701,10 +4613,6 @@ class MainActivity : Activity() {
         if (onboardingShowing) {
             if (onboardingView?.handleKey(event) != false) return true
             return super.dispatchKeyEvent(event)
-        }
-        if (event.keyCode == KeyEvent.KEYCODE_BACK && homeDebugView?.visibility == View.VISIBLE) {
-            if (event.action == KeyEvent.ACTION_UP) homeDebugView?.visibility = View.GONE
-            return true
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
