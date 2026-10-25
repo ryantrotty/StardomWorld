@@ -2647,6 +2647,18 @@ class MainActivity : Activity() {
             post(f, { method: 'addEventListener', value: 'play' });
           }, 2000);
 
+          // Quality list from the player: Auto first, then the resolutions from highest to lowest.
+          window.__tvSortQualities = function(qs) {
+            qs = (qs || []).slice();
+            function num(q) { var n = parseInt(String(q.id), 10); return isNaN(n) ? 0 : n; }
+            qs.sort(function(a, b) {
+              if (a.id === 'auto') return -1;
+              if (b.id === 'auto') return 1;
+              return num(b) - num(a);
+            });
+            return qs;
+          };
+
           window.__tvPlayerCmd = function(cmd, val) {
             var f = playerFrame();
             if (!f) return false;
@@ -2678,6 +2690,14 @@ class MainActivity : Activity() {
                 var i = rates.indexOf(r);
                 return p.setPlaybackRate(rates[(i + 1) % rates.length]);
               }).catch(function() {});
+            } else if (cmd === 'quality' && p) {
+              p.getQualities().then(function(qs) {
+                qs = window.__tvSortQualities(qs);
+                if (!qs.length) return;
+                var cur = 0;
+                for (var i = 0; i < qs.length; i++) { if (qs[i].active) cur = i; }
+                return p.setQuality(qs[(cur + 1) % qs.length].id);
+              }).catch(function() {});
             } else if (cmd === 'captions' && p) {
               p.getTextTracks().then(function(tr) {
                 if (!tr || !tr.length) return;
@@ -2697,11 +2717,13 @@ class MainActivity : Activity() {
             var p = null;
             try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
             if (!p) return;
-            Promise.all([p.getPaused(), p.getCurrentTime(), p.getDuration(), p.getVolume(), p.getPlaybackRate(), p.getTextTracks()]).then(function(r) {
+            Promise.all([p.getPaused(), p.getCurrentTime(), p.getDuration(), p.getVolume(), p.getPlaybackRate(), p.getTextTracks(), p.getQualities().catch(function() { return []; })]).then(function(r) {
               var cc = 'Off';
               var tr = r[5] || [];
               for (var i = 0; i < tr.length; i++) { if (tr[i].mode === 'showing') cc = tr[i].label || tr[i].language; }
-              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length });
+              var qs = r[6] || [], ql = '', qn = qs.length;
+              for (var k = 0; k < qs.length; k++) { if (qs[k].active) ql = qs[k].label || qs[k].id; }
+              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length, q: ql, nq: qn });
             }).catch(function() {});
           };
 
@@ -3475,7 +3497,7 @@ class MainActivity : Activity() {
     // ---- Full screen: the app drives the player (the player's own keyboard handling is bypassed,
     // so its controls only show when we ask for them and then go away on their own).
 
-    // Full screen: Down opens the app's own button bar (play, skip, mute, captions, speed, exit).
+    // Full screen: Down opens the app's own button bar (play, skip, mute, captions, quality, speed, exit).
     // The player's own buttons can't be reached from outside its frame, so these drive it instead.
     private var fsControlsMode = false
     private var fsOverlay: android.widget.LinearLayout? = null
@@ -3485,6 +3507,7 @@ class MainActivity : Activity() {
     private var fsBtnMute: android.widget.TextView? = null
     private var fsBtnCc: android.widget.TextView? = null
     private var fsBtnSpeed: android.widget.TextView? = null
+    private var fsBtnQuality: android.widget.TextView? = null
 
     private val fsStatusRunnable: Runnable = object : Runnable {
         override fun run() {
@@ -3501,7 +3524,7 @@ class MainActivity : Activity() {
         tv.textSize = 18f
         tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
         tv.gravity = Gravity.CENTER
-        val padH = (22 * density).toInt()
+        val padH = (16 * density).toInt()
         val padV = (12 * density).toInt()
         tv.setPadding(padH, padV, padH, padV)
         tv.isFocusable = true
@@ -3564,7 +3587,7 @@ class MainActivity : Activity() {
                 android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
                     android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { rightMargin = (12 * density).toInt() }
+                ).apply { rightMargin = (10 * density).toInt() }
             )
         }
         fsBtnPlay = fsButton(tr("Pause", "一時停止")) { playerCommand("toggle", 0) }
@@ -3575,7 +3598,9 @@ class MainActivity : Activity() {
         add(fsBtnMute!!)
         fsBtnCc = fsButton(tr("CC: Off", "字幕: オフ")) { playerCommand("captions", 0) }
         add(fsBtnCc!!)
-        fsBtnSpeed = fsButton(tr("Speed 1x", "速度 1x")) { playerCommand("speed", 0) }
+        fsBtnQuality = fsButton(tr("Auto", "自動")) { playerCommand("quality", 0) }
+        add(fsBtnQuality!!)
+        fsBtnSpeed = fsButton("1.0x") { playerCommand("speed", 0) }
         add(fsBtnSpeed!!)
         add(fsButton(tr("Exit full screen", "全画面を終了")) {
             hideFsOverlay()
@@ -3638,7 +3663,9 @@ class MainActivity : Activity() {
                 fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
                 val ccName = j.optString("cc", "Off")
                 fsBtnCc?.text = tr("CC: ", "字幕: ") + (if (ccName == "Off") tr("Off", "オフ") else ccName)
-                fsBtnSpeed?.text = tr("Speed ", "速度 ") + j.optDouble("rate", 1.0) + "x"
+                fsBtnSpeed?.text = j.optDouble("rate", 1.0).toString() + "x"
+                val qName = j.optString("q", "")
+                if (qName.isNotEmpty()) fsBtnQuality?.text = if (qName.equals("auto", true)) tr("Auto", "自動") else qName
                 fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
                 fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
             } catch (_: Exception) {
