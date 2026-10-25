@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.69
+- App icon is the square ring logo everywhere; the wide 星 HOSHI★ image is used only as the TV banner (tray tile).
+
 ## 1.3.68
 - Manifest: the main activity icon is the square ring logo again (app-info lists), while the application icon and TV banner stay the wide 星 HOSHI★ tile.
 
