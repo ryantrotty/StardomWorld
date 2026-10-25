@@ -5,6 +5,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 ## 1.3.64
 - Full-screen player bar: new quality button (cycles Auto and the available resolutions, e.g. 1080p / 720p) and a shorter speed button that just shows the rate (1.0x).
 
+## 1.3.65
+- Home video rows: row titles use the site's header style (gold bar, white Arial text) instead of gold lettering, and each row ends with a "View All" box that opens that row's full list.
+
 ## Unreleased
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.

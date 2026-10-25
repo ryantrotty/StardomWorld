@@ -2991,9 +2991,29 @@ class MainActivity : Activity() {
                 dataList.push({ href: href, title: itemTitle, bgUrl: bgUrl });
               });
 
+              // The row's "view all" link on the site: a link with a more / view all label, else the
+              // heading's own link, else a category link that is not one of the video cards.
+              var viewAll = '';
+              var moreRe = /view\s*all|see\s*all|more|一覧|すべて|もっと|全て/i;
+              var secLinks = Array.from(sec.querySelectorAll('a[href]')).filter(function(a) {
+                return !a.closest('.content-list-item, article, .slick-cloned') && a.getAttribute('href') && a.getAttribute('href').indexOf('#') !== 0 && a.getAttribute('href').indexOf('javascript') !== 0;
+              });
+              for (var li = 0; li < secLinks.length && !viewAll; li++) {
+                if (moreRe.test(secLinks[li].textContent || '') || moreRe.test(secLinks[li].className || '')) viewAll = secLinks[li].href;
+              }
+              if (!viewAll && titleEl) {
+                var titleLink = titleEl.closest('a') || titleEl.querySelector('a');
+                if (titleLink && titleLink.href) viewAll = titleLink.href;
+              }
+              if (!viewAll) {
+                for (var lj = 0; lj < secLinks.length && !viewAll; lj++) {
+                  if (/\/contents\/category\/|\/category\//.test(secLinks[lj].href)) viewAll = secLinks[lj].href;
+                }
+              }
+
               if (dataList.length > 0) {
                 seenTitles[title] = true;
-                result.push({ title: title, items: dataList });
+                result.push({ title: title, items: dataList, viewAll: viewAll });
               }
             });
             return result;
@@ -3217,11 +3237,15 @@ class MainActivity : Activity() {
 
             if (allRowsData && allRowsData.length > 0) {
               allRowsData.forEach(function(rowSec) {
-                html += '<div style="margin-bottom:35px;"><h2 tabindex="-1" style="color:#FFB347; font-size:22px; margin-bottom:14px; font-weight:bold; outline:none !important; user-select:none !important;">' + rowSec.title + '</h2><div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+                html += '<div style="margin-bottom:35px;"><h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:400 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span>' + rowSec.title + '</span></h2><div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
                 rowSec.items.forEach(function(item) {
                   var bgStyle = item.bgUrl ? 'background-image:url(' + item.bgUrl + ');' : '';
                   html += '<a class="tv-card" tabindex="0" href="' + item.href + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + item.title + '</div></a>';
                 });
+                if (rowSec.viewAll) {
+                  var viewAllJa = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+                  html += '<a class="tv-card notranslate" tabindex="0" href="' + rowSec.viewAll + '" style="flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); box-sizing:border-box; border-radius:8px; background:#11171E; border:2px solid #2a323c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-decoration:none; cursor:pointer; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:24px; font-weight:bold; min-height:165px;"><span>' + (viewAllJa ? 'すべて見る' : 'View All') + '</span><span style="color:#F4C242; font-size:34px; line-height:1;">&#8594;</span></a>';
+                }
                 html += '</div></div>';
               });
             }
