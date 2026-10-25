@@ -2,11 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.71
+- Fire TV home tile: Fire TV builds the tile from the launcher activity icon (not android:banner) for sideloaded apps, so the activity icon is now the wide 星 HOSHI★ banner (with a 640x360 copy for high-density launchers). The application icon stays the square ring logo for app lists. Fire TV caches tiles, so uninstall before installing to see the change.
+
 ## 1.3.70
 - Undid the image swap (ring = icon, wide 星 HOSHI★ = banner) and registered the app as a TV-only launcher (no phone LAUNCHER entry) so Fire TV uses the wide banner for its home tile instead of squeezing the icon into a square.
 
 ## 1.3.69
 - App icon is the square ring logo everywhere; the wide 星 HOSHI★ image is used only as the TV banner (tray tile).
+
+## 1.3.71
+- Fire TV home tile: Fire TV builds the tile from the launcher activity icon (not android:banner) for sideloaded apps, so the activity icon is now the wide 星 HOSHI★ banner (with a 640x360 copy for high-density launchers). The application icon stays the square ring logo for app lists. Fire TV caches tiles, so uninstall before installing to see the change.
 
 ## 1.3.70
 - Undid the image swap (ring = icon, wide 星 HOSHI★ = banner) and registered the app as a TV-only launcher (no phone LAUNCHER entry) so Fire TV uses the wide banner for its home tile instead of squeezing the icon into a square.
