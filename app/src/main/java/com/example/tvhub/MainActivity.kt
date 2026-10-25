@@ -2807,34 +2807,6 @@ class MainActivity : Activity() {
             if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') window.AndroidHost.logDebug(msg);
           }
 
-          // The whole card (thumbnail and title), not just the thumbnail box inside it.
-          function outerCard(el) {
-            return el.closest('.content-list-item, article, .tv-card') ||
-                   el.closest('.tile-inner, .slick-slide, .content-thumbnail-box, .content-thumbnail, .box-content') || el;
-          }
-
-          // On the favorites page an un-favorited video leaves the list altogether, and the highlight
-          // moves to a neighbouring video so the remote keeps working.
-          function removeCardFromList(card) {
-            var links = Array.from(document.querySelectorAll('a.tv-thumbnail-link, .tv-card')).filter(function(a) {
-              return !a.closest('.slick-cloned');
-            });
-            var mine = card.matches('.tv-card') ? card : card.querySelector('a.tv-thumbnail-link, .tv-card');
-            var idx = links.indexOf(mine);
-            var next = idx >= 0 ? (links[idx + 1] || links[idx - 1] || null) : null;
-            var node = card;
-            for (var up = 0; up < 3; up++) {
-              var par = node.parentElement;
-              if (!par || par === document.body) break;
-              if (par.children.length === 1 && !par.matches('.content-list, .row, main, #main, .container')) node = par; else break;
-            }
-            try { node.parentElement.removeChild(node); } catch (e) { node.style.setProperty('display', 'none', 'important'); }
-            if (next && next !== mine) {
-              try { next.focus({ preventScroll: true }); } catch (e) { next.focus(); }
-              try { next.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
-            }
-          }
-
           function toggleCardFavorite(input) {
             var $ = window.jQuery || window.$;
             var targets = [];
@@ -2859,7 +2831,7 @@ class MainActivity : Activity() {
               if (!el || typeof el.closest !== 'function') continue;
               if (el.closest('.slick-cloned')) continue;
 
-              var cardContainer = outerCard(el);
+              var cardContainer = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail-box, .content-thumbnail, .tv-card, .box-content') || el;
               var link = (cardContainer ? cardContainer.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
                          el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
                          el.querySelector('a[href*="/contents/"], a[href*="/set/"]');
@@ -2881,13 +2853,13 @@ class MainActivity : Activity() {
             var isFavorited = isFavPage || (targetCard && (targetCard.classList.contains('is-favorite') || targetCard.dataset.tvFav === 'true'));
             var apiType = isFavorited ? 'DELETE' : 'POST';
 
-            // Only the toast tells the user what happened: the card itself is never restyled when a
-            // video is added, and it leaves the list entirely when it is removed on the favorites page.
+            // Adding a video anywhere outside the Favorites page changes nothing on the card: the toast
+            // is the only cue. On the Favorites page a removed video is dimmed, as well as the toast.
             function markRemoved() {
               if (!targetCard) return;
               targetCard.classList.remove('is-favorite');
               targetCard.dataset.tvFav = 'false';
-              if (isFavPage) removeCardFromList(targetCard);
+              if (isFavPage) targetCard.style.setProperty('opacity', '0.3', 'important');
             }
             function markAdded() {
               if (targetCard) targetCard.dataset.tvFav = 'true';
