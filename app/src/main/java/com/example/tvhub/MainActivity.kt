@@ -310,6 +310,12 @@ class MainActivity : Activity() {
             box-sizing: border-box !important;
             vertical-align: middle !important;
         }
+        /* Same gold focus ring as the other highlighted items (no red glow). */
+        #tv-section-select:focus {
+            outline: 4px solid #FFB347 !important;
+            outline-offset: 3px !important;
+            box-shadow: none !important;
+        }
         #tv-section-select option {
             background-color: #111111 !important;
             color: #ffffff !important;
@@ -566,6 +572,7 @@ class MainActivity : Activity() {
     private lateinit var transitionOverlay: FrameLayout
     private lateinit var transitionView: TransitionOverlayView
     private var transitionShowing = false
+    private var transitionHome = false   // loading the home page: the overlay waits until its layout has settled
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -1843,7 +1850,14 @@ class MainActivity : Activity() {
                 super.onPageStarted(view, url, favicon)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
+                    val p0 = android.net.Uri.parse(url).path ?: ""
+                    transitionHome = p0 == "" || p0 == "/" || p0 == "/index.html"
                     showPageTransitionOverlay()
+                    if (transitionHome && transitionShowing) {
+                        // Wait for the page to report that its layout has stopped moving (or give up after 9 s).
+                        handler.removeCallbacks(hideTransitionRunnable)
+                        handler.postDelayed(hideTransitionRunnable, 9000L)
+                    }
                 }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
@@ -2190,6 +2204,17 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- page scripts
 
     inner class WebAppInterface {
+        // The home page's header, banner and rows are in their final places: the cover can go now.
+        @android.webkit.JavascriptInterface
+        fun pageSettled() {
+            handler.post {
+                if (transitionShowing && transitionHome) {
+                    handler.removeCallbacks(hideTransitionRunnable)
+                    handler.postDelayed(hideTransitionRunnable, 150L)
+                }
+            }
+        }
+
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
@@ -2939,6 +2964,39 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    // On the home page, tells the app once the header, banner and rows have stopped moving, so the
+    // loading cover is lifted onto the finished layout instead of showing the banner slide up into place.
+    private val homeSettleJs = """
+        (function(){
+          if (window.__tvHomeSettle) return;
+          window.__tvHomeSettle = true;
+          var p = location.pathname;
+          if (!(p === '/' || p === '/index.html' || p === '')) return;
+
+          var last = null, stable = 0, ticks = 0, done = false;
+          function finish() {
+            if (done) return;
+            done = true;
+            clearInterval(timer);
+            try { window.AndroidHost.pageSettled(); } catch (e) {}
+          }
+          var timer = setInterval(function() {
+            ticks++;
+            if (ticks > 80) { finish(); return; }          // 8 s: stop waiting
+            var hero = document.querySelector('.tv-hero-card') || document.querySelector('.tv-grid-row .tv-card');
+            var header = document.getElementById('tv-header-flex-wrapper') && document.getElementById('tv-lang-toggle-btn');
+            if (!hero || !header) { stable = 0; return; }
+            var img = hero.querySelector('img');
+            if (img && !(img.complete && img.naturalWidth > 0)) { stable = 0; return; }
+            var y = Math.round(hero.getBoundingClientRect().top + window.scrollY);
+            var hh = Math.round(hero.getBoundingClientRect().height);
+            var key = y + ':' + hh;
+            if (key === last) stable++; else { stable = 0; last = key; }
+            if (stable >= 5) finish();                       // still for half a second
+          }, 100);
+        })();
+    """.trimIndent()
+
     private val listNavJs = """
         (function(){
           if (window.__tvListNav) return;
@@ -3611,6 +3669,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
+        view.evaluateJavascript(homeSettleJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)

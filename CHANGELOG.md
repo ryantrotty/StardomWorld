@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.75
+- Returning to the home page: the loading cover now stays until the header, banner and rows have stopped moving, so the banner no longer appears low and then slides up.
+- The Categories box now shows the same gold focus ring as the other highlighted items instead of a red one.
+
 ## 1.3.70
 - Video listing pages: Up/Down now moves one video at a time and scrolls it into view (a card is a single stop, so it no longer takes several presses).
 - Adding a video to favourites outside the Favorites page now only shows the toast; the card and thumbnail are left untouched. The Favorites page keeps its dimming and toast on removal.
