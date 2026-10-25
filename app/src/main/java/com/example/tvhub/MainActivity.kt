@@ -248,11 +248,6 @@ class MainActivity : Activity() {
             border-radius: 4px 0 0 4px !important;
             box-sizing: border-box !important;
         }
-        /* The site's search box is not used on the TV: hidden completely so it can never flash up or open the keyboard. */
-        form.form-inline, form[action*="search"], input[name="q[keyword]"] {
-            display: none !important;
-            visibility: hidden !important;
-        }
         form.form-inline input[type="submit"], .input-group input[type="submit"], form[action*="search"] input[type="submit"], .input-group-btn, .input-group-append {
             height: 44px !important;
             min-width: 48px !important;
@@ -2496,7 +2491,7 @@ class MainActivity : Activity() {
               });
               target = cards[0] || null;
             } else {
-              target = document.querySelector('#tv-section-select, #tv-fav-header-btn');
+              target = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
             }
             try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
             if (target) {
@@ -2906,6 +2901,44 @@ class MainActivity : Activity() {
 
     // Up/Down on the video listing pages (everything except the home page): one press moves to the
     // video directly above or below, scrolling it into view, instead of stepping through hidden stops.
+    // The big "advanced search" block at the bottom of the video listing pages is not used on the TV and
+    // flashed up while more videos loaded, so it is hidden. The header's own search box is left alone.
+    private val hideBodySearchJs = """
+        (function(){
+          if (window.__tvHideBodySearch) return;
+          window.__tvHideBodySearch = true;
+
+          var css = document.createElement('style');
+          css.id = 'tv-hide-body-search';
+          css.textContent = '[class*="search-detail"],[class*="detail-search"],[class*="advanced-search"],[class*="search-advanced"],[class*="search-modal"],[class*="search-form-area"]{display:none !important;}';
+          (document.head || document.documentElement).appendChild(css);
+
+          var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer';
+          function sweep() {
+            var fields = document.querySelectorAll('input[name^="q["], select[name^="q["], input[name="keyword"], form[action*="search"] input, form[action*="/contents"] input[type="text"]');
+            fields.forEach(function(f) {
+              if (f.closest(HEADER)) return;
+              var node = f.closest('form') || f;
+              for (var up = 0; up < 4; up++) {
+                var par = node.parentElement;
+                if (!par || par === document.body) break;
+                // Climb to the module's own wrapper, never to something that also holds the videos.
+                if (par.querySelector('.content-list, a.tv-thumbnail-link, .content-list-item, article, iframe') || par.closest(HEADER)) break;
+                node = par;
+              }
+              if (node.querySelector('.content-list, a.tv-thumbnail-link, .content-list-item, article, iframe')) return;
+              if (node.dataset.tvHidden !== '1') {
+                node.dataset.tvHidden = '1';
+                node.style.setProperty('display', 'none', 'important');
+              }
+            });
+          }
+          sweep();
+          new MutationObserver(sweep).observe(document.documentElement, { childList: true, subtree: true });
+          setInterval(sweep, 1000);
+        })();
+    """.trimIndent()
+
     private val listNavJs = """
         (function(){
           if (window.__tvListNav) return;
@@ -3378,7 +3411,7 @@ class MainActivity : Activity() {
               if (e.target && e.target.id === 'tv-return-to-top-btn') {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                var firstHeader = document.querySelector('#tv-section-select, #tv-fav-header-btn');
+                var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
                 if (firstHeader) firstHeader.focus();
               }
             }, true);
@@ -3392,7 +3425,7 @@ class MainActivity : Activity() {
                 if (e.keyCode === 13 || e.key === 'Enter') {
                   e.preventDefault();
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  var firstHeader = document.querySelector('#tv-section-select, #tv-fav-header-btn');
+                  var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
                   if (firstHeader) firstHeader.focus();
                   return;
                 }
@@ -3438,7 +3471,7 @@ class MainActivity : Activity() {
                 }
 
                 if (e.keyCode === 38 || e.key === 'ArrowUp') {
-                  var searchBtn = document.querySelector('#tv-section-select, #tv-fav-header-btn');
+                  var searchBtn = document.querySelector('form.form-inline input[type="submit"], .input-group input[type="submit"], #tv-section-select, #tv-fav-header-btn');
                   if (searchBtn) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -3543,7 +3576,7 @@ class MainActivity : Activity() {
                     heroTarget.focus();
                     heroTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   } else {
-                    var headerTarget = document.querySelector('#tv-section-select, #tv-fav-header-btn');
+                    var headerTarget = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
                     if (headerTarget) {
                       e.preventDefault();
                       e.stopPropagation();
@@ -3578,6 +3611,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
+        view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
         view.evaluateJavascript(autoNextJs, null)
