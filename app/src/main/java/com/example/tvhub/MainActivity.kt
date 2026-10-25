@@ -270,6 +270,16 @@ class MainActivity : Activity() {
             word-break: normal !important;
         }
         .tv-acct-menu { display: none !important; }
+        /* Header controls share one 44px band, all centred on it. */
+        #tv-header-flex-wrapper > * { align-self: center !important; margin-top: 0 !important; margin-bottom: 0 !important; top: 0 !important; transform: none !important; }
+        #tv-header-flex-wrapper form, #tv-header-flex-wrapper .input-group, #tv-header-flex-wrapper .box-search {
+            margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important;
+            top: 0 !important; position: relative !important; transform: none !important;
+        }
+        #tv-header-flex-wrapper .input-group { align-items: stretch !important; }
+        #tv-section-select { height: 44px !important; margin-top: 0 !important; margin-bottom: 0 !important; align-self: center !important; }
+        .dropdown-wrapper { display: flex !important; align-items: center !important; height: 44px !important; margin: 0 !important; padding: 0 !important; }
+        .box-dropdown-key { display: inline-flex !important; align-items: center !important; height: 44px !important; margin: 0 !important; padding: 0 8px !important; line-height: 1 !important; }
         #tv-lang-li {
             margin-left: auto !important;
             padding-left: 16px !important;
@@ -1270,8 +1280,9 @@ class MainActivity : Activity() {
                         if (!langLi) {
                           langLi = document.createElement('li');
                           langLi.id = 'tv-lang-li';
-                          langLi.style.setProperty('display', 'inline-block', 'important');
-                          langLi.style.setProperty('vertical-align', 'middle', 'important');
+                          langLi.style.setProperty('display', 'flex', 'important');
+                          langLi.style.setProperty('align-items', 'center', 'important');
+                          langLi.style.setProperty('height', '44px', 'important');
                           langLi.style.setProperty('margin-left', '8px', 'important');
                           btnWrap.appendChild(langLi);
                         }
@@ -1417,6 +1428,11 @@ class MainActivity : Activity() {
                         bs.setProperty('list-style', 'none', 'important');
                         Array.from(btnWrap.children).forEach(function(li) {
                           li.style.setProperty('float', 'none', 'important');
+                          li.style.setProperty('display', 'flex', 'important');
+                          li.style.setProperty('align-items', 'center', 'important');
+                          li.style.setProperty('height', '44px', 'important');
+                          li.style.setProperty('padding-top', '0', 'important');
+                          li.style.setProperty('padding-bottom', '0', 'important');
                           li.style.setProperty('margin', '0 6px', 'important');
                           li.style.setProperty('white-space', 'nowrap', 'important');
                           li.style.setProperty('max-width', 'none', 'important');
@@ -1435,6 +1451,63 @@ class MainActivity : Activity() {
                             li.style.setProperty('padding-left', '16px', 'important');
                           }
                         });
+
+                        // The box holding the buttons is the same 44px band as the search and category boxes.
+                        var btnHolder = btnWrap.parentElement;
+                        if (btnHolder && btnHolder !== rowEl) {
+                          btnHolder.style.setProperty('display', 'flex', 'important');
+                          btnHolder.style.setProperty('align-items', 'center', 'important');
+                          btnHolder.style.setProperty('height', '44px', 'important');
+                          btnHolder.style.setProperty('padding-top', '0', 'important');
+                          btnHolder.style.setProperty('padding-bottom', '0', 'important');
+                        }
+                        btnWrap.style.setProperty('height', '44px', 'important');
+
+                        // Logo: half the distance from the left edge it had before.
+                        var logoChild = null;
+                        Array.from(rowEl.children).forEach(function(ch) { if (logoEl && ch.contains(logoEl)) logoChild = ch; });
+                        if (logoChild) {
+                          logoChild.style.setProperty('margin-left', '0', 'important');
+                          var logoLeft = logoEl.getBoundingClientRect().left;
+                          if (logoLeft > 4) logoChild.style.setProperty('margin-left', (-logoLeft / 2).toFixed(1) + 'px', 'important');
+                        }
+
+                        // Long account names: more than 8 characters before "-san" are cut short.
+                        var keyEl = btnWrap.querySelector('.box-dropdown-key');
+                        if (keyEl) {
+                          var tw = document.createTreeWalker(keyEl, NodeFilter.SHOW_TEXT, null, false);
+                          var tn;
+                          while ((tn = tw.nextNode())) {
+                            var raw = tn.nodeValue || '';
+                            if (!raw.trim()) continue;
+                            var mm = raw.match(/^(\s*)(.+?)(\s*[-\u2010]?\s*(?:san|\u3055\u3093))?(\s*)$/i);
+                            if (mm) {
+                              var nameChars = Array.from(mm[2]);
+                              if (nameChars.length > 8 && mm[2].indexOf('\u2026') < 0) {
+                                tn.nodeValue = mm[1] + nameChars.slice(0, 8).join('') + '\u2026' + (mm[3] || '') + mm[4];
+                              }
+                            }
+                            break;
+                          }
+                        }
+
+                        // Temporary: report header positions once per app launch, to check the alignment.
+                        try {
+                          if (!sessionStorage.getItem('__tvHdrDiag') && window.AndroidHost && window.AndroidHost.logDebug) {
+                            setTimeout(function() {
+                              function pos(el) {
+                                if (!el) return '-';
+                                var r = el.getBoundingClientRect();
+                                return Math.round(r.top) + '/' + Math.round(r.height);
+                              }
+                              var searchEl = document.querySelector('#tv-header-flex-wrapper form') || document.querySelector('form.form-inline');
+                              sessionStorage.setItem('__tvHdrDiag', '1');
+                              window.AndroidHost.logDebug('top/height: search ' + pos(searchEl) + ' category ' + pos(document.getElementById('tv-section-select')) +
+                                ' fav ' + pos(document.getElementById('tv-fav-header-btn')) + ' account ' + pos(keyEl) +
+                                ' lang ' + pos(document.getElementById('tv-lang-toggle-btn')) + ' logoLeft ' + (logoEl ? Math.round(logoEl.getBoundingClientRect().left) : '-'));
+                            }, 3000);
+                          }
+                        } catch (e) {}
                       }
                     }
 
