@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.70
+- Video listing pages: Up/Down now moves one video at a time and scrolls it into view (a card is a single stop, so it no longer takes several presses).
+- Removing a favourite on the Favorites page now removes the whole card and moves the highlight to a neighbour; adding one only shows the toast.
+- The site's search box is hidden completely, so it no longer flashes up or opens the keyboard while a page loads.
+
 ## 1.3.69
 - Under the hood: Added groundwork for translated closed captions. The feature is off in public builds for now, so the CC button behaves as before.
 

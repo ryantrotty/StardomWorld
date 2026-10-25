@@ -248,6 +248,11 @@ class MainActivity : Activity() {
             border-radius: 4px 0 0 4px !important;
             box-sizing: border-box !important;
         }
+        /* The site's search box is not used on the TV: hidden completely so it can never flash up or open the keyboard. */
+        form.form-inline, .box-search, .box-search form, form[action*="search"], input[name="q[keyword]"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
         form.form-inline input[type="submit"], .input-group input[type="submit"], form[action*="search"] input[type="submit"], .input-group-btn, .input-group-append {
             height: 44px !important;
             min-width: 48px !important;
@@ -1576,8 +1581,10 @@ class MainActivity : Activity() {
                         thumbLink.style.setProperty('display', 'block', 'important');
                       }
 
+                      // One stop per card: the thumbnail link. (A second stop on the box inside it made
+                      // each card take several presses to pass.)
                       if (thumbBox) {
-                        thumbBox.setAttribute('tabindex', '0');
+                        thumbBox.setAttribute('tabindex', thumbLink ? '-1' : '0');
                       }
 
                       var infoBox = art.querySelector('.content-info-box');
@@ -2489,7 +2496,7 @@ class MainActivity : Activity() {
               });
               target = cards[0] || null;
             } else {
-              target = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+              target = document.querySelector('#tv-section-select, #tv-fav-header-btn');
             }
             try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
             if (target) {
@@ -2796,6 +2803,38 @@ class MainActivity : Activity() {
           if (window.__tvCardFavoriteAttached) return;
           window.__tvCardFavoriteAttached = true;
 
+          function host(msg) {
+            if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') window.AndroidHost.logDebug(msg);
+          }
+
+          // The whole card (thumbnail and title), not just the thumbnail box inside it.
+          function outerCard(el) {
+            return el.closest('.content-list-item, article, .tv-card') ||
+                   el.closest('.tile-inner, .slick-slide, .content-thumbnail-box, .content-thumbnail, .box-content') || el;
+          }
+
+          // On the favorites page an un-favorited video leaves the list altogether, and the highlight
+          // moves to a neighbouring video so the remote keeps working.
+          function removeCardFromList(card) {
+            var links = Array.from(document.querySelectorAll('a.tv-thumbnail-link, .tv-card')).filter(function(a) {
+              return !a.closest('.slick-cloned');
+            });
+            var mine = card.matches('.tv-card') ? card : card.querySelector('a.tv-thumbnail-link, .tv-card');
+            var idx = links.indexOf(mine);
+            var next = idx >= 0 ? (links[idx + 1] || links[idx - 1] || null) : null;
+            var node = card;
+            for (var up = 0; up < 3; up++) {
+              var par = node.parentElement;
+              if (!par || par === document.body) break;
+              if (par.children.length === 1 && !par.matches('.content-list, .row, main, #main, .container')) node = par; else break;
+            }
+            try { node.parentElement.removeChild(node); } catch (e) { node.style.setProperty('display', 'none', 'important'); }
+            if (next && next !== mine) {
+              try { next.focus({ preventScroll: true }); } catch (e) { next.focus(); }
+              try { next.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+            }
+          }
+
           function toggleCardFavorite(input) {
             var $ = window.jQuery || window.$;
             var targets = [];
@@ -2820,7 +2859,7 @@ class MainActivity : Activity() {
               if (!el || typeof el.closest !== 'function') continue;
               if (el.closest('.slick-cloned')) continue;
 
-              var cardContainer = el.closest('article, .content-list-item, .tile-inner, .slick-slide, .content-thumbnail-box, .content-thumbnail, .tv-card, .box-content') || el;
+              var cardContainer = outerCard(el);
               var link = (cardContainer ? cardContainer.querySelector('a[href*="/contents/"], a[href*="/set/"]') : null) ||
                          el.closest('a[href*="/contents/"], a[href*="/set/"]') ||
                          el.querySelector('a[href*="/contents/"], a[href*="/set/"]');
@@ -2839,8 +2878,20 @@ class MainActivity : Activity() {
             if (!targetContentId) return false;
 
             var isFavPage = window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1;
-            var isFavorited = isFavPage || (targetCard && (targetCard.classList.contains('is-favorite') || targetCard.dataset.isFav === 'true'));
+            var isFavorited = isFavPage || (targetCard && (targetCard.classList.contains('is-favorite') || targetCard.dataset.tvFav === 'true'));
             var apiType = isFavorited ? 'DELETE' : 'POST';
+
+            // Only the toast tells the user what happened: the card itself is never restyled when a
+            // video is added, and it leaves the list entirely when it is removed on the favorites page.
+            function markRemoved() {
+              if (!targetCard) return;
+              targetCard.classList.remove('is-favorite');
+              targetCard.dataset.tvFav = 'false';
+              if (isFavPage) removeCardFromList(targetCard);
+            }
+            function markAdded() {
+              if (targetCard) targetCard.dataset.tvFav = 'true';
+            }
 
             if ($ && $.apiCall) {
               $.apiCall({
@@ -2848,64 +2899,97 @@ class MainActivity : Activity() {
                 type: apiType
               }).done(function(data) {
                 if (apiType === 'DELETE') {
-                  if (targetCard) {
-                    targetCard.classList.remove('is-favorite');
-                    targetCard.dataset.isFav = 'false';
-                    if (isFavPage) targetCard.style.setProperty('opacity', '0.3', 'important');
-                  }
-                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                    window.AndroidHost.logDebug('Removed from Favorites');
-                  }
+                  markRemoved();
+                  host('Removed from Favorites');
                 } else {
-                  if (targetCard) {
-                    targetCard.classList.add('is-favorite');
-                    targetCard.dataset.isFav = 'true';
-                  }
-                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                    window.AndroidHost.logDebug('♥ Added to Favorites!');
-                  }
+                  markAdded();
+                  host('♥ Added to Favorites!');
                 }
               }).fail(function(jqXHR) {
-                if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                  window.AndroidHost.logDebug('Please log in on Stardom World to sync favorites');
+                if (jqXHR.status === 400) {
+                  host('Please log in on Stardom World to sync favorites');
                 } else if (jqXHR.status === 409 || (jqXHR.responseJSON && jqXHR.responseJSON.message === 'Already favorited')) {
                   $.apiCall({
                     url: '/user_api/contents/' + targetContentId + '/favorites',
                     type: 'DELETE'
                   }).done(function() {
-                    if (targetCard) {
-                      targetCard.classList.remove('is-favorite');
-                      targetCard.dataset.isFav = 'false';
-                    }
-                    if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                      window.AndroidHost.logDebug('Removed from Favorites');
-                    }
+                    markRemoved();
+                    host('Removed from Favorites');
                   });
                 } else {
                   var newFavState = !isFavorited;
-                  if (targetCard) {
-                    if (newFavState) {
-                      targetCard.classList.add('is-favorite');
-                      targetCard.dataset.isFav = 'true';
-                    } else {
-                      targetCard.classList.remove('is-favorite');
-                      targetCard.dataset.isFav = 'false';
-                    }
-                  }
-                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                    window.AndroidHost.logDebug(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
-                  }
+                  if (newFavState) markAdded(); else markRemoved();
+                  host(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
                 }
               });
             } else {
-              if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                window.AndroidHost.logDebug('Favorites API not available');
-              }
+              host('Favorites API not available');
             }
             return true;
           }
 
           window.__tvToggleCardFavorite = toggleCardFavorite;
+        })();
+    """.trimIndent()
+
+    // Up/Down on the video listing pages (everything except the home page): one press moves to the
+    // video directly above or below, scrolling it into view, instead of stepping through hidden stops.
+    private val listNavJs = """
+        (function(){
+          if (window.__tvListNav) return;
+          window.__tvListNav = true;
+
+          function isHome() {
+            var p = location.pathname;
+            return p === '/' || p === '/index.html' || p === '';
+          }
+
+          function stops() {
+            return Array.from(document.querySelectorAll('a.tv-thumbnail-link')).filter(function(a) {
+              if (a.closest('.slick-cloned')) return false;
+              var r = a.getBoundingClientRect();
+              return r.width > 0 && r.height > 0;
+            });
+          }
+
+          function cardRect(a) {
+            var c = a.closest('.content-list-item, article') || a;
+            return c.getBoundingClientRect();
+          }
+
+          function go(from, dir) {
+            var list = stops();
+            var fr = cardRect(from);
+            var fx = fr.left + fr.width / 2;
+            var best = null, bestTop = 0, bestDx = 0;
+            list.forEach(function(a) {
+              if (a === from) return;
+              var r = cardRect(a);
+              var rowGap = dir > 0 ? (r.top - fr.top) : (fr.top - r.top);
+              if (rowGap < fr.height * 0.5) return;
+              var top = r.top;
+              var dx = Math.abs(r.left + r.width / 2 - fx);
+              var closerRow = best === null || (dir > 0 ? top < bestTop - 10 : top > bestTop + 10);
+              var sameRow = best !== null && Math.abs(top - bestTop) <= 10;
+              if (closerRow || (sameRow && dx < bestDx)) {
+                best = a; bestTop = top; bestDx = dx;
+              }
+            });
+            return best;
+          }
+
+          document.addEventListener('keydown', function(e) {
+            if (e.keyCode !== 38 && e.keyCode !== 40) return;
+            if (isHome()) return;
+            var ae = document.activeElement;
+            if (!ae || !ae.classList || !ae.classList.contains('tv-thumbnail-link')) return;
+            var target = go(ae, e.keyCode === 40 ? 1 : -1);
+            if (!target) return;   // nothing above/below yet: leave it to the page (header, or more videos loading)
+            e.preventDefault();
+            e.stopPropagation();
+            try { target.focus({ preventScroll: true }); } catch (err) { target.focus(); }
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, true);
         })();
     """.trimIndent()
 
@@ -3322,7 +3406,7 @@ class MainActivity : Activity() {
               if (e.target && e.target.id === 'tv-return-to-top-btn') {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                var firstHeader = document.querySelector('#tv-section-select, #tv-fav-header-btn');
                 if (firstHeader) firstHeader.focus();
               }
             }, true);
@@ -3336,7 +3420,7 @@ class MainActivity : Activity() {
                 if (e.keyCode === 13 || e.key === 'Enter') {
                   e.preventDefault();
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  var firstHeader = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                  var firstHeader = document.querySelector('#tv-section-select, #tv-fav-header-btn');
                   if (firstHeader) firstHeader.focus();
                   return;
                 }
@@ -3382,7 +3466,7 @@ class MainActivity : Activity() {
                 }
 
                 if (e.keyCode === 38 || e.key === 'ArrowUp') {
-                  var searchBtn = document.querySelector('form.form-inline input[type="submit"], .input-group input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                  var searchBtn = document.querySelector('#tv-section-select, #tv-fav-header-btn');
                   if (searchBtn) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -3487,7 +3571,7 @@ class MainActivity : Activity() {
                     heroTarget.focus();
                     heroTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   } else {
-                    var headerTarget = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+                    var headerTarget = document.querySelector('#tv-section-select, #tv-fav-header-btn');
                     if (headerTarget) {
                       e.preventDefault();
                       e.stopPropagation();
@@ -3521,6 +3605,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(pageFullyLoadedJs, null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
+        view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
         view.evaluateJavascript(autoNextJs, null)
