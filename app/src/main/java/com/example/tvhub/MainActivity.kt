@@ -3442,6 +3442,133 @@ class MainActivity : Activity() {
             updateHero();
             var firstFocus = gridDiv.querySelector('.tv-hero-card, .tv-card');
             if (firstFocus) firstFocus.focus();
+
+            loadRecentlyWatched(cardCss, imgCss, titleCss);
+          }
+
+          // "Recently Watched": the signed-in viewer's Viewing history from the site's My Page, shown as
+          // the last row. Nothing is added when signed out or when the history is empty.
+          function escHtml(t) {
+            return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+          }
+
+          function cleanHistoryTitle(t) {
+            return sanitizeTitle(t || '')
+              .replace(/(Viewing date|視聴日時|視聴日)\s*[:：]?\s*[0-9.\/\- :]*/gi, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
+
+          function absUrl(u) {
+            try { return new URL(u, location.origin).href; } catch (e) { return u; }
+          }
+
+          function extractHistory(doc) {
+            var heads = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, .ttl-md, .ttl-lg'));
+            var hi = -1;
+            for (var i = 0; i < heads.length; i++) {
+              if (/viewing history|視聴履歴|閲覧履歴|履歴/i.test(heads[i].textContent || '')) { hi = i; break; }
+            }
+            if (hi < 0) return [];
+            var head = heads[hi];
+            var nextHead = null;
+            for (var j = hi + 1; j < heads.length; j++) {
+              // the next heading that is not part of a video card
+              if (!heads[j].closest('.content-list-item, article')) { nextHead = heads[j]; break; }
+            }
+            var out = [];
+            var seen = {};
+            Array.from(doc.querySelectorAll('.content-list-item, article')).forEach(function(item) {
+              if (item.closest('.slick-cloned')) return;
+              if (!(head.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+              if (nextHead && !(nextHead.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_PRECEDING)) return;
+              var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+              if (!link) return;
+              var href = absUrl(link.getAttribute('href') || '');
+              if (!href || seen[href]) return;
+              seen[href] = true;
+
+              var bg = '';
+              var thumb = item.querySelector('[style*="background-image"]');
+              if (thumb) {
+                var m = (thumb.style.backgroundImage || '').match(/url\(['"]?(.*?)['"]?\)/);
+                if (m && m[1]) bg = m[1];
+              }
+              if (!bg) {
+                var img = item.querySelector('img');
+                if (img) bg = img.getAttribute('data-src') || img.getAttribute('data-lazy') || img.getAttribute('data-original') || img.getAttribute('src') || '';
+              }
+              if (bg.indexOf('data:') === 0) bg = '';
+              if (bg) bg = absUrl(bg);
+
+              var tEl = item.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
+              var title = cleanHistoryTitle(tEl ? tEl.textContent : item.textContent);
+              if (!title) title = 'Stardom World Video';
+              out.push({ href: href, title: title, bgUrl: bg });
+            });
+            return out.slice(0, 12);
+          }
+
+          function insertRecentRow(items, cardCss, imgCss, titleCss) {
+            if (!items.length || document.getElementById('tv-recent-row')) return;
+            var btn = document.getElementById('tv-return-to-top-btn');
+            if (!btn || !btn.parentElement || !btn.parentElement.parentNode) return;
+            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+            var rowTitle = ja ? '最近視聴した動画' : 'Recently Watched';
+            var html = '<h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:700 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span class="notranslate" translate="no">' + rowTitle + '</span></h2>' +
+              '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+            items.forEach(function(item) {
+              var bgStyle = item.bgUrl ? 'background-image:url(' + escHtml(item.bgUrl) + ');' : '';
+              html += '<a class="tv-card" tabindex="0" href="' + escHtml(item.href) + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + escHtml(item.title) + '</div></a>';
+            });
+            html += '</div>';
+            var wrap = document.createElement('div');
+            wrap.id = 'tv-recent-row';
+            wrap.style.cssText = 'margin-bottom:35px;';
+            wrap.innerHTML = html;
+            btn.parentElement.parentNode.insertBefore(wrap, btn.parentElement);
+          }
+
+          function loadRecentlyWatched(cardCss, imgCss, titleCss) {
+            if (window.__tvRecentLoading) return;
+            window.__tvRecentLoading = true;
+
+            // Some pages build their lists with script after loading; if the plain page has no history,
+            // open My Page invisibly for a few seconds and read it once it has drawn.
+            function viaFrame() {
+              var frame = document.createElement('iframe');
+              frame.src = '/mypage';
+              frame.setAttribute('aria-hidden', 'true');
+              frame.tabIndex = -1;
+              frame.style.cssText = 'position:absolute; left:-9999px; top:0; width:1280px; height:900px; border:0; visibility:hidden;';
+              document.body.appendChild(frame);
+              var tries = 0;
+              var timer = setInterval(function() {
+                tries++;
+                var items = [];
+                try { items = extractHistory(frame.contentDocument); } catch (e) {}
+                if (items.length || tries > 20) {
+                  clearInterval(timer);
+                  try { frame.parentNode.removeChild(frame); } catch (e) {}
+                  insertRecentRow(items, cardCss, imgCss, titleCss);
+                }
+              }, 500);
+            }
+
+            fetch('/mypage', { credentials: 'include' })
+              .then(function(res) {
+                if (!res.ok || (res.redirected && /login|sign_in|signin/.test(res.url))) return null;
+                return res.text();
+              })
+              .then(function(html) {
+                if (!html) return;
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                if (doc.querySelector('input[type="password"]')) return;
+                var items = extractHistory(doc);
+                if (items.length) insertRecentRow(items, cardCss, imgCss, titleCss);
+                else viaFrame();
+              })
+              .catch(function() {});
           }
 
           if (!window.__tvGridNavHandlerAttached) {

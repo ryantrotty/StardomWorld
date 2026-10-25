@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.79
+- Home page: signed-in viewers get a "Recently Watched" row as the last row (above Return to Top), built from the Viewing history on the site's My Page. It looks like the other rows. Signed-out viewers, or an empty history, show nothing extra.
+
 ## 1.3.78
 - Home page: the banner and rows no longer shift while the page loads or when you come back to it from another page. The site's own banner and rows are hidden from the first paint, and the grid is held at a fixed distance from the top every frame while the header settles.
 - The Categories box shows the same gold focus ring as the other highlighted items instead of a red one.
