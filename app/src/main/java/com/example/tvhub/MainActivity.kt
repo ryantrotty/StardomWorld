@@ -1183,7 +1183,7 @@ class MainActivity : Activity() {
                           img.src = logoUriStr;
                           img.srcset = '';
                           img.removeAttribute('srcset');
-                          img.style.maxHeight = '42px';
+                          img.style.maxHeight = '44px';
                           img.style.width = 'auto';
                           img.style.objectFit = 'contain';
                         }
