@@ -249,7 +249,7 @@ class MainActivity : Activity() {
             box-sizing: border-box !important;
         }
         /* The site's search box is not used on the TV: hidden completely so it can never flash up or open the keyboard. */
-        form.form-inline, .box-search, .box-search form, form[action*="search"], input[name="q[keyword]"] {
+        form.form-inline, form[action*="search"], input[name="q[keyword]"] {
             display: none !important;
             visibility: hidden !important;
         }

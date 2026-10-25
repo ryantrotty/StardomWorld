@@ -5,7 +5,7 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 ## 1.3.70
 - Video listing pages: Up/Down now moves one video at a time and scrolls it into view (a card is a single stop, so it no longer takes several presses).
 - Adding a video to favourites outside the Favorites page now only shows the toast; the card and thumbnail are left untouched. The Favorites page keeps its dimming and toast on removal.
-- The site's search box is hidden completely, so it no longer flashes up or opens the keyboard while a page loads.
+- The site's search box (only the box and its button) is hidden completely, so it no longer flashes up or opens the keyboard while a page loads.
 
 ## 1.3.69
 - Under the hood: Added groundwork for translated closed captions. The feature is off in public builds for now, so the CC button behaves as before.
