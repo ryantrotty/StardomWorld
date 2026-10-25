@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.78
+- Home page: the banner and rows no longer shift while the page loads or when you come back to it from another page. The site's own banner and rows are hidden from the first paint, and the grid is held at a fixed distance from the top every frame while the header settles.
+- The Categories box shows the same gold focus ring as the other highlighted items instead of a red one.
+
 ## 1.3.70
 - Video listing pages: Up/Down now moves one video at a time and scrolls it into view (a card is a single stop, so it no longer takes several presses).
 - Adding a video to favourites outside the Favorites page now only shows the toast; the card and thumbnail are left untouched. The Favorites page keeps its dimming and toast on removal.

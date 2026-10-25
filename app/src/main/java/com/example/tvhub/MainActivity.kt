@@ -123,6 +123,10 @@ class MainActivity : Activity() {
         .content-thumbnail-box-inner {
             background-color: transparent !important;
         }
+        html.tv-home .content-list, html.tv-home .box-section, html.tv-home .main-visual, html.tv-home .slider-inner,
+        html.tv-home .box-main-visual, html.tv-home .container.box-main, html.tv-home .news-wrap {
+            display: none !important;
+        }
         header, .box-header, nav, .nav-inner, header::after, .box-header::after, .nav-inner::after, hr, .border-bottom {
             border: none !important;
             border-bottom: none !important;
@@ -309,6 +313,12 @@ class MainActivity : Activity() {
             display: inline-block !important;
             box-sizing: border-box !important;
             vertical-align: middle !important;
+        }
+        /* Same gold focus ring as the other highlighted items (no red glow). */
+        #tv-section-select:focus {
+            outline: 4px solid #FFB347 !important;
+            outline-offset: 3px !important;
+            box-shadow: none !important;
         }
         #tv-section-select option {
             background-color: #111111 !important;
@@ -2939,6 +2949,37 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    // Keeps the home page's banner and rows at one fixed distance from the top while the header settles.
+    // The header is first drawn two rows tall, and the site sometimes lifts it out of the page flow a few
+    // seconds later (e.g. coming back from another page): either one used to push the banner around.
+    // Each frame, before it is painted, the grid's top margin is corrected, so it always appears in place.
+    private val homeAnchorJs = """
+        (function(){
+          if (window.__tvHomeAnchor) return;
+          var p = location.pathname;
+          if (!(p === '/' || p === '/index.html' || p === '')) return;
+          window.__tvHomeAnchor = true;
+
+          var TARGET = 90;   // distance from the top of the page to the banner, in CSS pixels
+          var started = performance.now();
+          function step() {
+            var grid = document.getElementById('tv-test-grid');
+            if (grid) {
+              var cur = grid.getBoundingClientRect().top + window.scrollY;
+              var delta = TARGET - cur;
+              if (Math.abs(delta) > 0.5) {
+                var mt = parseFloat(grid.dataset.tvMt || '0') + delta;
+                grid.dataset.tvMt = String(mt);
+                grid.style.setProperty('margin-top', mt + 'px', 'important');
+              }
+            }
+            if (performance.now() - started < 15000) requestAnimationFrame(step);
+            else setTimeout(step, 400);
+          }
+          requestAnimationFrame(step);
+        })();
+    """.trimIndent()
+
     private val listNavJs = """
         (function(){
           if (window.__tvListNav) return;
@@ -3598,6 +3639,12 @@ class MainActivity : Activity() {
     """.trimIndent()
 
     private fun injectPageScripts(view: WebView) {
+        // On the home page, the site's own banner and rows (which the app replaces with its own grid) are
+        // hidden by CSS from the very first paint, instead of a moment later by a timer.
+        view.evaluateJavascript(
+            "(function(){var p=location.pathname;if(p==='/'||p==='/index.html'||p===''){document.documentElement.classList.add('tv-home');}})();",
+            null
+        )
         view.evaluateJavascript(viewportJs(), null)
         view.evaluateJavascript(hideTranslateJs, null)
         view.evaluateJavascript(translateJs, null)
@@ -3611,6 +3658,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
+        view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
