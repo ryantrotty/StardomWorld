@@ -6,9 +6,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.61
+- Header: Favorites stays on one line; the category box is now the same width as the search box, reads CATEGORIES (カテゴリー) and has its arrow in a box on the right, like the search button. Removed the temporary position note.
+
 ## 1.3.60
 - Header cleanup: logo moved to half its previous distance from the left edge; search and category boxes share the same top and height; Favorites, the account name and the language switch are centred vertically on them; account names longer than 8 characters before "-san" are shortened with an ellipsis.
-- Temporary: once per launch a note lists the header positions so the alignment can be checked.
 
 ## 1.3.59
 - Account menu: fixed the account name disappearing from the header (the whole account block was being hidden instead of just its panel), and removed the false "menu not found" note when signed out.

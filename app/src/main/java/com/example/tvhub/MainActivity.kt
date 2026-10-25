@@ -228,10 +228,10 @@ class MainActivity : Activity() {
             min-width: 0 !important;
         }
         form.form-inline, .box-search form, .box-search .input-group, .input-group.flex-nowrap {
-            width: 320px !important;
-            max-width: 320px !important;
-            flex: 0 1 320px !important;
-            min-width: 200px !important;
+            width: 260px !important;
+            max-width: 260px !important;
+            flex: 0 1 260px !important;
+            min-width: 170px !important;
             height: 44px !important;
             margin: 0 !important;
             background: transparent !important;
@@ -285,18 +285,24 @@ class MainActivity : Activity() {
             padding-left: 16px !important;
         }
         #tv-section-select {
-            width: 320px !important;
-            max-width: 320px !important;
-            flex: 0 1 320px !important;
-            min-width: 200px !important;
+            width: 260px !important;
+            max-width: 260px !important;
+            flex: 0 1 260px !important;
+            min-width: 170px !important;
             height: 44px !important;
             background-color: #1a1a1a !important;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='44' viewBox='0 0 48 44'><rect width='48' height='44' fill='%232a2a2a'/><rect width='1' height='44' fill='%23333333'/><path d='M17 18 L24 26 L31 18' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+            background-repeat: no-repeat !important;
+            background-position: right center !important;
+            background-size: 48px 44px !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
             color: #ffffff !important;
             border: 1px solid #333333 !important;
             border-radius: 4px !important;
             font-size: 15px !important;
             font-weight: 500 !important;
-            padding: 0 14px !important;
+            padding: 0 56px 0 14px !important;
             margin: 0 16px 0 0 !important;
             outline: none !important;
             cursor: pointer !important;
@@ -364,6 +370,8 @@ class MainActivity : Activity() {
             box-sizing: border-box !important;
             vertical-align: middle !important;
             text-decoration: none !important;
+            white-space: nowrap !important;
+            flex: 0 0 auto !important;
         }
         #tv-fav-header-btn:focus, #tv-fav-header-btn:hover {
             color: #ffffff !important;
@@ -1188,7 +1196,7 @@ class MainActivity : Activity() {
                         defaultOpt.value = '';
                         defaultOpt.disabled = true;
                         defaultOpt.selected = true;
-                        defaultOpt.textContent = isJa ? 'カテゴリー・セクションを選択...' : 'Select Category / Section...';
+                        defaultOpt.textContent = isJa ? 'カテゴリー' : 'CATEGORIES';
                         select.appendChild(defaultOpt);
 
                         var links = globalNav.querySelectorAll('a');
@@ -1490,24 +1498,6 @@ class MainActivity : Activity() {
                             break;
                           }
                         }
-
-                        // Temporary: report header positions once per app launch, to check the alignment.
-                        try {
-                          if (!sessionStorage.getItem('__tvHdrDiag') && window.AndroidHost && window.AndroidHost.logDebug) {
-                            setTimeout(function() {
-                              function pos(el) {
-                                if (!el) return '-';
-                                var r = el.getBoundingClientRect();
-                                return Math.round(r.top) + '/' + Math.round(r.height);
-                              }
-                              var searchEl = document.querySelector('#tv-header-flex-wrapper form') || document.querySelector('form.form-inline');
-                              sessionStorage.setItem('__tvHdrDiag', '1');
-                              window.AndroidHost.logDebug('top/height: search ' + pos(searchEl) + ' category ' + pos(document.getElementById('tv-section-select')) +
-                                ' fav ' + pos(document.getElementById('tv-fav-header-btn')) + ' account ' + pos(keyEl) +
-                                ' lang ' + pos(document.getElementById('tv-lang-toggle-btn')) + ' logoLeft ' + (logoEl ? Math.round(logoEl.getBoundingClientRect().left) : '-'));
-                            }, 3000);
-                          }
-                        } catch (e) {}
                       }
                     }
 
