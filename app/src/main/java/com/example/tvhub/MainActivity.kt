@@ -1576,8 +1576,10 @@ class MainActivity : Activity() {
                         thumbLink.style.setProperty('display', 'block', 'important');
                       }
 
+                      // One stop per card: the thumbnail link. (A second stop on the box inside it made
+                      // each card take several presses to pass.)
                       if (thumbBox) {
-                        thumbBox.setAttribute('tabindex', '0');
+                        thumbBox.setAttribute('tabindex', thumbLink ? '-1' : '0');
                       }
 
                       var infoBox = art.querySelector('.content-info-box');
@@ -2796,6 +2798,10 @@ class MainActivity : Activity() {
           if (window.__tvCardFavoriteAttached) return;
           window.__tvCardFavoriteAttached = true;
 
+          function host(msg) {
+            if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') window.AndroidHost.logDebug(msg);
+          }
+
           function toggleCardFavorite(input) {
             var $ = window.jQuery || window.$;
             var targets = [];
@@ -2839,8 +2845,20 @@ class MainActivity : Activity() {
             if (!targetContentId) return false;
 
             var isFavPage = window.location.pathname.indexOf('/favorites') !== -1 || window.location.pathname.indexOf('/favorite') !== -1;
-            var isFavorited = isFavPage || (targetCard && (targetCard.classList.contains('is-favorite') || targetCard.dataset.isFav === 'true'));
+            var isFavorited = isFavPage || (targetCard && (targetCard.classList.contains('is-favorite') || targetCard.dataset.tvFav === 'true'));
             var apiType = isFavorited ? 'DELETE' : 'POST';
+
+            // Adding a video anywhere outside the Favorites page changes nothing on the card: the toast
+            // is the only cue. On the Favorites page a removed video is dimmed, as well as the toast.
+            function markRemoved() {
+              if (!targetCard) return;
+              targetCard.classList.remove('is-favorite');
+              targetCard.dataset.tvFav = 'false';
+              if (isFavPage) targetCard.style.setProperty('opacity', '0.3', 'important');
+            }
+            function markAdded() {
+              if (targetCard) targetCard.dataset.tvFav = 'true';
+            }
 
             if ($ && $.apiCall) {
               $.apiCall({
@@ -2848,64 +2866,135 @@ class MainActivity : Activity() {
                 type: apiType
               }).done(function(data) {
                 if (apiType === 'DELETE') {
-                  if (targetCard) {
-                    targetCard.classList.remove('is-favorite');
-                    targetCard.dataset.isFav = 'false';
-                    if (isFavPage) targetCard.style.setProperty('opacity', '0.3', 'important');
-                  }
-                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                    window.AndroidHost.logDebug('Removed from Favorites');
-                  }
+                  markRemoved();
+                  host('Removed from Favorites');
                 } else {
-                  if (targetCard) {
-                    targetCard.classList.add('is-favorite');
-                    targetCard.dataset.isFav = 'true';
-                  }
-                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                    window.AndroidHost.logDebug('♥ Added to Favorites!');
-                  }
+                  markAdded();
+                  host('♥ Added to Favorites!');
                 }
               }).fail(function(jqXHR) {
-                if (jqXHR.status === 400 && window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                  window.AndroidHost.logDebug('Please log in on Stardom World to sync favorites');
+                if (jqXHR.status === 400) {
+                  host('Please log in on Stardom World to sync favorites');
                 } else if (jqXHR.status === 409 || (jqXHR.responseJSON && jqXHR.responseJSON.message === 'Already favorited')) {
                   $.apiCall({
                     url: '/user_api/contents/' + targetContentId + '/favorites',
                     type: 'DELETE'
                   }).done(function() {
-                    if (targetCard) {
-                      targetCard.classList.remove('is-favorite');
-                      targetCard.dataset.isFav = 'false';
-                    }
-                    if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                      window.AndroidHost.logDebug('Removed from Favorites');
-                    }
+                    markRemoved();
+                    host('Removed from Favorites');
                   });
                 } else {
                   var newFavState = !isFavorited;
-                  if (targetCard) {
-                    if (newFavState) {
-                      targetCard.classList.add('is-favorite');
-                      targetCard.dataset.isFav = 'true';
-                    } else {
-                      targetCard.classList.remove('is-favorite');
-                      targetCard.dataset.isFav = 'false';
-                    }
-                  }
-                  if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                    window.AndroidHost.logDebug(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
-                  }
+                  if (newFavState) markAdded(); else markRemoved();
+                  host(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
                 }
               });
             } else {
-              if (window.AndroidHost && typeof window.AndroidHost.logDebug === 'function') {
-                window.AndroidHost.logDebug('Favorites API not available');
-              }
+              host('Favorites API not available');
             }
             return true;
           }
 
           window.__tvToggleCardFavorite = toggleCardFavorite;
+        })();
+    """.trimIndent()
+
+    // Up/Down on the video listing pages (everything except the home page): one press moves to the
+    // video directly above or below, scrolling it into view, instead of stepping through hidden stops.
+    // The big "advanced search" block at the bottom of the video listing pages is not used on the TV and
+    // flashed up while more videos loaded, so it is hidden. The header's own search box is left alone.
+    private val hideBodySearchJs = """
+        (function(){
+          if (window.__tvHideBodySearch) return;
+          window.__tvHideBodySearch = true;
+
+          var css = document.createElement('style');
+          css.id = 'tv-hide-body-search';
+          css.textContent = '#search-section,[class*="search-detail"],[class*="detail-search"],[class*="advanced-search"],[class*="search-advanced"],[class*="search-modal"],[class*="search-form-area"]{display:none !important;}';
+          (document.head || document.documentElement).appendChild(css);
+
+          var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer';
+          function sweep() {
+            var fields = document.querySelectorAll('input[name^="q["], select[name^="q["], input[name="keyword"], form[action*="search"] input, form[action*="/contents"] input[type="text"]');
+            fields.forEach(function(f) {
+              if (f.closest(HEADER)) return;
+              var node = f.closest('form') || f;
+              for (var up = 0; up < 4; up++) {
+                var par = node.parentElement;
+                if (!par || par === document.body) break;
+                // Climb to the module's own wrapper, never to something that also holds the videos.
+                if (par.querySelector('.content-list, a.tv-thumbnail-link, .content-list-item, article, iframe') || par.closest(HEADER)) break;
+                node = par;
+              }
+              if (node.querySelector('.content-list, a.tv-thumbnail-link, .content-list-item, article, iframe')) return;
+              if (node.dataset.tvHidden !== '1') {
+                node.dataset.tvHidden = '1';
+                node.style.setProperty('display', 'none', 'important');
+              }
+            });
+          }
+          sweep();
+          new MutationObserver(sweep).observe(document.documentElement, { childList: true, subtree: true });
+          setInterval(sweep, 1000);
+        })();
+    """.trimIndent()
+
+    private val listNavJs = """
+        (function(){
+          if (window.__tvListNav) return;
+          window.__tvListNav = true;
+
+          function isHome() {
+            var p = location.pathname;
+            return p === '/' || p === '/index.html' || p === '';
+          }
+
+          function stops() {
+            return Array.from(document.querySelectorAll('a.tv-thumbnail-link')).filter(function(a) {
+              if (a.closest('.slick-cloned')) return false;
+              var r = a.getBoundingClientRect();
+              return r.width > 0 && r.height > 0;
+            });
+          }
+
+          function cardRect(a) {
+            var c = a.closest('.content-list-item, article') || a;
+            return c.getBoundingClientRect();
+          }
+
+          function go(from, dir) {
+            var list = stops();
+            var fr = cardRect(from);
+            var fx = fr.left + fr.width / 2;
+            var best = null, bestTop = 0, bestDx = 0;
+            list.forEach(function(a) {
+              if (a === from) return;
+              var r = cardRect(a);
+              var rowGap = dir > 0 ? (r.top - fr.top) : (fr.top - r.top);
+              if (rowGap < fr.height * 0.5) return;
+              var top = r.top;
+              var dx = Math.abs(r.left + r.width / 2 - fx);
+              var closerRow = best === null || (dir > 0 ? top < bestTop - 10 : top > bestTop + 10);
+              var sameRow = best !== null && Math.abs(top - bestTop) <= 10;
+              if (closerRow || (sameRow && dx < bestDx)) {
+                best = a; bestTop = top; bestDx = dx;
+              }
+            });
+            return best;
+          }
+
+          document.addEventListener('keydown', function(e) {
+            if (e.keyCode !== 38 && e.keyCode !== 40) return;
+            if (isHome()) return;
+            var ae = document.activeElement;
+            if (!ae || !ae.classList || !ae.classList.contains('tv-thumbnail-link')) return;
+            var target = go(ae, e.keyCode === 40 ? 1 : -1);
+            if (!target) return;   // nothing above/below yet: leave it to the page (header, or more videos loading)
+            e.preventDefault();
+            e.stopPropagation();
+            try { target.focus({ preventScroll: true }); } catch (err) { target.focus(); }
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, true);
         })();
     """.trimIndent()
 
@@ -3521,6 +3610,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript(pageFullyLoadedJs, null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
+        view.evaluateJavascript(listNavJs, null)
+        view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
         view.evaluateJavascript(autoNextJs, null)
