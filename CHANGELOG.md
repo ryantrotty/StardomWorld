@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.66
+- HOSHI wordmark now ends with a white star everywhere. The home-screen tile shows the gold 星 on its own followed by the HOSHI★ wordmark on pure black, and the banner is also set as the application icon so Fire TV picks it up.
+
 ## 1.3.65
 - Header logo is now as tall as the search box, with a larger HOSHI name and more space after the emblem. The home-screen tile uses the full black banner as the activity icon, so Fire TV no longer shows grey bars.
 
