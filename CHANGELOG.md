@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.77
+- Home page: the banner and rows are held at a fixed distance from the top every frame while the header settles, so the banner no longer shifts (neither on first load, where the header shrinks, nor when coming back from another page, where the header leaves the page flow).
+
 ## 1.3.76
 - Home page: the site's own banner and rows are hidden by style from the first paint, so they no longer take up space above the app's banner before a timer hides them (this is the cause of the banner appearing low and then moving up, under test).
 - Temporary: after the home page loads, a layout timeline stays on screen until Back is pressed, to confirm the shift is gone and show what moves if it is not.

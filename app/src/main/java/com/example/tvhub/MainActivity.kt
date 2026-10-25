@@ -3013,6 +3013,7 @@ class MainActivity : Activity() {
               'spc ' + (spc ? Math.round(spc.getBoundingClientRect().height) : '-'),
               'grid ' + (grid ? Math.round(grid.getBoundingClientRect().top + window.scrollY) : '-'),
               'hero ' + (hero ? Math.round(hero.getBoundingClientRect().top + window.scrollY) + '+' + Math.round(hero.getBoundingClientRect().height) : '-'),
+              'mt ' + (grid ? Math.round(parseFloat(grid.dataset.tvMt || '0')) : '-'),
               'img ' + (img ? (img.complete && img.naturalWidth > 0 ? 'ok' : 'wait') : '-'),
               'orig ' + origHeight(),
               'cls ' + (document.documentElement.classList.contains('tv-home') ? 'home' : 'nohome')
@@ -3032,6 +3033,37 @@ class MainActivity : Activity() {
             var out = lines.length > 28 ? lines.slice(0, 14).concat(['...'], lines.slice(lines.length - 13)) : lines;
             try { window.AndroidHost.homeReport(head + '\n' + out.join('\n')); } catch (e) {}
           }, 8000);
+        })();
+    """.trimIndent()
+
+    // Keeps the home page's banner and rows at one fixed distance from the top while the header settles.
+    // The header is first drawn two rows tall, and the site sometimes lifts it out of the page flow a few
+    // seconds later (e.g. coming back from another page): either one used to push the banner around.
+    // Each frame, before it is painted, the grid's top margin is corrected, so it always appears in place.
+    private val homeAnchorJs = """
+        (function(){
+          if (window.__tvHomeAnchor) return;
+          var p = location.pathname;
+          if (!(p === '/' || p === '/index.html' || p === '')) return;
+          window.__tvHomeAnchor = true;
+
+          var TARGET = 90;   // distance from the top of the page to the banner, in CSS pixels
+          var started = performance.now();
+          function step() {
+            var grid = document.getElementById('tv-test-grid');
+            if (grid) {
+              var cur = grid.getBoundingClientRect().top + window.scrollY;
+              var delta = TARGET - cur;
+              if (Math.abs(delta) > 0.5) {
+                var mt = parseFloat(grid.dataset.tvMt || '0') + delta;
+                grid.dataset.tvMt = String(mt);
+                grid.style.setProperty('margin-top', mt + 'px', 'important');
+              }
+            }
+            if (performance.now() - started < 15000) requestAnimationFrame(step);
+            else setTimeout(step, 400);
+          }
+          requestAnimationFrame(step);
         })();
     """.trimIndent()
 
@@ -3713,6 +3745,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
+        view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(homeSettleJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
