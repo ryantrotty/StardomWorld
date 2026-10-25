@@ -3,6 +3,7 @@
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
 ## 1.3.69
+- Translated captions are only built in on a machine with a local branding-private folder; shared and GitHub builds keep the normal CC button.
 - Full-screen player: the CC button now cycles CC: EN, CC: 日本語 and Off. Captions are drawn by the app; each line is translated (free Google translation) only when its language differs from the chosen one. If the caption file cannot be loaded, it falls back to the player's own captions and shows the diagnostics panel.
 
 ## 1.3.64

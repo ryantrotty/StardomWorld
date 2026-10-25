@@ -17,6 +17,13 @@ android {
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
         buildConfigField("String", "START_URL", "\"$startUrl\"")
+
+        // Translated captions (CC: EN / CC: 日本語) use an unofficial Google endpoint, so they are
+        // off in shared builds. They turn on automatically when a local "branding-private" folder
+        // exists (your own machine), or when built with -Ptvhub.ccTranslate=true.
+        val ccTranslate = (project.findProperty("tvhub.ccTranslate") as String?)?.toBoolean()
+            ?: rootProject.file("branding-private").exists()
+        buildConfigField("boolean", "CC_TRANSLATE", ccTranslate.toString())
     }
 
     buildFeatures {

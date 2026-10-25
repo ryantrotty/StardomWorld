@@ -3679,7 +3679,9 @@ class MainActivity : Activity() {
         add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
         fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
         add(fsBtnMute!!)
-        fsBtnCc = fsButton(ccLabel()) { cycleCc() }
+        fsBtnCc = fsButton(ccLabel()) {
+            if (BuildConfig.CC_TRANSLATE) cycleCc() else playerCommand("captions", 0)
+        }
         add(fsBtnCc!!)
         fsBtnQuality = fsButton(tr("Auto", "自動")) { playerCommand("quality", 0) }
         add(fsBtnQuality!!)
@@ -3756,8 +3758,13 @@ class MainActivity : Activity() {
                 fsBtnPlay?.text = if (j.optBoolean("paused")) tr("Play", "再生") else tr("Pause", "一時停止")
                 fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
                 // The player may have its own captions on from the start: show that as the current state.
-                if (ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
-                fsBtnCc?.text = ccLabel()
+                if (BuildConfig.CC_TRANSLATE) {
+                    if (ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
+                    fsBtnCc?.text = ccLabel()
+                } else {
+                    val ccName = j.optString("cc", "Off")
+                    fsBtnCc?.text = tr("CC: ", "字幕: ") + (if (ccName == "Off") tr("Off", "オフ") else ccName)
+                }
                 fsBtnSpeed?.text = j.optDouble("rate", 1.0).toString() + "x"
                 val qName = j.optString("q", "")
                 if (qName.isNotEmpty()) fsBtnQuality?.text = if (qName.equals("auto", true)) tr("Auto", "自動") else qName
