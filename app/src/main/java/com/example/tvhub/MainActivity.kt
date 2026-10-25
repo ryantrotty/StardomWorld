@@ -123,6 +123,10 @@ class MainActivity : Activity() {
         .content-thumbnail-box-inner {
             background-color: transparent !important;
         }
+        html.tv-home .content-list, html.tv-home .box-section, html.tv-home .main-visual, html.tv-home .slider-inner,
+        html.tv-home .box-main-visual, html.tv-home .container.box-main, html.tv-home .news-wrap {
+            display: none !important;
+        }
         header, .box-header, nav, .nav-inner, header::after, .box-header::after, .nav-inner::after, hr, .border-bottom {
             border: none !important;
             border-bottom: none !important;
@@ -572,7 +576,7 @@ class MainActivity : Activity() {
     private lateinit var transitionOverlay: FrameLayout
     private lateinit var transitionView: TransitionOverlayView
     private var transitionShowing = false
-    private var transitionHome = false   // loading the home page: the overlay waits until its layout has settled
+    private var homeDebugView: android.widget.TextView? = null
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -1850,14 +1854,8 @@ class MainActivity : Activity() {
                 super.onPageStarted(view, url, favicon)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
-                    val p0 = android.net.Uri.parse(url).path ?: ""
-                    transitionHome = p0 == "" || p0 == "/" || p0 == "/index.html"
                     showPageTransitionOverlay()
-                    if (transitionHome && transitionShowing) {
-                        // Wait for the page to report that its layout has stopped moving (or give up after 9 s).
-                        handler.removeCallbacks(hideTransitionRunnable)
-                        handler.postDelayed(hideTransitionRunnable, 9000L)
-                    }
+                    homeDebugView?.visibility = View.GONE
                 }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
@@ -2173,6 +2171,25 @@ class MainActivity : Activity() {
         }
     }
 
+    // Stays on screen until Back is pressed, so it can be photographed at leisure.
+    private fun showHomeDebug(text: String) {
+        val v = homeDebugView ?: android.widget.TextView(this).also {
+            it.setTextColor(Color.WHITE)
+            it.typeface = android.graphics.Typeface.MONOSPACE
+            it.textSize = 13f
+            it.setBackgroundColor(0xF0000000.toInt())
+            val pad = (12 * resources.displayMetrics.density).toInt()
+            it.setPadding(pad, pad, pad, pad)
+            it.isFocusable = false
+            root.addView(it, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.START))
+            homeDebugView = it
+        }
+        v.text = text + "\n(press Back to close)"
+        v.visibility = View.VISIBLE
+        root.bringChildToFront(v)
+    }
+
     private fun showPageTransitionOverlay() {
         if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
@@ -2204,15 +2221,10 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- page scripts
 
     inner class WebAppInterface {
-        // The home page's header, banner and rows are in their final places: the cover can go now.
+        // Layout timeline of the home page while it loads (temporary, for tracking down the banner shift).
         @android.webkit.JavascriptInterface
-        fun pageSettled() {
-            handler.post {
-                if (transitionShowing && transitionHome) {
-                    handler.removeCallbacks(hideTransitionRunnable)
-                    handler.postDelayed(hideTransitionRunnable, 150L)
-                }
-            }
+        fun homeReport(text: String) {
+            handler.post { showHomeDebug(text) }
         }
 
         @android.webkit.JavascriptInterface
@@ -2964,36 +2976,62 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
-    // On the home page, tells the app once the header, banner and rows have stopped moving, so the
-    // loading cover is lifted onto the finished layout instead of showing the banner slide up into place.
+    // Temporary: records how the home page's header, spacer, banner and the site's own (hidden) content
+    // move while the page loads, and hands the timeline to the app to keep on screen.
     private val homeSettleJs = """
         (function(){
-          if (window.__tvHomeSettle) return;
-          window.__tvHomeSettle = true;
+          if (window.__tvHomeRec) return;
+          window.__tvHomeRec = true;
           var p = location.pathname;
           if (!(p === '/' || p === '/index.html' || p === '')) return;
 
-          var last = null, stable = 0, ticks = 0, done = false;
-          function finish() {
-            if (done) return;
-            done = true;
-            clearInterval(timer);
-            try { window.AndroidHost.pageSettled(); } catch (e) {}
+          var t0 = performance.now();
+          var lines = [];
+          var prev = '';
+          var origSel = '.content-list, .box-section, .main-visual, .slider-inner, .box-main-visual, .container.box-main, .news-wrap';
+
+          function origHeight() {
+            var sum = 0, n = 0;
+            document.querySelectorAll(origSel).forEach(function(el) {
+              if (el.closest('#tv-test-grid, header, .box-header')) return;
+              var h = el.getBoundingClientRect().height;
+              if (h > 0) { sum += h; n++; }
+            });
+            return Math.round(sum) + 'x' + n;
           }
-          var timer = setInterval(function() {
-            ticks++;
-            if (ticks > 80) { finish(); return; }          // 8 s: stop waiting
-            var hero = document.querySelector('.tv-hero-card') || document.querySelector('.tv-grid-row .tv-card');
-            var header = document.getElementById('tv-header-flex-wrapper') && document.getElementById('tv-lang-toggle-btn');
-            if (!hero || !header) { stable = 0; return; }
-            var img = hero.querySelector('img');
-            if (img && !(img.complete && img.naturalWidth > 0)) { stable = 0; return; }
-            var y = Math.round(hero.getBoundingClientRect().top + window.scrollY);
-            var hh = Math.round(hero.getBoundingClientRect().height);
-            var key = y + ':' + hh;
-            if (key === last) stable++; else { stable = 0; last = key; }
-            if (stable >= 5) finish();                       // still for half a second
-          }, 100);
+
+          function sample() {
+            var hdr = document.querySelector('header, .box-header, .nav-inner');
+            var spc = document.getElementById('tv-header-spacer');
+            var grid = document.getElementById('tv-test-grid');
+            var hero = document.querySelector('.tv-hero-card');
+            var img = hero && hero.querySelector('img');
+            var fw = document.getElementById('tv-header-flex-wrapper');
+            var parts = [
+              'hdr ' + (hdr ? Math.round(hdr.getBoundingClientRect().height) : '-'),
+              'fw ' + (fw ? Math.round(fw.getBoundingClientRect().height) : '-'),
+              'spc ' + (spc ? Math.round(spc.getBoundingClientRect().height) : '-'),
+              'grid ' + (grid ? Math.round(grid.getBoundingClientRect().top + window.scrollY) : '-'),
+              'hero ' + (hero ? Math.round(hero.getBoundingClientRect().top + window.scrollY) + '+' + Math.round(hero.getBoundingClientRect().height) : '-'),
+              'img ' + (img ? (img.complete && img.naturalWidth > 0 ? 'ok' : 'wait') : '-'),
+              'orig ' + origHeight(),
+              'cls ' + (document.documentElement.classList.contains('tv-home') ? 'home' : 'nohome')
+            ].join('  ');
+            if (parts !== prev) {
+              prev = parts;
+              lines.push(((performance.now() - t0) / 1000).toFixed(2) + 's  ' + parts);
+            }
+          }
+
+          sample();
+          var timer = setInterval(sample, 40);
+          setTimeout(function() {
+            clearInterval(timer);
+            sample();
+            var head = 'HOME LAYOUT TIMELINE (' + lines.length + ' changes, v' + '${BuildConfig.VERSION_NAME}' + ')';
+            var out = lines.length > 28 ? lines.slice(0, 14).concat(['...'], lines.slice(lines.length - 13)) : lines;
+            try { window.AndroidHost.homeReport(head + '\n' + out.join('\n')); } catch (e) {}
+          }, 8000);
         })();
     """.trimIndent()
 
@@ -3656,6 +3694,12 @@ class MainActivity : Activity() {
     """.trimIndent()
 
     private fun injectPageScripts(view: WebView) {
+        // On the home page, the site's own banner and rows (which the app replaces with its own grid) are
+        // hidden by CSS from the very first paint, instead of a moment later by a timer.
+        view.evaluateJavascript(
+            "(function(){var p=location.pathname;if(p==='/'||p==='/index.html'||p===''){document.documentElement.classList.add('tv-home');}})();",
+            null
+        )
         view.evaluateJavascript(viewportJs(), null)
         view.evaluateJavascript(hideTranslateJs, null)
         view.evaluateJavascript(translateJs, null)
@@ -4624,6 +4668,10 @@ class MainActivity : Activity() {
         if (onboardingShowing) {
             if (onboardingView?.handleKey(event) != false) return true
             return super.dispatchKeyEvent(event)
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && homeDebugView?.visibility == View.VISIBLE) {
+            if (event.action == KeyEvent.ACTION_UP) homeDebugView?.visibility = View.GONE
+            return true
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()

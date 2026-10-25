@@ -2,8 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
-## 1.3.75
-- Returning to the home page: the loading cover now stays until the header, banner and rows have stopped moving, so the banner no longer appears low and then slides up.
+## 1.3.76
+- Home page: the site's own banner and rows are hidden by style from the first paint, so they no longer take up space above the app's banner before a timer hides them (this is the cause of the banner appearing low and then moving up, under test).
+- Temporary: after the home page loads, a layout timeline stays on screen until Back is pressed, to confirm the shift is gone and show what moves if it is not.
 - The Categories box now shows the same gold focus ring as the other highlighted items instead of a red one.
 
 ## 1.3.70
