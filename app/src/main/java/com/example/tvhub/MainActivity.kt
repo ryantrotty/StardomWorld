@@ -1931,6 +1931,7 @@ class MainActivity : Activity() {
                     .start()
                 refreshCursorVisibility()
                 scheduleFullScreenResizeNudges()
+                if (ccMode == 1 || ccMode == 2) ccStart()
                 // Entered through the player's own full-screen button: start the 8 second countdown and
                 // take keyboard focus off the player, otherwise its controls never fade.
                 fullScreenInteraction()
@@ -2698,6 +2699,12 @@ class MainActivity : Activity() {
                 for (var i = 0; i < qs.length; i++) { if (qs[i].active) cur = i; }
                 return p.setQuality(qs[(cur + 1) % qs.length].id);
               }).catch(function() {});
+            } else if (cmd === 'ccoff' && p) {
+              p.disableTextTrack().catch(function() {});
+            } else if (cmd === 'ccnative' && p) {
+              p.getTextTracks().then(function(tr) {
+                if (tr && tr.length) return p.enableTextTrack(tr[0].language, tr[0].kind);
+              }).catch(function() {});
             } else if (cmd === 'captions' && p) {
               p.getTextTracks().then(function(tr) {
                 if (!tr || !tr.length) return;
@@ -2733,6 +2740,7 @@ class MainActivity : Activity() {
             try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
             if (!p) { window.__tvCcJson = JSON.stringify({ src: f.src, err: 'could not attach to player' }); return; }
             hookCues(f, p);
+            try { p.getVideoId().then(function(v) { window.__tvVideoId = String(v); }).catch(function() {}); } catch (x) {}
             p.getTextTracks().then(function(tr) {
               window.__tvCcJson = JSON.stringify({
                 src: f.src,
@@ -3568,6 +3576,21 @@ class MainActivity : Activity() {
     private var fsBtnQuality: android.widget.TextView? = null
     private var fsDebugView: android.widget.TextView? = null
 
+    // ---- Captions drawn by the app (translated when needed) ----
+    private class CcSentence(val start: Double, val end: Double, val text: String, val ja: Boolean)
+
+    private var ccMode = 0            // 0 off, 1 English, 2 Japanese, 3 the player's own captions
+    private var ccView: android.widget.TextView? = null
+    @Volatile private var ccSentences: List<CcSentence>? = null
+    @Volatile private var ccLoading = false
+    @Volatile private var ccFailed = false
+    private var ccKey = ""
+    @Volatile private var ccNow = 0.0
+    private val ccCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+    @Volatile private var ccWorkerRunning = false
+    @Volatile private var ccBackoffUntil = 0L
+    private var ccTicking = false
+
     private val fsStatusRunnable: Runnable = object : Runnable {
         override fun run() {
             if (!fsControlsMode) return
@@ -3656,10 +3679,7 @@ class MainActivity : Activity() {
         add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
         fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
         add(fsBtnMute!!)
-        fsBtnCc = fsButton(tr("CC: Off", "字幕: オフ")) {
-            playerCommand("captions", 0)
-            showCcDebug()
-        }
+        fsBtnCc = fsButton(ccLabel()) { cycleCc() }
         add(fsBtnCc!!)
         fsBtnQuality = fsButton(tr("Auto", "自動")) { playerCommand("quality", 0) }
         add(fsBtnQuality!!)
@@ -3735,8 +3755,9 @@ class MainActivity : Activity() {
                 val d = j.optDouble("d", 0.0)
                 fsBtnPlay?.text = if (j.optBoolean("paused")) tr("Play", "再生") else tr("Pause", "一時停止")
                 fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
-                val ccName = j.optString("cc", "Off")
-                fsBtnCc?.text = tr("CC: ", "字幕: ") + (if (ccName == "Off") tr("Off", "オフ") else ccName)
+                // The player may have its own captions on from the start: show that as the current state.
+                if (ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
+                fsBtnCc?.text = ccLabel()
                 fsBtnSpeed?.text = j.optDouble("rate", 1.0).toString() + "x"
                 val qName = j.optString("q", "")
                 if (qName.isNotEmpty()) fsBtnQuality?.text = if (qName.equals("auto", true)) tr("Auto", "自動") else qName
@@ -3745,6 +3766,334 @@ class MainActivity : Activity() {
             } catch (_: Exception) {
             }
         }
+    }
+
+    // ---------------------------------------------------------------- captions (EN / JA / off)
+
+    private fun ccLabel(): String = when (ccMode) {
+        1 -> "CC: EN"
+        2 -> "CC: 日本語"
+        3 -> tr("CC: Original", "字幕: 原文")
+        else -> tr("CC: Off", "字幕: オフ")
+    }
+
+    private fun cycleCc() {
+        ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
+        fsBtnCc?.text = ccLabel()
+        // The player's own captions always go off: ours replace them (and are shown or hidden below).
+        playerCommand("ccoff", 0)
+        if (ccMode == 0) {
+            handler.removeCallbacks(ccTick)
+            ccTicking = false
+            ccView?.visibility = View.GONE
+        } else {
+            ccStart()
+        }
+    }
+
+    private fun ccEnsureView(): android.widget.TextView {
+        ccView?.let { return it }
+        val v = android.widget.TextView(this)
+        v.setTextColor(Color.WHITE)
+        v.textSize = 24f
+        v.gravity = Gravity.CENTER
+        v.setShadowLayer(4f, 0f, 2f, Color.BLACK)
+        v.setBackgroundColor(0x99000000.toInt())
+        val padH = (16 * density).toInt()
+        val padV = (6 * density).toInt()
+        v.setPadding(padH, padV, padH, padV)
+        v.maxWidth = (resources.displayMetrics.widthPixels * 0.8f).toInt()
+        v.isFocusable = false
+        v.visibility = View.GONE
+        root.addView(
+            v,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            ).apply { bottomMargin = (48 * density).toInt() }
+        )
+        ccView = v
+        return v
+    }
+
+    private fun ccShowMessage(msg: String) {
+        val v = ccEnsureView()
+        v.text = msg
+        v.alpha = 0.8f
+        v.visibility = View.VISIBLE
+        root.bringChildToFront(v)
+    }
+
+    private fun ccStart() {
+        ccEnsureView()
+        if (!ccTicking) {
+            ccTicking = true
+            handler.removeCallbacks(ccTick)
+            handler.post(ccTick)
+        }
+        if (ccSentences == null && !ccLoading) {
+            ccLoading = true
+            ccFailed = false
+            ccShowMessage(tr("Loading captions...", "字幕を読み込み中..."))
+            webView.evaluateJavascript("window.__tvVideoId = ''; window.__tvCcRefresh && window.__tvCcRefresh(); 1", null)
+            handler.postDelayed({
+                webView.evaluateJavascript(
+                    "(window.__tvVideoId || '') + '|' + ((document.querySelector('iframe[src*=vimeo], iframe[src*=player]') || {}).src || '')"
+                ) { raw ->
+                    val str = try { org.json.JSONTokener(raw ?: "").nextValue() as? String ?: "" } catch (_: Exception) { "" }
+                    val cut = str.indexOf('|')
+                    val vid = if (cut >= 0) str.substring(0, cut) else ""
+                    val src = if (cut >= 0) str.substring(cut + 1) else ""
+                    if (src != ccKey) {
+                        ccKey = src
+                        ccCache.clear()
+                    }
+                    val ua = webView.settings.userAgentString
+                    Thread {
+                        val vtt = fetchCcVtt(src, vid, ua)
+                        val list = if (vtt != null) parseVttToSentences(vtt) else null
+                        runOnUiThread {
+                            ccLoading = false
+                            if (list != null && list.isNotEmpty()) {
+                                ccSentences = list
+                                ccFailed = false
+                                ccStartWorker(ua)
+                            } else {
+                                ccFailed = true
+                                // Fall back to the player's own captions and show why in the debug panel.
+                                ccMode = 3
+                                fsBtnCc?.text = ccLabel()
+                                playerCommand("ccnative", 0)
+                                ccView?.visibility = View.GONE
+                                if (fsControlsMode) showCcDebug()
+                            }
+                        }
+                    }.start()
+                }
+            }, 900)
+        } else if (ccSentences != null) {
+            val ua = webView.settings.userAgentString
+            ccStartWorker(ua)
+        }
+    }
+
+    private val ccTick: Runnable = object : Runnable {
+        override fun run() {
+            if ((ccMode != 1 && ccMode != 2) || !fullScreenActive()) {
+                ccTicking = false
+                ccView?.visibility = View.GONE
+                return
+            }
+            webView.evaluateJavascript(
+                "(window.__tvRefreshStatus && window.__tvRefreshStatus(), window.__tvStatusJson || '')"
+            ) { raw ->
+                try {
+                    val str = org.json.JSONTokener(raw ?: "").nextValue() as? String ?: ""
+                    if (str.isNotEmpty()) ccNow = org.json.JSONObject(str).optDouble("t", ccNow)
+                } catch (_: Exception) {
+                }
+                ccRender()
+            }
+            handler.postDelayed(this, 350)
+        }
+    }
+
+    private fun ccTargetJa(): Boolean = ccMode == 2
+
+    private fun ccRender() {
+        val v = ccView ?: return
+        if (ccMode != 1 && ccMode != 2) return
+        val list = ccSentences ?: return
+        if (list.isEmpty()) return
+        val t = ccNow
+        var lo = 0
+        var hi = list.size - 1
+        var idx = -1
+        while (lo <= hi) {
+            val mid = (lo + hi) / 2
+            if (list[mid].start <= t) { idx = mid; lo = mid + 1 } else hi = mid - 1
+        }
+        if (idx < 0 || t > list[idx].end + 1.0) {
+            v.visibility = View.GONE
+            return
+        }
+        val sentence = list[idx]
+        val tl = if (ccTargetJa()) "ja" else "en"
+        val needs = sentence.ja != ccTargetJa()
+        val translated = if (needs) ccCache[tl + ":" + idx] else null
+        v.text = translated ?: sentence.text
+        v.alpha = if (needs && translated == null) 0.55f else 1f
+        v.translationY = if (fsControlsMode) -((fsOverlay?.height ?: 0).toFloat()) else 0f
+        v.visibility = View.VISIBLE
+        if (root.getChildAt(root.childCount - 1) !== v) root.bringChildToFront(v)
+    }
+
+    // Translates the sentences just ahead of the playhead, one at a time, and keeps them for later.
+    private fun ccStartWorker(ua: String) {
+        if (ccWorkerRunning) return
+        ccWorkerRunning = true
+        Thread {
+            try {
+                while ((ccMode == 1 || ccMode == 2) && ccSentences != null) {
+                    val list = ccSentences ?: break
+                    val toJa = ccTargetJa()
+                    val tl = if (toJa) "ja" else "en"
+                    val t = ccNow
+                    var target = -1
+                    var i = 0
+                    var lo = 0
+                    var hi = list.size - 1
+                    while (lo <= hi) {
+                        val mid = (lo + hi) / 2
+                        if (list[mid].start < t - 3) lo = mid + 1 else hi = mid - 1
+                    }
+                    i = lo
+                    while (i < list.size && list[i].start < t + 240) {
+                        if (list[i].ja != toJa && !ccCache.containsKey(tl + ":" + i)) { target = i; break }
+                        i++
+                    }
+                    if (target < 0) {
+                        Thread.sleep(700)
+                        continue
+                    }
+                    val out = ccTranslate(list[target].text, tl, ua)
+                    if (out != null) ccCache[tl + ":" + target] = out else Thread.sleep(2500)
+                    Thread.sleep(150)
+                }
+            } finally {
+                ccWorkerRunning = false
+            }
+        }.start()
+    }
+
+    // Google's free web translation, one sentence per request, backing off if it asks us to slow down.
+    private fun ccTranslate(text: String, tl: String, ua: String): String? {
+        if (System.currentTimeMillis() < ccBackoffUntil) return null
+        return try {
+            val url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" + tl +
+                "&dt=t&q=" + java.net.URLEncoder.encode(text, "UTF-8")
+            val (code, body) = httpGetText(url, 200000, ua)
+            if (code == 429 || code == 403 || code == 503) {
+                ccBackoffUntil = System.currentTimeMillis() + 60000
+                null
+            } else if (code != 200) {
+                null
+            } else {
+                val segs = org.json.JSONArray(body).getJSONArray(0)
+                val sb = StringBuilder()
+                for (k in 0 until segs.length()) {
+                    val seg = segs.optJSONArray(k) ?: continue
+                    sb.append(seg.optString(0, ""))
+                }
+                sb.toString().trim().ifEmpty { null }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // Finds the video's caption file (WebVTT) through the player's settings and returns its text.
+    private fun fetchCcVtt(src: String, vid: String, ua: String): String? {
+        val configs = ArrayList<String>()
+        val h = Regex("[?&]h=([0-9a-fA-F]+)").find(src)?.groupValues?.get(1)
+        val hq = if (h != null) "?h=" + h else ""
+        if (vid.isNotEmpty()) configs.add("https://player.vimeo.com/video/" + vid + "/config" + hq)
+        val m = Regex("video/(\\d+)").find(src)
+        if (m != null) configs.add("https://player.vimeo.com/video/" + m.groupValues[1] + "/config" + hq)
+        if (src.contains("/event/")) {
+            try {
+                val (_, html) = httpGetText(src, 800000, ua)
+                val cm = Regex("\"config_url\"\\s*:\\s*\"([^\"]+)\"").find(html)
+                if (cm != null) configs.add(cm.groupValues[1].replace("\\/", "/").replace("\\u0026", "&"))
+                val vm = Regex("player\\.vimeo\\.com\\\\?/video\\\\?/(\\d+)").find(html)
+                if (vm != null) configs.add("https://player.vimeo.com/video/" + vm.groupValues[1] + "/config")
+            } catch (_: Exception) {
+            }
+        }
+        for (cfg in configs) {
+            try {
+                val (code, body) = httpGetText(cfg, 800000, ua)
+                if (code != 200) continue
+                val tt = org.json.JSONObject(body).optJSONObject("request")?.optJSONArray("text_tracks") ?: continue
+                for (i in 0 until tt.length()) {
+                    var u = tt.getJSONObject(i).optString("url", "")
+                    if (u.startsWith("/")) u = "https://player.vimeo.com" + u
+                    if (u.isEmpty()) continue
+                    val (c2, vtt) = httpGetText(u, 6000000, ua)
+                    if (c2 == 200 && vtt.contains("-->")) return vtt
+                }
+            } catch (_: Exception) {
+            }
+        }
+        return null
+    }
+
+    private fun isJapaneseText(t: String): Boolean {
+        var ja = 0
+        for (c in t) {
+            if ((c in '\u3040'..'\u30ff') || (c in '\u4e00'..'\u9fff')) ja++
+        }
+        return ja > 0 && ja * 5 >= t.length
+    }
+
+    private fun isCjkChar(c: Char): Boolean =
+        (c in '\u3000'..'\u30ff') || (c in '\u4e00'..'\u9fff') || (c in '\uff00'..'\uffef')
+
+    // Turns the caption file's short, mid-sentence cues into whole sentences with the stray spaces removed.
+    private fun parseVttToSentences(vtt: String): List<CcSentence> {
+        val timeRe = Regex("(?:(\\d+):)?(\\d{1,2}):(\\d{2})[.,](\\d{3})\\s*-->\\s*(?:(\\d+):)?(\\d{1,2}):(\\d{2})[.,](\\d{3})")
+        val tagRe = Regex("<[^>]+>")
+        val spaceRe = Regex("\\s+")
+        val cjkGap = Regex("(?<=[\\u3000-\\u30ff\\u4e00-\\u9fff\\uff00-\\uffef])\\s+(?=[\\u3000-\\u30ff\\u4e00-\\u9fff\\uff00-\\uffef])")
+        fun sec(h: String, mn: String, s: String, ms: String): Double =
+            (if (h.isEmpty()) 0 else h.toInt()) * 3600.0 + mn.toInt() * 60 + s.toInt() + ms.toInt() / 1000.0
+
+        val out = ArrayList<CcSentence>()
+        val lines = vtt.split("\n")
+        val cur = StringBuilder()
+        var curStart = 0.0
+        var curEnd = 0.0
+        var lastText = ""
+        fun flush() {
+            val tx = cur.toString().trim()
+            if (tx.isNotEmpty()) out.add(CcSentence(curStart, curEnd, tx, isJapaneseText(tx)))
+            cur.setLength(0)
+        }
+        var i = 0
+        while (i < lines.size) {
+            val m = timeRe.find(lines[i])
+            if (m == null) { i++; continue }
+            val g = m.groupValues
+            val st = sec(g[1], g[2], g[3], g[4])
+            val en = sec(g[5], g[6], g[7], g[8])
+            val sb = StringBuilder()
+            i++
+            while (i < lines.size && lines[i].trim().isNotEmpty()) {
+                sb.append(lines[i].trim()).append(' ')
+                i++
+            }
+            var tx = sb.toString().replace(tagRe, "").replace(spaceRe, " ").trim()
+            tx = tx.replace(cjkGap, "")
+            if (tx.none { it.isLetterOrDigit() }) continue
+            if (tx == lastText) continue
+            lastText = tx
+            if (cur.isNotEmpty() && (st - curEnd > 2.0 || cur.length > 160)) flush()
+            if (cur.isEmpty()) {
+                curStart = st
+                cur.append(tx)
+            } else {
+                val a = cur[cur.length - 1]
+                val b = tx[0]
+                if (!(isCjkChar(a) || isCjkChar(b))) cur.append(' ')
+                cur.append(tx)
+            }
+            curEnd = maxOf(curEnd, en)
+            val last = tx[tx.length - 1]
+            if (last == '.' || last == '!' || last == '?' || last == '。' || last == '！' || last == '？') flush()
+        }
+        flush()
+        return out
     }
 
     // ---- Caption debugging (shown after the CC button is pressed) ----
@@ -4109,6 +4458,9 @@ class MainActivity : Activity() {
         customCallback?.onCustomViewHidden()
         customCallback = null
         hideFsOverlay()
+        handler.removeCallbacks(ccTick)
+        ccTicking = false
+        ccView?.visibility = View.GONE
         handler.removeCallbacks(fsNudgeRunnable)
         handler.removeCallbacks(hideControlsRunnable)
         handler.removeCallbacks(fsPulse)
