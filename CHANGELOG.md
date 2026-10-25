@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.69
+- Full-screen player: the CC button now cycles CC: EN, CC: 日本語 and Off. Captions are drawn by the app; each line is translated (free Google translation) only when its language differs from the chosen one. If the caption file cannot be loaded, it falls back to the player's own captions and shows the diagnostics panel.
+
 ## 1.3.64
 - Full-screen player bar: new quality button (cycles Auto and the available resolutions, e.g. 1080p / 720p) and a shorter speed button that just shows the rate (1.0x).
 
@@ -10,6 +13,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 ## 1.3.65
 - Home video rows: row titles use the site's header style (gold bar, white Arial text) instead of gold lettering, and each row ends with a "View All" box that opens that row's full list.
+
+## 1.3.68
+- Caption debug panel: also handles live-event embeds (vimeo.com/event/...) by reading the embed page for the video's config link.
+
+## 1.3.67
+- Full-screen player: pressing the CC button now also shows a caption debug panel (the player's caption tracks, how many caption lines it reports, and whether the player's caption files can be read). It hides after a few seconds or when another button is pressed.
 
 ## Unreleased
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
