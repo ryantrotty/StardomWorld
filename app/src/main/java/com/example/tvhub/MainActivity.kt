@@ -3032,6 +3032,48 @@ class MainActivity : Activity() {
             return false;
           }
 
+          // The site's own "free" label on other pages, restyled as the gold pill used on the home page.
+          function tvStyleFreeBadges() {
+            if (!document.body) return;
+            var tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            var n;
+            var hits = [];
+            while ((n = tw.nextNode())) {
+              var v = n.nodeValue;
+              if (!v || v.length > 12) continue;
+              v = v.trim();
+              if (v === '無料' || /^free$/i.test(v)) hits.push(n);
+            }
+            hits.forEach(function(node) {
+              var el = node.parentElement;
+              if (!el || el.closest('#tv-test-grid, header, .tv-free-badge, .tv-lock-overlay, #tv-header-flex-wrapper')) return;
+              var badge = el;
+              while (badge.parentElement && badge.parentElement !== document.body &&
+                     badge.parentElement.textContent.trim().length <= 6) badge = badge.parentElement;
+              if (badge.getAttribute('data-tv-pill')) return;
+              badge.setAttribute('data-tv-pill', '1');
+              var set = function(node2, prop, val) { node2.style.setProperty(prop, val, 'important'); };
+              set(badge, 'background', '#FFB347');
+              set(badge, 'color', '#1a1a1a');
+              set(badge, 'border', 'none');
+              set(badge, 'border-radius', '6px');
+              set(badge, 'padding', '4px 10px');
+              set(badge, 'font-size', '13px');
+              set(badge, 'font-weight', '800');
+              set(badge, 'letter-spacing', '0.5px');
+              set(badge, 'line-height', '1.3');
+              set(badge, 'text-transform', 'uppercase');
+              set(badge, 'box-shadow', 'none');
+              set(badge, 'width', 'auto');
+              set(badge, 'height', 'auto');
+              Array.prototype.forEach.call(badge.querySelectorAll('*'), function(c) {
+                if (/^(I|SVG|IMG)$/i.test(c.tagName)) { set(c, 'display', 'none'); return; }
+                set(c, 'color', '#1a1a1a');
+                set(c, 'font-weight', '800');
+              });
+            });
+          }
+
           function absUrl(u) {
             try { return new URL(u, 'https://www.stardom-world.com/').href; } catch (e) { return u; }
           }
@@ -3102,32 +3144,46 @@ class MainActivity : Activity() {
             } catch (e) {}
             var found = [];
             var seen = {};
-            var page = 1;
-            var MAX_PAGES = 8;
+            var nextPage = 1;
+            var MAX_PAGES = 20;
+            var BATCH = 4;
             function done() {
               try { if (found.length) localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), items: found })); } catch (e) {}
             }
-            function next() {
-              if (page > MAX_PAGES || found.length >= 12) { done(); return; }
-              var url = '/contents/category/events?page=' + page;
-              page++;
-              fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(t) {
-                var doc = new DOMParser().parseFromString(t, 'text/html');
-                var items = doc.querySelectorAll('.content-list-item, article');
+            function scanPage(n) {
+              return fetch('/contents/category/events?page=' + n, { credentials: 'same-origin' })
+                .then(function(r) { return r.text(); })
+                .then(function(t) {
+                  var doc = new DOMParser().parseFromString(t, 'text/html');
+                  var res = [];
+                  Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item, article'), function(it) {
+                    if (!itemIsFree(it)) return;
+                    var info = cardInfo(it);
+                    if (info) res.push(info);
+                  });
+                  return res;
+                })
+                .catch(function() { return []; });
+            }
+            function nextBatch() {
+              if (nextPage > MAX_PAGES || found.length >= 12) { done(); return; }
+              var pages = [];
+              for (var k = 0; k < BATCH && nextPage <= MAX_PAGES; k++) pages.push(nextPage++);
+              Promise.all(pages.map(scanPage)).then(function(lists) {
                 var added = false;
-                Array.prototype.forEach.call(items, function(it) {
-                  if (!itemIsFree(it)) return;
-                  var info = cardInfo(it);
-                  if (!info || seen[info.href] || found.length >= 12) return;
-                  seen[info.href] = true;
-                  found.push(info);
-                  added = true;
+                lists.forEach(function(list) {
+                  list.forEach(function(info) {
+                    if (seen[info.href] || found.length >= 12) return;
+                    seen[info.href] = true;
+                    found.push(info);
+                    added = true;
+                  });
                 });
                 if (added) renderFreeRow(found.slice());
-                next();
-              }).catch(function() { next(); });
+                nextBatch();
+              });
             }
-            next();
+            nextBatch();
           }
 
           var HERO_FALLBACK = 'https://www.stardom-world.com/file_upload/images/mv_06.jpg';
@@ -3575,7 +3631,7 @@ class MainActivity : Activity() {
           } else {
             renderCustomTvGrid();
           }
-          setInterval(function() { renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
+          setInterval(function() { renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); tvStyleFreeBadges(); }, 1000);
         })();
     """.trimIndent()
 

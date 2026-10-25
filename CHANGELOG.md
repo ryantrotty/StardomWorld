@@ -6,6 +6,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.66
+- The site's own "free" labels on other pages now use the same gold pill as the home page.
+- Free to Watch row: looks through up to 20 events pages (four at a time) for free videos.
+
 ## 1.3.65
 - Free to Watch: spot the site's free label even when it has an icon inside it.
 
