@@ -1,6 +1,6 @@
 # Custom Artwork & Private Branding Guide
 
-The public repository ships with **generic placeholder artwork** (a gold star and the name "TV VIEWER").
+The public repository ships with **generic placeholder artwork** (the "HOSHI 星" logo).
 If you build the app yourself and want to use your own private logos, app icon, home-screen banner, and app title, you can add them to a local `branding-private/` directory. 
 
 Because `branding-private/` is listed in `.gitignore`, your custom images remain private on your computer and will **never** be committed or pushed to Git.
@@ -43,7 +43,7 @@ Place your custom PNG images into `branding-private/res/drawable-nodpi/` using t
 
 ## Custom App Name Label
 
-By default, the generic build app name is **"TV Viewer"**. To customize the app title on your TV home screen, create `branding-private/res/values/strings.xml`:
+By default, the generic build app name is **"Hoshi"**. To customize the app title on your TV home screen, create `branding-private/res/values/strings.xml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>

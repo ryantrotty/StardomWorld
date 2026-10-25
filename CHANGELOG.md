@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.64
+- New generic branding: "HOSHI 星" logo (ring seen from above) for the app icon, TV home banner, splash screen and header, replacing the gold star / "TV VIEWER" art. App name is now "Hoshi". The TV banner and icon are also set on the main activity so the home-screen tile uses the full banner. Private branding overrides work as before.
+
 ## Unreleased
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.

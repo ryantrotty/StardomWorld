@@ -1,4 +1,4 @@
-# TV Viewer for Stardom (Android TV / Google TV)
+# Hoshi 星 – TV launcher for Stardom (Android TV / Google TV)
 
 An **unofficial, fan-made** Android TV / Google TV app that opens [stardom-world.com](https://www.stardom-world.com)
 full-screen in a WebView and reshapes the site so it works well with a TV remote.
@@ -37,7 +37,7 @@ full-screen in a WebView and reshapes the site so it works well with a TV remote
 2. Copy it to your TV, for example with a file manager such as **X-plore** (its WiFi file sharing works from a
    computer's web browser) or a USB drive.
 3. On the TV, allow installs from that file manager when prompted, then open the APK to install it.
-4. Open **TV Viewer** from your apps row and sign in to your own account.
+4. Open **Hoshi** from your apps row and sign in to your own account.
 
 If Android says the package is invalid, the file was probably cut short during transfer. Compare the file size on
 the TV with the original and copy it again.
@@ -55,7 +55,7 @@ publish an APK on the Releases page.
 
 ### Customizing Artwork & Logos
 
-The repository ships with generic artwork ("TV VIEWER" gold star). If you build the app yourself and want to use custom logos, app icon, or title, add them to `branding-private/` (which is git-ignored):
+The repository ships with generic artwork (the "HOSHI 星" logo). If you build the app yourself and want to use custom logos, app icon, or title, add them to `branding-private/` (which is git-ignored):
 
 - **`branding-private/res/drawable-nodpi/ic_launcher.png`** (App Icon, 512 × 512 px)
 - **`branding-private/res/drawable-nodpi/banner.png`** (TV Banner, 1000 × 562 px)
