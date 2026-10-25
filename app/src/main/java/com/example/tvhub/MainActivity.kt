@@ -270,6 +270,26 @@ class MainActivity : Activity() {
             word-break: normal !important;
         }
         .tv-acct-menu { display: none !important; }
+        /* Signed-out home: rows that need a login are dimmed, and show a Log in button when focused. */
+        .tv-card { position: relative !important; }
+        .tv-card.tv-locked .tv-thumb { filter: brightness(0.35) saturate(0.6) !important; }
+        .tv-card.tv-locked .tv-title { opacity: 0.55 !important; }
+        .tv-lock-overlay {
+            position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+            display: none; align-items: center !important; justify-content: center !important;
+            z-index: 3 !important; pointer-events: none !important;
+        }
+        .tv-card:focus .tv-lock-overlay, .tv-card:hover .tv-lock-overlay { display: flex !important; }
+        .tv-lock-pill {
+            background: #FFB347 !important; color: #1a1a1a !important; font-weight: 700 !important;
+            font-size: 20px !important; padding: 10px 28px !important; border-radius: 10px !important;
+            border: 3px solid #ffffff !important;
+        }
+        .tv-free-badge {
+            position: absolute !important; top: 10px !important; right: 10px !important; z-index: 2 !important;
+            background: #FFB347 !important; color: #1a1a1a !important; font-weight: 800 !important;
+            font-size: 13px !important; padding: 4px 10px !important; border-radius: 6px !important; letter-spacing: 0.5px !important;
+        }
         /* Header controls share one 44px band, all centred on it. */
         #tv-header-flex-wrapper > * { align-self: center !important; margin-top: 0 !important; margin-bottom: 0 !important; top: 0 !important; transform: none !important; }
         #tv-header-flex-wrapper form, #tv-header-flex-wrapper .input-group, #tv-header-flex-wrapper .box-search {
@@ -2966,7 +2986,7 @@ class MainActivity : Activity() {
                   bgUrl = imgEl.src;
                 }
 
-                dataList.push({ href: href, title: itemTitle, bgUrl: bgUrl });
+                dataList.push({ href: href, title: itemTitle, bgUrl: bgUrl, free: itemIsFree(item) });
               });
 
               if (dataList.length > 0) {
@@ -2975,6 +2995,136 @@ class MainActivity : Activity() {
               }
             });
             return result;
+          }
+
+          // ---- Signed-out home: Free to Watch row + locked rows ----
+          function tvLang() { return document.cookie.indexOf('googtrans=/ja/ja') >= 0 ? 'ja' : 'en'; }
+          function tvT(en, ja) { return tvLang() === 'ja' ? ja : en; }
+
+          function tvIsLoggedOut() {
+            if (document.querySelector('input[type=password]')) return true;
+            var hdr = document.querySelector('header, .box-header, .nav-inner, .header');
+            if (!hdr) return false;
+            if (hdr.querySelector('a[href*="login"], a[href*="sign_in"], a[href*="signin"]')) return true;
+            var els = hdr.querySelectorAll('a, button');
+            for (var i = 0; i < els.length; i++) {
+              var t = (els[i].textContent || '').trim();
+              if (t.length < 30 && /log\s*in|ログイン|new registration|新規登録|新規会員/i.test(t)) return true;
+            }
+            return false;
+          }
+
+          // A card is "free" when it carries a free label (無料 / free) of its own.
+          function itemIsFree(it) {
+            var all = it.querySelectorAll('*');
+            for (var i = 0; i < all.length; i++) {
+              var el = all[i];
+              var cn = (typeof el.className === 'string') ? el.className : '';
+              if (/free/i.test(cn) && el.textContent.trim().length < 12) return true;
+              if (el.children.length === 0) {
+                var t = (el.textContent || '').trim();
+                if (t === '無料' || /^free$/i.test(t)) return true;
+              }
+            }
+            return false;
+          }
+
+          function absUrl(u) {
+            try { return new URL(u, 'https://www.stardom-world.com/').href; } catch (e) { return u; }
+          }
+
+          function cardInfo(item) {
+            var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+            if (!link || !link.getAttribute('href')) return null;
+            var thumbInner = item.querySelector('.content-thumbnail-box-inner, [style*="background-image"]');
+            var imgEl = item.querySelector('img');
+            var titleBox = item.querySelector('h3, .ttl-xs, .content-info-box');
+            var bgUrl = '';
+            if (thumbInner) {
+              var bg = (thumbInner.getAttribute('style') || '').match(/url\(['"]?(.*?)['"]?\)/);
+              if (bg && bg[1]) bgUrl = bg[1];
+            }
+            if (!bgUrl && imgEl) bgUrl = imgEl.getAttribute('data-src') || imgEl.getAttribute('data-original') || imgEl.getAttribute('src') || '';
+            return {
+              href: absUrl(link.getAttribute('href')),
+              title: titleBox ? sanitizeTitle(titleBox.textContent) : 'Stardom World Video',
+              bgUrl: bgUrl ? absUrl(bgUrl) : ''
+            };
+          }
+
+          var TV_CARD_CSS = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+          var TV_IMG_CSS = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+          var TV_TITLE_CSS = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
+
+          function renderFreeRow(items) {
+            var grid = document.getElementById('tv-test-grid');
+            if (!grid || !items.length) return;
+            var wrapper = grid.children[grid.children.length - 1];
+            if (!wrapper) return;
+            var old = document.getElementById('tv-free-row');
+            var hadFocus = old && old.contains(document.activeElement);
+            var html = '<h2 class="notranslate" translate="no" tabindex="-1" style="color:#FFB347; font-size:22px; margin-bottom:14px; font-weight:bold; outline:none !important; user-select:none !important;">' + tvT('Free to Watch', '無料で視聴') + '</h2>' +
+              '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+            items.forEach(function(item) {
+              var bgStyle = item.bgUrl ? 'background-image:url(' + item.bgUrl + ');' : '';
+              html += '<a class="tv-card" tabindex="0" href="' + item.href + '" style="' + TV_CARD_CSS + '"><span class="tv-free-badge notranslate" translate="no">' + tvT('FREE', '無料') + '</span><div class="tv-thumb" style="' + TV_IMG_CSS + ' ' + bgStyle + '"></div><div class="tv-title" style="' + TV_TITLE_CSS + '">' + item.title + '</div></a>';
+            });
+            html += '</div>';
+            if (old) {
+              var scrollL = old.querySelector('.tv-grid-row') ? old.querySelector('.tv-grid-row').scrollLeft : 0;
+              old.innerHTML = html;
+              var nr = old.querySelector('.tv-grid-row');
+              if (nr) nr.scrollLeft = scrollL;
+            } else {
+              var row = document.createElement('div');
+              row.id = 'tv-free-row';
+              row.style.cssText = 'margin-bottom:35px;';
+              row.innerHTML = html;
+              wrapper.insertBefore(row, wrapper.firstChild);
+            }
+          }
+
+          // Looks through the site's events pages for free-to-watch videos (signed-out only) and fills
+          // the row as they turn up. The result is kept for an hour so the home page opens quickly.
+          function loadFreeRow() {
+            if (window.__tvFreeStarted) return;
+            window.__tvFreeStarted = true;
+            var KEY = '__tvFreeRow1';
+            try {
+              var cached = JSON.parse(localStorage.getItem(KEY) || 'null');
+              if (cached && cached.items && cached.items.length && Date.now() - cached.t < 3600000) {
+                renderFreeRow(cached.items);
+                return;
+              }
+            } catch (e) {}
+            var found = [];
+            var seen = {};
+            var page = 1;
+            var MAX_PAGES = 8;
+            function done() {
+              try { if (found.length) localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), items: found })); } catch (e) {}
+            }
+            function next() {
+              if (page > MAX_PAGES || found.length >= 12) { done(); return; }
+              var url = '/contents/category/events?page=' + page;
+              page++;
+              fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(t) {
+                var doc = new DOMParser().parseFromString(t, 'text/html');
+                var items = doc.querySelectorAll('.content-list-item, article');
+                var added = false;
+                Array.prototype.forEach.call(items, function(it) {
+                  if (!itemIsFree(it)) return;
+                  var info = cardInfo(it);
+                  if (!info || seen[info.href] || found.length >= 12) return;
+                  seen[info.href] = true;
+                  found.push(info);
+                  added = true;
+                });
+                if (added) renderFreeRow(found.slice());
+                next();
+              }).catch(function() { next(); });
+            }
+            next();
           }
 
           var HERO_FALLBACK = 'https://www.stardom-world.com/file_upload/images/mv_06.jpg';
@@ -3193,12 +3343,17 @@ class MainActivity : Activity() {
             var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
             var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
 
+            var loggedOutNow = tvIsLoggedOut();
             if (allRowsData && allRowsData.length > 0) {
               allRowsData.forEach(function(rowSec) {
                 html += '<div style="margin-bottom:35px;"><h2 tabindex="-1" style="color:#FFB347; font-size:22px; margin-bottom:14px; font-weight:bold; outline:none !important; user-select:none !important;">' + rowSec.title + '</h2><div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
                 rowSec.items.forEach(function(item) {
                   var bgStyle = item.bgUrl ? 'background-image:url(' + item.bgUrl + ');' : '';
-                  html += '<a class="tv-card" tabindex="0" href="' + item.href + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + item.title + '</div></a>';
+                  var locked = loggedOutNow && !item.free;
+                  var cardHref = locked ? ('https://www.stardom-world.com/login?redirect_to=' + encodeURIComponent(item.href)) : item.href;
+                  html += '<a class="tv-card' + (locked ? ' tv-locked' : '') + '" tabindex="0" href="' + cardHref + '" style="' + cardCss + '">' +
+                    (locked ? '<div class="tv-lock-overlay"><span class="tv-lock-pill notranslate" translate="no">' + tvT('Log in', 'ログイン') + '</span></div>' : '') +
+                    '<div class="tv-thumb" style="' + imgCss + ' ' + bgStyle + '"></div><div class="tv-title" style="' + titleCss + '">' + item.title + '</div></a>';
                 });
                 html += '</div></div>';
               });
@@ -3222,6 +3377,7 @@ class MainActivity : Activity() {
             }
 
             updateHero();
+            if (loggedOutNow) loadFreeRow();
             var firstFocus = gridDiv.querySelector('.tv-hero-card, .tv-card');
             if (firstFocus) firstFocus.focus();
           }
