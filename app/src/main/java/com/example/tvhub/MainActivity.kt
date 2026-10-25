@@ -2910,7 +2910,7 @@ class MainActivity : Activity() {
 
           var css = document.createElement('style');
           css.id = 'tv-hide-body-search';
-          css.textContent = '[class*="search-detail"],[class*="detail-search"],[class*="advanced-search"],[class*="search-advanced"],[class*="search-modal"],[class*="search-form-area"]{display:none !important;}';
+          css.textContent = '#search-section,[class*="search-detail"],[class*="detail-search"],[class*="advanced-search"],[class*="search-advanced"],[class*="search-modal"],[class*="search-form-area"]{display:none !important;}';
           (document.head || document.documentElement).appendChild(css);
 
           var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer';
