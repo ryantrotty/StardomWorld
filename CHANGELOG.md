@@ -6,6 +6,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Repository cleanup for sharing: generic placeholder artwork, optional private branding folder, README,
   license, contributing guide, issue/PR templates and automatic APK builds.
 
+## 1.3.65
+- Free to Watch: spot the site's free label even when it has an icon inside it.
+
 ## 1.3.64
 - Signed-out home: a new "Free to Watch" row under the banner, filled from the free videos on the site's events pages (kept for an hour). The other rows are dimmed with a Log in button on the focused card; choosing one opens the login page and returns to that video afterwards.
 

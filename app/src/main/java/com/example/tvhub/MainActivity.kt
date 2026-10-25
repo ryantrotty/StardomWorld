@@ -3021,10 +3021,13 @@ class MainActivity : Activity() {
               var el = all[i];
               var cn = (typeof el.className === 'string') ? el.className : '';
               if (/free/i.test(cn) && el.textContent.trim().length < 12) return true;
-              if (el.children.length === 0) {
-                var t = (el.textContent || '').trim();
-                if (t === '無料' || /^free$/i.test(t)) return true;
+              // The label's own text (ignoring any icon element inside it) is just 無料 / free.
+              var own = '';
+              for (var k = 0; k < el.childNodes.length; k++) {
+                if (el.childNodes[k].nodeType === 3) own += el.childNodes[k].nodeValue;
               }
+              own = own.trim();
+              if (own === '無料' || /^free$/i.test(own)) return true;
             }
             return false;
           }
