@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.80
+- Home page, signed in: a "Favorites" row below "Recently Watched" shows the first 12 favorites, followed by a "Show All" tile that opens the Favorites page when there are more.
+- "Recently Watched" is left out entirely when the viewing history is empty, without the background page load used before.
+
 ## 1.3.79
 - Home page: signed-in viewers get a "Recently Watched" row as the last row (above Return to Top), built from the Viewing history on the site's My Page. It looks like the other rows. Signed-out viewers, or an empty history, show nothing extra.
 
