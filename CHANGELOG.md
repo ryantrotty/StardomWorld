@@ -3,7 +3,7 @@
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
 ## 1.3.69
-- Full-screen player: the CC button now cycles CC: EN, CC: 日本語 and Off. Captions are drawn by the app; each line is translated (free Google translation) only when its language differs from the chosen one. If the caption file cannot be loaded, it falls back to the player's own captions and shows the diagnostics panel.
+- Under the hood: Added groundwork for translated closed captions. The feature is off in public builds for now, so the CC button behaves as before.
 
 ## 1.3.64
 - Full-screen player bar: new quality button (cycles Auto and the available resolutions, e.g. 1080p / 720p) and a shorter speed button that just shows the rate (1.0x).

@@ -17,6 +17,9 @@ android {
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
         buildConfigField("String", "START_URL", "\"$startUrl\"")
+
+        val hasPrivateBranding = rootProject.file("branding-private/res").exists()
+        buildConfigField("Boolean", "ENABLE_CC_TRANSLATE", hasPrivateBranding.toString())
     }
 
     buildFeatures {
