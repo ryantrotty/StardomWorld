@@ -2710,6 +2710,39 @@ class MainActivity : Activity() {
             return true;
           };
 
+          // Caption debugging: counts the caption lines the player reports while a track is showing.
+          window.__tvCueCount = 0;
+          window.__tvLastCue = '';
+          function hookCues(f, p) {
+            if (f.__tvCueHooked) return;
+            f.__tvCueHooked = true;
+            try {
+              p.on('cuechange', function(e) {
+                window.__tvCueCount++;
+                try { window.__tvLastCue = (e && e.cues && e.cues.length) ? e.cues.map(function(c) { return c.text; }).join(' / ') : ''; } catch (x) {}
+              });
+            } catch (x) {}
+          }
+
+          // Fills window.__tvCcJson (asynchronously) with what the player says about its caption tracks.
+          window.__tvCcRefresh = function() {
+            var f = playerFrame();
+            if (!f) { window.__tvCcJson = JSON.stringify({ err: 'no player frame' }); return; }
+            if (typeof Vimeo === 'undefined' || !Vimeo.Player) { window.__tvCcJson = JSON.stringify({ src: f.src, err: 'player SDK not on page' }); return; }
+            var p = null;
+            try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
+            if (!p) { window.__tvCcJson = JSON.stringify({ src: f.src, err: 'could not attach to player' }); return; }
+            hookCues(f, p);
+            p.getTextTracks().then(function(tr) {
+              window.__tvCcJson = JSON.stringify({
+                src: f.src,
+                tracks: (tr || []).map(function(t) { return { label: t.label, language: t.language, kind: t.kind, mode: t.mode }; }),
+                cues: window.__tvCueCount,
+                last: window.__tvLastCue
+              });
+            }).catch(function(e) { window.__tvCcJson = JSON.stringify({ src: f.src, err: String((e && e.message) || e) }); });
+          };
+
           // Latest player state for the app's own full-screen button bar.
           window.__tvRefreshStatus = function() {
             var f = playerFrame();
@@ -2717,6 +2750,7 @@ class MainActivity : Activity() {
             var p = null;
             try { p = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f)); } catch (err) { p = null; }
             if (!p) return;
+            hookCues(f, p);
             Promise.all([p.getPaused(), p.getCurrentTime(), p.getDuration(), p.getVolume(), p.getPlaybackRate(), p.getTextTracks(), p.getQualities().catch(function() { return []; })]).then(function(r) {
               var cc = 'Off';
               var tr = r[5] || [];
@@ -3532,6 +3566,7 @@ class MainActivity : Activity() {
     private var fsBtnCc: android.widget.TextView? = null
     private var fsBtnSpeed: android.widget.TextView? = null
     private var fsBtnQuality: android.widget.TextView? = null
+    private var fsDebugView: android.widget.TextView? = null
 
     private val fsStatusRunnable: Runnable = object : Runnable {
         override fun run() {
@@ -3569,6 +3604,7 @@ class MainActivity : Activity() {
         paint(false)
         tv.setOnFocusChangeListener { _, focused -> paint(focused) }
         tv.setOnClickListener {
+            fsDebugView?.visibility = View.GONE
             onClick()
             fullScreenInteraction()
             handler.postDelayed({ pollFsStatus() }, 250)
@@ -3620,7 +3656,10 @@ class MainActivity : Activity() {
         add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
         fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
         add(fsBtnMute!!)
-        fsBtnCc = fsButton(tr("CC: Off", "字幕: オフ")) { playerCommand("captions", 0) }
+        fsBtnCc = fsButton(tr("CC: Off", "字幕: オフ")) {
+            playerCommand("captions", 0)
+            showCcDebug()
+        }
         add(fsBtnCc!!)
         fsBtnQuality = fsButton(tr("Auto", "自動")) { playerCommand("quality", 0) }
         add(fsBtnQuality!!)
@@ -3631,6 +3670,16 @@ class MainActivity : Activity() {
             hideCustomView()
         })
         o.addView(row)
+
+        // Caption debug panel: only shown after the CC button is pressed.
+        val dbg = android.widget.TextView(this)
+        dbg.setTextColor(0xFFFFD27A.toInt())
+        dbg.textSize = 12f
+        dbg.typeface = android.graphics.Typeface.MONOSPACE
+        dbg.setPadding(0, (12 * density).toInt(), 0, 0)
+        dbg.visibility = View.GONE
+        o.addView(dbg)
+        fsDebugView = dbg
 
         o.visibility = View.GONE
         root.addView(
@@ -3660,6 +3709,7 @@ class MainActivity : Activity() {
 
     private fun hideFsOverlay() {
         fsControlsMode = false
+        fsDebugView?.visibility = View.GONE
         handler.removeCallbacks(fsStatusRunnable)
         fsOverlay?.visibility = View.GONE
     }
@@ -3695,6 +3745,112 @@ class MainActivity : Activity() {
             } catch (_: Exception) {
             }
         }
+    }
+
+    // ---- Caption debugging (shown after the CC button is pressed) ----
+    private fun showCcDebug() {
+        val dbg = fsDebugView ?: return
+        dbg.text = "CC debug: reading..."
+        dbg.visibility = View.VISIBLE
+        webView.evaluateJavascript("window.__tvCueCount = window.__tvCueCount || 0; window.__tvCcJson = ''; window.__tvCcRefresh && window.__tvCcRefresh(); 1", null)
+        handler.postDelayed({ readCcDebug() }, 800)
+        handler.postDelayed({ if (dbg.visibility == View.VISIBLE) readCcDebug() }, 4000)
+        handler.postDelayed({ dbg.visibility = View.GONE }, 30000)
+    }
+
+    private fun readCcDebug() {
+        val dbg = fsDebugView ?: return
+        webView.evaluateJavascript("window.__tvCcJson || ''") { raw ->
+            if (raw == null || raw == "null") return@evaluateJavascript
+            val str = try { org.json.JSONTokener(raw).nextValue() as? String ?: "" } catch (_: Exception) { "" }
+            if (str.isEmpty()) return@evaluateJavascript
+            val j = try { org.json.JSONObject(str) } catch (_: Exception) { return@evaluateJavascript }
+            val sb = StringBuilder("CC debug\n")
+            if (j.has("err")) sb.append("Player: ").append(j.optString("err")).append('\n')
+            val tracks = j.optJSONArray("tracks")
+            sb.append("Player tracks: ").append(tracks?.length() ?: 0).append('\n')
+            if (tracks != null) {
+                for (i in 0 until tracks.length()) {
+                    val t = tracks.getJSONObject(i)
+                    sb.append("  ").append(t.optString("language")).append(" | ").append(t.optString("label"))
+                        .append(" | ").append(t.optString("kind")).append(" | ").append(t.optString("mode")).append('\n')
+                }
+            }
+            sb.append("Lines seen while showing: ").append(j.optInt("cues", 0))
+            val last = j.optString("last", "")
+            if (last.isNotEmpty()) sb.append("  last: ").append(last.take(60))
+            sb.append('\n')
+            dbg.text = sb.toString() + "Caption file: checking..."
+            val src = j.optString("src", "")
+            if (src.isEmpty()) {
+                dbg.text = sb.toString() + "Caption file: no player address"
+                return@evaluateJavascript
+            }
+            val ua = webView.settings.userAgentString
+            Thread {
+                val report = ccFileReport(src, ua)
+                runOnUiThread { if (dbg.visibility == View.VISIBLE) dbg.text = sb.toString() + report }
+            }.start()
+        }
+    }
+
+    // Looks up the player's own caption files (with the site as referrer) and reports whether they can be read.
+    private fun ccFileReport(src: String, ua: String): String {
+        val out = StringBuilder()
+        try {
+            val m = Regex("video/(\\d+)").find(src) ?: return "Caption file: no video id in " + src.take(60)
+            val id = m.groupValues[1]
+            val h = Regex("[?&]h=([0-9a-fA-F]+)").find(src)?.groupValues?.get(1)
+            val cfg = "https://player.vimeo.com/video/" + id + "/config" + (if (h != null) "?h=" + h else "")
+            val (code, body) = httpGetText(cfg, 400000, ua)
+            out.append("Config: HTTP ").append(code).append('\n')
+            if (code != 200) return out.toString()
+            val tt = org.json.JSONObject(body).optJSONObject("request")?.optJSONArray("text_tracks")
+            out.append("Config caption tracks: ").append(tt?.length() ?: 0).append('\n')
+            if (tt != null) {
+                for (i in 0 until tt.length().coerceAtMost(4)) {
+                    val t = tt.getJSONObject(i)
+                    var u = t.optString("url", "")
+                    if (u.startsWith("/")) u = "https://player.vimeo.com" + u
+                    out.append("  ").append(t.optString("lang")).append(" | ").append(t.optString("label"))
+                        .append(" | ").append(t.optString("kind")).append(" -> ")
+                    if (u.isEmpty()) {
+                        out.append("no file link\n")
+                    } else {
+                        val (c2, txt) = httpGetText(u, 2000000, ua)
+                        val cues = Regex("-->").findAll(txt).count()
+                        out.append("file HTTP ").append(c2).append(", ").append(cues).append(" lines, ")
+                            .append(txt.length / 1024).append(" KB\n")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            out.append("Caption file error: ").append(e.javaClass.simpleName).append(' ').append((e.message ?: "").take(80))
+        }
+        return out.toString()
+    }
+
+    private fun httpGetText(url: String, maxChars: Int, ua: String): Pair<Int, String> {
+        val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        c.connectTimeout = 8000
+        c.readTimeout = 8000
+        c.setRequestProperty("Referer", "https://www.stardom-world.com/")
+        c.setRequestProperty("User-Agent", ua)
+        val code = c.responseCode
+        val text = try {
+            (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { r ->
+                val buf = CharArray(8192)
+                val sb = StringBuilder()
+                while (sb.length < maxChars) {
+                    val n = r.read(buf)
+                    if (n < 0) break
+                    sb.append(buf, 0, n)
+                }
+                sb.toString()
+            } ?: ""
+        } catch (_: Exception) { "" }
+        c.disconnect()
+        return Pair(code, text)
     }
 
     // Takes keyboard focus off the player frame (a focused player keeps its controls on screen).
