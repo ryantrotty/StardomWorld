@@ -228,10 +228,10 @@ class MainActivity : Activity() {
             min-width: 0 !important;
         }
         form.form-inline, .box-search form, .box-search .input-group, .input-group.flex-nowrap {
-            width: 320px !important;
-            max-width: 320px !important;
-            flex: 0 1 320px !important;
-            min-width: 200px !important;
+            width: 260px !important;
+            max-width: 260px !important;
+            flex: 0 1 260px !important;
+            min-width: 170px !important;
             height: 44px !important;
             margin: 0 !important;
             background: transparent !important;
@@ -270,23 +270,39 @@ class MainActivity : Activity() {
             word-break: normal !important;
         }
         .tv-acct-menu { display: none !important; }
+        /* Header controls share one 44px band, all centred on it. */
+        #tv-header-flex-wrapper > * { align-self: center !important; margin-top: 0 !important; margin-bottom: 0 !important; top: 0 !important; transform: none !important; }
+        #tv-header-flex-wrapper form, #tv-header-flex-wrapper .input-group, #tv-header-flex-wrapper .box-search {
+            margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important;
+            top: 0 !important; position: relative !important; transform: none !important;
+        }
+        #tv-header-flex-wrapper .input-group { align-items: stretch !important; }
+        #tv-section-select { height: 44px !important; margin-top: 0 !important; margin-bottom: 0 !important; align-self: center !important; }
+        .dropdown-wrapper { display: flex !important; align-items: center !important; height: 44px !important; margin: 0 !important; padding: 0 !important; }
+        .box-dropdown-key { display: inline-flex !important; align-items: center !important; height: 44px !important; margin: 0 !important; padding: 0 8px !important; line-height: 1 !important; }
         #tv-lang-li {
             margin-left: auto !important;
             padding-left: 16px !important;
         }
         #tv-section-select {
-            width: 320px !important;
-            max-width: 320px !important;
-            flex: 0 1 320px !important;
-            min-width: 200px !important;
+            width: 260px !important;
+            max-width: 260px !important;
+            flex: 0 1 260px !important;
+            min-width: 170px !important;
             height: 44px !important;
             background-color: #1a1a1a !important;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='44' viewBox='0 0 48 44'><rect width='48' height='44' fill='%232a2a2a'/><rect width='1' height='44' fill='%23333333'/><path d='M17 18 L24 26 L31 18' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+            background-repeat: no-repeat !important;
+            background-position: right center !important;
+            background-size: 48px 44px !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
             color: #ffffff !important;
             border: 1px solid #333333 !important;
             border-radius: 4px !important;
             font-size: 15px !important;
             font-weight: 500 !important;
-            padding: 0 14px !important;
+            padding: 0 56px 0 14px !important;
             margin: 0 16px 0 0 !important;
             outline: none !important;
             cursor: pointer !important;
@@ -354,6 +370,8 @@ class MainActivity : Activity() {
             box-sizing: border-box !important;
             vertical-align: middle !important;
             text-decoration: none !important;
+            white-space: nowrap !important;
+            flex: 0 0 auto !important;
         }
         #tv-fav-header-btn:focus, #tv-fav-header-btn:hover {
             color: #ffffff !important;
@@ -1178,7 +1196,7 @@ class MainActivity : Activity() {
                         defaultOpt.value = '';
                         defaultOpt.disabled = true;
                         defaultOpt.selected = true;
-                        defaultOpt.textContent = isJa ? 'カテゴリー・セクションを選択...' : 'Select Category / Section...';
+                        defaultOpt.textContent = isJa ? 'カテゴリー' : 'CATEGORIES';
                         select.appendChild(defaultOpt);
 
                         var links = globalNav.querySelectorAll('a');
@@ -1270,8 +1288,9 @@ class MainActivity : Activity() {
                         if (!langLi) {
                           langLi = document.createElement('li');
                           langLi.id = 'tv-lang-li';
-                          langLi.style.setProperty('display', 'inline-block', 'important');
-                          langLi.style.setProperty('vertical-align', 'middle', 'important');
+                          langLi.style.setProperty('display', 'flex', 'important');
+                          langLi.style.setProperty('align-items', 'center', 'important');
+                          langLi.style.setProperty('height', '44px', 'important');
                           langLi.style.setProperty('margin-left', '8px', 'important');
                           btnWrap.appendChild(langLi);
                         }
@@ -1417,6 +1436,11 @@ class MainActivity : Activity() {
                         bs.setProperty('list-style', 'none', 'important');
                         Array.from(btnWrap.children).forEach(function(li) {
                           li.style.setProperty('float', 'none', 'important');
+                          li.style.setProperty('display', 'flex', 'important');
+                          li.style.setProperty('align-items', 'center', 'important');
+                          li.style.setProperty('height', '44px', 'important');
+                          li.style.setProperty('padding-top', '0', 'important');
+                          li.style.setProperty('padding-bottom', '0', 'important');
                           li.style.setProperty('margin', '0 6px', 'important');
                           li.style.setProperty('white-space', 'nowrap', 'important');
                           li.style.setProperty('max-width', 'none', 'important');
@@ -1435,6 +1459,45 @@ class MainActivity : Activity() {
                             li.style.setProperty('padding-left', '16px', 'important');
                           }
                         });
+
+                        // The box holding the buttons is the same 44px band as the search and category boxes.
+                        var btnHolder = btnWrap.parentElement;
+                        if (btnHolder && btnHolder !== rowEl) {
+                          btnHolder.style.setProperty('display', 'flex', 'important');
+                          btnHolder.style.setProperty('align-items', 'center', 'important');
+                          btnHolder.style.setProperty('height', '44px', 'important');
+                          btnHolder.style.setProperty('padding-top', '0', 'important');
+                          btnHolder.style.setProperty('padding-bottom', '0', 'important');
+                        }
+                        btnWrap.style.setProperty('height', '44px', 'important');
+
+                        // Logo: half the distance from the left edge it had before.
+                        var logoChild = null;
+                        Array.from(rowEl.children).forEach(function(ch) { if (logoEl && ch.contains(logoEl)) logoChild = ch; });
+                        if (logoChild) {
+                          logoChild.style.setProperty('margin-left', '0', 'important');
+                          var logoLeft = logoEl.getBoundingClientRect().left;
+                          if (logoLeft > 4) logoChild.style.setProperty('margin-left', (-logoLeft / 2).toFixed(1) + 'px', 'important');
+                        }
+
+                        // Long account names: more than 8 characters before "-san" are cut short.
+                        var keyEl = btnWrap.querySelector('.box-dropdown-key');
+                        if (keyEl) {
+                          var tw = document.createTreeWalker(keyEl, NodeFilter.SHOW_TEXT, null, false);
+                          var tn;
+                          while ((tn = tw.nextNode())) {
+                            var raw = tn.nodeValue || '';
+                            if (!raw.trim()) continue;
+                            var mm = raw.match(/^(\s*)(.+?)(\s*[-\u2010]?\s*(?:san|\u3055\u3093))?(\s*)$/i);
+                            if (mm) {
+                              var nameChars = Array.from(mm[2]);
+                              if (nameChars.length > 8 && mm[2].indexOf('\u2026') < 0) {
+                                tn.nodeValue = mm[1] + nameChars.slice(0, 8).join('') + '\u2026' + (mm[3] || '') + mm[4];
+                              }
+                            }
+                            break;
+                          }
+                        }
                       }
                     }
 
