@@ -438,6 +438,12 @@ class MainActivity : Activity() {
             font-weight: inherit !important;
             display: inline !important;
         }
+        /* Sort bar on listing pages: evenly spaced, centred, readable, with one clean arrow after each label. */
+        .box-sort { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 14px 30px !important; padding: 14px 0 18px 0 !important; }
+        .box-sort a, .box-sort a.btn { position: relative !important; display: inline-flex !important; align-items: center !important; gap: 10px !important; font-size: 23px !important; line-height: 1.2 !important; padding: 10px 6px 12px 6px !important; margin: 0 !important; background-image: none !important; white-space: nowrap !important; }
+        .box-sort a::before { content: none !important; display: none !important; }
+        .box-sort a::after { content: "\25BE" !important; display: inline-block !important; position: static !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; background: none !important; border: none !important; font-size: 20px !important; line-height: 1 !important; color: inherit !important; transform: none !important; }
+        .box-sort a i, .box-sort a svg, .box-sort a img, .box-sort a [class*="icon"], .box-sort a [class*="arrow"], .box-sort a [class^="fa"] { display: none !important; }
         /* Unified Sub-Page Video Card & Rounded Thumbnail Styling */
         .content-thumbnail, .content-thumbnail-box, .content-thumbnail-box-inner, .tile-inner {
             border-radius: 8px 8px 0 0 !important;
@@ -2259,6 +2265,11 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
+        fun promptSearch(hint: String, initial: String) {
+            handler.post { showSearchPrompt(hint, initial) }
+        }
+
+        @android.webkit.JavascriptInterface
         fun startVoiceSearch(langTag: String) {
             handler.post {
                 try {
@@ -3033,6 +3044,11 @@ class MainActivity : Activity() {
             ['English Commentary', '/contents/category/english'],
             ['[Special Feature] 5★STAR GP 2026', '/contents/category/fivestar2026']
           ];
+          var NEW_KEY = 'tvNewHrefV1';
+          function showsList() {
+            return [['New', lsGet(NEW_KEY) || '/']].concat(SHOWS);
+          }
+          function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           var CHAMPS = [
             ["IWGP Women's", '/contents/category/iwgp'],
             ['World of Stardom', '/contents/category/world-sd'],
@@ -3072,8 +3088,7 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
             '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
-            '#tv-sm .tv-sm-list > :first-child{margin-top:auto;}',
-            '#tv-sm .tv-sm-list > :last-child{margin-bottom:auto;}',
+            '#tv-sm .tv-sm-logorow{margin:auto 0;padding:18px 0;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
             '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
@@ -3088,7 +3103,7 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:46px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:22px;font-family:inherit;padding:0;}',
             '#tv-sm .tv-sm-mic{flex:0 0 auto;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;border:3px solid transparent;box-sizing:border-box;outline:none;cursor:pointer;}',
             '#tv-sm .tv-sm-mic:focus{border-color:#F4C242;background:#0F151C;}',
-            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:20px 0 20px 0;min-height:68px;}',
+            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:68px;}',
             '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
@@ -3119,7 +3134,7 @@ class MainActivity : Activity() {
           function group(label, rows) {
             var h = '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
             rows.forEach(function(r) {
-              h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(BASE + r[1]) + '">' + esc(r[0]) + '</a>';
+              h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(r[0]) + '</a>';
             });
             return h + '</div></div>';
           }
@@ -3154,9 +3169,8 @@ class MainActivity : Activity() {
             var logo = logoSrc();
             var h = '';
             h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '"><span class="tv-sm-mic" tabindex="0" role="button" data-mic="1" aria-label="Voice search"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
-            h += '<a class="tv-sm-item tv-sm-home" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a>';
-            h += '<div class="tv-sm-list">';
-            h += group(T('Shows', '番組'), SHOWS);
+            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
+            h += group(T('Shows', '番組'), showsList());
             h += group(T('Championships', '王座'), CHAMPS);
             h += group(T('Years', '年別'), years);
             h += group(T('Current Wrestlers', '現役選手'), wrestlers(CURRENT_W));
@@ -3369,8 +3383,11 @@ class MainActivity : Activity() {
               if (inInput) {
                 stop(e);
                 if (ae.value && submitSearch()) return;
-                try { ae.focus(); } catch (e3) {}
-                try { if (window.AndroidHost && window.AndroidHost.showKeyboard) window.AndroidHost.showKeyboard(); } catch (e4) {}
+                try {
+                  if (window.AndroidHost && window.AndroidHost.promptSearch) { window.AndroidHost.promptSearch(ae.getAttribute('placeholder') || '', ae.value || ''); return; }
+                  ae.focus();
+                  if (window.AndroidHost && window.AndroidHost.showKeyboard) window.AndroidHost.showKeyboard();
+                } catch (e4) {}
                 return;
               }
               if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
@@ -3399,6 +3416,25 @@ class MainActivity : Activity() {
               setTimeout(function() { if (hint.parentNode) hint.parentNode.removeChild(hint); }, 13000);
             }
           }
+          // The "New" entry in Shows opens wherever the home page's New row sends its View All tile: remembered
+          // from the home page, which is where that row is drawn.
+          function rememberNewHref() {
+            var grid = document.getElementById('tv-test-grid');
+            if (!grid) return false;
+            var rows = grid.querySelectorAll('.tv-grid-row');
+            if (!rows.length) return false;
+            var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
+            var last = tiles.length ? tiles[tiles.length - 1] : null;
+            if (last && last.href) lsSet(NEW_KEY, last.href);
+            return true;
+          }
+          if (isHome()) {
+            var nhTries = 0;
+            var nhTimer = setInterval(function() {
+              nhTries++;
+              if (rememberNewHref() || nhTries > 40) clearInterval(nhTimer);
+            }, 1000);
+          }
           if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addCues);
           else addCues();
 
@@ -3411,10 +3447,10 @@ class MainActivity : Activity() {
             var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
             var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
             if (isJa()) return fallback;
-            var all = [].concat(SHOWS, CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W));
+            var all = [].concat(showsList(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W));
             for (var y = new Date().getFullYear(); y >= 2011; y--) all.push([String(y), '/contents/category/' + y]);
             for (var i = 0; i < all.length; i++) {
-              var u = new URL(BASE + all[i][1]);
+              var u = new URL(all[i][1], BASE);
               if (u.pathname !== loc.pathname) continue;
               if (u.pathname === '/contents/search') {
                 var up = u.searchParams;
@@ -5235,6 +5271,61 @@ class MainActivity : Activity() {
 
     // The header's category list as an app dialog: dark panel, clearly lighter highlight on the focused
     // row, no radio buttons. Choosing a row hands the choice back to the page's own list.
+    // The search box: a small box with the system keyboard (which has its own microphone key on Google TV).
+    private fun showSearchPrompt(hint: String, initial: String) {
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        val panel = android.widget.LinearLayout(this)
+        panel.orientation = android.widget.LinearLayout.VERTICAL
+        val bg = android.graphics.drawable.GradientDrawable()
+        bg.setColor(0xFF3A4656.toInt())
+        bg.cornerRadius = 14 * density
+        panel.background = bg
+        val pad = (24 * density).toInt()
+        panel.setPadding(pad, pad, pad, pad)
+
+        val edit = android.widget.EditText(this)
+        edit.setText(initial)
+        edit.setSelection(edit.text.length)
+        edit.hint = hint
+        edit.setHintTextColor(0xFFB8C2CF.toInt())
+        edit.setTextColor(Color.WHITE)
+        edit.textSize = 24f
+        edit.setSingleLine(true)
+        edit.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
+        edit.inputType = android.text.InputType.TYPE_CLASS_TEXT
+        val submit = {
+            val text = edit.text.toString().trim()
+            dialog.dismiss()
+            if (text.isNotEmpty()) {
+                webView.evaluateJavascript("(function(){ if (window.__tvVoiceResult) window.__tvVoiceResult(" + org.json.JSONObject.quote(text) + "); })()", null)
+            }
+        }
+        edit.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
+                actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
+                submit()
+                true
+            } else false
+        }
+        panel.addView(edit, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT))
+        dialog.setContentView(panel)
+        dialog.window?.let { w ->
+            w.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            val dm = resources.displayMetrics
+            w.setLayout((dm.widthPixels * 0.62f).toInt(), android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+            w.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
+            w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        }
+        dialog.show()
+        edit.requestFocus()
+        edit.post {
+            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.showSoftInput(edit, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
+        }
+    }
+
     private fun showSectionPicker(labelsJson: String, pickFn: String, focusSelector: String) {
         val labels = ArrayList<String>()
         try {

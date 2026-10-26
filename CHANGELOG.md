@@ -10,6 +10,8 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - Menu search: OK on the search box now opens the on-screen keyboard, and a blue microphone at the right end of the box starts voice search (press Right from the box to reach it).
 - Menu: more room around the logo, slightly larger text, and the list sits centred in the space so it spreads evenly if items are added.
 - Every destination page (shows, championships, years, wrestlers, My Videos, Community, search results) now starts with a title in the home-row style: gold bar and large white text, lined up with the first video card.
+- Menu: OK on the search box now opens a small search box with the system keyboard (its microphone key included); the blue microphone beside the box still starts voice search. The logo sits evenly between the search box and the first item. "New" is the first entry in Shows (it opens whatever the home page's New row sends its View All tile to).
+- Sort bar on listing pages (Registration date / Number of plays / Number of favorites / Price): larger text, centred, evenly spaced, with one arrow after each label that no longer overlaps the text.
 - The home page content now starts higher, since the header is gone.
 
 ## 1.3.83
