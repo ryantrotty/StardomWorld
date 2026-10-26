@@ -2552,7 +2552,7 @@ class MainActivity : Activity() {
             var carousels = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide');
             if (!carousels.length) return [];
             var items = Array.from(carousels[0].querySelectorAll('.content-list-item, .sub-category-list-item')).filter(function(el) {
-              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned');
+              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned') && !el.classList.contains('tv-viewall-slide');
             });
             var out = [];
             items.forEach(function(it) {
@@ -3582,6 +3582,50 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    // Video pages: the related-videos row gets its "View all" as the last tile (same look as the main page
+    // rows) instead of the small text link above the row.
+    private val relatedViewAllJs = """
+        (function(){
+          if (window.__tvRelatedViewAll) return;
+          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          window.__tvRelatedViewAll = true;
+
+          var st = document.createElement('style');
+          st.textContent = '.box-related-content .ttl-wrap > a{display:none !important;}' +
+            '.tv-viewall-slide .tv-va-in{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;box-sizing:border-box;height:165px;border-radius:8px;background:#11171E;border:2px solid #2a323c;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:bold;}' +
+            '.tv-viewall-slide .tv-va-in span+span{color:#F4C242;font-size:34px;line-height:1;}';
+          (document.head || document.documentElement).appendChild(st);
+
+          var started = Date.now();
+          function tryAdd() {
+            var c = document.querySelector('.box-related-content .js-list-slide, .js-list-slide');
+            if (!c || c.querySelector('.tv-viewall-slide')) return !!(c && c.querySelector('.tv-viewall-slide'));
+            var $ = window.jQuery || window.$;
+            var isSlick = c.classList.contains('slick-initialized');
+            // Wait for the carousel to be reversed and re-initialised (it is, within about 4 seconds).
+            if (!isSlick && Date.now() - started < 6000) return false;
+            if (!window.__tvReverseCarouselDone && Date.now() - started < 4600) return false;
+            var sec = c.closest('.box-related-content') || c.parentElement;
+            var link = sec ? sec.querySelector('.ttl-wrap > a[href]') : null;
+            var href = link ? link.href : '';
+            if (!href) return true;
+            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+            var html = '<div class="content-list-item tv-viewall-slide"><a class="notranslate" translate="no" href="' + href + '"><span class="tv-va-in"><span>' + (ja ? 'すべて見る' : 'View All') + '</span><span>&#8594;</span></span></a></div>';
+            try {
+              if (isSlick && $ && $(c).slick) { $(c).slick('slickAdd', html); }
+              else {
+                var track = c.querySelector('.slick-track') || c;
+                track.insertAdjacentHTML('beforeend', html);
+              }
+            } catch (e) { return true; }
+            return true;
+          }
+          var timer = setInterval(function() {
+            if (tryAdd() || Date.now() - started > 15000) clearInterval(timer);
+          }, 400);
+        })();
+    """.trimIndent()
+
     private val listNavJs = """
         (function(){
           if (window.__tvListNav) return;
@@ -4547,6 +4591,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(sideMenuJs, null)
         view.evaluateJavascript(playerPageJs, null)
+        view.evaluateJavascript(relatedViewAllJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.87
+- Video pages: the related-videos row now ends with a "View All" tile (same look as the main page rows) and the small "View all" text link above the row is hidden. The tile is skipped by auto-play-next.
+- Includes everything in 1.3.86, 1.3.85 and 1.3.84.
+
 ## 1.3.86
 - Video pages: the player now sits lower, under a title bar with the video's name (gold marker, large white text). The menu stays on the side tab: press Left on the first related video to open it (Left inside the player still rewinds). The edge tab is shown on video pages again.
 - Up from the player no longer sends focus to the hidden old header (which lost focus); with nothing above the player it now stays put. Down only leaves the player when there is a video to land on.
