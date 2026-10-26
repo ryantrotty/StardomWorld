@@ -107,6 +107,9 @@ class MainActivity : Activity() {
         // per row but smaller text.
         private const val LAYOUT_WIDTH = 1440
 
+        // Temporary: shows a focus/key log on video pages while the player focus problems are tracked down.
+        private const val PLAYER_DEBUG = true
+
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
@@ -2516,7 +2519,7 @@ class MainActivity : Activity() {
               });
               target = cards[0] || null;
             } else {
-              target = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+              target = document.getElementById('tv-player-menu') || document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
             }
             try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
             if (target) {
@@ -3299,6 +3302,7 @@ class MainActivity : Activity() {
             return true;
           }
           window.__tvMenuClose = closeMenu;
+          window.__tvOpenMenu = openMenu;
 
           function go(rel) {
             closeMenu();
@@ -3409,7 +3413,7 @@ class MainActivity : Activity() {
 
           // The always-visible edge tab and the first-launch hint.
           function addCues() {
-            if (isDetail() || document.getElementById('tv-sm-tab')) return;
+            if (document.getElementById('tv-sm-tab')) return;
             var host = document.body || document.documentElement;
             var tab = document.createElement('div');
             tab.id = 'tv-sm-tab';
@@ -3505,6 +3509,140 @@ class MainActivity : Activity() {
             addPageTitle();
             if (ptTries > 25) clearInterval(ptTimer);
           }, 800);
+        })();
+    """.trimIndent()
+
+    // Video (detail) pages: a title bar above the player with a Menu button (so the menu is reachable without
+    // Left, which rewinds), Up/Down between related videos, the bar and the player, and a debug panel that
+    // stays on screen and records where focus goes (temporary, for tracking down lost focus).
+    private val playerPageJs = """
+        (function(){
+          if (window.__tvPlayerPage) return;
+          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          window.__tvPlayerPage = true;
+
+          function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+          function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
+          function focusPlayer() {
+            var f = playerFrame();
+            if (!f) return false;
+            try { f.focus(); } catch (e) {}
+            try { f.scrollIntoView({ block: 'center' }); } catch (e) {}
+            return true;
+          }
+          function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+
+          var st = document.createElement('style');
+          st.id = 'tv-player-style';
+          st.textContent = [
+            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
+            '#tv-player-menu{display:flex;align-items:center;gap:10px;flex:0 0 auto;height:54px;padding:0 22px;border-radius:27px;background:#172029;border:3px solid #2a323c;color:#ffffff;font:700 22px Arial,Helvetica,sans-serif;cursor:pointer;outline:none;}',
+            '#tv-player-menu:focus{border-color:#F4C242;}',
+            '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
+            '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '#tv-dbg{position:fixed;right:12px;bottom:12px;width:660px;max-height:52vh;overflow:hidden;box-sizing:border-box;background:rgba(0,0,0,.9);border:2px solid #F4C242;border-radius:6px;color:#ffffff;font:14px/1.35 monospace;padding:8px 10px;z-index:100001;white-space:pre-wrap;word-break:break-all;pointer-events:none;}'
+          ].join('\n');
+          (document.head || document.documentElement).appendChild(st);
+
+          function titleText() {
+            var el = document.querySelector('.content-ttl-wrap h1, .content-ttl-wrap h2, h1.ttl-lg, h1, h2.ttl-md');
+            var t = el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            var d = (document.title || '').replace(/\s*[|｜\-]\s*Stardom World.*$/i, '').trim();
+            return t || d;
+          }
+
+          var bar = null, btn = null;
+          function addBar() {
+            if (!document.body) return;
+            if (!bar) {
+              bar = document.createElement('div');
+              bar.id = 'tv-player-bar';
+              bar.innerHTML = '<button id="tv-player-menu" type="button" class="notranslate" translate="no" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span></span></button><span class="tv-pb-bar"></span><span class="tv-pb-title"></span>';
+              document.body.insertBefore(bar, document.body.firstChild);
+              btn = bar.querySelector('#tv-player-menu');
+              btn.addEventListener('keydown', function(e) {
+                var k = e.keyCode;
+                if (k === 13 || k === 23 || k === 37) {
+                  e.preventDefault(); e.stopPropagation();
+                  if (window.__tvOpenMenu) window.__tvOpenMenu();
+                } else if (k === 40) {
+                  e.preventDefault(); e.stopPropagation();
+                  focusPlayer();
+                } else if (k === 38 || k === 39) {
+                  e.preventDefault(); e.stopPropagation();
+                }
+              }, true);
+              btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.__tvOpenMenu) window.__tvOpenMenu();
+              });
+            }
+            var lab = btn.querySelector('span');
+            var want = isJa() ? 'メニュー' : 'Menu';
+            if (lab.textContent !== want) lab.textContent = want;
+            var tt = bar.querySelector('.tv-pb-title');
+            var txt = titleText();
+            if (txt && tt.textContent !== txt) tt.textContent = txt;
+          }
+          addBar();
+          var barTries = 0;
+          var barTimer = setInterval(function() { barTries++; addBar(); if (barTries > 40) clearInterval(barTimer); }, 1000);
+
+          // Up from the first row of related videos goes to the player.
+          window.addEventListener('keydown', function(e) {
+            if (e.keyCode !== 38 || menuOpen()) return;
+            var ae = document.activeElement;
+            if (!ae || !ae.classList || !(ae.classList.contains('tv-thumbnail-link') || ae.classList.contains('tv-card'))) return;
+            var c = ae.closest('.content-list-item, article') || ae;
+            var fr = c.getBoundingClientRect();
+            var above = false;
+            Array.prototype.forEach.call(document.querySelectorAll('a.tv-thumbnail-link'), function(a) {
+              if (a.closest('.slick-cloned')) return;
+              var cc = a.closest('.content-list-item, article') || a;
+              var r = cc.getBoundingClientRect();
+              if (r.width > 0 && r.height > 0 && fr.top - r.top > fr.height * 0.5) above = true;
+            });
+            if (above) return;
+            if (focusPlayer()) { e.preventDefault(); e.stopPropagation(); }
+          }, true);
+
+          // ---- debug panel (stays on screen; temporary) ----
+          var dbg = document.createElement('div');
+          dbg.id = 'tv-dbg';
+          var lines = [];
+          var t0 = Date.now();
+          function stamp() { return ((Date.now() - t0) / 1000).toFixed(1) + 's'; }
+          function desc(el) {
+            if (!el || el === document.body) return 'body/none';
+            var d = el.tagName.toLowerCase();
+            if (el.id) d += '#' + el.id;
+            if (el.classList && el.classList.length) d += '.' + el.classList[0];
+            if (el.getAttribute && el.getAttribute('href')) d += ' ' + el.getAttribute('href').slice(-26);
+            if (el.tagName === 'IFRAME') d += ' ' + (el.src || '').replace(/^https?:\/\//, '').slice(0, 30);
+            return d;
+          }
+          var state = { pf: '?', fs: '?', cursor: '?' };
+          function render() {
+            dbg.textContent = 'PLAYER DEBUG (temporary)  menu:' + (menuOpen() ? 'OPEN' : 'closed') + '\n' +
+              'focus now: ' + desc(document.activeElement) + '\n' +
+              'app: playerFocused=' + state.pf + ' fullscreen=' + state.fs + ' cursor=' + state.cursor + '\n' +
+              '-----\n' + lines.join('\n');
+          }
+          function log(m) { lines.push(stamp() + ' ' + m); if (lines.length > 14) lines.shift(); render(); }
+          document.body.appendChild(dbg);
+          var lastDesc = '';
+          setInterval(function() {
+            var d = desc(document.activeElement);
+            if (d !== lastDesc) { lastDesc = d; log('focus -> ' + d); } else render();
+          }, 150);
+          window.addEventListener('keydown', function(e) {
+            log('page key ' + e.keyCode + ' on ' + desc(document.activeElement));
+          }, true);
+          // Called by the app for every remote key it sees: if the page never logs the same key, the player frame took it.
+          window.__tvDbgKey = function(code, pf, fs, cursor) {
+            state.pf = pf; state.fs = fs; state.cursor = cursor;
+            log('APP key ' + code + ' pf=' + pf + ' fs=' + fs);
+          };
         })();
     """.trimIndent()
 
@@ -4472,6 +4610,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(sideMenuJs, null)
+        view.evaluateJavascript(playerPageJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
@@ -5429,6 +5568,16 @@ class MainActivity : Activity() {
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
+        }
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 && PLAYER_DEBUG) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_BACK -> {
+                    webView.evaluateJavascript(
+                        "window.__tvDbgKey && window.__tvDbgKey('" + KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_") + "'," + playerFocused + "," + fullScreenActive() + "," + cursorMode + ")", null
+                    )
+                }
+            }
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {

@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.86
+- Video pages: the player now sits lower, under a title bar with the video's name (gold bar, large white text) and a Menu button at its left. Press Up from the player to reach the Menu button, OK (or Left) to open the menu; Down goes back to the player. Left inside the player still rewinds. This also fixes Up from the player leaving focus nowhere (it used to aim at the hidden old header).
+- Up from the first row of related videos now goes straight to the player.
+- TEMPORARY: a debug panel stays on screen on video pages, logging what has focus and every remote key the app and the page see, so lost focus can be traced. It will be removed once the focus problems are fixed.
+- Includes everything in 1.3.85 and 1.3.84.
+
 ## 1.3.85
 - Intro screens: a new "The menu" screen after "Moving around" explains how to open the menu (Left on the first video of a row or list), how to close it (Right or Back) and what is inside, with a small drawing. The language screen now points to the menu's language switch instead of the old header button. (New installs only; no "what's new" logic for people who already saw the intro.)
 - Includes everything in 1.3.84 (the left slide-out menu).
