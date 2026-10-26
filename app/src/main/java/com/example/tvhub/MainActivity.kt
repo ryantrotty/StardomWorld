@@ -2501,6 +2501,7 @@ class MainActivity : Activity() {
             if (inPlayer !== last) {
               last = inPlayer;
               try { window.AndroidHost.setPlayerFocused(inPlayer); } catch (e) {}
+              try { if (window.__tvDbgNote) window.__tvDbgNote('player focus flag -> ' + inPlayer); } catch (e) {}
             }
           }
           setInterval(check, 150);
@@ -2518,17 +2519,21 @@ class MainActivity : Activity() {
                 return !iframe || (iframe.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING);
               });
               target = cards[0] || null;
-            } else {
-              target = document.getElementById('tv-player-menu') || document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+            }
+            // Up has nowhere to go above the player (the menu is the edge tab, opened with Left from the
+            // related videos), and a missing target must never leave focus nowhere: stay in the player.
+            if (!target) {
+              try { if (window.__tvDbgNote) window.__tvDbgNote('leave ' + dir + ': no target, staying'); } catch (e) {}
+              try { window.AndroidHost.setPlayerFocused(true); } catch (e) {}
+              return false;
             }
             try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
-            if (target) {
-              target.focus();
-              target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            }
+            target.focus();
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
             last = false;
             try { window.AndroidHost.setPlayerFocused(false); } catch (e) {}
-            return !!target;
+            try { if (window.__tvDbgNote) window.__tvDbgNote('leave ' + dir + ' -> ' + (target.getAttribute('href') || target.tagName)); } catch (e) {}
+            return true;
           };
         })();
     """.trimIndent()
@@ -3536,11 +3541,9 @@ class MainActivity : Activity() {
           st.id = 'tv-player-style';
           st.textContent = [
             '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
-            '#tv-player-menu{display:flex;align-items:center;gap:10px;flex:0 0 auto;height:54px;padding:0 22px;border-radius:27px;background:#172029;border:3px solid #2a323c;color:#ffffff;font:700 22px Arial,Helvetica,sans-serif;cursor:pointer;outline:none;}',
-            '#tv-player-menu:focus{border-color:#F4C242;}',
             '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
             '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-            '#tv-dbg{position:fixed;right:12px;bottom:12px;width:660px;max-height:52vh;overflow:hidden;box-sizing:border-box;background:rgba(0,0,0,.9);border:2px solid #F4C242;border-radius:6px;color:#ffffff;font:14px/1.35 monospace;padding:8px 10px;z-index:100001;white-space:pre-wrap;word-break:break-all;pointer-events:none;}'
+            '#tv-dbg{position:fixed;right:12px;bottom:12px;width:820px;max-height:58vh;overflow:hidden;box-sizing:border-box;background:rgba(0,0,0,.9);border:2px solid #F4C242;border-radius:6px;color:#ffffff;font:bold 20px/1.3 monospace;padding:8px 10px;z-index:100001;white-space:pre-wrap;word-break:break-all;pointer-events:none;}'
           ].join('\n');
           (document.head || document.documentElement).appendChild(st);
 
@@ -3551,35 +3554,15 @@ class MainActivity : Activity() {
             return t || d;
           }
 
-          var bar = null, btn = null;
+          var bar = null;
           function addBar() {
             if (!document.body) return;
             if (!bar) {
               bar = document.createElement('div');
               bar.id = 'tv-player-bar';
-              bar.innerHTML = '<button id="tv-player-menu" type="button" class="notranslate" translate="no" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span></span></button><span class="tv-pb-bar"></span><span class="tv-pb-title"></span>';
+              bar.innerHTML = '<span class="tv-pb-bar"></span><span class="tv-pb-title"></span>';
               document.body.insertBefore(bar, document.body.firstChild);
-              btn = bar.querySelector('#tv-player-menu');
-              btn.addEventListener('keydown', function(e) {
-                var k = e.keyCode;
-                if (k === 13 || k === 23 || k === 37) {
-                  e.preventDefault(); e.stopPropagation();
-                  if (window.__tvOpenMenu) window.__tvOpenMenu();
-                } else if (k === 40) {
-                  e.preventDefault(); e.stopPropagation();
-                  focusPlayer();
-                } else if (k === 38 || k === 39) {
-                  e.preventDefault(); e.stopPropagation();
-                }
-              }, true);
-              btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.__tvOpenMenu) window.__tvOpenMenu();
-              });
             }
-            var lab = btn.querySelector('span');
-            var want = isJa() ? 'メニュー' : 'Menu';
-            if (lab.textContent !== want) lab.textContent = want;
             var tt = bar.querySelector('.tv-pb-title');
             var txt = titleText();
             if (txt && tt.textContent !== txt) tt.textContent = txt;
@@ -3628,7 +3611,7 @@ class MainActivity : Activity() {
               'app: playerFocused=' + state.pf + ' fullscreen=' + state.fs + ' cursor=' + state.cursor + '\n' +
               '-----\n' + lines.join('\n');
           }
-          function log(m) { lines.push(stamp() + ' ' + m); if (lines.length > 14) lines.shift(); render(); }
+          function log(m) { lines.push(stamp() + ' ' + m); if (lines.length > 11) lines.shift(); render(); }
           document.body.appendChild(dbg);
           var lastDesc = '';
           setInterval(function() {
@@ -3639,6 +3622,7 @@ class MainActivity : Activity() {
             log('page key ' + e.keyCode + ' on ' + desc(document.activeElement));
           }, true);
           // Called by the app for every remote key it sees: if the page never logs the same key, the player frame took it.
+          window.__tvDbgNote = function(m) { log(m); };
           window.__tvDbgKey = function(code, pf, fs, cursor) {
             state.pf = pf; state.fs = fs; state.cursor = cursor;
             log('APP key ' + code + ' pf=' + pf + ' fs=' + fs);
@@ -5723,7 +5707,6 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
                     if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                         val dir = if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) "down" else "up"
-                        playerFocused = false
                         webView.evaluateJavascript("window.__tvLeavePlayer && window.__tvLeavePlayer('" + dir + "')", null)
                     }
                     return true
