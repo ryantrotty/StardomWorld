@@ -3758,16 +3758,25 @@ class MainActivity : Activity() {
 
           var bar = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
 
+          var buildTries = 0;
           function build() {
             var f = playerFrame();
             if (!f || !f.parentElement) return false;
+            // The bar goes right above the related-videos section: the player's own wrapper can clip anything
+            // placed inside it (it is a fixed-ratio box), which cut the bar off. Wait briefly for the section.
+            var sec = document.querySelector('.box-related-content');
+            if (!sec && ++buildTries < 8) return false;
             f.setAttribute('tabindex', '-1');   // the frame itself is never a keyboard stop
             bar = document.createElement('div');
             bar.id = 'tv-pbar';
             var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
             ids.forEach(function(id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
             bar.innerHTML = html + '</span>';
-            f.parentElement.insertAdjacentElement('afterend', bar);
+            if (sec && sec.parentElement) sec.parentElement.insertBefore(bar, sec);
+            else {
+              var host = f.parentElement;
+              host.insertAdjacentElement('afterend', bar);
+            }
             timeEl = bar.querySelector('.tv-pb-time');
             fillEl = bar.querySelector('.tv-pb-fill');
             Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
@@ -3785,10 +3794,11 @@ class MainActivity : Activity() {
             var f = playerFrame();
             if (!bar || !f) return;
             var r = f.getBoundingClientRect();
-            var pr = bar.parentElement.getBoundingClientRect();
             if (r.width < 50) return;
             bar.style.width = Math.round(r.width) + 'px';
-            bar.style.marginLeft = Math.max(0, Math.round(r.left - pr.left)) + 'px';
+            bar.style.marginLeft = '0px';
+            var bl = bar.getBoundingClientRect().left;
+            bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';
           }
 
           function fmt(sec) {
@@ -3822,7 +3832,8 @@ class MainActivity : Activity() {
             var b = btns[id || lastId] || btns[ids[0]];
             if (!b) return false;
             try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
-            try { b.scrollIntoView({ block: 'center' }); } catch (e) {}
+            // Title, picture and bar all fit on screen together, so show the page from the top.
+            try { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
             return true;
           };
 
