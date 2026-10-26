@@ -123,6 +123,8 @@ class MainActivity : Activity() {
         .content-thumbnail-box-inner {
             background-color: transparent !important;
         }
+        /* The top header lives in the left slide-out menu now. */
+        header, .box-header, .nav-inner, .header, #header { display: none !important; }
         html.tv-home .content-list, html.tv-home .box-section, html.tv-home .main-visual, html.tv-home .slider-inner,
         html.tv-home .box-main-visual, html.tv-home .container.box-main, html.tv-home .news-wrap {
             display: none !important;
@@ -598,6 +600,7 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
+    @Volatile private var sideMenuOpen = false   // the left slide-out menu is showing (set by the page)
     private var authPending = false
     private var loginStarting = false
     private var loginRevealing = false
@@ -1851,6 +1854,7 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                sideMenuOpen = false
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
@@ -2240,6 +2244,11 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun pickAccountItem(labelsJson: String) {
             handler.post { showSectionPicker(labelsJson, "__tvPickAccount", "[data-tv-acct] .box-dropdown-key, [data-tv-acct] a, [data-tv-acct] button") }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun setSideMenuOpen(open: Boolean) {
+            sideMenuOpen = open
         }
 
         @android.webkit.JavascriptInterface
@@ -2960,7 +2969,7 @@ class MainActivity : Activity() {
           if (!(p === '/' || p === '/index.html' || p === '')) return;
           window.__tvHomeAnchor = true;
 
-          var TARGET = 90;   // distance from the top of the page to the banner, in CSS pixels
+          var TARGET = 28;   // distance from the top of the page to the banner, in CSS pixels
           var started = performance.now();
           function step() {
             var grid = document.getElementById('tv-test-grid');
@@ -2977,6 +2986,327 @@ class MainActivity : Activity() {
             else setTimeout(step, 400);
           }
           requestAnimationFrame(step);
+        })();
+    """.trimIndent()
+
+    // The left slide-out menu: everything the site's top header used to hold (search, categories, favorites,
+    // account, language) lives here instead. Left on the first card of any row or list opens it, Right closes it.
+    private val sideMenuJs = """
+        (function(){
+          if (window.__tvSideMenu) return;
+          var path0 = location.pathname;
+          if (path0.indexOf('/login') === 0) return;
+          window.__tvSideMenu = true;
+
+          var BASE = 'https://www.stardom-world.com';
+          var SHOWS = [
+            ['Tournament Archives (Newest Tournaments)', '/contents/category/events'],
+            ['LIVE & On-demand streaming', '/contents/category/live-archives'],
+            ['Big Match', '/contents/category/bm2025'],
+            ['English Commentary', '/contents/category/english'],
+            ['[Special Feature] 5★STAR GP 2026', '/contents/category/fivestar2026']
+          ];
+          var CHAMPS = [
+            ["IWGP Women's", '/contents/category/iwgp'],
+            ['World of Stardom', '/contents/category/world-sd'],
+            ['Wonder of Stardom', '/contents/category/wonder-sd'],
+            ['High Speed', '/contents/category/high_speed']
+          ];
+          var MINE = [
+            ['Recently Watched', '/mypage'],
+            ['My Favorites', '/mypage/favorites']
+          ];
+          var COMMUNITY = [
+            ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1'],
+            ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1']
+          ];
+          var HINT_KEY = 'tvMenuHintV1';
+
+          function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+          function T(en, ja) { return isJa() ? ja : en; }
+          function isHome() { return path0 === '/' || path0 === '/index.html' || path0 === ''; }
+          function isDetail() { return /^\/contents\/[0-9]+/.test(path0); }
+          function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+          function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+          function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+          var st = document.createElement('style');
+          st.id = 'tv-sm-style';
+          st.textContent = [
+            '#tv-sm-scrim{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,8,12,.66);z-index:99998;opacity:0;pointer-events:none;transition:opacity .18s;}',
+            'html.tv-sm-open #tv-sm-scrim{opacity:1;}',
+            '#tv-sm{position:fixed;left:0;top:0;bottom:0;width:430px;box-sizing:border-box;background:#0F151C !important;border-right:1px solid #222b36;z-index:99999;transform:translateX(-104%);transition:transform .18s;padding:26px 24px 22px 24px;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#fff;}',
+            'html.tv-sm-open #tv-sm{transform:none;}',
+            '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;}',
+            '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
+            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:50px;padding:0 14px;font-size:22px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
+            '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
+            '#tv-sm .tv-sm-sub{font-size:20px;font-weight:500;color:#c9d2dc !important;min-height:44px;}',
+            '#tv-sm .tv-sm-subs{margin-left:24px;padding-left:10px;border-left:2px solid #2a323c;display:none;}',
+            '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-subs{display:block;}',
+            '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-item{color:#F4C242 !important;}',
+            '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-item .tv-sm-chev{transform:rotate(90deg);}',
+            '#tv-sm .tv-sm-chev{flex:0 0 auto;transition:transform .12s;}',
+            '#tv-sm .tv-sm-search{gap:12px;justify-content:flex-start;background:#172029 !important;border:1px solid #2a323c !important;padding:0 14px;}',
+            '#tv-sm .tv-sm-search:focus-within{border:3px solid #F4C242 !important;padding:0 12px;}',
+            '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:44px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:20px;font-family:inherit;padding:0;}',
+            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:16px;margin-top:6px;}',
+            '#tv-sm .tv-sm-home img{max-height:40px;width:auto;object-fit:contain;}',
+            '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-foot .tv-sm-item{width:auto;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block !important;line-height:44px;min-height:50px;}',
+            '#tv-sm .tv-sm-lang{flex:0 0 auto;display:flex !important;width:auto;padding:0;gap:0;min-height:44px;border:2px solid #2a323c !important;border-radius:22px;overflow:hidden;}',
+            '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
+            '#tv-sm .tv-sm-lang span{padding:10px 16px;font-size:17px;font-weight:700;color:#c9d2dc;}',
+            '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B0F14;}',
+            '#tv-sm-tab{position:fixed;left:0;top:42%;width:26px;height:110px;border-radius:0 12px 12px 0;background:rgba(17,23,30,.92);border:1px solid #2a323c;border-left:0;z-index:99990;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
+            'html.tv-sm-open #tv-sm-tab{display:none;}',
+            '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B0F14;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
+            'html.tv-sm-open #tv-sm-hint{display:none;}'
+          ].join('\n');
+          (document.head || document.documentElement).appendChild(st);
+
+          var isOpen = false;
+          var prevFocus = null;
+          var panel = null, scrim = null;
+
+          function setNativeFlag(v) {
+            try { if (window.AndroidHost && window.AndroidHost.setSideMenuOpen) window.AndroidHost.setSideMenuOpen(!!v); } catch (e) {}
+          }
+
+          function chev() {
+            return '<svg class="tv-sm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+          }
+          function group(label, rows) {
+            var h = '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+            rows.forEach(function(r) {
+              h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(BASE + r[1]) + '">' + esc(r[0]) + '</a>';
+            });
+            return h + '</div></div>';
+          }
+          function signedIn() { return !!document.querySelector('.box-dropdown-key'); }
+          function acctName() {
+            var k = document.querySelector('.box-dropdown-key');
+            var t = k ? (k.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            return t || T('Account', 'アカウント');
+          }
+          function logoSrc() {
+            var img = document.querySelector('h1 a img, .nav-inner h1 img, header a img, .logo img');
+            return img && img.src ? img.src : '';
+          }
+
+          function build() {
+            var years = [];
+            var y0 = new Date().getFullYear();
+            for (var y = y0; y >= 2011; y--) years.push([String(y), '/contents/category/' + y]);
+            var ja = isJa();
+            var logo = logoSrc();
+            var h = '';
+            h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '"></div>';
+            h += '<a class="tv-sm-item tv-sm-home" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a>';
+            h += '<div class="tv-sm-list">';
+            h += group(T('Shows', '番組'), SHOWS);
+            h += group(T('Championships', '王座'), CHAMPS);
+            h += group(T('Years', '年別'), years);
+            h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-wrest="1"><span>' + esc(T('Wrestlers', '選手')) + '</span>' + chev() + '</div></div>';
+            if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE);
+            h += group(T('Community', 'みんなの動画'), COMMUNITY);
+            h += '</div>';
+            h += '<div class="tv-sm-foot">';
+            if (signedIn()) h += '<div class="tv-sm-item" tabindex="0" role="button" data-acct="1">' + esc(acctName()) + '</div>';
+            else h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login">' + esc(T('Log in', 'ログイン')) + '</a>';
+            h += '<div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">日本語</span></div>';
+            h += '</div>';
+            panel.innerHTML = h;
+          }
+
+          function ensureDom() {
+            if (panel && panel.isConnected) return;
+            var host = document.body || document.documentElement;
+            scrim = document.createElement('div');
+            scrim.id = 'tv-sm-scrim';
+            panel = document.createElement('div');
+            panel.id = 'tv-sm';
+            panel.className = 'notranslate';
+            panel.setAttribute('translate', 'no');
+            host.appendChild(scrim);
+            host.appendChild(panel);
+          }
+
+          function items() {
+            if (!panel) return [];
+            return Array.prototype.filter.call(panel.querySelectorAll('.tv-sm-item'), function(el) {
+              return el.offsetParent !== null || el.getClientRects().length > 0;
+            });
+          }
+          function focusItem(el) {
+            if (!el) return;
+            try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+            try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+          }
+          function move(d) {
+            var list = items();
+            var i = list.indexOf(document.activeElement);
+            if (i < 0) i = 0; else i = Math.max(0, Math.min(list.length - 1, i + d));
+            focusItem(list[i]);
+          }
+          function collapseAll(except) {
+            Array.prototype.forEach.call(panel.querySelectorAll('.tv-sm-grp.tv-sm-expanded'), function(g) {
+              if (g !== except) g.classList.remove('tv-sm-expanded');
+            });
+          }
+
+          function openMenu() {
+            if (isOpen) return;
+            ensureDom();
+            build();
+            prevFocus = document.activeElement;
+            isOpen = true;
+            document.documentElement.classList.add('tv-sm-open');
+            lsSet(HINT_KEY, '99');
+            var hint = document.getElementById('tv-sm-hint');
+            if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
+            setNativeFlag(true);
+            setTimeout(function() { focusItem(items()[2] || items()[0]); }, 30);
+          }
+          function closeMenu() {
+            if (!isOpen) return false;
+            isOpen = false;
+            document.documentElement.classList.remove('tv-sm-open');
+            setNativeFlag(false);
+            try { if (document.activeElement && panel && panel.contains(document.activeElement)) document.activeElement.blur(); } catch (e) {}
+            var back = prevFocus;
+            if (back && back.isConnected) {
+              try { back.focus({ preventScroll: true }); } catch (e) { try { back.focus(); } catch (e2) {} }
+            }
+            return true;
+          }
+          window.__tvMenuClose = closeMenu;
+
+          function go(rel) {
+            closeMenu();
+            window.location.href = /^https?:/.test(rel) ? rel : (BASE + rel);
+          }
+
+          function submitSearch() {
+            var q = document.getElementById('tv-sm-q');
+            var v = q ? q.value.trim() : '';
+            if (!v) return false;
+            closeMenu();
+            window.location.href = BASE + '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(v);
+            return true;
+          }
+
+          function activate(el) {
+            if (el.getAttribute('data-grp')) {
+              var g = el.parentNode;
+              var was = g.classList.contains('tv-sm-expanded');
+              collapseAll(null);
+              if (!was) { g.classList.add('tv-sm-expanded'); }
+              focusItem(el);
+              return;
+            }
+            if (el.getAttribute('data-go')) { go(el.getAttribute('data-go')); return; }
+            if (el.getAttribute('data-wrest')) { var q = document.getElementById('tv-sm-q'); if (q) focusItem(q); return; }
+            if (el.getAttribute('data-lang')) {
+              var next = isJa() ? 'en' : 'ja';
+              if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') window.AndroidHost.toggleLanguage(next);
+              return;
+            }
+            if (el.getAttribute('data-acct')) {
+              var key = document.querySelector('.box-dropdown-key');
+              closeMenu();
+              if (key) key.click(); else window.location.href = BASE + '/mypage';
+              return;
+            }
+          }
+
+          function stop(e) { e.preventDefault(); e.stopPropagation(); }
+
+          function cardRect(a) {
+            var c = a.closest('.content-list-item, article') || a;
+            return c.getBoundingClientRect();
+          }
+          function atLeftEdge(ae) {
+            if (!ae || ae === document.body || ae === document.documentElement) return true;
+            if (ae.classList.contains('tv-card')) return !ae.previousElementSibling;
+            if (ae.classList.contains('tv-thumbnail-link')) {
+              var r = cardRect(ae);
+              var min = r.left;
+              Array.prototype.forEach.call(document.querySelectorAll('a.tv-thumbnail-link'), function(a) {
+                if (a.closest('.slick-cloned')) return;
+                var rr = cardRect(a);
+                if (rr.width > 0 && rr.height > 0 && Math.abs(rr.top - r.top) < r.height && rr.left < min) min = rr.left;
+              });
+              return r.left <= min + 12;
+            }
+            return false;
+          }
+
+          window.addEventListener('keydown', function(e) {
+            var k = e.keyCode;
+            if (!isOpen) {
+              if (k !== 37) return;
+              var ae0 = document.activeElement;
+              var tag = ae0 && ae0.tagName;
+              if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+              if (isDetail() && !(ae0 && ae0.classList && (ae0.classList.contains('tv-thumbnail-link') || ae0.classList.contains('tv-card')))) return;
+              if (atLeftEdge(ae0)) { stop(e); openMenu(); }
+              return;
+            }
+            var ae = document.activeElement;
+            var inInput = !!(ae && ae.id === 'tv-sm-q');
+            if (k === 40) { stop(e); move(1); return; }
+            if (k === 38) { stop(e); move(-1); return; }
+            if (k === 39) {
+              if (inInput && ae.value) return;   // let the cursor move inside typed text
+              stop(e); closeMenu(); return;
+            }
+            if (k === 37) {
+              if (inInput && ae.value) return;
+              stop(e);
+              if (ae && ae.classList && ae.classList.contains('tv-sm-sub')) {
+                var par = ae.parentNode.parentNode;
+                var head = par && par.firstElementChild;
+                if (head) { par.classList.remove('tv-sm-expanded'); focusItem(head); }
+              } else if (ae && ae.parentNode && ae.parentNode.classList && ae.parentNode.classList.contains('tv-sm-expanded')) {
+                ae.parentNode.classList.remove('tv-sm-expanded');
+              }
+              return;
+            }
+            if (k === 27) { stop(e); closeMenu(); return; }
+            if (k === 13 || k === 23 || k === 32 && !inInput) {
+              if (inInput) {
+                if (ae.value && submitSearch()) { stop(e); }
+                return;   // empty: the OK press opens the keyboard
+              }
+              if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
+            }
+          }, true);
+
+          // The always-visible edge tab and the first-launch hint.
+          function addCues() {
+            if (isDetail() || document.getElementById('tv-sm-tab')) return;
+            var host = document.body || document.documentElement;
+            var tab = document.createElement('div');
+            tab.id = 'tv-sm-tab';
+            tab.setAttribute('aria-hidden', 'true');
+            tab.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+            host.appendChild(tab);
+            var shown = parseInt(lsGet(HINT_KEY) || '0', 10) || 0;
+            if (isHome() && shown < 3) {
+              lsSet(HINT_KEY, String(shown + 1));
+              var hint = document.createElement('div');
+              hint.id = 'tv-sm-hint';
+              hint.className = 'notranslate';
+              hint.setAttribute('translate', 'no');
+              hint.textContent = '◀  ' + T('Press Left for the menu', '左キーでメニュー');
+              host.appendChild(hint);
+              setTimeout(function() { hint.style.opacity = '0'; }, 12000);
+              setTimeout(function() { if (hint.parentNode) hint.parentNode.removeChild(hint); }, 13000);
+            }
+          }
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addCues);
+          else addCues();
         })();
     """.trimIndent()
 
@@ -3943,6 +4273,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
+        view.evaluateJavascript(sideMenuJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
@@ -4915,6 +5246,12 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (sideMenuOpen) {
+                        // Back puts the side menu away before it does anything else.
+                        webView.evaluateJavascript("(function(){ return window.__tvMenuClose ? window.__tvMenuClose() : false; })()", null)
+                        sideMenuOpen = false
+                        return true
+                    }
                     if (awaitingLogin && !onboardingShowing) {
                         // Backing out of the login page: the normal signed-out start.
                         exitGuideToSite()
