@@ -3005,37 +3005,46 @@ class MainActivity : Activity() {
           window.__tvSideMenu = true;
 
           var BASE = 'https://www.stardom-world.com';
+          // Each entry: [English label, path, Japanese label]
           var SHOWS = [
-            ['Tournament Archives (Newest Tournaments)', '/contents/category/events'],
-            ['LIVE & On-demand streaming', '/contents/category/live-archives'],
-            ['Big Match', '/contents/category/bm2025'],
-            ['English Commentary', '/contents/category/english'],
-            ['[Special Feature] 5★STAR GP 2026', '/contents/category/fivestar2026']
+            ['Tournament Archives (Newest Tournaments)', '/contents/category/events', '大会アーカイブス（新着大会）'],
+            ['LIVE & On-demand streaming', '/contents/category/live-archives', 'LIVE&見逃し配信'],
+            ['Big Match', '/contents/category/bm2025', 'ビッグマッチ'],
+            ['English Commentary', '/contents/category/english', 'English Commentary'],
+            ['[Special Feature] 5\u2605STAR GP 2026', '/contents/category/fivestar2026', '【特集】5\u2605STAR GP 2026']
           ];
           var NEW_KEY = 'tvNewHrefV1';
           function showsList() {
-            return [['New', lsGet(NEW_KEY) || '/']].concat(SHOWS);
+            return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS);
           }
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           var CHAMPS = [
-            ["IWGP Women's", '/contents/category/iwgp'],
-            ['World of Stardom', '/contents/category/world-sd'],
-            ['Wonder of Stardom', '/contents/category/wonder-sd'],
-            ['High Speed', '/contents/category/high_speed']
+            ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
+            ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
+            ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
+            ['High Speed', '/contents/category/high_speed', 'ハイスピード']
           ];
           var MINE = [
-            ['Recently Watched', '/mypage'],
-            ['My Favorites', '/mypage/favorites']
+            ['Recently Watched', '/mypage', '最近視聴した動画'],
+            ['My Favorites', '/mypage/favorites', 'お気に入り']
           ];
           var COMMUNITY = [
-            ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1'],
-            ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1']
+            ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1', '再生数の多い動画'],
+            ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1', 'お気に入り数の多い動画']
           ];
-          var CURRENT_W = ['AZM', 'Fuwa Chan', 'Hanan', 'Hazuki', 'Hime Yuria', 'Hina', 'Kiyoka Kotatsu', 'Maki Itoh', 'Natsupoi', 'Rina', 'Sakura Aya', 'Saori Anou', 'Saya Iida', 'Saya Kamitani', 'Sayaka Kurara', 'Starlight Kid', 'Suzu Suzuki', 'Syuri', 'Tomoka Inaba', 'Utami Hayashishita'];
-          var PAST_W = ['Giulia', 'Hana Kimura', 'Io Shirai', 'Jamie Hayter', 'Jungle Kyona', 'Kairi Hane (KAIRI)', 'Kris Wolf', 'Mariah May', 'Mayu Iwatani', 'Mina Shirakawa', 'Sareee', 'Tam Nakano', 'Thekla', 'Toni Storm'];
+          function yearsList() {
+            var out = [];
+            for (var y = new Date().getFullYear(); y >= 2011; y--) {
+              out.push([String(y), '/contents/category/' + (y === 2020 ? '_2020' : y), String(y)]);   // the site's 2020 page is "_2020"
+            }
+            return out;
+          }
+          // [English name, Japanese name]
+          var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
-          function wrestlers(names) { return names.map(function(n) { return [n, searchPath(n)]; }); }
+          function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
           var HINT_KEY = 'tvMenuHintV1';
 
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -3105,7 +3114,7 @@ class MainActivity : Activity() {
           function group(label, rows) {
             var h = '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
             rows.forEach(function(r) {
-              h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(r[0]) + '</a>';
+              h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>';
             });
             return h + '</div></div>';
           }
@@ -3159,9 +3168,7 @@ class MainActivity : Activity() {
           }
 
           function build() {
-            var years = [];
-            var y0 = new Date().getFullYear();
-            for (var y = y0; y >= 2011; y--) years.push([String(y), '/contents/category/' + y]);
+            var years = yearsList();
             var ja = isJa();
             var logo = logoSrc();
             var h = '';
@@ -3452,9 +3459,7 @@ class MainActivity : Activity() {
             var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
             var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
-            if (isJa()) return fallback;
-            var all = [].concat(showsList(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W));
-            for (var y = new Date().getFullYear(); y >= 2011; y--) all.push([String(y), '/contents/category/' + y]);
+            var all = [].concat(showsList(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
             for (var i = 0; i < all.length; i++) {
               var u = new URL(all[i][1], BASE);
               if (u.pathname !== loc.pathname) continue;
@@ -3463,8 +3468,9 @@ class MainActivity : Activity() {
                 if ((up.get('s') || '') !== (params.get('s') || '')) continue;
                 if ((up.get('q[keyword]') || '') !== (params.get('q[keyword]') || '')) continue;
               }
-              return all[i][0];
+              return isJa() ? (all[i][2] || fallback) : all[i][0];
             }
+            if (isJa()) return fallback;
             var kw = params.get('q[keyword]');
             if (loc.pathname === '/contents/search' && kw) return 'Search: ' + kw;
             return fallback;
