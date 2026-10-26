@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.83
+- Home page: a new "Most Favorited" row (the site's most-favorited videos, first 12, then a "View All" tile for the full list sorted by favorites) is added as the last of the new rows.
+- Row order under "NEW" is now: Recently Watched, Most Watched, Favorites, Most Favorited. Each row lands in its correct place whichever finishes loading first.
+
 ## 1.3.82
 - Home page: a new "Most Watched" row (the site's most-played videos, first 12) sits below Favorites and above Tournament Archives, followed by a "View All" tile that opens the full list sorted by plays. It is shown to everyone, signed in or not. It loads with one small request (no hidden page) shortly after the page appears, and its last-known contents are saved so it is in place from the first paint on later visits.
 
