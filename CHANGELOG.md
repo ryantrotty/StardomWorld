@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.82
+- Home page: a new "Most Watched" row (the site's most-played videos, first 12) sits below Favorites and above Tournament Archives, followed by a "View All" tile that opens the full list sorted by plays. It is shown to everyone, signed in or not. It loads with one small request (no hidden page) shortly after the page appears, and its last-known contents are saved so it is in place from the first paint on later visits.
+
 ## 1.3.81
 - Home page, signed in: "Recently Watched" is now row 2 and "Favorites" row 3, directly under "NEW". Their last-known contents are saved on the device and drawn with the page, then refreshed in the background, so they are in place from the first paint after the first visit. If a row arrives late, the highlighted card stays where it is on screen.
 - Signing out clears the saved copies.
