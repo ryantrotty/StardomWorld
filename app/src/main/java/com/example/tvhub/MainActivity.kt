@@ -107,6 +107,13 @@ class MainActivity : Activity() {
         // per row but smaller text.
         private const val LAYOUT_WIDTH = 1440
 
+        // The player control bar exists twice (a native overlay in full screen, an in-page bar under the player).
+        // Both are built from this one list, from barLabel() and from barAction() so they cannot drift apart.
+        private val BAR_IDS = listOf("play", "back", "fwd", "mute", "cc", "quality", "speed", "full")
+        private const val BAR_ACCENT = "#FFB347"
+        private const val BAR_TEXT_ON_ACCENT = "#1A1A1A"
+        private const val BAR_RADIUS_DP = 10
+
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
@@ -1714,7 +1721,7 @@ class MainActivity : Activity() {
         webView.setBackgroundColor(Color.BLACK)
         // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
         if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        webView.addJavascriptInterface(WebAppInterface(), "AndroidHost")
+        webView.addJavascriptInterface(webAppInterface, "AndroidHost")
         root.addView(
             webView,
             ViewGroup.LayoutParams(
@@ -2212,7 +2219,27 @@ class MainActivity : Activity() {
 
     // ---------------------------------------------------------------- page scripts
 
+    private val webAppInterface by lazy { WebAppInterface() }
+
     inner class WebAppInterface {
+        // In-page control bar: the page asks for labels and sends button presses here.
+        @android.webkit.JavascriptInterface
+        fun barIds(): String = org.json.JSONArray(BAR_IDS).toString()
+
+        @android.webkit.JavascriptInterface
+        fun barLabels(statusJson: String): String {
+            val j = try { if (statusJson.isEmpty()) null else org.json.JSONObject(statusJson) } catch (_: Exception) { null }
+            if (j != null && ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
+            val o = org.json.JSONObject()
+            for (id in BAR_IDS) o.put(id, barLabel(id, j))
+            return o.toString()
+        }
+
+        @android.webkit.JavascriptInterface
+        fun barAction(id: String) {
+            handler.post { this@MainActivity.barAction(id) }
+        }
+
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
@@ -3597,7 +3624,8 @@ class MainActivity : Activity() {
               if (r.width > 0 && r.height > 0 && fr.top - r.top > fr.height * 0.5) above = true;
             });
             if (above) return;
-            if (focusPlayer()) { e.preventDefault(); e.stopPropagation(); }
+            if (window.__tvFocusBar && window.__tvFocusBar()) { e.preventDefault(); e.stopPropagation(); }
+            else if (focusPlayer()) { e.preventDefault(); e.stopPropagation(); }
           }, true);
         })();
     """.trimIndent()
@@ -3696,6 +3724,156 @@ class MainActivity : Activity() {
             secs.forEach(function(s) { build(s); });
             if (elapsed > 12000) clearInterval(timer);
           }, 500);
+        })();
+    """.trimIndent()
+
+    // Video pages: the player's control bar under the picture. Same buttons, labels and actions as the full screen
+    // bar (the app supplies them: AndroidHost.barIds / barLabels / barAction), in one compact row. Focus lives on
+    // these buttons, not inside the player frame, so Left/Right can never wander off into the player's hidden controls.
+    private val playerBarJs = """
+        (function(){
+          if (window.__tvPlayerBar) return;
+          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          if (!window.AndroidHost || !AndroidHost.barIds) return;
+          window.__tvPlayerBar = true;
+
+          var ACCENT = '${BAR_ACCENT}', DARK = '${BAR_TEXT_ON_ACCENT}', RADIUS = '${BAR_RADIUS_DP}px';
+          var ids = [];
+          try { ids = JSON.parse(AndroidHost.barIds()); } catch (e) {}
+          if (!ids.length) return;
+
+          var st = document.createElement('style');
+          st.textContent =
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:64px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:2px solid #222b36;border-top:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
+            '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
+            '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
+            '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
+            '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
+            '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}';
+          (document.head || document.documentElement).appendChild(st);
+
+          function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
+          function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+
+          var bar = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
+
+          function build() {
+            var f = playerFrame();
+            if (!f || !f.parentElement) return false;
+            f.setAttribute('tabindex', '-1');   // the frame itself is never a keyboard stop
+            bar = document.createElement('div');
+            bar.id = 'tv-pbar';
+            var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
+            ids.forEach(function(id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
+            bar.innerHTML = html + '</span>';
+            f.parentElement.insertAdjacentElement('afterend', bar);
+            timeEl = bar.querySelector('.tv-pb-time');
+            fillEl = bar.querySelector('.tv-pb-fill');
+            Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
+              btns[b.getAttribute('data-id')] = b;
+              b.addEventListener('focus', function() { lastId = b.getAttribute('data-id'); });
+              b.addEventListener('click', function(e) { e.preventDefault(); act(b.getAttribute('data-id')); });
+            });
+            fit();
+            refresh();
+            return true;
+          }
+
+          // The bar is exactly as wide as, and lined up with, the picture above it.
+          function fit() {
+            var f = playerFrame();
+            if (!bar || !f) return;
+            var r = f.getBoundingClientRect();
+            var pr = bar.parentElement.getBoundingClientRect();
+            if (r.width < 50) return;
+            bar.style.width = Math.round(r.width) + 'px';
+            bar.style.marginLeft = Math.max(0, Math.round(r.left - pr.left)) + 'px';
+          }
+
+          function fmt(sec) {
+            sec = Math.max(0, Math.floor(sec || 0));
+            var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+            return (h > 0 ? h + ':' + (m < 10 ? '0' : '') + m : m) + ':' + (s < 10 ? '0' : '') + s;
+          }
+
+          function refresh() {
+            if (!bar) return;
+            try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); } catch (e) {}
+            var json = window.__tvStatusJson || '';
+            var labels = {};
+            try { labels = JSON.parse(AndroidHost.barLabels(json)); } catch (e) {}
+            ids.forEach(function(id) { if (labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+            if (json) {
+              try {
+                var j = JSON.parse(json);
+                timeEl.textContent = fmt(j.t) + ' / ' + fmt(j.d);
+                fillEl.style.width = (j.d > 0 ? Math.min(100, j.t / j.d * 100) : 0) + '%';
+              } catch (e) {}
+            }
+          }
+
+          function act(id) {
+            try { AndroidHost.barAction(id); } catch (e) {}
+            setTimeout(refresh, 300);
+          }
+
+          window.__tvFocusBar = function(id) {
+            var b = btns[id || lastId] || btns[ids[0]];
+            if (!b) return false;
+            try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
+            try { b.scrollIntoView({ block: 'center' }); } catch (e) {}
+            return true;
+          };
+
+          function firstCard() {
+            return document.querySelector('.tv-related-row a.tv-card, a.tv-thumbnail-link');
+          }
+
+          document.addEventListener('keydown', function(e) {
+            if (menuOpen()) return;
+            var ae = document.activeElement;
+            if (!ae || !ae.classList || !ae.classList.contains('tv-pbtn')) return;
+            var k = e.keyCode;
+            var i = ids.indexOf(ae.getAttribute('data-id'));
+            if (k === 39) {                       // Right: next button, stops at the last
+              e.preventDefault(); e.stopPropagation();
+              if (i < ids.length - 1) btns[ids[i + 1]].focus();
+            } else if (k === 37) {                // Left: previous button; before the first, the menu
+              e.preventDefault(); e.stopPropagation();
+              if (i > 0) btns[ids[i - 1]].focus();
+              else if (window.__tvOpenMenu) window.__tvOpenMenu();
+            } else if (k === 38) {                // Up: nothing above the bar
+              e.preventDefault(); e.stopPropagation();
+            } else if (k === 40) {                // Down: on to the first related video
+              var c = firstCard();
+              if (c) {
+                e.preventDefault(); e.stopPropagation();
+                try { c.focus({ preventScroll: true }); } catch (x) { c.focus(); }
+                try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {}
+              }
+            } else if (k === 13 || k === 23) {
+              e.preventDefault(); e.stopPropagation();
+              act(ae.getAttribute('data-id'));
+            }
+          }, true);
+
+          var tries = 0, focused = false;
+          var timer = setInterval(function() {
+            tries++;
+            if (!bar) { build(); }
+            else {
+              fit();
+              if (!focused) {
+                focused = true;
+                var ae = document.activeElement;
+                if (!ae || ae === document.body || ae.tagName === 'IFRAME') window.__tvFocusBar('play');
+              }
+            }
+            if (tries > 120) clearInterval(timer);
+          }, 500);
+          setInterval(function() { if (bar && !document.hidden) refresh(); }, 500);
+          window.addEventListener('resize', fit);
         })();
     """.trimIndent()
 
@@ -4665,6 +4843,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(sideMenuJs, null)
         view.evaluateJavascript(playerPageJs, null)
         view.evaluateJavascript(relatedRowJs, null)
+        view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
@@ -4719,6 +4898,8 @@ class MainActivity : Activity() {
     private var fsBtnCc: android.widget.TextView? = null
     private var fsBtnSpeed: android.widget.TextView? = null
     private var fsBtnQuality: android.widget.TextView? = null
+    private val fsBtns = LinkedHashMap<String, android.widget.TextView>()
+    private var barQuality: String = ""
     private var fsDebugView: android.widget.TextView? = null
 
     // ---- Captions drawn by the app (translated when needed) ----
@@ -4758,10 +4939,10 @@ class MainActivity : Activity() {
         tv.isClickable = true
         fun paint(focused: Boolean) {
             val d = android.graphics.drawable.GradientDrawable()
-            d.cornerRadius = 10 * density
+            d.cornerRadius = BAR_RADIUS_DP * density
             if (focused) {
-                d.setColor(0xFFFFB347.toInt())
-                tv.setTextColor(0xFF1A1A1A.toInt())
+                d.setColor(Color.parseColor(BAR_ACCENT))
+                tv.setTextColor(Color.parseColor(BAR_TEXT_ON_ACCENT))
             } else {
                 d.setColor(0x66000000)
                 d.setStroke((2 * density).toInt(), 0x88FFFFFF.toInt())
@@ -4796,7 +4977,7 @@ class MainActivity : Activity() {
 
         val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
         bar.max = 1000
-        bar.progressDrawable.setColorFilter(0xFFFFB347.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
+        bar.progressDrawable.setColorFilter(Color.parseColor(BAR_ACCENT), android.graphics.PorterDuff.Mode.SRC_IN)
         o.addView(
             bar,
             android.widget.LinearLayout.LayoutParams(
@@ -4818,22 +4999,18 @@ class MainActivity : Activity() {
                 ).apply { rightMargin = (10 * density).toInt() }
             )
         }
-        fsBtnPlay = fsButton(tr("Pause", "一時停止")) { playerCommand("toggle", 0) }
-        add(fsBtnPlay!!)
-        add(fsButton(tr("-10s", "-10秒")) { playerCommand("seek", -10) })
-        add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
-        fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
-        add(fsBtnMute!!)
-        fsBtnCc = fsButton(ccLabel()) { cycleCc() }
-        add(fsBtnCc!!)
-        fsBtnQuality = fsButton(tr("Auto", "自動")) { playerCommand("quality", 0) }
-        add(fsBtnQuality!!)
-        fsBtnSpeed = fsButton("1.0x") { playerCommand("speed", 0) }
-        add(fsBtnSpeed!!)
-        add(fsButton(tr("Exit full screen", "全画面を終了")) {
-            hideFsOverlay()
-            hideCustomView()
-        })
+        for (id in BAR_IDS) {
+            val b = fsButton(barLabel(id, null)) { barAction(id) }
+            when (id) {
+                "play" -> fsBtnPlay = b
+                "mute" -> fsBtnMute = b
+                "cc" -> fsBtnCc = b
+                "quality" -> fsBtnQuality = b
+                "speed" -> fsBtnSpeed = b
+            }
+            fsBtns[id] = b
+            add(b)
+        }
         o.addView(row)
 
         // Caption debug panel: only shown after the CC button is pressed.
@@ -4879,6 +5056,42 @@ class MainActivity : Activity() {
         fsOverlay?.visibility = View.GONE
     }
 
+    // Label of one control-bar button, from the player's latest status (null = not known yet).
+    private fun barLabel(id: String, j: org.json.JSONObject?): String = when (id) {
+        "play" -> if (j?.optBoolean("paused") == true) tr("Play", "再生") else tr("Pause", "一時停止")
+        "back" -> tr("-10s", "-10秒")
+        "fwd" -> tr("+10s", "+10秒")
+        "mute" -> if (j != null && j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
+        "cc" -> ccLabel()
+        "quality" -> {
+            val q = j?.optString("q", "") ?: ""
+            if (q.isNotEmpty()) barQuality = if (q.equals("auto", true)) tr("Auto", "自動") else q
+            if (barQuality.isEmpty()) tr("Auto", "自動") else barQuality
+        }
+        "speed" -> (j?.optDouble("rate", 1.0) ?: 1.0).toString() + "x"
+        "full" -> if (fullScreenActive()) tr("Exit full screen", "全画面を終了") else tr("Full screen", "全画面")
+        else -> id
+    }
+
+    // What a control-bar button does; used by the full screen overlay and the in-page bar alike.
+    private fun barAction(id: String) {
+        when (id) {
+            "play" -> playerCommand("toggle", 0)
+            "back" -> playerCommand("seek", -10)
+            "fwd" -> playerCommand("seek", 10)
+            "mute" -> playerCommand("mute", 0)
+            "cc" -> cycleCc()
+            "quality" -> playerCommand("quality", 0)
+            "speed" -> playerCommand("speed", 0)
+            "full" -> if (fullScreenActive()) {
+                hideFsOverlay()
+                hideCustomView()
+            } else {
+                webAppInterface.triggerFullScreen()
+            }
+        }
+    }
+
     private fun fmtTime(sec: Double): String {
         val t = sec.toInt().coerceAtLeast(0)
         val h = t / 3600
@@ -4898,14 +5111,9 @@ class MainActivity : Activity() {
                 val j = org.json.JSONObject(str)
                 val t = j.optDouble("t", 0.0)
                 val d = j.optDouble("d", 0.0)
-                fsBtnPlay?.text = if (j.optBoolean("paused")) tr("Play", "再生") else tr("Pause", "一時停止")
-                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
                 // The player may have its own captions on from the start: show that as the current state.
                 if (ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
-                fsBtnCc?.text = ccLabel()
-                fsBtnSpeed?.text = j.optDouble("rate", 1.0).toString() + "x"
-                val qName = j.optString("q", "")
-                if (qName.isNotEmpty()) fsBtnQuality?.text = if (qName.equals("auto", true)) tr("Auto", "自動") else qName
+                for ((id, btn) in fsBtns) btn.text = barLabel(id, j)
                 fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
                 fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
             } catch (_: Exception) {
@@ -5612,6 +5820,7 @@ class MainActivity : Activity() {
         fsPulseRunning = false
         refreshCursorVisibility()
         playerCtrlPos = 0
+        handler.postDelayed({ webView.evaluateJavascript("window.__tvFocusBar && window.__tvFocusBar('full')", null) }, 400)
         for (delay in longArrayOf(250L, 900L, 1800L)) {
             handler.postDelayed({ webView.evaluateJavascript("window.__tvRefitPlayer && window.__tvRefitPlayer()", null) }, delay)
         }

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.89
+- Video pages: a compact control bar under the picture (time, progress, then Pause, -10s, +10s, Mute, CC, quality, speed, Full screen), styled like the full screen bar. Keyboard focus now lives on these buttons instead of inside the player frame: Left/Right stop at the ends (Left before Pause opens the menu), Down goes to the first related video, Up from the first related row comes back to the bar. This fixes getting stuck or lost in the player's own controls. The progress bar is display only; skip with -10s / +10s.
+- The bar and the full screen bar share one button list, one set of labels and one set of actions, so changing a control changes both. After leaving full screen, focus returns to the Full screen button.
+- Captions: the CC button cycles Off / EN / 日本語 as in full screen; the app's own captions are drawn in full screen.
+
 ## 1.3.88
 - Video pages: the related-videos rows are now built exactly like the main page rows (same cards, sizes and View All tile) and use the main page's navigation: Right/Left move one video at a time and focus follows the row, Up/Down move between rows and to the player. The site's own carousel stays in the page hidden because play-next reads it. This replaces the 1.3.87 tile.
 - Leaving full screen now re-lays out the player so the picture no longer sits shifted down and right with its edges cut off.
