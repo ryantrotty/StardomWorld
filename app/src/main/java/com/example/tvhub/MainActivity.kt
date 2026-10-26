@@ -3020,6 +3020,11 @@ class MainActivity : Activity() {
             ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1'],
             ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1']
           ];
+          var CURRENT_W = ['AZM', 'Fuwa Chan', 'Hanan', 'Hazuki', 'Hime Yuria', 'Hina', 'Kiyoka Kotatsu', 'Maki Itoh', 'Natsupoi', 'Rina', 'Sakura Aya', 'Saori Anou', 'Saya Iida', 'Saya Kamitani', 'Sayaka Kurara', 'Starlight Kid', 'Suzu Suzuki', 'Syuri', 'Tomoka Inaba', 'Utami Hayashishita'];
+          var PAST_W = ['Giulia', 'Hana Kimura', 'Io Shirai', 'Jamie Hayter', 'Jungle Kyona', 'Kairi Hane (KAIRI)', 'Kris Wolf', 'Mariah May', 'Mayu Iwatani', 'Mina Shirakawa', 'Sareee', 'Tam Nakano', 'Thekla', 'Toni Storm'];
+          var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
+          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
+          function wrestlers(names) { return names.map(function(n) { return [n, searchPath(n)]; }); }
           var HINT_KEY = 'tvMenuHintV1';
 
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -3037,6 +3042,8 @@ class MainActivity : Activity() {
             'html.tv-sm-open #tv-sm-scrim{opacity:1;}',
             '#tv-sm{position:fixed;left:0;top:0;bottom:0;width:430px;box-sizing:border-box;background:#0F151C !important;border-right:1px solid #222b36;z-index:99999;transform:translateX(-104%);transition:transform .18s;padding:26px 24px 22px 24px;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#fff;}',
             'html.tv-sm-open #tv-sm{transform:none;}',
+            '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
+            '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
             '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
             '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:50px;padding:0 14px;font-size:22px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
@@ -3053,10 +3060,9 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-home{justify-content:flex-start;gap:16px;margin-top:6px;}',
             '#tv-sm .tv-sm-home img{max-height:40px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
-            '#tv-sm .tv-sm-foot .tv-sm-item{width:auto;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block !important;line-height:44px;min-height:50px;}',
-            '#tv-sm .tv-sm-lang{flex:0 0 auto;display:flex !important;width:auto;padding:0;gap:0;min-height:44px;border:2px solid #2a323c !important;border-radius:22px;overflow:hidden;}',
+            '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
-            '#tv-sm .tv-sm-lang span{padding:10px 16px;font-size:17px;font-weight:700;color:#c9d2dc;}',
+            '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:18px;font-weight:700;color:#c9d2dc;}',
             '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B0F14;}',
             '#tv-sm-tab{position:fixed;left:0;top:42%;width:26px;height:110px;border-radius:0 12px 12px 0;background:rgba(17,23,30,.92);border:1px solid #2a323c;border-left:0;z-index:99990;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
             'html.tv-sm-open #tv-sm-tab{display:none;}',
@@ -3089,6 +3095,18 @@ class MainActivity : Activity() {
             var t = k ? (k.textContent || '').replace(/\s+/g, ' ').trim() : '';
             return t || T('Account', 'アカウント');
           }
+          // The account menu's own links (My page, Log out, ...): read from the header the site draws, which is
+          // hidden but still there, and pressed through the real link so nothing about them changes.
+          function acctLinks() {
+            var menu = document.querySelector('.tv-acct-menu, [data-tv-acct] .dropdown-container');
+            if (!menu) return [];
+            var out = [];
+            Array.prototype.forEach.call(menu.querySelectorAll('a'), function(a) {
+              var t = (a.textContent || '').replace(/\s+/g, ' ').trim();
+              if (t) out.push({ label: t, el: a });
+            });
+            return out;
+          }
           function logoSrc() {
             var img = document.querySelector('h1 a img, .nav-inner h1 img, header a img, .logo img');
             return img && img.src ? img.src : '';
@@ -3107,15 +3125,27 @@ class MainActivity : Activity() {
             h += group(T('Shows', '番組'), SHOWS);
             h += group(T('Championships', '王座'), CHAMPS);
             h += group(T('Years', '年別'), years);
-            h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-wrest="1"><span>' + esc(T('Wrestlers', '選手')) + '</span>' + chev() + '</div></div>';
+            h += group(T('Current Wrestlers', '現役選手'), wrestlers(CURRENT_W));
+            h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W));
             if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE);
             h += group(T('Community', 'みんなの動画'), COMMUNITY);
+            if (signedIn()) {
+              var links = acctLinks();
+              window.__tvMenuAcct = links;
+              if (links.length) {
+                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(acctName()) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+                links.forEach(function(l, i) {
+                  h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span>' + esc(l.label) + '</span></div>';
+                });
+                h += '</div></div>';
+              } else {
+                h += '<a class="tv-sm-item" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage"><span>' + esc(acctName()) + '</span></a>';
+              }
+            } else {
+              h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
+            }
             h += '</div>';
-            h += '<div class="tv-sm-foot">';
-            if (signedIn()) h += '<div class="tv-sm-item" tabindex="0" role="button" data-acct="1">' + esc(acctName()) + '</div>';
-            else h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login">' + esc(T('Log in', 'ログイン')) + '</a>';
-            h += '<div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">日本語</span></div>';
-            h += '</div>';
+            h += '<div class="tv-sm-foot"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div></div>';
             panel.innerHTML = h;
           }
 
@@ -3212,6 +3242,12 @@ class MainActivity : Activity() {
               if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') window.AndroidHost.toggleLanguage(next);
               return;
             }
+            if (el.getAttribute('data-acctlink')) {
+              var l = (window.__tvMenuAcct || [])[parseInt(el.getAttribute('data-acctlink'), 10)];
+              closeMenu();
+              if (l && l.el) l.el.click();
+              return;
+            }
             if (el.getAttribute('data-acct')) {
               var key = document.querySelector('.box-dropdown-key');
               closeMenu();
@@ -3228,6 +3264,7 @@ class MainActivity : Activity() {
           }
           function atLeftEdge(ae) {
             if (!ae || ae === document.body || ae === document.documentElement) return true;
+            if (ae.classList.contains('tv-hero-card')) return true;   // Left on the banner opens the menu (Right still changes slides)
             if (ae.classList.contains('tv-card')) return !ae.previousElementSibling;
             if (ae.classList.contains('tv-thumbnail-link')) {
               var r = cardRect(ae);
