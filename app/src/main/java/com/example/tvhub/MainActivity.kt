@@ -576,6 +576,7 @@ class MainActivity : Activity() {
     private lateinit var transitionOverlay: FrameLayout
     private lateinit var transitionView: TransitionOverlayView
     private var transitionShowing = false
+    private var homeDebugView: android.widget.TextView? = null
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -1854,6 +1855,7 @@ class MainActivity : Activity() {
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
+                    homeDebugView?.visibility = View.GONE
                 }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
@@ -2169,6 +2171,25 @@ class MainActivity : Activity() {
         }
     }
 
+    // Stays on screen until Back is pressed, so it can be photographed at leisure.
+    private fun showHomeDebug(text: String) {
+        val v = homeDebugView ?: android.widget.TextView(this).also {
+            it.setTextColor(Color.WHITE)
+            it.typeface = android.graphics.Typeface.MONOSPACE
+            it.textSize = 12f
+            it.setBackgroundColor(0xF0000000.toInt())
+            val pad = (12 * resources.displayMetrics.density).toInt()
+            it.setPadding(pad, pad, pad, pad)
+            it.isFocusable = false
+            root.addView(it, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.START))
+            homeDebugView = it
+        }
+        v.text = text + "\n(press Back to close)"
+        v.visibility = View.VISIBLE
+        root.bringChildToFront(v)
+    }
+
     private fun showPageTransitionOverlay() {
         if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
@@ -2200,6 +2221,12 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- page scripts
 
     inner class WebAppInterface {
+        // Temporary diagnostics from the home page (row title translation timeline).
+        @android.webkit.JavascriptInterface
+        fun homeReport(text: String) {
+            handler.post { showHomeDebug(text) }
+        }
+
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
@@ -2977,6 +3004,51 @@ class MainActivity : Activity() {
             else setTimeout(step, 400);
           }
           requestAnimationFrame(step);
+        })();
+    """.trimIndent()
+
+    // Temporary: records, over the first 25 seconds of the home page, when the row titles turn from
+    // Japanese to English and what the page's translator was doing at the time.
+    private val titleDiagJs = """
+        (function(){
+          if (window.__tvTitleDiag) return;
+          var p = location.pathname;
+          if (!(p === '/' || p === '/index.html' || p === '')) return;
+          window.__tvTitleDiag = true;
+
+          var JA = /[぀-ヿ一-鿿]/;
+          var t0 = performance.now();
+          var lines = [];
+          var prev = '';
+          function sample() {
+            var gridTitles = Array.from(document.querySelectorAll('#tv-test-grid h2')).filter(function(h) {
+              return !h.closest('#tv-recent-row, #tv-favorites-row');
+            });
+            var gJa = gridTitles.filter(function(h) { return JA.test(h.textContent || ''); }).length;
+            var origTitles = Array.from(document.querySelectorAll('.box-section .ttl-md, .box-section h2')).filter(function(h) {
+              return !h.closest('#tv-test-grid');
+            });
+            var oJa = origTitles.filter(function(h) { return JA.test(h.textContent || ''); }).length;
+            var combo = document.querySelector('select.goog-te-combo');
+            var ck = (document.cookie.match(/googtrans=([^;]*)/) || [])[1] || '-';
+            var cls = document.documentElement.className.indexOf('translated') >= 0 ? 'translated' : 'plain';
+            var frames = document.querySelectorAll('iframe[aria-hidden="true"]').length;
+            var first = gridTitles[0] ? (gridTitles[0].textContent || '').trim().slice(0, 18) : '-';
+            var parts = 'grid ' + gJa + 'ja/' + gridTitles.length + '  orig ' + oJa + 'ja/' + origTitles.length +
+              '  combo ' + (combo ? combo.value || 'none' : '-') + '  ck ' + ck + '  ' + cls + '  frames ' + frames + '  row1 "' + first + '"';
+            if (parts !== prev) {
+              prev = parts;
+              lines.push(((performance.now() - t0) / 1000).toFixed(2) + 's  ' + parts);
+            }
+          }
+          sample();
+          var timer = setInterval(sample, 250);
+          setTimeout(function() {
+            clearInterval(timer);
+            sample();
+            var out = lines.length > 30 ? lines.slice(0, 10).concat(['...'], lines.slice(lines.length - 19)) : lines;
+            try { window.AndroidHost.homeReport('ROW TITLE TRANSLATION TIMELINE (' + lines.length + ' changes, v${BuildConfig.VERSION_NAME})\\n' + out.join('\\n')); } catch (e) {}
+          }, 25000);
         })();
     """.trimIndent()
 
@@ -3890,6 +3962,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
+        view.evaluateJavascript(titleDiagJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
@@ -4845,6 +4918,10 @@ class MainActivity : Activity() {
         if (onboardingShowing) {
             if (onboardingView?.handleKey(event) != false) return true
             return super.dispatchKeyEvent(event)
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && homeDebugView?.visibility == View.VISIBLE) {
+            if (event.action == KeyEvent.ACTION_UP) homeDebugView?.visibility = View.GONE
+            return true
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()

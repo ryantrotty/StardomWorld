@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.82
+- Temporary: a timeline panel on the home page (stays until Back is pressed) records when the row titles turn from Japanese to English, to track down titles that appear in Japanese on first load.
+
 ## 1.3.81
 - Home page, signed in: "Recently Watched" is now row 2 and "Favorites" row 3, directly under "NEW". Their last-known contents are saved on the device and drawn with the page, then refreshed in the background, so they are in place from the first paint after the first visit. If a row arrives late, the highlighted card stays where it is on screen.
 - Signing out clears the saved copies.
