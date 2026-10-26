@@ -592,6 +592,9 @@ class MainActivity : Activity() {
     private var cursorMode = false
     // True while keyboard focus is inside the embedded video player iframe (set by playerNavJs)
     @Volatile private var playerFocused = false
+    // How many of the player's own buttons the focus has stepped past (0 = on the frame itself, 1 = Play).
+    // Left at Play is swallowed: going further back lands on hidden controls in the player's top corner.
+    @Volatile private var playerCtrlPos = 0
     private var okPending = false
     private val hideControlsRunnable = Runnable { hidePlayerControls() }
     private var okLongFired = false
@@ -2267,6 +2270,7 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun setPlayerFocused(focused: Boolean) {
+            if (focused && !playerFocused) playerCtrlPos = 0
             playerFocused = focused
             handler.post {
                 if (focused) armControlsIdleTimer() else handler.removeCallbacks(hideControlsRunnable)
@@ -2508,7 +2512,7 @@ class MainActivity : Activity() {
             var iframe = document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]');
             var target = null;
             if (dir === 'down') {
-              var cards = Array.from(document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"], .content-list-item a[href*="/set/"]')).filter(function(a) {
+              var cards = Array.from(document.querySelectorAll('a.tv-card, a.tv-thumbnail-link, .content-list-item a[href*="/contents/"], .content-list-item a[href*="/set/"]')).filter(function(a) {
                 if (a.closest('.slick-cloned')) return false;
                 var r = a.getBoundingClientRect();
                 if (r.width === 0 && r.height === 0) return false;
@@ -2552,7 +2556,7 @@ class MainActivity : Activity() {
             var carousels = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide');
             if (!carousels.length) return [];
             var items = Array.from(carousels[0].querySelectorAll('.content-list-item, .sub-category-list-item')).filter(function(el) {
-              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned') && !el.classList.contains('tv-viewall-slide');
+              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned');
             });
             var out = [];
             items.forEach(function(it) {
@@ -3529,6 +3533,22 @@ class MainActivity : Activity() {
           }
           function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
 
+          // After leaving full screen the player's picture can stay offset inside its frame until the frame is
+          // resized; nudge the frame's width and put it back so the player lays itself out again.
+          window.__tvRefitPlayer = function() {
+            var f = playerFrame();
+            if (!f) return;
+            try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+            var w = f.style.width;
+            var r = f.getBoundingClientRect();
+            if (r.width < 10) return;
+            f.style.width = Math.round(r.width - 2) + 'px';
+            setTimeout(function() {
+              f.style.width = w;
+              try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+            }, 150);
+          };
+
           var st = document.createElement('style');
           st.id = 'tv-player-style';
           st.textContent = [
@@ -3567,12 +3587,12 @@ class MainActivity : Activity() {
             if (e.keyCode !== 38 || menuOpen()) return;
             var ae = document.activeElement;
             if (!ae || !ae.classList || !(ae.classList.contains('tv-thumbnail-link') || ae.classList.contains('tv-card'))) return;
-            var c = ae.closest('.content-list-item, article') || ae;
+            var c = ae.closest('.content-list-item, article, a.tv-card') || ae;
             var fr = c.getBoundingClientRect();
             var above = false;
-            Array.prototype.forEach.call(document.querySelectorAll('a.tv-thumbnail-link'), function(a) {
+            Array.prototype.forEach.call(document.querySelectorAll('a.tv-thumbnail-link, .tv-related-row a.tv-card'), function(a) {
               if (a.closest('.slick-cloned')) return;
-              var cc = a.closest('.content-list-item, article') || a;
+              var cc = a.closest('.content-list-item, article, a.tv-card') || a;
               var r = cc.getBoundingClientRect();
               if (r.width > 0 && r.height > 0 && fr.top - r.top > fr.height * 0.5) above = true;
             });
@@ -3582,47 +3602,100 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
-    // Video pages: the related-videos row gets its "View all" as the last tile (same look as the main page
-    // rows) instead of the small text link above the row.
-    private val relatedViewAllJs = """
+    // Video pages: every related-videos row is rebuilt with the same markup and styles as the main page rows
+    // (so the main page's own keyboard handling drives it: one card per press, focus follows the scroll,
+    // View All as the last tile). The site's carousel stays in the page, hidden, because play-next reads it.
+    private val relatedRowJs = """
         (function(){
-          if (window.__tvRelatedViewAll) return;
+          if (window.__tvRelatedRows) return;
           if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
-          window.__tvRelatedViewAll = true;
+          window.__tvRelatedRows = true;
 
           var st = document.createElement('style');
-          st.textContent = '.box-related-content .ttl-wrap > a{display:none !important;}' +
-            '.tv-viewall-slide .tv-va-in{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;box-sizing:border-box;height:165px;border-radius:8px;background:#11171E;border:2px solid #2a323c;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:bold;}' +
-            '.tv-viewall-slide .tv-va-in span+span{color:#F4C242;font-size:34px;line-height:1;}';
+          st.textContent = '.box-related-content.tv-related-done > .ttl-wrap, .box-related-content.tv-related-done > .content-list{display:none !important;}';
           (document.head || document.documentElement).appendChild(st);
 
-          var started = Date.now();
-          function tryAdd() {
-            var c = document.querySelector('.box-related-content .js-list-slide, .js-list-slide');
-            if (!c || c.querySelector('.tv-viewall-slide')) return !!(c && c.querySelector('.tv-viewall-slide'));
-            var $ = window.jQuery || window.$;
-            var isSlick = c.classList.contains('slick-initialized');
-            // Wait for the carousel to be reversed and re-initialised (it is, within about 4 seconds).
-            if (!isSlick && Date.now() - started < 6000) return false;
-            if (!window.__tvReverseCarouselDone && Date.now() - started < 4600) return false;
-            var sec = c.closest('.box-related-content') || c.parentElement;
-            var link = sec ? sec.querySelector('.ttl-wrap > a[href]') : null;
-            var href = link ? link.href : '';
-            if (!href) return true;
-            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
-            var html = '<div class="content-list-item tv-viewall-slide"><a class="notranslate" translate="no" href="' + href + '"><span class="tv-va-in"><span>' + (ja ? 'すべて見る' : 'View All') + '</span><span>&#8594;</span></span></a></div>';
-            try {
-              if (isSlick && $ && $(c).slick) { $(c).slick('slickAdd', html); }
-              else {
-                var track = c.querySelector('.slick-track') || c;
-                track.insertAdjacentHTML('beforeend', html);
+          // Same values as the main page rows.
+          var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+          var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+          var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
+
+          function esc(t) {
+            return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+          }
+          function clean(txt) {
+            return String(txt || '').replace(/月額見放題/g, '')
+              .replace(/Unlimited viewing for a monthly fee/gi, '')
+              .replace(/Monthly subscription available/gi, '')
+              .replace(/Monthly subscription/gi, '')
+              .replace(/Registration date\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+              .replace(/登録日\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+              .replace(/Registration date\s*[:：]?/gi, '')
+              .replace(/登録日\s*[:：]?/g, '')
+              .replace(/\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/g, '')
+              .replace(/\s+/g, ' ').trim();
+          }
+
+          function build(sec) {
+            var c = sec.querySelector('.js-list-slide');
+            if (!c) return false;
+            var items = Array.from(c.querySelectorAll('.content-list-item')).filter(function(el) {
+              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned');
+            });
+            var cards = [];
+            var seen = {};
+            items.forEach(function(item) {
+              var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+              if (!link || !link.href || seen[link.href]) return;
+              seen[link.href] = true;
+              var thumbInner = item.querySelector('.content-thumbnail-box-inner, [style*="background-image"]');
+              var imgEl = item.querySelector('img');
+              var titleBox = item.querySelector('h3, .ttl-xs, .content-info-box');
+              var bg = '';
+              if (thumbInner) {
+                var b = thumbInner.style.backgroundImage || getComputedStyle(thumbInner).backgroundImage;
+                var m = b && b.match(/url\(['"]?(.*?)['"]?\)/);
+                if (m && m[1]) bg = m[1];
               }
-            } catch (e) { return true; }
+              if (!bg && imgEl) bg = imgEl.src;
+              cards.push({ href: link.href, title: clean(titleBox ? titleBox.textContent : '') || 'Stardom World Video', bg: bg });
+            });
+            if (!cards.length) return false;
+
+            var head = sec.querySelector('.ttl-wrap h2, .ttl-md');
+            var title = head ? (head.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            var all = sec.querySelector('.ttl-wrap > a[href]');
+            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+
+            var html = '<h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:700 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span>' + esc(title) + '</span></h2>' +
+              '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+            cards.forEach(function(it) {
+              var bgStyle = it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '';
+              html += '<a class="tv-card" tabindex="0" href="' + esc(it.href) + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + esc(it.title) + '</div></a>';
+            });
+            if (all && all.href) {
+              html += '<a class="tv-card notranslate" tabindex="0" href="' + esc(all.href) + '" style="flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); box-sizing:border-box; border-radius:8px; background:#11171E; border:2px solid #2a323c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-decoration:none; cursor:pointer; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:24px; font-weight:bold; min-height:165px;"><span>' + (ja ? 'すべて見る' : 'View All') + '</span><span style="color:#F4C242; font-size:34px; line-height:1;">&#8594;</span></a>';
+            }
+            html += '</div>';
+
+            var wrap = document.createElement('div');
+            wrap.className = 'tv-related-row';
+            wrap.style.cssText = 'margin-bottom:35px;';
+            wrap.innerHTML = html;
+            sec.classList.add('tv-related-done');
+            sec.insertBefore(wrap, sec.firstChild);
             return true;
           }
+
+          var started = Date.now();
           var timer = setInterval(function() {
-            if (tryAdd() || Date.now() - started > 15000) clearInterval(timer);
-          }, 400);
+            var secs = Array.from(document.querySelectorAll('.box-related-content')).filter(function(s) { return !s.classList.contains('tv-related-done'); });
+            var elapsed = Date.now() - started;
+            // The first carousel is reversed and re-initialised by another script within about 4 seconds; wait for it.
+            if (!window.__tvReverseCarouselDone && elapsed < 4600) return;
+            secs.forEach(function(s) { build(s); });
+            if (elapsed > 12000) clearInterval(timer);
+          }, 500);
         })();
     """.trimIndent()
 
@@ -4591,7 +4664,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(sideMenuJs, null)
         view.evaluateJavascript(playerPageJs, null)
-        view.evaluateJavascript(relatedViewAllJs, null)
+        view.evaluateJavascript(relatedRowJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
@@ -5538,6 +5611,10 @@ class MainActivity : Activity() {
         handler.removeCallbacks(fsPulse)
         fsPulseRunning = false
         refreshCursorVisibility()
+        playerCtrlPos = 0
+        for (delay in longArrayOf(250L, 900L, 1800L)) {
+            handler.postDelayed({ webView.evaluateJavascript("window.__tvRefitPlayer && window.__tvRefitPlayer()", null) }, delay)
+        }
     }
 
     // ---------------------------------------------------------------- remote keys
@@ -5699,6 +5776,11 @@ class MainActivity : Activity() {
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    if (event.action == KeyEvent.ACTION_DOWN) {
+                        if (event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) playerCtrlPos++
+                        else if (playerCtrlPos > 1) playerCtrlPos--
+                        else return true
+                    }
                     val meta = if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                         KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON
                     } else 0

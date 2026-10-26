@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.88
+- Video pages: the related-videos rows are now built exactly like the main page rows (same cards, sizes and View All tile) and use the main page's navigation: Right/Left move one video at a time and focus follows the row, Up/Down move between rows and to the player. The site's own carousel stays in the page hidden because play-next reads it. This replaces the 1.3.87 tile.
+- Leaving full screen now re-lays out the player so the picture no longer sits shifted down and right with its edges cut off.
+- Pressing Left at the player's Play button stops there instead of jumping to hidden controls in the top corner of the player.
+
 ## 1.3.87
 - Video pages: the related-videos row now ends with a "View All" tile (same look as the main page rows) and the small "View all" text link above the row is hidden. The tile is skipped by auto-play-next.
 - Includes everything in 1.3.86, 1.3.85 and 1.3.84.
