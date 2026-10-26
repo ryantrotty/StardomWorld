@@ -6081,57 +6081,79 @@ private class OnboardingView(
     private val onLanguage: (String) -> Unit
 ) : FrameLayout(context) {
 
-    private class Slide(val title: String, val body: String)
+    private class Slide(val title: String, val body: String, val art: Int)
 
     private fun buildSlides() = if (isJa) listOf(
         Slide(
             "テレビで Stardom World へようこそ",
-            "リモコンでの操作方法をかんたんにご紹介します。"
+            "リモコンでの操作方法をかんたんにご紹介します。",
+            0
         ),
         Slide(
             "移動のしかた",
-            "矢印ボタンで動画やメニューを移動します。OKで選択した項目を開き、戻るボタンで前のページに戻ります。"
+            "矢印ボタンで動画やメニューを移動します。OKで選択した項目を開き、戻るボタンで前のページに戻ります。",
+            1
+        ),
+        Slide(
+            "メニュー",
+            "各列や一覧の一番左の動画で左ボタンを押すとメニューが開き、右ボタンか戻るボタンで閉じます。検索、番組、王座、年別、選手、マイビデオ、みんなの動画、アカウント、言語の切り替えがあります。",
+            6
         ),
         Slide(
             "お気に入りに追加",
-            "動画を選択して、リモコンのオプション(メニュー)ボタンを押すと、お気に入りに追加・削除できます。ログインが必要です。"
+            "動画を選択して、リモコンのオプション(メニュー)ボタンを押すと、お気に入りに追加・削除できます。ログインが必要です。",
+            2
         ),
         Slide(
             "カーソルモード",
-            "OKを約0.5秒長押しするとポインターが表示されます。「人間であることを確認」のチェックなどに使えます。もう一度長押しすると解除されます。"
+            "OKを約0.5秒長押しするとポインターが表示されます。「人間であることを確認」のチェックなどに使えます。もう一度長押しすると解除されます。",
+            3
         ),
         Slide(
             "動画と全画面表示",
-            "動画は全画面で開き、次の動画が自動で再生されます。下ボタンでコントロールバー、左右ボタンでスキップ、戻るボタンで全画面を終了します。"
+            "動画は全画面で開き、次の動画が自動で再生されます。下ボタンでコントロールバー、左右ボタンでスキップ、戻るボタンで全画面を終了します。",
+            4
         ),
         Slide(
             "日本語と英語",
-            "ページ上部の EN / JA ボタンで、いつでも言語を切り替えられます。"
+            "メニューを開き、一番下の EN / 日本語 の切り替えでいつでも言語を変えられます。",
+            5
         )
     ) else listOf(
         Slide(
             "Welcome to Stardom World on TV",
-            "A quick tour of getting around with your remote."
+            "A quick tour of getting around with your remote.",
+            0
         ),
         Slide(
             "Moving around",
-            "Use the arrow buttons to move between videos and menus. OK opens what is highlighted, and Back returns to the previous page."
+            "Use the arrow buttons to move between videos and menus. OK opens what is highlighted, and Back returns to the previous page.",
+            1
+        ),
+        Slide(
+            "The menu",
+            "Press Left on the first video in any row or list to open the menu, and Right or Back to close it. Inside you will find Search, Shows, Championships, Years, Wrestlers, My Videos, Community, your Account and the language switch.",
+            6
         ),
         Slide(
             "Add to favorites",
-            "Highlight a video and press the Options (menu) button on your remote to add it to, or remove it from, your favorites. You need to be signed in."
+            "Highlight a video and press the Options (menu) button on your remote to add it to, or remove it from, your favorites. You need to be signed in.",
+            2
         ),
         Slide(
             "Cursor mode",
-            "Hold OK for about half a second to turn on a pointer, for things like the \"Verify you are human\" box. Hold OK again to turn it off."
+            "Hold OK for about half a second to turn on a pointer, for things like the \"Verify you are human\" box. Hold OK again to turn it off.",
+            3
         ),
         Slide(
             "Videos and full screen",
-            "Videos open in full screen and the next one plays by itself. Press Down for the controls bar, Left and Right to skip, and Back to leave full screen."
+            "Videos open in full screen and the next one plays by itself. Press Down for the controls bar, Left and Right to skip, and Back to leave full screen.",
+            4
         ),
         Slide(
             "English or Japanese",
-            "Use the EN / JA button at the top of the page to switch language at any time."
+            "Open the menu and use the EN / 日本語 switch at the bottom to change language at any time.",
+            5
         )
     )
 
@@ -6306,7 +6328,7 @@ private class OnboardingView(
             lp.height = 0
         }
         art.layoutParams = lp
-        art.type = if (langStep) 0 else index
+        art.type = if (langStep) 0 else slides[index].art
         art.invalidate()
     }
 
@@ -6450,6 +6472,23 @@ private class OnboardingView(
                     }
                     triangle(canvas, cx, cy + 46f * u, cx - 9f * u, cy + 34f * u, cx + 9f * u, cy + 34f * u, fillGold)
                     triangle(canvas, cx - 18f * u, cy - 14f * u, cx - 18f * u, cy - 2f * u, cx - 7f * u, cy - 8f * u, fillWhite)
+                }
+                6 -> {
+                    // The menu: a panel of rows on the left, and the remote's Left button pointing at it.
+                    tmp.set(cx - 86f * u, cy - 44f * u, cx - 28f * u, cy + 44f * u)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
+                    for (k in 0..5) {
+                        val top = cy - 36f * u + k * 13f * u
+                        tmp.set(cx - 80f * u, top, cx - 80f * u + (if (k % 2 == 0) 40f else 30f) * u, top + 5f * u)
+                        canvas.drawRoundRect(tmp, 2.5f * u, 2.5f * u, if (k == 1) fillGold else fillWhite)
+                    }
+                    canvas.drawCircle(cx + 56f * u, cy, 28f * u, fillDim)
+                    canvas.drawCircle(cx + 56f * u, cy, 28f * u, line)
+                    triangle(canvas, cx + 36f * u, cy, cx + 48f * u, cy - 9f * u, cx + 48f * u, cy + 9f * u, fillGold)
+                    triangle(canvas, cx + 76f * u, cy, cx + 64f * u, cy - 9f * u, cx + 64f * u, cy + 9f * u, fillWhite)
+                    canvas.drawLine(cx + 24f * u, cy, cx - 18f * u, cy, line)
+                    triangle(canvas, cx - 24f * u, cy, cx - 14f * u, cy - 6f * u, cx - 14f * u, cy + 6f * u, fillGold)
                 }
                 else -> {
                     tmp.set(cx - 34f * u, cy - 14f * u, cx + 34f * u, cy + 14f * u)

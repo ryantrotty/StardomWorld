@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.85
+- Intro screens: a new "The menu" screen after "Moving around" explains how to open the menu (Left on the first video of a row or list), how to close it (Right or Back) and what is inside, with a small drawing. The language screen now points to the menu's language switch instead of the old header button. (New installs only; no "what's new" logic for people who already saw the intro.)
+- Includes everything in 1.3.84 (the left slide-out menu).
+
 ## 1.3.84
 - New left slide-out menu replaces the site's top header on every page. Press Left on the first card of any row or list to open it, Right (or Back) to close it. It holds: search, Home with the logo, Shows, Championships, Years (current year back to 2011), Wrestlers (opens the search box), My Videos (Recently Watched, My Favorites; signed in only), Community (Most Watched, Most Favorited), then your account (or Log in) and the EN / 日本語 switch at the bottom. Groups open one at a time.
 - A slim arrow tab on the left edge shows the menu is there, and "Press Left for the menu" appears on the first three launches of the home page (it stops once the menu has been opened).
