@@ -3101,6 +3101,10 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-search{gap:12px;justify-content:flex-start;background:#172029 !important;border:1px solid #2a323c !important;padding:0 14px;}',
             '#tv-sm .tv-sm-search:focus-within{border:3px solid #F4C242 !important;padding:0 12px;}',
             '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:46px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:22px;font-family:inherit;padding:0;}',
+            '#tv-sm .tv-sm-formhost{flex:1 1 auto;min-width:0;display:block;}',
+            '#tv-sm .tv-sm-formhost form, #tv-sm .tv-sm-formhost .input-group{display:block !important;width:100% !important;max-width:none !important;min-width:0 !important;flex:1 1 auto !important;height:46px !important;margin:0 !important;padding:0 !important;background:transparent !important;border:0 !important;}',
+            '#tv-sm .tv-sm-formhost input[type="text"], #tv-sm .tv-sm-formhost input.form-control, #tv-sm .tv-sm-formhost input[name="q[keyword]"]{display:block !important;width:100% !important;height:46px !important;padding:0 !important;margin:0 !important;background:transparent !important;border:0 !important;border-radius:0 !important;outline:none !important;box-shadow:none !important;color:#ffffff !important;font-size:22px !important;font-family:inherit !important;}',
+            '#tv-sm .tv-sm-formhost input[type="submit"], #tv-sm .tv-sm-formhost button, #tv-sm .tv-sm-formhost .input-group-btn, #tv-sm .tv-sm-formhost .input-group-append{display:none !important;}',
             '#tv-sm .tv-sm-mic{flex:0 0 auto;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;border:3px solid transparent;box-sizing:border-box;outline:none;cursor:pointer;}',
             '#tv-sm .tv-sm-mic:focus{border-color:#F4C242;background:#0F151C;}',
             '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:68px;}',
@@ -3168,7 +3172,7 @@ class MainActivity : Activity() {
             var ja = isJa();
             var logo = logoSrc();
             var h = '';
-            h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '"><span class="tv-sm-mic" tabindex="0" role="button" data-mic="1" aria-label="Voice search"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
+            h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" tabindex="0" role="button" data-mic="1" aria-label="Voice search"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
             h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
             h += group(T('Shows', '番組'), showsList());
             h += group(T('Championships', '王座'), CHAMPS);
@@ -3210,6 +3214,34 @@ class MainActivity : Activity() {
             host.appendChild(panel);
           }
 
+          // The search box is the site's own (the one the old header used, which opens the keyboard properly):
+          // it is moved into the menu while the menu is open and put back in the header when it closes.
+          var searchOrigin = null;
+          function realSearchForm() {
+            var f = document.querySelector('#tv-header-flex-wrapper form') || document.querySelector('form.form-inline');
+            return (f && !(panel && panel.contains(f))) ? f : null;
+          }
+          function mountSearch() {
+            var host = panel.querySelector('.tv-sm-formhost');
+            if (!host) return;
+            var f = realSearchForm();
+            if (f && f.parentNode) {
+              searchOrigin = { parent: f.parentNode, next: f.nextSibling, form: f };
+              host.appendChild(f);
+            } else {
+              host.innerHTML = '<input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '">';
+            }
+          }
+          function unmountSearch() {
+            if (searchOrigin && searchOrigin.parent) {
+              try { searchOrigin.parent.insertBefore(searchOrigin.form, (searchOrigin.next && searchOrigin.next.parentNode === searchOrigin.parent) ? searchOrigin.next : null); } catch (e) {}
+            }
+            searchOrigin = null;
+          }
+          function searchInput() {
+            return panel ? panel.querySelector('.tv-sm-formhost input[type="text"], .tv-sm-formhost input.form-control, .tv-sm-formhost input[name="q[keyword]"], .tv-sm-formhost input:not([type="submit"]):not([type="hidden"])') : null;
+          }
+
           function items() {
             if (!panel) return [];
             return Array.prototype.filter.call(panel.querySelectorAll('.tv-sm-item'), function(el) {
@@ -3218,14 +3250,16 @@ class MainActivity : Activity() {
           }
           function focusItem(el) {
             if (!el) return;
+            if (el.classList && el.classList.contains('tv-sm-search')) { var si = searchInput(); if (si) el = si; }
             try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
             try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
           }
           function move(d) {
             var list = items();
             var cur = document.activeElement;
-            if (cur && cur.classList && cur.classList.contains('tv-sm-mic')) cur = document.getElementById('tv-sm-q');
-            var i = list.indexOf(cur && cur.parentNode && cur.parentNode.classList.contains('tv-sm-search') ? cur.parentNode : cur);
+            if (cur && cur.classList && cur.classList.contains('tv-sm-mic')) cur = searchInput();
+            var curRow = cur && cur.closest ? cur.closest('.tv-sm-item') : null;
+            var i = list.indexOf(curRow || cur);
             if (i < 0) i = 0; else i = Math.max(0, Math.min(list.length - 1, i + d));
             focusItem(list[i]);
           }
@@ -3239,6 +3273,7 @@ class MainActivity : Activity() {
             if (isOpen) return;
             ensureDom();
             build();
+            mountSearch();
             prevFocus = document.activeElement;
             isOpen = true;
             document.documentElement.classList.add('tv-sm-open');
@@ -3251,6 +3286,7 @@ class MainActivity : Activity() {
           function closeMenu() {
             if (!isOpen) return false;
             isOpen = false;
+            unmountSearch();
             document.documentElement.classList.remove('tv-sm-open');
             setNativeFlag(false);
             try { if (document.activeElement && panel && panel.contains(document.activeElement)) document.activeElement.blur(); } catch (e) {}
@@ -3268,7 +3304,7 @@ class MainActivity : Activity() {
           }
 
           function submitSearch() {
-            var q = document.getElementById('tv-sm-q');
+            var q = searchInput();
             var v = q ? q.value.trim() : '';
             if (!v) return false;
             closeMenu();
@@ -3286,7 +3322,7 @@ class MainActivity : Activity() {
               return;
             }
             if (el.getAttribute('data-go')) { go(el.getAttribute('data-go')); return; }
-            if (el.getAttribute('data-wrest')) { var q = document.getElementById('tv-sm-q'); if (q) focusItem(q); return; }
+
             if (el.getAttribute('data-lang')) {
               var next = isJa() ? 'en' : 'ja';
               if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') window.AndroidHost.toggleLanguage(next);
@@ -3315,7 +3351,7 @@ class MainActivity : Activity() {
           }
           // Called by the app with what was heard: it fills the search box and runs the search.
           window.__tvVoiceResult = function(text) {
-            var q = document.getElementById('tv-sm-q');
+            var q = searchInput();
             if (!q || !text) return;
             q.value = String(text);
             submitSearch();
@@ -3354,7 +3390,7 @@ class MainActivity : Activity() {
               return;
             }
             var ae = document.activeElement;
-            var inInput = !!(ae && ae.id === 'tv-sm-q');
+            var inInput = !!(ae && ae.tagName === 'INPUT' && ae.type !== 'submit' && ae.closest && ae.closest('.tv-sm-search'));
             if (k === 40) { stop(e); move(1); return; }
             if (k === 38) { stop(e); move(-1); return; }
             var onMic = !!(ae && ae.classList && ae.classList.contains('tv-sm-mic'));
@@ -3365,7 +3401,7 @@ class MainActivity : Activity() {
               closeMenu(); return;
             }
             if (k === 37) {
-              if (onMic) { stop(e); var q0 = document.getElementById('tv-sm-q'); if (q0) q0.focus(); return; }
+              if (onMic) { stop(e); var q0 = searchInput(); if (q0) q0.focus(); return; }
               if (inInput && ae.value && ae.selectionStart > 0) return;
               stop(e);
               if (ae && ae.classList && ae.classList.contains('tv-sm-sub')) {
@@ -3380,16 +3416,7 @@ class MainActivity : Activity() {
             if (k === 27) { stop(e); closeMenu(); return; }
             if (k === 13 || k === 23 || k === 32 && !inInput) {
               if (onMic) { stop(e); startVoice(); return; }
-              if (inInput) {
-                stop(e);
-                if (ae.value && submitSearch()) return;
-                try {
-                  if (window.AndroidHost && window.AndroidHost.promptSearch) { window.AndroidHost.promptSearch(ae.getAttribute('placeholder') || '', ae.value || ''); return; }
-                  ae.focus();
-                  if (window.AndroidHost && window.AndroidHost.showKeyboard) window.AndroidHost.showKeyboard();
-                } catch (e4) {}
-                return;
-              }
+              if (inInput) return;   // the site's own search box: OK opens the keyboard, Enter searches, as it always did
               if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
             }
           }, true);
