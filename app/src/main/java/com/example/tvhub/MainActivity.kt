@@ -600,6 +600,7 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
+    private val REQ_VOICE_SEARCH = 4711
     @Volatile private var sideMenuOpen = false   // the left slide-out menu is showing (set by the page)
     private var authPending = false
     private var loginStarting = false
@@ -2247,6 +2248,32 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
+        fun showKeyboard() {
+            handler.post {
+                try {
+                    webView.requestFocus()
+                    val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.showSoftInput(webView, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
+                } catch (e: Exception) {}
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun startVoiceSearch(langTag: String) {
+            handler.post {
+                try {
+                    val i = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                    i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, langTag)
+                    i.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                    startActivityForResult(i, REQ_VOICE_SEARCH)
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(this@MainActivity, "Voice search is not available on this device", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        @android.webkit.JavascriptInterface
         fun setSideMenuOpen(open: Boolean) {
             sideMenuOpen = open
         }
@@ -3044,11 +3071,13 @@ class MainActivity : Activity() {
             'html.tv-sm-open #tv-sm{transform:none;}',
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
-            '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;}',
+            '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
+            '#tv-sm .tv-sm-list > :first-child{margin-top:auto;}',
+            '#tv-sm .tv-sm-list > :last-child{margin-bottom:auto;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
-            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:50px;padding:0 14px;font-size:22px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
+            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
-            '#tv-sm .tv-sm-sub{font-size:20px;font-weight:500;color:#c9d2dc !important;min-height:44px;}',
+            '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:48px;}',
             '#tv-sm .tv-sm-subs{margin-left:24px;padding-left:10px;border-left:2px solid #2a323c;display:none;}',
             '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-subs{display:block;}',
             '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-item{color:#F4C242 !important;}',
@@ -3056,18 +3085,23 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-chev{flex:0 0 auto;transition:transform .12s;}',
             '#tv-sm .tv-sm-search{gap:12px;justify-content:flex-start;background:#172029 !important;border:1px solid #2a323c !important;padding:0 14px;}',
             '#tv-sm .tv-sm-search:focus-within{border:3px solid #F4C242 !important;padding:0 12px;}',
-            '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:44px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:20px;font-family:inherit;padding:0;}',
-            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:16px;margin-top:6px;}',
-            '#tv-sm .tv-sm-home img{max-height:40px;width:auto;object-fit:contain;}',
+            '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:46px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:22px;font-family:inherit;padding:0;}',
+            '#tv-sm .tv-sm-mic{flex:0 0 auto;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;border:3px solid transparent;box-sizing:border-box;outline:none;cursor:pointer;}',
+            '#tv-sm .tv-sm-mic:focus{border-color:#F4C242;background:#0F151C;}',
+            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:20px 0 20px 0;min-height:68px;}',
+            '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
-            '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:18px;font-weight:700;color:#c9d2dc;}',
+            '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:20px;font-weight:700;color:#c9d2dc;}',
             '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B0F14;}',
             '#tv-sm-tab{position:fixed;left:0;top:42%;width:26px;height:110px;border-radius:0 12px 12px 0;background:rgba(17,23,30,.92);border:1px solid #2a323c;border-left:0;z-index:99990;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
             'html.tv-sm-open #tv-sm-tab{display:none;}',
             '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B0F14;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
-            'html.tv-sm-open #tv-sm-hint{display:none;}'
+            'html.tv-sm-open #tv-sm-hint{display:none;}',
+            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#000000;}',
+            '#tv-page-title .tv-pt-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
+            '#tv-page-title .tv-pt-txt{min-width:0;line-height:1.2;}'
           ].join('\n');
           (document.head || document.documentElement).appendChild(st);
 
@@ -3119,7 +3153,7 @@ class MainActivity : Activity() {
             var ja = isJa();
             var logo = logoSrc();
             var h = '';
-            h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '"></div>';
+            h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '"><span class="tv-sm-mic" tabindex="0" role="button" data-mic="1" aria-label="Voice search"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
             h += '<a class="tv-sm-item tv-sm-home" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a>';
             h += '<div class="tv-sm-list">';
             h += group(T('Shows', '番組'), SHOWS);
@@ -3175,7 +3209,9 @@ class MainActivity : Activity() {
           }
           function move(d) {
             var list = items();
-            var i = list.indexOf(document.activeElement);
+            var cur = document.activeElement;
+            if (cur && cur.classList && cur.classList.contains('tv-sm-mic')) cur = document.getElementById('tv-sm-q');
+            var i = list.indexOf(cur && cur.parentNode && cur.parentNode.classList.contains('tv-sm-search') ? cur.parentNode : cur);
             if (i < 0) i = 0; else i = Math.max(0, Math.min(list.length - 1, i + d));
             focusItem(list[i]);
           }
@@ -3258,6 +3294,19 @@ class MainActivity : Activity() {
 
           function stop(e) { e.preventDefault(); e.stopPropagation(); }
 
+          function startVoice() {
+            try {
+              if (window.AndroidHost && window.AndroidHost.startVoiceSearch) window.AndroidHost.startVoiceSearch(isJa() ? 'ja-JP' : 'en-US');
+            } catch (e) {}
+          }
+          // Called by the app with what was heard: it fills the search box and runs the search.
+          window.__tvVoiceResult = function(text) {
+            var q = document.getElementById('tv-sm-q');
+            if (!q || !text) return;
+            q.value = String(text);
+            submitSearch();
+          };
+
           function cardRect(a) {
             var c = a.closest('.content-list-item, article') || a;
             return c.getBoundingClientRect();
@@ -3294,12 +3343,16 @@ class MainActivity : Activity() {
             var inInput = !!(ae && ae.id === 'tv-sm-q');
             if (k === 40) { stop(e); move(1); return; }
             if (k === 38) { stop(e); move(-1); return; }
+            var onMic = !!(ae && ae.classList && ae.classList.contains('tv-sm-mic'));
             if (k === 39) {
-              if (inInput && ae.value) return;   // let the cursor move inside typed text
-              stop(e); closeMenu(); return;
+              if (inInput && ae.value && ae.selectionStart < ae.value.length) return;   // let the cursor move inside typed text
+              stop(e);
+              if (inInput) { var mic = panel.querySelector('.tv-sm-mic'); if (mic) focusItem(mic); return; }
+              closeMenu(); return;
             }
             if (k === 37) {
-              if (inInput && ae.value) return;
+              if (onMic) { stop(e); var q0 = document.getElementById('tv-sm-q'); if (q0) q0.focus(); return; }
+              if (inInput && ae.value && ae.selectionStart > 0) return;
               stop(e);
               if (ae && ae.classList && ae.classList.contains('tv-sm-sub')) {
                 var par = ae.parentNode.parentNode;
@@ -3312,9 +3365,13 @@ class MainActivity : Activity() {
             }
             if (k === 27) { stop(e); closeMenu(); return; }
             if (k === 13 || k === 23 || k === 32 && !inInput) {
+              if (onMic) { stop(e); startVoice(); return; }
               if (inInput) {
-                if (ae.value && submitSearch()) { stop(e); }
-                return;   // empty: the OK press opens the keyboard
+                stop(e);
+                if (ae.value && submitSearch()) return;
+                try { ae.focus(); } catch (e3) {}
+                try { if (window.AndroidHost && window.AndroidHost.showKeyboard) window.AndroidHost.showKeyboard(); } catch (e4) {}
+                return;
               }
               if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
             }
@@ -3344,6 +3401,62 @@ class MainActivity : Activity() {
           }
           if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addCues);
           else addCues();
+
+          // A page title in the home-row style (gold bar + large white text) at the top of every destination page.
+          function pageTitleText() {
+            var loc = location;
+            var params = new URLSearchParams(loc.search);
+            var h1 = document.querySelector('h1.ttl-lg, .box-content > h1, h1');
+            var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
+            var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
+            if (isJa()) return fallback;
+            var all = [].concat(SHOWS, CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W));
+            for (var y = new Date().getFullYear(); y >= 2011; y--) all.push([String(y), '/contents/category/' + y]);
+            for (var i = 0; i < all.length; i++) {
+              var u = new URL(BASE + all[i][1]);
+              if (u.pathname !== loc.pathname) continue;
+              if (u.pathname === '/contents/search') {
+                var up = u.searchParams;
+                if ((up.get('s') || '') !== (params.get('s') || '')) continue;
+                if ((up.get('q[keyword]') || '') !== (params.get('q[keyword]') || '')) continue;
+              }
+              return all[i][0];
+            }
+            var kw = params.get('q[keyword]');
+            if (loc.pathname === '/contents/search' && kw) return 'Search: ' + kw;
+            return fallback;
+          }
+          function addPageTitle() {
+            var p = location.pathname;
+            if (isHome() || isDetail() || p.indexOf('/login') === 0) return true;
+            if (!document.body) return false;
+            var el = document.getElementById('tv-page-title');
+            var txt = pageTitleText();
+            if (!txt) return false;
+            if (!el) {
+              el = document.createElement('div');
+              el.id = 'tv-page-title';
+              el.className = 'notranslate';
+              el.setAttribute('translate', 'no');
+              el.innerHTML = '<span class="tv-pt-bar"></span><span class="tv-pt-txt"></span>';
+              document.body.insertBefore(el, document.body.firstChild);
+            }
+            var t = el.querySelector('.tv-pt-txt');
+            if (t.textContent !== txt) t.textContent = txt;
+            // line the title up with the left edge of the first video card
+            var card = document.querySelector('a.tv-thumbnail-link');
+            var c = card ? (card.closest('.content-list-item, article') || card) : null;
+            var left = c ? c.getBoundingClientRect().left + window.scrollX : 0;
+            el.style.paddingLeft = (left > 16 ? left : 40) + 'px';
+            return true;
+          }
+          var ptTries = 0;
+          var ptTimer = setInterval(function() {
+            ptTries++;
+            addPageTitle();
+            if (ptTries > 25) clearInterval(ptTimer);
+          }, 800);
         })();
     """.trimIndent()
 
@@ -5260,6 +5373,16 @@ class MainActivity : Activity() {
     }
 
     // ---------------------------------------------------------------- remote keys
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_VOICE_SEARCH && resultCode == RESULT_OK) {
+            val heard = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!heard.isNullOrBlank()) {
+                webView.evaluateJavascript("(function(){ if (window.__tvVoiceResult) window.__tvVoiceResult(" + org.json.JSONObject.quote(heard) + "); })()", null)
+            }
+        }
+    }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (onboardingShowing) {

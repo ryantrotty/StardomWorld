@@ -7,6 +7,9 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - A slim arrow tab on the left edge shows the menu is there, and "Press Left for the menu" appears on the first three launches of the home page (it stops once the menu has been opened).
 - Left on the home banner opens the menu (Right still changes slides). Long titles in the menu wrap at spaces, never inside a word.
 - The account is now a drop-down in the list like the others (My page, Log out, ...), the language switch is a full-width pill at the very bottom (reached with Down), and Wrestlers is split into Current Wrestlers and Past Wrestlers, each name opening a search for that wrestler.
+- Menu search: OK on the search box now opens the on-screen keyboard, and a blue microphone at the right end of the box starts voice search (press Right from the box to reach it).
+- Menu: more room around the logo, slightly larger text, and the list sits centred in the space so it spreads evenly if items are added.
+- Every destination page (shows, championships, years, wrestlers, My Videos, Community, search results) now starts with a title in the home-row style: gold bar and large white text, lined up with the first video card.
 - The home page content now starts higher, since the header is gone.
 
 ## 1.3.83
