@@ -606,7 +606,6 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
-    private val REQ_VOICE_SEARCH = 4711
     @Volatile private var sideMenuOpen = false   // the left slide-out menu is showing (set by the page)
     private var authPending = false
     private var loginStarting = false
@@ -2254,37 +2253,6 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
-        fun showKeyboard() {
-            handler.post {
-                try {
-                    webView.requestFocus()
-                    val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                    imm.showSoftInput(webView, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
-                } catch (e: Exception) {}
-            }
-        }
-
-        @android.webkit.JavascriptInterface
-        fun promptSearch(hint: String, initial: String) {
-            handler.post { showSearchPrompt(hint, initial) }
-        }
-
-        @android.webkit.JavascriptInterface
-        fun startVoiceSearch(langTag: String) {
-            handler.post {
-                try {
-                    val i = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                    i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, langTag)
-                    i.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-                    startActivityForResult(i, REQ_VOICE_SEARCH)
-                } catch (e: Exception) {
-                    android.widget.Toast.makeText(this@MainActivity, "Voice search is not available on this device", android.widget.Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-
-        @android.webkit.JavascriptInterface
         fun setSideMenuOpen(open: Boolean) {
             sideMenuOpen = open
         }
@@ -3101,12 +3069,11 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-search{gap:12px;justify-content:flex-start;background:#172029 !important;border:1px solid #2a323c !important;padding:0 14px;}',
             '#tv-sm .tv-sm-search:focus-within{border:3px solid #F4C242 !important;padding:0 12px;}',
             '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:46px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:22px;font-family:inherit;padding:0;}',
+            '#tv-sm .tv-sm-mic{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
             '#tv-sm .tv-sm-formhost{flex:1 1 auto;min-width:0;display:block;}',
             '#tv-sm .tv-sm-formhost form, #tv-sm .tv-sm-formhost .input-group{display:block !important;width:100% !important;max-width:none !important;min-width:0 !important;flex:1 1 auto !important;height:46px !important;margin:0 !important;padding:0 !important;background:transparent !important;border:0 !important;}',
             '#tv-sm .tv-sm-formhost input[type="text"], #tv-sm .tv-sm-formhost input.form-control, #tv-sm .tv-sm-formhost input[name="q[keyword]"]{display:block !important;width:100% !important;height:46px !important;padding:0 !important;margin:0 !important;background:transparent !important;border:0 !important;border-radius:0 !important;outline:none !important;box-shadow:none !important;color:#ffffff !important;font-size:22px !important;font-family:inherit !important;}',
             '#tv-sm .tv-sm-formhost input[type="submit"], #tv-sm .tv-sm-formhost button, #tv-sm .tv-sm-formhost .input-group-btn, #tv-sm .tv-sm-formhost .input-group-append{display:none !important;}',
-            '#tv-sm .tv-sm-mic{flex:0 0 auto;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;border:3px solid transparent;box-sizing:border-box;outline:none;cursor:pointer;}',
-            '#tv-sm .tv-sm-mic:focus{border-color:#F4C242;background:#0F151C;}',
             '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:68px;}',
             '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
@@ -3136,13 +3103,39 @@ class MainActivity : Activity() {
             return '<svg class="tv-sm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
           }
           function group(label, rows) {
-            var h = '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+            var h = '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
             rows.forEach(function(r) {
               h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(r[0]) + '</a>';
             });
             return h + '</div></div>';
           }
           function signedIn() { return !!document.querySelector('.box-dropdown-key'); }
+          // The account name and menu come from the site's header, which is hidden, so the page's translator
+          // never reaches it. They are drawn in the menu where the translator can, and what it produces is
+          // remembered so the next opening shows the English straight away.
+          var XLAT_KEY = 'tvAcctXlatV1';
+          function readXlat() { try { return JSON.parse(lsGet(XLAT_KEY) || '{}') || {}; } catch (e) { return {}; } }
+          function hasJa(t) { return /[\u3040-\u30ff\u3400-\u9fff]/.test(t || ''); }
+          function xl(t) {
+            if (isJa() || !hasJa(t)) return t;
+            var m = readXlat();
+            return m[t] || t;
+          }
+          function learnXlat() {
+            if (isJa()) return;
+            var n = 0;
+            var tm = setInterval(function() {
+              n++;
+              if (!isOpen || !panel || n > 20) { clearInterval(tm); return; }
+              var m = readXlat(), changed = false;
+              Array.prototype.forEach.call(panel.querySelectorAll('[data-orig]'), function(el) {
+                var orig = el.getAttribute('data-orig');
+                var cur = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (orig && hasJa(orig) && cur && !hasJa(cur) && m[orig] !== cur) { m[orig] = cur; changed = true; }
+              });
+              if (changed) lsSet(XLAT_KEY, JSON.stringify(m));
+            }, 400);
+          }
           function acctName() {
             var k = document.querySelector('.box-dropdown-key');
             var t = k ? (k.textContent || '').replace(/\s+/g, ' ').trim() : '';
@@ -3172,8 +3165,8 @@ class MainActivity : Activity() {
             var ja = isJa();
             var logo = logoSrc();
             var h = '';
-            h += '<div class="tv-sm-item tv-sm-search" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" tabindex="0" role="button" data-mic="1" aria-label="Voice search"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
-            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
+            h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
+            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
             h += group(T('Shows', '番組'), showsList());
             h += group(T('Championships', '王座'), CHAMPS);
             h += group(T('Years', '年別'), years);
@@ -3185,19 +3178,20 @@ class MainActivity : Activity() {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               if (links.length) {
-                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(acctName()) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+                var an = acctName();
+                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
                 links.forEach(function(l, i) {
-                  h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span>' + esc(l.label) + '</span></div>';
+                  h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span data-orig="' + esc(l.label) + '">' + esc(xl(l.label)) + '</span></div>';
                 });
                 h += '</div></div>';
               } else {
-                h += '<a class="tv-sm-item" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage"><span>' + esc(acctName()) + '</span></a>';
+                h += '<a class="tv-sm-item" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage"><span data-orig="' + esc(acctName()) + '">' + esc(xl(acctName())) + '</span></a>';
               }
             } else {
               h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
             }
             h += '</div>';
-            h += '<div class="tv-sm-foot"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div></div>';
+            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div></div>';
             panel.innerHTML = h;
           }
 
@@ -3208,8 +3202,6 @@ class MainActivity : Activity() {
             scrim.id = 'tv-sm-scrim';
             panel = document.createElement('div');
             panel.id = 'tv-sm';
-            panel.className = 'notranslate';
-            panel.setAttribute('translate', 'no');
             host.appendChild(scrim);
             host.appendChild(panel);
           }
@@ -3257,7 +3249,6 @@ class MainActivity : Activity() {
           function move(d) {
             var list = items();
             var cur = document.activeElement;
-            if (cur && cur.classList && cur.classList.contains('tv-sm-mic')) cur = searchInput();
             var curRow = cur && cur.closest ? cur.closest('.tv-sm-item') : null;
             var i = list.indexOf(curRow || cur);
             if (i < 0) i = 0; else i = Math.max(0, Math.min(list.length - 1, i + d));
@@ -3284,6 +3275,7 @@ class MainActivity : Activity() {
             var hint = document.getElementById('tv-sm-hint');
             if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
             setNativeFlag(true);
+            learnXlat();
             setTimeout(function() { focusItem(items()[2] || items()[0]); }, 30);
           }
           function closeMenu() {
@@ -3347,18 +3339,7 @@ class MainActivity : Activity() {
 
           function stop(e) { e.preventDefault(); e.stopPropagation(); }
 
-          function startVoice() {
-            try {
-              if (window.AndroidHost && window.AndroidHost.startVoiceSearch) window.AndroidHost.startVoiceSearch(isJa() ? 'ja-JP' : 'en-US');
-            } catch (e) {}
-          }
-          // Called by the app with what was heard: it fills the search box and runs the search.
-          window.__tvVoiceResult = function(text) {
-            var q = searchInput();
-            if (!q || !text) return;
-            q.value = String(text);
-            submitSearch();
-          };
+
 
           function cardRect(a) {
             var c = a.closest('.content-list-item, article') || a;
@@ -3396,15 +3377,11 @@ class MainActivity : Activity() {
             var inInput = !!(ae && ae.tagName === 'INPUT' && ae.type !== 'submit' && ae.closest && ae.closest('.tv-sm-search'));
             if (k === 40) { stop(e); move(1); return; }
             if (k === 38) { stop(e); move(-1); return; }
-            var onMic = !!(ae && ae.classList && ae.classList.contains('tv-sm-mic'));
             if (k === 39) {
               if (inInput && ae.value && ae.selectionStart < ae.value.length) return;   // let the cursor move inside typed text
-              stop(e);
-              if (inInput) { var mic = panel.querySelector('.tv-sm-mic'); if (mic) focusItem(mic); return; }
-              closeMenu(); return;
+              stop(e); closeMenu(); return;
             }
             if (k === 37) {
-              if (onMic) { stop(e); var q0 = searchInput(); if (q0) q0.focus(); return; }
               if (inInput && ae.value && ae.selectionStart > 0) return;
               stop(e);
               if (ae && ae.classList && ae.classList.contains('tv-sm-sub')) {
@@ -3418,7 +3395,6 @@ class MainActivity : Activity() {
             }
             if (k === 27) { stop(e); closeMenu(); return; }
             if (k === 13 || k === 23 || k === 32 && !inInput) {
-              if (onMic) { stop(e); startVoice(); return; }
               if (inInput) return;   // the site's own search box: OK opens the keyboard, Enter searches, as it always did
               if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
             }
@@ -5301,61 +5277,6 @@ class MainActivity : Activity() {
 
     // The header's category list as an app dialog: dark panel, clearly lighter highlight on the focused
     // row, no radio buttons. Choosing a row hands the choice back to the page's own list.
-    // The search box: a small box with the system keyboard (which has its own microphone key on Google TV).
-    private fun showSearchPrompt(hint: String, initial: String) {
-        val dialog = android.app.Dialog(this)
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
-        val panel = android.widget.LinearLayout(this)
-        panel.orientation = android.widget.LinearLayout.VERTICAL
-        val bg = android.graphics.drawable.GradientDrawable()
-        bg.setColor(0xFF3A4656.toInt())
-        bg.cornerRadius = 14 * density
-        panel.background = bg
-        val pad = (24 * density).toInt()
-        panel.setPadding(pad, pad, pad, pad)
-
-        val edit = android.widget.EditText(this)
-        edit.setText(initial)
-        edit.setSelection(edit.text.length)
-        edit.hint = hint
-        edit.setHintTextColor(0xFFB8C2CF.toInt())
-        edit.setTextColor(Color.WHITE)
-        edit.textSize = 24f
-        edit.setSingleLine(true)
-        edit.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
-        edit.inputType = android.text.InputType.TYPE_CLASS_TEXT
-        val submit = {
-            val text = edit.text.toString().trim()
-            dialog.dismiss()
-            if (text.isNotEmpty()) {
-                webView.evaluateJavascript("(function(){ if (window.__tvVoiceResult) window.__tvVoiceResult(" + org.json.JSONObject.quote(text) + "); })()", null)
-            }
-        }
-        edit.setOnEditorActionListener { _, actionId, event ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
-                actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
-                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-                submit()
-                true
-            } else false
-        }
-        panel.addView(edit, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT))
-        dialog.setContentView(panel)
-        dialog.window?.let { w ->
-            w.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
-            val dm = resources.displayMetrics
-            w.setLayout((dm.widthPixels * 0.62f).toInt(), android.view.WindowManager.LayoutParams.WRAP_CONTENT)
-            w.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
-            w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-        }
-        dialog.show()
-        edit.requestFocus()
-        edit.post {
-            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-            imm.showSoftInput(edit, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
-        }
-    }
-
     private fun showSectionPicker(labelsJson: String, pickFn: String, focusSelector: String) {
         val labels = ArrayList<String>()
         try {
@@ -5494,16 +5415,6 @@ class MainActivity : Activity() {
     }
 
     // ---------------------------------------------------------------- remote keys
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQ_VOICE_SEARCH && resultCode == RESULT_OK) {
-            val heard = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-            if (!heard.isNullOrBlank()) {
-                webView.evaluateJavascript("(function(){ if (window.__tvVoiceResult) window.__tvVoiceResult(" + org.json.JSONObject.quote(heard) + "); })()", null)
-            }
-        }
-    }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (onboardingShowing) {
