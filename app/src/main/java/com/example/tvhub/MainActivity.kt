@@ -107,9 +107,6 @@ class MainActivity : Activity() {
         // per row but smaller text.
         private const val LAYOUT_WIDTH = 1440
 
-        // Temporary: shows a focus/key log on video pages while the player focus problems are tracked down.
-        private const val PLAYER_DEBUG = true
-
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
@@ -2501,7 +2498,6 @@ class MainActivity : Activity() {
             if (inPlayer !== last) {
               last = inPlayer;
               try { window.AndroidHost.setPlayerFocused(inPlayer); } catch (e) {}
-              try { if (window.__tvDbgNote) window.__tvDbgNote('player focus flag -> ' + inPlayer); } catch (e) {}
             }
           }
           setInterval(check, 150);
@@ -2523,7 +2519,6 @@ class MainActivity : Activity() {
             // Up has nowhere to go above the player (the menu is the edge tab, opened with Left from the
             // related videos), and a missing target must never leave focus nowhere: stay in the player.
             if (!target) {
-              try { if (window.__tvDbgNote) window.__tvDbgNote('leave ' + dir + ': no target, staying'); } catch (e) {}
               try { window.AndroidHost.setPlayerFocused(true); } catch (e) {}
               return false;
             }
@@ -2532,7 +2527,6 @@ class MainActivity : Activity() {
             target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
             last = false;
             try { window.AndroidHost.setPlayerFocused(false); } catch (e) {}
-            try { if (window.__tvDbgNote) window.__tvDbgNote('leave ' + dir + ' -> ' + (target.getAttribute('href') || target.tagName)); } catch (e) {}
             return true;
           };
         })();
@@ -3517,9 +3511,7 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
-    // Video (detail) pages: a title bar above the player with a Menu button (so the menu is reachable without
-    // Left, which rewinds), Up/Down between related videos, the bar and the player, and a debug panel that
-    // stays on screen and records where focus goes (temporary, for tracking down lost focus).
+    // Video (detail) pages: a title bar above the player, and Up from the first row of related videos to the player.
     private val playerPageJs = """
         (function(){
           if (window.__tvPlayerPage) return;
@@ -3543,7 +3535,6 @@ class MainActivity : Activity() {
             '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
             '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
             '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-            '#tv-dbg{position:fixed;right:12px;bottom:12px;width:820px;max-height:58vh;overflow:hidden;box-sizing:border-box;background:rgba(0,0,0,.9);border:2px solid #F4C242;border-radius:6px;color:#ffffff;font:bold 20px/1.3 monospace;padding:8px 10px;z-index:100001;white-space:pre-wrap;word-break:break-all;pointer-events:none;}'
           ].join('\n');
           (document.head || document.documentElement).appendChild(st);
 
@@ -3588,45 +3579,6 @@ class MainActivity : Activity() {
             if (above) return;
             if (focusPlayer()) { e.preventDefault(); e.stopPropagation(); }
           }, true);
-
-          // ---- debug panel (stays on screen; temporary) ----
-          var dbg = document.createElement('div');
-          dbg.id = 'tv-dbg';
-          var lines = [];
-          var t0 = Date.now();
-          function stamp() { return ((Date.now() - t0) / 1000).toFixed(1) + 's'; }
-          function desc(el) {
-            if (!el || el === document.body) return 'body/none';
-            var d = el.tagName.toLowerCase();
-            if (el.id) d += '#' + el.id;
-            if (el.classList && el.classList.length) d += '.' + el.classList[0];
-            if (el.getAttribute && el.getAttribute('href')) d += ' ' + el.getAttribute('href').slice(-26);
-            if (el.tagName === 'IFRAME') d += ' ' + (el.src || '').replace(/^https?:\/\//, '').slice(0, 30);
-            return d;
-          }
-          var state = { pf: '?', fs: '?', cursor: '?' };
-          function render() {
-            dbg.textContent = 'PLAYER DEBUG (temporary)  menu:' + (menuOpen() ? 'OPEN' : 'closed') + '\n' +
-              'focus now: ' + desc(document.activeElement) + '\n' +
-              'app: playerFocused=' + state.pf + ' fullscreen=' + state.fs + ' cursor=' + state.cursor + '\n' +
-              '-----\n' + lines.join('\n');
-          }
-          function log(m) { lines.push(stamp() + ' ' + m); if (lines.length > 11) lines.shift(); render(); }
-          document.body.appendChild(dbg);
-          var lastDesc = '';
-          setInterval(function() {
-            var d = desc(document.activeElement);
-            if (d !== lastDesc) { lastDesc = d; log('focus -> ' + d); } else render();
-          }, 150);
-          window.addEventListener('keydown', function(e) {
-            log('page key ' + e.keyCode + ' on ' + desc(document.activeElement));
-          }, true);
-          // Called by the app for every remote key it sees: if the page never logs the same key, the player frame took it.
-          window.__tvDbgNote = function(m) { log(m); };
-          window.__tvDbgKey = function(code, pf, fs, cursor) {
-            state.pf = pf; state.fs = fs; state.cursor = cursor;
-            log('APP key ' + code + ' pf=' + pf + ' fs=' + fs);
-          };
         })();
     """.trimIndent()
 
@@ -5552,16 +5504,6 @@ class MainActivity : Activity() {
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
-        }
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 && PLAYER_DEBUG) {
-            when (event.keyCode) {
-                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
-                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_BACK -> {
-                    webView.evaluateJavascript(
-                        "window.__tvDbgKey && window.__tvDbgKey('" + KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_") + "'," + playerFocused + "," + fullScreenActive() + "," + cursorMode + ")", null
-                    )
-                }
-            }
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
