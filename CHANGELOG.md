@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.81
+- Home page, signed in: "Recently Watched" is now row 2 and "Favorites" row 3, directly under "NEW". Their last-known contents are saved on the device and drawn with the page, then refreshed in the background, so they are in place from the first paint after the first visit. If a row arrives late, the highlighted card stays where it is on screen.
+- Signing out clears the saved copies.
+
 ## 1.3.80
 - Home page, signed in: a "Favorites" row below "Recently Watched" shows the first 12 favorites, followed by a "Show All" tile that opens the Favorites page when there are more.
 - "Recently Watched" is left out entirely when the viewing history is empty, without the background page load used before.

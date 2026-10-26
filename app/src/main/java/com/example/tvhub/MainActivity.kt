@@ -3443,7 +3443,7 @@ class MainActivity : Activity() {
             var firstFocus = gridDiv.querySelector('.tv-hero-card, .tv-card');
             if (firstFocus) firstFocus.focus();
 
-            loadRecentlyWatched(cardCss, imgCss, titleCss);
+            startAccountRows(cardCss, imgCss, titleCss);
           }
 
           // Two extra rows at the bottom of the home page for signed-in viewers: "Recently Watched" (the site's
@@ -3513,28 +3513,79 @@ class MainActivity : Activity() {
           var HISTORY_RE = /viewing history|視聴履歴|閲覧履歴|履歴/i;
           var FAVORITES_RE = /favorites list|favourites list|お気に入り/i;
 
-          // Adds one row above the Return to Top button. Favorites always sits last, so Recently Watched
-          // goes above it if it is already there, whichever finishes loading first.
-          function insertRow(id, rowTitle, items, showAllHref, showAllLabel, cardCss, imgCss, titleCss) {
-            if (!items.length || document.getElementById(id)) return;
-            var btn = document.getElementById('tv-return-to-top-btn');
-            if (!btn || !btn.parentElement || !btn.parentElement.parentNode) return;
+          // The two account rows sit right under the first row ("NEW"): Recently Watched, then Favorites.
+          // Their last-known contents are kept on the device and drawn at once with the page, then refreshed
+          // from the site in the background, so they are in place from the first paint on every visit
+          // after the first and nothing jumps when the fresh copy arrives.
+          var CACHE_KEY = 'tvHomeRowsV1';
+          function readCache() {
+            try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
+          }
+          function writeCache(key, val) {
+            try {
+              var c = readCache();
+              if (val) c[key] = val; else delete c[key];
+              localStorage.setItem(CACHE_KEY, JSON.stringify(c));
+            } catch (e) {}
+          }
+          function clearCache() {
+            try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+          }
+
+          // Runs a change to the page and, if the highlighted card moved because of it, scrolls by the same
+          // amount so the card stays where the viewer's eyes are.
+          function keepFocusStill(change) {
+            var ae = document.activeElement;
+            var tracked = !!(ae && ae !== document.body && ae.getBoundingClientRect);
+            var t0 = tracked ? ae.getBoundingClientRect().top : 0;
+            change();
+            if (tracked && document.body.contains(ae)) {
+              var d = ae.getBoundingClientRect().top - t0;
+              if (Math.abs(d) > 1) {
+                try { window.scrollBy({ top: d, left: 0, behavior: 'instant' }); } catch (e) { window.scrollBy(0, d); }
+              }
+            }
+          }
+
+          function rowHtml(rowTitle, items, showAllHref, showAllLabel, css) {
             var html = '<h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:700 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span class="notranslate" translate="no">' + escHtml(rowTitle) + '</span></h2>' +
               '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
             items.forEach(function(item) {
               var bgStyle = item.bgUrl ? 'background-image:url(' + escHtml(item.bgUrl) + ');' : '';
-              html += '<a class="tv-card" tabindex="0" href="' + escHtml(item.href) + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + escHtml(item.title) + '</div></a>';
+              html += '<a class="tv-card" tabindex="0" href="' + escHtml(item.href) + '" style="' + css.card + '"><div style="' + css.img + ' ' + bgStyle + '"></div><div style="' + css.title + '">' + escHtml(item.title) + '</div></a>';
             });
             if (showAllHref) {
               html += '<a class="tv-card notranslate" tabindex="0" href="' + escHtml(showAllHref) + '" style="flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); box-sizing:border-box; border-radius:8px; background:#11171E; border:2px solid #2a323c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-decoration:none; cursor:pointer; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:24px; font-weight:bold; min-height:165px;"><span>' + escHtml(showAllLabel) + '</span><span style="color:#F4C242; font-size:34px; line-height:1;">&#8594;</span></a>';
             }
-            html += '</div>';
+            return html + '</div>';
+          }
+
+          // Adds, updates or removes one account row. Recently Watched goes straight under the first row and
+          // Favorites under Recently Watched, whichever finishes first.
+          function upsertRow(id, rowTitle, items, showAllHref, showAllLabel, css) {
+            var existing = document.getElementById(id);
+            if (!items.length) {
+              if (existing && existing.parentNode) keepFocusStill(function() { existing.parentNode.removeChild(existing); });
+              return;
+            }
+            var html = rowHtml(rowTitle, items, showAllHref, showAllLabel, css);
+            if (existing) {
+              if (existing.dataset.tvSig === html) return;
+              if (existing.contains(document.activeElement)) return;   // don't pull the card from under the remote
+              keepFocusStill(function() { existing.innerHTML = html; });
+              existing.dataset.tvSig = html;
+              return;
+            }
+            var first = document.querySelector('#tv-test-grid .tv-grid-row');
+            if (!first || !first.parentElement || !first.parentElement.parentNode) return;
+            var firstWrap = first.parentElement;
+            var after = id === 'tv-recent-row' ? firstWrap : (document.getElementById('tv-recent-row') || firstWrap);
             var wrap = document.createElement('div');
             wrap.id = id;
             wrap.style.cssText = 'margin-bottom:35px;';
             wrap.innerHTML = html;
-            var anchor = (id === 'tv-recent-row' && document.getElementById('tv-favorites-row')) || btn.parentElement;
-            anchor.parentNode.insertBefore(wrap, anchor);
+            wrap.dataset.tvSig = html;
+            keepFocusStill(function() { after.parentNode.insertBefore(wrap, after.nextSibling); });
           }
 
           // Reads a page of the site that draws its list with script: opens it invisibly, waits until the
@@ -3563,10 +3614,29 @@ class MainActivity : Activity() {
             }, 500);
           }
 
-          function loadRecentlyWatched(cardCss, imgCss, titleCss) {
+          function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+          var FAV_URL = 'https://www.stardom-world.com/mypage/favorites';
+
+          function showRecent(items, css) {
+            upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items, '', '', css);
+          }
+          function showFavorites(items, more, css) {
+            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'Favorites', items,
+              more ? FAV_URL : '', isJa() ? 'すべて見る' : 'Show All', css);
+          }
+
+          // Called as soon as the grid exists: draws the saved copies straight away, then refreshes them.
+          function startAccountRows(cardCss, imgCss, titleCss) {
+            var css = { card: cardCss, img: imgCss, title: titleCss };
+            var c = readCache();
+            if (c.recent && c.recent.length) showRecent(c.recent, css);
+            if (c.fav && c.fav.items && c.fav.items.length) showFavorites(c.fav.items, !!c.fav.more, css);
+            loadRecentlyWatched(css);
+          }
+
+          function loadRecentlyWatched(css) {
             if (window.__tvRecentLoading) return;
             window.__tvRecentLoading = true;
-            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
 
             fetch('/mypage', { credentials: 'include' })
               .then(function(res) {
@@ -3574,33 +3644,35 @@ class MainActivity : Activity() {
                 return res.text();
               })
               .then(function(html) {
-                if (!html) return;                                  // signed out
-                var doc = new DOMParser().parseFromString(html, 'text/html');
-                if (doc.querySelector('input[type="password"]')) return;
+                var doc = html ? new DOMParser().parseFromString(html, 'text/html') : null;
+                if (!doc || doc.querySelector('input[type="password"]')) {
+                  // Signed out: forget what was saved and show nothing.
+                  clearCache();
+                  showRecent([], css);
+                  showFavorites([], false, css);
+                  return;
+                }
                 var items = extractList(doc, HISTORY_RE, 12);
-                var show = function(list) {
-                  insertRow('tv-recent-row', ja ? '最近視聴した動画' : 'Recently Watched', list, '', '', cardCss, imgCss, titleCss);
-                };
-                if (items.length) show(items);
+                var finish = function(list) { writeCache('recent', list.length ? list : null); showRecent(list, css); };
+                if (items.length) finish(items);
                 else if (!/viewing history|視聴履歴|閲覧履歴/i.test(html)) {
                   // The heading is missing from the plain page: it may be drawn by script.
-                  readViaFrame('/mypage', HISTORY_RE, 12, function(list) { show(list); });
+                  readViaFrame('/mypage', HISTORY_RE, 12, function(list) { finish(list); });
+                } else {
+                  finish([]);   // heading present, no videos yet: nothing is shown
                 }
-                // Heading present but no videos yet: nothing is shown.
-                loadFavorites(cardCss, imgCss, titleCss);   // signed in: the Favorites row is read as well
+                loadFavorites(css);   // signed in: the Favorites row is read as well
               })
               .catch(function() {});
           }
 
           // The first 12 favorites (what the site's own first page shows); a "Show All" tile when there are more.
-          function loadFavorites(cardCss, imgCss, titleCss) {
+          function loadFavorites(css) {
             if (window.__tvFavLoading) return;
             window.__tvFavLoading = true;
-            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
             readViaFrame('/mypage/favorites', FAVORITES_RE, 12, function(items, more) {
-              insertRow('tv-favorites-row', ja ? 'お気に入り' : 'Favorites', items,
-                more ? 'https://www.stardom-world.com/mypage/favorites' : '', ja ? 'すべて見る' : 'Show All',
-                cardCss, imgCss, titleCss);
+              writeCache('fav', items.length ? { items: items, more: !!more } : null);
+              showFavorites(items, more, css);
             });
           }
 
