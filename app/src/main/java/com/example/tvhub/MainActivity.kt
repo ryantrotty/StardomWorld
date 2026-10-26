@@ -3579,9 +3579,13 @@ class MainActivity : Activity() {
             var first = document.querySelector('#tv-test-grid .tv-grid-row');
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
+            // Row order under the first row: Recently Watched, Most Watched, Favorites, Most Favorited.
+            var ORDER = ['tv-recent-row', 'tv-most-row', 'tv-favorites-row', 'tv-mostfav-row'];
             var after = firstWrap;
-            if (id === 'tv-favorites-row') after = document.getElementById('tv-recent-row') || firstWrap;
-            else if (id === 'tv-most-row') after = document.getElementById('tv-favorites-row') || document.getElementById('tv-recent-row') || firstWrap;
+            for (var oi = ORDER.indexOf(id) - 1; oi >= 0; oi--) {
+              var prev = document.getElementById(ORDER[oi]);
+              if (prev) { after = prev; break; }
+            }
             var wrap = document.createElement('div');
             wrap.id = id;
             wrap.style.cssText = 'margin-bottom:35px;';
@@ -3623,7 +3627,7 @@ class MainActivity : Activity() {
             upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items, '', '', css);
           }
           function showFavorites(items, more, css) {
-            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'Favorites', items,
+            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'My Favorites', items,
               more ? FAV_URL : '', isJa() ? 'すべて見る' : 'Show All', css);
           }
 
@@ -3633,28 +3637,33 @@ class MainActivity : Activity() {
             var c = readCache();
             if (c.recent && c.recent.length) showRecent(c.recent, css);
             if (c.fav && c.fav.items && c.fav.items.length) showFavorites(c.fav.items, !!c.fav.more, css);
-            var mc = readMostCache();
-            if (mc && mc.length) showMost(mc, css);
+            MOST_ROWS.forEach(function(r, n) {
+              var mc = readMostCache(r.key);
+              if (mc && mc.length) showMost(r, mc, css);
+              setTimeout(function() { loadMostRow(r, css); }, 1500 + n * 1500);
+            });
             loadRecentlyWatched(css);
-            setTimeout(function() { loadMostWatched(css); }, 1500);
           }
 
-          // "Most Watched": the site's own list sorted by number of plays, the first 12, then a View All tile.
-          // One small request to the same address the search page uses; not tied to signing in, so it has its
-          // own saved copy that signing out does not clear.
-          var MOST_KEY = 'tvMostWatchedV1';
-          var MOST_URL = 'https://www.stardom-world.com/contents/search?s=pc&o=d&activetab=contents&page=1';
-          function readMostCache() {
-            try { return JSON.parse(localStorage.getItem(MOST_KEY) || 'null'); } catch (e) { return null; }
+          // "Most Watched" and "Most Favorited": the site's own lists sorted by plays / favorites, the first 12,
+          // then a View All tile. One small request each to the address the search page uses; not tied to
+          // signing in, so each has its own saved copy that signing out does not clear.
+          var MOST_ROWS = [
+            { id: 'tv-most-row', key: 'tvMostWatchedV1', sort: 'pc', en: 'Most Watched', ja: '再生数の多い動画' },
+            { id: 'tv-mostfav-row', key: 'tvMostFavoritedV1', sort: 'fc', en: 'Most Favorited', ja: 'お気に入り数の多い動画' }
+          ];
+          function readMostCache(key) {
+            try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
           }
-          function showMost(items, css) {
-            upsertRow('tv-most-row', isJa() ? '再生数の多い動画' : 'Most Watched', items,
-              MOST_URL, isJa() ? 'すべて見る' : 'View All', css);
+          function showMost(r, items, css) {
+            upsertRow(r.id, isJa() ? r.ja : r.en, items,
+              'https://www.stardom-world.com/contents/search?s=' + r.sort + '&o=d&activetab=contents&page=1',
+              isJa() ? 'すべて見る' : 'View All', css);
           }
-          function loadMostWatched(css) {
-            if (window.__tvMostLoading) return;
-            window.__tvMostLoading = true;
-            fetch('/user_api/contents?size=12&sort=pc&order=d', { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+          function loadMostRow(r, css) {
+            if (window['__tvLoading_' + r.id]) return;
+            window['__tvLoading_' + r.id] = true;
+            fetch('/user_api/contents?size=12&sort=' + r.sort + '&order=d', { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
               .then(function(res) { return res.ok ? res.json() : null; })
               .then(function(list) {
                 if (!list || !list.length) return;
@@ -3671,8 +3680,8 @@ class MainActivity : Activity() {
                 });
                 items = items.slice(0, 12);
                 if (!items.length) return;
-                try { localStorage.setItem(MOST_KEY, JSON.stringify(items)); } catch (e) {}
-                showMost(items, css);
+                try { localStorage.setItem(r.key, JSON.stringify(items)); } catch (e) {}
+                showMost(r, items, css);
               })
               .catch(function() {});
           }
