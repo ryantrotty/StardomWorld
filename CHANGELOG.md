@@ -4,6 +4,7 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 ## 1.3.83
 - Home page: a new "Most Favorited" row (the site's most-favorited videos, first 12, then a "View All" tile for the full list sorted by favorites) is added as the last of the new rows.
+- The "Favorites" row is now titled "My Favorites" (English).
 - Row order under "NEW" is now: Recently Watched, Most Watched, Favorites, Most Favorited. Each row lands in its correct place whichever finishes loading first.
 
 ## 1.3.82

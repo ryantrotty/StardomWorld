@@ -3627,7 +3627,7 @@ class MainActivity : Activity() {
             upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items, '', '', css);
           }
           function showFavorites(items, more, css) {
-            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'Favorites', items,
+            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'My Favorites', items,
               more ? FAV_URL : '', isJa() ? 'すべて見る' : 'Show All', css);
           }
 
