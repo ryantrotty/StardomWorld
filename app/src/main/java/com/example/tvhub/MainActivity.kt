@@ -2970,7 +2970,7 @@ class MainActivity : Activity() {
           css.textContent = '#search-section,[class*="search-detail"],[class*="detail-search"],[class*="advanced-search"],[class*="search-advanced"],[class*="search-modal"],[class*="search-form-area"]{display:none !important;}';
           (document.head || document.documentElement).appendChild(css);
 
-          var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer';
+          var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer, #tv-sm';
           function sweep() {
             var fields = document.querySelectorAll('input[name^="q["], select[name^="q["], input[name="keyword"], form[action*="search"] input, form[action*="/contents"] input[type="text"]');
             fields.forEach(function(f) {
@@ -3272,6 +3272,9 @@ class MainActivity : Activity() {
           function openMenu() {
             if (isOpen) return;
             ensureDom();
+            // never stay hidden by a page sweep (the search box lives in here while the menu is open)
+            if (panel.dataset.tvHidden) { delete panel.dataset.tvHidden; }
+            panel.style.removeProperty('display');
             build();
             mountSearch();
             prevFocus = document.activeElement;
