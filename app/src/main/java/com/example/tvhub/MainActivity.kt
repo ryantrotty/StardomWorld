@@ -110,6 +110,8 @@ class MainActivity : Activity() {
         // The player control bar exists twice (a native overlay in full screen, an in-page bar under the player).
         // Both are built from this one list, from barLabel() and from barAction() so they cannot drift apart.
         private val BAR_IDS = listOf("play", "back", "fwd", "mute", "cc", "quality", "speed", "full")
+        // Not offered in the bar under the picture: the app draws its own EN / 日本語 captions in full screen only.
+        private val BAR_FULLSCREEN_ONLY = setOf("cc")
         private const val BAR_ACCENT = "#FFB347"
         private const val BAR_TEXT_ON_ACCENT = "#1A1A1A"
         private const val BAR_RADIUS_DP = 10
@@ -2228,7 +2230,7 @@ class MainActivity : Activity() {
     inner class WebAppInterface {
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
-        fun barIds(): String = org.json.JSONArray(BAR_IDS).toString()
+        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY }).toString()
 
         @android.webkit.JavascriptInterface
         fun barLabels(statusJson: String): String {
@@ -4952,11 +4954,11 @@ class MainActivity : Activity() {
         val tv = android.widget.TextView(this)
         tv.text = label
         tv.setTextColor(Color.WHITE)
-        tv.textSize = 18f
+        tv.textSize = 15f
         tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
         tv.gravity = Gravity.CENTER
-        val padH = (16 * density).toInt()
-        val padV = (12 * density).toInt()
+        val padH = (12 * density).toInt()
+        val padV = (8 * density).toInt()
         tv.setPadding(padH, padV, padH, padV)
         tv.isFocusable = true
         tv.isClickable = true
@@ -4989,24 +4991,33 @@ class MainActivity : Activity() {
         o.orientation = android.widget.LinearLayout.VERTICAL
         o.setBackgroundColor(0xCC000000.toInt())
         val pad = (28 * density).toInt()
-        o.setPadding(pad, (18 * density).toInt(), pad, (22 * density).toInt())
+        o.setPadding(pad, (14 * density).toInt(), pad, (14 * density).toInt())
+
+        // One compact row, like the bar under the picture on the video page: time, progress, buttons.
+        val main = android.widget.LinearLayout(this)
+        main.orientation = android.widget.LinearLayout.HORIZONTAL
+        main.gravity = Gravity.CENTER_VERTICAL
 
         val time = android.widget.TextView(this)
         time.setTextColor(Color.WHITE)
-        time.textSize = 16f
+        time.textSize = 14f
         time.text = "0:00 / 0:00"
-        o.addView(time)
+        main.addView(
+            time,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { rightMargin = (14 * density).toInt() }
+        )
         fsTimeText = time
 
         val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
         bar.max = 1000
         bar.progressDrawable.setColorFilter(Color.parseColor(BAR_ACCENT), android.graphics.PorterDuff.Mode.SRC_IN)
-        o.addView(
+        main.addView(
             bar,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                (10 * density).toInt()
-            ).apply { topMargin = (6 * density).toInt(); bottomMargin = (14 * density).toInt() }
+            android.widget.LinearLayout.LayoutParams(0, (8 * density).toInt(), 1f)
+                .apply { rightMargin = (14 * density).toInt() }
         )
         fsProgress = bar
 
@@ -5019,7 +5030,7 @@ class MainActivity : Activity() {
                 android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
                     android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { rightMargin = (10 * density).toInt() }
+                ).apply { rightMargin = (6 * density).toInt() }
             )
         }
         for (id in BAR_IDS) {
@@ -5034,7 +5045,8 @@ class MainActivity : Activity() {
             fsBtns[id] = b
             add(b)
         }
-        o.addView(row)
+        main.addView(row)
+        o.addView(main)
 
         // Caption debug panel: only shown after the CC button is pressed.
         val dbg = android.widget.TextView(this)
