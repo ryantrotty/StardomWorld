@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.95
+- New Factions entry in the side menu, listing STARS, COSMIC ANGELS, God's Eye, NEO GENESIS, HATE, Mi Vida Loca, Itoh Respect Gundan and Unaffiliated. A faction page keeps its members in a list on the left; pressing OK or Right on a member loads that member's videos into a grid on the right, loading more pages as you move down. Left from the grid returns to the member list, and Left from the list opens the main menu.
+- Only one request is made at a time, a second apart, and each member's first page is remembered on the TV for 12 hours so reopening one costs nothing. If the site asks for slower access, loading pauses for ten minutes.
+- The faction names live in app/src/main/assets/factions.json (edit it when members change). Faction logos show only in builds with the private branding folder; other builds show text.
+
 ## 1.3.94
 - Full screen: Left and Right now skip 30 seconds per press (60 seconds while held or with the fast-forward / rewind keys), instead of 10 and 30.
 

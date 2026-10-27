@@ -2228,6 +2228,15 @@ class MainActivity : Activity() {
     private val webAppInterface by lazy { WebAppInterface() }
 
     inner class WebAppInterface {
+        // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
+        @android.webkit.JavascriptInterface
+        fun factionsJson(): String = try {
+            this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun factionLogos(): Boolean = BuildConfig.FACTION_LOGOS
+
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
         fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY }).toString()
@@ -3093,6 +3102,18 @@ class MainActivity : Activity() {
           var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
+          // The Factions entries come from the app's factions.json: [name, address of its page, name].
+          function factionRows() {
+            var out = [];
+            try {
+              var d = JSON.parse(AndroidHost.factionsJson());
+              (d.factions || []).forEach(function(f) {
+                if (!f.members || !f.members.length) return;
+                out.push([f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
+              });
+            } catch (e) {}
+            return out;
+          }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
           var HINT_KEY = 'tvMenuHintV1';
 
@@ -3225,6 +3246,8 @@ class MainActivity : Activity() {
             h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
             h += group(T('Shows', '番組'), showsList());
             h += group(T('Championships', '王座'), CHAMPS);
+            var facRows = factionRows();
+            if (facRows.length) h += group(T('Factions', 'ユニット'), facRows);
             h += group(T('Years', '年別'), years);
             h += group(T('Current Wrestlers', '現役選手'), wrestlers(CURRENT_W));
             h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W));
@@ -3943,6 +3966,375 @@ class MainActivity : Activity() {
           setInterval(function() { if (bar && !document.hidden) refresh(); }, 500);
           window.addEventListener('resize', fit);
         })();
+    """.trimIndent()
+
+    // Factions page: reached from the menu's Factions entry (a search page address carrying "tvfaction=<id>").
+    // The faction's members are listed on the left (they stay put); OK or Right on one loads that member's videos
+    // into a grid on the right, one page at a time as the remote reaches the bottom. The names come from the
+    // app's factions.json; nothing is requested until a member is chosen, and never more than one request at once.
+    private val factionJs = """
+(function(){
+  if (window.__tvFaction) return;
+  var mm = /[?&]tvfaction=([A-Za-z0-9_-]+)/.exec(location.search);
+  if (!mm || location.pathname.indexOf('/contents/search') !== 0) return;
+  if (!window.AndroidHost || !AndroidHost.factionsJson) return;
+  var data = null;
+  try { data = JSON.parse(AndroidHost.factionsJson()); } catch (e) {}
+  var fac = null;
+  ((data && data.factions) || []).forEach(function(f) { if (f.id === mm[1]) fac = f; });
+  if (!fac || !fac.members || !fac.members.length) return;
+  window.__tvFaction = true;
+  window.__tvInfiniteScroll = true;   // the site's own result list is not used; this page loads its own pages
+  var useLogo = false;
+  try { useLogo = !!AndroidHost.factionLogos(); } catch (e) {}
+
+  var GAP_MS = 1200;                 // pause between two requests to the site
+  var CACHE_KEY = 'tvFacCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1';
+  var CACHE_TTL = 12 * 3600 * 1000;
+  var MAX_SAVED = 40;                // videos kept per member on the TV (the first pages only)
+
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+  function absUrl(u) { try { return new URL(u, location.origin).href; } catch (e) { return u; } }
+  function clean(t) {
+    return (t || '').replace(/月額見放題/g, '')
+      .replace(/Unlimited viewing for a monthly fee/gi, '')
+      .replace(/Monthly subscription available/gi, '')
+      .replace(/Monthly subscription/gi, '')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#tv-fac{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fac-nav{flex:0 0 330px;box-sizing:border-box;padding:30px 20px 20px 40px;display:flex;flex-direction:column;min-height:0;border-right:1px solid #222b36;}',
+    '#tv-fac .tv-fh{display:flex;align-items:center;gap:16px;margin-bottom:18px;min-height:56px;}',
+    '#tv-fac .tv-fh-bar{flex:0 0 auto;width:8px;height:44px;background:#F4C242;}',
+    '#tv-fac .tv-fh-logo{flex:0 0 auto;max-width:96px;max-height:80px;object-fit:contain;}',
+    '#tv-fac .tv-fh-name{font-size:28px;font-weight:700;line-height:1.15;}',
+    '#tv-fac .tv-fh-sub{font-size:16px;color:#9aa6b4;margin-top:4px;}',
+    '#tv-fac-members{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;padding:2px;}',
+    '#tv-fac-members::-webkit-scrollbar{display:none;}',
+    '#tv-fac .tv-fm{display:flex;align-items:center;box-sizing:border-box;min-height:50px;margin:3px 0;padding:0 14px;font-size:22px;font-weight:600;color:#c9d2dc;border:3px solid transparent;border-left:6px solid transparent;border-radius:8px;outline:none !important;cursor:pointer;}',
+    '#tv-fac .tv-fm.tv-sel{color:#F4C242;border-left-color:#F4C242;}',
+    '#tv-fac .tv-fm:focus{background:#172029;border-color:#F4C242;color:#ffffff;box-shadow:none !important;}',
+    '#tv-fac-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;min-height:0;}',
+    '#tv-fac-title{display:flex;align-items:center;gap:14px;padding:30px 40px 6px 40px;font-size:28px;font-weight:700;}',
+    '#tv-fac-title .tv-ft-bar{width:8px;height:32px;background:#F4C242;}',
+    '#tv-fac-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 40px 30px;scrollbar-width:none;}',
+    '#tv-fac-scroll::-webkit-scrollbar{display:none;}',
+    '#tv-fac-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;}',
+    '#tv-fac .tv-fc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-fac .tv-fc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
+    '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
+    '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  // ------------------------------------------------------------------ data
+  var members = fac.members;
+  var S = [];                       // per member: { items, seen, page, more, loaded, err }
+  members.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
+  var sel = 0;
+  var kw = /[?&]q%5Bkeyword%5D=([^&]*)/i.exec(location.search) || /[?&]q\[keyword\]=([^&]*)/i.exec(location.search);
+  if (kw) {
+    var want = ''; try { want = decodeURIComponent(kw[1].replace(/\+/g, ' ')); } catch (e) {}
+    members.forEach(function(m, i) { if (m.search === want) sel = i; });
+  }
+
+  function readCache() { try { return JSON.parse(lsGet(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function writeCache(term, s) {
+    var c = readCache();
+    c[term] = { t: Date.now(), items: s.items.slice(0, MAX_SAVED), more: s.more };
+    var keys = Object.keys(c);
+    if (keys.length > 80) {
+      keys.sort(function(a, b) { return c[a].t - c[b].t; });
+      for (var i = 0; i < keys.length - 80; i++) delete c[keys[i]];
+    }
+    lsSet(CACHE_KEY, JSON.stringify(c));
+  }
+
+  function parseCards(doc) {
+    var scope = doc.querySelector('.content-list, [class*="content-list"]') || doc;
+    var nodes = scope.querySelectorAll('.content-list-item, article');
+    var out = [], seen = {};
+    Array.prototype.forEach.call(nodes, function(item) {
+      if (item.closest && item.closest('.slick-cloned')) return;
+      var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+      if (!link) return;
+      var href = absUrl(link.getAttribute('href') || '');
+      if (!href || seen[href]) return;
+      seen[href] = true;
+      var bg = '';
+      var th = item.querySelector('[style*="background-image"]');
+      if (th) {
+        var m = (th.style.backgroundImage || '').match(/url\(['"]?(.*?)['"]?\)/);
+        if (m && m[1]) bg = m[1];
+      }
+      if (!bg) {
+        var img = item.querySelector('img');
+        if (img) bg = img.getAttribute('data-src') || img.getAttribute('data-lazy') || img.getAttribute('data-original') || img.getAttribute('src') || '';
+      }
+      if (bg.indexOf('data:') === 0) bg = '';
+      if (bg) bg = absUrl(bg);
+      var tEl = item.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
+      var title = clean(tEl ? tEl.textContent : item.textContent) || 'Stardom World Video';
+      out.push({ href: href, title: title, bgUrl: bg });
+    });
+    return out;
+  }
+  function hasNext(doc) {
+    return !!doc.querySelector('a[rel="next"], .pagination a.next, .pagination .next a, li.next a');
+  }
+
+  // ------------------------------------------------------------------ requests: one at a time, spaced out
+  var busy = false, lastReq = 0;
+  function blockedFor() {
+    var until = parseInt(lsGet(BLOCK_KEY) || '0', 10) || 0;
+    return until > Date.now() ? Math.ceil((until - Date.now()) / 60000) : 0;
+  }
+  function blockNow(mins) { lsSet(BLOCK_KEY, String(Date.now() + mins * 60000)); }
+
+  function fetchPage(term, page, cb) {
+    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term) + (page > 1 ? '&page=' + page : '');
+    fetch(url, { credentials: 'include' }).then(function(res) {
+      if (res.status === 429 || res.status === 403 || res.status === 503) { blockNow(10); throw 'blocked'; }
+      if (!res.ok) throw 'http';
+      if (res.redirected && /login|sign_in|signin/.test(res.url)) throw 'login';
+      return res.text();
+    }).then(function(html) {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var items = parseCards(doc);
+      if (!items.length && /captcha|verify you are human|are you a robot/i.test(html)) { blockNow(10); throw 'blocked'; }
+      var more = hasNext(doc) || items.length >= 12;
+      cb('', items, more);
+    }).catch(function(err) { cb(typeof err === 'string' ? err : 'error'); });
+  }
+
+  // Loads the next page of member i (the first one when nothing is loaded yet). done(newItems) afterwards.
+  function loadNext(i, done) {
+    var s = S[i];
+    if (s.loading) return;
+    if (busy) { setTimeout(function() { loadNext(i, done); }, 400); return; }
+    if (!s.more && s.loaded) { if (done) done([]); return; }
+    var wait = blockedFor();
+    if (wait) { s.err = 'blocked'; if (done) done([]); return; }
+    // first page: the saved copy, if fresh, costs no request
+    if (!s.loaded) {
+      var c = readCache()[members[i].search];
+      if (c && c.items && c.items.length && Date.now() - c.t < CACHE_TTL) {
+        c.items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
+        s.page = 1; s.more = !!c.more; s.loaded = true; s.err = '';
+        if (done) done(s.items.slice());
+        return;
+      }
+    }
+    s.loading = true; busy = true;
+    var go = function() {
+      lastReq = Date.now();
+      fetchPage(members[i].search, s.page + 1, function(err, items, more) {
+        s.loading = false; busy = false;
+        if (err) { s.err = err; if (done) done([]); return; }
+        s.err = '';
+        var added = [];
+        items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); added.push(it); } });
+        s.page += 1; s.loaded = true;
+        s.more = more && added.length > 0;
+        if (s.page === 1) writeCache(members[i].search, s);
+        if (done) done(added);
+      });
+    };
+    var gap = lastReq + GAP_MS - Date.now();
+    if (gap > 0) setTimeout(go, gap); else go();
+  }
+
+  // ------------------------------------------------------------------ page
+  var root = document.createElement('div');
+  root.id = 'tv-fac';
+  var head = '<div class="tv-fh">';
+  if (useLogo && fac.logo) head += '<img class="tv-fh-logo" src="' + esc(fac.logo) + '" alt="">';
+  else head += '<span class="tv-fh-bar"></span>';
+  head += '<div><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div><div class="tv-fh-sub">' + members.length + ' ' + esc(T('members', 'メンバー')) + '</div></div></div>';
+  var mh = '';
+  members.forEach(function(m, i) {
+    mh += '<div class="tv-fm notranslate" translate="no" tabindex="0" role="button" data-i="' + i + '">' + esc(m.name) + '</div>';
+  });
+  root.innerHTML =
+    '<div id="tv-fac-nav">' + head + '<div id="tv-fac-members">' + mh + '</div></div>' +
+    '<div id="tv-fac-main"><div id="tv-fac-title"><span class="tv-ft-bar"></span><span id="tv-fac-name" class="notranslate" translate="no"></span></div>' +
+    '<div id="tv-fac-scroll"><div id="tv-fac-grid"></div><div id="tv-fac-status"></div></div></div>';
+  (document.body || document.documentElement).appendChild(root);
+  document.documentElement.style.overflow = 'hidden';
+  var logoImg = root.querySelector('.tv-fh-logo');
+  if (logoImg) logoImg.addEventListener('error', function() {
+    var b = document.createElement('span'); b.className = 'tv-fh-bar';
+    if (logoImg.parentNode) logoImg.parentNode.replaceChild(b, logoImg);
+  });
+
+  var nav = root.querySelector('#tv-fac-members');
+  var grid = root.querySelector('#tv-fac-grid');
+  var status = root.querySelector('#tv-fac-status');
+  var scroller = root.querySelector('#tv-fac-scroll');
+  var nameEl = root.querySelector('#tv-fac-name');
+  var fmEls = Array.prototype.slice.call(root.querySelectorAll('.tv-fm'));
+
+  function cardHtml(it) {
+    return '<a class="tv-fc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-fc-img" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '"></div><div class="tv-fc-t">' + esc(it.title) + '</div></a>';
+  }
+  function cards() { return Array.prototype.slice.call(grid.children); }
+  function setStatus(i) {
+    var s = S[i];
+    var t = '';
+    if (s.loading) t = T('Loading...', '読み込み中...');
+    else if (s.err === 'blocked') t = T('The site asked us to slow down. Try again in a few minutes.', 'サイトからアクセス制限がかかりました。数分後にお試しください。');
+    else if (s.err === 'login') t = T('Please log in to see these videos.', 'ログインしてください。');
+    else if (s.err) t = T('Could not load. Press OK on the name to try again.', '読み込めませんでした。名前でOKを押して再試行。');
+    else if (s.loaded && !s.items.length) t = T('No videos found for this name.', '動画が見つかりませんでした。');
+    status.textContent = t;
+  }
+  function renderGrid() {
+    var s = S[sel];
+    var h = '';
+    s.items.forEach(function(it) { h += cardHtml(it); });
+    grid.innerHTML = h;
+    scroller.scrollTop = 0;
+    setStatus(sel);
+  }
+  function markSel() {
+    fmEls.forEach(function(el, i) { el.classList.toggle('tv-sel', i === sel); });
+    nameEl.textContent = members[sel].name;
+  }
+  function focusEl(el, mode) {
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    try { el.scrollIntoView({ block: mode || 'nearest' }); } catch (e) {}
+  }
+  function focusNav() { focusEl(fmEls[sel] || fmEls[0]); }
+  function inNav(el) { return !!(el && el.classList && el.classList.contains('tv-fm')); }
+  function inGrid(el) { return !!(el && el.classList && el.classList.contains('tv-fc')); }
+
+  function cols() {
+    var c = grid.children;
+    if (!c.length) return 1;
+    var top = c[0].offsetTop, n = 0;
+    while (n < c.length && c[n].offsetTop === top) n++;
+    return Math.max(1, n);
+  }
+
+  function more(i) {
+    var s = S[i];
+    if (s.loading || s.queued || !s.more || !s.loaded) return;
+    s.queued = true;
+    status.textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...');
+    loadNext(i, function(added) {
+      s.queued = false;
+      if (i !== sel) return;
+      if (added.length) {
+        var h = ''; added.forEach(function(it) { h += cardHtml(it); });
+        grid.insertAdjacentHTML('beforeend', h);
+      }
+      setStatus(i);
+    });
+  }
+
+  // Opens member i: its saved/loaded videos at once, or one request when it has never been opened.
+  function openMember(i, enter) {
+    sel = i;
+    markSel();
+    var s = S[i];
+    if (s.err && !s.loaded) { s.err = ''; }
+    if (s.loaded) {
+      renderGrid();
+      if (enter) { var f = grid.firstElementChild; if (f) focusEl(f, 'center'); }
+      return;
+    }
+    grid.innerHTML = '';
+    status.textContent = T('Loading...', '読み込み中...');
+    loadNext(i, function() {
+      if (i !== sel) return;
+      renderGrid();
+      var ae = document.activeElement;
+      if (enter && (inNav(ae) || !ae || ae === document.body)) { var f2 = grid.firstElementChild; if (f2) focusEl(f2, 'center'); }
+    });
+  }
+
+  // ------------------------------------------------------------------ keys
+  window.addEventListener('keydown', function(e) {
+    if (!document.getElementById('tv-fac') || menuOpen()) return;
+    var k = e.keyCode, ae = document.activeElement;
+    var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
+    if (inNav(ae)) {
+      var i = parseInt(ae.getAttribute('data-i'), 10);
+      if (k === 40) { stop(); if (i < fmEls.length - 1) focusEl(fmEls[i + 1]); }
+      else if (k === 38) { stop(); if (i > 0) focusEl(fmEls[i - 1]); }
+      else if (k === 39) { stop(); openMember(i, true); }
+      else if (k === 37) { stop(); if (window.__tvOpenMenu) window.__tvOpenMenu(); }
+      else if (k === 13 || k === 23) { stop(); openMember(i, false); }
+      return;
+    }
+    if (inGrid(ae)) {
+      var list = cards(), idx = list.indexOf(ae), n = cols();
+      if (k === 37) {
+        stop();
+        if (idx % n === 0) focusNav(); else focusEl(list[idx - 1]);
+      } else if (k === 39) {
+        stop();
+        if (idx < list.length - 1 && (idx + 1) % n !== 0) focusEl(list[idx + 1]);
+      } else if (k === 38) {
+        stop();
+        if (idx - n >= 0) focusEl(list[idx - n], 'nearest');
+        else scroller.scrollTop = 0;
+      } else if (k === 40) {
+        stop();
+        var row = Math.floor(idx / n), last = Math.floor((list.length - 1) / n);
+        if (row < last) focusEl(list[Math.min(idx + n, list.length - 1)], 'nearest');
+        else if (S[sel].more) more(sel);
+      }
+      // Prefetch the next page while the last two rows are on screen
+      if ((k === 38 || k === 39 || k === 40) && S[sel].more && !S[sel].loading) {
+        var nowIdx = cards().indexOf(document.activeElement);
+        if (nowIdx >= 0 && cards().length - nowIdx <= n * 2) more(sel);
+      }
+    }
+  }, true);
+
+  // ------------------------------------------------------------------ start
+  markSel();
+  // The page that was just opened is that member's own first page of results: use it instead of asking again.
+  function seedFromPage(cb) {
+    var n = 0;
+    (function poll() {
+      var items = [];
+      try { items = parseCards(document); } catch (e) {}
+      n++;
+      if (items.length || n > 8) {
+        if (items.length) {
+          var s = S[sel];
+          items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
+          s.page = 1; s.loaded = true; s.more = items.length >= 12 || hasNext(document);
+          writeCache(members[sel].search, s);
+        }
+        cb();
+      } else setTimeout(poll, 300);
+    })();
+  }
+  var c0 = readCache()[members[sel].search];
+  if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) openMember(sel, false);
+  else { status.textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...'); seedFromPage(function() { openMember(sel, false); }); }
+  var tries = 0;
+  var tm = setInterval(function() {
+    tries++;
+    var ae = document.activeElement;
+    if (menuOpen() || inNav(ae) || inGrid(ae)) { if (tries > 6) clearInterval(tm); return; }
+    focusNav();
+    if (tries > 10) clearInterval(tm);
+  }, 300);
+})();
     """.trimIndent()
 
     private val listNavJs = """
@@ -4900,6 +5292,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(headerJs, null)
         view.evaluateJavascript(authJs, null)
         view.evaluateJavascript(loginPageJs(), null)
+        view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)

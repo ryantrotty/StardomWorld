@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 124
-        versionName = "1.3.94"
+        versionCode = 125
+        versionName = "1.3.95"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -20,6 +20,8 @@ android {
 
         val hasPrivateBranding = rootProject.file("branding-private/res").exists()
         buildConfigField("Boolean", "ENABLE_CC_TRANSLATE", hasPrivateBranding.toString())
+        // Faction logos (artwork from the wrestling site) only appear in builds that have the private branding folder.
+        buildConfigField("Boolean", "FACTION_LOGOS", hasPrivateBranding.toString())
     }
 
     buildFeatures {

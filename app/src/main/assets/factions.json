@@ -1,0 +1,98 @@
+{
+  "_note": "Edit this file to change the Factions menu. 'name' is what is shown; 'search' is what is typed into the site's search (use the spelling the video site uses). 'logo' is only shown in builds that have the private branding folder.",
+  "factions": [
+    {
+      "id": "stars", "name": "STARS",
+      "logo": "https://wwr-stardom.com/images/wrestler/logo_stars.png?ver=001",
+      "members": [
+        { "name": "Hanan", "search": "Hanan" },
+        { "name": "Saya Iida", "search": "Saya Iida" },
+        { "name": "Momo Kohgo", "search": "Momo Kohgo" },
+        { "name": "Hime Yuria", "search": "Hime Yuria" },
+        { "name": "Matoi Hamabe", "search": "Matoi Hamabe" },
+        { "name": "Maika", "search": "Maika" },
+        { "name": "Waka Tsukiyama", "search": "Waka Tsukiyama" },
+        { "name": "Hanako", "search": "Hanako" },
+        { "name": "Utami Hayashishita", "search": "Utami Hayashishita" }
+      ]
+    },
+    {
+      "id": "cosmic-angels", "name": "COSMIC ANGELS",
+      "logo": "https://wwr-stardom.com/images/wrestler/logo_cosmicangels.png?ver=001",
+      "members": [
+        { "name": "Sakura Aya", "search": "Sakura Aya" },
+        { "name": "Sayaka Kurara", "search": "Sayaka Kurara" },
+        { "name": "Natsupoi", "search": "Natsupoi" },
+        { "name": "Saori Anou", "search": "Saori Anou" },
+        { "name": "Yuna Mizumori", "search": "Yuna Mizumori" },
+        { "name": "Anne Kanaya", "search": "Anne Kanaya" }
+      ]
+    },
+    {
+      "id": "gods-eye", "name": "God's Eye",
+      "logo": "https://wwr-stardom.com/images/wrestler/logo_godseye.png?ver=001",
+      "members": [
+        { "name": "Syuri", "search": "Syuri" },
+        { "name": "Ami Sohrei", "search": "Ami Sohrei" },
+        { "name": "Ranna Yagami", "search": "Ranna Yagami" },
+        { "name": "Hina", "search": "Hina" },
+        { "name": "Lady C", "search": "Lady C" },
+        { "name": "Tomoka Inaba", "search": "Tomoka Inaba" },
+        { "name": "Kiyoka Kotatsu", "search": "Kiyoka Kotatsu" }
+      ]
+    },
+    {
+      "id": "neo-genesis", "name": "NEO GENESIS",
+      "logo": "https://wwr-stardom.com/images/wrestler/logo_neogenesis.png?ver=001",
+      "members": [
+        { "name": "Starlight Kid", "search": "Starlight Kid" },
+        { "name": "AZM", "search": "AZM" },
+        { "name": "Mei Seira", "search": "Mei Seira" },
+        { "name": "Miyu Amasaki", "search": "Miyu Amasaki" },
+        { "name": "Ema Maishima", "search": "Ema Maishima" }
+      ]
+    },
+    {
+      "id": "hate", "name": "HATE",
+      "logo": "https://wwr-stardom.com/images/wrestler/logo_hate.png?ver=001",
+      "members": [
+        { "name": "Natsuko Tora", "search": "Natsuko Tora" },
+        { "name": "Momo Watanabe", "search": "Momo Watanabe" },
+        { "name": "Konami", "search": "Konami" },
+        { "name": "Saya Kamitani", "search": "Saya Kamitani" },
+        { "name": "Ruaka", "search": "Ruaka" },
+        { "name": "Rina", "search": "Rina" },
+        { "name": "Bea Priestley", "search": "Bea Priestley" },
+        { "name": "Azusa Inaba", "search": "Azusa Inaba" },
+        { "name": "Fukigen Death", "search": "Fukigen Death" }
+      ]
+    },
+    {
+      "id": "mi-vida-loca", "name": "Mi Vida Loca",
+      "logo": "https://wwr-stardom.com/images/wrestler/logo_mividaloca.png?ver=001",
+      "members": [
+        { "name": "Suzu Suzuki", "search": "Suzu Suzuki" },
+        { "name": "Rina Yamashita", "search": "Rina Yamashita" },
+        { "name": "Itsuki Aoki", "search": "Itsuki Aoki" },
+        { "name": "Bozilla", "search": "Bozilla" },
+        { "name": "Tetsu Akira", "search": "Tetsu Akira" }
+      ]
+    },
+    {
+      "id": "itoh-respect-gundan", "name": "Itoh Respect Gundan",
+      "members": [
+        { "name": "Maki Itoh", "search": "Maki Itoh" },
+        { "name": "Kikyo Furusawa", "search": "Kikyo Furusawa" },
+        { "name": "Rian", "search": "Rian" }
+      ]
+    },
+    {
+      "id": "unaffiliated", "name": "Unaffiliated",
+      "members": [
+        { "name": "Hazuki", "search": "Hazuki" },
+        { "name": "Koguma", "search": "Koguma" },
+        { "name": "Fuwa Chan", "search": "Fuwa Chan" }
+      ]
+    }
+  ]
+}
