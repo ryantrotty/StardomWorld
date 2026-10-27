@@ -2229,10 +2229,6 @@ class MainActivity : Activity() {
 
     inner class WebAppInterface {
         // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
-        // The data probe menu entry (temporary, for finding out what the site's data holds): shown in every build.
-        @android.webkit.JavascriptInterface
-        fun probeEnabled(): Boolean = true
-
         // Tournament Archives filter bar lists (cities, venues, shows) kept in assets/event_filters.json.
         @android.webkit.JavascriptInterface
         fun eventFiltersJson(): String = try {
@@ -3102,12 +3098,12 @@ class MainActivity : Activity() {
             ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
             ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
             ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
-            ['Artist of Stardom', '/contents/search?q%5Bkeyword%5D=Artist%20of%20Stardom&activetab=contents&page=1', 'アーティスト・オブ・スターダム'],
-            ['Future of Stardom', '/contents/search?q%5Bkeyword%5D=Future%20of%20Stardom&activetab=contents&page=1', 'フューチャー・オブ・スターダム'],
-            ['Goddess of Stardom', '/contents/search?q%5Bkeyword%5D=Goddess%20of%20Stardom&activetab=contents&page=1', 'ゴッデス・オブ・スターダム'],
-            ['NEW BLOOD Tag Team', '/contents/search?q%5Bkeyword%5D=NEW%20BLOOD&activetab=contents&page=1', 'NEW BLOOD タッグ'],
-            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1', 'すべての王座戦'],
-            ['Other title matches', '/contents/search?q%5Bkeyword%5D=Title%20Match&activetab=contents&page=1', 'その他のタイトルマッチ']
+            ['Artist of Stardom', '/contents/search?q%5Bkeyword%5D=Artist%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=artist', 'アーティスト・オブ・スターダム'],
+            ['Future of Stardom', '/contents/search?q%5Bkeyword%5D=Future%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=future', 'フューチャー・オブ・スターダム'],
+            ['Goddess of Stardom', '/contents/search?q%5Bkeyword%5D=Goddess%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=goddess', 'ゴッデス・オブ・スターダム'],
+            ['NEW BLOOD Tag Team', '/contents/search?q%5Bkeyword%5D=NEW%20BLOOD&activetab=contents&page=1&tvb=&tvch=newblood', 'NEW BLOOD タッグ'],
+            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
+            ['Other title matches', '/contents/search?q%5Bkeyword%5D=Title%20Match&activetab=contents&page=1&tvb=&tvch=other', 'その他のタイトルマッチ']
           ];
           var MINE = [
             ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
@@ -3315,7 +3311,6 @@ class MainActivity : Activity() {
             }
             h += '</div>';
             h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>';
-            try { if (window.AndroidHost && AndroidHost.probeEnabled && AndroidHost.probeEnabled()) h += '<div class="tv-sm-item" tabindex="0" role="button" data-probe="1" style="width:auto;flex:0 0 auto;min-height:48px;font-size:18px;padding:0 16px;">Probe</div>'; } catch (e) {}
             h += '</div>';
             panel.innerHTML = h;
           }
@@ -3443,11 +3438,6 @@ class MainActivity : Activity() {
               return;
             }
             if (el.getAttribute('data-go')) { go(el.getAttribute('data-go')); return; }
-            if (el.getAttribute('data-probe')) {
-              closeMenu();
-              setTimeout(function() { if (window.__tvProbe) window.__tvProbe(); }, 300);
-              return;
-            }
 
             if (el.getAttribute('data-lang')) {
               var next = isJa() ? 'en' : 'ja';
@@ -4566,432 +4556,14 @@ class MainActivity : Activity() {
 })();
     """.trimIndent()
 
-    // Data probe (temporary, every build): a menu entry that lists, on screen and without fading, everything the
-    // current page and the site's data address say about the video or list, to see what could be filtered on.
-    private val probeJs = """
-(function(){
-  if (window.__tvProbeDefined) return;
-  window.__tvProbeDefined = true;
-
-  var COLS = 138, LINES = 36;
-
-  function clip(s, n) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n) + '...(' + s.length + ')' : s; }
-
-  // key.sub.sub: value lines for any JSON value
-  function flat(v, prefix, depth, out) {
-    if (v === null || v === undefined) { out.push(prefix + ': null'); return; }
-    if (typeof v !== 'object') { out.push(prefix + ': ' + clip(v, 230)); return; }
-    if (depth > 4) { out.push(prefix + ': ' + clip(JSON.stringify(v), 230)); return; }
-    if (Array.isArray(v)) {
-      if (!v.length) { out.push(prefix + ': []'); return; }
-      out.push(prefix + ': [' + v.length + ' items]');
-      v.slice(0, 6).forEach(function(x, i) { flat(x, prefix + '[' + i + ']', depth + 1, out); });
-      return;
-    }
-    Object.keys(v).forEach(function(k) { flat(v[k], prefix ? prefix + '.' + k : k, depth + 1, out); });
-  }
-
-  function getJson(url) {
-    return fetch(url, { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
-      .then(function(res) {
-        return res.text().then(function(t) {
-          var j = null; try { j = JSON.parse(t); } catch (e) {}
-          return { status: res.status, json: j, text: t };
-        });
-      }).catch(function(e) { return { status: 0, json: null, text: String(e) }; });
-  }
-
-  // Round 3, search and category pages: the page's own search form, and a few single test searches
-  // (year, a second word, venue, search inside a category), 1.2 s apart
-  function gatherRound3(done) {
-    var L = [];
-    function add(x) { L.push(x); }
-    function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
-    add('ROUND 3   URL ' + location.href);
-    sec('SEARCH FORMS ON THIS PAGE (field names only)');
-    var forms = document.querySelectorAll('form');
-    var nf = 0;
-    Array.prototype.forEach.call(forms, function(f) {
-      var fields = [];
-      Array.prototype.forEach.call(f.querySelectorAll('input, select, textarea'), function(el) {
-        var nm = el.getAttribute('name');
-        if (!nm || /csrf|_token/i.test(nm)) return;
-        var d = nm + '(' + (el.tagName === 'SELECT' ? 'select' : (el.getAttribute('type') || 'text')) + ')';
-        if (el.tagName === 'SELECT') {
-          var opts = [];
-          Array.prototype.slice.call(el.options, 0, 14).forEach(function(o) { opts.push(clip(o.value, 20) + '=' + clip(o.textContent, 20)); });
-          d += ' [' + opts.join(' | ') + ']';
-        } else if (el.type === 'hidden' || el.type === 'checkbox' || el.type === 'radio') d += '=' + clip(el.value, 30);
-        fields.push(d);
-      });
-      if (!fields.length) return;
-      nf++;
-      add('form action=' + clip(f.getAttribute('action'), 60) + ' method=' + (f.getAttribute('method') || 'get'));
-      add('  ' + fields.join(' , '));
-    });
-    if (!nf) add('(no forms with named fields)');
-    var tasks = [];
-    function t(label, url) {
-      tasks.push(function(next) {
-        setTimeout(function() {
-          fetch(url, { credentials: 'include' })
-            .then(function(res) { return res.text().then(function(x) { return { status: res.status, text: x }; }); })
-            .then(function(r) {
-              sec('TEST ' + label + '   status ' + r.status);
-              add(url);
-              var doc = new DOMParser().parseFromString(r.text, 'text/html');
-              var ids = {}, titles = [];
-              Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item'), function(c) {
-                var a = c.querySelector('a[href*="/contents/"], a[href*="/set/"]');
-                var m = a && /(?:contents|set)\/([0-9]+)/.exec(a.getAttribute('href') || '');
-                if (!m || ids[m[1]]) return;
-                ids[m[1]] = 1;
-                var h = c.querySelector('h3, h4');
-                titles.push(clip(h ? h.textContent : c.textContent, 80));
-              });
-              var maxp = 1;
-              Array.prototype.forEach.call(doc.querySelectorAll('a[href*="page="]'), function(a) {
-                var pm = /[?&]page=([0-9]+)/.exec(a.getAttribute('href') || '');
-                if (pm && +pm[1] > maxp) maxp = +pm[1];
-              });
-              add('videos on page 1: ' + titles.length + '   highest page link: ' + maxp);
-              titles.slice(0, 3).forEach(function(x) { add(' - ' + x); });
-              next();
-            }).catch(function(e) { sec('TEST ' + label); add('failed: ' + e); next(); });
-        }, 1200);
-      });
-    }
-    var q = '/contents/search?q%5Bkeyword%5D=';
-    if (location.pathname.indexOf('/contents/category/events') === 0 || /[?&]tvev=1/.test(location.search)) {
-      t('events category, page 1', '/contents/category/events');
-      t('2024', q + '2024');
-      t('STARDOM 2024', q + encodeURIComponent('STARDOM 2024'));
-      t('Tokyo', q + 'Tokyo');
-      t('NIGHTER', q + 'NIGHTER');
-      t('Cinderella', q + 'Cinderella');
-      t('Korakuen 2024', q + encodeURIComponent('Korakuen 2024'));
-      t('Aichi', q + 'Aichi');
-      t('Chunichi', q + 'Chunichi');
-    } else {
-    t('Syuri 2024', q + encodeURIComponent('Syuri 2024'));
-    t('Syuri 2024/', q + encodeURIComponent('Syuri 2024/'));
-    t('Syuri Hazuki Tag Team (three words)', q + encodeURIComponent('Syuri Hazuki Tag Team'));
-    t('Championship', q + 'Championship');
-    t('Title', q + 'Title');
-    t('Korakuen', q + 'Korakuen');
-    t('Syuri Korakuen', q + encodeURIComponent('Syuri Korakuen'));
-    t('category 2024 with keyword', '/contents/category/2024?q%5Bkeyword%5D=Syuri');
-    t('search with category=2024', q + 'Syuri&category=2024');
-    }
-    var ti = 0;
-    (function run() {
-      if (ti >= tasks.length) { done(L); return; }
-      tasks[ti++](run);
-    })();
-  }
-
-  // Round 2, search pages only: which list-API address filters by keyword, do list items carry match
-  // descriptions, and how does the page search treat several words
-  function gatherSearch(done) {
-    var L = [];
-    function add(x) { L.push(x); }
-    function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
-    add('ROUND 2   URL ' + location.href);
-    var tasks = [];
-    function listLines(r, base) {
-      var list = r.json ? (Array.isArray(r.json) ? r.json : (r.json.contents || r.json.items || [])) : [];
-      add('status ' + r.status + '   items ' + list.length + '   first id ' + (list[0] ? list[0].id : '-') + (base != null ? (list[0] && String(list[0].id) === String(base) ? '   SAME as no-keyword list' : '   DIFFERENT from no-keyword list') : ''));
-      list.slice(0, 6).forEach(function(it) {
-        add(' #' + it.id + ' ' + clip(it.display_name, 70));
-        add('    desc: ' + clip(it.description, 150));
-      });
-      return list;
-    }
-    var baseId = null;
-    function apiTask(label, url, isBase) {
-      tasks.push(function(next) {
-        setTimeout(function() {
-          getJson(url).then(function(r) {
-            sec('API ' + label);
-            add(url);
-            var l = listLines(r, isBase ? null : baseId);
-            if (isBase && l[0]) baseId = l[0].id;
-            next();
-          });
-        }, 1200);
-      });
-    }
-    apiTask('no keyword, most played', '/user_api/contents?size=3&sort=pc&order=d', true);
-    apiTask('q[keyword]=Syuri', '/user_api/contents?size=3&sort=pc&order=d&q%5Bkeyword%5D=Syuri');
-    apiTask('keyword=Syuri', '/user_api/contents?size=3&sort=pc&order=d&keyword=Syuri');
-    apiTask('q=Syuri', '/user_api/contents?size=3&sort=pc&order=d&q=Syuri');
-    apiTask('newest six (match videos?)', '/user_api/contents?size=6&sort=di_s&order=d');
-    ['Syuri', 'Hazuki', 'Syuri Hazuki', 'Syuri Tag Team', 'Cage', 'Battle Royal', 'Singles', 'Title Match'].forEach(function(term) {
-      tasks.push(function(next) {
-        setTimeout(function() {
-          fetch('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term), { credentials: 'include' })
-            .then(function(res) { return res.text().then(function(t) { return { status: res.status, text: t }; }); })
-            .then(function(r) {
-              sec('SEARCH ' + term + '   status ' + r.status);
-              var doc = new DOMParser().parseFromString(r.text, 'text/html');
-              var ids = {}, titles = [];
-              Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item'), function(c) {
-                var a = c.querySelector('a[href*="/contents/"], a[href*="/set/"]');
-                var m = a && /(?:contents|set)\/([0-9]+)/.exec(a.getAttribute('href') || '');
-                if (!m || ids[m[1]]) return;
-                ids[m[1]] = 1;
-                var t = c.querySelector('h3, h4');
-                titles.push(clip(t ? t.textContent : c.textContent, 90));
-              });
-              var maxp = 1;
-              Array.prototype.forEach.call(doc.querySelectorAll('a[href*="page="]'), function(a) {
-                var pm = /[?&]page=([0-9]+)/.exec(a.getAttribute('href') || '');
-                if (pm && +pm[1] > maxp) maxp = +pm[1];
-              });
-              add('unique videos on page 1: ' + titles.length + '   highest page link: ' + maxp);
-              titles.slice(0, 4).forEach(function(t) { add(' - ' + t); });
-              next();
-            }).catch(function(e) { sec('SEARCH ' + term); add('failed: ' + e); next(); });
-        }, 1200);
-      });
-    });
-    var ti = 0;
-    (function run() {
-      if (ti >= tasks.length) { done(L); return; }
-      tasks[ti++](run);
-    })();
-  }
-
-  // Round 5, category pages (Big Match, English Commentary ...): walk the category's pages 1.2 s apart (at most 12)
-  // and list the show names found inside quotes in the titles, with how often each appears
-  function gatherShows(done) {
-    var L = [];
-    var base = location.pathname;
-    var names = {}, order = [], seen = {}, plain = [], total = 0, pagesDone = 0;
-    function strip(n) {
-      return n.replace(/\b(19|20)[0-9]{2}\b/g, '').replace(/\s+in\s+[A-Z][A-Za-z ]+$/, '').replace(/[\s\-–,:]+$/, '').replace(/^[\s\-–,:]+/, '').replace(/\s+/g, ' ').trim();
-    }
-    function readDoc(doc) {
-      var added = 0;
-      Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item'), function(c) {
-        var a = c.querySelector('a[href*="/contents/"], a[href*="/set/"]');
-        var m = a && /(?:contents|set)\/([0-9]+)/.exec(a.getAttribute('href') || '');
-        if (!m || seen[m[1]]) return;
-        seen[m[1]] = 1; added++; total++;
-        var h = c.querySelector('h3, h4');
-        var t = clip(h ? h.textContent : c.textContent, 200);
-        var q = /[“"‘']([^”"’']{4,80})[”"’']/.exec(t);
-        if (q) {
-          var nm = strip(q[1]);
-          if (!nm) return;
-          var key = nm.toLowerCase();
-          if (!names[key]) { names[key] = { n: nm, c: 0 }; order.push(key); }
-          names[key].c++;
-        } else if (plain.length < 3) plain.push(t);
-      });
-      return added;
-    }
-    var p = 1;
-    function step() {
-      var url = base + (p > 1 ? '?page=' + p : '');
-      var go = function(txt) {
-        var doc = new DOMParser().parseFromString(txt, 'text/html');
-        var added = readDoc(doc);
-        pagesDone = p;
-        if (!added || p >= 12) return finish();
-        p++;
-        setTimeout(step, 1200);
-      };
-      if (p === 1) { go(document.documentElement.outerHTML); return; }
-      fetch(url, { credentials: 'include' }).then(function(r) { return r.text(); }).then(go).catch(function(e) { L.push('failed page ' + p + ': ' + e); finish(); });
-    }
-    function finish() {
-      L.push('ROUND 5   ' + base + '   pages read ' + pagesDone + '   cards ' + total + '   show names ' + order.length);
-      order.sort(function(a, b) { return names[b].c - names[a].c; });
-      var cells = order.map(function(k) { return clip(names[k].n, 52) + ' (' + names[k].c + ')'; });
-      var rows = Math.ceil(cells.length / 2);
-      for (var i = 0; i < rows; i++) {
-        var a = cells[i] || '', b = cells[i + rows] || '';
-        while (a.length < 66) a += ' ';
-        L.push(a + b);
-      }
-      if (plain.length) { L.push('No quoted name in:'); plain.forEach(function(x) { L.push(' - ' + clip(x, 120)); }); }
-      done(L);
-    }
-    step();
-  }
-
-  function gather(done) {
-    if (/^\/contents\/category\//.test(location.pathname) && location.pathname.indexOf('/contents/category/events') !== 0) { gatherShows(done); return; }
-    if (/^\/contents\/(search|category)/.test(location.pathname)) { gatherRound3(done); return; }
-    var L = [];
-    function add(s) { L.push(s); }
-    function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
-    add('URL ' + location.href);
-    add('TITLE ' + clip(document.title, 200));
-
-    sec('META TAGS');
-    Array.prototype.forEach.call(document.querySelectorAll('meta[name], meta[property]'), function(m) {
-      var n = m.getAttribute('name') || m.getAttribute('property');
-      if (/viewport|csrf|theme|format-detection/i.test(n)) return;
-      add(n + ' = ' + clip(m.getAttribute('content'), 300));
-    });
-
-    sec('JSON-LD');
-    var ld = document.querySelectorAll('script[type="application/ld+json"]');
-    if (!ld.length) add('(none)');
-    Array.prototype.forEach.call(ld, function(s) { add(clip(s.textContent, 1500)); });
-
-    sec('HEADINGS');
-    Array.prototype.slice.call(document.querySelectorAll('h1, h2, h3'), 0, 14).forEach(function(h) {
-      if (document.getElementById('tv-probe') && document.getElementById('tv-probe').contains(h)) return;
-      add(h.tagName + ' ' + clip(h.textContent, 160));
-    });
-
-    sec('LINKS THAT LOOK LIKE TAGS / CATEGORIES / SEARCHES');
-    var seen = {}, n = 0;
-    Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function(a) {
-      var h = a.getAttribute('href') || '';
-      if (!/category|tag|keyword|search|wrestler|performer|talent|series|event|genre|format|type|\/set\//i.test(h)) return;
-      var key = h + '|' + (a.textContent || '').trim();
-      if (seen[key] || n > 70) return;
-      seen[key] = 1; n++;
-      add(clip(a.textContent, 60) + '  ->  ' + clip(h, 120));
-    });
-    if (!n) add('(none)');
-
-    sec('DATA ATTRIBUTES (names only)');
-    var attrs = {};
-    Array.prototype.forEach.call(document.querySelectorAll('[class*="content"], [class*="detail"], article, main'), function(el) {
-      Array.prototype.forEach.call(el.attributes, function(a) { if (a.name.indexOf('data-') === 0 && !/tv-|data-tv/.test(a.name)) attrs[a.name] = clip(a.value, 60); });
-    });
-    var ak = Object.keys(attrs);
-    if (!ak.length) add('(none)'); else ak.slice(0, 30).forEach(function(k) { add(k + ' = ' + attrs[k]); });
-
-    var m = /^\/contents\/([0-9]+)/.exec(location.pathname);
-    var tasks = [];
-    if (m) {
-      sec('PAGE TEXT (description area)');
-      var box = document.querySelector('.content-description, .description, .box-detail, [class*="detail"], main') || document.body;
-      add(clip(box.innerText || box.textContent, 1800));
-    } else {
-      sec('FIRST TWO LISTING CARDS (HTML)');
-      var cardsEl = document.querySelectorAll('.content-list-item, article');
-      if (!cardsEl.length) add('(no cards found)');
-      Array.prototype.slice.call(cardsEl, 0, 2).forEach(function(c) { add(clip(c.outerHTML, 1100)); add(''); });
-    }
-
-    // The site's list data: every field of the first three items
-    tasks.push(function(next) {
-      var url = '/user_api/contents?size=3&sort=pc&order=d';
-      getJson(url).then(function(r) {
-        sec('API  ' + url + '   status ' + r.status);
-        if (r.json) {
-          var list = Array.isArray(r.json) ? r.json : (r.json.contents || r.json.items || [r.json]);
-          add('top-level: ' + (Array.isArray(r.json) ? 'array of ' + r.json.length : Object.keys(r.json).join(', ')));
-          list.slice(0, 3).forEach(function(it, i) { var o = []; flat(it, 'item' + i, 0, o); o.forEach(add); });
-        } else add('not JSON: ' + clip(r.text, 300));
-        next();
-      });
-    });
-
-    // On a search page only: does the site's search find videos by two names, or by a match word?
-    if (location.pathname.indexOf('/contents/search') === 0) {
-      ['Syuri Hazuki', 'Tag Team', 'Steel Cage'].forEach(function(term) {
-        tasks.push(function(next) {
-          setTimeout(function() {
-            fetch('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term), { credentials: 'include' })
-              .then(function(res) { return res.text().then(function(t) { return { status: res.status, text: t }; }); })
-              .then(function(r) {
-                sec('SEARCH EXPERIMENT: ' + term + '   status ' + r.status);
-                var doc = new DOMParser().parseFromString(r.text, 'text/html');
-                var items = doc.querySelectorAll('.content-list-item, article');
-                add('cards on first page: ' + items.length);
-                var tot = (doc.body.innerText || '').match(/[0-9,]+\s*(results|hits|items|videos|\u4ef6)/i);
-                add('total text: ' + (tot ? tot[0] : '(none seen)'));
-                Array.prototype.slice.call(items, 0, 5).forEach(function(c) {
-                  var t = c.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
-                  add(' - ' + clip(t ? t.textContent : c.textContent, 150));
-                });
-                next();
-              }).catch(function(e) { sec('SEARCH EXPERIMENT: ' + term); add('failed: ' + e); next(); });
-          }, 1200);
-        });
-      });
-    }
-
-    var ti = 0;
-    (function run() {
-      if (ti >= tasks.length) { done(L); return; }
-      tasks[ti++](run);
-    })();
-  }
-
-  function wrap(lines) {
-    var out = [];
-    lines.forEach(function(l) {
-      l = String(l);
-      if (!l.length) { out.push(''); return; }
-      for (var i = 0; i < l.length; i += COLS) out.push(l.slice(i, i + COLS));
-    });
-    return out;
-  }
-
-  var root = null, pages = [], pi = 0, prevClose = null;
-  function show() {
-    if (!root) return;
-    var head = 'DATA PROBE   page ' + (pi + 1) + ' / ' + pages.length + '     Left / Right: pages     Back: close';
-    root.querySelector('.tv-pr-head').textContent = head;
-    root.querySelector('.tv-pr-body').textContent = pages[pi].join('\n');
-  }
-  function closeProbe() {
-    if (root && root.parentNode) root.parentNode.removeChild(root);
-    root = null;
-    window.removeEventListener('keydown', onKey, true);
-    if (prevClose) window.__tvMenuClose = prevClose;
-    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(false); } catch (e) {}
-  }
-  function onKey(e) {
-    if (!root) return;
-    var k = e.keyCode;
-    if (k === 37 || k === 38) { e.preventDefault(); e.stopImmediatePropagation(); if (pi > 0) { pi--; show(); } }
-    else if (k === 39 || k === 40) { e.preventDefault(); e.stopImmediatePropagation(); if (pi < pages.length - 1) { pi++; show(); } }
-    else if (k === 27) { e.preventDefault(); e.stopImmediatePropagation(); closeProbe(); }
-  }
-
-  window.__tvProbe = function() {
-    if (root) return;
-    root = document.createElement('div');
-    root.id = 'tv-probe';
-    root.tabIndex = -1;
-    root.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:99500;background:#000;color:#e6edf3;font:15px/18px monospace;padding:8px 12px;box-sizing:border-box;outline:none;overflow:hidden;';
-    root.innerHTML = '<div class="tv-pr-head" style="color:#F4C242;font-weight:bold;margin-bottom:4px;"></div><pre class="tv-pr-body" style="margin:0;white-space:pre;font:15px/18px monospace;"></pre>';
-    document.body.appendChild(root);
-    try { root.focus(); } catch (e) {}
-    root.querySelector('.tv-pr-body').textContent = 'Reading this page...';
-    window.addEventListener('keydown', onKey, true);
-    // Back closes the probe (the app calls __tvMenuClose when its "menu open" flag is set)
-    prevClose = window.__tvMenuClose;
-    window.__tvMenuClose = function() { closeProbe(); return true; };
-    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(true); } catch (e) {}
-    gather(function(lines) {
-      var w = wrap(lines);
-      pages = [];
-      for (var i = 0; i < w.length; i += LINES) pages.push(w.slice(i, i + LINES));
-      if (!pages.length) pages = [['(nothing found)']];
-      pi = 0;
-      show();
-    });
-  };
-})();
-    """.trimIndent()
-
     // Filter bar on search pages (wrestler pages, keyword searches): replaces the site sort row with Sort, Match type,
     // Championship, Competitors and Year drop-downs. Each choice only adds words to the keyword search.
     private val filterBarJs = """
 (function(){
   if (window.__tvFilterBar) return;
-  if (location.pathname.indexOf('/contents/search') !== 0) return;
+  var CHAMP_PAGES = { '/contents/category/iwgp': 'iwgp', '/contents/category/world-sd': 'world', '/contents/category/wonder-sd': 'wonder', '/contents/category/high_speed': 'highspeed' };
+  var champCat = CHAMP_PAGES[location.pathname.replace(/\/+$/, '')] || '';
+  if (location.pathname.indexOf('/contents/search') !== 0 && !champCat) return;
   if (/[?&](tvfaction|tvrecent|tvev)=/.test(location.search)) return;
   window.__tvFilterBar = true;
 
@@ -5044,8 +4616,8 @@ class MainActivity : Activity() {
   })();
 
   var S = {
-    base: location.search.indexOf('tvb=') !== -1 ? qp('tvb') : kwNow,
-    mt: qp('tvmt'), ch: qp('tvch'), co: qp('tvco'), yr: qp('tvyr'),
+    base: champCat ? '' : (location.search.indexOf('tvb=') !== -1 ? qp('tvb') : kwNow),
+    mt: qp('tvmt'), ch: champCat || qp('tvch'), co: qp('tvco'), yr: qp('tvyr'),
     s: qp('s'), o: qp('o')
   };
   var SORTS = [
@@ -5068,6 +4640,7 @@ class MainActivity : Activity() {
     if (n.co && n.co !== n.base) words.push(n.co);
     var c = find(YR, n.yr); if (c) words.push(c[2]);
     var kw = words.filter(function(w) { return w; }).join(' ');
+    if (!kw && !n.s) return '/';
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
     if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
     u += '&activetab=contents&page=1';
@@ -6654,7 +6227,6 @@ class MainActivity : Activity() {
         view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(recentPageJs, null)
-        view.evaluateJavascript(probeJs, null)
         view.evaluateJavascript(filterBarJs, null)
         view.evaluateJavascript(eventBarJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)

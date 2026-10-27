@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.114
+- The championships added to the side menu now open with the championship as the removable chip and the wrestler pill left on "Wrestler" (any wrestler), instead of treating the championship as the search subject.
+- The four older championship pages (IWGP Women's, World of Stardom, Wonder of Stardom, High Speed) now show the same filter bar as the search pages (Wrestler, Sort, Match type, Championship, Competitors, Year) with their championship chip already set. Changing anything there opens a keyword search for that championship.
+- Removed the Probe (the menu entry and all its code).
+
 ## 1.3.113
 - Side menu, Championships: the four site pages stay, and the filter bar's other championships are added under them (Artist, Future, Goddess of Stardom, NEW BLOOD Tag Team, Any championship match, Other title matches). These open a keyword search with the filter bar on top.
 
