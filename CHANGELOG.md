@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.105
+- Search pages (wrestler pages and keyword searches) get a filter bar in place of the sort row: Sort, Match type, Championship, Competitors and Year. Every list is fixed, so opening one loads nothing; each choice adds words to the search and opens that result page (one request, like any list), and more results load as you scroll as before.
+- Match type: Single match, Tag team, 3-way, 6-person, 8-person, 8-man, Battle royal, Cage match.
+- Championship: any championship match, the individual titles as written in the video titles, and an "Other" row for the older "Title Match" wording.
+- Competitors: a shelf with a column per faction (same list as the Factions pages).
+- Year: 2026 back to 2011. Finds titles that start with the date, so a few older clips without a date in the title are not found.
+- "Clear filters" appears when any filter is set. Up from the first row of videos returns to the bar; Down from the bar goes to the videos. Back closes an open drop-down.
+
 ## 1.3.104
 - Probe, round 3: on a search or category page it lists the page's own search form fields and runs nine one-off test searches, 1.2 seconds apart (year, a third word, venue, search inside a category), to see which filters can be done through the web address alone.
 
