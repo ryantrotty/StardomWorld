@@ -2229,9 +2229,9 @@ class MainActivity : Activity() {
 
     inner class WebAppInterface {
         // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
-        // The data probe menu entry is for builds that have the private branding folder only.
+        // The data probe menu entry (temporary, for finding out what the site's data holds): shown in every build.
         @android.webkit.JavascriptInterface
-        fun probeEnabled(): Boolean = BuildConfig.ENABLE_CC_TRANSLATE
+        fun probeEnabled(): Boolean = true
 
         @android.webkit.JavascriptInterface
         fun factionsJson(): String = try {
@@ -4554,7 +4554,7 @@ class MainActivity : Activity() {
 })();
     """.trimIndent()
 
-    // Data probe (your own builds only): a menu entry that lists, on screen and without fading, everything the
+    // Data probe (temporary, every build): a menu entry that lists, on screen and without fading, everything the
     // current page and the site's data address say about the video or list, to see what could be filtered on.
     private val probeJs = """
 (function(){
@@ -5643,7 +5643,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(recentPageJs, null)
-        if (BuildConfig.ENABLE_CC_TRANSLATE) view.evaluateJavascript(probeJs, null)
+        view.evaluateJavascript(probeJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)

@@ -2,8 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.101
+- The Probe button is now in every build (including the public test build), not just your own, while the data is being checked.
+
 ## 1.3.100
-- Your own builds only: a "Probe" button next to the language switch in the side menu. It lists, on screen, everything the current video page or list page and the site's data address say about the videos (tags, categories, descriptions, data fields), paged with Left and Right, to find out what could be filtered on. Back closes it.
+- A "Probe" button next to the language switch in the side menu. It lists, on screen, everything the current video page or list page and the site's data address say about the videos (tags, categories, descriptions, data fields), paged with Left and Right, to find out what could be filtered on. Back closes it.
 
 ## 1.3.99
 - Menu: a little less space around the logo at the top, so the whole list fits above the language switch without scrolling.
