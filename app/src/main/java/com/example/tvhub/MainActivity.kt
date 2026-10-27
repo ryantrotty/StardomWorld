@@ -3094,7 +3094,7 @@ class MainActivity : Activity() {
             ['High Speed', '/contents/category/high_speed', 'ハイスピード']
           ];
           var MINE = [
-            ['Recently Watched', '/mypage', '最近視聴した動画'],
+            ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
             ['My Favorites', '/mypage/favorites', 'お気に入り']
           ];
           var COMMUNITY = [
@@ -3125,6 +3125,23 @@ class MainActivity : Activity() {
             } catch (e) {}
             return out;
           }
+          // "Current Wrestlers": everyone listed in the app's factions.json, once each, in alphabetical order.
+          var JA_NAMES = {};
+          CURRENT_W.concat(PAST_W).forEach(function(n) { JA_NAMES[n[0]] = n[1]; });
+          function currentWrestlers() {
+            var seen = {}, out = [];
+            try {
+              var d = JSON.parse(AndroidHost.factionsJson());
+              (d.factions || []).forEach(function(f) {
+                (f.members || []).forEach(function(m) {
+                  if (m && m.name && !seen[m.name]) { seen[m.name] = 1; out.push([m.name, m.search || m.name, JA_NAMES[m.name] || m.name]); }
+                });
+              });
+            } catch (e) {}
+            if (!out.length) return wrestlers(CURRENT_W);
+            out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
+            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]), m[2]]; });
+          }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
           var HINT_KEY = 'tvMenuHintV1';
 
@@ -3146,7 +3163,7 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
             '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
-            '#tv-sm .tv-sm-logorow{margin:auto 0;padding:18px 0;}',
+            '#tv-sm .tv-sm-logorow{margin:auto 0;padding:4px 0;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
             '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
@@ -3164,7 +3181,7 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-formhost form, #tv-sm .tv-sm-formhost .input-group{display:block !important;width:100% !important;max-width:none !important;min-width:0 !important;flex:1 1 auto !important;height:46px !important;margin:0 !important;padding:0 !important;background:transparent !important;border:0 !important;}',
             '#tv-sm .tv-sm-formhost input[type="text"], #tv-sm .tv-sm-formhost input.form-control, #tv-sm .tv-sm-formhost input[name="q[keyword]"]{display:block !important;width:100% !important;height:46px !important;padding:0 !important;margin:0 !important;background:transparent !important;border:0 !important;border-radius:0 !important;outline:none !important;box-shadow:none !important;color:#ffffff !important;font-size:22px !important;font-family:inherit !important;}',
             '#tv-sm .tv-sm-formhost input[type="submit"], #tv-sm .tv-sm-formhost button, #tv-sm .tv-sm-formhost .input-group-btn, #tv-sm .tv-sm-formhost .input-group-append{display:none !important;}',
-            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:68px;}',
+            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:58px;}',
             '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
@@ -3260,7 +3277,7 @@ class MainActivity : Activity() {
             h += group(T('Years', '年別'), years);
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows);
-            h += group(T('Current Wrestlers', '現役選手'), wrestlers(CURRENT_W));
+            h += group(T('Current Wrestlers', '現役選手'), currentWrestlers());
             h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W));
             if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE);
             h += group(T('Community', 'みんなの動画'), COMMUNITY);
@@ -4357,6 +4374,175 @@ class MainActivity : Activity() {
 })();
     """.trimIndent()
 
+    // Recently Watched page: reached from the menu or the home row's View All (the My page address carrying
+    // "tvrecent=1"). It takes the viewing history that page already holds and draws it as a full video grid,
+    // like My Favorites, instead of the My page layout. No extra request is made.
+    private val recentPageJs = """
+(function(){
+  if (window.__tvRecentPage) return;
+  if (location.pathname !== '/mypage' || !/[?&]tvrecent=1/.test(location.search)) return;
+  window.__tvRecentPage = true;
+
+  var HISTORY_RE = /viewing history|視聴履歴|閲覧履歴|履歴/i;
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+  function absUrl(u) { try { return new URL(u, location.origin).href; } catch (e) { return u; } }
+  function clean(t) {
+    return (t || '').replace(/月額見放題/g, '')
+      .replace(/Unlimited viewing for a monthly fee/gi, '')
+      .replace(/Monthly subscription available/gi, '')
+      .replace(/Monthly subscription/gi, '')
+      .replace(/(Viewing date|視聴日時|視聴日)\s*[:：]?\s*[0-9.\/\- :]*/gi, '')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // The video cards listed under the "Viewing history" heading of this very page (no extra request).
+  function readHistory() {
+    var heads = Array.prototype.slice.call(document.querySelectorAll('h1, h2, h3, h4, h5, .ttl-md, .ttl-lg'));
+    var hi = -1;
+    for (var i = 0; i < heads.length; i++) {
+      if (root && root.contains(heads[i])) continue;
+      if (HISTORY_RE.test(heads[i].textContent || '')) { hi = i; break; }
+    }
+    if (hi < 0) return [];
+    var head = heads[hi], nextHead = null;
+    for (var j = hi + 1; j < heads.length; j++) {
+      if (root && root.contains(heads[j])) continue;
+      if (!heads[j].closest('.content-list-item, article')) { nextHead = heads[j]; break; }
+    }
+    var out = [], seen = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.content-list-item, article'), function(item) {
+      if (root && root.contains(item)) return;
+      if (item.closest('.slick-cloned')) return;
+      if (!(head.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+      if (nextHead && !(nextHead.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_PRECEDING)) return;
+      var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+      if (!link) return;
+      var href = absUrl(link.getAttribute('href') || '');
+      if (!href || seen[href]) return;
+      seen[href] = true;
+      var bg = '';
+      var th = item.querySelector('[style*="background-image"]');
+      if (th) {
+        var m = (th.style.backgroundImage || '').match(/url\(['"]?(.*?)['"]?\)/);
+        if (m && m[1]) bg = m[1];
+      }
+      if (!bg) {
+        var img = item.querySelector('img');
+        if (img) bg = img.getAttribute('data-src') || img.getAttribute('data-lazy') || img.getAttribute('data-original') || img.getAttribute('src') || '';
+      }
+      if (bg.indexOf('data:') === 0) bg = '';
+      if (bg) bg = absUrl(bg);
+      var tEl = item.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
+      var title = clean(tEl ? tEl.textContent : item.textContent) || 'Stardom World Video';
+      out.push({ href: href, title: title, bgUrl: bg });
+    });
+    return out;
+  }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#tv-rp{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-rp, #tv-rp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
+    '#tv-rp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 40px 12px 40px;font-size:36px;}',
+    '#tv-rp-title .tv-rp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
+    '#tv-rp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 40px 40px;scrollbar-width:none;}',
+    '#tv-rp-scroll::-webkit-scrollbar{display:none;}',
+    '#tv-rp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
+    '#tv-rp .tv-rc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
+    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
+    '#tv-rp .tv-rc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  var root = document.createElement('div');
+  root.id = 'tv-rp';
+  root.innerHTML =
+    '<div id="tv-rp-title"><span class="tv-rp-bar"></span><span class="notranslate" translate="no">' + esc(T('Recently Watched', '最近視聴した動画')) + '</span></div>' +
+    '<div id="tv-rp-scroll"><div id="tv-rp-grid"></div><div id="tv-rp-status">' + esc(T('Loading...', '読み込み中...')) + '</div></div>';
+  (document.body || document.documentElement).appendChild(root);
+  document.documentElement.style.overflow = 'hidden';
+  var grid = root.querySelector('#tv-rp-grid');
+  var status = root.querySelector('#tv-rp-status');
+  var scroller = root.querySelector('#tv-rp-scroll');
+
+  function cards() { return Array.prototype.slice.call(grid.children); }
+  function cols() {
+    var c = grid.children;
+    if (!c.length) return 1;
+    var top = c[0].offsetTop, n = 0;
+    while (n < c.length && c[n].offsetTop === top) n++;
+    return Math.max(1, n);
+  }
+  function focusEl(el) {
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  }
+
+  var shown = false;
+  function render(items) {
+    shown = true;
+    var h = '';
+    items.forEach(function(it) {
+      h += '<a class="tv-rc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-rc-img" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '"></div><div class="tv-rc-t">' + esc(it.title) + '</div></a>';
+    });
+    grid.innerHTML = h;
+    status.textContent = items.length ? '' : T('No viewing history yet.', '視聴履歴はまだありません。');
+    if (items.length) focusEl(grid.firstElementChild);
+  }
+
+  // The list may be drawn by the page's own script a moment after it loads: wait until it stops growing.
+  var tries = 0, lastCount = -1;
+  var tm = setInterval(function() {
+    tries++;
+    var items = [];
+    try { items = readHistory(); } catch (e) {}
+    if ((items.length && items.length === lastCount) || tries > 24) {
+      clearInterval(tm);
+      render(items);
+      return;
+    }
+    lastCount = items.length;
+  }, 400);
+
+  window.addEventListener('keydown', function(e) {
+    if (!document.getElementById('tv-rp') || menuOpen()) return;
+    var k = e.keyCode, ae = document.activeElement;
+    if (!ae || !ae.classList || !ae.classList.contains('tv-rc')) {
+      if (shown && (k === 37 || k === 38 || k === 39 || k === 40) && grid.firstElementChild) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        focusEl(grid.firstElementChild);
+      } else if (k === 37) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (window.__tvOpenMenu) window.__tvOpenMenu();
+      }
+      return;
+    }
+    var list = cards(), idx = list.indexOf(ae), n = cols();
+    var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
+    if (k === 37) {
+      stop();
+      if (idx % n === 0) { if (window.__tvOpenMenu) window.__tvOpenMenu(); } else focusEl(list[idx - 1]);
+    } else if (k === 39) {
+      stop();
+      if (idx < list.length - 1 && (idx + 1) % n !== 0) focusEl(list[idx + 1]);
+    } else if (k === 38) {
+      stop();
+      if (idx - n >= 0) focusEl(list[idx - n]); else scroller.scrollTop = 0;
+    } else if (k === 40) {
+      stop();
+      var row = Math.floor(idx / n), last = Math.floor((list.length - 1) / n);
+      if (row < last) focusEl(list[Math.min(idx + n, list.length - 1)]);
+    }
+  }, true);
+})();
+    """.trimIndent()
+
     private val listNavJs = """
         (function(){
           if (window.__tvListNav) return;
@@ -4956,8 +5142,8 @@ class MainActivity : Activity() {
             var first = document.querySelector('#tv-test-grid .tv-grid-row');
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
-            // Row order under the first row: Recently Watched, Most Watched, Favorites, Most Favorited.
-            var ORDER = ['tv-recent-row', 'tv-most-row', 'tv-favorites-row', 'tv-mostfav-row'];
+            // Row order under the first row: Recently Watched, Favorites.
+            var ORDER = ['tv-recent-row', 'tv-favorites-row'];
             var after = firstWrap;
             for (var oi = ORDER.indexOf(id) - 1; oi >= 0; oi--) {
               var prev = document.getElementById(ORDER[oi]);
@@ -5001,7 +5187,8 @@ class MainActivity : Activity() {
           var FAV_URL = 'https://www.stardom-world.com/mypage/favorites';
 
           function showRecent(items, css) {
-            upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items, '', '', css);
+            upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items,
+              'https://www.stardom-world.com/mypage?tvrecent=1', isJa() ? 'すべて見る' : 'View All', css);
           }
           function showFavorites(items, more, css) {
             upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'My Favorites', items,
@@ -5014,53 +5201,9 @@ class MainActivity : Activity() {
             var c = readCache();
             if (c.recent && c.recent.length) showRecent(c.recent, css);
             if (c.fav && c.fav.items && c.fav.items.length) showFavorites(c.fav.items, !!c.fav.more, css);
-            MOST_ROWS.forEach(function(r, n) {
-              var mc = readMostCache(r.key);
-              if (mc && mc.length) showMost(r, mc, css);
-              setTimeout(function() { loadMostRow(r, css); }, 1500 + n * 1500);
-            });
+            // Most Watched / Most Favorited are no longer drawn on the home page: forget their saved copies.
+            try { localStorage.removeItem('tvMostWatchedV1'); localStorage.removeItem('tvMostFavoritedV1'); } catch (e) {}
             loadRecentlyWatched(css);
-          }
-
-          // "Most Watched" and "Most Favorited": the site's own lists sorted by plays / favorites, the first 12,
-          // then a View All tile. One small request each to the address the search page uses; not tied to
-          // signing in, so each has its own saved copy that signing out does not clear.
-          var MOST_ROWS = [
-            { id: 'tv-most-row', key: 'tvMostWatchedV1', sort: 'pc', en: 'Most Watched', ja: '再生数の多い動画' },
-            { id: 'tv-mostfav-row', key: 'tvMostFavoritedV1', sort: 'fc', en: 'Most Favorited', ja: 'お気に入り数の多い動画' }
-          ];
-          function readMostCache(key) {
-            try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
-          }
-          function showMost(r, items, css) {
-            upsertRow(r.id, isJa() ? r.ja : r.en, items,
-              'https://www.stardom-world.com/contents/search?s=' + r.sort + '&o=d&activetab=contents&page=1',
-              isJa() ? 'すべて見る' : 'View All', css);
-          }
-          function loadMostRow(r, css) {
-            if (window['__tvLoading_' + r.id]) return;
-            window['__tvLoading_' + r.id] = true;
-            fetch('/user_api/contents?size=12&sort=' + r.sort + '&order=d', { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-              .then(function(res) { return res.ok ? res.json() : null; })
-              .then(function(list) {
-                if (!list || !list.length) return;
-                var items = [];
-                list.forEach(function(v) {
-                  if (!v || !v.id || v.displayable === false) return;
-                  var t = v.thumbnails || {};
-                  var bg = t.md || t.sm || t.original || t.xs || '';
-                  items.push({
-                    href: v.web_detail_url || ('https://www.stardom-world.com/contents/' + v.id),
-                    title: cleanHistoryTitle(v.display_name || '') || 'Stardom World Video',
-                    bgUrl: bg
-                  });
-                });
-                items = items.slice(0, 12);
-                if (!items.length) return;
-                try { localStorage.setItem(r.key, JSON.stringify(items)); } catch (e) {}
-                showMost(r, items, css);
-              })
-              .catch(function() {});
           }
 
           function loadRecentlyWatched(css) {
@@ -5313,6 +5456,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(authJs, null)
         view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(factionJs, null)
+        view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)

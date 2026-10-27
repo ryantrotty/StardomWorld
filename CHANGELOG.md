@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.99
+- Menu: a little less space around the logo at the top, so the whole list fits above the language switch without scrolling.
+- Menu: Current Wrestlers now lists everyone in the factions list, alphabetically (Japanese names are kept where the app already had them).
+- Home page: the Most Watched and Most Favorited rows are removed (the Community menu entries stay).
+- Recently Watched (menu entry and the row's new View All tile) now opens a video grid page like My Favorites, built from the viewing history already on the My page, with no extra request. The My page link in the account section is unchanged.
+
 ## 1.3.98
 - Faction pages: fixed the faction logo showing the Stardom header logo instead (the app's header-logo swap was catching it).
 
