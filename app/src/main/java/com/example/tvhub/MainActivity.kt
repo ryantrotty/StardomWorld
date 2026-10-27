@@ -6007,7 +6007,7 @@ class MainActivity : Activity() {
             }
         }
 
-        // Full screen: Left/Right skip 10 s (30 s while held or with the FF/RW keys), OK plays/pauses.
+        // Full screen: Left/Right skip 30 s (60 s while held or with the FF/RW keys), OK plays/pauses.
         // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
         if (fullScreenActive()) {
             if (fsControlsMode) {
@@ -6045,7 +6045,7 @@ class MainActivity : Activity() {
                             event.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
                         val media = event.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ||
                             event.keyCode == KeyEvent.KEYCODE_MEDIA_REWIND
-                        val step = if (media || event.repeatCount > 0) 30 else 10
+                        val step = if (media || event.repeatCount > 0) 60 else 30
                         playerCommand("seek", if (forward) step else -step)
                         fullScreenInteraction()
                     }

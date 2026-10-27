@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.94
+- Full screen: Left and Right now skip 30 seconds per press (60 seconds while held or with the fast-forward / rewind keys), instead of 10 and 30.
+
 ## 1.3.93
 - Skip size: the -/+ buttons (in full screen and under the picture) now skip 30 seconds by default. Press Up or Down while one of them is selected to choose 10s, 30s, 1m, 5m, 10m or 30m (a small list shows the choice and both buttons change their label); OK then skips by that amount. Nothing needs to be held down.
 
