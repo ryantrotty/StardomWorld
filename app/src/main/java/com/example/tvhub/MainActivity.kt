@@ -4925,15 +4925,15 @@ class MainActivity : Activity() {
   ];
   var CH = [
     ['any', 'Any championship match', 'Championship'],
-    ['goddess', 'Goddess of Stardom', 'Goddess of Stardom'],
-    ['future', 'Future of Stardom', 'Future of Stardom'],
-    ['wonder', 'Wonder of Stardom', 'Wonder of Stardom'],
-    ['highspeed', 'High-Speed', 'High-Speed Championship'],
-    ['world', 'World of Stardom', 'World of Stardom'],
     ['artist', 'Artist of Stardom', 'Artist of Stardom'],
+    ['future', 'Future of Stardom', 'Future of Stardom'],
+    ['goddess', 'Goddess of Stardom', 'Goddess of Stardom'],
+    ['highspeed', 'High-Speed', 'High-Speed Championship'],
     ['iwgp', "IWGP Women's", "IWGP Women's"],
     ['newblood', 'NEW BLOOD Tag Team', 'NEW BLOOD'],
-    ['other', 'Other (“Title Match” wording)', 'Title Match']
+    ['wonder', 'Wonder of Stardom', 'Wonder of Stardom'],
+    ['world', 'World of Stardom', 'World of Stardom'],
+    ['other', 'Other title matches', 'Title Match']
   ];
   var YR = [];
   for (var y = new Date().getFullYear(); y >= 2011; y--) YR.push([String(y), String(y), y + '/']);
@@ -4941,7 +4941,9 @@ class MainActivity : Activity() {
   var facs = [];
   try {
     var fd = JSON.parse(AndroidHost.factionsJson());
-    facs = (fd && fd.factions) || [];
+    facs = ((fd && fd.factions) || []).map(function(f) {
+      return { id: f.id, name: f.name, members: (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); }) };
+    }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
   } catch (e) {}
 
   function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -4963,8 +4965,7 @@ class MainActivity : Activity() {
     s: qp('s'), o: qp('o')
   };
   var SORTS = [
-    ['', '', 'Default'],
-    ['di_s', 'd', 'Newest'],
+    ['', '', 'Newest'],
     ['di_s', 'a', 'Oldest'],
     ['pc', 'd', 'Most played'],
     ['fc', 'd', 'Most favorited']
@@ -4981,7 +4982,7 @@ class MainActivity : Activity() {
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
     if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
     u += '&activetab=contents&page=1';
-    if (n.base) u += '&tvb=' + encodeURIComponent(n.base);
+    if (n.base && (n.mt || n.ch || n.co || n.yr)) u += '&tvb=' + encodeURIComponent(n.base);
     if (n.mt) u += '&tvmt=' + encodeURIComponent(n.mt);
     if (n.ch) u += '&tvch=' + encodeURIComponent(n.ch);
     if (n.co) u += '&tvco=' + encodeURIComponent(n.co);
@@ -5007,10 +5008,16 @@ class MainActivity : Activity() {
     '#tv-fbp .tv-fbi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:nowrap;}',
     '#tv-fbp .tv-fbi.tv-cur{color:#F4C242;}',
     '#tv-fbp .tv-fbi:focus{background:#172029;border-color:#F4C242;color:#ffffff;font-weight:700;box-shadow:none !important;}',
-    '#tv-fbp .tv-fbh{padding:4px 6px 2px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:.5px;color:#F4C242;min-height:30px;}',
-    '#tv-fbp .tv-fbcols{display:flex;gap:10px;}',
-    '#tv-fbp .tv-fbcol{flex:1 1 0;min-width:0;}',
-    '#tv-fbp .tv-fbcol .tv-fbi{font-size:16px;padding:7px 8px;white-space:normal;}'
+    '#tv-fbp .tv-fbh{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:0;color:#F4C242;white-space:nowrap;}',
+    '#tv-fbp .tv-fbcols{display:flex;gap:6px;width:max-content;min-width:100%;}',
+    '#tv-fbp .tv-fbcol{flex:1 0 auto;}',
+    '#tv-fbp .tv-fbcol .tv-fbi{font-size:15px;padding:7px 8px;white-space:nowrap;}',
+    '#tv-fbp.tv-co{overflow-x:auto;overflow-y:auto;padding:10px;}',
+    '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0 8px;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fbc .tv-fbl{font-size:17px;color:#9aa6b4;}',
+    '#tv-fbc .tv-fbchip{box-sizing:border-box;padding:7px 14px;border-radius:20px;background:#172029;border:2px solid #3b4656;color:#ffffff;font-size:17px;font-weight:700;white-space:nowrap;outline:none !important;cursor:pointer;}',
+    '#tv-fbc .tv-fbchip.tv-clr{background:transparent;border-color:transparent;color:#F4C242;}',
+    '#tv-fbc .tv-fbchip:focus{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);
 
@@ -5021,7 +5028,7 @@ class MainActivity : Activity() {
     if (kind === 'sort') {
       nm = T('Sort', '並び替え');
       for (var i = 0; i < SORTS.length; i++) if (SORTS[i][0] === S.s && (SORTS[i][0] === '' || SORTS[i][1] === (S.o || 'd'))) { cur = SORTS[i]; break; }
-      return { text: nm + ': ' + (cur ? cur[2] : T('Default', '標準')), on: !!S.s };
+      return { text: nm + ': ' + (cur ? T(cur[2], cur[2] === 'Newest' ? '新着順' : cur[2]) : T('Newest', '新着順')), on: !!S.s };
     }
     if (kind === 'mt') { cur = find(MT, S.mt); nm = T('Match type', '試合形式'); }
     if (kind === 'ch') { cur = find(CH, S.ch); nm = T('Championship', '選手権'); }
@@ -5050,26 +5057,44 @@ class MainActivity : Activity() {
       btns.push(b);
       bar.appendChild(b);
     });
-    var any = S.mt || S.ch || S.co || S.yr;
-    if (any) {
-      var c = document.createElement('div');
-      c.className = 'tv-fbb';
-      c.tabIndex = 0;
-      c.setAttribute('role', 'button');
-      c.setAttribute('data-k', 'clear');
-      c.textContent = T('Clear filters', 'フィルターを解除');
-      c.addEventListener('click', function() { go({ mt: '', ch: '', co: '', yr: '' }); });
-      btns.push(c);
-      bar.appendChild(c);
-    }
     refreshLabels();
     anchor.parentNode.insertBefore(bar, anchor);
+    buildChips();
     return true;
+  }
+  var chipBar = null, chips = [];
+  function buildChips() {
+    var defs = [];
+    var a = find(MT, S.mt); if (a) defs.push([a[1], { mt: '' }]);
+    var b = find(CH, S.ch); if (b) defs.push([b[1], { ch: '' }]);
+    if (S.co) defs.push([T('With ', '対戦: ') + S.co, { co: '' }]);
+    var c = find(YR, S.yr); if (c) defs.push([c[1], { yr: '' }]);
+    chips = [];
+    if (!defs.length) return;
+    chipBar = document.createElement('div');
+    chipBar.id = 'tv-fbc';
+    var l = document.createElement('span');
+    l.className = 'tv-fbl';
+    l.textContent = T('Showing', '絞り込み');
+    chipBar.appendChild(l);
+    function chip(text, patch, clr) {
+      var d = document.createElement('div');
+      d.className = 'tv-fbchip' + (clr ? ' tv-clr' : '');
+      d.tabIndex = 0;
+      d.setAttribute('role', 'button');
+      d.textContent = text;
+      d._fn = function() { go(patch); };
+      d.addEventListener('click', d._fn);
+      chips.push(d);
+      chipBar.appendChild(d);
+    }
+    defs.forEach(function(x) { chip(x[0] + ' \u00D7', x[1], false); });
+    chip(T('Clear all', 'すべて解除'), { mt: '', ch: '', co: '', yr: '' }, true);
+    bar.parentNode.insertBefore(chipBar, bar.nextSibling);
   }
   function refreshLabels() {
     btns.forEach(function(b) {
       var k = b.getAttribute('data-k');
-      if (k === 'clear') return;
       var l = labelFor(k);
       b.textContent = l.text + ' ▾';
       b.classList.toggle('tv-on', l.on);
@@ -5099,7 +5124,6 @@ class MainActivity : Activity() {
   function openPanel(btn) {
     if (panel) closePanel(false);
     var k = btn.getAttribute('data-k');
-    if (k === 'clear') { go({ mt: '', ch: '', co: '', yr: '' }); return; }
     panel = document.createElement('div');
     panel.id = 'tv-fbp';
     var all = T('All', 'すべて');
@@ -5127,6 +5151,7 @@ class MainActivity : Activity() {
       panel.style.columnCount = 2;
       list(YR, S.yr, 'yr');
     } else if (k === 'co') {
+      panel.className = 'tv-co';
       var top = item(T('All competitors', 'すべての選手'), !S.co, function() { go({ co: '' }); });
       panel.appendChild(top);
       first = top;
@@ -5226,13 +5251,22 @@ class MainActivity : Activity() {
       lastBtn = bi;
       if (k === 39) { stop(e); if (bi < btns.length - 1) btns[bi + 1].focus(); }
       else if (k === 37) { if (bi > 0) { stop(e); btns[bi - 1].focus(); } }   // at the first button Left opens the menu as usual
-      else if (k === 40) { var c = firstCard(); if (c) { stop(e); c.focus(); try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
+      else if (k === 40) { var c = chips.length ? chips[0] : firstCard(); if (c) { stop(e); c.focus(); try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
       else if (k === 13 || k === 23) { stop(e); openPanel(ae); }
+      return;
+    }
+    var ci = chips.indexOf(ae);
+    if (ci !== -1) {
+      if (k === 39) { stop(e); if (ci < chips.length - 1) chips[ci + 1].focus(); }
+      else if (k === 37) { if (ci > 0) { stop(e); chips[ci - 1].focus(); } }
+      else if (k === 38) { stop(e); var ub = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (ub) ub.focus(); }
+      else if (k === 40) { var fc = firstCard(); if (fc) { stop(e); fc.focus(); try { fc.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
+      else if (k === 13 || k === 23) { stop(e); if (ae._fn) ae._fn(); }
       return;
     }
     if (k === 38 && bar && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardAbove(ae)) {
       stop(e);
-      var tb = btns[Math.min(lastBtn, btns.length - 1)] || btns[0];
+      var tb = chips.length ? chips[0] : (btns[Math.min(lastBtn, btns.length - 1)] || btns[0]);
       if (tb) { tb.focus(); try { tb.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} }
     }
   }, true);

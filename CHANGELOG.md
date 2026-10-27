@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.106
+- Filter bar: the sort now says "Newest" (the site's own order) instead of "Default", and the Default row is gone. Newest no longer adds any sort setting to the address, so clearing every filter gives the plain search page.
+- A "Showing" row of chips appears under the drop-downs for each filter in use (press OK on a chip to remove it), with "Clear all" at the end. Down from the bar goes to the chips, then the videos; Up from the first row of videos goes back to the chips.
+- Competitors shelf: names no longer wrap onto two lines; factions run alphabetically left to right and wrestlers alphabetically within each faction.
+- Championship list is alphabetical (Any championship match first), and the last row is now "Other title matches".
+
 ## 1.3.105
 - Search pages (wrestler pages and keyword searches) get a filter bar in place of the sort row: Sort, Match type, Championship, Competitors and Year. Every list is fixed, so opening one loads nothing; each choice adds words to the search and opens that result page (one request, like any list), and more results load as you scroll as before.
 - Match type: Single match, Tag team, 3-way, 6-person, 8-person, 8-man, Battle royal, Cage match.
