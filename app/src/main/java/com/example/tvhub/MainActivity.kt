@@ -4756,7 +4756,67 @@ class MainActivity : Activity() {
     })();
   }
 
+  // Round 5, category pages (Big Match, English Commentary ...): walk the category's pages 1.2 s apart (at most 12)
+  // and list the show names found inside quotes in the titles, with how often each appears
+  function gatherShows(done) {
+    var L = [];
+    var base = location.pathname;
+    var names = {}, order = [], seen = {}, plain = [], total = 0, pagesDone = 0;
+    function strip(n) {
+      return n.replace(/\b(19|20)[0-9]{2}\b/g, '').replace(/\s+in\s+[A-Z][A-Za-z ]+$/, '').replace(/[\s\-–,:]+$/, '').replace(/^[\s\-–,:]+/, '').replace(/\s+/g, ' ').trim();
+    }
+    function readDoc(doc) {
+      var added = 0;
+      Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item'), function(c) {
+        var a = c.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+        var m = a && /(?:contents|set)\/([0-9]+)/.exec(a.getAttribute('href') || '');
+        if (!m || seen[m[1]]) return;
+        seen[m[1]] = 1; added++; total++;
+        var h = c.querySelector('h3, h4');
+        var t = clip(h ? h.textContent : c.textContent, 200);
+        var q = /[“"‘']([^”"’']{4,80})[”"’']/.exec(t);
+        if (q) {
+          var nm = strip(q[1]);
+          if (!nm) return;
+          var key = nm.toLowerCase();
+          if (!names[key]) { names[key] = { n: nm, c: 0 }; order.push(key); }
+          names[key].c++;
+        } else if (plain.length < 3) plain.push(t);
+      });
+      return added;
+    }
+    var p = 1;
+    function step() {
+      var url = base + (p > 1 ? '?page=' + p : '');
+      var go = function(txt) {
+        var doc = new DOMParser().parseFromString(txt, 'text/html');
+        var added = readDoc(doc);
+        pagesDone = p;
+        if (!added || p >= 12) return finish();
+        p++;
+        setTimeout(step, 1200);
+      };
+      if (p === 1) { go(document.documentElement.outerHTML); return; }
+      fetch(url, { credentials: 'include' }).then(function(r) { return r.text(); }).then(go).catch(function(e) { L.push('failed page ' + p + ': ' + e); finish(); });
+    }
+    function finish() {
+      L.push('ROUND 5   ' + base + '   pages read ' + pagesDone + '   cards ' + total + '   show names ' + order.length);
+      order.sort(function(a, b) { return names[b].c - names[a].c; });
+      var cells = order.map(function(k) { return clip(names[k].n, 52) + ' (' + names[k].c + ')'; });
+      var rows = Math.ceil(cells.length / 2);
+      for (var i = 0; i < rows; i++) {
+        var a = cells[i] || '', b = cells[i + rows] || '';
+        while (a.length < 66) a += ' ';
+        L.push(a + b);
+      }
+      if (plain.length) { L.push('No quoted name in:'); plain.forEach(function(x) { L.push(' - ' + clip(x, 120)); }); }
+      done(L);
+    }
+    step();
+  }
+
   function gather(done) {
+    if (/^\/contents\/category\//.test(location.pathname) && location.pathname.indexOf('/contents/category/events') !== 0) { gatherShows(done); return; }
     if (/^\/contents\/(search|category)/.test(location.pathname)) { gatherRound3(done); return; }
     var L = [];
     function add(s) { L.push(s); }
@@ -5348,8 +5408,9 @@ class MainActivity : Activity() {
 (function(){
   if (window.__tvEventBar) return;
   var onArchive = location.pathname === '/contents/category/events' || location.pathname === '/contents/category/events/';
+  var onShowCat = /^\/contents\/category\//.test(location.pathname) && !/^\/contents\/category\/(iwgp|world-sd|wonder-sd|high_speed)/.test(location.pathname);
   var onEvSearch = location.pathname.indexOf('/contents/search') === 0 && /[?&]tvev=1/.test(location.search);
-  if (!onArchive && !onEvSearch) return;
+  if (!onArchive && !onEvSearch && !onShowCat) return;
   if (!window.AndroidHost || !AndroidHost.eventFiltersJson) return;
   var D = null;
   try { D = JSON.parse(AndroidHost.eventFiltersJson()); } catch (e) {}
@@ -5414,7 +5475,8 @@ class MainActivity : Activity() {
     '#tv-eb .tv-ebb:focus, #tv-eb .tv-ebb.tv-open{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}',
     '#tv-ebp{position:fixed;z-index:99100;box-sizing:border-box;padding:12px;border-radius:14px;background:#121922;border:2px solid #2a323c;font-family:Arial,Helvetica,sans-serif;color:#ffffff;max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:none;}',
     '#tv-ebp::-webkit-scrollbar{display:none;}',
-    '#tv-ebp .tv-ebi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:nowrap;}',
+    '#tv-ebp .tv-ebi{break-inside:avoid;}',
+    '#tv-ebp .tv-ebi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:normal;}',
     '#tv-ebp .tv-ebi.tv-cur{color:#F4C242;}',
     '#tv-ebp .tv-ebi:focus{background:#172029;border-color:#F4C242;color:#ffffff;font-weight:700;box-shadow:none !important;}',
     '#tv-ebp .tv-ebcols{column-count:4;column-gap:14px;}',
@@ -5561,13 +5623,15 @@ class MainActivity : Activity() {
         if (r[0] === S[k]) first = it;
       });
       if (k === 'yr') panel.style.columnCount = 2;
+      if (k === 'sh') { panel.style.columnCount = 3; panel.style.columnGap = '10px'; }
     }
     document.body.appendChild(panel);
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
-    else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : 440))) + 'px';
+    else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : (k === 'sh' ? 900 : 440)))) + 'px';
     if (k === 'yr') panel.style.width = '440px';
+    if (k === 'sh') panel.style.width = '880px';
     btn.classList.add('tv-open');
     openBtn = btn;
     prevClose = window.__tvMenuClose || null;

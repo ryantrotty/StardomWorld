@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.111
+- Probe on a category page (Big Match, English Commentary, LIVE & On-demand, 5★STAR GP special): reads that category's pages one at a time, 1.2 s apart (at most 12), and lists the show names found in quotes in the titles with how many times each appears, so more shows can be added to the Show list. Run it from the menu's Probe entry while on the Big Match page.
+- The Tournament Archives bar (Sort, Location, Show, Year) now also appears on category pages such as Big Match, English Commentary, LIVE & On-demand and the 5★STAR GP feature, replacing the site's sort row there. The four championship pages keep the site's own layout.
+- The Show drop-down is now a three-column shelf, so a long list no longer runs off the bottom of the screen.
+
 ## 1.3.110
 - Filter bars (wrestler search pages and Tournament Archives): the drop-down row and the "Showing" chip row now line up with the left edge of the first video thumbnail.
 - 5★STAR GP show now searches "5★STAR".
