@@ -1579,9 +1579,13 @@ class MainActivity : Activity() {
                         iframe.setAttribute('allow', 'autoplay; fullscreen');
                         iframe.setAttribute('allowfullscreen', 'true');
                       }
-                      if (iframe.src && iframe.src.indexOf('vimeo.com') !== -1 && iframe.src.indexOf('autoplay=1') === -1) {
+                      if (iframe.src && iframe.src.indexOf('vimeo.com') !== -1 && (iframe.src.indexOf('autoplay=1') === -1 || iframe.src.indexOf('controls=0') === -1)) {
+                        var extra = '';
+                        if (iframe.src.indexOf('autoplay=1') === -1) extra = 'autoplay=1&autopause=0&muted=0';
+                        // The page's own control bar (under the picture) replaces the player's.
+                        if (iframe.src.indexOf('controls=0') === -1) extra += (extra ? '&' : '') + 'controls=0';
                         var sep = iframe.src.indexOf('?') !== -1 ? '&' : '?';
-                        iframe.src = iframe.src + sep + 'autoplay=1&autopause=0&muted=0';
+                        iframe.src = iframe.src + sep + extra;
                       }
                       if (iframe.contentWindow && !iframe.__tvPlaySent) {
                         try {
@@ -3744,13 +3748,14 @@ class MainActivity : Activity() {
 
           var st = document.createElement('style');
           st.textContent =
-            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:64px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:2px solid #222b36;border-top:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:64px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
             '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
             '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
             '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
             '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
             '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
-            '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}';
+            '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}' +
+            '.tv-nb, .tv-nb:focus{border:0 !important;box-shadow:none !important;outline:0 !important;}';
           (document.head || document.documentElement).appendChild(st);
 
           function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
@@ -3767,6 +3772,9 @@ class MainActivity : Activity() {
             var sec = document.querySelector('.box-related-content');
             if (!sec && ++buildTries < 8) return false;
             f.setAttribute('tabindex', '-1');   // the frame itself is never a keyboard stop
+            // No thin outlines around the player or its wrappers.
+            var n = f, depth = 0;
+            while (n && n !== document.body && depth < 6) { n.classList.add('tv-nb'); n = n.parentElement; depth++; }
             bar = document.createElement('div');
             bar.id = 'tv-pbar';
             var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
@@ -3796,6 +3804,10 @@ class MainActivity : Activity() {
             var r = f.getBoundingClientRect();
             if (r.width < 50) return;
             bar.style.width = Math.round(r.width) + 'px';
+            // Close the gap the player's wrapper leaves under the picture.
+            bar.style.marginTop = '0px';
+            var gap = bar.getBoundingClientRect().top - r.bottom;
+            bar.style.marginTop = (gap > 1 ? -Math.round(gap) : 0) + 'px';
             bar.style.marginLeft = '0px';
             var bl = bar.getBoundingClientRect().left;
             bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';

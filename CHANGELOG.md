@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.91
+- Video pages: closed the gap between the picture and the control bar, removed the thin grey outlines around the player and the bar, and asked the player to hide its own control bar (controls=0) since the page's bar replaces it. If the player ignores that for live events, its bar will still show.
+
 ## 1.3.90
 - Video pages: fixed the new control bar being cut off (it now sits just above the related videos instead of inside the player's clipping box), and focusing the bar (on load, after full screen, or coming up from the row) now scrolls to the top of the page so the title and the top of the picture are never cut off.
 
