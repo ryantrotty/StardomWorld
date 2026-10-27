@@ -128,12 +128,16 @@
    "search": "5★STAR"
   },
   {
+   "name": "All Star Grand Queendom",
+   "search": "GRAND QUEENDOM"
+  },
+  {
    "name": "Cinderella Tournament",
    "search": "Cinderella"
   },
   {
    "name": "Dream Queendom",
-   "search": "Queendom"
+   "search": "DREAM QUEENDOM"
   },
   {
    "name": "Fight in the Top",
@@ -148,8 +152,12 @@
    "search": "Mid-Summer"
   },
   {
-   "name": "NEW BLOOD",
+   "name": "New Blood",
    "search": "NEW BLOOD"
+  },
+  {
+   "name": "New Year Dream",
+   "search": "NEW YEAR DREAM"
   },
   {
    "name": "Path of Thunder",
@@ -160,8 +168,24 @@
    "search": "DYNASTY"
   },
   {
+   "name": "Spring Vacation",
+   "search": "SPRING VACATION"
+  },
+  {
    "name": "Stardom Nighter",
    "search": "NIGHTER"
+  },
+  {
+   "name": "Supreme Fight",
+   "search": "Supreme Fight"
+  },
+  {
+   "name": "The Conversion",
+   "search": "CONVERSION"
+  },
+  {
+   "name": "To the World",
+   "search": "TO THE WORLD"
   },
   {
    "name": "Triangle Derby",
