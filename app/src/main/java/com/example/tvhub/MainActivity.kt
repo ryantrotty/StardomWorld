@@ -4024,8 +4024,8 @@ class MainActivity : Activity() {
     '#tv-fac{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-fac, #tv-fac *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-fac-nav{flex:0 0 330px;box-sizing:border-box;padding:30px 20px 20px 30px;display:flex;flex-direction:column;min-height:0;border-right:1px solid #222b36;}',
-    '#tv-fac .tv-fh-logowrap{display:flex;justify-content:center;align-items:center;margin:0 0 16px 0;}',
-    '#tv-fac .tv-fh-logo{max-width:100%;max-height:130px;object-fit:contain;}',
+    '#tv-fac .tv-fh-brandwrap{display:flex;justify-content:center;align-items:center;margin:0 0 16px 0;}',
+    '#tv-fac .tv-fh-brand{max-width:100%;max-height:130px;object-fit:contain;}',
     '#tv-fac .tv-fh{display:flex;align-items:center;gap:14px;margin:0 0 18px 8px;min-height:48px;}',
     '#tv-fac .tv-fh-bar{flex:0 0 auto;width:8px;align-self:stretch;min-height:40px;background:#F4C242;}',
     '#tv-fac .tv-fh-name{min-width:0;font-size:26px;font-weight:700;line-height:1.15;white-space:normal;}',
@@ -4178,7 +4178,7 @@ class MainActivity : Activity() {
   root.id = 'tv-fac';
   var head = '';
   // Builds that may show logos: the logo, centered, above the name; the name is laid out the same either way.
-  if (logoSrc) head += '<div class="tv-fh-logowrap"><img class="tv-fh-logo" src="' + esc(logoSrc) + '" alt=""></div>';
+  if (logoSrc) head += '<div class="tv-fh-brandwrap"><img class="tv-fh-brand" src="' + esc(logoSrc) + '" alt=""></div>';
   head += '<div class="tv-fh"><span class="tv-fh-bar"></span><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div></div>';
   var mh = '';
   members.forEach(function(m, i) {
@@ -4194,7 +4194,7 @@ class MainActivity : Activity() {
   root.classList.add('tv-empty');
   (document.body || document.documentElement).appendChild(root);
   document.documentElement.style.overflow = 'hidden';
-  var logoImg = root.querySelector('.tv-fh-logo');
+  var logoImg = root.querySelector('.tv-fh-brand'); // not named *logo*: the app's header-logo swap would replace it
   if (logoImg) logoImg.addEventListener('error', function() {
     var w = logoImg.parentNode;
     if (w && w.parentNode) w.parentNode.removeChild(w);
