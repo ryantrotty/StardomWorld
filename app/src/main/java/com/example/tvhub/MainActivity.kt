@@ -5325,7 +5325,7 @@ class MainActivity : Activity() {
 })();
     """.trimIndent()
 
-    // Tournament Archives filter bar: City, Venue, Show and Year drop-downs; each choice adds a word to the keyword search.
+    // Tournament Archives filter bar: Sort, Location, Show and Year drop-downs; each choice adds a word to the keyword search.
     private val eventBarJs = """
 (function(){
   if (window.__tvEventBar) return;
@@ -5341,14 +5341,24 @@ class MainActivity : Activity() {
   // Every choice adds a word to the site's own keyword search and opens that page: one request per choice.
   // The lists are fixed (assets/event_filters.json), so opening a drop-down loads nothing.
   var KINDS = [
-    ['ci', 'cities', 'City', '都市'],
-    ['ve', 'venues', 'Venue', '会場'],
-    ['sh', 'shows', 'Show', '大会名'],
+    ['sort', null, 'Sort', '並び替え'],
+    ['lo', null, 'Location', '開催地'],
+    ['sh', null, 'Show', '大会名'],
     ['yr', null, 'Year', '年']
   ];
+  var SORTS = [
+    ['', '', 'Newest'],
+    ['di_s', 'a', 'Oldest'],
+    ['pc', 'd', 'Most played'],
+    ['fc', 'd', 'Most favorited']
+  ];
   var LISTS = {};
-  function opts(arr) { return (arr || []).map(function(x) { return [x.name, x.name, x.search]; }); }
-  LISTS.ci = opts(D.cities); LISTS.ve = opts(D.venues); LISTS.sh = opts(D.shows);
+  LISTS.lo = [];
+  (D.locations || []).forEach(function(c) {
+    LISTS.lo.push(['c:' + c.name, c.name, c.search, 'city']);
+    (c.venues || []).forEach(function(v) { LISTS.lo.push(['v:' + v.name, v.name, v.search, 'venue']); });
+  });
+  LISTS.sh = (D.shows || []).map(function(x) { return [x.name, x.name, x.search]; });
   LISTS.yr = [];
   for (var y = new Date().getFullYear(); y >= 2011; y--) LISTS.yr.push([String(y), String(y), String(y)]);
 
@@ -5359,14 +5369,16 @@ class MainActivity : Activity() {
     if (!m) return '';
     try { return decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { return m[1]; }
   }
-  var S = { ci: qp('tvci'), ve: qp('tvve'), sh: qp('tvsh'), yr: qp('tvyr') };
+  var S = { lo: qp('tvlo'), sh: qp('tvsh'), yr: qp('tvyr'), s: qp('s'), o: qp('o') };
   function find(k, id) { var l = LISTS[k]; for (var i = 0; i < l.length; i++) if (l[i][0] === id) return l[i]; return null; }
   function buildUrl(n) {
     var words = [];
-    ['sh', 've', 'ci', 'yr'].forEach(function(k) { var f = find(k, n[k]); if (f) words.push(f[2]); });
-    if (!words.length) return '/contents/category/events';
+    ['sh', 'lo', 'yr'].forEach(function(k) { var f = find(k, n[k]); if (f) words.push(f[2]); });
+    var sortQ = n.s ? 's=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd') : '';
+    if (!words.length) return '/contents/category/events' + (sortQ ? '?' + sortQ : '');
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(words.join(' ')) + '&activetab=contents&page=1&tvev=1';
-    ['ci', 've', 'sh', 'yr'].forEach(function(k) { if (n[k]) u += '&tv' + k + '=' + encodeURIComponent(n[k]); });
+    if (sortQ) u += '&' + sortQ;
+    ['lo', 'sh', 'yr'].forEach(function(k) { if (n[k]) u += '&tv' + k + '=' + encodeURIComponent(n[k]); });
     return u;
   }
   function go(patch) {
@@ -5387,6 +5399,12 @@ class MainActivity : Activity() {
     '#tv-ebp .tv-ebi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:nowrap;}',
     '#tv-ebp .tv-ebi.tv-cur{color:#F4C242;}',
     '#tv-ebp .tv-ebi:focus{background:#172029;border-color:#F4C242;color:#ffffff;font-weight:700;box-shadow:none !important;}',
+    '#tv-ebp .tv-ebcols{column-count:4;column-gap:14px;}',
+    '#tv-ebp .tv-ebcity{break-inside:avoid;margin:0 0 10px 0;}',
+    '#tv-ebp .tv-ebh{font-weight:700;color:#F4C242;font-size:17px;}',
+    '#tv-ebp .tv-ebv{font-size:16px;padding:7px 8px 7px 22px;}',
+    '#tv-ebp.tv-lo .tv-ebi{white-space:normal;}',
+    'html body .box-sort{display:none !important;}',
     '#tv-ec{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0 8px;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-ec .tv-ebl{font-size:17px;color:#9aa6b4;}',
     '#tv-ec .tv-ebchip{box-sizing:border-box;padding:7px 14px;border-radius:20px;background:#172029;border:2px solid #3b4656;color:#ffffff;font-size:17px;font-weight:700;white-space:nowrap;outline:none !important;cursor:pointer;}',
@@ -5397,9 +5415,18 @@ class MainActivity : Activity() {
 
   var bar = null, btns = [], lastBtn = 0, panel = null, openBtn = null, prevClose = null, chips = [];
 
+  function sortCur() {
+    for (var i = 0; i < SORTS.length; i++) if (SORTS[i][0] === S.s && (SORTS[i][0] === '' || SORTS[i][1] === (S.o || 'd'))) return SORTS[i];
+    return null;
+  }
   function kindInfo(k) { for (var i = 0; i < KINDS.length; i++) if (KINDS[i][0] === k) return KINDS[i]; return null; }
   function labelFor(k) {
-    var ki = kindInfo(k), cur = find(k, S[k]);
+    var ki = kindInfo(k);
+    if (k === 'sort') {
+      var sc = sortCur();
+      return { text: T(ki[2], ki[3]) + ': ' + T(sc ? sc[2] : 'Newest', (!sc || sc[2] === 'Newest') ? '新着順' : sc[2]), on: !!S.s };
+    }
+    var cur = find(k, S[k]);
     return { text: T(ki[2], ki[3]) + (cur ? ': ' + cur[1] : ''), on: !!cur };
   }
   function mount() {
@@ -5428,7 +5455,7 @@ class MainActivity : Activity() {
   }
   function buildChips() {
     var defs = [];
-    KINDS.forEach(function(ki) { var f = find(ki[0], S[ki[0]]); if (f) { var p = {}; p[ki[0]] = ''; defs.push([f[1], p]); } });
+    ['lo', 'sh', 'yr'].forEach(function(k) { var f = find(k, S[k]); if (f) { var p = {}; p[k] = ''; defs.push([f[1], p]); } });
     chips = [];
     if (!defs.length) return;
     var cb = document.createElement('div');
@@ -5449,7 +5476,7 @@ class MainActivity : Activity() {
       cb.appendChild(d);
     }
     defs.forEach(function(x) { chip(x[0] + ' ×', x[1], false); });
-    chip(T('Clear all', 'すべて解除'), { ci: '', ve: '', sh: '', yr: '' }, true);
+    chip(T('Clear all', 'すべて解除'), { lo: '', sh: '', yr: '' }, true);
     bar.parentNode.insertBefore(cb, bar.nextSibling);
   }
 
@@ -5476,18 +5503,48 @@ class MainActivity : Activity() {
     var k = btn.getAttribute('data-k');
     panel = document.createElement('div');
     panel.id = 'tv-ebp';
-    var first = item(T('All', 'すべて'), !S[k], function() { var p = {}; p[k] = ''; go(p); });
-    panel.appendChild(first);
-    LISTS[k].forEach(function(r) {
-      var it = item(r[1], r[0] === S[k], function() { var p = {}; p[k] = r[0]; go(p); });
-      panel.appendChild(it);
-      if (r[0] === S[k]) first = it;
-    });
-    if (k === 'yr') panel.style.columnCount = 2;
+    var first = null;
+    if (k === 'sort') {
+      SORTS.forEach(function(r) {
+        var cur = (r[0] === S.s) && (r[0] === '' || r[1] === (S.o || 'd'));
+        var it = item(r[2], cur, function() { go({ s: r[0], o: r[1] }); });
+        panel.appendChild(it);
+        if (cur) first = it; else if (!first) first = it;
+      });
+    } else if (k === 'lo') {
+      panel.className = 'tv-lo';
+      first = item(T('All locations', 'すべての開催地'), !S.lo, function() { go({ lo: '' }); });
+      panel.appendChild(first);
+      var cols = document.createElement('div');
+      cols.className = 'tv-ebcols';
+      var block = null;
+      LISTS.lo.forEach(function(r) {
+        var it = item(r[3] === 'city' ? r[1] : r[1], r[0] === S.lo, function() { go({ lo: r[0] }); });
+        if (r[3] === 'city') {
+          block = document.createElement('div');
+          block.className = 'tv-ebcity';
+          it.classList.add('tv-ebh');
+          cols.appendChild(block);
+        } else it.classList.add('tv-ebv');
+        if (block) block.appendChild(it);
+        if (r[0] === S.lo) first = it;
+      });
+      panel.appendChild(cols);
+    } else {
+      first = item(T('All', 'すべて'), !S[k], function() { var p = {}; p[k] = ''; go(p); });
+      panel.appendChild(first);
+      LISTS[k].forEach(function(r) {
+        var it = item(r[1], r[0] === S[k], function() { var p = {}; p[k] = r[0]; go(p); });
+        panel.appendChild(it);
+        if (r[0] === S[k]) first = it;
+      });
+      if (k === 'yr') panel.style.columnCount = 2;
+    }
     document.body.appendChild(panel);
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
-    panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : 440))) + 'px';
+    if (k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : 440))) + 'px';
     if (k === 'yr') panel.style.width = '440px';
     btn.classList.add('tv-open');
     openBtn = btn;

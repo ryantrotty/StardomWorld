@@ -1,42 +1,175 @@
 {
-  "_note": "Lists for the Tournament Archives filter bar. 'search' is the word sent to the site's search (it must appear in the event's title or description). Edit freely: labels are what you see, search is what is looked for. First pass, check the spellings against real event titles.",
-  "cities": [
-    { "name": "Aichi", "search": "Aichi" },
-    { "name": "Fukuoka", "search": "Fukuoka" },
-    { "name": "Ibaraki", "search": "Ibaraki" },
-    { "name": "Kanagawa", "search": "Kanagawa" },
-    { "name": "Kumamoto", "search": "Kumamoto" },
-    { "name": "Nagano", "search": "Nagano" },
-    { "name": "Osaka", "search": "Osaka" },
-    { "name": "Tochigi", "search": "Tochigi" },
-    { "name": "Tokyo", "search": "Tokyo" },
-    { "name": "Yamagata", "search": "Yamagata" },
-    { "name": "Yamanashi", "search": "Yamanashi" }
-  ],
-  "venues": [
-    { "name": "Aimesse Yamanashi", "search": "Aimesse" },
-    { "name": "Chunichi Hall (Nagoya Congress Center)", "search": "Chunichi" },
-    { "name": "Edion Arena Osaka", "search": "Edion" },
-    { "name": "Korakuen Hall", "search": "Korakuen" },
-    { "name": "Light Cube Utsunomiya", "search": "Light Cube" },
-    { "name": "Mito Lily Arena", "search": "Lily Arena" },
-    { "name": "Ota City General Gymnasium", "search": "Ota City" },
-    { "name": "Osaka-jo Hall", "search": "Osaka-jo" },
-    { "name": "Sagae City Gymnasium", "search": "Sagae" },
-    { "name": "Takadanobaba Belle Salle", "search": "Takadanobaba" },
-    { "name": "Ueda Sogo Taiikukan", "search": "Ueda" },
-    { "name": "Yokohama Arena", "search": "Yokohama Arena" }
-  ],
-  "shows": [
-    { "name": "5★STAR GP", "search": "STAR GP" },
-    { "name": "Cinderella Tournament", "search": "Cinderella" },
-    { "name": "Dream Queendom", "search": "Queendom" },
-    { "name": "Fight in the Top", "search": "Fight in the Top" },
-    { "name": "Golden Week Fight Tour", "search": "Golden Week" },
-    { "name": "Mid-Summer Champions", "search": "Mid-Summer" },
-    { "name": "Path of Thunder", "search": "Path of Thunder" },
-    { "name": "Stardom Nighter", "search": "NIGHTER" },
-    { "name": "Triangle Derby", "search": "Triangle" },
-    { "name": "Year-End Climax", "search": "Climax" }
-  ]
+ "_note": "Lists for the Tournament Archives filter bar. 'search' is the word sent to the site's search (it must appear in the event's title or description). Edit freely: 'name' is what you see, 'search' is what is looked for. Locations are grouped by prefecture; a venue sits under its prefecture. Check spellings against real event titles.",
+ "locations": [
+  {
+   "name": "Aichi",
+   "search": "Aichi",
+   "venues": [
+    {
+     "name": "Chunichi Hall",
+     "search": "Chunichi"
+    },
+    {
+     "name": "Loisir Hotel Toyohashi Holiday Hall",
+     "search": "Toyohashi"
+    },
+    {
+     "name": "Toyota Gosei Memorial Gymnasium",
+     "search": "Toyota Gosei"
+    }
+   ]
+  },
+  {
+   "name": "Fukuoka",
+   "search": "Fukuoka",
+   "venues": []
+  },
+  {
+   "name": "Ibaraki",
+   "search": "Ibaraki",
+   "venues": [
+    {
+     "name": "Mito Lily Arena",
+     "search": "Lily Arena"
+    }
+   ]
+  },
+  {
+   "name": "Kanagawa",
+   "search": "Kanagawa",
+   "venues": [
+    {
+     "name": "Yokohama Arena",
+     "search": "Yokohama Arena"
+    }
+   ]
+  },
+  {
+   "name": "Kumamoto",
+   "search": "Kumamoto",
+   "venues": []
+  },
+  {
+   "name": "Nagano",
+   "search": "Nagano",
+   "venues": [
+    {
+     "name": "Ueda Sogo Taiikukan",
+     "search": "Ueda"
+    }
+   ]
+  },
+  {
+   "name": "Osaka",
+   "search": "Osaka",
+   "venues": [
+    {
+     "name": "Edion Arena Osaka",
+     "search": "Edion"
+    },
+    {
+     "name": "Osaka-jo Hall",
+     "search": "Osaka-jo"
+    }
+   ]
+  },
+  {
+   "name": "Tochigi",
+   "search": "Tochigi",
+   "venues": [
+    {
+     "name": "Light Cube Utsunomiya",
+     "search": "Light Cube"
+    }
+   ]
+  },
+  {
+   "name": "Tokyo",
+   "search": "Tokyo",
+   "venues": [
+    {
+     "name": "Korakuen Hall",
+     "search": "Korakuen"
+    },
+    {
+     "name": "Ota City General Gymnasium",
+     "search": "Ota City"
+    },
+    {
+     "name": "Takadanobaba Belle Salle",
+     "search": "Takadanobaba"
+    }
+   ]
+  },
+  {
+   "name": "Yamagata",
+   "search": "Yamagata",
+   "venues": [
+    {
+     "name": "Sagae City Gymnasium",
+     "search": "Sagae"
+    }
+   ]
+  },
+  {
+   "name": "Yamanashi",
+   "search": "Yamanashi",
+   "venues": [
+    {
+     "name": "Aimesse Yamanashi",
+     "search": "Aimesse"
+    }
+   ]
+  }
+ ],
+ "shows": [
+  {
+   "name": "5★STAR GP",
+   "search": "GP"
+  },
+  {
+   "name": "Cinderella Tournament",
+   "search": "Cinderella"
+  },
+  {
+   "name": "Dream Queendom",
+   "search": "Queendom"
+  },
+  {
+   "name": "Fight in the Top",
+   "search": "Fight in the Top"
+  },
+  {
+   "name": "Golden Week Fight Tour",
+   "search": "Golden Week"
+  },
+  {
+   "name": "Mid-Summer Champions",
+   "search": "Mid-Summer"
+  },
+  {
+   "name": "NEW BLOOD",
+   "search": "NEW BLOOD"
+  },
+  {
+   "name": "Path of Thunder",
+   "search": "Path of Thunder"
+  },
+  {
+   "name": "Queens Dynasty",
+   "search": "DYNASTY"
+  },
+  {
+   "name": "Stardom Nighter",
+   "search": "NIGHTER"
+  },
+  {
+   "name": "Triangle Derby",
+   "search": "Triangle"
+  },
+  {
+   "name": "Year-End Climax",
+   "search": "Climax"
+  }
+ ]
 }

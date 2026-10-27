@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.109
+- Tournament Archives bar: the page's sort row is now a Sort drop-down (Newest, Oldest, Most played, Most favorited) like the wrestler filter bar, and the old row is hidden.
+- City and Venue are merged into one Location drop-down shelf: prefectures as gold headings with their venues underneath, in columns. Picking a prefecture searches the prefecture name; picking a venue searches the venue.
+- Show: 5★STAR GP now searches "GP" (the old "STAR GP" matched poorly). Added NEW BLOOD and Queens Dynasty; added Toyohashi and Toyota Gosei venues under Aichi.
+
 ## 1.3.108
 - Tournament Archives gets a filter bar: City, Venue, Show and Year. Each is a fixed list (kept in assets/event_filters.json, edit freely: the name you see and the word searched for), so opening one loads nothing; picking one adds the word to the site's keyword search and opens the results (one request), with a "Showing" row of removable chips and "Clear all". Clearing everything returns to the plain archive page.
 - Year on its own searches for the year, which also finds match clips from that year, not only events; picking a city, venue or show with it narrows it to events.
