@@ -4971,6 +4971,11 @@ class MainActivity : Activity() {
     ['fc', 'd', 'Most favorited']
   ];
 
+  function wrestlerName(search) {
+    var low = String(search || '').toLowerCase(), out = '';
+    facs.forEach(function(f) { (f.members || []).forEach(function(m) { if (!out && String(m.search).toLowerCase() === low) out = m.name; }); });
+    return out;
+  }
   function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
   function buildUrl(n) {
     var words = [n.base];
@@ -5016,6 +5021,7 @@ class MainActivity : Activity() {
     '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0 8px;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-fbc .tv-fbl{font-size:17px;color:#9aa6b4;}',
     '#tv-fbc .tv-fbchip{box-sizing:border-box;padding:7px 14px;border-radius:20px;background:#172029;border:2px solid #3b4656;color:#ffffff;font-size:17px;font-weight:700;white-space:nowrap;outline:none !important;cursor:pointer;}',
+    '#tv-fbc .tv-fbchip.tv-base{background:#FFB347;border-color:#FFB347;color:#1A1A1A;cursor:default;}',
     '#tv-fbc .tv-fbchip.tv-clr{background:transparent;border-color:transparent;color:#F4C242;}',
     '#tv-fbc .tv-fbchip:focus{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}'
   ].join('\n');
@@ -5025,6 +5031,12 @@ class MainActivity : Activity() {
 
   function labelFor(kind) {
     var cur, nm;
+    if (kind === 'wr') {
+      var wn = S.base ? wrestlerName(S.base) : '';
+      if (wn) return { text: T('Wrestler', '選手') + ': ' + wn, on: true };
+      if (S.base) return { text: T('Search', '検索') + ': ' + S.base, on: true };
+      return { text: T('Wrestler', '選手'), on: false };
+    }
     if (kind === 'sort') {
       nm = T('Sort', '並び替え');
       for (var i = 0; i < SORTS.length; i++) if (SORTS[i][0] === S.s && (SORTS[i][0] === '' || SORTS[i][1] === (S.o || 'd'))) { cur = SORTS[i]; break; }
@@ -5043,7 +5055,9 @@ class MainActivity : Activity() {
     if (!anchor || !anchor.parentNode) return false;
     bar = document.createElement('div');
     bar.id = 'tv-fb';
-    var kinds = ['sort', 'mt', 'ch'];
+    var kinds = [];
+    if (facs.length) kinds.push('wr');
+    kinds.push('sort', 'mt', 'ch');
     if (facs.length) kinds.push('co');
     kinds.push('yr');
     btns = [];
@@ -5070,13 +5084,20 @@ class MainActivity : Activity() {
     if (S.co) defs.push([T('With ', '対戦: ') + S.co, { co: '' }]);
     var c = find(YR, S.yr); if (c) defs.push([c[1], { yr: '' }]);
     chips = [];
-    if (!defs.length) return;
+    var baseName = S.base ? (wrestlerName(S.base) || S.base) : '';
+    if (!defs.length && !baseName) return;
     chipBar = document.createElement('div');
     chipBar.id = 'tv-fbc';
     var l = document.createElement('span');
     l.className = 'tv-fbl';
     l.textContent = T('Showing', '絞り込み');
     chipBar.appendChild(l);
+    if (baseName) {
+      var bc = document.createElement('div');
+      bc.className = 'tv-fbchip tv-base';
+      bc.textContent = baseName;
+      chipBar.appendChild(bc);
+    }
     function chip(text, patch, clr) {
       var d = document.createElement('div');
       d.className = 'tv-fbchip' + (clr ? ' tv-clr' : '');
@@ -5089,7 +5110,7 @@ class MainActivity : Activity() {
       chipBar.appendChild(d);
     }
     defs.forEach(function(x) { chip(x[0] + ' \u00D7', x[1], false); });
-    chip(T('Clear all', 'すべて解除'), { mt: '', ch: '', co: '', yr: '' }, true);
+    if (defs.length) chip(T('Clear all', 'すべて解除'), { mt: '', ch: '', co: '', yr: '' }, true);
     bar.parentNode.insertBefore(chipBar, bar.nextSibling);
   }
   function refreshLabels() {
@@ -5150,9 +5171,12 @@ class MainActivity : Activity() {
     else if (k === 'yr') {
       panel.style.columnCount = 2;
       list(YR, S.yr, 'yr');
-    } else if (k === 'co') {
+    } else if (k === 'co' || k === 'wr') {
       panel.className = 'tv-co';
-      var top = item(T('All competitors', 'すべての選手'), !S.co, function() { go({ co: '' }); });
+      var isWr = k === 'wr';
+      var top = isWr
+        ? item(T('Any wrestler', 'すべての選手'), !S.base, function() { go({ base: '' }); })
+        : item(T('All competitors', 'すべての選手'), !S.co, function() { go({ co: '' }); });
       panel.appendChild(top);
       first = top;
       var cols = document.createElement('div');
@@ -5165,9 +5189,13 @@ class MainActivity : Activity() {
         h.textContent = String(f.name || '').toUpperCase();
         col.appendChild(h);
         (f.members || []).forEach(function(m) {
-          var it = item(m.name, S.co === m.search, function() { go({ co: m.search }); });
+          var curM = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
+          var it = item(m.name, curM, function() {
+            if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
+            else go({ co: m.search });
+          });
           col.appendChild(it);
-          if (S.co === m.search) first = it;
+          if (curM) first = it;
         });
         cols.appendChild(col);
       });
@@ -5176,7 +5204,7 @@ class MainActivity : Activity() {
     document.body.appendChild(panel);
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
-    if (k === 'co') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    if (k === 'co' || k === 'wr') { panel.style.left = '30px'; panel.style.right = '30px'; }
     else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';
     btn.classList.add('tv-open');

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.107
+- The first pill in the filter bar is now the page's main subject: "Wrestler: Syuri". It opens the faction shelf; picking another wrestler switches the whole page to them and keeps any match type, championship, competitor and year already set. "Any wrestler" clears the subject. On a keyword search that is not a known wrestler it reads "Search: ..." and works the same way.
+- The "Showing" row starts with the subject as a highlighted chip (no x on it), followed by the removable filter chips.
+
 ## 1.3.106
 - Filter bar: the sort now says "Newest" (the site's own order) instead of "Default", and the Default row is gone. Newest no longer adds any sort setting to the address, so clearing every filter gives the plain search page.
 - A "Showing" row of chips appears under the drop-downs for each filter in use (press OK on a chip to remove it), with "Clear all" at the end. Down from the bar goes to the chips, then the videos; Up from the first row of videos goes back to the chips.
