@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.93
+- Skip size: the -/+ buttons (in full screen and under the picture) now skip 30 seconds by default. Press Up or Down while one of them is selected to choose 10s, 30s, 1m, 5m, 10m or 30m (a small list shows the choice and both buttons change their label); OK then skips by that amount. Nothing needs to be held down.
+
 ## 1.3.92
 - Full screen: the button bar is now the same compact one-row design as the bar under the picture (time, slim progress bar, smaller buttons), so it covers less of the picture.
 - The bar under the picture no longer shows the captions button; captions (EN / 日本語) are only offered in full screen, where they are drawn.

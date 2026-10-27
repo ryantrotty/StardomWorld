@@ -2241,6 +2241,16 @@ class MainActivity : Activity() {
             return o.toString()
         }
 
+        // Up / Down on the -/+ buttons: change the skip size, answer with the sizes and the chosen one.
+        @android.webkit.JavascriptInterface
+        fun skipStep(dir: Int): String {
+            this@MainActivity.skipStep(dir)
+            return this@MainActivity.skipInfoJson()
+        }
+
+        @android.webkit.JavascriptInterface
+        fun skipInfo(): String = this@MainActivity.skipInfoJson()
+
         @android.webkit.JavascriptInterface
         fun barAction(id: String) {
             handler.post { this@MainActivity.barAction(id) }
@@ -3757,6 +3767,9 @@ class MainActivity : Activity() {
             '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
             '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
             '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}' +
+            '#tv-pskip{position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc;}' +
+            '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center;}' +
+            '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + ';}' +
             '.tv-nb, .tv-nb:focus{border:0 !important;box-shadow:none !important;outline:0 !important;}';
           (document.head || document.documentElement).appendChild(st);
 
@@ -3837,6 +3850,26 @@ class MainActivity : Activity() {
             }
           }
 
+          var skipBox = null, skipTimer = 0;
+          function showSkip(info, anchor) {
+            if (!skipBox) { skipBox = document.createElement('div'); skipBox.id = 'tv-pskip'; document.body.appendChild(skipBox); }
+            skipBox.innerHTML = '';
+            // Largest at the top, so Up = bigger and Down = smaller, as on the remote.
+            for (var i = info.sizes.length - 1; i >= 0; i--) {
+              var d = document.createElement('div');
+              d.textContent = info.sizes[i];
+              if (i === info.idx) d.className = 'on';
+              skipBox.appendChild(d);
+            }
+            skipBox.style.display = 'flex';
+            var r = anchor.getBoundingClientRect();
+            var h = skipBox.offsetHeight, w = skipBox.offsetWidth;
+            skipBox.style.left = Math.max(8, Math.round(r.left + r.width / 2 - w / 2)) + 'px';
+            skipBox.style.top = Math.max(8, Math.round(r.top - h - 10)) + 'px';
+            clearTimeout(skipTimer);
+            skipTimer = setTimeout(function() { if (skipBox) skipBox.style.display = 'none'; }, 2500);
+          }
+
           function act(id) {
             try { AndroidHost.barAction(id); } catch (e) {}
             setTimeout(refresh, 300);
@@ -3861,6 +3894,16 @@ class MainActivity : Activity() {
             if (!ae || !ae.classList || !ae.classList.contains('tv-pbtn')) return;
             var k = e.keyCode;
             var i = ids.indexOf(ae.getAttribute('data-id'));
+            var did = ae.getAttribute('data-id');
+            if ((k === 38 || k === 40) && (did === 'back' || did === 'fwd') && AndroidHost.skipStep) {
+              // Up / Down on -/+: choose the skip size (Up = bigger, Down = smaller); OK skips by it.
+              e.preventDefault(); e.stopPropagation();
+              var info = null;
+              try { info = JSON.parse(AndroidHost.skipStep(k === 38 ? 1 : -1)); } catch (x) {}
+              refresh();
+              if (info) showSkip(info, ae);
+              return;
+            }
             if (k === 39) {                       // Right: next button, stops at the last
               e.preventDefault(); e.stopPropagation();
               if (i < ids.length - 1) btns[ids[i + 1]].focus();
@@ -4993,6 +5036,14 @@ class MainActivity : Activity() {
         val pad = (28 * density).toInt()
         o.setPadding(pad, (14 * density).toInt(), pad, (14 * density).toInt())
 
+        val hint = android.widget.TextView(this)
+        hint.setTextColor(Color.WHITE)
+        hint.textSize = 15f
+        hint.visibility = View.GONE
+        hint.setPadding(0, 0, 0, (10 * density).toInt())
+        o.addView(hint)
+        fsSkipHint = hint
+
         // One compact row, like the bar under the picture on the video page: time, progress, buttons.
         val main = android.widget.LinearLayout(this)
         main.orientation = android.widget.LinearLayout.HORIZONTAL
@@ -5086,16 +5137,60 @@ class MainActivity : Activity() {
 
     private fun hideFsOverlay() {
         fsControlsMode = false
+        fsSkipHint?.visibility = View.GONE
         fsDebugView?.visibility = View.GONE
         handler.removeCallbacks(fsStatusRunnable)
         fsOverlay?.visibility = View.GONE
     }
 
+    // Skip size of the -/+ buttons (shared by the bar under the picture and the full screen bar).
+    // Up / Down while one of them is focused steps through the sizes; OK skips by the chosen size.
+    private val SKIP_SIZES = intArrayOf(10, 30, 60, 300, 600, 1800)
+    @Volatile private var skipIdx = 1   // starts at 30 s
+
+    private fun skipText(sec: Int): String =
+        if (sec < 60) tr("${sec}s", "${sec}秒") else tr("${sec / 60}m", "${sec / 60}分")
+
+    private fun skipInfoJson(): String {
+        val o = org.json.JSONObject()
+        o.put("idx", skipIdx)
+        o.put("sizes", org.json.JSONArray(SKIP_SIZES.map { skipText(it) }))
+        return o.toString()
+    }
+
+    // dir > 0: next larger size, dir < 0: next smaller. Stops at the ends.
+    private fun skipStep(dir: Int) {
+        skipIdx = (skipIdx + if (dir > 0) 1 else -1).coerceIn(0, SKIP_SIZES.size - 1)
+    }
+
+    private var fsSkipHint: android.widget.TextView? = null
+    private val fsSkipHintHide = Runnable { fsSkipHint?.visibility = View.GONE }
+
+    private fun showFsSkipHint() {
+        val tv = fsSkipHint ?: return
+        val sb = android.text.SpannableStringBuilder()
+        sb.append(tr("Skip size   ", "スキップ幅   "))
+        SKIP_SIZES.forEachIndexed { i, sec ->
+            val t = skipText(sec)
+            val start = sb.length
+            sb.append(if (i == skipIdx) "[ $t ]" else " $t ")
+            if (i == skipIdx) {
+                sb.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor(BAR_ACCENT)), start, sb.length, 0)
+                sb.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), start, sb.length, 0)
+            }
+            sb.append("  ")
+        }
+        tv.text = sb
+        tv.visibility = View.VISIBLE
+        handler.removeCallbacks(fsSkipHintHide)
+        handler.postDelayed(fsSkipHintHide, 2500)
+    }
+
     // Label of one control-bar button, from the player's latest status (null = not known yet).
     private fun barLabel(id: String, j: org.json.JSONObject?): String = when (id) {
         "play" -> if (j?.optBoolean("paused") == true) tr("Play", "再生") else tr("Pause", "一時停止")
-        "back" -> tr("-10s", "-10秒")
-        "fwd" -> tr("+10s", "+10秒")
+        "back" -> "-" + skipText(SKIP_SIZES[skipIdx])
+        "fwd" -> "+" + skipText(SKIP_SIZES[skipIdx])
         "mute" -> if (j != null && j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
         "cc" -> ccLabel()
         "quality" -> {
@@ -5112,8 +5207,8 @@ class MainActivity : Activity() {
     private fun barAction(id: String) {
         when (id) {
             "play" -> playerCommand("toggle", 0)
-            "back" -> playerCommand("seek", -10)
-            "fwd" -> playerCommand("seek", 10)
+            "back" -> playerCommand("seek", -SKIP_SIZES[skipIdx])
+            "fwd" -> playerCommand("seek", SKIP_SIZES[skipIdx])
             "mute" -> playerCommand("mute", 0)
             "cc" -> cycleCc()
             "quality" -> playerCommand("quality", 0)
@@ -5918,11 +6013,20 @@ class MainActivity : Activity() {
             if (fsControlsMode) {
                 // The button bar is showing: the remote moves between its buttons and OK presses one.
                 when (event.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_UP -> {
-                        if (event.action == KeyEvent.ACTION_DOWN) hideFsOverlay()
+                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val onSkip = fsBtns["back"]?.isFocused == true || fsBtns["fwd"]?.isFocused == true
+                        if (event.action == KeyEvent.ACTION_DOWN) {
+                            if (onSkip) {
+                                skipStep(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) 1 else -1)
+                                for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") btn.text = barLabel(id, null)
+                                showFsSkipHint()
+                                fullScreenInteraction()
+                            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                                hideFsOverlay()
+                            }
+                        }
                         return true
                     }
-                    KeyEvent.KEYCODE_DPAD_DOWN -> return true
                     KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
                         if (event.action == KeyEvent.ACTION_DOWN) fullScreenInteraction()
