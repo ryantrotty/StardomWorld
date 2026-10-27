@@ -2229,6 +2229,10 @@ class MainActivity : Activity() {
 
     inner class WebAppInterface {
         // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
+        // The data probe menu entry is for builds that have the private branding folder only.
+        @android.webkit.JavascriptInterface
+        fun probeEnabled(): Boolean = BuildConfig.ENABLE_CC_TRANSLATE
+
         @android.webkit.JavascriptInterface
         fun factionsJson(): String = try {
             this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
@@ -3298,7 +3302,9 @@ class MainActivity : Activity() {
               h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
             }
             h += '</div>';
-            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div></div>';
+            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>';
+            try { if (window.AndroidHost && AndroidHost.probeEnabled && AndroidHost.probeEnabled()) h += '<div class="tv-sm-item" tabindex="0" role="button" data-probe="1" style="width:auto;flex:0 0 auto;min-height:48px;font-size:18px;padding:0 16px;">Probe</div>'; } catch (e) {}
+            h += '</div>';
             panel.innerHTML = h;
           }
 
@@ -3425,6 +3431,11 @@ class MainActivity : Activity() {
               return;
             }
             if (el.getAttribute('data-go')) { go(el.getAttribute('data-go')); return; }
+            if (el.getAttribute('data-probe')) {
+              closeMenu();
+              setTimeout(function() { if (window.__tvProbe) window.__tvProbe(); }, 300);
+              return;
+            }
 
             if (el.getAttribute('data-lang')) {
               var next = isJa() ? 'en' : 'ja';
@@ -4543,6 +4554,181 @@ class MainActivity : Activity() {
 })();
     """.trimIndent()
 
+    // Data probe (your own builds only): a menu entry that lists, on screen and without fading, everything the
+    // current page and the site's data address say about the video or list, to see what could be filtered on.
+    private val probeJs = """
+(function(){
+  if (window.__tvProbeDefined) return;
+  window.__tvProbeDefined = true;
+
+  var COLS = 138, LINES = 36;
+
+  function clip(s, n) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n) + '...(' + s.length + ')' : s; }
+
+  // key.sub.sub: value lines for any JSON value
+  function flat(v, prefix, depth, out) {
+    if (v === null || v === undefined) { out.push(prefix + ': null'); return; }
+    if (typeof v !== 'object') { out.push(prefix + ': ' + clip(v, 230)); return; }
+    if (depth > 4) { out.push(prefix + ': ' + clip(JSON.stringify(v), 230)); return; }
+    if (Array.isArray(v)) {
+      if (!v.length) { out.push(prefix + ': []'); return; }
+      out.push(prefix + ': [' + v.length + ' items]');
+      v.slice(0, 6).forEach(function(x, i) { flat(x, prefix + '[' + i + ']', depth + 1, out); });
+      return;
+    }
+    Object.keys(v).forEach(function(k) { flat(v[k], prefix ? prefix + '.' + k : k, depth + 1, out); });
+  }
+
+  function getJson(url) {
+    return fetch(url, { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+      .then(function(res) {
+        return res.text().then(function(t) {
+          var j = null; try { j = JSON.parse(t); } catch (e) {}
+          return { status: res.status, json: j, text: t };
+        });
+      }).catch(function(e) { return { status: 0, json: null, text: String(e) }; });
+  }
+
+  function gather(done) {
+    var L = [];
+    function add(s) { L.push(s); }
+    function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
+    add('URL ' + location.href);
+    add('TITLE ' + clip(document.title, 200));
+
+    sec('META TAGS');
+    Array.prototype.forEach.call(document.querySelectorAll('meta[name], meta[property]'), function(m) {
+      var n = m.getAttribute('name') || m.getAttribute('property');
+      if (/viewport|csrf|theme|format-detection/i.test(n)) return;
+      add(n + ' = ' + clip(m.getAttribute('content'), 300));
+    });
+
+    sec('JSON-LD');
+    var ld = document.querySelectorAll('script[type="application/ld+json"]');
+    if (!ld.length) add('(none)');
+    Array.prototype.forEach.call(ld, function(s) { add(clip(s.textContent, 1500)); });
+
+    sec('HEADINGS');
+    Array.prototype.slice.call(document.querySelectorAll('h1, h2, h3'), 0, 14).forEach(function(h) {
+      if (document.getElementById('tv-probe') && document.getElementById('tv-probe').contains(h)) return;
+      add(h.tagName + ' ' + clip(h.textContent, 160));
+    });
+
+    sec('LINKS THAT LOOK LIKE TAGS / CATEGORIES / SEARCHES');
+    var seen = {}, n = 0;
+    Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function(a) {
+      var h = a.getAttribute('href') || '';
+      if (!/category|tag|keyword|search|wrestler|performer|talent|series|event|genre|format|type/i.test(h)) return;
+      var key = h + '|' + (a.textContent || '').trim();
+      if (seen[key] || n > 70) return;
+      seen[key] = 1; n++;
+      add(clip(a.textContent, 60) + '  ->  ' + clip(h, 120));
+    });
+    if (!n) add('(none)');
+
+    sec('DATA ATTRIBUTES (names only)');
+    var attrs = {};
+    Array.prototype.forEach.call(document.querySelectorAll('[class*="content"], [class*="detail"], article, main'), function(el) {
+      Array.prototype.forEach.call(el.attributes, function(a) { if (a.name.indexOf('data-') === 0 && !/tv-|data-tv/.test(a.name)) attrs[a.name] = clip(a.value, 60); });
+    });
+    var ak = Object.keys(attrs);
+    if (!ak.length) add('(none)'); else ak.slice(0, 30).forEach(function(k) { add(k + ' = ' + attrs[k]); });
+
+    var m = /^\/contents\/([0-9]+)/.exec(location.pathname);
+    var pending = 2;
+    function finish() { if (--pending === 0) done(L); }
+
+    if (m) {
+      sec('PAGE TEXT (description area)');
+      var box = document.querySelector('.content-description, .description, .box-detail, [class*="detail"], main') || document.body;
+      add(clip(box.innerText || box.textContent, 1800));
+      getJson('/user_api/contents/' + m[1]).then(function(r) {
+        sec('API  /user_api/contents/' + m[1] + '   status ' + r.status);
+        if (r.json) { var o = []; flat(r.json, '', 0, o); o.forEach(add); } else add('not JSON: ' + clip(r.text, 300));
+        finish();
+      });
+      finish();
+    } else {
+      sec('FIRST TWO LISTING CARDS (HTML)');
+      var cardsEl = document.querySelectorAll('.content-list-item, article');
+      if (!cardsEl.length) add('(no cards found)');
+      Array.prototype.slice.call(cardsEl, 0, 2).forEach(function(c) { add(clip(c.outerHTML, 1100)); add(''); });
+      var kw = '';
+      var km = /[?&]q(?:%5B|\[)keyword(?:%5D|\])=([^&]*)/.exec(location.search);
+      if (km) kw = km[1];
+      var url = '/user_api/contents?size=3&sort=pc&order=d' + (kw ? '&q%5Bkeyword%5D=' + kw : '');
+      getJson(url).then(function(r) {
+        sec('API  ' + url + '   status ' + r.status);
+        if (r.json) {
+          var list = Array.isArray(r.json) ? r.json : (r.json.contents || r.json.items || [r.json]);
+          add('top-level: ' + (Array.isArray(r.json) ? 'array of ' + r.json.length : Object.keys(r.json).join(', ')));
+          list.slice(0, 3).forEach(function(it, i) { var o = []; flat(it, 'item' + i, 0, o); o.forEach(add); });
+        } else add('not JSON: ' + clip(r.text, 300));
+        finish();
+      });
+      finish();
+    }
+  }
+
+  function wrap(lines) {
+    var out = [];
+    lines.forEach(function(l) {
+      l = String(l);
+      if (!l.length) { out.push(''); return; }
+      for (var i = 0; i < l.length; i += COLS) out.push(l.slice(i, i + COLS));
+    });
+    return out;
+  }
+
+  var root = null, pages = [], pi = 0, prevClose = null;
+  function show() {
+    if (!root) return;
+    var head = 'DATA PROBE   page ' + (pi + 1) + ' / ' + pages.length + '     Left / Right: pages     Back: close';
+    root.querySelector('.tv-pr-head').textContent = head;
+    root.querySelector('.tv-pr-body').textContent = pages[pi].join('\n');
+  }
+  function closeProbe() {
+    if (root && root.parentNode) root.parentNode.removeChild(root);
+    root = null;
+    window.removeEventListener('keydown', onKey, true);
+    if (prevClose) window.__tvMenuClose = prevClose;
+    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(false); } catch (e) {}
+  }
+  function onKey(e) {
+    if (!root) return;
+    var k = e.keyCode;
+    if (k === 37 || k === 38) { e.preventDefault(); e.stopImmediatePropagation(); if (pi > 0) { pi--; show(); } }
+    else if (k === 39 || k === 40) { e.preventDefault(); e.stopImmediatePropagation(); if (pi < pages.length - 1) { pi++; show(); } }
+    else if (k === 27) { e.preventDefault(); e.stopImmediatePropagation(); closeProbe(); }
+  }
+
+  window.__tvProbe = function() {
+    if (root) return;
+    root = document.createElement('div');
+    root.id = 'tv-probe';
+    root.tabIndex = -1;
+    root.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:99500;background:#000;color:#e6edf3;font:15px/18px monospace;padding:8px 12px;box-sizing:border-box;outline:none;overflow:hidden;';
+    root.innerHTML = '<div class="tv-pr-head" style="color:#F4C242;font-weight:bold;margin-bottom:4px;"></div><pre class="tv-pr-body" style="margin:0;white-space:pre;font:15px/18px monospace;"></pre>';
+    document.body.appendChild(root);
+    try { root.focus(); } catch (e) {}
+    root.querySelector('.tv-pr-body').textContent = 'Reading this page...';
+    window.addEventListener('keydown', onKey, true);
+    // Back closes the probe (the app calls __tvMenuClose when its "menu open" flag is set)
+    prevClose = window.__tvMenuClose;
+    window.__tvMenuClose = function() { closeProbe(); return true; };
+    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(true); } catch (e) {}
+    gather(function(lines) {
+      var w = wrap(lines);
+      pages = [];
+      for (var i = 0; i < w.length; i += LINES) pages.push(w.slice(i, i + LINES));
+      if (!pages.length) pages = [['(nothing found)']];
+      pi = 0;
+      show();
+    });
+  };
+})();
+    """.trimIndent()
+
     private val listNavJs = """
         (function(){
           if (window.__tvListNav) return;
@@ -5457,6 +5643,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(recentPageJs, null)
+        if (BuildConfig.ENABLE_CC_TRANSLATE) view.evaluateJavascript(probeJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
