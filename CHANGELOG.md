@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.97
+- Faction pages now open with no wrestler selected: the right side shows the faction name and a prompt to choose a wrestler. Videos are requested only when you pick a member. The results of the page the app just opened are kept quietly, so the first member in the list loads instantly if chosen.
+- Faction logos now come from the private branding folder (res/drawable-nodpi/faction_logo_<name>.png) instead of the wrestling site, so nothing is fetched from their site. Builds without those files show text.
+
 ## 1.3.96
 - Menu: Factions now sits above Current Wrestlers.
 - Faction pages: faction names no longer break in the middle of a word, the member count is gone, and in builds that show logos the logo is centered at the top of the left side with the faction name below it (laid out the same as in public builds).

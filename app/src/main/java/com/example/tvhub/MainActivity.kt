@@ -2234,8 +2234,19 @@ class MainActivity : Activity() {
             this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
 
+        // A faction's logo from the private branding folder (res/drawable-nodpi/faction_logo_<id>.png, with
+        // "-" written as "_"), as a data address. Empty when the build doesn't have it: the page shows text.
         @android.webkit.JavascriptInterface
-        fun factionLogos(): Boolean = BuildConfig.FACTION_LOGOS
+        fun factionLogo(id: String): String {
+            return try {
+                val resId = this@MainActivity.resources.getIdentifier(
+                    "faction_logo_" + id.replace('-', '_'), "drawable", this@MainActivity.packageName
+                )
+                if (resId == 0) return ""
+                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
+                "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
 
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
@@ -3985,8 +3996,8 @@ class MainActivity : Activity() {
   if (!fac || !fac.members || !fac.members.length) return;
   window.__tvFaction = true;
   window.__tvInfiniteScroll = true;   // the site's own result list is not used; this page loads its own pages
-  var useLogo = false;
-  try { useLogo = !!AndroidHost.factionLogos(); } catch (e) {}
+  var logoSrc = '';
+  try { logoSrc = AndroidHost.factionLogo(fac.id) || ''; } catch (e) {}
 
   var GAP_MS = 1200;                 // pause between two requests to the site
   var CACHE_KEY = 'tvFacCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1';
@@ -4033,7 +4044,14 @@ class MainActivity : Activity() {
     '#tv-fac .tv-fc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
     '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
     '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
-    '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}'
+    '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}',
+    '#tv-fac-empty{flex:1 1 auto;display:none;align-items:center;justify-content:center;}',
+    '#tv-fac.tv-empty #tv-fac-empty{display:flex;}',
+    '#tv-fac.tv-empty #tv-fac-title, #tv-fac.tv-empty #tv-fac-scroll{display:none;}',
+    '#tv-fac .tv-em{max-width:560px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 30px;}',
+    '#tv-fac .tv-em-name{font-size:44px;font-weight:700;line-height:1.15;}',
+    '#tv-fac .tv-em-text{font-size:24px;color:#c9d2dc;line-height:1.4;}',
+    '#tv-fac .tv-em-hint{padding:10px 22px;border-radius:28px;background:#172029;border:2px solid #2a323c;font-size:18px;font-weight:700;color:#F4C242;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);
 
@@ -4041,11 +4059,12 @@ class MainActivity : Activity() {
   var members = fac.members;
   var S = [];                       // per member: { items, seen, page, more, loaded, err }
   members.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
-  var sel = 0;
+  var sel = -1;                     // no member is opened until one is chosen
+  var seedIdx = 0;                  // the member whose results the opened page itself holds
   var kw = /[?&]q%5Bkeyword%5D=([^&]*)/i.exec(location.search) || /[?&]q\[keyword\]=([^&]*)/i.exec(location.search);
   if (kw) {
     var want = ''; try { want = decodeURIComponent(kw[1].replace(/\+/g, ' ')); } catch (e) {}
-    members.forEach(function(m, i) { if (m.search === want) sel = i; });
+    members.forEach(function(m, i) { if (m.search === want) seedIdx = i; });
   }
 
   function readCache() { try { return JSON.parse(lsGet(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -4159,7 +4178,7 @@ class MainActivity : Activity() {
   root.id = 'tv-fac';
   var head = '';
   // Builds that may show logos: the logo, centered, above the name; the name is laid out the same either way.
-  if (useLogo && fac.logo) head += '<div class="tv-fh-logowrap"><img class="tv-fh-logo" src="' + esc(fac.logo) + '" alt=""></div>';
+  if (logoSrc) head += '<div class="tv-fh-logowrap"><img class="tv-fh-logo" src="' + esc(logoSrc) + '" alt=""></div>';
   head += '<div class="tv-fh"><span class="tv-fh-bar"></span><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div></div>';
   var mh = '';
   members.forEach(function(m, i) {
@@ -4168,7 +4187,11 @@ class MainActivity : Activity() {
   root.innerHTML =
     '<div id="tv-fac-nav">' + head + '<div id="tv-fac-members">' + mh + '</div></div>' +
     '<div id="tv-fac-main"><div id="tv-fac-title"><span class="tv-ft-bar"></span><span id="tv-fac-name" class="notranslate" translate="no"></span></div>' +
-    '<div id="tv-fac-scroll"><div id="tv-fac-grid"></div><div id="tv-fac-status"></div></div></div>';
+    '<div id="tv-fac-scroll"><div id="tv-fac-grid"></div><div id="tv-fac-status"></div></div>' +
+    '<div id="tv-fac-empty"><div class="tv-em"><div class="tv-em-name notranslate" translate="no">' + esc(fac.name) + '</div>' +
+    '<div class="tv-em-text">' + esc(T('Choose a wrestler on the left to see their videos.', '\u5de6\u306e\u9078\u624b\u3092\u9078\u3093\u3067\u52d5\u753b\u3092\u898b\u307e\u3057\u3087\u3046\u3002')) + '</div>' +
+    '<div class="tv-em-hint">\u2190 ' + esc(T('Up / Down to browse, OK or Right to open', '\u4e0a\u4e0b\u3067\u9078\u629e\u3001OK\u304b\u53f3\u3067\u958b\u304f')) + '</div></div></div></div>';
+  root.classList.add('tv-empty');
   (document.body || document.documentElement).appendChild(root);
   document.documentElement.style.overflow = 'hidden';
   var logoImg = root.querySelector('.tv-fh-logo');
@@ -4208,14 +4231,15 @@ class MainActivity : Activity() {
   }
   function markSel() {
     fmEls.forEach(function(el, i) { el.classList.toggle('tv-sel', i === sel); });
-    nameEl.textContent = members[sel].name;
+    root.classList.toggle('tv-empty', sel < 0);
+    nameEl.textContent = sel >= 0 ? members[sel].name : '';
   }
   function focusEl(el, mode) {
     if (!el) return;
     try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
     try { el.scrollIntoView({ block: mode || 'nearest' }); } catch (e) {}
   }
-  function focusNav() { focusEl(fmEls[sel] || fmEls[0]); }
+  function focusNav() { focusEl(fmEls[sel >= 0 ? sel : 0]); }
   function inNav(el) { return !!(el && el.classList && el.classList.contains('tv-fm')); }
   function inGrid(el) { return !!(el && el.classList && el.classList.contains('tv-fc')); }
 
@@ -4306,27 +4330,22 @@ class MainActivity : Activity() {
 
   // ------------------------------------------------------------------ start
   markSel();
-  // The page that was just opened is that member's own first page of results: use it instead of asking again.
-  function seedFromPage(cb) {
+  // The page that was just opened holds one member's first page of results: keep it as that member's saved copy
+  // (shown with no request if that member is chosen later). Nothing is drawn or loaded until a member is chosen.
+  (function seedQuietly() {
+    var c0 = readCache()[members[seedIdx].search];
+    if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) return;
     var n = 0;
     (function poll() {
       var items = [];
       try { items = parseCards(document); } catch (e) {}
       n++;
-      if (items.length || n > 8) {
-        if (items.length) {
-          var s = S[sel];
-          items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
-          s.page = 1; s.loaded = true; s.more = items.length >= 12 || hasNext(document);
-          writeCache(members[sel].search, s);
-        }
-        cb();
-      } else setTimeout(poll, 300);
+      if (items.length) {
+        var s = { items: items.slice(0, MAX_SAVED), more: items.length >= 12 || hasNext(document) };
+        writeCache(members[seedIdx].search, s);
+      } else if (n <= 8) setTimeout(poll, 300);
     })();
-  }
-  var c0 = readCache()[members[sel].search];
-  if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) openMember(sel, false);
-  else { status.textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...'); seedFromPage(function() { openMember(sel, false); }); }
+  })();
   var tries = 0;
   var tm = setInterval(function() {
     tries++;
