@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.113
+- Side menu, Championships: the four site pages stay, and the filter bar's other championships are added under them (Artist, Future, Goddess of Stardom, NEW BLOOD Tag Team, Any championship match, Other title matches). These open a keyword search with the filter bar on top.
+
 ## 1.3.112
 - Show list: added All Star Grand Queendom, New Year Dream, Spring Vacation, Supreme Fight, The Conversion and To the World (found with the Big Match probe); Dream Queendom now searches "DREAM QUEENDOM" so it no longer also catches All Star Grand Queendom.
 

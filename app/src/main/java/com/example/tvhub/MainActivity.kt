@@ -3101,7 +3101,13 @@ class MainActivity : Activity() {
             ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
             ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
             ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
-            ['High Speed', '/contents/category/high_speed', 'ハイスピード']
+            ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
+            ['Artist of Stardom', '/contents/search?q%5Bkeyword%5D=Artist%20of%20Stardom&activetab=contents&page=1', 'アーティスト・オブ・スターダム'],
+            ['Future of Stardom', '/contents/search?q%5Bkeyword%5D=Future%20of%20Stardom&activetab=contents&page=1', 'フューチャー・オブ・スターダム'],
+            ['Goddess of Stardom', '/contents/search?q%5Bkeyword%5D=Goddess%20of%20Stardom&activetab=contents&page=1', 'ゴッデス・オブ・スターダム'],
+            ['NEW BLOOD Tag Team', '/contents/search?q%5Bkeyword%5D=NEW%20BLOOD&activetab=contents&page=1', 'NEW BLOOD タッグ'],
+            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1', 'すべての王座戦'],
+            ['Other title matches', '/contents/search?q%5Bkeyword%5D=Title%20Match&activetab=contents&page=1', 'その他のタイトルマッチ']
           ];
           var MINE = [
             ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
