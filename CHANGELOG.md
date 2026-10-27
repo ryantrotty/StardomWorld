@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.108
+- Tournament Archives gets a filter bar: City, Venue, Show and Year. Each is a fixed list (kept in assets/event_filters.json, edit freely: the name you see and the word searched for), so opening one loads nothing; picking one adds the word to the site's keyword search and opens the results (one request), with a "Showing" row of removable chips and "Clear all". Clearing everything returns to the plain archive page.
+- Year on its own searches for the year, which also finds match clips from that year, not only events; picking a city, venue or show with it narrows it to events.
+- Probe: on the Tournament Archives page (or its filtered results) it now runs nine one-off test searches to check how events are titled and what a year search returns.
+
 ## 1.3.107
 - The first pill in the filter bar is now the page's main subject: "Wrestler: Syuri". It opens the faction shelf; picking another wrestler switches the whole page to them and keeps any match type, championship, competitor and year already set. "Any wrestler" clears the subject. On a keyword search that is not a known wrestler it reads "Search: ..." and works the same way.
 - The "Showing" row starts with the subject as a highlighted chip (no x on it), followed by the removable filter chips.
