@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.104
+- Probe, round 3: on a search or category page it lists the page's own search form fields and runs nine one-off test searches, 1.2 seconds apart (year, a third word, venue, search inside a category), to see which filters can be done through the web address alone.
+
 ## 1.3.103
 - Probe, round 2: on a search page it now only runs the follow-up tests (which list-data address filters by keyword, whether match videos carry a description in the list data, and how the search treats two names, "Cage", "Battle Royal", "Singles" and "Title Match") and shows the results compactly.
 

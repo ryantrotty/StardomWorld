@@ -4589,6 +4589,83 @@ class MainActivity : Activity() {
       }).catch(function(e) { return { status: 0, json: null, text: String(e) }; });
   }
 
+  // Round 3, search and category pages: the page's own search form, and a few single test searches
+  // (year, a second word, venue, search inside a category), 1.2 s apart
+  function gatherRound3(done) {
+    var L = [];
+    function add(x) { L.push(x); }
+    function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
+    add('ROUND 3   URL ' + location.href);
+    sec('SEARCH FORMS ON THIS PAGE (field names only)');
+    var forms = document.querySelectorAll('form');
+    var nf = 0;
+    Array.prototype.forEach.call(forms, function(f) {
+      var fields = [];
+      Array.prototype.forEach.call(f.querySelectorAll('input, select, textarea'), function(el) {
+        var nm = el.getAttribute('name');
+        if (!nm || /csrf|_token/i.test(nm)) return;
+        var d = nm + '(' + (el.tagName === 'SELECT' ? 'select' : (el.getAttribute('type') || 'text')) + ')';
+        if (el.tagName === 'SELECT') {
+          var opts = [];
+          Array.prototype.slice.call(el.options, 0, 14).forEach(function(o) { opts.push(clip(o.value, 20) + '=' + clip(o.textContent, 20)); });
+          d += ' [' + opts.join(' | ') + ']';
+        } else if (el.type === 'hidden' || el.type === 'checkbox' || el.type === 'radio') d += '=' + clip(el.value, 30);
+        fields.push(d);
+      });
+      if (!fields.length) return;
+      nf++;
+      add('form action=' + clip(f.getAttribute('action'), 60) + ' method=' + (f.getAttribute('method') || 'get'));
+      add('  ' + fields.join(' , '));
+    });
+    if (!nf) add('(no forms with named fields)');
+    var tasks = [];
+    function t(label, url) {
+      tasks.push(function(next) {
+        setTimeout(function() {
+          fetch(url, { credentials: 'include' })
+            .then(function(res) { return res.text().then(function(x) { return { status: res.status, text: x }; }); })
+            .then(function(r) {
+              sec('TEST ' + label + '   status ' + r.status);
+              add(url);
+              var doc = new DOMParser().parseFromString(r.text, 'text/html');
+              var ids = {}, titles = [];
+              Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item'), function(c) {
+                var a = c.querySelector('a[href*="/contents/"]');
+                var m = a && /contents\/([0-9]+)/.exec(a.getAttribute('href') || '');
+                if (!m || ids[m[1]]) return;
+                ids[m[1]] = 1;
+                var h = c.querySelector('h3, h4');
+                titles.push(clip(h ? h.textContent : c.textContent, 80));
+              });
+              var maxp = 1;
+              Array.prototype.forEach.call(doc.querySelectorAll('a[href*="page="]'), function(a) {
+                var pm = /[?&]page=([0-9]+)/.exec(a.getAttribute('href') || '');
+                if (pm && +pm[1] > maxp) maxp = +pm[1];
+              });
+              add('videos on page 1: ' + titles.length + '   highest page link: ' + maxp);
+              titles.slice(0, 3).forEach(function(x) { add(' - ' + x); });
+              next();
+            }).catch(function(e) { sec('TEST ' + label); add('failed: ' + e); next(); });
+        }, 1200);
+      });
+    }
+    var q = '/contents/search?q%5Bkeyword%5D=';
+    t('Syuri 2024', q + encodeURIComponent('Syuri 2024'));
+    t('Syuri 2024/', q + encodeURIComponent('Syuri 2024/'));
+    t('Syuri Hazuki Tag Team (three words)', q + encodeURIComponent('Syuri Hazuki Tag Team'));
+    t('Championship', q + 'Championship');
+    t('Title', q + 'Title');
+    t('Korakuen', q + 'Korakuen');
+    t('Syuri Korakuen', q + encodeURIComponent('Syuri Korakuen'));
+    t('category 2024 with keyword', '/contents/category/2024?q%5Bkeyword%5D=Syuri');
+    t('search with category=2024', q + 'Syuri&category=2024');
+    var ti = 0;
+    (function run() {
+      if (ti >= tasks.length) { done(L); return; }
+      tasks[ti++](run);
+    })();
+  }
+
   // Round 2, search pages only: which list-API address filters by keyword, do list items carry match
   // descriptions, and how does the page search treat several words
   function gatherSearch(done) {
@@ -4662,7 +4739,7 @@ class MainActivity : Activity() {
   }
 
   function gather(done) {
-    if (location.pathname.indexOf('/contents/search') === 0) { gatherSearch(done); return; }
+    if (/^\/contents\/(search|category)/.test(location.pathname)) { gatherRound3(done); return; }
     var L = [];
     function add(s) { L.push(s); }
     function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
