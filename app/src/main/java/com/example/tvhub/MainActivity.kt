@@ -3246,9 +3246,9 @@ class MainActivity : Activity() {
             h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
             h += group(T('Shows', '番組'), showsList());
             h += group(T('Championships', '王座'), CHAMPS);
+            h += group(T('Years', '年別'), years);
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows);
-            h += group(T('Years', '年別'), years);
             h += group(T('Current Wrestlers', '現役選手'), wrestlers(CURRENT_W));
             h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W));
             if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE);
@@ -4011,12 +4011,13 @@ class MainActivity : Activity() {
   var st = document.createElement('style');
   st.textContent = [
     '#tv-fac{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;font-family:Arial,Helvetica,sans-serif;}',
-    '#tv-fac-nav{flex:0 0 330px;box-sizing:border-box;padding:30px 20px 20px 40px;display:flex;flex-direction:column;min-height:0;border-right:1px solid #222b36;}',
-    '#tv-fac .tv-fh{display:flex;align-items:center;gap:16px;margin-bottom:18px;min-height:56px;}',
-    '#tv-fac .tv-fh-bar{flex:0 0 auto;width:8px;height:44px;background:#F4C242;}',
-    '#tv-fac .tv-fh-logo{flex:0 0 auto;max-width:96px;max-height:80px;object-fit:contain;}',
-    '#tv-fac .tv-fh-name{font-size:28px;font-weight:700;line-height:1.15;}',
-    '#tv-fac .tv-fh-sub{font-size:16px;color:#9aa6b4;margin-top:4px;}',
+    '#tv-fac, #tv-fac *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
+    '#tv-fac-nav{flex:0 0 330px;box-sizing:border-box;padding:30px 20px 20px 30px;display:flex;flex-direction:column;min-height:0;border-right:1px solid #222b36;}',
+    '#tv-fac .tv-fh-logowrap{display:flex;justify-content:center;align-items:center;margin:0 0 16px 0;}',
+    '#tv-fac .tv-fh-logo{max-width:100%;max-height:130px;object-fit:contain;}',
+    '#tv-fac .tv-fh{display:flex;align-items:center;gap:14px;margin:0 0 18px 8px;min-height:48px;}',
+    '#tv-fac .tv-fh-bar{flex:0 0 auto;width:8px;align-self:stretch;min-height:40px;background:#F4C242;}',
+    '#tv-fac .tv-fh-name{min-width:0;font-size:26px;font-weight:700;line-height:1.15;white-space:normal;}',
     '#tv-fac-members{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;padding:2px;}',
     '#tv-fac-members::-webkit-scrollbar{display:none;}',
     '#tv-fac .tv-fm{display:flex;align-items:center;box-sizing:border-box;min-height:50px;margin:3px 0;padding:0 14px;font-size:22px;font-weight:600;color:#c9d2dc;border:3px solid transparent;border-left:6px solid transparent;border-radius:8px;outline:none !important;cursor:pointer;}',
@@ -4156,10 +4157,10 @@ class MainActivity : Activity() {
   // ------------------------------------------------------------------ page
   var root = document.createElement('div');
   root.id = 'tv-fac';
-  var head = '<div class="tv-fh">';
-  if (useLogo && fac.logo) head += '<img class="tv-fh-logo" src="' + esc(fac.logo) + '" alt="">';
-  else head += '<span class="tv-fh-bar"></span>';
-  head += '<div><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div><div class="tv-fh-sub">' + members.length + ' ' + esc(T('members', 'メンバー')) + '</div></div></div>';
+  var head = '';
+  // Builds that may show logos: the logo, centered, above the name; the name is laid out the same either way.
+  if (useLogo && fac.logo) head += '<div class="tv-fh-logowrap"><img class="tv-fh-logo" src="' + esc(fac.logo) + '" alt=""></div>';
+  head += '<div class="tv-fh"><span class="tv-fh-bar"></span><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div></div>';
   var mh = '';
   members.forEach(function(m, i) {
     mh += '<div class="tv-fm notranslate" translate="no" tabindex="0" role="button" data-i="' + i + '">' + esc(m.name) + '</div>';
@@ -4172,8 +4173,8 @@ class MainActivity : Activity() {
   document.documentElement.style.overflow = 'hidden';
   var logoImg = root.querySelector('.tv-fh-logo');
   if (logoImg) logoImg.addEventListener('error', function() {
-    var b = document.createElement('span'); b.className = 'tv-fh-bar';
-    if (logoImg.parentNode) logoImg.parentNode.replaceChild(b, logoImg);
+    var w = logoImg.parentNode;
+    if (w && w.parentNode) w.parentNode.removeChild(w);
   });
 
   var nav = root.querySelector('#tv-fac-members');
