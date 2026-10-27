@@ -4589,7 +4589,80 @@ class MainActivity : Activity() {
       }).catch(function(e) { return { status: 0, json: null, text: String(e) }; });
   }
 
+  // Round 2, search pages only: which list-API address filters by keyword, do list items carry match
+  // descriptions, and how does the page search treat several words
+  function gatherSearch(done) {
+    var L = [];
+    function add(x) { L.push(x); }
+    function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }
+    add('ROUND 2   URL ' + location.href);
+    var tasks = [];
+    function listLines(r, base) {
+      var list = r.json ? (Array.isArray(r.json) ? r.json : (r.json.contents || r.json.items || [])) : [];
+      add('status ' + r.status + '   items ' + list.length + '   first id ' + (list[0] ? list[0].id : '-') + (base != null ? (list[0] && String(list[0].id) === String(base) ? '   SAME as no-keyword list' : '   DIFFERENT from no-keyword list') : ''));
+      list.slice(0, 6).forEach(function(it) {
+        add(' #' + it.id + ' ' + clip(it.display_name, 70));
+        add('    desc: ' + clip(it.description, 150));
+      });
+      return list;
+    }
+    var baseId = null;
+    function apiTask(label, url, isBase) {
+      tasks.push(function(next) {
+        setTimeout(function() {
+          getJson(url).then(function(r) {
+            sec('API ' + label);
+            add(url);
+            var l = listLines(r, isBase ? null : baseId);
+            if (isBase && l[0]) baseId = l[0].id;
+            next();
+          });
+        }, 1200);
+      });
+    }
+    apiTask('no keyword, most played', '/user_api/contents?size=3&sort=pc&order=d', true);
+    apiTask('q[keyword]=Syuri', '/user_api/contents?size=3&sort=pc&order=d&q%5Bkeyword%5D=Syuri');
+    apiTask('keyword=Syuri', '/user_api/contents?size=3&sort=pc&order=d&keyword=Syuri');
+    apiTask('q=Syuri', '/user_api/contents?size=3&sort=pc&order=d&q=Syuri');
+    apiTask('newest six (match videos?)', '/user_api/contents?size=6&sort=di_s&order=d');
+    ['Syuri', 'Hazuki', 'Syuri Hazuki', 'Syuri Tag Team', 'Cage', 'Battle Royal', 'Singles', 'Title Match'].forEach(function(term) {
+      tasks.push(function(next) {
+        setTimeout(function() {
+          fetch('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term), { credentials: 'include' })
+            .then(function(res) { return res.text().then(function(t) { return { status: res.status, text: t }; }); })
+            .then(function(r) {
+              sec('SEARCH ' + term + '   status ' + r.status);
+              var doc = new DOMParser().parseFromString(r.text, 'text/html');
+              var ids = {}, titles = [];
+              Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item'), function(c) {
+                var a = c.querySelector('a[href*="/contents/"]');
+                var m = a && /contents\/([0-9]+)/.exec(a.getAttribute('href') || '');
+                if (!m || ids[m[1]]) return;
+                ids[m[1]] = 1;
+                var t = c.querySelector('h3, h4');
+                titles.push(clip(t ? t.textContent : c.textContent, 90));
+              });
+              var maxp = 1;
+              Array.prototype.forEach.call(doc.querySelectorAll('a[href*="page="]'), function(a) {
+                var pm = /[?&]page=([0-9]+)/.exec(a.getAttribute('href') || '');
+                if (pm && +pm[1] > maxp) maxp = +pm[1];
+              });
+              add('unique videos on page 1: ' + titles.length + '   highest page link: ' + maxp);
+              titles.slice(0, 4).forEach(function(t) { add(' - ' + t); });
+              next();
+            }).catch(function(e) { sec('SEARCH ' + term); add('failed: ' + e); next(); });
+        }, 1200);
+      });
+    });
+    var ti = 0;
+    (function run() {
+      if (ti >= tasks.length) { done(L); return; }
+      tasks[ti++](run);
+    })();
+  }
+
   function gather(done) {
+    if (location.pathname.indexOf('/contents/search') === 0) { gatherSearch(done); return; }
     var L = [];
     function add(s) { L.push(s); }
     function sec(t) { L.push(''); L.push('=== ' + t + ' ==='); }

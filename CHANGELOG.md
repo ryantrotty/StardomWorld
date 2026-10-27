@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.103
+- Probe, round 2: on a search page it now only runs the follow-up tests (which list-data address filters by keyword, whether match videos carry a description in the list data, and how the search treats two names, "Cage", "Battle Royal", "Singles" and "Title Match") and shows the results compactly.
+
 ## 1.3.102
 - Probe: also reads the site's list data on every page, lists links to sets (events), and on a search page tries three test searches (two names, "Tag Team", "Steel Cage").
 
