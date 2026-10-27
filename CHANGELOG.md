@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.102
+- Probe: also reads the site's list data on every page, lists links to sets (events), and on a search page tries three test searches (two names, "Tag Team", "Steel Cage").
+
 ## 1.3.101
 - The Probe button is now in every build (including the public test build), not just your own, while the data is being checked.
 

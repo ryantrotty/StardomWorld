@@ -4618,7 +4618,7 @@ class MainActivity : Activity() {
     var seen = {}, n = 0;
     Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function(a) {
       var h = a.getAttribute('href') || '';
-      if (!/category|tag|keyword|search|wrestler|performer|talent|series|event|genre|format|type/i.test(h)) return;
+      if (!/category|tag|keyword|search|wrestler|performer|talent|series|event|genre|format|type|\/set\//i.test(h)) return;
       var key = h + '|' + (a.textContent || '').trim();
       if (seen[key] || n > 70) return;
       seen[key] = 1; n++;
@@ -4635,28 +4635,21 @@ class MainActivity : Activity() {
     if (!ak.length) add('(none)'); else ak.slice(0, 30).forEach(function(k) { add(k + ' = ' + attrs[k]); });
 
     var m = /^\/contents\/([0-9]+)/.exec(location.pathname);
-    var pending = 2;
-    function finish() { if (--pending === 0) done(L); }
-
+    var tasks = [];
     if (m) {
       sec('PAGE TEXT (description area)');
       var box = document.querySelector('.content-description, .description, .box-detail, [class*="detail"], main') || document.body;
       add(clip(box.innerText || box.textContent, 1800));
-      getJson('/user_api/contents/' + m[1]).then(function(r) {
-        sec('API  /user_api/contents/' + m[1] + '   status ' + r.status);
-        if (r.json) { var o = []; flat(r.json, '', 0, o); o.forEach(add); } else add('not JSON: ' + clip(r.text, 300));
-        finish();
-      });
-      finish();
     } else {
       sec('FIRST TWO LISTING CARDS (HTML)');
       var cardsEl = document.querySelectorAll('.content-list-item, article');
       if (!cardsEl.length) add('(no cards found)');
       Array.prototype.slice.call(cardsEl, 0, 2).forEach(function(c) { add(clip(c.outerHTML, 1100)); add(''); });
-      var kw = '';
-      var km = /[?&]q(?:%5B|\[)keyword(?:%5D|\])=([^&]*)/.exec(location.search);
-      if (km) kw = km[1];
-      var url = '/user_api/contents?size=3&sort=pc&order=d' + (kw ? '&q%5Bkeyword%5D=' + kw : '');
+    }
+
+    // The site's list data: every field of the first three items
+    tasks.push(function(next) {
+      var url = '/user_api/contents?size=3&sort=pc&order=d';
       getJson(url).then(function(r) {
         sec('API  ' + url + '   status ' + r.status);
         if (r.json) {
@@ -4664,10 +4657,40 @@ class MainActivity : Activity() {
           add('top-level: ' + (Array.isArray(r.json) ? 'array of ' + r.json.length : Object.keys(r.json).join(', ')));
           list.slice(0, 3).forEach(function(it, i) { var o = []; flat(it, 'item' + i, 0, o); o.forEach(add); });
         } else add('not JSON: ' + clip(r.text, 300));
-        finish();
+        next();
       });
-      finish();
+    });
+
+    // On a search page only: does the site's search find videos by two names, or by a match word?
+    if (location.pathname.indexOf('/contents/search') === 0) {
+      ['Syuri Hazuki', 'Tag Team', 'Steel Cage'].forEach(function(term) {
+        tasks.push(function(next) {
+          setTimeout(function() {
+            fetch('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term), { credentials: 'include' })
+              .then(function(res) { return res.text().then(function(t) { return { status: res.status, text: t }; }); })
+              .then(function(r) {
+                sec('SEARCH EXPERIMENT: ' + term + '   status ' + r.status);
+                var doc = new DOMParser().parseFromString(r.text, 'text/html');
+                var items = doc.querySelectorAll('.content-list-item, article');
+                add('cards on first page: ' + items.length);
+                var tot = (doc.body.innerText || '').match(/[0-9,]+\s*(results|hits|items|videos|\u4ef6)/i);
+                add('total text: ' + (tot ? tot[0] : '(none seen)'));
+                Array.prototype.slice.call(items, 0, 5).forEach(function(c) {
+                  var t = c.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
+                  add(' - ' + clip(t ? t.textContent : c.textContent, 150));
+                });
+                next();
+              }).catch(function(e) { sec('SEARCH EXPERIMENT: ' + term); add('failed: ' + e); next(); });
+          }, 1200);
+        });
+      });
     }
+
+    var ti = 0;
+    (function run() {
+      if (ti >= tasks.length) { done(L); return; }
+      tasks[ti++](run);
+    })();
   }
 
   function wrap(lines) {
