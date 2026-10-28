@@ -3101,6 +3101,11 @@ class MainActivity : Activity() {
                   en = ja = r[0];
                   SHOWS.forEach(function(x) { if (hrefPath(r[1]) === x[1]) en = x[0]; });
                   if (en === '新着') en = 'New';
+                  CHAMPS.forEach(function(x) { if (hrefPath(r[1]) === x[1]) en = x[0]; });
+                  var dm = /^(\d{4})年代$/.exec(en);
+                  if (dm) en = dm[1] + 's';
+                  var ym = /^(\d{4})年$/.exec(en);
+                  if (ym) en = ym[1];
                   if (hasJa(en)) en = xl(en);
                 }
                 return [en, r[1], ja];
@@ -3529,7 +3534,7 @@ class MainActivity : Activity() {
               var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
               var L = lists[key];
               if (L) {
-                w = key === 'champs' ? 420 : 360;
+                w = (key === 'champs' || key === 'home') ? 440 : 360;
                 var body = '';
                 if (key === 'acct') {
                   (window.__tvMenuAcct || []).forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });

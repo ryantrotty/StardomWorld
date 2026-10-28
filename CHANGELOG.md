@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.121
+- Home list: championship rows (IWGP Women's, World of Stardom, Wonder of Stardom, High Speed) and decade rows like "2020s" now show English names. The Home flyout is slightly wider so long titles fit.
+
 ## 1.3.120
 - The shelf menu is now the only slide-out menu; the Left-key switch to the classic menu is gone.
 - Home list now shows English names (it was showing the Japanese names the home page uses). The app learns both names for each row as the home page loads.
