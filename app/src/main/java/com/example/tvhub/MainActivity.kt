@@ -3194,6 +3194,7 @@ class MainActivity : Activity() {
           }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
           var HINT_KEY = 'tvMenuHintV1';
+          var REOPEN_KEY = 'tvMenuReopenV1';
 
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
           function T(en, ja) { return isJa() ? ja : en; }
@@ -3471,6 +3472,24 @@ class MainActivity : Activity() {
           }
           window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
+          // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
+          (function() {
+            var t0 = parseInt(lsGet(REOPEN_KEY) || '0', 10) || 0;
+            if (!t0) return;
+            try { localStorage.removeItem(REOPEN_KEY); } catch (e) {}
+            if (Date.now() - t0 > 20000) return;
+            var tries = 0, done = false;
+            function focusLang() {
+              var l = panel && panel.querySelector('.tv-sm-lang');
+              if (l && isOpen && !(panel.contains(document.activeElement) && document.activeElement === l)) focusItem(l);
+            }
+            var iv = setInterval(function() {
+              tries++;
+              if (document.body && !done) { done = true; openMenu(); setTimeout(focusLang, 80); }
+              if (isOpen && (tries === 15 || tries === 40)) focusLang();
+              if (tries > 40) clearInterval(iv);
+            }, 100);
+          })();
 
           function go(rel) {
             closeMenu();
@@ -3610,6 +3629,8 @@ class MainActivity : Activity() {
 
             if (el.getAttribute('data-lang')) {
               var next = isJa() ? 'en' : 'ja';
+              // the page reloads in the new language; the menu is opened again as soon as the new page appears
+              lsSet(REOPEN_KEY, String(Date.now()));
               if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') window.AndroidHost.toggleLanguage(next);
               return;
             }

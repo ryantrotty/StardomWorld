@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.122
+- Switching language from the slide-out menu: the menu now comes straight back (with the language switch selected) as soon as the reloaded page appears, instead of leaving you on the bare page. The page reloads and translates behind it.
+
 ## 1.3.121
 - Home list: championship rows (IWGP Women's, World of Stardom, Wonder of Stardom, High Speed) and decade rows like "2020s" now show English names. The Home flyout is slightly wider so long titles fit.
 
