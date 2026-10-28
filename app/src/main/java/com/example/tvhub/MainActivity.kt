@@ -3217,6 +3217,15 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:58px;}',
             '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-home .tv-sm-chev{margin-left:auto;}',
+            '#tv-sm-shelf{position:fixed;z-index:100000;box-sizing:border-box;left:430px;padding:16px 18px;border-radius:0 14px 14px 0;background:#121922;border:2px solid #2a323c;border-left:4px solid #F4C242;color:#ffffff;font-family:Arial,Helvetica,sans-serif;overflow-y:auto;scrollbar-width:none;}',
+            '#tv-sm-shelf::-webkit-scrollbar{display:none;}',
+            '#tv-sm-shelf .tv-shl-t{font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:0 0 10px 0;}',
+            '#tv-sm-shelf .tv-shl-grid{display:grid;gap:2px 8px;}',
+            '#tv-sm-shelf .tv-shl-h{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
+            '#tv-sm-shelf a.tv-sm-fi{display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
+            '#tv-sm-shelf a.tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
+            '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
@@ -3244,7 +3253,14 @@ class MainActivity : Activity() {
           function chev() {
             return '<svg class="tv-sm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
           }
-          function group(label, rows) {
+          // Menu style: "shelf" (long sections open a panel to the right of the menu) or "classic" (everything inline).
+          // Left on a top-level menu row switches between them; the choice is remembered.
+          var MODE_KEY = 'tvMenuModeV1';
+          function shelfMode() { return lsGet(MODE_KEY) !== 'classic'; }
+          function group(label, rows, shelfKey) {
+            if (shelfKey && shelfMode()) {
+              return '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-shelf="' + shelfKey + '"><span>' + esc(label) + '</span>' + chev() + '</div></div>';
+            }
             var h = '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
             rows.forEach(function(r) {
               h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>';
@@ -3307,13 +3323,13 @@ class MainActivity : Activity() {
             var h = '';
             h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
             h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" data-homegrp="1" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + homeRows().map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
-            h += group(T('Shows', '番組'), showsList());
+            h += group(T('Shows', '番組'), showsList(), 'shows');
             h += group(T('Championships', '王座'), CHAMPS);
-            h += group(T('Years', '年別'), years);
+            h += group(T('Years', '年別'), years, 'years');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows);
-            h += group(T('Current Wrestlers', '現役選手'), currentWrestlers());
-            h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W));
+            h += group(T('Current Wrestlers', '現役選手'), currentWrestlers(), 'current');
+            h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W), 'past');
             if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE);
             h += group(T('Community', 'みんなの動画'), COMMUNITY);
             if (signedIn()) {
@@ -3420,9 +3436,11 @@ class MainActivity : Activity() {
             setNativeFlag(true);
             learnXlat();
             setTimeout(function() { focusItem(items()[2] || items()[0]); }, 30);
+            showToast();
           }
           function closeMenu() {
             if (!isOpen) return false;
+            closeShelf(false);
             isOpen = false;
             unmountSearch();
             document.documentElement.classList.remove('tv-sm-open');
@@ -3434,7 +3452,7 @@ class MainActivity : Activity() {
             }
             return true;
           }
-          window.__tvMenuClose = closeMenu;
+          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
 
           function go(rel) {
@@ -3451,7 +3469,117 @@ class MainActivity : Activity() {
             return true;
           }
 
+          // ---- shelf flyout (to the right of the menu)
+          var shelfEl = null, shelfRow = null;
+          function fiHtml(label, path) {
+            return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>';
+          }
+          function rowsHtml(rows) {
+            return rows.map(function(r) { return fiHtml(isJa() && r[2] ? r[2] : r[0], r[1]); }).join('');
+          }
+          function shelfBody(key) {
+            var h = '', w = 760;
+            if (key === 'shows') {
+              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">' + rowsHtml(showsList()) + '</div>';
+            } else if (key === 'years') {
+              w = 400;
+              h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
+            } else if (key === 'current') {
+              w = 858;
+              var blocks = '';
+              try {
+                var d = JSON.parse(AndroidHost.factionsJson());
+                var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+                var seen = {};
+                facs.forEach(function(f) {
+                  var ms = (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+                  var inner = '';
+                  ms.forEach(function(m) {
+                    if (!m || !m.name || seen[m.name]) return;
+                    seen[m.name] = 1;
+                    inner += fiHtml(isJa() && JA_NAMES[m.name] ? JA_NAMES[m.name] : m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name));
+                  });
+                  if (inner) blocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>' + inner + '</div>';
+                });
+              } catch (e) {}
+              if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
+              h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
+            } else if (key === 'past') {
+              var rows = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              h = '<div class="tv-shl-t">' + esc(T('PAST WRESTLERS', '元所属選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(rows) + '</div>';
+            }
+            return { html: h, width: w };
+          }
+          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('a.tv-sm-fi')) : []; }
+          function closeShelf(refocus) {
+            if (shelfEl && shelfEl.parentNode) shelfEl.parentNode.removeChild(shelfEl);
+            shelfEl = null;
+            var r = shelfRow; shelfRow = null;
+            if (refocus && r && r.isConnected) focusItem(r);
+          }
+          function openShelf(key, row) {
+            closeShelf(false);
+            var b = shelfBody(key);
+            if (!b.html) return;
+            shelfRow = row;
+            shelfEl = document.createElement('div');
+            shelfEl.id = 'tv-sm-shelf';
+            shelfEl.setAttribute('translate', 'no');
+            shelfEl.classList.add('notranslate');
+            shelfEl.innerHTML = b.html;
+            shelfEl.style.width = Math.min(b.width, window.innerWidth - 430 - 16) + 'px';
+            shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
+            document.body.appendChild(shelfEl);
+            var rr = row.getBoundingClientRect();
+            shelfEl.style.top = Math.max(12, Math.min(rr.top, window.innerHeight - shelfEl.offsetHeight - 12)) + 'px';
+            var list = fiItems(), first = list[0];
+            list.forEach(function(a) { try { if (new URL(a.href).pathname + new URL(a.href).search === location.pathname + location.search) first = a; } catch (e) {} });
+            if (first) focusItem(first);
+          }
+          function shelfMove(dir) {
+            var list = fiItems(), cur = document.activeElement;
+            if (list.indexOf(cur) === -1) { if (list[0]) focusItem(list[0]); return true; }
+            var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+            var best = null, bs = 1e9;
+            list.forEach(function(it) {
+              if (it === cur) return;
+              var r = it.getBoundingClientRect();
+              var dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim, orth;
+              if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
+              else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
+              else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
+              else { if (dx >= -4) return; prim = -dx; orth = Math.abs(dy); }
+              var sc = prim + orth * 2;
+              if (sc < bs) { bs = sc; best = it; }
+            });
+            if (best) { focusItem(best); return true; }
+            return false;
+          }
+          var toastTimer = 0;
+          function showToast() {
+            if (!panel) return;
+            var t = document.getElementById('tv-sm-toast');
+            if (!t) { t = document.createElement('div'); t.id = 'tv-sm-toast'; t.className = 'notranslate'; t.setAttribute('translate', 'no'); panel.appendChild(t); }
+            t.textContent = shelfMode() ? T('Shelf menu. Left switches to the classic menu.', 'シェルフ型メニュー。左でクラシックに切替。') : T('Classic menu. Left switches to the shelf menu.', 'クラシック型メニュー。左でシェルフ型に切替。');
+            t.style.opacity = '1';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function() { t.style.opacity = '0'; }, 3500);
+          }
+          function toggleMode(ae) {
+            var row = ae && ae.closest ? ae.closest('.tv-sm-item') : null;
+            var idx = items().indexOf(row || ae);
+            lsSet(MODE_KEY, shelfMode() ? 'classic' : 'shelf');
+            closeShelf(false);
+            unmountSearch();
+            build();
+            mountSearch();
+            var l2 = items();
+            if (l2.length) focusItem(l2[Math.max(0, Math.min(idx < 0 ? 2 : idx, l2.length - 1))]);
+            showToast();
+          }
+
           function activate(el) {
+            if (el.getAttribute('data-shelf')) { openShelf(el.getAttribute('data-shelf'), el); return; }
             if (el.getAttribute('data-grp')) {
               var g = el.parentNode;
               var was = g.classList.contains('tv-sm-expanded');
@@ -3508,6 +3636,18 @@ class MainActivity : Activity() {
 
           window.addEventListener('keydown', function(e) {
             var k = e.keyCode;
+            if (isOpen && shelfEl) {
+              if (k === 40) { stop(e); shelfMove('down'); }
+              else if (k === 38) { stop(e); shelfMove('up'); }
+              else if (k === 39) { stop(e); shelfMove('right'); }
+              else if (k === 37) { stop(e); if (!shelfMove('left')) closeShelf(true); }
+              else if (k === 27) { stop(e); closeShelf(true); }
+              else if (k === 13 || k === 23 || k === 32) {
+                var fa = document.activeElement;
+                if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) { stop(e); go(fa.getAttribute('data-go')); }
+              }
+              return;
+            }
             if (!isOpen) {
               if (k !== 37) return;
               var ae0 = document.activeElement;
@@ -3530,6 +3670,7 @@ class MainActivity : Activity() {
                 if (!hwas) hg.classList.add('tv-sm-expanded');
                 return;
               }
+              if (ae && ae.getAttribute && ae.getAttribute('data-shelf')) { stop(e); openShelf(ae.getAttribute('data-shelf'), ae); return; }
               stop(e); closeMenu(); return;
             }
             if (k === 37) {
@@ -3541,6 +3682,8 @@ class MainActivity : Activity() {
                 if (head) { par.classList.remove('tv-sm-expanded'); focusItem(head); }
               } else if (ae && ae.parentNode && ae.parentNode.classList && ae.parentNode.classList.contains('tv-sm-expanded')) {
                 ae.parentNode.classList.remove('tv-sm-expanded');
+              } else if (ae && ae.classList && ae.classList.contains('tv-sm-item') && !inInput) {
+                toggleMode(ae);
               }
               return;
             }

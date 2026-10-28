@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.118
+- Trial: shelf menu. In the slide-out menu, Shows, Years, Current Wrestlers and Past Wrestlers now open as a panel to the right of the menu instead of an inline list. Right or OK opens it, arrows move between entries, OK goes there, Left from the first column or Back returns to the menu row. Current Wrestlers is a column per faction; Past Wrestlers is alphabetical columns. Home, Championships, Factions, My Videos and Community stay inline.
+- Press Left on any top-level menu row to switch between the shelf menu and the classic inline menu; a short note at the bottom says which one is showing. The choice is remembered, so the two can be compared side by side before one is picked.
+
 ## 1.3.117
 - Slide-out menu: the house icon and logo row at the top is now also a drop-down. OK still opens the main page; Right opens or closes a list under it of the rows the home page itself shows (New, Big Match and so on). The app notes those rows each time the home page loads (no extra request) and keeps the last list, so it follows whatever the site features; until the first visit it shows the five known ones.
 - Shows now means the big shows only: "All tournaments", then the same list as the Show filter. Each opens a search for that show with the Show chip set and the tournament bar on top. Big Match, English Commentary, LIVE & On-demand and the 5★STAR GP special feature live under Home.
