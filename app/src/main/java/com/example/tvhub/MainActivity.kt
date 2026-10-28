@@ -3082,15 +3082,36 @@ class MainActivity : Activity() {
           var BASE = 'https://www.stardom-world.com';
           // Each entry: [English label, path, Japanese label]
           var SHOWS = [
-            ['Tournament Archives (Newest Tournaments)', '/contents/category/events', '大会アーカイブス（新着大会）'],
+            ['All tournaments', '/contents/category/events', '大会アーカイブス（新着大会）'],
             ['LIVE & On-demand streaming', '/contents/category/live-archives', 'LIVE&見逃し配信'],
             ['Big Match', '/contents/category/bm2025', 'ビッグマッチ'],
             ['English Commentary', '/contents/category/english', 'English Commentary'],
             ['[Special Feature] 5\u2605STAR GP 2026', '/contents/category/fivestar2026', '【特集】5\u2605STAR GP 2026']
           ];
           var NEW_KEY = 'tvNewHrefV1';
+          var HOME_ROWS_KEY = 'tvHomeRowsV1';
+          // Under Home: the rows the home page itself shows (noted each time the home page loads, no extra request),
+          // else the five known ones.
+          function homeRows() {
+            try {
+              var saved = JSON.parse(lsGet(HOME_ROWS_KEY) || 'null');
+              if (saved && saved.length) return saved.map(function(r) { return [r[0], r[1], r[0]]; });
+            } catch (e) {}
+            return staticHomeRows();
+          }
+          function staticHomeRows() {
+            return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
+          }
+          // Shows: the big shows, the same list as the Show filter (assets/event_filters.json).
           function showsList() {
-            return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS);
+            var out = [[SHOWS[0][0], SHOWS[0][1], SHOWS[0][2]]];
+            try {
+              var d = JSON.parse(AndroidHost.eventFiltersJson());
+              (d.shows || []).forEach(function(x) {
+                out.push([x.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvev=1&tvsh=' + encodeURIComponent(x.name), x.name]);
+              });
+            } catch (e) {}
+            return out;
           }
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           var CHAMPS = [
@@ -3195,6 +3216,8 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-formhost input[type="submit"], #tv-sm .tv-sm-formhost button, #tv-sm .tv-sm-formhost .input-group-btn, #tv-sm .tv-sm-formhost .input-group-append{display:none !important;}',
             '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:58px;}',
             '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
+            '#tv-sm .tv-sm-home .tv-sm-chev{margin-left:auto;}',
+            '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
@@ -3283,7 +3306,7 @@ class MainActivity : Activity() {
             var logo = logoSrc();
             var h = '';
             h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
-            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '</a></div>';
+            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" data-homegrp="1" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + homeRows().map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
             h += group(T('Shows', '番組'), showsList());
             h += group(T('Championships', '王座'), CHAMPS);
             h += group(T('Years', '年別'), years);
@@ -3500,6 +3523,13 @@ class MainActivity : Activity() {
             if (k === 38) { stop(e); move(-1); return; }
             if (k === 39) {
               if (inInput && ae.value && ae.selectionStart < ae.value.length) return;   // let the cursor move inside typed text
+              if (ae && ae.getAttribute && ae.getAttribute('data-homegrp')) {
+                stop(e);
+                var hg = ae.parentNode, hwas = hg.classList.contains('tv-sm-expanded');
+                collapseAll(null);
+                if (!hwas) hg.classList.add('tv-sm-expanded');
+                return;
+              }
               stop(e); closeMenu(); return;
             }
             if (k === 37) {
@@ -3553,6 +3583,18 @@ class MainActivity : Activity() {
             var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
             var last = tiles.length ? tiles[tiles.length - 1] : null;
             if (last && last.href) lsSet(NEW_KEY, last.href);
+            // every row the site draws on the home page (not the app's own Recently Watched / Favorites rows) with its View All address
+            var list = [];
+            Array.prototype.forEach.call(rows, function(row) {
+              var wrap = row.parentNode;
+              if (!wrap || wrap.id) return;
+              var h2 = wrap.querySelector('h2');
+              var title = h2 ? (h2.textContent || '').replace(/\s+/g, ' ').trim() : '';
+              var t2 = row.querySelectorAll('a.tv-card.notranslate');
+              var va = t2.length ? t2[t2.length - 1] : null;
+              if (title && va && va.href) list.push([title, va.href]);
+            });
+            if (list.length) lsSet(HOME_ROWS_KEY, JSON.stringify(list));
             return true;
           }
           if (isHome()) {
@@ -3573,7 +3615,7 @@ class MainActivity : Activity() {
             var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
             var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
-            var all = [].concat(showsList(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
+            var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
             for (var i = 0; i < all.length; i++) {
               var u = new URL(all[i][1], BASE);
               if (u.pathname !== loc.pathname) continue;

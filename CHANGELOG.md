@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.117
+- Slide-out menu: the house icon and logo row at the top is now also a drop-down. OK still opens the main page; Right opens or closes a list under it of the rows the home page itself shows (New, Big Match and so on). The app notes those rows each time the home page loads (no extra request) and keeps the last list, so it follows whatever the site features; until the first visit it shows the five known ones.
+- Shows now means the big shows only: "All tournaments", then the same list as the Show filter. Each opens a search for that show with the Show chip set and the tournament bar on top. Big Match, English Commentary, LIVE & On-demand and the 5★STAR GP special feature live under Home.
+
 ## 1.3.116
 - Year pages (2011–2026) now use the match filter bar with the year already set as a chip, instead of the tournament bar.
 - Show and Location drop-downs added to the match filter bar (search results, championship pages, year pages), same lists as the tournament bar. These add the show or venue name to the keyword search, so combined with a wrestler or match type they only find videos whose title or description names that show or venue.
