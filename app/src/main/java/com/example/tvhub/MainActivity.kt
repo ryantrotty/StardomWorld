@@ -3767,6 +3767,9 @@ class MainActivity : Activity() {
                 if (head) { par.classList.remove('tv-sm-expanded'); focusItem(head); }
               } else if (ae && ae.parentNode && ae.parentNode.classList && ae.parentNode.classList.contains('tv-sm-expanded')) {
                 ae.parentNode.classList.remove('tv-sm-expanded');
+              } else if (ae && panel && panel.contains(ae)) {
+                // on a top-level row with nothing open: Left puts the menu away (like Right and Back)
+                closeMenu();
               }
               return;
             }
@@ -8316,7 +8319,7 @@ private class OnboardingView(
         ),
         Slide(
             "メニュー",
-            "各列や一覧の一番左の動画で左ボタンを押すとメニューが開き、右ボタンか戻るボタンで閉じます。検索、番組、王座、年別、選手、マイビデオ、みんなの動画、アカウント、言語の切り替えがあります。",
+            "各列や一覧の一番左の動画で左ボタンを押すとメニューが開きます。番組や選手などの項目で右ボタンを押すとメニューの横に一覧が開き、左ボタンで戻ります。もう一度左ボタン(または戻るボタン)でメニューが閉じます。検索、ホーム、番組、王座、年別、ユニット、選手、マイビデオ、みんなの動画、アカウント、言語の切り替えがあります。",
             6
         ),
         Slide(
@@ -8352,7 +8355,7 @@ private class OnboardingView(
         ),
         Slide(
             "The menu",
-            "Press Left on the first video in any row or list to open the menu, and Right or Back to close it. Inside you will find Search, Shows, Championships, Years, Wrestlers, My Videos, Community, your Account and the language switch.",
+            "Press Left on the first video in any row or list to open the menu. Press Right on a section such as Shows or Wrestlers to open its list beside the menu, and Left to step back. Press Left again (or Back) to close the menu. Inside: Search, Home, Shows, Championships, Years, Factions, Wrestlers, My Videos, Community, your Account and the language switch.",
             6
         ),
         Slide(
@@ -8694,21 +8697,29 @@ private class OnboardingView(
                     triangle(canvas, cx - 18f * u, cy - 14f * u, cx - 18f * u, cy - 2f * u, cx - 7f * u, cy - 8f * u, fillWhite)
                 }
                 6 -> {
-                    // The menu: a panel of rows on the left, and the remote's Left button pointing at it.
-                    tmp.set(cx - 86f * u, cy - 44f * u, cx - 28f * u, cy + 44f * u)
+                    // The menu on the left with a list opened beside it, and the remote's Left button.
+                    tmp.set(cx - 92f * u, cy - 44f * u, cx - 52f * u, cy + 44f * u)
                     canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
                     canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
                     for (k in 0..5) {
                         val top = cy - 36f * u + k * 13f * u
-                        tmp.set(cx - 80f * u, top, cx - 80f * u + (if (k % 2 == 0) 40f else 30f) * u, top + 5f * u)
+                        tmp.set(cx - 87f * u, top, cx - 87f * u + (if (k % 2 == 0) 26f else 20f) * u, top + 5f * u)
                         canvas.drawRoundRect(tmp, 2.5f * u, 2.5f * u, if (k == 1) fillGold else fillWhite)
                     }
-                    canvas.drawCircle(cx + 56f * u, cy, 28f * u, fillDim)
-                    canvas.drawCircle(cx + 56f * u, cy, 28f * u, line)
-                    triangle(canvas, cx + 36f * u, cy, cx + 48f * u, cy - 9f * u, cx + 48f * u, cy + 9f * u, fillGold)
-                    triangle(canvas, cx + 76f * u, cy, cx + 64f * u, cy - 9f * u, cx + 64f * u, cy + 9f * u, fillWhite)
-                    canvas.drawLine(cx + 24f * u, cy, cx - 18f * u, cy, line)
-                    triangle(canvas, cx - 24f * u, cy, cx - 14f * u, cy - 6f * u, cx - 14f * u, cy + 6f * u, fillGold)
+                    tmp.set(cx - 48f * u, cy - 30f * u, cx + 8f * u, cy + 18f * u)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
+                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
+                    for (k in 0..3) {
+                        val top = cy - 22f * u + k * 10f * u
+                        tmp.set(cx - 42f * u, top, cx - 42f * u + (if (k % 2 == 0) 32f else 24f) * u, top + 4f * u)
+                        canvas.drawRoundRect(tmp, 2f * u, 2f * u, if (k == 0) fillGold else fillWhite)
+                    }
+                    canvas.drawCircle(cx + 62f * u, cy, 24f * u, fillDim)
+                    canvas.drawCircle(cx + 62f * u, cy, 24f * u, line)
+                    triangle(canvas, cx + 44f * u, cy, cx + 54f * u, cy - 8f * u, cx + 54f * u, cy + 8f * u, fillGold)
+                    triangle(canvas, cx + 80f * u, cy, cx + 70f * u, cy - 8f * u, cx + 70f * u, cy + 8f * u, fillWhite)
+                    canvas.drawLine(cx + 36f * u, cy, cx + 14f * u, cy, line)
+                    triangle(canvas, cx + 10f * u, cy, cx + 18f * u, cy - 5f * u, cx + 18f * u, cy + 5f * u, fillGold)
                 }
                 else -> {
                     tmp.set(cx - 34f * u, cy - 14f * u, cx + 34f * u, cy + 14f * u)

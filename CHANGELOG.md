@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.125
+- Slide-out menu: Left on a top-level menu row (with no list or drop-down open) now closes the menu, like Right and Back. Inside a list beside the menu, Left steps back to the menu row first.
+- First-run guide: the menu screen now explains the lists that open beside the menu, that Left steps back and closes the menu, and the current section names (Home, Factions, Wrestlers). Its picture shows a list opened beside the menu. English and Japanese.
+
 ## 1.3.124
 - Home list: any row name still in Japanese after the known names are applied is now translated to English once (one short translation request per new name, then remembered), so new or unusual rows no longer stay Japanese. The first time a new row appears it may take a few seconds to turn English.
 
