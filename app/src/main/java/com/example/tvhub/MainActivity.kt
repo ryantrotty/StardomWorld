@@ -3458,6 +3458,7 @@ class MainActivity : Activity() {
           }
           function closeMenu() {
             if (!isOpen) return false;
+            try { localStorage.removeItem(REOPEN_KEY); } catch (e) {}
             closeShelf(false);
             isOpen = false;
             unmountSearch();
@@ -3476,8 +3477,9 @@ class MainActivity : Activity() {
           (function() {
             var t0 = parseInt(lsGet(REOPEN_KEY) || '0', 10) || 0;
             if (!t0) return;
-            try { localStorage.removeItem(REOPEN_KEY); } catch (e) {}
-            if (Date.now() - t0 > 20000) return;
+            // The flag stays until the person closes the menu or 12 seconds pass, so a page that reloads itself
+            // a second time while translating still gets the menu back.
+            if (Date.now() - t0 > 12000) { try { localStorage.removeItem(REOPEN_KEY); } catch (e) {} return; }
             var tries = 0, done = false;
             function focusLang() {
               var l = panel && panel.querySelector('.tv-sm-lang');
@@ -3485,9 +3487,13 @@ class MainActivity : Activity() {
             }
             var iv = setInterval(function() {
               tries++;
-              if (document.body && !done) { done = true; openMenu(); setTimeout(focusLang, 80); }
-              if (isOpen && (tries === 15 || tries === 40)) focusLang();
-              if (tries > 40) clearInterval(iv);
+              if (!lsGet(REOPEN_KEY)) { clearInterval(iv); return; }   // the person closed the menu
+              if (document.body && (!done || !panel || !panel.isConnected || !document.documentElement.classList.contains('tv-sm-open'))) {
+                // opened, or opened again if the page rebuilt itself and swept the menu away
+                done = true; isOpen = false; openMenu(); setTimeout(focusLang, 80);
+              }
+              if (isOpen && (tries === 15 || tries === 40 || tries === 70)) focusLang();
+              if (tries > 80) { clearInterval(iv); try { localStorage.removeItem(REOPEN_KEY); } catch (e) {} }
             }, 100);
           })();
 

@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.123
+- Language switch menu reopening made sturdier: it keeps trying for a few seconds, covers a page that reloads or rebuilds itself while translating, and stops once the menu is closed.
+
 ## 1.3.122
 - Switching language from the slide-out menu: the menu now comes straight back (with the language switch selected) as soon as the reloaded page appears, instead of leaving you on the bare page. The page reloads and translates behind it.
 
