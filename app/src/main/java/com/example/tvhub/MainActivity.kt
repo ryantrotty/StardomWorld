@@ -4270,6 +4270,8 @@ class MainActivity : Activity() {
     try { el.scrollIntoView({ block: mode || 'nearest' }); } catch (e) {}
   }
   function focusNav() { focusEl(fmEls[sel >= 0 ? sel : 0]); }
+  window.__tvFacFocusNav = function() { focusNav(); };
+  window.__tvFacBase = function() { return sel >= 0 ? members[sel].search : ''; };
   function inNav(el) { return !!(el && el.classList && el.classList.contains('tv-fm')); }
   function inGrid(el) { return !!(el && el.classList && el.classList.contains('tv-fc')); }
 
@@ -4343,7 +4345,7 @@ class MainActivity : Activity() {
       } else if (k === 38) {
         stop();
         if (idx - n >= 0) focusEl(list[idx - n], 'nearest');
-        else scroller.scrollTop = 0;
+        else if (!(window.__tvFacFocusBar && window.__tvFacFocusBar())) scroller.scrollTop = 0;
       } else if (k === 40) {
         stop();
         var row = Math.floor(idx / n), last = Math.floor((list.length - 1) / n);
@@ -4563,8 +4565,11 @@ class MainActivity : Activity() {
   if (window.__tvFilterBar) return;
   var CHAMP_PAGES = { '/contents/category/iwgp': 'iwgp', '/contents/category/world-sd': 'world', '/contents/category/wonder-sd': 'wonder', '/contents/category/high_speed': 'highspeed' };
   var champCat = CHAMP_PAGES[location.pathname.replace(/\/+$/, '')] || '';
-  if (location.pathname.indexOf('/contents/search') !== 0 && !champCat) return;
-  if (/[?&](tvfaction|tvrecent|tvev)=/.test(location.search)) return;
+  var YM = /^\/contents\/category\/(20[0-9]{2}|_2020)\/?$/.exec(location.pathname);
+  var yearCat = YM ? (YM[1] === '_2020' ? '2020' : YM[1]) : '';
+  var FAC_MODE = /[?&]tvfaction=/.test(location.search);
+  if (location.pathname.indexOf('/contents/search') !== 0 && !champCat && !yearCat) return;
+  if (/[?&](tvrecent|tvev)=/.test(location.search)) return;
   window.__tvFilterBar = true;
 
   // Every choice just adds words to the site's own keyword search and opens that page: one request per
@@ -4591,6 +4596,17 @@ class MainActivity : Activity() {
     ['world', 'World of Stardom', 'World of Stardom'],
     ['other', 'Other title matches', 'Title Match']
   ];
+  var SH = [], LO = [];
+  try {
+    var ED = (window.AndroidHost && AndroidHost.eventFiltersJson) ? JSON.parse(AndroidHost.eventFiltersJson()) : null;
+    if (ED) {
+      SH = (ED.shows || []).map(function(x) { return [x.name, x.name, x.search]; });
+      (ED.locations || []).forEach(function(c) {
+        LO.push(['c:' + c.name, c.name, c.search, 'city']);
+        (c.venues || []).forEach(function(v) { LO.push(['v:' + v.name, v.name, v.search, 'venue']); });
+      });
+    }
+  } catch (e) {}
   var YR = [];
   for (var y = new Date().getFullYear(); y >= 2011; y--) YR.push([String(y), String(y), y + '/']);
 
@@ -4616,8 +4632,8 @@ class MainActivity : Activity() {
   })();
 
   var S = {
-    base: champCat ? '' : (location.search.indexOf('tvb=') !== -1 ? qp('tvb') : kwNow),
-    mt: qp('tvmt'), ch: champCat || qp('tvch'), co: qp('tvco'), yr: qp('tvyr'),
+    base: (champCat || yearCat || FAC_MODE) ? '' : (location.search.indexOf('tvb=') !== -1 ? qp('tvb') : kwNow),
+    mt: qp('tvmt'), ch: champCat || qp('tvch'), co: qp('tvco'), yr: yearCat || qp('tvyr'), sh: qp('tvsh'), lo: qp('tvlo'),
     s: qp('s'), o: qp('o')
   };
   var SORTS = [
@@ -4638,16 +4654,20 @@ class MainActivity : Activity() {
     var a = find(MT, n.mt); if (a) words.push(a[2]);
     var b = find(CH, n.ch); if (b) words.push(b[2]);
     if (n.co && n.co !== n.base) words.push(n.co);
+    var sh0 = find(SH, n.sh); if (sh0) words.push(sh0[2]);
+    var lo0 = find(LO, n.lo); if (lo0) words.push(lo0[2]);
     var c = find(YR, n.yr); if (c) words.push(c[2]);
     var kw = words.filter(function(w) { return w; }).join(' ');
     if (!kw && !n.s) return '/';
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
     if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
     u += '&activetab=contents&page=1';
-    if (n.base && (n.mt || n.ch || n.co || n.yr)) u += '&tvb=' + encodeURIComponent(n.base);
+    if (n.base && (n.mt || n.ch || n.co || n.yr || n.sh || n.lo)) u += '&tvb=' + encodeURIComponent(n.base);
     if (n.mt) u += '&tvmt=' + encodeURIComponent(n.mt);
     if (n.ch) u += '&tvch=' + encodeURIComponent(n.ch);
     if (n.co) u += '&tvco=' + encodeURIComponent(n.co);
+    if (n.sh) u += '&tvsh=' + encodeURIComponent(n.sh);
+    if (n.lo) u += '&tvlo=' + encodeURIComponent(n.lo);
     if (n.yr) u += '&tvyr=' + encodeURIComponent(n.yr);
     return u;
   }
@@ -4655,19 +4675,28 @@ class MainActivity : Activity() {
     var n = {};
     Object.keys(S).forEach(function(k) { n[k] = S[k]; });
     Object.keys(patch).forEach(function(k) { n[k] = patch[k]; });
+    if (FAC_MODE && window.__tvFacBase) n.base = window.__tvFacBase();
     location.href = buildUrl(n);
   }
 
   var st = document.createElement('style');
   st.textContent = [
     'html body .box-sort{display:none !important;}',
-    '#tv-fb{display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;margin:6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
-    '#tv-fb .tv-fbb{box-sizing:border-box;padding:10px 18px;border-radius:10px;border:2px solid rgba(255,255,255,0.45);color:#ffffff;font-size:19px;font-weight:700;line-height:1.2;white-space:nowrap;background:transparent;cursor:pointer;outline:none !important;}',
+    '#tv-fb{display:flex;flex-wrap:wrap;align-items:center;gap:12px 10px;margin:6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fb .tv-fbb{box-sizing:border-box;padding:10px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.45);color:#ffffff;font-size:19px;font-weight:700;line-height:1.2;white-space:nowrap;background:transparent;cursor:pointer;outline:none !important;}',
     '#tv-fb .tv-fbb.tv-on{border-color:#F4C242;color:#F4C242;}',
     '#tv-fb .tv-fbb:focus, #tv-fb .tv-fbb.tv-open{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}',
     '#tv-fbp{position:fixed;z-index:99100;box-sizing:border-box;padding:12px;border-radius:14px;background:#121922;border:2px solid #2a323c;font-family:Arial,Helvetica,sans-serif;color:#ffffff;max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:none;}',
     '#tv-fbp::-webkit-scrollbar{display:none;}',
     '#tv-fbp .tv-fbi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:nowrap;}',
+    '#tv-fbp .tv-fbi{break-inside:avoid;}',
+    '#tv-fbp.tv-flo .tv-fbi, #tv-fbp.tv-fsh .tv-fbi{white-space:normal;}',
+    '#tv-fbp .tv-fblo{column-count:4;column-gap:14px;}',
+    '#tv-fbp .tv-fbcity{break-inside:avoid;margin:0 0 10px 0;}',
+    '#tv-fbp .tv-fbch{font-weight:700;color:#F4C242;font-size:17px;}',
+    '#tv-fbp .tv-fbv{font-size:16px;padding:7px 8px 7px 22px;}',
+    '#tv-fac-main #tv-fb{margin:6px 40px 12px 40px;}',
+    '#tv-fac.tv-empty #tv-fb{display:none;}',
     '#tv-fbp .tv-fbi.tv-cur{color:#F4C242;}',
     '#tv-fbp .tv-fbi:focus{background:#172029;border-color:#F4C242;color:#ffffff;font-weight:700;box-shadow:none !important;}',
     '#tv-fbp .tv-fbh{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:0;color:#F4C242;white-space:nowrap;}',
@@ -4703,19 +4732,23 @@ class MainActivity : Activity() {
     if (kind === 'ch') { cur = find(CH, S.ch); nm = T('Championship', '選手権'); }
     if (kind === 'yr') { cur = find(YR, S.yr); nm = T('Year', '年'); }
     if (kind === 'co') { cur = S.co ? [S.co, S.co] : null; nm = T('Competitors', '出場選手'); }
+    if (kind === 'sh') { cur = find(SH, S.sh); nm = T('Show', '大会名'); }
+    if (kind === 'lo') { cur = find(LO, S.lo); nm = T('Location', '開催地'); }
     return { text: nm + (cur ? ': ' + cur[1] : ''), on: !!cur };
   }
 
   function mount() {
     if (document.getElementById('tv-fb')) return true;
-    var anchor = document.querySelector('.box-sort') || document.querySelector('.content-list, [class*="content-list"]');
+    var anchor = FAC_MODE ? document.querySelector('#tv-fac-main #tv-fac-scroll') : (document.querySelector('.box-sort') || document.querySelector('.content-list, [class*="content-list"]'));
     if (!anchor || !anchor.parentNode) return false;
     bar = document.createElement('div');
     bar.id = 'tv-fb';
     var kinds = [];
-    if (facs.length) kinds.push('wr');
+    if (facs.length && !FAC_MODE) kinds.push('wr');
     kinds.push('sort', 'mt', 'ch');
     if (facs.length) kinds.push('co');
+    if (SH.length) kinds.push('sh');
+    if (LO.length) kinds.push('lo');
     kinds.push('yr');
     btns = [];
     kinds.forEach(function(k) {
@@ -4730,6 +4763,10 @@ class MainActivity : Activity() {
     });
     refreshLabels();
     anchor.parentNode.insertBefore(bar, anchor);
+    if (FAC_MODE) {
+      window.__tvFacFocusBar = function() { var b0 = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (b0) { b0.focus(); return true; } return false; };
+      return true;
+    }
     buildChips();
     return true;
   }
@@ -4739,6 +4776,8 @@ class MainActivity : Activity() {
     var a = find(MT, S.mt); if (a) defs.push([a[1], { mt: '' }]);
     var b = find(CH, S.ch); if (b) defs.push([b[1], { ch: '' }]);
     if (S.co) defs.push([T('With ', '対戦: ') + S.co, { co: '' }]);
+    var sh1 = find(SH, S.sh); if (sh1) defs.push([sh1[1], { sh: '' }]);
+    var lo1 = find(LO, S.lo); if (lo1) defs.push([lo1[1], { lo: '' }]);
     var c = find(YR, S.yr); if (c) defs.push([c[1], { yr: '' }]);
     chips = [];
     var baseName = S.base ? (wrestlerName(S.base) || S.base) : '';
@@ -4767,7 +4806,7 @@ class MainActivity : Activity() {
       chipBar.appendChild(d);
     }
     defs.forEach(function(x) { chip(x[0] + ' \u00D7', x[1], false); });
-    if (defs.length) chip(T('Clear all', 'すべて解除'), { mt: '', ch: '', co: '', yr: '' }, true);
+    if (defs.length) chip(T('Clear all', 'すべて解除'), { mt: '', ch: '', co: '', sh: '', lo: '', yr: '' }, true);
     bar.parentNode.insertBefore(chipBar, bar.nextSibling);
     setTimeout(alignBars, 0);
   }
@@ -4824,6 +4863,25 @@ class MainActivity : Activity() {
         panel.appendChild(it);
         if (cur) first = it; else if (!first) first = it;
       });
+    } else if (k === 'sh') {
+      panel.className = 'tv-fsh';
+      panel.style.columnCount = 3; panel.style.columnGap = '10px';
+      list(SH, S.sh, 'sh');
+    } else if (k === 'lo') {
+      panel.className = 'tv-flo';
+      first = item(T('All locations', 'すべての開催地'), !S.lo, function() { go({ lo: '' }); });
+      panel.appendChild(first);
+      var lcols = document.createElement('div');
+      lcols.className = 'tv-fblo';
+      var lblock = null;
+      LO.forEach(function(r) {
+        var it = item(r[1], r[0] === S.lo, function() { go({ lo: r[0] }); });
+        if (r[3] === 'city') { lblock = document.createElement('div'); lblock.className = 'tv-fbcity'; it.classList.add('tv-fbch'); lcols.appendChild(lblock); }
+        else it.classList.add('tv-fbv');
+        if (lblock) lblock.appendChild(it);
+        if (r[0] === S.lo) first = it;
+      });
+      panel.appendChild(lcols);
     } else if (k === 'mt') list(MT, S.mt, 'mt');
     else if (k === 'ch') list(CH, S.ch, 'ch');
     else if (k === 'yr') {
@@ -4862,7 +4920,8 @@ class MainActivity : Activity() {
     document.body.appendChild(panel);
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
-    if (k === 'co' || k === 'wr') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    if (k === 'co' || k === 'wr' || k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    else if (k === 'sh') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 900)) + 'px'; panel.style.width = '880px'; }
     else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';
     btn.classList.add('tv-open');
@@ -4936,8 +4995,8 @@ class MainActivity : Activity() {
     if (bi !== -1) {
       lastBtn = bi;
       if (k === 39) { stop(e); if (bi < btns.length - 1) btns[bi + 1].focus(); }
-      else if (k === 37) { if (bi > 0) { stop(e); btns[bi - 1].focus(); } }   // at the first button Left opens the menu as usual
-      else if (k === 40) { var c = chips.length ? chips[0] : firstCard(); if (c) { stop(e); c.focus(); try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
+      else if (k === 37) { if (bi > 0) { stop(e); btns[bi - 1].focus(); } else if (FAC_MODE && window.__tvFacFocusNav) { stop(e); window.__tvFacFocusNav(); } }   // at the first button Left opens the menu as usual
+      else if (k === 40) { var c = FAC_MODE ? document.querySelector('#tv-fac-grid .tv-fc') : (chips.length ? chips[0] : firstCard()); if (c) { stop(e); c.focus(); try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
       else if (k === 13 || k === 23) { stop(e); openPanel(ae); }
       return;
     }
@@ -4959,6 +5018,7 @@ class MainActivity : Activity() {
 
   // Line the bar and the chip row up with the left edge of the first thumbnail.
   function alignBars() {
+    if (FAC_MODE) return;
     try {
       var t = document.querySelector('.content-list-item .tv-thumbnail-link') || document.querySelector('.content-list-item img') || document.querySelector('.content-list-item');
       if (!t) return;
@@ -4987,7 +5047,7 @@ class MainActivity : Activity() {
 (function(){
   if (window.__tvEventBar) return;
   var onArchive = location.pathname === '/contents/category/events' || location.pathname === '/contents/category/events/';
-  var onShowCat = /^\/contents\/category\//.test(location.pathname) && !/^\/contents\/category\/(iwgp|world-sd|wonder-sd|high_speed)/.test(location.pathname);
+  var onShowCat = /^\/contents\/category\//.test(location.pathname) && !/^\/contents\/category\/(iwgp|world-sd|wonder-sd|high_speed|20[0-9]{2}|_2020)\/?$/.test(location.pathname) && !/^\/contents\/category\/(iwgp|world-sd|wonder-sd|high_speed)/.test(location.pathname);
   var onEvSearch = location.pathname.indexOf('/contents/search') === 0 && /[?&]tvev=1/.test(location.search);
   if (!onArchive && !onEvSearch && !onShowCat) return;
   if (!window.AndroidHost || !AndroidHost.eventFiltersJson) return;

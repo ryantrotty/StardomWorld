@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.116
+- Year pages (2011–2026) now use the match filter bar with the year already set as a chip, instead of the tournament bar.
+- Show and Location drop-downs added to the match filter bar (search results, championship pages, year pages), same lists as the tournament bar. These add the show or venue name to the keyword search, so combined with a wrestler or match type they only find videos whose title or description names that show or venue.
+- Faction pages: once a member is chosen, a filter bar (Sort, Match type, Championship, Competitors, Show, Location, Year) sits above their videos. Picking a filter opens a search for that member with the filter applied and the member as the first chip. Left from the first pill goes back to the member list; Up from the first row of videos goes to the bar.
+
 ## 1.3.115
 - The in-page control bar (play, -/+, mute, quality, speed, full screen) is now also built on event (set) pages that have a player, not only on single-video pages. It still only appears when the page has the player.
 
