@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.119
+- Home in the slide-out menu now opens a list instead of going straight to the main page, in both menu styles. The list starts with "Main page", then the categories the main page features.
+- Shelf menu: every section now opens as a flyout. Added Home, Championships, Factions (columns of members per faction), My Videos, Community and the account menu. Current Wrestlers is now plain alphabetical columns with no factions, like Past Wrestlers.
+
 ## 1.3.118
 - Trial: shelf menu. In the slide-out menu, Shows, Years, Current Wrestlers and Past Wrestlers now open as a panel to the right of the menu instead of an inline list. Right or OK opens it, arrows move between entries, OK goes there, Left from the first column or Back returns to the menu row. Current Wrestlers is a column per faction; Past Wrestlers is alphabetical columns. Home, Championships, Factions, My Videos and Community stay inline.
 - Press Left on any top-level menu row to switch between the shelf menu and the classic inline menu; a short note at the bottom says which one is showing. The choice is remembered, so the two can be compared side by side before one is picked.

@@ -3099,6 +3099,8 @@ class MainActivity : Activity() {
             } catch (e) {}
             return staticHomeRows();
           }
+          // What the Home drop-down / flyout lists: the main page itself, then the rows the main page shows.
+          function homeList() { return [[T('Main page', 'メインページ'), '/', 'メインページ']].concat(homeRows()); }
           function staticHomeRows() {
             return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
           }
@@ -3219,12 +3221,13 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-home .tv-sm-chev{margin-left:auto;}',
             '#tv-sm-shelf{position:fixed;z-index:100000;box-sizing:border-box;left:430px;padding:16px 18px;border-radius:0 14px 14px 0;background:#121922;border:2px solid #2a323c;border-left:4px solid #F4C242;color:#ffffff;font-family:Arial,Helvetica,sans-serif;overflow-y:auto;scrollbar-width:none;}',
             '#tv-sm-shelf::-webkit-scrollbar{display:none;}',
+            '#tv-sm-shelf .tv-sm-fi{break-inside:avoid;}',
             '#tv-sm-shelf .tv-shl-t{font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:0 0 10px 0;}',
             '#tv-sm-shelf .tv-shl-grid{display:grid;gap:2px 8px;}',
             '#tv-sm-shelf .tv-shl-h{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242;white-space:nowrap;}',
             '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
-            '#tv-sm-shelf a.tv-sm-fi{display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
-            '#tv-sm-shelf a.tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
+            '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
+            '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
             '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
@@ -3322,23 +3325,23 @@ class MainActivity : Activity() {
             var logo = logoSrc();
             var h = '';
             h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
-            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" data-go="/" data-homegrp="1" href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + homeRows().map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
+            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" ' + (shelfMode() ? 'data-shelf="home"' : 'data-go="/" data-homegrp="1"') + ' href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + (shelfMode() ? [] : homeList()).map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
             h += group(T('Shows', '番組'), showsList(), 'shows');
-            h += group(T('Championships', '王座'), CHAMPS);
+            h += group(T('Championships', '王座'), CHAMPS, 'champs');
             h += group(T('Years', '年別'), years, 'years');
             var facRows = factionRows();
-            if (facRows.length) h += group(T('Factions', 'ユニット'), facRows);
+            if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
             h += group(T('Current Wrestlers', '現役選手'), currentWrestlers(), 'current');
             h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W), 'past');
-            if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE);
-            h += group(T('Community', 'みんなの動画'), COMMUNITY);
+            if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
+            h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             if (signedIn()) {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               if (links.length) {
                 var an = acctName();
-                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
-                links.forEach(function(l, i) {
+                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+                (shelfMode() ? [] : links).forEach(function(l, i) {
                   h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span data-orig="' + esc(l.label) + '">' + esc(xl(l.label)) + '</span></div>';
                 });
                 h += '</div></div>';
@@ -3484,7 +3487,7 @@ class MainActivity : Activity() {
             } else if (key === 'years') {
               w = 400;
               h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
-            } else if (key === 'current') {
+            } else if (key === 'factions') {
               w = 858;
               var blocks = '';
               try {
@@ -3503,14 +3506,29 @@ class MainActivity : Activity() {
                 });
               } catch (e) {}
               if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
-              h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
+            } else if (key === 'current') {
+              var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>';
             } else if (key === 'past') {
               var rows = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               h = '<div class="tv-shl-t">' + esc(T('PAST WRESTLERS', '元所属選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(rows) + '</div>';
             }
+            else {
+              var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
+              var L = lists[key];
+              if (L) {
+                w = key === 'champs' ? 420 : 360;
+                var body = '';
+                if (key === 'acct') {
+                  (window.__tvMenuAcct || []).forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                } else body = rowsHtml(L[1]);
+                h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
+              }
+            }
             return { html: h, width: w };
           }
-          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('a.tv-sm-fi')) : []; }
+          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('.tv-sm-fi')) : []; }
           function closeShelf(refocus) {
             if (shelfEl && shelfEl.parentNode) shelfEl.parentNode.removeChild(shelfEl);
             shelfEl = null;
@@ -3588,6 +3606,13 @@ class MainActivity : Activity() {
               focusItem(el);
               return;
             }
+            if (el.getAttribute('data-homegrp')) {
+              var hg2 = el.parentNode, hw2 = hg2.classList.contains('tv-sm-expanded');
+              collapseAll(null);
+              if (!hw2) hg2.classList.add('tv-sm-expanded');
+              focusItem(el);
+              return;
+            }
             if (el.getAttribute('data-go')) { go(el.getAttribute('data-go')); return; }
 
             if (el.getAttribute('data-lang')) {
@@ -3644,7 +3669,11 @@ class MainActivity : Activity() {
               else if (k === 27) { stop(e); closeShelf(true); }
               else if (k === 13 || k === 23 || k === 32) {
                 var fa = document.activeElement;
-                if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) { stop(e); go(fa.getAttribute('data-go')); }
+                if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
+                  stop(e);
+                  if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  else go(fa.getAttribute('data-go'));
+                }
               }
               return;
             }
