@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.120
+- The shelf menu is now the only slide-out menu; the Left-key switch to the classic menu is gone.
+- Home list now shows English names (it was showing the Japanese names the home page uses). The app learns both names for each row as the home page loads.
+- Current and Past Wrestlers flyouts are wider so long names like Utami Hayashishita stay on one line.
+
 ## 1.3.119
 - Home in the slide-out menu now opens a list instead of going straight to the main page, in both menu styles. The list starts with "Main page", then the categories the main page features.
 - Shelf menu: every section now opens as a flyout. Added Home, Championships, Factions (columns of members per faction), My Videos, Community and the account menu. Current Wrestlers is now plain alphabetical columns with no factions, like Past Wrestlers.

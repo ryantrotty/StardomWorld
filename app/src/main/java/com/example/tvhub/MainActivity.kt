@@ -3095,12 +3095,22 @@ class MainActivity : Activity() {
           function homeRows() {
             try {
               var saved = JSON.parse(lsGet(HOME_ROWS_KEY) || 'null');
-              if (saved && saved.length) return saved.map(function(r) { return [r[0], r[1], r[0]]; });
+              if (saved && saved.length) return saved.map(function(r) {
+                var en = r[0], ja = r[2] || r[0];
+                if (hasJa(en)) {
+                  en = ja = r[0];
+                  SHOWS.forEach(function(x) { if (hrefPath(r[1]) === x[1]) en = x[0]; });
+                  if (en === '新着') en = 'New';
+                  if (hasJa(en)) en = xl(en);
+                }
+                return [en, r[1], ja];
+              });
             } catch (e) {}
             return staticHomeRows();
           }
           // What the Home drop-down / flyout lists: the main page itself, then the rows the main page shows.
           function homeList() { return [[T('Main page', 'メインページ'), '/', 'メインページ']].concat(homeRows()); }
+          function hrefPath(h) { try { return new URL(h, location.href).pathname; } catch (e) { return String(h); } }
           function staticHomeRows() {
             return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
           }
@@ -3259,7 +3269,7 @@ class MainActivity : Activity() {
           // Menu style: "shelf" (long sections open a panel to the right of the menu) or "classic" (everything inline).
           // Left on a top-level menu row switches between them; the choice is remembered.
           var MODE_KEY = 'tvMenuModeV1';
-          function shelfMode() { return lsGet(MODE_KEY) !== 'classic'; }
+          function shelfMode() { return true; }
           function group(label, rows, shelfKey) {
             if (shelfKey && shelfMode()) {
               return '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-shelf="' + shelfKey + '"><span>' + esc(label) + '</span>' + chev() + '</div></div>';
@@ -3439,7 +3449,6 @@ class MainActivity : Activity() {
             setNativeFlag(true);
             learnXlat();
             setTimeout(function() { focusItem(items()[2] || items()[0]); }, 30);
-            showToast();
           }
           function closeMenu() {
             if (!isOpen) return false;
@@ -3508,9 +3517,11 @@ class MainActivity : Activity() {
               if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
               h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
             } else if (key === 'current') {
+              w = 880;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>';
             } else if (key === 'past') {
+              w = 880;
               var rows = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               h = '<div class="tv-shl-t">' + esc(T('PAST WRESTLERS', '元所属選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(rows) + '</div>';
             }
@@ -3573,29 +3584,6 @@ class MainActivity : Activity() {
             if (best) { focusItem(best); return true; }
             return false;
           }
-          var toastTimer = 0;
-          function showToast() {
-            if (!panel) return;
-            var t = document.getElementById('tv-sm-toast');
-            if (!t) { t = document.createElement('div'); t.id = 'tv-sm-toast'; t.className = 'notranslate'; t.setAttribute('translate', 'no'); panel.appendChild(t); }
-            t.textContent = shelfMode() ? T('Shelf menu. Left switches to the classic menu.', 'シェルフ型メニュー。左でクラシックに切替。') : T('Classic menu. Left switches to the shelf menu.', 'クラシック型メニュー。左でシェルフ型に切替。');
-            t.style.opacity = '1';
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(function() { t.style.opacity = '0'; }, 3500);
-          }
-          function toggleMode(ae) {
-            var row = ae && ae.closest ? ae.closest('.tv-sm-item') : null;
-            var idx = items().indexOf(row || ae);
-            lsSet(MODE_KEY, shelfMode() ? 'classic' : 'shelf');
-            closeShelf(false);
-            unmountSearch();
-            build();
-            mountSearch();
-            var l2 = items();
-            if (l2.length) focusItem(l2[Math.max(0, Math.min(idx < 0 ? 2 : idx, l2.length - 1))]);
-            showToast();
-          }
-
           function activate(el) {
             if (el.getAttribute('data-shelf')) { openShelf(el.getAttribute('data-shelf'), el); return; }
             if (el.getAttribute('data-grp')) {
@@ -3711,8 +3699,6 @@ class MainActivity : Activity() {
                 if (head) { par.classList.remove('tv-sm-expanded'); focusItem(head); }
               } else if (ae && ae.parentNode && ae.parentNode.classList && ae.parentNode.classList.contains('tv-sm-expanded')) {
                 ae.parentNode.classList.remove('tv-sm-expanded');
-              } else if (ae && ae.classList && ae.classList.contains('tv-sm-item') && !inInput) {
-                toggleMode(ae);
               }
               return;
             }
@@ -3766,7 +3752,17 @@ class MainActivity : Activity() {
               var va = t2.length ? t2[t2.length - 1] : null;
               if (title && va && va.href) list.push([title, va.href]);
             });
-            if (list.length) lsSet(HOME_ROWS_KEY, JSON.stringify(list));
+            if (list.length) {
+              // keep an English and a Japanese name per row: the page shows whichever language it is in when it is read
+              var prev = {};
+              try { (JSON.parse(lsGet(HOME_ROWS_KEY) || '[]') || []).forEach(function(r) { prev[r[1]] = r; }); } catch (e) {}
+              lsSet(HOME_ROWS_KEY, JSON.stringify(list.map(function(r) {
+                var pr = prev[r[1]], en = null, ja = null;
+                if (pr) { var pj = pr[2] || pr[0]; if (hasJa(pr[0])) ja = pr[0]; else { en = pr[0]; if (hasJa(pj)) ja = pj; } }
+                if (hasJa(r[0])) ja = r[0]; else en = r[0];
+                return [en || ja, r[1], ja || en];
+              })));
+            }
             return true;
           }
           if (isHome()) {
@@ -3775,6 +3771,9 @@ class MainActivity : Activity() {
               nhTries++;
               if (rememberNewHref() || nhTries > 40) clearInterval(nhTimer);
             }, 1000);
+            // once the page has been translated, read the rows again to learn the other language's names
+            setTimeout(rememberNewHref, 8000);
+            setTimeout(rememberNewHref, 16000);
           }
           if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addCues);
           else addCues();
