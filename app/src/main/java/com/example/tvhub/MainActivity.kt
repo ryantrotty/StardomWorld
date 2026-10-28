@@ -3813,7 +3813,7 @@ class MainActivity : Activity() {
     private val playerBarJs = """
         (function(){
           if (window.__tvPlayerBar) return;
-          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          if (!/^\/(contents|set)\/[0-9]+/.test(location.pathname)) return;
           if (!window.AndroidHost || !AndroidHost.barIds) return;
           window.__tvPlayerBar = true;
 

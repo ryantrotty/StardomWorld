@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.115
+- The in-page control bar (play, -/+, mute, quality, speed, full screen) is now also built on event (set) pages that have a player, not only on single-video pages. It still only appears when the page has the player.
+
 ## 1.3.114
 - The championships added to the side menu now open with the championship as the removable chip and the wrestler pill left on "Wrestler" (any wrestler), instead of treating the championship as the search subject.
 - The four older championship pages (IWGP Women's, World of Stardom, Wonder of Stardom, High Speed) now show the same filter bar as the search pages (Wrestler, Sort, Match type, Championship, Competitors, Year) with their championship chip already set. Changing anything there opens a keyword search for that championship.
