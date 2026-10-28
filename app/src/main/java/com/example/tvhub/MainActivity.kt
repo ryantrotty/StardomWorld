@@ -2329,6 +2329,23 @@ class MainActivity : Activity() {
             sideMenuOpen = open
         }
 
+        // Translates one short title (a Home row name) to English once; the page keeps the answer.
+        @android.webkit.JavascriptInterface
+        fun translateTitle(text: String) {
+            val ua = webView.settings.userAgentString
+            Thread {
+                val out = ccTranslate(text, "en", ua)
+                if (out != null) {
+                    handler.post {
+                        webView.evaluateJavascript(
+                            "window.__tvTitleXlat&&window.__tvTitleXlat(" + org.json.JSONObject.quote(text) + "," + org.json.JSONObject.quote(out) + ");",
+                            null
+                        )
+                    }
+                }
+            }.start()
+        }
+
         @android.webkit.JavascriptInterface
         fun toggleLanguage(targetLang: String) {
             handler.post {
@@ -3106,7 +3123,7 @@ class MainActivity : Activity() {
                   if (dm) en = dm[1] + 's';
                   var ym = /^(\d{4})年$/.exec(en);
                   if (ym) en = ym[1];
-                  if (hasJa(en)) en = xl(en);
+                  if (hasJa(en)) en = titleXl(en);
                 }
                 return [en, r[1], ja];
               });
@@ -3115,6 +3132,24 @@ class MainActivity : Activity() {
           }
           // What the Home drop-down / flyout lists: the main page itself, then the rows the main page shows.
           function homeList() { return [[T('Main page', 'メインページ'), '/', 'メインページ']].concat(homeRows()); }
+          // English for a Japanese Home row title that none of the known lists cover: asked of the translator once, then kept.
+          var TXL_KEY = 'tvTitleXlatV1', txlAsked = {};
+          function titleXl(t) {
+            var m = {};
+            try { m = JSON.parse(lsGet(TXL_KEY) || '{}') || {}; } catch (e) {}
+            if (m[t]) return m[t];
+            if (!txlAsked[t] && window.AndroidHost && AndroidHost.translateTitle) {
+              txlAsked[t] = 1;
+              setTimeout(function() { try { AndroidHost.translateTitle(t); } catch (e) {} }, 1200 * Object.keys(txlAsked).length);
+            }
+            return t;
+          }
+          window.__tvTitleXlat = function(t, out) {
+            var m = {};
+            try { m = JSON.parse(lsGet(TXL_KEY) || '{}') || {}; } catch (e) {}
+            m[t] = out;
+            lsSet(TXL_KEY, JSON.stringify(m));
+          };
           function hrefPath(h) { try { return new URL(h, location.href).pathname; } catch (e) { return String(h); } }
           function staticHomeRows() {
             return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
@@ -3444,6 +3479,7 @@ class MainActivity : Activity() {
             // never stay hidden by a page sweep (the search box lives in here while the menu is open)
             if (panel.dataset.tvHidden) { delete panel.dataset.tvHidden; }
             panel.style.removeProperty('display');
+            homeRows();
             build();
             mountSearch();
             prevFocus = document.activeElement;
@@ -3803,6 +3839,7 @@ class MainActivity : Activity() {
               nhTries++;
               if (rememberNewHref() || nhTries > 40) clearInterval(nhTimer);
             }, 1000);
+            setTimeout(function() { homeRows(); }, 2500);
             // once the page has been translated, read the rows again to learn the other language's names
             setTimeout(rememberNewHref, 8000);
             setTimeout(rememberNewHref, 16000);

@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.124
+- Home list: any row name still in Japanese after the known names are applied is now translated to English once (one short translation request per new name, then remembered), so new or unusual rows no longer stay Japanese. The first time a new row appears it may take a few seconds to turn English.
+
 ## 1.3.123
 - Language switch menu reopening made sturdier: it keeps trying for a few seconds, covers a page that reloads or rebuilds itself while translating, and stops once the menu is closed.
 
