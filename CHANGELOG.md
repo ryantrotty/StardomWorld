@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.6 (experiment)
+- The player itself gets keyboard focus when a video page opens, as in the early versions, to see whether that makes the video start without the player reload and brings back resuming where you left off. Focus moves to the button bar once the picture is moving (or after 6 seconds), so the remote works as before.
+- The player reload is now only a last resort (20 s and 40 s at 0:00); Play is still requested at 1.5 s and 10 s.
+
 ## 2.0.5
 - First video of a page sat on the spinner for about 15 seconds: in the recording the picture only appeared after the player was loaded again. The app now loads the player again after 5 seconds if it is still at 0:00 (Play is still requested at 1.5 s), and once more at 16 seconds if needed. A video that has played, or that you paused, is left alone.
 

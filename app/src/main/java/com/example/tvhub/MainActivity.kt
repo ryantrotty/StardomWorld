@@ -3051,9 +3051,8 @@ class MainActivity : Activity() {
             return true;
           };
 
-          // Get the video going quickly. On the TV the first load often sits on the spinner and only a fresh load of the
-          // player starts it, so: Play at 1.5 s, load the player again at 5 s if still at 0:00, Play at 9 s, load it again
-          // at 16 s (at most twice per page), Play at 30 s. Once it has played, pausing and seeking are left alone.
+          // Experiment (player focused on load): Play at 1.5 s, Play at 10 s, and only then, as a last resort, load the
+          // player again at 20 s and 40 s if still at 0:00, Play at 60 s. Once it has played, pausing and seeking are left alone.
           (function() {
             var born = Date.now(), step = 0;
             setInterval(function() {
@@ -3061,10 +3060,10 @@ class MainActivity : Activity() {
               if (tvTime > 0.5) return;
               var t = (Date.now() - born) / 1000;
               if (t > 1.5 && step < 1) { step = 1; try { window.__tvPlayerCmd('play'); } catch (e1) {} }
-              else if (t > 5 && step < 2) { step = 2; try { window.__tvReloadPlayer(); } catch (e2) {} }
-              else if (t > 9 && step < 3) { step = 3; try { window.__tvPlayerCmd('play'); } catch (e3) {} }
-              else if (t > 16 && step < 4) { step = 4; try { window.__tvReloadPlayer(); } catch (e4) {} }
-              else if (t > 30 && step < 5) { step = 5; try { window.__tvPlayerCmd('play'); } catch (e5) {} }
+              else if (t > 10 && step < 2) { step = 2; try { window.__tvPlayerCmd('play'); } catch (e2) {} }
+              else if (t > 20 && step < 3) { step = 3; try { window.__tvReloadPlayer(); } catch (e3) {} }
+              else if (t > 40 && step < 4) { step = 4; try { window.__tvReloadPlayer(); } catch (e4) {} }
+              else if (t > 60 && step < 5) { step = 5; try { window.__tvPlayerCmd('play'); } catch (e5) {} }
             }, 500);
           })();
 
@@ -4612,16 +4611,32 @@ class MainActivity : Activity() {
             }
           }, true);
 
-          var tries = 0, focused = false;
+          var tries = 0, focused = false, holdStart = 0, handed = false;
           var timer = setInterval(function() {
             tries++;
             if (!bar) { build(); }
             else {
               fit();
+              // Experiment: the player itself gets focus when the page opens (as in the early versions), and
+              // focus moves on to the button bar once the picture is moving (or after 6 seconds).
+              var pf0 = document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]');
               if (!focused) {
                 focused = true;
                 var ae = document.activeElement;
-                if (!ae || ae === document.body || ae.tagName === 'IFRAME') window.__tvFocusBar('play');
+                if (pf0 && (!ae || ae === document.body || ae.tagName === 'IFRAME')) {
+                  try { pf0.focus(); } catch (e0) {}
+                  holdStart = Date.now();
+                } else if (!ae || ae === document.body || ae.tagName === 'IFRAME') {
+                  window.__tvFocusBar('play');
+                }
+              }
+              if (holdStart && !handed) {
+                var secs = 0;
+                try { secs = parseFloat(String(window.__tvPlayState ? window.__tvPlayState() : '0').split('|')[0]) || 0; } catch (e1) {}
+                var ae2 = document.activeElement;
+                var elsewhere = ae2 && ae2 !== document.body && ae2.tagName !== 'IFRAME' && !(ae2.closest && ae2.closest('#tv-pbar'));
+                if (elsewhere) { handed = true; }
+                else if (secs > 0.5 || Date.now() - holdStart > 6000) { handed = true; window.__tvFocusBar('play'); }
               }
             }
             if (tries > 120) clearInterval(timer);
