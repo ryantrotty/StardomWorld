@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.131
+- Fixed: the login page styling in 1.3.130 also ran on the Home page (which has a hidden login form), bringing the site's old header back and adding the sparkles and status line. It now only runs on the login page.
+
 ## 1.3.130
 - Log in page: the look is now also set directly on each element, because the site's own rules were out-ranking the style sheet. It re-applies as the page settles and when the focus moves. The site's top bar (categories, search, log in, language) is hidden on this page, and boxes around the form lose their frames. The two helper links stay. The grey status line at the bottom now also shows the scale values.
 

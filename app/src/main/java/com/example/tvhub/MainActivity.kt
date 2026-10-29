@@ -711,10 +711,10 @@ class MainActivity : Activity() {
 
     private val LOGIN_PAGE_JS_BODY = """
         (function() {
-          // The login form may be drawn a moment after the page loads (or sit at another address), so
-          // this looks for it by its password field and tries again for about ten seconds.
+          // Only the login page (address starts with /login) is touched. The form may be drawn a moment after
+          // the page loads, so this tries again for about ten seconds.
           var attempts = 0;
-          function isLogin() { return location.pathname.indexOf('/login') === 0 || !!document.querySelector('input[type=password]'); }
+          function isLogin() { return location.pathname.indexOf('/login') === 0; }
           function attempt() {
             attempts++;
             var done = !!document.getElementById('tv-login-style') && !!document.querySelector('.tv-continue');
@@ -896,6 +896,7 @@ class MainActivity : Activity() {
               for (var k in props) { try { el.style.setProperty(k, props[k], 'important'); } catch (e3) {} }
             }
             function restyle() {
+              if (!isLogin()) return;
               try {
                 var fm = scope();
                 var active = document.activeElement;
