@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.7
+- When the player has to be loaded again, it now keeps your place: the video that had resumed where you left off (for example at 5:00) used to jump back to 0:00 after the reload. The app reads the position first, then starts the new load at that time.
+
 ## 2.0.5
 - First video of a page sat on the spinner for about 15 seconds: in the recording the picture only appeared after the player was loaded again. The app now loads the player again after 5 seconds if it is still at 0:00 (Play is still requested at 1.5 s), and once more at 16 seconds if needed. A video that has played, or that you paused, is left alone.
 

@@ -3037,17 +3037,45 @@ class MainActivity : Activity() {
             }
             return 't=' + tvTime.toFixed(1) + ' paused=' + (tvPaused ? 1 : 0) + ' ev=' + lastEv + '/' + Math.round((Date.now() - lastEvAt) / 1000) + 's ae=' + a + ' ' + location.pathname;
           };
-          // A video that never started in full screen: load the player again (once per page).
+          // A video that is stuck at the start: load the player again (at most twice per page), keeping the place
+          // it was at, so a video that resumed where you left off does not start from 0:00.
           window.__tvReloadPlayer = function() {
             var f = playerFrame();
             if (!f || (window.__tvReloaded || 0) >= 2) return false;
             window.__tvReloaded = (window.__tvReloaded || 0) + 1;
+            var done = false;
+            function go(sec) {
+              if (done) return;
+              done = true;
+              try {
+                var base = f.src.split('#')[0];
+                var keep = sec > 2 ? Math.floor(sec) : 0;
+                f.src = 'about:blank';
+                setTimeout(function() {
+                  f.src = base + (keep ? '#t=' + keep + 's' : '');
+                  f.__tvPlayer = null;
+                  if (keep && typeof Vimeo !== 'undefined' && Vimeo.Player) {
+                    setTimeout(function() {
+                      try {
+                        var np = f.__tvPlayer = new Vimeo.Player(f);
+                        np.ready().then(function() {
+                          return np.getCurrentTime().then(function(cur) {
+                            if (cur < keep - 5) return np.setCurrentTime(keep);
+                          });
+                        }).then(function() { return np.play(); }).catch(function() {});
+                      } catch (e5) {}
+                    }, 1200);
+                  }
+                }, 300);
+              } catch (err3) {}
+              setTimeout(function() { if (window.__tvFocusBar) window.__tvFocusBar('play'); }, 1800);
+            }
             try {
-              var src = f.src;
-              f.src = 'about:blank';
-              setTimeout(function() { f.src = src; }, 300);
-            } catch (err3) {}
-            setTimeout(function() { if (window.__tvFocusBar) window.__tvFocusBar('play'); }, 1800);
+              var p0 = null;
+              if (typeof Vimeo !== 'undefined' && Vimeo.Player) p0 = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f));
+              if (p0) p0.getCurrentTime().then(go).catch(function() { go(0); });
+              setTimeout(function() { go(tvTime); }, p0 ? 900 : 0);
+            } catch (err4) { go(tvTime); }
             return true;
           };
 
