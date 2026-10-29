@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.135
+- Cookie card: the grey "Choose one to continue" line (which showed with a light highlight) is gone, and text on the card can no longer be selected.
+- After the cookie banner is answered, anything of it still stuck to the bottom edge of the screen (an empty strip or bar) is put away.
+
 ## 1.3.134
 - Cookie banner: when the site shows its cookie banner (found by its Allow / Deny buttons, on any page), a large card in the new look appears above it with the same two choices, Deny and Allow all, with Deny selected. Left/Right switches, OK answers. Pressing a button presses the site's own button, so the answer is the site's real answer. If no banner appears, nothing is shown.
 - Log in page: the logo drawn over the top is gone, and so is the grey status line at the bottom.

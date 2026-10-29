@@ -1013,11 +1013,27 @@ class MainActivity : Activity() {
             }
             return null;
           }
+          // Once the banner has been answered, anything of its that is still stuck to the bottom edge
+          // (an empty strip, a leftover bar) is put away.
+          function tidy() {
+            try {
+              var all = document.querySelectorAll('[id*=ookie],[class*=ookie],[id*=onsent],[class*=onsent],[id*=Cybot],[class*=Cybot]');
+              for (var i = 0; i < all.length; i++) {
+                var e = all[i];
+                if (e.id === 'tv-ck-card' || e.id === 'tv-ck-back') continue;
+                var cs = getComputedStyle(e);
+                if (cs.position !== 'fixed') continue;
+                var r = e.getBoundingClientRect();
+                if (r.height > 0 && r.bottom >= window.innerHeight - 3 && r.height < window.innerHeight * 0.4) e.style.setProperty('display', 'none', 'important');
+              }
+            } catch (e1) {}
+          }
           var shown = false, tries = 0, prev = null;
           function close() {
             var c = document.getElementById('tv-ck-card'), b = document.getElementById('tv-ck-back');
             if (c) c.remove();
             if (b) b.remove();
+            tidy();
             window.removeEventListener('keydown', onKey, true);
             try { if (prev && document.contains(prev)) prev.focus({ preventScroll: true }); } catch (e) {}
           }
@@ -1049,7 +1065,7 @@ class MainActivity : Activity() {
             back.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:2147483646;';
             var card = document.createElement('div');
             card.id = 'tv-ck-card';
-            card.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:' + f(720) + ';max-width:92vw;box-sizing:border-box;padding:' + f(36) + ' ' + f(40) + ';background:#000;border:' + f(5) + ' solid #fff;border-radius:' + f(32) + ';text-align:center;z-index:2147483647;font-family:Roboto,Arial,sans-serif;';
+            card.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:' + f(720) + ';max-width:92vw;box-sizing:border-box;padding:' + f(36) + ' ' + f(40) + ';background:#000;border:' + f(5) + ' solid #fff;border-radius:' + f(32) + ';text-align:center;z-index:2147483647;font-family:Roboto,Arial,sans-serif;-webkit-user-select:none;user-select:none;';
             var jp = document.createElement('div');
             jp.setAttribute('translate', 'no'); jp.className = 'notranslate';
             jp.style.cssText = 'color:' + gold + ';font-size:' + f(48) + ';font-weight:900;line-height:1.1;';
@@ -1057,9 +1073,6 @@ class MainActivity : Activity() {
             var en = document.createElement('div');
             en.style.cssText = 'color:#fff;font-size:' + f(24) + ';font-weight:900;margin-top:' + f(6) + ';';
             en.textContent = JA ? 'このサイトはクッキーを使います' : 'This site uses cookies';
-            var sub = document.createElement('div');
-            sub.style.cssText = 'color:#ccc;font-size:' + f(16) + ';margin-top:' + f(10) + ';';
-            sub.textContent = JA ? '選んで続けてください。あとで変えることもできます。' : 'Choose one to continue. You can change it later.';
             var row = document.createElement('div');
             row.style.cssText = 'display:flex;gap:' + f(20) + ';justify-content:center;margin-top:' + f(26) + ';padding:' + f(8) + ';';
             btns = [];
@@ -1073,7 +1086,7 @@ class MainActivity : Activity() {
             }
             if (denyBtn) mk(JA ? '拒否' : 'Deny', denyBtn);
             if (allowBtn) mk(JA ? 'すべて許可' : 'Allow all', allowBtn);
-            card.appendChild(jp); card.appendChild(en); card.appendChild(sub); card.appendChild(row);
+            card.appendChild(jp); card.appendChild(en); card.appendChild(row);
             document.body.appendChild(back);
             document.body.appendChild(card);
             window.addEventListener('keydown', onKey, true);
