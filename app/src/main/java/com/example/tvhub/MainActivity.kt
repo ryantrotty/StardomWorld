@@ -4550,7 +4550,9 @@ class MainActivity : Activity() {
           // arrow keys only scroll. This puts it back on the bar, or on the first related video for Down.
           window.__tvRecoverFocus = function(toCard) {
             var ae = document.activeElement;
-            var lost = !ae || ae === document.body || ae === document.documentElement || !document.contains(ae);
+            // Lost = nowhere, or on something that is not a button/link/field (a plain DIV can grab focus on set pages).
+            var lost = !ae || ae === document.body || ae === document.documentElement || !document.contains(ae) ||
+              !(ae.matches && ae.matches('a, button, input, select, textarea, [role="button"]'));
             if (!lost) return false;
             if (toCard) {
               var c = firstCard();

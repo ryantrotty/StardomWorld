@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.3
+- On some video pages the remote could not get back up to the player buttons because keyboard focus had landed on a plain page block. An arrow key now treats that as lost focus: Up/Left/Right go to the player bar, Down goes to the first video in the row.
+
 ## 2.0.2
 - A video that never starts on a page (spinner forever, before full screen): after 8 seconds the app asks the player to play, after 18 seconds it loads the player again (once), after 40 seconds it asks once more. Videos that have played, or that you paused, are left alone.
 - Down from the player bar now finds the video row on set pages too (it only looked for one kind of card before), and ignores anything above the bar.
