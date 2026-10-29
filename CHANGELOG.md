@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.127
+- First-run guide: the language-switch screen now comes right after the menu screen (4 of 7), with the text "Language switch at bottom of the menu." The full-screen screen is last and reads "In full screen press down for controls." then "Left/Right to skip. Back to exit." on two lines (the caption box is a little wider so the text stays full size).
+- Log in page: closer to the mock-up using styling only, no change to the form itself: dotted background, sparkles, bilingual field labels (EMAIL ・ メール, PASSWORD ・ パスワード), a yellow glow around the selected Log in button, and the site's own boxes made transparent.
+
 ## 1.3.126
 - First-run guide redesigned in a bold poster style: black background, a Japanese headline with a short English line, one yellow caption, and a TV and remote drawn in a yellow frame (a wrestling match on the TV where it fits). Order is unchanged: language screen first, then seven guide screens.
 - Buttons are pills in the existing order, Skip to log in, Back, Next, with Next selected by default (yellow). The welcome screen has Skip to log in and Next; the last screen has Back and Log in. The splash logo stays where it is on the language and welcome screens.

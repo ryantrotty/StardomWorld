@@ -722,7 +722,11 @@ class MainActivity : Activity() {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background:#000 !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
+                'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
+                '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
+                '.tv-lbl::after{content:" ・ " attr(data-jp);text-transform:none;}' +
                 'header,.box-header,.nav-inner,.header,footer,.footer,.breadcrumb,.breadcrumbs,#header,#footer{display:none !important;}' +
                 'body{padding-top:' + TOP.toFixed(1) + 'px !important;}' +
                 'form{width:' + f(620) + ' !important;max-width:100% !important;margin:0 auto !important;}' +
@@ -730,7 +734,7 @@ class MainActivity : Activity() {
                 'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(16) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
                 'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2410 !important;border:' + f(6) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
                 'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:transparent !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(60) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
-                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ' !important;outline:none !important;}' +
                 'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
                 'p,li,span,div{font-size:' + f(18) + ';}' +
                 '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]{color:#FF7A66 !important;font-size:' + f(20) + ' !important;text-align:center !important;}' +
@@ -777,6 +781,20 @@ class MainActivity : Activity() {
               var fm = pw && pw.closest('form');
               if (fm) { if (fm.requestSubmit) fm.requestSubmit(); else fm.submit(); }
             }
+
+            // Bilingual field labels (display only: a CSS suffix on the site's own labels).
+            try {
+              var lbIns = inputs();
+              for (var li = 0; li < lbIns.length; li++) {
+                var inp = lbIns[li];
+                var lb = (inp.id && document.querySelector('label[for="' + inp.id + '"]')) || inp.closest('label') ||
+                  (inp.previousElementSibling && inp.previousElementSibling.tagName === 'LABEL' ? inp.previousElementSibling : null);
+                if (lb && !lb.classList.contains('tv-lbl')) {
+                  lb.classList.add('tv-lbl');
+                  lb.setAttribute('data-jp', inp.type === 'password' ? 'パスワード' : 'メール');
+                }
+              }
+            } catch (e1) {}
 
             // Title, hint and the "continue without logging in" button, added around the site's form.
             var pw0 = pwInput();
@@ -8309,16 +8327,16 @@ private class OnboardingView(
     private val onLanguage: (String) -> Unit
 ) : FrameLayout(context) {
 
-    private class Slide(val jp: String, val en: String, val capJp: String, val capEn: String)
+    private class Slide(val jp: String, val en: String, val capJp: String, val capEn: String, val art: Int)
 
     private val slides = listOf(
-        Slide("ようこそ。", "Welcome to Stardom World on TV", "リモコンの使い方をご紹介", "A quick tour of your remote."),
-        Slide("えらぼう。", "Move around", "矢印で移動 ・ OKで決定 ・ 戻るで前へ", "Arrows move. OK opens. Back returns."),
-        Slide("左を押そう。", "Press Left for the menu", "右でリストを開く ・ 左で戻る", "Right opens a list. Left steps back."),
-        Slide("お気に入り。", "Save a favorite", "動画で「オプション」ボタンを押す", "Press Options on a video. Sign-in needed."),
-        Slide("長押し。", "Hold OK for a pointer", "もう一度長押しで解除", "Hold again to turn it off."),
-        Slide("全画面。", "Full screen", "下でバー ・ 左右でスキップ", "Down: controls. Left/Right: skip. Back: exit."),
-        Slide("言語。", "English or 日本語", "メニュー下部のスイッチ", "Use the switch at the bottom of the menu.")
+        Slide("ようこそ。", "Welcome to Stardom World on TV", "リモコンの使い方をご紹介", "A quick tour of your remote.", 0),
+        Slide("えらぼう。", "Move around", "矢印で移動 ・ OKで決定 ・ 戻るで前へ", "Arrows move. OK opens. Back returns.", 1),
+        Slide("左を押そう。", "Press Left for the menu", "右でリストを開く ・ 左で戻る", "Right opens a list. Left steps back.", 2),
+        Slide("言語。", "English or 日本語", "メニュー下部で言語を切り替え", "Language switch at bottom of the menu.", 6),
+        Slide("お気に入り。", "Save a favorite", "動画で「オプション」ボタンを押す", "Press Options on a video. Sign-in needed.", 3),
+        Slide("長押し。", "Hold OK for a pointer", "もう一度長押しで解除", "Hold again to turn it off.", 4),
+        Slide("全画面。", "Full screen", "全画面で下を押すとバー ・ 左右でスキップ ・ 戻るで終了", "In full screen press down for controls.\nLeft/Right to skip. Back to exit.", 5)
     )
 
     private val yellow = 0xFFF7D117.toInt()
@@ -8389,7 +8407,9 @@ private class OnboardingView(
         tv.text = text
         var size = base * u
         tv.paint.textSize = size
-        while (tv.paint.measureText(text) > maxW * u && size > 12f * u) {
+        val lines = text.split("\n")
+        fun widest(): Float { var m = 0f; for (l in lines) m = maxOf(m, tv.paint.measureText(l)); return m }
+        while (widest() > maxW * u && size > 12f * u) {
             size -= 2f * u
             tv.paint.textSize = size
         }
@@ -8555,16 +8575,16 @@ private class OnboardingView(
             place(enView, 60f, 146f, px(470f), wrap)
             capJp.gravity = Gravity.START
             capEn.gravity = Gravity.START
-            fit(capJp, s.capJp, 25f, 396f)
-            fit(capEn, s.capEn, 21f, 396f)
-            place(pill, 60f, 350f, px(450f), wrap)
+            fit(capJp, s.capJp, 25f, 426f)
+            fit(capEn, s.capEn, 21f, 426f)
+            place(pill, 60f, 350f, px(480f), wrap)
             place(btnRow, 56f, 556f, wrap, wrap)
             btnRow.gravity = Gravity.CENTER_VERTICAL
             dots.visibility = View.VISIBLE
             place(dots, 66f, 648f, px(7 * 26f), px(24f))
             place(artWeb, 550f, 50f, px(700f), px(620f))
             artWeb.visibility = View.VISIBLE
-            val url = "file:///android_asset/guide/art_" + index + ".html"
+            val url = "file:///android_asset/guide/art_" + s.art + ".html"
             if (artWeb.tag != url) {
                 artWeb.tag = url
                 artWeb.loadUrl(url)
