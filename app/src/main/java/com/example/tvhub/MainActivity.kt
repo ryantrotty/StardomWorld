@@ -737,7 +737,7 @@ class MainActivity : Activity() {
               d.style.cssText = 'position:fixed;left:8px;bottom:6px;z-index:2147483647;font:12px monospace;color:#999;background:#000;padding:2px 6px;pointer-events:none;';
               document.body.appendChild(d);
             }
-            d.textContent = 'login-js ' + attempts + ' path=' + location.pathname + ' pw=' + (document.querySelector('input[type=password]') ? 1 : 0) +
+            d.textContent = 'login-js ' + attempts + ' path=' + location.pathname + ' pw=' + document.querySelectorAll('input[type=password]').length +
               ' style=' + (document.getElementById('tv-login-style') ? 1 : 0) + ' form=' + (document.querySelector('input[type=password]') && document.querySelector('input[type=password]').closest('form') ? 1 : 0) +
               ' title=' + (document.querySelector('.tv-login-title') ? 1 : 0) + ' cont=' + (document.querySelector('.tv-continue') ? 1 : 0) + ' lbl=' + document.querySelectorAll('.tv-lbl').length + ' U=' + U + ' top=' + TOP + ' w=' + window.innerWidth;
           }
@@ -772,7 +772,15 @@ class MainActivity : Activity() {
               document.head.appendChild(st);
             }
 
-            function pwInput() { return document.querySelector('input[type=password]'); }
+            var HDR_SEL = 'header, nav, [role=banner], [class*=header], [id*=header], [class*=Header], [id*=Header], [class*=navbar], [id*=navbar], [class*=gnav], [id*=gnav], [class*=menu], [id*=menu]';
+            // The site's top bar holds its own small login form, so the real one is the password field
+            // outside the top bar (the last one on the page if that cannot be told).
+            function pwInput() {
+              var all = [].slice.call(document.querySelectorAll('input[type=password]'));
+              var main = all.filter(function(e) { return !e.closest(HDR_SEL); });
+              var l = main.length ? main : all;
+              return l.length ? l[l.length - 1] : null;
+            }
             function scope() { var pw = pwInput(); return (pw && pw.closest('form')) || document; }
             function visible(e) { var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.disabled; }
             function inputs() {
@@ -830,7 +838,7 @@ class MainActivity : Activity() {
               var anchors = document.querySelectorAll('a');
               for (var ai = 0; ai < anchors.length; ai++) {
                 var at = (anchors[ai].textContent || '').toLowerCase();
-                if (/unable to log|register|ログイン(でき|できない)|新規|登録|アカウント/.test(at)) {
+                if (/unable to log|register|ログイン(でき|できない)|新規|登録|アカウント/.test(at) && !anchors[ai].closest(HDR_SEL)) {
                   anchors[ai].classList.add('tv-keep');
                   for (var el = anchors[ai]; el && el !== document.body; el = el.parentElement) {
                     if (getComputedStyle(el).display === 'none') el.style.setProperty('display', el.tagName === 'A' ? 'inline' : 'block', 'important');
@@ -913,7 +921,7 @@ class MainActivity : Activity() {
                 var hs = document.querySelectorAll('header, nav, [role=banner], [class*=header], [id*=header], [class*=Header], [id*=Header], [class*=navbar], [id*=navbar], [class*=gnav], [id*=gnav], [class*=menu], [id*=menu]');
                 for (var hi = 0; hi < hs.length; hi++) {
                   var he = hs[hi];
-                  if (he.contains(fm) || he.querySelector('input[type=password]') || he.classList.contains('tv-keep') || he.querySelector('.tv-keep') || he.id === 'tv-login-dbg') continue;
+                  if (he.contains(fm) || he.classList.contains('tv-keep') || he.querySelector('.tv-keep') || he.querySelector('.tv-login-title') || he.id === 'tv-login-dbg') continue;
                   if (/cookie|consent|privacy/i.test((he.id || '') + ' ' + (he.className && he.className.toString ? he.className.toString() : ''))) continue;
                   imp(he, { 'display': 'none' });
                 }

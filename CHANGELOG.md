@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.132
+- Log in page: the site's top bar holds its own small login form, and the styling was being applied to that one instead of the real form. It now picks the real form (the password field outside the top bar), and the top bar stays hidden. The top bar's "New registration" link is no longer brought back.
+
 ## 1.3.131
 - Fixed: the login page styling in 1.3.130 also ran on the Home page (which has a hidden login form), bringing the site's old header back and adding the sparkles and status line. It now only runs on the login page.
 
