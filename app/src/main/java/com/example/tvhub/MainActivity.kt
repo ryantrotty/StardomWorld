@@ -8488,6 +8488,8 @@ private class OnboardingView(
             t.includeFontPadding = false
         }
         jpView.setSingleLine(true)
+        capJp.setSingleLine(true)
+        capEn.setSingleLine(true)
         capJp.setTextColor(ink)
         capEn.setTextColor(ink)
         addView(jpView)

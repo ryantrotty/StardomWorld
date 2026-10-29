@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.129
+- Favorite guide picture: the toast with the heart now pops up over the video grid, not over a full-screen video.
+- Guide captions are always one line (the text shrinks to fit), so the full-screen text no longer changes between one and two lines, in English or Japanese.
+
 ## 1.3.128
 - First-run guide pictures are animated, like the pointer screen: Move around (the red focus box travels over the cards), Menu (the menu slides out, then the sub-menu flies out of it), Favorite (a toast pops up with the heart in it, replacing the heart over the video), Full screen (the video control bar slides up) and Language (the switch slides to the other side).
 - Full screen text is now "Down for controls. Left/Right skips. Back exits."
