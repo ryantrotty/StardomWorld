@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.130
+- Log in page: the look is now also set directly on each element, because the site's own rules were out-ranking the style sheet. It re-applies as the page settles and when the focus moves. The site's top bar (categories, search, log in, language) is hidden on this page, and boxes around the form lose their frames. The two helper links stay. The grey status line at the bottom now also shows the scale values.
+
 ## 1.3.129
 - Favorite guide picture: the toast with the heart now pops up over the video grid, not over a full-screen video.
 - Guide captions are always one line (the text shrinks to fit), so the full-screen text no longer changes between one and two lines, in English or Japanese.

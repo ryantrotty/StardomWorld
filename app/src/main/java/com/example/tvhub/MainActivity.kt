@@ -739,7 +739,7 @@ class MainActivity : Activity() {
             }
             d.textContent = 'login-js ' + attempts + ' path=' + location.pathname + ' pw=' + (document.querySelector('input[type=password]') ? 1 : 0) +
               ' style=' + (document.getElementById('tv-login-style') ? 1 : 0) + ' form=' + (document.querySelector('input[type=password]') && document.querySelector('input[type=password]').closest('form') ? 1 : 0) +
-              ' title=' + (document.querySelector('.tv-login-title') ? 1 : 0) + ' cont=' + (document.querySelector('.tv-continue') ? 1 : 0) + ' lbl=' + document.querySelectorAll('.tv-lbl').length;
+              ' title=' + (document.querySelector('.tv-login-title') ? 1 : 0) + ' cont=' + (document.querySelector('.tv-continue') ? 1 : 0) + ' lbl=' + document.querySelectorAll('.tv-lbl').length + ' U=' + U + ' top=' + TOP + ' w=' + window.innerWidth;
           }
           function run() {
           try {
@@ -887,6 +887,70 @@ class MainActivity : Activity() {
                   if (k >= 0 && k < ins.length - 1) ins[k + 1].focus(); else doSubmit();
                 }
               }, true);
+            }
+
+            // The site's own rules can out-rank a style sheet even with !important, so the look is also set
+            // directly on each element (an inline !important wins), and re-applied while the page settles
+            // and whenever the focus moves.
+            function imp(el, props) {
+              for (var k in props) { try { el.style.setProperty(k, props[k], 'important'); } catch (e3) {} }
+            }
+            function restyle() {
+              try {
+                var fm = scope();
+                var active = document.activeElement;
+                imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
+                imp(document.body, { 'background-color': 'transparent', 'background-image': 'none', 'color': '#fff', 'padding-top': TOP.toFixed(1) + 'px' });
+                // boxes around the form: no cards, no frames
+                if (fm && fm !== document) {
+                  for (var an = fm; an && an !== document.body && an !== document.documentElement; an = an.parentElement) {
+                    imp(an, { 'background': 'transparent', 'border': '0', 'box-shadow': 'none', 'filter': 'none', 'opacity': '1' });
+                  }
+                  imp(fm, { 'width': f(620), 'max-width': '100%', 'margin': '0 auto' });
+                }
+                // the site's top bar (categories, search, log in, language) is not wanted here
+                var hs = document.querySelectorAll('header, nav, [role=banner], [class*=header], [id*=header], [class*=Header], [id*=Header], [class*=navbar], [id*=navbar], [class*=gnav], [id*=gnav], [class*=menu], [id*=menu]');
+                for (var hi = 0; hi < hs.length; hi++) {
+                  var he = hs[hi];
+                  if (he.contains(fm) || he.querySelector('input[type=password]') || he.classList.contains('tv-keep') || he.querySelector('.tv-keep') || he.id === 'tv-login-dbg') continue;
+                  if (/cookie|consent|privacy/i.test((he.id || '') + ' ' + (he.className && he.className.toString ? he.className.toString() : ''))) continue;
+                  imp(he, { 'display': 'none' });
+                }
+                var ins = inputs();
+                for (var ii = 0; ii < ins.length; ii++) {
+                  var fo = ins[ii] === active;
+                  imp(ins[ii], {
+                    'display': 'block', 'height': f(64), 'font-size': f(24), 'padding': '0 ' + f(24), 'margin': f(12) + ' 0 0 0',
+                    'background': fo ? '#2A2410' : '#111', 'color': '#fff', 'border': (fo ? f(6) : f(4)) + ' solid ' + (fo ? gold : '#fff'),
+                    'border-radius': f(16), 'width': '100%', 'box-sizing': 'border-box', 'box-shadow': 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none', '-webkit-appearance': 'none'
+                  });
+                  var lb2 = (ins[ii].id && document.querySelector('label[for="' + ins[ii].id + '"]')) || ins[ii].closest('label') || (ins[ii].previousElementSibling && ins[ii].previousElementSibling.tagName === 'LABEL' ? ins[ii].previousElementSibling : null);
+                  if (lb2) imp(lb2, { 'color': gold, 'font-size': f(16), 'font-weight': '900', 'text-shadow': 'none' });
+                }
+                var bs = [].slice.call(fm.querySelectorAll('button, input[type=submit]')).concat([].slice.call(document.querySelectorAll('.tv-continue')));
+                for (var bi = 0; bi < bs.length; bi++) {
+                  if (!visible(bs[bi])) continue;
+                  var bf = bs[bi] === active;
+                  imp(bs[bi], {
+                    'display': 'block', 'width': f(620), 'max-width': '100%', 'height': f(60), 'margin': f(14) + ' auto 0 auto', 'font-size': f(20), 'font-weight': 'bold',
+                    'background': bf ? gold : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
+                    'box-shadow': bf ? '0 0 0 ' + f(5) + ' ' + gold : 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
+                  });
+                }
+                var jp = document.querySelector('.tv-login-jp');
+                if (jp) imp(jp, { 'display': 'block', 'color': gold, 'font-size': f(54), 'font-weight': '900', 'text-align': 'center', 'margin': '0', 'line-height': '1.05' });
+                var tt = document.querySelector('.tv-login-title');
+                if (tt) imp(tt, { 'display': 'block', 'color': '#fff', 'font-size': f(26), 'font-weight': '900', 'text-align': 'center', 'margin': f(4) + ' 0 ' + f(8) + ' 0' });
+                var kk = document.querySelectorAll('a.tv-keep');
+                for (var ki = 0; ki < kk.length; ki++) imp(kk[ki], { 'color': gold, 'font-size': f(18), 'display': 'inline-block', 'margin': f(12) + ' ' + f(14) + ' 0 ' + f(14), 'text-shadow': 'none' });
+              } catch (e4) { var d4 = document.getElementById('tv-login-dbg'); if (d4) d4.textContent = 'restyle error: ' + e4; }
+            }
+            restyle();
+            if (!window.__tvLoginRestyle) {
+              var rs = 0;
+              window.__tvLoginRestyle = setInterval(function() { rs++; restyle(); if (rs > 40) clearInterval(window.__tvLoginRestyle); }, 700);
+              document.addEventListener('focusin', restyle, true);
+              document.addEventListener('focusout', function() { setTimeout(restyle, 0); }, true);
             }
 
             // Tell the app the page is ready, and put the focus on the first field.
