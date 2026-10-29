@@ -2,6 +2,31 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.9
+- Same as 2.0.7 (video starts quickly, keeps your place, video row on set pages, focus recovery) with the temporary on-screen player line turned off.
+
+## 2.0.7
+- When the player has to be loaded again, it now keeps your place: the video that had resumed where you left off (for example at 5:00) used to jump back to 0:00 after the reload. The app reads the position first, then starts the new load at that time.
+
+## 2.0.5
+- First video of a page sat on the spinner for about 15 seconds: in the recording the picture only appeared after the player was loaded again. The app now loads the player again after 5 seconds if it is still at 0:00 (Play is still requested at 1.5 s), and once more at 16 seconds if needed. A video that has played, or that you paused, is left alone.
+
+## 2.0.4
+- Videos now get a Play request straight away (1.5 s and 4 s after the page opens, if still at 0:00) instead of waiting about 8 seconds; the player reload follows at 14 s. A video that has played, or that you paused, is left alone.
+- Pages of a video inside a set (the address contains /set/...) now get the same video row as the main page: same cards, one-by-one Left/Right, a View All tile at the end, and Up to the player. They were showing the site's own row before.
+
+## 2.0.3
+- On some video pages the remote could not get back up to the player buttons because keyboard focus had landed on a plain page block. An arrow key now treats that as lost focus: Up/Left/Right go to the player bar, Down goes to the first video in the row.
+
+## 2.0.2
+- A video that never starts on a page (spinner forever, before full screen): after 8 seconds the app asks the player to play, after 18 seconds it loads the player again (once), after 40 seconds it asks once more. Videos that have played, or that you paused, are left alone.
+- Down from the player bar now finds the video row on set pages too (it only looked for one kind of card before), and ignores anything above the bar.
+
+## 2.0.1
+- Video that never starts: the automatic switch to full screen now waits until the picture is really moving (a bare "play" signal can arrive while the video is still loading). If a video still sits at 0:00 in full screen, the app asks it to play after 10 seconds, and after 25 seconds leaves full screen and loads the player again (once).
+- After leaving full screen the remote could stop reaching the related videos (arrow keys only scrolled the page). The app now takes keyboard focus back to the page, and if focus is ever nowhere the arrow keys put it back: Down goes to the first related video, the others to the player's button bar.
+- Temporary: a small black line at the bottom-left of the screen shows the player's state (full screen, focus, last player signal, time) so a photo shows what happened if it goes wrong again. It stays on screen, including in full screen.
+
 ## 2.0.0
 - Release 2.0.0: Redesigned TV navigation with slide-out side menu, Factions and roster explorer, advanced match/event filters, universal TV player control bar with quality selector and 30s/60s seeking, poster-style onboarding guide, and restyled TV login page.
 

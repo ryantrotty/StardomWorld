@@ -2217,6 +2217,10 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customCallback = callback
+                fsEnteredAt = SystemClock.uptimeMillis()
+                fsStallAction = 0
+                handler.removeCallbacks(fsStallCheck)
+                handler.postDelayed(fsStallCheck, 10000)
                 // Fire TV: GONE collapses the page to 0x0, which shrinks the video layout; keep its size.
                 webView.visibility = if (isFireTv()) View.INVISIBLE else View.GONE
                 view.alpha = 0f
@@ -2250,6 +2254,7 @@ class MainActivity : Activity() {
             }
         }
 
+        startPlayerDebug()
         webView.loadUrl(START_URL)
     }
 
@@ -2803,7 +2808,8 @@ class MainActivity : Activity() {
           window.addEventListener('message', function(ev) {
             try {
               var data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
-              if (data && (data.event === 'play' || data.event === 'timeupdate')) {
+              // Only once the picture is really moving: a bare "play" can arrive while the video is still loading.
+              if (data && ((data.event === 'timeupdate' && data.data && data.data.seconds > 0.5) || data.event === 'playing')) {
                 scheduleFullScreenIn5Sec();
               }
             } catch(e) {}
@@ -3006,7 +3012,89 @@ class MainActivity : Activity() {
             post(f, { method: 'addEventListener', value: 'timeupdate' });
             post(f, { method: 'addEventListener', value: 'pause' });
             post(f, { method: 'addEventListener', value: 'play' });
+            post(f, { method: 'addEventListener', value: 'playing' });
+            post(f, { method: 'addEventListener', value: 'bufferstart' });
+            post(f, { method: 'addEventListener', value: 'bufferend' });
+            post(f, { method: 'addEventListener', value: 'error' });
           }, 2000);
+
+          // What the player last said, for the on-screen diagnostics and the stall check.
+          var lastEv = '-', lastEvAt = Date.now();
+          window.addEventListener('message', function(ev) {
+            try {
+              var d2 = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
+              if (d2 && d2.event && d2.event !== 'timeupdate') { lastEv = d2.event; lastEvAt = Date.now(); }
+            } catch (err2) {}
+          });
+          window.__tvPlayState = function() { return tvTime.toFixed(1) + '|' + (tvPaused ? 1 : 0); };
+          window.__tvDbg = function() {
+            var ae = document.activeElement;
+            var a = 'none';
+            if (ae) {
+              a = ae.tagName || '?';
+              var cn = ae.className && ae.className.toString ? String(ae.className).split(' ')[0] : '';
+              if (cn) a += '.' + cn;
+            }
+            return 't=' + tvTime.toFixed(1) + ' paused=' + (tvPaused ? 1 : 0) + ' ev=' + lastEv + '/' + Math.round((Date.now() - lastEvAt) / 1000) + 's ae=' + a + ' ' + location.pathname;
+          };
+          // A video that is stuck at the start: load the player again (at most twice per page), keeping the place
+          // it was at, so a video that resumed where you left off does not start from 0:00.
+          window.__tvReloadPlayer = function() {
+            var f = playerFrame();
+            if (!f || (window.__tvReloaded || 0) >= 2) return false;
+            window.__tvReloaded = (window.__tvReloaded || 0) + 1;
+            var done = false;
+            function go(sec) {
+              if (done) return;
+              done = true;
+              try {
+                var base = f.src.split('#')[0];
+                var keep = sec > 2 ? Math.floor(sec) : 0;
+                f.src = 'about:blank';
+                setTimeout(function() {
+                  f.src = base + (keep ? '#t=' + keep + 's' : '');
+                  f.__tvPlayer = null;
+                  if (keep && typeof Vimeo !== 'undefined' && Vimeo.Player) {
+                    setTimeout(function() {
+                      try {
+                        var np = f.__tvPlayer = new Vimeo.Player(f);
+                        np.ready().then(function() {
+                          return np.getCurrentTime().then(function(cur) {
+                            if (cur < keep - 5) return np.setCurrentTime(keep);
+                          });
+                        }).then(function() { return np.play(); }).catch(function() {});
+                      } catch (e5) {}
+                    }, 1200);
+                  }
+                }, 300);
+              } catch (err3) {}
+              setTimeout(function() { if (window.__tvFocusBar) window.__tvFocusBar('play'); }, 1800);
+            }
+            try {
+              var p0 = null;
+              if (typeof Vimeo !== 'undefined' && Vimeo.Player) p0 = f.__tvPlayer || (f.__tvPlayer = new Vimeo.Player(f));
+              if (p0) p0.getCurrentTime().then(go).catch(function() { go(0); });
+              setTimeout(function() { go(tvTime); }, p0 ? 900 : 0);
+            } catch (err4) { go(tvTime); }
+            return true;
+          };
+
+          // Get the video going quickly. On the TV the first load often sits on the spinner and only a fresh load of the
+          // player starts it, so: Play at 1.5 s, load the player again at 5 s if still at 0:00, Play at 9 s, load it again
+          // at 16 s (at most twice per page), Play at 30 s. Once it has played, pausing and seeking are left alone.
+          (function() {
+            var born = Date.now(), step = 0;
+            setInterval(function() {
+              if (document.hidden || !playerFrame()) return;
+              if (tvTime > 0.5) return;
+              var t = (Date.now() - born) / 1000;
+              if (t > 1.5 && step < 1) { step = 1; try { window.__tvPlayerCmd('play'); } catch (e1) {} }
+              else if (t > 5 && step < 2) { step = 2; try { window.__tvReloadPlayer(); } catch (e2) {} }
+              else if (t > 9 && step < 3) { step = 3; try { window.__tvPlayerCmd('play'); } catch (e3) {} }
+              else if (t > 16 && step < 4) { step = 4; try { window.__tvReloadPlayer(); } catch (e4) {} }
+              else if (t > 30 && step < 5) { step = 5; try { window.__tvPlayerCmd('play'); } catch (e5) {} }
+            }, 500);
+          })();
 
           // Quality list from the player: Auto first, then the resolutions from highest to lowest.
           window.__tvSortQualities = function(qs) {
@@ -3036,6 +3124,8 @@ class MainActivity : Activity() {
               } else {
                 post(f, { method: 'setCurrentTime', value: Math.max(0, tvTime + val) });
               }
+            } else if (cmd === 'play') {
+              if (p) { p.play().catch(function() {}); } else { post(f, { method: 'play' }); }
             } else if (cmd === 'toggle') {
               if (p) {
                 p.getPaused().then(function(paused) { return paused ? p.play() : p.pause(); }).catch(function() {});
@@ -3475,7 +3565,7 @@ class MainActivity : Activity() {
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
           function T(en, ja) { return isJa() ? ja : en; }
           function isHome() { return path0 === '/' || path0 === '/index.html' || path0 === ''; }
-          function isDetail() { return /^\/contents\/[0-9]+/.test(path0); }
+          function isDetail() { return /^\/(set\/[0-9]+\/)?contents\/[0-9]+/.test(path0); }
           function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
           function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
           function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -4152,7 +4242,7 @@ class MainActivity : Activity() {
     private val playerPageJs = """
         (function(){
           if (window.__tvPlayerPage) return;
-          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          if (!/^\/(set\/[0-9]+\/)?contents\/[0-9]+/.test(location.pathname)) return;
           window.__tvPlayerPage = true;
 
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -4242,7 +4332,7 @@ class MainActivity : Activity() {
     private val relatedRowJs = """
         (function(){
           if (window.__tvRelatedRows) return;
-          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          if (!/^\/(set\/[0-9]+\/)?contents\/[0-9]+/.test(location.pathname)) return;
           window.__tvRelatedRows = true;
 
           var st = document.createElement('style');
@@ -4474,9 +4564,43 @@ class MainActivity : Activity() {
             return true;
           };
 
+          // First visible video link below the bar: the related row on a video page, a set's row, or the grid.
           function firstCard() {
-            return document.querySelector('.tv-related-row a.tv-card, a.tv-thumbnail-link');
+            var barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+            var sels = ['.tv-related-row a.tv-card', 'a.tv-card', 'a.tv-thumbnail-link', '.content-list-item a[href]', 'a[href*="/contents/"]'];
+            for (var s = 0; s < sels.length; s++) {
+              var l = document.querySelectorAll(sels[s]);
+              for (var i = 0; i < l.length; i++) {
+                var q = l[i].getBoundingClientRect();
+                if (q.width > 0 && q.height > 0 && q.top >= barBottom - 5 && !l[i].closest('#tv-pbar')) return l[i];
+              }
+            }
+            return null;
           }
+
+          // Keyboard focus can end up nowhere (on the page itself) after leaving full screen, and then the
+          // arrow keys only scroll. This puts it back on the bar, or on the first related video for Down.
+          window.__tvRecoverFocus = function(toCard) {
+            var ae = document.activeElement;
+            // Lost = nowhere, or on something that is not a button/link/field (a plain DIV can grab focus on set pages).
+            var lost = !ae || ae === document.body || ae === document.documentElement || !document.contains(ae) ||
+              !(ae.matches && ae.matches('a, button, input, select, textarea, [role="button"]'));
+            if (!lost) return false;
+            if (toCard) {
+              var c = firstCard();
+              if (c) {
+                try { c.focus({ preventScroll: true }); } catch (x) { c.focus(); }
+                try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {}
+                return true;
+              }
+            }
+            return window.__tvFocusBar();
+          };
+          window.addEventListener('keydown', function(e) {
+            var k = e.keyCode;
+            if (k < 37 || k > 40 || menuOpen()) return;
+            if (window.__tvRecoverFocus(k === 40)) { e.preventDefault(); e.stopPropagation(); }
+          }, true);
 
           document.addEventListener('keydown', function(e) {
             if (menuOpen()) return;
@@ -7849,8 +7973,76 @@ class MainActivity : Activity() {
         handler.postDelayed({ customView?.setPadding(0, 0, 0, 0) }, 150L)
     }
 
+    // ---- Temporary on-screen player diagnostics (they stay on screen so they can be photographed) and a
+    // watchdog for a video that never starts after entering full screen.
+    private val DEBUG_PLAYER = false
+    private var dbgView: android.widget.TextView? = null
+    private var fsEnteredAt = 0L
+    private var fsStallAction = 0
+
+    private val dbgTick: Runnable = object : Runnable {
+        override fun run() {
+            val v = dbgView
+            if (v != null) {
+                webView.evaluateJavascript("(function(){return window.__tvDbg ? window.__tvDbg() : '';})()") { raw ->
+                    val page = if (raw == null || raw == "null") "" else raw.trim('"')
+                    val fsAge = if (customView != null) ((SystemClock.uptimeMillis() - fsEnteredAt) / 1000).toString() + "s" else "-"
+                    v.text = "fs=" + (if (customView != null) 1 else 0) + "(" + fsAge + ") pf=" + (if (playerFocused) 1 else 0) +
+                        " cur=" + (if (cursorMode) 1 else 0) + " ctl=" + (if (fsControlsMode) 1 else 0) + " " + page
+                    v.bringToFront()
+                }
+            }
+            handler.postDelayed(this, 700)
+        }
+    }
+
+    private fun startPlayerDebug() {
+        if (!DEBUG_PLAYER) return
+        val tv = android.widget.TextView(this)
+        tv.setTextColor(Color.WHITE)
+        tv.setBackgroundColor(0xCC000000.toInt())
+        tv.typeface = android.graphics.Typeface.MONOSPACE
+        tv.textSize = 11f
+        tv.setPadding(8, 2, 8, 2)
+        tv.isFocusable = false
+        tv.isClickable = false
+        dbgView = tv
+        root.addView(
+            tv,
+            FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM or Gravity.START)
+        )
+        handler.post(dbgTick)
+    }
+
+    // Full screen entered but the picture never starts moving: ask it to play after 10 s, and after
+    // 25 s leave full screen and load the player again (once), instead of spinning for ever.
+    private val fsStallCheck: Runnable = Runnable {
+        if (customView != null) {
+            webView.evaluateJavascript("(function(){return window.__tvPlayState ? window.__tvPlayState() : '';})()") { raw ->
+                val st = if (raw == null) "" else raw.trim('"')
+                val parts = st.split("|")
+                val secs = parts.getOrNull(0)?.toDoubleOrNull() ?: 0.0
+                if (customView != null && secs < 0.5) {
+                    val age = SystemClock.uptimeMillis() - fsEnteredAt
+                    if (age >= 25000 && fsStallAction == 1) {
+                        fsStallAction = 2
+                        hideCustomView()
+                        webView.evaluateJavascript("window.__tvReloadPlayer && window.__tvReloadPlayer()", null)
+                    } else {
+                        if (age >= 10000 && fsStallAction == 0) {
+                            fsStallAction = 1
+                            playerCommand("play", 0)
+                        }
+                        handler.postDelayed(fsStallCheck, 3000)
+                    }
+                }
+            }
+        }
+    }
+
     private fun hideCustomView() {
         val view = customView ?: return
+        handler.removeCallbacks(fsStallCheck)
         webView.visibility = View.VISIBLE
         root.removeView(view)
         customView = null
@@ -7866,7 +8058,11 @@ class MainActivity : Activity() {
         fsPulseRunning = false
         refreshCursorVisibility()
         playerCtrlPos = 0
+        webView.requestFocus()
         handler.postDelayed({ webView.evaluateJavascript("window.__tvFocusBar && window.__tvFocusBar('full')", null) }, 400)
+        for (delay in longArrayOf(900L, 2000L, 3500L)) {
+            handler.postDelayed({ webView.evaluateJavascript("window.__tvRecoverFocus && window.__tvRecoverFocus(false)", null) }, delay)
+        }
         for (delay in longArrayOf(250L, 900L, 1800L)) {
             handler.postDelayed({ webView.evaluateJavascript("window.__tvRefitPlayer && window.__tvRefitPlayer()", null) }, delay)
         }
