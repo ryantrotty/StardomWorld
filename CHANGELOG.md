@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.1
+- Video that never starts: the automatic switch to full screen now waits until the picture is really moving (a bare "play" signal can arrive while the video is still loading). If a video still sits at 0:00 in full screen, the app asks it to play after 10 seconds, and after 25 seconds leaves full screen and loads the player again (once).
+- After leaving full screen the remote could stop reaching the related videos (arrow keys only scrolled the page). The app now takes keyboard focus back to the page, and if focus is ever nowhere the arrow keys put it back: Down goes to the first related video, the others to the player's button bar.
+- Temporary: a small black line at the bottom-left of the screen shows the player's state (full screen, focus, last player signal, time) so a photo shows what happened if it goes wrong again. It stays on screen, including in full screen.
+
 ## 2.0.0
 - Release 2.0.0: Redesigned TV navigation with slide-out side menu, Factions and roster explorer, advanced match/event filters, universal TV player control bar with quality selector and 30s/60s seeking, poster-style onboarding guide, and restyled TV login page.
 

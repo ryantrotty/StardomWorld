@@ -2217,6 +2217,10 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customCallback = callback
+                fsEnteredAt = SystemClock.uptimeMillis()
+                fsStallAction = 0
+                handler.removeCallbacks(fsStallCheck)
+                handler.postDelayed(fsStallCheck, 10000)
                 // Fire TV: GONE collapses the page to 0x0, which shrinks the video layout; keep its size.
                 webView.visibility = if (isFireTv()) View.INVISIBLE else View.GONE
                 view.alpha = 0f
@@ -2250,6 +2254,7 @@ class MainActivity : Activity() {
             }
         }
 
+        startPlayerDebug()
         webView.loadUrl(START_URL)
     }
 
@@ -2803,7 +2808,8 @@ class MainActivity : Activity() {
           window.addEventListener('message', function(ev) {
             try {
               var data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
-              if (data && (data.event === 'play' || data.event === 'timeupdate')) {
+              // Only once the picture is really moving: a bare "play" can arrive while the video is still loading.
+              if (data && ((data.event === 'timeupdate' && data.data && data.data.seconds > 0.5) || data.event === 'playing')) {
                 scheduleFullScreenIn5Sec();
               }
             } catch(e) {}
@@ -3006,7 +3012,44 @@ class MainActivity : Activity() {
             post(f, { method: 'addEventListener', value: 'timeupdate' });
             post(f, { method: 'addEventListener', value: 'pause' });
             post(f, { method: 'addEventListener', value: 'play' });
+            post(f, { method: 'addEventListener', value: 'playing' });
+            post(f, { method: 'addEventListener', value: 'bufferstart' });
+            post(f, { method: 'addEventListener', value: 'bufferend' });
+            post(f, { method: 'addEventListener', value: 'error' });
           }, 2000);
+
+          // What the player last said, for the on-screen diagnostics and the stall check.
+          var lastEv = '-', lastEvAt = Date.now();
+          window.addEventListener('message', function(ev) {
+            try {
+              var d2 = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
+              if (d2 && d2.event && d2.event !== 'timeupdate') { lastEv = d2.event; lastEvAt = Date.now(); }
+            } catch (err2) {}
+          });
+          window.__tvPlayState = function() { return tvTime.toFixed(1) + '|' + (tvPaused ? 1 : 0); };
+          window.__tvDbg = function() {
+            var ae = document.activeElement;
+            var a = 'none';
+            if (ae) {
+              a = ae.tagName || '?';
+              var cn = ae.className && ae.className.toString ? String(ae.className).split(' ')[0] : '';
+              if (cn) a += '.' + cn;
+            }
+            return 't=' + tvTime.toFixed(1) + ' paused=' + (tvPaused ? 1 : 0) + ' ev=' + lastEv + '/' + Math.round((Date.now() - lastEvAt) / 1000) + 's ae=' + a + ' ' + location.pathname;
+          };
+          // A video that never started in full screen: load the player again (once per page).
+          window.__tvReloadPlayer = function() {
+            var f = playerFrame();
+            if (!f || window.__tvReloaded) return false;
+            window.__tvReloaded = true;
+            try {
+              var src = f.src;
+              f.src = 'about:blank';
+              setTimeout(function() { f.src = src; }, 300);
+            } catch (err3) {}
+            setTimeout(function() { if (window.__tvFocusBar) window.__tvFocusBar('play'); }, 1800);
+            return true;
+          };
 
           // Quality list from the player: Auto first, then the resolutions from highest to lowest.
           window.__tvSortQualities = function(qs) {
@@ -3036,6 +3079,8 @@ class MainActivity : Activity() {
               } else {
                 post(f, { method: 'setCurrentTime', value: Math.max(0, tvTime + val) });
               }
+            } else if (cmd === 'play') {
+              if (p) { p.play().catch(function() {}); } else { post(f, { method: 'play' }); }
             } else if (cmd === 'toggle') {
               if (p) {
                 p.getPaused().then(function(paused) { return paused ? p.play() : p.pause(); }).catch(function() {});
@@ -4477,6 +4522,28 @@ class MainActivity : Activity() {
           function firstCard() {
             return document.querySelector('.tv-related-row a.tv-card, a.tv-thumbnail-link');
           }
+
+          // Keyboard focus can end up nowhere (on the page itself) after leaving full screen, and then the
+          // arrow keys only scroll. This puts it back on the bar, or on the first related video for Down.
+          window.__tvRecoverFocus = function(toCard) {
+            var ae = document.activeElement;
+            var lost = !ae || ae === document.body || ae === document.documentElement || !document.contains(ae);
+            if (!lost) return false;
+            if (toCard) {
+              var c = firstCard();
+              if (c) {
+                try { c.focus({ preventScroll: true }); } catch (x) { c.focus(); }
+                try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {}
+                return true;
+              }
+            }
+            return window.__tvFocusBar();
+          };
+          window.addEventListener('keydown', function(e) {
+            var k = e.keyCode;
+            if (k < 37 || k > 40 || menuOpen()) return;
+            if (window.__tvRecoverFocus(k === 40)) { e.preventDefault(); e.stopPropagation(); }
+          }, true);
 
           document.addEventListener('keydown', function(e) {
             if (menuOpen()) return;
@@ -7849,8 +7916,76 @@ class MainActivity : Activity() {
         handler.postDelayed({ customView?.setPadding(0, 0, 0, 0) }, 150L)
     }
 
+    // ---- Temporary on-screen player diagnostics (they stay on screen so they can be photographed) and a
+    // watchdog for a video that never starts after entering full screen.
+    private val DEBUG_PLAYER = true
+    private var dbgView: android.widget.TextView? = null
+    private var fsEnteredAt = 0L
+    private var fsStallAction = 0
+
+    private val dbgTick: Runnable = object : Runnable {
+        override fun run() {
+            val v = dbgView
+            if (v != null) {
+                webView.evaluateJavascript("(function(){return window.__tvDbg ? window.__tvDbg() : '';})()") { raw ->
+                    val page = if (raw == null || raw == "null") "" else raw.trim('"')
+                    val fsAge = if (customView != null) ((SystemClock.uptimeMillis() - fsEnteredAt) / 1000).toString() + "s" else "-"
+                    v.text = "fs=" + (if (customView != null) 1 else 0) + "(" + fsAge + ") pf=" + (if (playerFocused) 1 else 0) +
+                        " cur=" + (if (cursorMode) 1 else 0) + " ctl=" + (if (fsControlsMode) 1 else 0) + " " + page
+                    v.bringToFront()
+                }
+            }
+            handler.postDelayed(this, 700)
+        }
+    }
+
+    private fun startPlayerDebug() {
+        if (!DEBUG_PLAYER) return
+        val tv = android.widget.TextView(this)
+        tv.setTextColor(Color.WHITE)
+        tv.setBackgroundColor(0xCC000000.toInt())
+        tv.typeface = android.graphics.Typeface.MONOSPACE
+        tv.textSize = 11f
+        tv.setPadding(8, 2, 8, 2)
+        tv.isFocusable = false
+        tv.isClickable = false
+        dbgView = tv
+        root.addView(
+            tv,
+            FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM or Gravity.START)
+        )
+        handler.post(dbgTick)
+    }
+
+    // Full screen entered but the picture never starts moving: ask it to play after 10 s, and after
+    // 25 s leave full screen and load the player again (once), instead of spinning for ever.
+    private val fsStallCheck: Runnable = Runnable {
+        if (customView != null) {
+            webView.evaluateJavascript("(function(){return window.__tvPlayState ? window.__tvPlayState() : '';})()") { raw ->
+                val st = if (raw == null) "" else raw.trim('"')
+                val parts = st.split("|")
+                val secs = parts.getOrNull(0)?.toDoubleOrNull() ?: 0.0
+                if (customView != null && secs < 0.5) {
+                    val age = SystemClock.uptimeMillis() - fsEnteredAt
+                    if (age >= 25000 && fsStallAction == 1) {
+                        fsStallAction = 2
+                        hideCustomView()
+                        webView.evaluateJavascript("window.__tvReloadPlayer && window.__tvReloadPlayer()", null)
+                    } else {
+                        if (age >= 10000 && fsStallAction == 0) {
+                            fsStallAction = 1
+                            playerCommand("play", 0)
+                        }
+                        handler.postDelayed(fsStallCheck, 3000)
+                    }
+                }
+            }
+        }
+    }
+
     private fun hideCustomView() {
         val view = customView ?: return
+        handler.removeCallbacks(fsStallCheck)
         webView.visibility = View.VISIBLE
         root.removeView(view)
         customView = null
@@ -7866,7 +8001,11 @@ class MainActivity : Activity() {
         fsPulseRunning = false
         refreshCursorVisibility()
         playerCtrlPos = 0
+        webView.requestFocus()
         handler.postDelayed({ webView.evaluateJavascript("window.__tvFocusBar && window.__tvFocusBar('full')", null) }, 400)
+        for (delay in longArrayOf(900L, 2000L, 3500L)) {
+            handler.postDelayed({ webView.evaluateJavascript("window.__tvRecoverFocus && window.__tvRecoverFocus(false)", null) }, delay)
+        }
         for (delay in longArrayOf(250L, 900L, 1800L)) {
             handler.postDelayed({ webView.evaluateJavascript("window.__tvRefitPlayer && window.__tvRefitPlayer()", null) }, delay)
         }
