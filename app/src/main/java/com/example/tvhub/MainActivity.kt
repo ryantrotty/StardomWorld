@@ -727,20 +727,7 @@ class MainActivity : Activity() {
             }
             if (attempts < 20) setTimeout(attempt, 500);
           }
-          // Small status line kept on screen on the login page, so a photo shows what ran.
-          function debugNote() {
-            if (!isLogin()) return;
-            var d = document.getElementById('tv-login-dbg');
-            if (!d) {
-              d = document.createElement('div');
-              d.id = 'tv-login-dbg';
-              d.style.cssText = 'position:fixed;left:8px;bottom:6px;z-index:2147483647;font:12px monospace;color:#999;background:#000;padding:2px 6px;pointer-events:none;';
-              document.body.appendChild(d);
-            }
-            d.textContent = 'login-js ' + attempts + ' path=' + location.pathname + ' pw=' + document.querySelectorAll('input[type=password]').length +
-              ' style=' + (document.getElementById('tv-login-style') ? 1 : 0) + ' form=' + (document.querySelector('input[type=password]') && document.querySelector('input[type=password]').closest('form') ? 1 : 0) +
-              ' title=' + (document.querySelector('.tv-login-title') ? 1 : 0) + ' cont=' + (document.querySelector('.tv-continue') ? 1 : 0) + ' lbl=' + document.querySelectorAll('.tv-lbl').length + ' U=' + U + ' top=' + TOP + ' w=' + window.innerWidth;
-          }
+          function debugNote() { }
           function run() {
           try {
             var gold = '#F7D117';
@@ -974,7 +961,7 @@ class MainActivity : Activity() {
                   reported = true;
                   if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(true);
                 }
-                if (order().indexOf(document.activeElement) < 0) {
+                if (order().indexOf(document.activeElement) < 0 && !document.getElementById('tv-ck-card')) {
                   try { ins[0].focus({ preventScroll: true }); } catch (e) { ins[0].focus(); }
                   try { window.scrollTo(0, 0); } catch (e) {}
                 }
@@ -986,6 +973,128 @@ class MainActivity : Activity() {
           } catch (e) { var dd = document.getElementById('tv-login-dbg'); if (dd) dd.textContent = 'login-js error: ' + e; }
           }
           attempt();
+        })();
+    """
+
+
+    // The site's cookie banner is hard to reach with a remote. When one appears (found by its Allow /
+    // Deny buttons), a large card is shown above it with the same two choices; pressing one presses the
+    // site's own button, so the answer is the site's real answer. Nothing is shown if no banner appears.
+    private fun cookieBannerJs(): String {
+        val screenW = resources.displayMetrics.widthPixels.toFloat()
+        val cssPerPx = LAYOUT_WIDTH.toFloat() / screenW
+        val unit = density * cssPerPx
+        return "var U = " + unit + "; var JA = " + isJa + ";" + COOKIE_BANNER_JS_BODY
+    }
+
+    private val COOKIE_BANNER_JS_BODY = """
+        (function() {
+          if (window.__tvCookieWatch) return;
+          window.__tvCookieWatch = true;
+          var gold = '#F7D117';
+          function f(n) { return (n * U).toFixed(1) + 'px'; }
+          function vis(e) { if (!e || !e.getBoundingClientRect) return false; var r = e.getBoundingClientRect(); var cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; }
+          var ALLOW = /^(allow all|accept all|accept|allow|agree|i agree|ok|すべて許可|すべて同意|同意する|同意)$/i;
+          var DENY = /^(deny|reject all|reject|decline|refuse|拒否|すべて拒否)$/i;
+          function find(re) {
+            var els = document.querySelectorAll('button, a, [role=button], input[type=button], input[type=submit]');
+            for (var i = 0; i < els.length; i++) {
+              var t = ((els[i].textContent || els[i].value || '') + '').replace(/\s+/g, ' ').trim();
+              if (re.test(t) && vis(els[i]) && !els[i].closest('#tv-ck-card')) return els[i];
+            }
+            return null;
+          }
+          function holder(btn) {
+            var d = document.getElementById('CybotCookiebotDialog');
+            if (d && vis(d)) return d;
+            for (var e = btn, n = 0; e && e !== document.body && n < 10; e = e.parentElement, n++) {
+              var pos = getComputedStyle(e).position;
+              if ((pos === 'fixed' || pos === 'sticky' || pos === 'absolute') && /cookie|クッキー/i.test(e.textContent || '')) return e;
+            }
+            return null;
+          }
+          var shown = false, tries = 0, prev = null;
+          function close() {
+            var c = document.getElementById('tv-ck-card'), b = document.getElementById('tv-ck-back');
+            if (c) c.remove();
+            if (b) b.remove();
+            window.removeEventListener('keydown', onKey, true);
+            try { if (prev && document.contains(prev)) prev.focus({ preventScroll: true }); } catch (e) {}
+          }
+          function btnStyle(b, on) {
+            b.style.cssText = 'display:block;min-width:' + f(260) + ';height:' + f(56) + ';padding:0 ' + f(28) + ';font:900 ' + f(20) + ' Roboto,Arial,sans-serif;border-radius:' + f(60) + ';border:' + f(4) + ' solid #fff;outline:none;cursor:pointer;' +
+              (on ? 'background:' + gold + ';color:#111;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ';' : 'background:transparent;color:#fff;box-shadow:none;');
+          }
+          var btns = [];
+          function paint() { var a = document.activeElement; for (var i = 0; i < btns.length; i++) btnStyle(btns[i].el, btns[i].el === a); }
+          function onKey(e) {
+            var k = e.keyCode;
+            if (k === 37 || k === 39) {
+              e.preventDefault(); e.stopPropagation();
+              var i = 0; for (var j = 0; j < btns.length; j++) if (btns[j].el === document.activeElement) i = j;
+              var n = Math.max(0, Math.min(btns.length - 1, i + (k === 37 ? -1 : 1)));
+              btns[n].el.focus(); paint();
+            } else if (k === 38 || k === 40) {
+              e.preventDefault(); e.stopPropagation();
+            } else if (k === 13 || k === 23) {
+              e.preventDefault(); e.stopPropagation();
+              for (var q = 0; q < btns.length; q++) if (btns[q].el === document.activeElement) { btns[q].go(); break; }
+            }
+          }
+          function show(allowBtn, denyBtn, box) {
+            shown = true;
+            prev = document.activeElement;
+            var back = document.createElement('div');
+            back.id = 'tv-ck-back';
+            back.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:2147483646;';
+            var card = document.createElement('div');
+            card.id = 'tv-ck-card';
+            card.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:' + f(720) + ';max-width:92vw;box-sizing:border-box;padding:' + f(36) + ' ' + f(40) + ';background:#000;border:' + f(5) + ' solid #fff;border-radius:' + f(32) + ';text-align:center;z-index:2147483647;font-family:Roboto,Arial,sans-serif;';
+            var jp = document.createElement('div');
+            jp.setAttribute('translate', 'no'); jp.className = 'notranslate';
+            jp.style.cssText = 'color:' + gold + ';font-size:' + f(48) + ';font-weight:900;line-height:1.1;';
+            jp.textContent = 'クッキー。';
+            var en = document.createElement('div');
+            en.style.cssText = 'color:#fff;font-size:' + f(24) + ';font-weight:900;margin-top:' + f(6) + ';';
+            en.textContent = JA ? 'このサイトはクッキーを使います' : 'This site uses cookies';
+            var sub = document.createElement('div');
+            sub.style.cssText = 'color:#ccc;font-size:' + f(16) + ';margin-top:' + f(10) + ';';
+            sub.textContent = JA ? '選んで続けてください。あとで変えることもできます。' : 'Choose one to continue. You can change it later.';
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:' + f(20) + ';justify-content:center;margin-top:' + f(26) + ';padding:' + f(8) + ';';
+            btns = [];
+            function mk(label, target) {
+              var b = document.createElement('button');
+              b.type = 'button';
+              b.textContent = label;
+              b.addEventListener('click', function() { try { target.click(); } catch (e) {} setTimeout(finish, 2500); });
+              row.appendChild(b);
+              btns.push({ el: b, go: function() { b.click(); } });
+            }
+            if (denyBtn) mk(JA ? '拒否' : 'Deny', denyBtn);
+            if (allowBtn) mk(JA ? 'すべて許可' : 'Allow all', allowBtn);
+            card.appendChild(jp); card.appendChild(en); card.appendChild(sub); card.appendChild(row);
+            document.body.appendChild(back);
+            document.body.appendChild(card);
+            window.addEventListener('keydown', onKey, true);
+            btns[0].el.focus();
+            paint();
+            var watch = setInterval(function() {
+              if (!document.getElementById('tv-ck-card')) { clearInterval(watch); return; }
+              if (!document.contains(box) || !vis(box)) { clearInterval(watch); close(); }
+            }, 400);
+            function finish() { clearInterval(watch); close(); }
+          }
+          var timer = setInterval(function() {
+            tries++;
+            if (!shown) {
+              var allowBtn = find(ALLOW), denyBtn = find(DENY);
+              var anchor = denyBtn || allowBtn;
+              var box = anchor ? holder(anchor) : null;
+              if (box && (allowBtn || denyBtn)) show(allowBtn, denyBtn, box);
+            }
+            if (tries > 40 || shown) clearInterval(timer);
+          }, 500);
         })();
     """
 
@@ -2295,34 +2404,11 @@ class MainActivity : Activity() {
         }.start()
     }
 
-    // A small copy of the logo above the login page, in the same style as the guide.
+    // The login page no longer carries a logo above it (its own heading does that job).
     private var loginLogoView: ImageView? = null
 
     private fun showLoginLogo(show: Boolean) {
-        if (!show) {
-            loginLogoView?.visibility = View.GONE
-            return
-        }
-        var v = loginLogoView
-        if (v == null) {
-            v = ImageView(this).apply {
-                setImageResource(R.drawable.splash_logo)
-                adjustViewBounds = true
-                isFocusable = false
-            }
-            loginLogoView = v
-            root.addView(
-                v,
-                FrameLayout.LayoutParams(
-                    (resources.displayMetrics.widthPixels * LOGIN_LOGO_FRACTION).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                ).apply { topMargin = (resources.displayMetrics.heightPixels * 0.04f).toInt() }
-            )
-        }
-        v.visibility = View.VISIBLE
-        root.bringChildToFront(v)
-        if (::cursorView.isInitialized) root.bringChildToFront(cursorView)
+        loginLogoView?.visibility = View.GONE
     }
 
     // Signed in from the login page: the transition screen, then the main page (no second splash).
@@ -6712,6 +6798,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(headerJs, null)
         view.evaluateJavascript(authJs, null)
         view.evaluateJavascript(loginPageJs(), null)
+        view.evaluateJavascript(cookieBannerJs(), null)
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)

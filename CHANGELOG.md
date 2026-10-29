@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.134
+- Cookie banner: when the site shows its cookie banner (found by its Allow / Deny buttons, on any page), a large card in the new look appears above it with the same two choices, Deny and Allow all, with Deny selected. Left/Right switches, OK answers. Pressing a button presses the site's own button, so the answer is the site's real answer. If no banner appears, nothing is shown.
+- Log in page: the logo drawn over the top is gone, and so is the grey status line at the bottom.
+
 ## 1.3.133
 - Log in page: everything now fits on screen. The empty space at the top is gone, and the heading, fields, buttons and the two links are a little smaller and closer together.
 - The Japanese heading "ログイン。" is marked as not to be translated, so it no longer turns into "Log in." in English.
