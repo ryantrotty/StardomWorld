@@ -3051,6 +3051,19 @@ class MainActivity : Activity() {
             return true;
           };
 
+          // First video of a page that never starts (spinner for good): nudge Play, then load the player again.
+          (function() {
+            var born = Date.now(), nudged = 0;
+            setInterval(function() {
+              if (document.hidden || !playerFrame()) return;
+              if (tvTime > 0.5) return;   // it has played: leave pausing and seeking alone
+              var stuck = (Date.now() - born) / 1000;
+              if (stuck > 8 && nudged < 1) { nudged = 1; try { window.__tvPlayerCmd('play'); } catch (e1) {} }
+              else if (stuck > 18 && nudged < 2) { nudged = 2; try { window.__tvReloadPlayer(); } catch (e2) {} }
+              else if (stuck > 40 && nudged < 3) { nudged = 3; try { window.__tvPlayerCmd('play'); } catch (e3) {} }
+            }, 1500);
+          })();
+
           // Quality list from the player: Auto first, then the resolutions from highest to lowest.
           window.__tvSortQualities = function(qs) {
             qs = (qs || []).slice();
@@ -4519,8 +4532,18 @@ class MainActivity : Activity() {
             return true;
           };
 
+          // First visible video link below the bar: the related row on a video page, a set's row, or the grid.
           function firstCard() {
-            return document.querySelector('.tv-related-row a.tv-card, a.tv-thumbnail-link');
+            var barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+            var sels = ['.tv-related-row a.tv-card', 'a.tv-card', 'a.tv-thumbnail-link', '.content-list-item a[href]', 'a[href*="/contents/"]'];
+            for (var s = 0; s < sels.length; s++) {
+              var l = document.querySelectorAll(sels[s]);
+              for (var i = 0; i < l.length; i++) {
+                var q = l[i].getBoundingClientRect();
+                if (q.width > 0 && q.height > 0 && q.top >= barBottom - 5 && !l[i].closest('#tv-pbar')) return l[i];
+              }
+            }
+            return null;
           }
 
           // Keyboard focus can end up nowhere (on the page itself) after leaving full screen, and then the

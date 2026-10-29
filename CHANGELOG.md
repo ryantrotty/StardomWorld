@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.2
+- A video that never starts on a page (spinner forever, before full screen): after 8 seconds the app asks the player to play, after 18 seconds it loads the player again (once), after 40 seconds it asks once more. Videos that have played, or that you paused, are left alone.
+- Down from the player bar now finds the video row on set pages too (it only looked for one kind of card before), and ignores anything above the bar.
+
 ## 2.0.1
 - Video that never starts: the automatic switch to full screen now waits until the picture is really moving (a bare "play" signal can arrive while the video is still loading). If a video still sits at 0:00 in full screen, the app asks it to play after 10 seconds, and after 25 seconds leaves full screen and loads the player again (once).
 - After leaving full screen the remote could stop reaching the related videos (arrow keys only scrolled the page). The app now takes keyboard focus back to the page, and if focus is ever nowhere the arrow keys put it back: Down goes to the first related video, the others to the player's button bar.
