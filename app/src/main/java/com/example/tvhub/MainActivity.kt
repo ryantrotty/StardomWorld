@@ -107,6 +107,15 @@ class MainActivity : Activity() {
         // per row but smaller text.
         private const val LAYOUT_WIDTH = 1440
 
+        // The player control bar exists twice (a native overlay in full screen, an in-page bar under the player).
+        // Both are built from this one list, from barLabel() and from barAction() so they cannot drift apart.
+        private val BAR_IDS = listOf("play", "back", "fwd", "mute", "cc", "quality", "speed", "full")
+        // Not offered in the bar under the picture: the app draws its own EN / 日本語 captions in full screen only.
+        private val BAR_FULLSCREEN_ONLY = setOf("cc")
+        private const val BAR_ACCENT = "#FFB347"
+        private const val BAR_TEXT_ON_ACCENT = "#1A1A1A"
+        private const val BAR_RADIUS_DP = 10
+
         private const val SPLASH_MIN_MS = 20000L
         private const val SPLASH_MAX_MS = 25000L
         // The splash never finishes sooner than this, so the progress bar always visibly travels.
@@ -123,6 +132,8 @@ class MainActivity : Activity() {
         .content-thumbnail-box-inner {
             background-color: transparent !important;
         }
+        /* The top header lives in the left slide-out menu now. */
+        header, .box-header, .nav-inner, .header, #header { display: none !important; }
         html.tv-home .content-list, html.tv-home .box-section, html.tv-home .main-visual, html.tv-home .slider-inner,
         html.tv-home .box-main-visual, html.tv-home .container.box-main, html.tv-home .news-wrap {
             display: none !important;
@@ -436,6 +447,12 @@ class MainActivity : Activity() {
             font-weight: inherit !important;
             display: inline !important;
         }
+        /* Sort bar on listing pages: evenly spaced, centred, readable, with one clean arrow after each label. */
+        .box-sort { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 14px 30px !important; padding: 14px 0 18px 0 !important; }
+        .box-sort a, .box-sort a.btn { position: relative !important; display: inline-flex !important; align-items: center !important; gap: 10px !important; font-size: 23px !important; line-height: 1.2 !important; padding: 10px 6px 12px 6px !important; margin: 0 !important; background-image: none !important; white-space: nowrap !important; }
+        .box-sort a::before { content: none !important; display: none !important; }
+        .box-sort a::after { content: "\25BE" !important; display: inline-block !important; position: static !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; background: none !important; border: none !important; font-size: 20px !important; line-height: 1 !important; color: inherit !important; transform: none !important; }
+        .box-sort a i, .box-sort a svg, .box-sort a img, .box-sort a [class*="icon"], .box-sort a [class*="arrow"], .box-sort a [class^="fa"] { display: none !important; }
         /* Unified Sub-Page Video Card & Rounded Thumbnail Styling */
         .content-thumbnail, .content-thumbnail-box, .content-thumbnail-box-inner, .tile-inner {
             border-radius: 8px 8px 0 0 !important;
@@ -584,6 +601,9 @@ class MainActivity : Activity() {
     private var cursorMode = false
     // True while keyboard focus is inside the embedded video player iframe (set by playerNavJs)
     @Volatile private var playerFocused = false
+    // How many of the player's own buttons the focus has stepped past (0 = on the frame itself, 1 = Play).
+    // Left at Play is swallowed: going further back lands on hidden controls in the player's top corner.
+    @Volatile private var playerCtrlPos = 0
     private var okPending = false
     private val hideControlsRunnable = Runnable { hidePlayerControls() }
     private var okLongFired = false
@@ -598,6 +618,7 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
+    @Volatile private var sideMenuOpen = false   // the left slide-out menu is showing (set by the page)
     private var authPending = false
     private var loginStarting = false
     private var loginRevealing = false
@@ -690,35 +711,63 @@ class MainActivity : Activity() {
 
     private val LOGIN_PAGE_JS_BODY = """
         (function() {
-          try {
-            if (location.pathname.indexOf('/login') !== 0) {
+          // Only the login page (address starts with /login) is touched. The form may be drawn a moment after
+          // the page loads, so this tries again for about ten seconds.
+          var attempts = 0;
+          function isLogin() { return location.pathname.indexOf('/login') === 0; }
+          function attempt() {
+            attempts++;
+            var done = !!document.getElementById('tv-login-style') && !!document.querySelector('.tv-continue');
+            if (done) { debugNote(); return; }
+            if (isLogin()) {
+              run();
+              debugNote();
+            } else if (attempts === 1) {
               if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(false);
-              return;
             }
-            var gold = '#FFB347';
+            if (attempts < 20) setTimeout(attempt, 500);
+          }
+          function debugNote() { }
+          function run() {
+          try {
+            var gold = '#F7D117';
             function f(n) { return (n * U).toFixed(1) + 'px'; }
             if (!document.getElementById('tv-login-style')) {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background:#000 !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
+                'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
+                '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
+                '.tv-lbl::after{content:" ・ " attr(data-jp);text-transform:none;}' +
                 'header,.box-header,.nav-inner,.header,footer,.footer,.breadcrumb,.breadcrumbs,#header,#footer{display:none !important;}' +
                 'body{padding-top:' + TOP.toFixed(1) + 'px !important;}' +
                 'form{width:' + f(620) + ' !important;max-width:100% !important;margin:0 auto !important;}' +
                 'label{color:' + gold + ' !important;font-size:' + f(16) + ' !important;font-weight:bold !important;}' +
-                'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(2) + ' solid rgba(255,179,71,.4) !important;border-radius:' + f(12) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
-                'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2210 !important;border:' + f(5) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
-                'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:rgba(0,0,0,.2) !important;color:#fff !important;border:' + f(2) + ' solid ' + gold + ' !important;border-radius:' + f(12) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
-                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#1a1a1a !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
+                'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(16) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
+                'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2410 !important;border:' + f(6) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
+                'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:transparent !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(60) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ' !important;outline:none !important;}' +
                 'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
+                'a.tv-keep{display:inline-block !important;margin:' + f(12) + ' ' + f(14) + ' 0 ' + f(14) + ' !important;}' +
                 'p,li,span,div{font-size:' + f(18) + ';}' +
                 '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]{color:#FF7A66 !important;font-size:' + f(20) + ' !important;text-align:center !important;}' +
-                '.tv-login-title{color:' + gold + ';font-size:' + f(34) + ';font-weight:bold;text-align:center;margin:0 0 ' + f(8) + ' 0;}' +
-                '.tv-login-hint{color:#fff;font-size:' + f(22) + ';text-align:center;margin:0 0 ' + f(10) + ' 0;}';
+                '.tv-login-jp{color:' + gold + ';font-size:' + f(54) + ';font-weight:900;text-align:center;margin:0;line-height:1.05;}' +
+                '.tv-login-title{color:#fff;font-size:' + f(26) + ';font-weight:900;text-align:center;margin:' + f(4) + ' 0 ' + f(8) + ' 0;}' +
+                '.tv-login-hint{display:none !important;}';
               document.head.appendChild(st);
             }
 
-            function pwInput() { return document.querySelector('input[type=password]'); }
+            var HDR_SEL = 'header, nav, [role=banner], [class*=header], [id*=header], [class*=Header], [id*=Header], [class*=navbar], [id*=navbar], [class*=gnav], [id*=gnav], [class*=menu], [id*=menu]';
+            // The site's top bar holds its own small login form, so the real one is the password field
+            // outside the top bar (the last one on the page if that cannot be told).
+            function pwInput() {
+              var all = [].slice.call(document.querySelectorAll('input[type=password]'));
+              var main = all.filter(function(e) { return !e.closest(HDR_SEL); });
+              var l = main.length ? main : all;
+              return l.length ? l[l.length - 1] : null;
+            }
             function scope() { var pw = pwInput(); return (pw && pw.closest('form')) || document; }
             function visible(e) { var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.disabled; }
             function inputs() {
@@ -756,6 +805,35 @@ class MainActivity : Activity() {
               if (fm) { if (fm.requestSubmit) fm.requestSubmit(); else fm.submit(); }
             }
 
+            // Bilingual field labels (display only: a CSS suffix on the site's own labels).
+            try {
+              var lbIns = inputs();
+              for (var li = 0; li < lbIns.length; li++) {
+                var inp = lbIns[li];
+                var lb = (inp.id && document.querySelector('label[for="' + inp.id + '"]')) || inp.closest('label') ||
+                  (inp.previousElementSibling && inp.previousElementSibling.tagName === 'LABEL' ? inp.previousElementSibling : null);
+                if (lb && !lb.classList.contains('tv-lbl')) {
+                  lb.classList.add('tv-lbl');
+                  lb.setAttribute('data-jp', inp.type === 'password' ? 'パスワード' : 'メール');
+                }
+              }
+            } catch (e1) {}
+
+            // The site's two helper links under the form ("unable to log in", "Register here") stay: if any
+            // hiding rule above caught a box around them, that box is shown again.
+            try {
+              var anchors = document.querySelectorAll('a');
+              for (var ai = 0; ai < anchors.length; ai++) {
+                var at = (anchors[ai].textContent || '').toLowerCase();
+                if (/unable to log|register|ログイン(でき|できない)|新規|登録|アカウント/.test(at) && !anchors[ai].closest(HDR_SEL)) {
+                  anchors[ai].classList.add('tv-keep');
+                  for (var el = anchors[ai]; el && el !== document.body; el = el.parentElement) {
+                    if (getComputedStyle(el).display === 'none') el.style.setProperty('display', el.tagName === 'A' ? 'inline' : 'block', 'important');
+                  }
+                }
+              }
+            } catch (e2) {}
+
             // Title, hint and the "continue without logging in" button, added around the site's form.
             var pw0 = pwInput();
             var f0 = pw0 && pw0.closest('form');
@@ -767,6 +845,12 @@ class MainActivity : Activity() {
                 var hint = document.createElement('div');
                 hint.className = 'tv-login-hint';
                 hint.textContent = JA ? 'Stardom World のアカウントでログインするか、ログインせずに続けられます。' : 'Use your Stardom World account, or carry on without one.';
+                var jpt = document.createElement('div');
+                jpt.className = 'tv-login-jp';
+                jpt.setAttribute('translate', 'no');
+                jpt.classList.add('notranslate');
+                jpt.textContent = 'ログイン。';
+                f0.parentNode.insertBefore(jpt, f0);
                 f0.parentNode.insertBefore(ttl, f0);
                 f0.parentNode.insertBefore(hint, f0);
               }
@@ -783,7 +867,7 @@ class MainActivity : Activity() {
             if (!window.__tvLoginKeys) {
               window.__tvLoginKeys = true;
               document.addEventListener('keydown', function(e) {
-                if (location.pathname.indexOf('/login') !== 0) return;
+                if (!isLogin()) return;
                 var list = order();
                 var i = list.indexOf(document.activeElement);
                 if (i < 0) return;
@@ -802,6 +886,71 @@ class MainActivity : Activity() {
               }, true);
             }
 
+            // The site's own rules can out-rank a style sheet even with !important, so the look is also set
+            // directly on each element (an inline !important wins), and re-applied while the page settles
+            // and whenever the focus moves.
+            function imp(el, props) {
+              for (var k in props) { try { el.style.setProperty(k, props[k], 'important'); } catch (e3) {} }
+            }
+            function restyle() {
+              if (!isLogin()) return;
+              try {
+                var fm = scope();
+                var active = document.activeElement;
+                imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
+                imp(document.body, { 'background-color': 'transparent', 'background-image': 'none', 'color': '#fff', 'padding-top': f(14), 'margin': '0' });
+                // boxes around the form: no cards, no frames
+                if (fm && fm !== document) {
+                  for (var an = fm; an && an !== document.body && an !== document.documentElement; an = an.parentElement) {
+                    imp(an, { 'background': 'transparent', 'border': '0', 'box-shadow': 'none', 'filter': 'none', 'opacity': '1', 'padding-top': '0', 'margin-top': '0', 'min-height': '0' });
+                  }
+                  imp(fm, { 'width': f(620), 'max-width': '100%', 'margin': '0 auto' });
+                }
+                // the site's top bar (categories, search, log in, language) is not wanted here
+                var hs = document.querySelectorAll('header, nav, [role=banner], [class*=header], [id*=header], [class*=Header], [id*=Header], [class*=navbar], [id*=navbar], [class*=gnav], [id*=gnav], [class*=menu], [id*=menu]');
+                for (var hi = 0; hi < hs.length; hi++) {
+                  var he = hs[hi];
+                  if (he.contains(fm) || he.classList.contains('tv-keep') || he.querySelector('.tv-keep') || he.querySelector('.tv-login-title') || he.id === 'tv-login-dbg') continue;
+                  if (/cookie|consent|privacy/i.test((he.id || '') + ' ' + (he.className && he.className.toString ? he.className.toString() : ''))) continue;
+                  imp(he, { 'display': 'none' });
+                }
+                var ins = inputs();
+                for (var ii = 0; ii < ins.length; ii++) {
+                  var fo = ins[ii] === active;
+                  imp(ins[ii], {
+                    'display': 'block', 'height': f(52), 'font-size': f(22), 'padding': '0 ' + f(22), 'margin': f(6) + ' 0 0 0',
+                    'background': fo ? '#2A2410' : '#111', 'color': '#fff', 'border': (fo ? f(6) : f(4)) + ' solid ' + (fo ? gold : '#fff'),
+                    'border-radius': f(16), 'width': '100%', 'box-sizing': 'border-box', 'box-shadow': 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none', '-webkit-appearance': 'none'
+                  });
+                  var lb2 = (ins[ii].id && document.querySelector('label[for="' + ins[ii].id + '"]')) || ins[ii].closest('label') || (ins[ii].previousElementSibling && ins[ii].previousElementSibling.tagName === 'LABEL' ? ins[ii].previousElementSibling : null);
+                  if (lb2) imp(lb2, { 'color': gold, 'font-size': f(14), 'font-weight': '900', 'text-shadow': 'none', 'margin': f(8) + ' 0 0 0', 'padding': '0', 'line-height': '1.2', 'display': 'block' });
+                }
+                var bs = [].slice.call(fm.querySelectorAll('button, input[type=submit]')).concat([].slice.call(document.querySelectorAll('.tv-continue')));
+                for (var bi = 0; bi < bs.length; bi++) {
+                  if (!visible(bs[bi])) continue;
+                  var bf = bs[bi] === active;
+                  imp(bs[bi], {
+                    'display': 'block', 'width': f(620), 'max-width': '100%', 'height': f(48), 'margin': f(10) + ' auto 0 auto', 'padding': '0', 'font-size': f(18), 'font-weight': 'bold',
+                    'background': bf ? gold : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
+                    'box-shadow': bf ? '0 0 0 ' + f(5) + ' ' + gold : 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
+                  });
+                }
+                var jp = document.querySelector('.tv-login-jp');
+                if (jp) imp(jp, { 'display': 'block', 'color': gold, 'font-size': f(44), 'font-weight': '900', 'text-align': 'center', 'margin': '0', 'line-height': '1.05' });
+                var tt = document.querySelector('.tv-login-title');
+                if (tt) imp(tt, { 'display': 'block', 'color': '#fff', 'font-size': f(22), 'font-weight': '900', 'text-align': 'center', 'margin': f(2) + ' 0 ' + f(2) + ' 0' });
+                var kk = document.querySelectorAll('a.tv-keep');
+                for (var ki = 0; ki < kk.length; ki++) imp(kk[ki], { 'color': gold, 'font-size': f(16), 'display': 'inline-block', 'margin': f(8) + ' ' + f(12) + ' 0 ' + f(12), 'text-shadow': 'none' });
+              } catch (e4) { var d4 = document.getElementById('tv-login-dbg'); if (d4) d4.textContent = 'restyle error: ' + e4; }
+            }
+            restyle();
+            if (!window.__tvLoginRestyle) {
+              var rs = 0;
+              window.__tvLoginRestyle = setInterval(function() { rs++; restyle(); if (rs > 40) clearInterval(window.__tvLoginRestyle); }, 700);
+              document.addEventListener('focusin', restyle, true);
+              document.addEventListener('focusout', function() { setTimeout(restyle, 0); }, true);
+            }
+
             // Tell the app the page is ready, and put the focus on the first field.
             var tries = 0, reported = false;
             var timer = setInterval(function() {
@@ -812,7 +961,7 @@ class MainActivity : Activity() {
                   reported = true;
                   if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(true);
                 }
-                if (order().indexOf(document.activeElement) < 0) {
+                if (order().indexOf(document.activeElement) < 0 && !document.getElementById('tv-ck-card')) {
                   try { ins[0].focus({ preventScroll: true }); } catch (e) { ins[0].focus(); }
                   try { window.scrollTo(0, 0); } catch (e) {}
                 }
@@ -821,7 +970,144 @@ class MainActivity : Activity() {
                 clearInterval(timer);
               }
             }, 300);
-          } catch (e) {}
+          } catch (e) { var dd = document.getElementById('tv-login-dbg'); if (dd) dd.textContent = 'login-js error: ' + e; }
+          }
+          attempt();
+        })();
+    """
+
+
+    // The site's cookie banner is hard to reach with a remote. When one appears (found by its Allow /
+    // Deny buttons), a large card is shown above it with the same two choices; pressing one presses the
+    // site's own button, so the answer is the site's real answer. Nothing is shown if no banner appears.
+    private fun cookieBannerJs(): String {
+        val screenW = resources.displayMetrics.widthPixels.toFloat()
+        val cssPerPx = LAYOUT_WIDTH.toFloat() / screenW
+        val unit = density * cssPerPx
+        return "var U = " + unit + "; var JA = " + isJa + ";" + COOKIE_BANNER_JS_BODY
+    }
+
+    private val COOKIE_BANNER_JS_BODY = """
+        (function() {
+          if (window.__tvCookieWatch) return;
+          window.__tvCookieWatch = true;
+          var gold = '#F7D117';
+          function f(n) { return (n * U).toFixed(1) + 'px'; }
+          function vis(e) { if (!e || !e.getBoundingClientRect) return false; var r = e.getBoundingClientRect(); var cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; }
+          var ALLOW = /^(allow all|accept all|accept|allow|agree|i agree|ok|すべて許可|すべて同意|同意する|同意)$/i;
+          var DENY = /^(deny|reject all|reject|decline|refuse|拒否|すべて拒否)$/i;
+          function find(re) {
+            var els = document.querySelectorAll('button, a, [role=button], input[type=button], input[type=submit]');
+            for (var i = 0; i < els.length; i++) {
+              var t = ((els[i].textContent || els[i].value || '') + '').replace(/\s+/g, ' ').trim();
+              if (re.test(t) && vis(els[i]) && !els[i].closest('#tv-ck-card')) return els[i];
+            }
+            return null;
+          }
+          function holder(btn) {
+            var d = document.getElementById('CybotCookiebotDialog');
+            if (d && vis(d)) return d;
+            for (var e = btn, n = 0; e && e !== document.body && n < 10; e = e.parentElement, n++) {
+              var pos = getComputedStyle(e).position;
+              if ((pos === 'fixed' || pos === 'sticky' || pos === 'absolute') && /cookie|クッキー/i.test(e.textContent || '')) return e;
+            }
+            return null;
+          }
+          // Once the banner has been answered, anything of its that is still stuck to the bottom edge
+          // (an empty strip, a leftover bar) is put away.
+          function tidy() {
+            try {
+              var all = document.querySelectorAll('[id*=ookie],[class*=ookie],[id*=onsent],[class*=onsent],[id*=Cybot],[class*=Cybot]');
+              for (var i = 0; i < all.length; i++) {
+                var e = all[i];
+                if (e.id === 'tv-ck-card' || e.id === 'tv-ck-back') continue;
+                var cs = getComputedStyle(e);
+                if (cs.position !== 'fixed') continue;
+                var r = e.getBoundingClientRect();
+                if (r.height > 0 && r.bottom >= window.innerHeight - 3 && r.height < window.innerHeight * 0.4) e.style.setProperty('display', 'none', 'important');
+              }
+            } catch (e1) {}
+          }
+          var shown = false, tries = 0, prev = null;
+          function close() {
+            var c = document.getElementById('tv-ck-card'), b = document.getElementById('tv-ck-back');
+            if (c) c.remove();
+            if (b) b.remove();
+            tidy();
+            window.removeEventListener('keydown', onKey, true);
+            try { if (prev && document.contains(prev)) prev.focus({ preventScroll: true }); } catch (e) {}
+          }
+          function btnStyle(b, on) {
+            b.style.cssText = 'display:block;min-width:' + f(260) + ';height:' + f(56) + ';padding:0 ' + f(28) + ';font:900 ' + f(20) + ' Roboto,Arial,sans-serif;border-radius:' + f(60) + ';border:' + f(4) + ' solid #fff;outline:none;cursor:pointer;' +
+              (on ? 'background:' + gold + ';color:#111;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ';' : 'background:transparent;color:#fff;box-shadow:none;');
+          }
+          var btns = [];
+          function paint() { var a = document.activeElement; for (var i = 0; i < btns.length; i++) btnStyle(btns[i].el, btns[i].el === a); }
+          function onKey(e) {
+            var k = e.keyCode;
+            if (k === 37 || k === 39) {
+              e.preventDefault(); e.stopPropagation();
+              var i = 0; for (var j = 0; j < btns.length; j++) if (btns[j].el === document.activeElement) i = j;
+              var n = Math.max(0, Math.min(btns.length - 1, i + (k === 37 ? -1 : 1)));
+              btns[n].el.focus(); paint();
+            } else if (k === 38 || k === 40) {
+              e.preventDefault(); e.stopPropagation();
+            } else if (k === 13 || k === 23) {
+              e.preventDefault(); e.stopPropagation();
+              for (var q = 0; q < btns.length; q++) if (btns[q].el === document.activeElement) { btns[q].go(); break; }
+            }
+          }
+          function show(allowBtn, denyBtn, box) {
+            shown = true;
+            prev = document.activeElement;
+            var back = document.createElement('div');
+            back.id = 'tv-ck-back';
+            back.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:2147483646;';
+            var card = document.createElement('div');
+            card.id = 'tv-ck-card';
+            card.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:' + f(720) + ';max-width:92vw;box-sizing:border-box;padding:' + f(36) + ' ' + f(40) + ';background:#000;border:' + f(5) + ' solid #fff;border-radius:' + f(32) + ';text-align:center;z-index:2147483647;font-family:Roboto,Arial,sans-serif;-webkit-user-select:none;user-select:none;';
+            var jp = document.createElement('div');
+            jp.setAttribute('translate', 'no'); jp.className = 'notranslate';
+            jp.style.cssText = 'color:' + gold + ';font-size:' + f(48) + ';font-weight:900;line-height:1.1;';
+            jp.textContent = 'クッキー。';
+            var en = document.createElement('div');
+            en.style.cssText = 'color:#fff;font-size:' + f(24) + ';font-weight:900;margin-top:' + f(6) + ';';
+            en.textContent = JA ? 'このサイトはクッキーを使います' : 'This site uses cookies';
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:' + f(20) + ';justify-content:center;margin-top:' + f(26) + ';padding:' + f(8) + ';';
+            btns = [];
+            function mk(label, target) {
+              var b = document.createElement('button');
+              b.type = 'button';
+              b.textContent = label;
+              b.addEventListener('click', function() { try { target.click(); } catch (e) {} setTimeout(finish, 2500); });
+              row.appendChild(b);
+              btns.push({ el: b, go: function() { b.click(); } });
+            }
+            if (denyBtn) mk(JA ? '拒否' : 'Deny', denyBtn);
+            if (allowBtn) mk(JA ? 'すべて許可' : 'Allow all', allowBtn);
+            card.appendChild(jp); card.appendChild(en); card.appendChild(row);
+            document.body.appendChild(back);
+            document.body.appendChild(card);
+            window.addEventListener('keydown', onKey, true);
+            btns[0].el.focus();
+            paint();
+            var watch = setInterval(function() {
+              if (!document.getElementById('tv-ck-card')) { clearInterval(watch); return; }
+              if (!document.contains(box) || !vis(box)) { clearInterval(watch); close(); }
+            }, 400);
+            function finish() { clearInterval(watch); close(); }
+          }
+          var timer = setInterval(function() {
+            tries++;
+            if (!shown) {
+              var allowBtn = find(ALLOW), denyBtn = find(DENY);
+              var anchor = denyBtn || allowBtn;
+              var box = anchor ? holder(anchor) : null;
+              if (box && (allowBtn || denyBtn)) show(allowBtn, denyBtn, box);
+            }
+            if (tries > 40 || shown) clearInterval(timer);
+          }, 500);
         })();
     """
 
@@ -1560,9 +1846,13 @@ class MainActivity : Activity() {
                         iframe.setAttribute('allow', 'autoplay; fullscreen');
                         iframe.setAttribute('allowfullscreen', 'true');
                       }
-                      if (iframe.src && iframe.src.indexOf('vimeo.com') !== -1 && iframe.src.indexOf('autoplay=1') === -1) {
+                      if (iframe.src && iframe.src.indexOf('vimeo.com') !== -1 && (iframe.src.indexOf('autoplay=1') === -1 || iframe.src.indexOf('controls=0') === -1)) {
+                        var extra = '';
+                        if (iframe.src.indexOf('autoplay=1') === -1) extra = 'autoplay=1&autopause=0&muted=0';
+                        // The page's own control bar (under the picture) replaces the player's.
+                        if (iframe.src.indexOf('controls=0') === -1) extra += (extra ? '&' : '') + 'controls=0';
                         var sep = iframe.src.indexOf('?') !== -1 ? '&' : '?';
-                        iframe.src = iframe.src + sep + 'autoplay=1&autopause=0&muted=0';
+                        iframe.src = iframe.src + sep + extra;
                       }
                       if (iframe.contentWindow && !iframe.__tvPlaySent) {
                         try {
@@ -1702,7 +1992,7 @@ class MainActivity : Activity() {
         webView.setBackgroundColor(Color.BLACK)
         // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
         if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        webView.addJavascriptInterface(WebAppInterface(), "AndroidHost")
+        webView.addJavascriptInterface(webAppInterface, "AndroidHost")
         root.addView(
             webView,
             ViewGroup.LayoutParams(
@@ -1851,6 +2141,7 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                sideMenuOpen = false
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
@@ -2052,7 +2343,6 @@ class MainActivity : Activity() {
         val v = OnboardingView(
             this,
             density,
-            BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
             { startWebLogin() },
             { exitGuideToSite() },
             { lang ->
@@ -2127,34 +2417,11 @@ class MainActivity : Activity() {
         }.start()
     }
 
-    // A small copy of the logo above the login page, in the same style as the guide.
+    // The login page no longer carries a logo above it (its own heading does that job).
     private var loginLogoView: ImageView? = null
 
     private fun showLoginLogo(show: Boolean) {
-        if (!show) {
-            loginLogoView?.visibility = View.GONE
-            return
-        }
-        var v = loginLogoView
-        if (v == null) {
-            v = ImageView(this).apply {
-                setImageResource(R.drawable.splash_logo)
-                adjustViewBounds = true
-                isFocusable = false
-            }
-            loginLogoView = v
-            root.addView(
-                v,
-                FrameLayout.LayoutParams(
-                    (resources.displayMetrics.widthPixels * LOGIN_LOGO_FRACTION).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                ).apply { topMargin = (resources.displayMetrics.heightPixels * 0.04f).toInt() }
-            )
-        }
-        v.visibility = View.VISIBLE
-        root.bringChildToFront(v)
-        if (::cursorView.isInitialized) root.bringChildToFront(cursorView)
+        loginLogoView?.visibility = View.GONE
     }
 
     // Signed in from the login page: the transition screen, then the main page (no second splash).
@@ -2199,7 +2466,63 @@ class MainActivity : Activity() {
 
     // ---------------------------------------------------------------- page scripts
 
+    private val webAppInterface by lazy { WebAppInterface() }
+
     inner class WebAppInterface {
+        // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
+        // Tournament Archives filter bar lists (cities, venues, shows) kept in assets/event_filters.json.
+        @android.webkit.JavascriptInterface
+        fun eventFiltersJson(): String = try {
+            this@MainActivity.assets.open("event_filters.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun factionsJson(): String = try {
+            this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        // A faction's logo from the private branding folder (res/drawable-nodpi/faction_logo_<id>.png, with
+        // "-" written as "_"), as a data address. Empty when the build doesn't have it: the page shows text.
+        @android.webkit.JavascriptInterface
+        fun factionLogo(id: String): String {
+            return try {
+                val resId = this@MainActivity.resources.getIdentifier(
+                    "faction_logo_" + id.replace('-', '_'), "drawable", this@MainActivity.packageName
+                )
+                if (resId == 0) return ""
+                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
+                "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
+        // In-page control bar: the page asks for labels and sends button presses here.
+        @android.webkit.JavascriptInterface
+        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY }).toString()
+
+        @android.webkit.JavascriptInterface
+        fun barLabels(statusJson: String): String {
+            val j = try { if (statusJson.isEmpty()) null else org.json.JSONObject(statusJson) } catch (_: Exception) { null }
+            if (j != null && ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
+            val o = org.json.JSONObject()
+            for (id in BAR_IDS) o.put(id, barLabel(id, j))
+            return o.toString()
+        }
+
+        // Up / Down on the -/+ buttons: change the skip size, answer with the sizes and the chosen one.
+        @android.webkit.JavascriptInterface
+        fun skipStep(dir: Int): String {
+            this@MainActivity.skipStep(dir)
+            return this@MainActivity.skipInfoJson()
+        }
+
+        @android.webkit.JavascriptInterface
+        fun skipInfo(): String = this@MainActivity.skipInfoJson()
+
+        @android.webkit.JavascriptInterface
+        fun barAction(id: String) {
+            handler.post { this@MainActivity.barAction(id) }
+        }
+
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
@@ -2243,6 +2566,28 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
+        fun setSideMenuOpen(open: Boolean) {
+            sideMenuOpen = open
+        }
+
+        // Translates one short title (a Home row name) to English once; the page keeps the answer.
+        @android.webkit.JavascriptInterface
+        fun translateTitle(text: String) {
+            val ua = webView.settings.userAgentString
+            Thread {
+                val out = ccTranslate(text, "en", ua)
+                if (out != null) {
+                    handler.post {
+                        webView.evaluateJavascript(
+                            "window.__tvTitleXlat&&window.__tvTitleXlat(" + org.json.JSONObject.quote(text) + "," + org.json.JSONObject.quote(out) + ");",
+                            null
+                        )
+                    }
+                }
+            }.start()
+        }
+
+        @android.webkit.JavascriptInterface
         fun toggleLanguage(targetLang: String) {
             handler.post {
                 applyLanguage(targetLang)
@@ -2252,6 +2597,7 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun setPlayerFocused(focused: Boolean) {
+            if (focused && !playerFocused) playerCtrlPos = 0
             playerFocused = focused
             handler.post {
                 if (focused) armControlsIdleTimer() else handler.removeCallbacks(hideControlsRunnable)
@@ -2493,24 +2839,26 @@ class MainActivity : Activity() {
             var iframe = document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]');
             var target = null;
             if (dir === 'down') {
-              var cards = Array.from(document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"], .content-list-item a[href*="/set/"]')).filter(function(a) {
+              var cards = Array.from(document.querySelectorAll('a.tv-card, a.tv-thumbnail-link, .content-list-item a[href*="/contents/"], .content-list-item a[href*="/set/"]')).filter(function(a) {
                 if (a.closest('.slick-cloned')) return false;
                 var r = a.getBoundingClientRect();
                 if (r.width === 0 && r.height === 0) return false;
                 return !iframe || (iframe.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING);
               });
               target = cards[0] || null;
-            } else {
-              target = document.querySelector('form.form-inline input[type="submit"], #tv-section-select, #tv-fav-header-btn');
+            }
+            // Up has nowhere to go above the player (the menu is the edge tab, opened with Left from the
+            // related videos), and a missing target must never leave focus nowhere: stay in the player.
+            if (!target) {
+              try { window.AndroidHost.setPlayerFocused(true); } catch (e) {}
+              return false;
             }
             try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
-            if (target) {
-              target.focus();
-              target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            }
+            target.focus();
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
             last = false;
             try { window.AndroidHost.setPlayerFocused(false); } catch (e) {}
-            return !!target;
+            return true;
           };
         })();
     """.trimIndent()
@@ -2923,7 +3271,7 @@ class MainActivity : Activity() {
           css.textContent = '#search-section,[class*="search-detail"],[class*="detail-search"],[class*="advanced-search"],[class*="search-advanced"],[class*="search-modal"],[class*="search-form-area"]{display:none !important;}';
           (document.head || document.documentElement).appendChild(css);
 
-          var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer';
+          var HEADER = 'header, .box-header, #tv-header-flex-wrapper, .nav-inner, footer, #tv-sm';
           function sweep() {
             var fields = document.querySelectorAll('input[name^="q["], select[name^="q["], input[name="keyword"], form[action*="search"] input, form[action*="/contents"] input[type="text"]');
             fields.forEach(function(f) {
@@ -2960,7 +3308,7 @@ class MainActivity : Activity() {
           if (!(p === '/' || p === '/index.html' || p === '')) return;
           window.__tvHomeAnchor = true;
 
-          var TARGET = 90;   // distance from the top of the page to the banner, in CSS pixels
+          var TARGET = 28;   // distance from the top of the page to the banner, in CSS pixels
           var started = performance.now();
           function step() {
             var grid = document.getElementById('tv-test-grid');
@@ -2978,6 +3326,2577 @@ class MainActivity : Activity() {
           }
           requestAnimationFrame(step);
         })();
+    """.trimIndent()
+
+    // The left slide-out menu: everything the site's top header used to hold (search, categories, favorites,
+    // account, language) lives here instead. Left on the first card of any row or list opens it, Right closes it.
+    private val sideMenuJs = """
+        (function(){
+          if (window.__tvSideMenu) return;
+          var path0 = location.pathname;
+          if (path0.indexOf('/login') === 0) return;
+          window.__tvSideMenu = true;
+
+          var BASE = 'https://www.stardom-world.com';
+          // Each entry: [English label, path, Japanese label]
+          var SHOWS = [
+            ['All tournaments', '/contents/category/events', '大会アーカイブス（新着大会）'],
+            ['LIVE & On-demand streaming', '/contents/category/live-archives', 'LIVE&見逃し配信'],
+            ['Big Match', '/contents/category/bm2025', 'ビッグマッチ'],
+            ['English Commentary', '/contents/category/english', 'English Commentary'],
+            ['[Special Feature] 5\u2605STAR GP 2026', '/contents/category/fivestar2026', '【特集】5\u2605STAR GP 2026']
+          ];
+          var NEW_KEY = 'tvNewHrefV1';
+          var HOME_ROWS_KEY = 'tvHomeRowsV1';
+          // Under Home: the rows the home page itself shows (noted each time the home page loads, no extra request),
+          // else the five known ones.
+          function homeRows() {
+            try {
+              var saved = JSON.parse(lsGet(HOME_ROWS_KEY) || 'null');
+              if (saved && saved.length) return saved.map(function(r) {
+                var en = r[0], ja = r[2] || r[0];
+                if (hasJa(en)) {
+                  en = ja = r[0];
+                  SHOWS.forEach(function(x) { if (hrefPath(r[1]) === x[1]) en = x[0]; });
+                  if (en === '新着') en = 'New';
+                  CHAMPS.forEach(function(x) { if (hrefPath(r[1]) === x[1]) en = x[0]; });
+                  var dm = /^(\d{4})年代$/.exec(en);
+                  if (dm) en = dm[1] + 's';
+                  var ym = /^(\d{4})年$/.exec(en);
+                  if (ym) en = ym[1];
+                  if (hasJa(en)) en = titleXl(en);
+                }
+                return [en, r[1], ja];
+              });
+            } catch (e) {}
+            return staticHomeRows();
+          }
+          // What the Home drop-down / flyout lists: the main page itself, then the rows the main page shows.
+          function homeList() { return [[T('Main page', 'メインページ'), '/', 'メインページ']].concat(homeRows()); }
+          // English for a Japanese Home row title that none of the known lists cover: asked of the translator once, then kept.
+          var TXL_KEY = 'tvTitleXlatV1', txlAsked = {};
+          function titleXl(t) {
+            var m = {};
+            try { m = JSON.parse(lsGet(TXL_KEY) || '{}') || {}; } catch (e) {}
+            if (m[t]) return m[t];
+            if (!txlAsked[t] && window.AndroidHost && AndroidHost.translateTitle) {
+              txlAsked[t] = 1;
+              setTimeout(function() { try { AndroidHost.translateTitle(t); } catch (e) {} }, 1200 * Object.keys(txlAsked).length);
+            }
+            return t;
+          }
+          window.__tvTitleXlat = function(t, out) {
+            var m = {};
+            try { m = JSON.parse(lsGet(TXL_KEY) || '{}') || {}; } catch (e) {}
+            m[t] = out;
+            lsSet(TXL_KEY, JSON.stringify(m));
+          };
+          function hrefPath(h) { try { return new URL(h, location.href).pathname; } catch (e) { return String(h); } }
+          function staticHomeRows() {
+            return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
+          }
+          // Shows: the big shows, the same list as the Show filter (assets/event_filters.json).
+          function showsList() {
+            var out = [[SHOWS[0][0], SHOWS[0][1], SHOWS[0][2]]];
+            try {
+              var d = JSON.parse(AndroidHost.eventFiltersJson());
+              (d.shows || []).forEach(function(x) {
+                out.push([x.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvev=1&tvsh=' + encodeURIComponent(x.name), x.name]);
+              });
+            } catch (e) {}
+            return out;
+          }
+          function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
+          var CHAMPS = [
+            ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
+            ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
+            ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
+            ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
+            ['Artist of Stardom', '/contents/search?q%5Bkeyword%5D=Artist%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=artist', 'アーティスト・オブ・スターダム'],
+            ['Future of Stardom', '/contents/search?q%5Bkeyword%5D=Future%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=future', 'フューチャー・オブ・スターダム'],
+            ['Goddess of Stardom', '/contents/search?q%5Bkeyword%5D=Goddess%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=goddess', 'ゴッデス・オブ・スターダム'],
+            ['NEW BLOOD Tag Team', '/contents/search?q%5Bkeyword%5D=NEW%20BLOOD&activetab=contents&page=1&tvb=&tvch=newblood', 'NEW BLOOD タッグ'],
+            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
+            ['Other title matches', '/contents/search?q%5Bkeyword%5D=Title%20Match&activetab=contents&page=1&tvb=&tvch=other', 'その他のタイトルマッチ']
+          ];
+          var MINE = [
+            ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
+            ['My Favorites', '/mypage/favorites', 'お気に入り']
+          ];
+          var COMMUNITY = [
+            ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1', '再生数の多い動画'],
+            ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1', 'お気に入り数の多い動画']
+          ];
+          function yearsList() {
+            var out = [];
+            for (var y = new Date().getFullYear(); y >= 2011; y--) {
+              out.push([String(y), '/contents/category/' + (y === 2020 ? '_2020' : y), String(y)]);   // the site's 2020 page is "_2020"
+            }
+            return out;
+          }
+          // [English name, Japanese name]
+          var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
+          var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
+          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
+          // The Factions entries come from the app's factions.json: [name, address of its page, name].
+          function factionRows() {
+            var out = [];
+            try {
+              var d = JSON.parse(AndroidHost.factionsJson());
+              (d.factions || []).forEach(function(f) {
+                if (!f.members || !f.members.length) return;
+                out.push([f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
+              });
+            } catch (e) {}
+            return out;
+          }
+          // "Current Wrestlers": everyone listed in the app's factions.json, once each, in alphabetical order.
+          var JA_NAMES = {};
+          CURRENT_W.concat(PAST_W).forEach(function(n) { JA_NAMES[n[0]] = n[1]; });
+          function currentWrestlers() {
+            var seen = {}, out = [];
+            try {
+              var d = JSON.parse(AndroidHost.factionsJson());
+              (d.factions || []).forEach(function(f) {
+                (f.members || []).forEach(function(m) {
+                  if (m && m.name && !seen[m.name]) { seen[m.name] = 1; out.push([m.name, m.search || m.name, JA_NAMES[m.name] || m.name]); }
+                });
+              });
+            } catch (e) {}
+            if (!out.length) return wrestlers(CURRENT_W);
+            out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
+            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]), m[2]]; });
+          }
+          function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
+          var HINT_KEY = 'tvMenuHintV1';
+          var REOPEN_KEY = 'tvMenuReopenV1';
+
+          function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+          function T(en, ja) { return isJa() ? ja : en; }
+          function isHome() { return path0 === '/' || path0 === '/index.html' || path0 === ''; }
+          function isDetail() { return /^\/contents\/[0-9]+/.test(path0); }
+          function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+          function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+          function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+          var st = document.createElement('style');
+          st.id = 'tv-sm-style';
+          st.textContent = [
+            '#tv-sm-scrim{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,8,12,.66);z-index:99998;opacity:0;pointer-events:none;transition:opacity .18s;}',
+            'html.tv-sm-open #tv-sm-scrim{opacity:1;}',
+            '#tv-sm{position:fixed;left:0;top:0;bottom:0;width:430px;box-sizing:border-box;background:#0F151C !important;border-right:1px solid #222b36;z-index:99999;transform:translateX(-104%);transition:transform .18s;padding:26px 24px 22px 24px;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#fff;}',
+            'html.tv-sm-open #tv-sm{transform:none;}',
+            '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
+            '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
+            '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
+            '#tv-sm .tv-sm-logorow{margin:auto 0;padding:4px 0;}',
+            '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
+            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
+            '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
+            '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:48px;}',
+            '#tv-sm .tv-sm-subs{margin-left:24px;padding-left:10px;border-left:2px solid #2a323c;display:none;}',
+            '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-subs{display:block;}',
+            '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-item{color:#F4C242 !important;}',
+            '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-item .tv-sm-chev{transform:rotate(90deg);}',
+            '#tv-sm .tv-sm-chev{flex:0 0 auto;transition:transform .12s;}',
+            '#tv-sm .tv-sm-search{gap:12px;justify-content:flex-start;background:#172029 !important;border:1px solid #2a323c !important;padding:0 14px;}',
+            '#tv-sm .tv-sm-search:focus-within{border:3px solid #F4C242 !important;padding:0 12px;}',
+            '#tv-sm .tv-sm-search input{flex:1 1 auto;min-width:0;height:46px;background:transparent !important;border:0 !important;outline:none !important;color:#ffffff !important;font-size:22px;font-family:inherit;padding:0;}',
+            '#tv-sm .tv-sm-mic{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
+            '#tv-sm .tv-sm-formhost{flex:1 1 auto;min-width:0;display:block;}',
+            '#tv-sm .tv-sm-formhost form, #tv-sm .tv-sm-formhost .input-group{display:block !important;width:100% !important;max-width:none !important;min-width:0 !important;flex:1 1 auto !important;height:46px !important;margin:0 !important;padding:0 !important;background:transparent !important;border:0 !important;}',
+            '#tv-sm .tv-sm-formhost input[type="text"], #tv-sm .tv-sm-formhost input.form-control, #tv-sm .tv-sm-formhost input[name="q[keyword]"]{display:block !important;width:100% !important;height:46px !important;padding:0 !important;margin:0 !important;background:transparent !important;border:0 !important;border-radius:0 !important;outline:none !important;box-shadow:none !important;color:#ffffff !important;font-size:22px !important;font-family:inherit !important;}',
+            '#tv-sm .tv-sm-formhost input[type="submit"], #tv-sm .tv-sm-formhost button, #tv-sm .tv-sm-formhost .input-group-btn, #tv-sm .tv-sm-formhost .input-group-append{display:none !important;}',
+            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:58px;}',
+            '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
+            '#tv-sm .tv-sm-home .tv-sm-chev{margin-left:auto;}',
+            '#tv-sm-shelf{position:fixed;z-index:100000;box-sizing:border-box;left:430px;padding:16px 18px;border-radius:0 14px 14px 0;background:#121922;border:2px solid #2a323c;border-left:4px solid #F4C242;color:#ffffff;font-family:Arial,Helvetica,sans-serif;overflow-y:auto;scrollbar-width:none;}',
+            '#tv-sm-shelf::-webkit-scrollbar{display:none;}',
+            '#tv-sm-shelf .tv-sm-fi{break-inside:avoid;}',
+            '#tv-sm-shelf .tv-shl-t{font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:0 0 10px 0;}',
+            '#tv-sm-shelf .tv-shl-grid{display:grid;gap:2px 8px;}',
+            '#tv-sm-shelf .tv-shl-h{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
+            '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
+            '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
+            '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
+            '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
+            '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
+            '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
+            '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:20px;font-weight:700;color:#c9d2dc;}',
+            '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B0F14;}',
+            '#tv-sm-tab{position:fixed;left:0;top:42%;width:26px;height:110px;border-radius:0 12px 12px 0;background:rgba(17,23,30,.92);border:1px solid #2a323c;border-left:0;z-index:99990;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
+            'html.tv-sm-open #tv-sm-tab{display:none;}',
+            '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B0F14;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
+            'html.tv-sm-open #tv-sm-hint{display:none;}',
+            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#000000;}',
+            '#tv-page-title .tv-pt-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
+            '#tv-page-title .tv-pt-txt{min-width:0;line-height:1.2;}'
+          ].join('\n');
+          (document.head || document.documentElement).appendChild(st);
+
+          var isOpen = false;
+          var prevFocus = null;
+          var panel = null, scrim = null;
+
+          function setNativeFlag(v) {
+            try { if (window.AndroidHost && window.AndroidHost.setSideMenuOpen) window.AndroidHost.setSideMenuOpen(!!v); } catch (e) {}
+          }
+
+          function chev() {
+            return '<svg class="tv-sm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+          }
+          // Menu style: "shelf" (long sections open a panel to the right of the menu) or "classic" (everything inline).
+          // Left on a top-level menu row switches between them; the choice is remembered.
+          var MODE_KEY = 'tvMenuModeV1';
+          function shelfMode() { return true; }
+          function group(label, rows, shelfKey) {
+            if (shelfKey && shelfMode()) {
+              return '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-shelf="' + shelfKey + '"><span>' + esc(label) + '</span>' + chev() + '</div></div>';
+            }
+            var h = '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-grp="1"><span>' + esc(label) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+            rows.forEach(function(r) {
+              h += '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>';
+            });
+            return h + '</div></div>';
+          }
+          function signedIn() { return !!document.querySelector('.box-dropdown-key'); }
+          // The account name and menu come from the site's header, which is hidden, so the page's translator
+          // never reaches it. They are drawn in the menu where the translator can, and what it produces is
+          // remembered so the next opening shows the English straight away.
+          var XLAT_KEY = 'tvAcctXlatV1';
+          function readXlat() { try { return JSON.parse(lsGet(XLAT_KEY) || '{}') || {}; } catch (e) { return {}; } }
+          function hasJa(t) { return /[\u3040-\u30ff\u3400-\u9fff]/.test(t || ''); }
+          function xl(t) {
+            if (isJa() || !hasJa(t)) return t;
+            var m = readXlat();
+            return m[t] || t;
+          }
+          function learnXlat() {
+            if (isJa()) return;
+            var n = 0;
+            var tm = setInterval(function() {
+              n++;
+              if (!isOpen || !panel || n > 20) { clearInterval(tm); return; }
+              var m = readXlat(), changed = false;
+              Array.prototype.forEach.call(panel.querySelectorAll('[data-orig]'), function(el) {
+                var orig = el.getAttribute('data-orig');
+                var cur = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (orig && hasJa(orig) && cur && !hasJa(cur) && m[orig] !== cur) { m[orig] = cur; changed = true; }
+              });
+              if (changed) lsSet(XLAT_KEY, JSON.stringify(m));
+            }, 400);
+          }
+          function acctName() {
+            var k = document.querySelector('.box-dropdown-key');
+            var t = k ? (k.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            return t || T('Account', 'アカウント');
+          }
+          // The account menu's own links (My page, Log out, ...): read from the header the site draws, which is
+          // hidden but still there, and pressed through the real link so nothing about them changes.
+          function acctLinks() {
+            var menu = document.querySelector('.tv-acct-menu, [data-tv-acct] .dropdown-container');
+            if (!menu) return [];
+            var out = [];
+            Array.prototype.forEach.call(menu.querySelectorAll('a'), function(a) {
+              var t = (a.textContent || '').replace(/\s+/g, ' ').trim();
+              if (t) out.push({ label: t, el: a });
+            });
+            return out;
+          }
+          function logoSrc() {
+            var img = document.querySelector('h1 a img, .nav-inner h1 img, header a img, .logo img');
+            return img && img.src ? img.src : '';
+          }
+
+          function build() {
+            var years = yearsList();
+            var ja = isJa();
+            var logo = logoSrc();
+            var h = '';
+            h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
+            h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" ' + (shelfMode() ? 'data-shelf="home"' : 'data-go="/" data-homegrp="1"') + ' href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + (shelfMode() ? [] : homeList()).map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
+            h += group(T('Shows', '番組'), showsList(), 'shows');
+            h += group(T('Championships', '王座'), CHAMPS, 'champs');
+            h += group(T('Years', '年別'), years, 'years');
+            var facRows = factionRows();
+            if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
+            h += group(T('Current Wrestlers', '現役選手'), currentWrestlers(), 'current');
+            h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W), 'past');
+            if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
+            h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
+            if (signedIn()) {
+              var links = acctLinks();
+              window.__tvMenuAcct = links;
+              if (links.length) {
+                var an = acctName();
+                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
+                (shelfMode() ? [] : links).forEach(function(l, i) {
+                  h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span data-orig="' + esc(l.label) + '">' + esc(xl(l.label)) + '</span></div>';
+                });
+                h += '</div></div>';
+              } else {
+                h += '<a class="tv-sm-item" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage"><span data-orig="' + esc(acctName()) + '">' + esc(xl(acctName())) + '</span></a>';
+              }
+            } else {
+              h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
+            }
+            h += '</div>';
+            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>';
+            h += '</div>';
+            panel.innerHTML = h;
+          }
+
+          function ensureDom() {
+            if (panel && panel.isConnected) return;
+            var host = document.body || document.documentElement;
+            scrim = document.createElement('div');
+            scrim.id = 'tv-sm-scrim';
+            panel = document.createElement('div');
+            panel.id = 'tv-sm';
+            host.appendChild(scrim);
+            host.appendChild(panel);
+          }
+
+          // The search box is the site's own (the one the old header used, which opens the keyboard properly):
+          // it is moved into the menu while the menu is open and put back in the header when it closes.
+          var searchOrigin = null;
+          function realSearchForm() {
+            var f = document.querySelector('#tv-header-flex-wrapper form') || document.querySelector('form.form-inline');
+            return (f && !(panel && panel.contains(f))) ? f : null;
+          }
+          function mountSearch() {
+            var host = panel.querySelector('.tv-sm-formhost');
+            if (!host) return;
+            var f = realSearchForm();
+            if (f && f.parentNode) {
+              searchOrigin = { parent: f.parentNode, next: f.nextSibling, form: f };
+              host.appendChild(f);
+            } else {
+              host.innerHTML = '<input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '">';
+            }
+          }
+          function unmountSearch() {
+            if (searchOrigin && searchOrigin.parent) {
+              try { searchOrigin.parent.insertBefore(searchOrigin.form, (searchOrigin.next && searchOrigin.next.parentNode === searchOrigin.parent) ? searchOrigin.next : null); } catch (e) {}
+            }
+            searchOrigin = null;
+          }
+          function searchInput() {
+            return panel ? panel.querySelector('.tv-sm-formhost input[type="text"], .tv-sm-formhost input.form-control, .tv-sm-formhost input[name="q[keyword]"], .tv-sm-formhost input:not([type="submit"]):not([type="hidden"])') : null;
+          }
+
+          function items() {
+            if (!panel) return [];
+            return Array.prototype.filter.call(panel.querySelectorAll('.tv-sm-item'), function(el) {
+              return el.offsetParent !== null || el.getClientRects().length > 0;
+            });
+          }
+          function focusItem(el) {
+            if (!el) return;
+            if (el.classList && el.classList.contains('tv-sm-search')) { var si = searchInput(); if (si) el = si; }
+            try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+            try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+          }
+          function move(d) {
+            var list = items();
+            var cur = document.activeElement;
+            var curRow = cur && cur.closest ? cur.closest('.tv-sm-item') : null;
+            var i = list.indexOf(curRow || cur);
+            if (i < 0) i = 0; else i = Math.max(0, Math.min(list.length - 1, i + d));
+            focusItem(list[i]);
+          }
+          function collapseAll(except) {
+            Array.prototype.forEach.call(panel.querySelectorAll('.tv-sm-grp.tv-sm-expanded'), function(g) {
+              if (g !== except) g.classList.remove('tv-sm-expanded');
+            });
+          }
+
+          function openMenu() {
+            if (isOpen) return;
+            ensureDom();
+            // never stay hidden by a page sweep (the search box lives in here while the menu is open)
+            if (panel.dataset.tvHidden) { delete panel.dataset.tvHidden; }
+            panel.style.removeProperty('display');
+            homeRows();
+            build();
+            mountSearch();
+            prevFocus = document.activeElement;
+            isOpen = true;
+            document.documentElement.classList.add('tv-sm-open');
+            lsSet(HINT_KEY, '99');
+            var hint = document.getElementById('tv-sm-hint');
+            if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
+            setNativeFlag(true);
+            learnXlat();
+            setTimeout(function() { focusItem(items()[2] || items()[0]); }, 30);
+          }
+          function closeMenu() {
+            if (!isOpen) return false;
+            try { localStorage.removeItem(REOPEN_KEY); } catch (e) {}
+            closeShelf(false);
+            isOpen = false;
+            unmountSearch();
+            document.documentElement.classList.remove('tv-sm-open');
+            setNativeFlag(false);
+            try { if (document.activeElement && panel && panel.contains(document.activeElement)) document.activeElement.blur(); } catch (e) {}
+            var back = prevFocus;
+            if (back && back.isConnected) {
+              try { back.focus({ preventScroll: true }); } catch (e) { try { back.focus(); } catch (e2) {} }
+            }
+            return true;
+          }
+          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
+          window.__tvOpenMenu = openMenu;
+          // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
+          (function() {
+            var t0 = parseInt(lsGet(REOPEN_KEY) || '0', 10) || 0;
+            if (!t0) return;
+            // The flag stays until the person closes the menu or 12 seconds pass, so a page that reloads itself
+            // a second time while translating still gets the menu back.
+            if (Date.now() - t0 > 12000) { try { localStorage.removeItem(REOPEN_KEY); } catch (e) {} return; }
+            var tries = 0, done = false;
+            function focusLang() {
+              var l = panel && panel.querySelector('.tv-sm-lang');
+              if (l && isOpen && !(panel.contains(document.activeElement) && document.activeElement === l)) focusItem(l);
+            }
+            var iv = setInterval(function() {
+              tries++;
+              if (!lsGet(REOPEN_KEY)) { clearInterval(iv); return; }   // the person closed the menu
+              if (document.body && (!done || !panel || !panel.isConnected || !document.documentElement.classList.contains('tv-sm-open'))) {
+                // opened, or opened again if the page rebuilt itself and swept the menu away
+                done = true; isOpen = false; openMenu(); setTimeout(focusLang, 80);
+              }
+              if (isOpen && (tries === 15 || tries === 40 || tries === 70)) focusLang();
+              if (tries > 80) { clearInterval(iv); try { localStorage.removeItem(REOPEN_KEY); } catch (e) {} }
+            }, 100);
+          })();
+
+          function go(rel) {
+            closeMenu();
+            window.location.href = /^https?:/.test(rel) ? rel : (BASE + rel);
+          }
+
+          function submitSearch() {
+            var q = searchInput();
+            var v = q ? q.value.trim() : '';
+            if (!v) return false;
+            closeMenu();
+            window.location.href = BASE + '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(v);
+            return true;
+          }
+
+          // ---- shelf flyout (to the right of the menu)
+          var shelfEl = null, shelfRow = null;
+          function fiHtml(label, path) {
+            return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>';
+          }
+          function rowsHtml(rows) {
+            return rows.map(function(r) { return fiHtml(isJa() && r[2] ? r[2] : r[0], r[1]); }).join('');
+          }
+          function shelfBody(key) {
+            var h = '', w = 760;
+            if (key === 'shows') {
+              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">' + rowsHtml(showsList()) + '</div>';
+            } else if (key === 'years') {
+              w = 400;
+              h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
+            } else if (key === 'factions') {
+              w = 858;
+              var blocks = '';
+              try {
+                var d = JSON.parse(AndroidHost.factionsJson());
+                var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+                var seen = {};
+                facs.forEach(function(f) {
+                  var ms = (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+                  var inner = '';
+                  ms.forEach(function(m) {
+                    if (!m || !m.name || seen[m.name]) return;
+                    seen[m.name] = 1;
+                    inner += fiHtml(isJa() && JA_NAMES[m.name] ? JA_NAMES[m.name] : m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name));
+                  });
+                  if (inner) blocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>' + inner + '</div>';
+                });
+              } catch (e) {}
+              if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
+              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
+            } else if (key === 'current') {
+              w = 880;
+              var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>';
+            } else if (key === 'past') {
+              w = 880;
+              var rows = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              h = '<div class="tv-shl-t">' + esc(T('PAST WRESTLERS', '元所属選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(rows) + '</div>';
+            }
+            else {
+              var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
+              var L = lists[key];
+              if (L) {
+                w = (key === 'champs' || key === 'home') ? 440 : 360;
+                var body = '';
+                if (key === 'acct') {
+                  (window.__tvMenuAcct || []).forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                } else body = rowsHtml(L[1]);
+                h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
+              }
+            }
+            return { html: h, width: w };
+          }
+          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('.tv-sm-fi')) : []; }
+          function closeShelf(refocus) {
+            if (shelfEl && shelfEl.parentNode) shelfEl.parentNode.removeChild(shelfEl);
+            shelfEl = null;
+            var r = shelfRow; shelfRow = null;
+            if (refocus && r && r.isConnected) focusItem(r);
+          }
+          function openShelf(key, row) {
+            closeShelf(false);
+            var b = shelfBody(key);
+            if (!b.html) return;
+            shelfRow = row;
+            shelfEl = document.createElement('div');
+            shelfEl.id = 'tv-sm-shelf';
+            shelfEl.setAttribute('translate', 'no');
+            shelfEl.classList.add('notranslate');
+            shelfEl.innerHTML = b.html;
+            shelfEl.style.width = Math.min(b.width, window.innerWidth - 430 - 16) + 'px';
+            shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
+            document.body.appendChild(shelfEl);
+            var rr = row.getBoundingClientRect();
+            shelfEl.style.top = Math.max(12, Math.min(rr.top, window.innerHeight - shelfEl.offsetHeight - 12)) + 'px';
+            var list = fiItems(), first = list[0];
+            list.forEach(function(a) { try { if (new URL(a.href).pathname + new URL(a.href).search === location.pathname + location.search) first = a; } catch (e) {} });
+            if (first) focusItem(first);
+          }
+          function shelfMove(dir) {
+            var list = fiItems(), cur = document.activeElement;
+            if (list.indexOf(cur) === -1) { if (list[0]) focusItem(list[0]); return true; }
+            var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+            var best = null, bs = 1e9;
+            list.forEach(function(it) {
+              if (it === cur) return;
+              var r = it.getBoundingClientRect();
+              var dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim, orth;
+              if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
+              else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
+              else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
+              else { if (dx >= -4) return; prim = -dx; orth = Math.abs(dy); }
+              var sc = prim + orth * 2;
+              if (sc < bs) { bs = sc; best = it; }
+            });
+            if (best) { focusItem(best); return true; }
+            return false;
+          }
+          function activate(el) {
+            if (el.getAttribute('data-shelf')) { openShelf(el.getAttribute('data-shelf'), el); return; }
+            if (el.getAttribute('data-grp')) {
+              var g = el.parentNode;
+              var was = g.classList.contains('tv-sm-expanded');
+              collapseAll(null);
+              if (!was) { g.classList.add('tv-sm-expanded'); }
+              focusItem(el);
+              return;
+            }
+            if (el.getAttribute('data-homegrp')) {
+              var hg2 = el.parentNode, hw2 = hg2.classList.contains('tv-sm-expanded');
+              collapseAll(null);
+              if (!hw2) hg2.classList.add('tv-sm-expanded');
+              focusItem(el);
+              return;
+            }
+            if (el.getAttribute('data-go')) { go(el.getAttribute('data-go')); return; }
+
+            if (el.getAttribute('data-lang')) {
+              var next = isJa() ? 'en' : 'ja';
+              // the page reloads in the new language; the menu is opened again as soon as the new page appears
+              lsSet(REOPEN_KEY, String(Date.now()));
+              if (window.AndroidHost && typeof window.AndroidHost.toggleLanguage === 'function') window.AndroidHost.toggleLanguage(next);
+              return;
+            }
+            if (el.getAttribute('data-acctlink')) {
+              var l = (window.__tvMenuAcct || [])[parseInt(el.getAttribute('data-acctlink'), 10)];
+              closeMenu();
+              if (l && l.el) l.el.click();
+              return;
+            }
+            if (el.getAttribute('data-acct')) {
+              var key = document.querySelector('.box-dropdown-key');
+              closeMenu();
+              if (key) key.click(); else window.location.href = BASE + '/mypage';
+              return;
+            }
+          }
+
+          function stop(e) { e.preventDefault(); e.stopPropagation(); }
+
+
+
+          function cardRect(a) {
+            var c = a.closest('.content-list-item, article') || a;
+            return c.getBoundingClientRect();
+          }
+          function atLeftEdge(ae) {
+            if (!ae || ae === document.body || ae === document.documentElement) return true;
+            if (ae.classList.contains('tv-hero-card')) return true;   // Left on the banner opens the menu (Right still changes slides)
+            if (ae.classList.contains('tv-card')) return !ae.previousElementSibling;
+            if (ae.classList.contains('tv-thumbnail-link')) {
+              var r = cardRect(ae);
+              var min = r.left;
+              Array.prototype.forEach.call(document.querySelectorAll('a.tv-thumbnail-link'), function(a) {
+                if (a.closest('.slick-cloned')) return;
+                var rr = cardRect(a);
+                if (rr.width > 0 && rr.height > 0 && Math.abs(rr.top - r.top) < r.height && rr.left < min) min = rr.left;
+              });
+              return r.left <= min + 12;
+            }
+            return false;
+          }
+
+          window.addEventListener('keydown', function(e) {
+            var k = e.keyCode;
+            if (isOpen && shelfEl) {
+              if (k === 40) { stop(e); shelfMove('down'); }
+              else if (k === 38) { stop(e); shelfMove('up'); }
+              else if (k === 39) { stop(e); shelfMove('right'); }
+              else if (k === 37) { stop(e); if (!shelfMove('left')) closeShelf(true); }
+              else if (k === 27) { stop(e); closeShelf(true); }
+              else if (k === 13 || k === 23 || k === 32) {
+                var fa = document.activeElement;
+                if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
+                  stop(e);
+                  if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  else go(fa.getAttribute('data-go'));
+                }
+              }
+              return;
+            }
+            if (!isOpen) {
+              if (k !== 37) return;
+              var ae0 = document.activeElement;
+              var tag = ae0 && ae0.tagName;
+              if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+              if (isDetail() && !(ae0 && ae0.classList && (ae0.classList.contains('tv-thumbnail-link') || ae0.classList.contains('tv-card')))) return;
+              if (atLeftEdge(ae0)) { stop(e); openMenu(); }
+              return;
+            }
+            var ae = document.activeElement;
+            var inInput = !!(ae && ae.tagName === 'INPUT' && ae.type !== 'submit' && ae.closest && ae.closest('.tv-sm-search'));
+            if (k === 40) { stop(e); move(1); return; }
+            if (k === 38) { stop(e); move(-1); return; }
+            if (k === 39) {
+              if (inInput && ae.value && ae.selectionStart < ae.value.length) return;   // let the cursor move inside typed text
+              if (ae && ae.getAttribute && ae.getAttribute('data-homegrp')) {
+                stop(e);
+                var hg = ae.parentNode, hwas = hg.classList.contains('tv-sm-expanded');
+                collapseAll(null);
+                if (!hwas) hg.classList.add('tv-sm-expanded');
+                return;
+              }
+              if (ae && ae.getAttribute && ae.getAttribute('data-shelf')) { stop(e); openShelf(ae.getAttribute('data-shelf'), ae); return; }
+              stop(e); closeMenu(); return;
+            }
+            if (k === 37) {
+              if (inInput && ae.value && ae.selectionStart > 0) return;
+              stop(e);
+              if (ae && ae.classList && ae.classList.contains('tv-sm-sub')) {
+                var par = ae.parentNode.parentNode;
+                var head = par && par.firstElementChild;
+                if (head) { par.classList.remove('tv-sm-expanded'); focusItem(head); }
+              } else if (ae && ae.parentNode && ae.parentNode.classList && ae.parentNode.classList.contains('tv-sm-expanded')) {
+                ae.parentNode.classList.remove('tv-sm-expanded');
+              } else if (ae && panel && panel.contains(ae)) {
+                // on a top-level row with nothing open: Left puts the menu away (like Right and Back)
+                closeMenu();
+              }
+              return;
+            }
+            if (k === 27) { stop(e); closeMenu(); return; }
+            if (k === 13 || k === 23 || k === 32 && !inInput) {
+              if (inInput) return;   // the site's own search box: OK opens the keyboard, Enter searches, as it always did
+              if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
+            }
+          }, true);
+
+          // The always-visible edge tab and the first-launch hint.
+          function addCues() {
+            if (document.getElementById('tv-sm-tab')) return;
+            var host = document.body || document.documentElement;
+            var tab = document.createElement('div');
+            tab.id = 'tv-sm-tab';
+            tab.setAttribute('aria-hidden', 'true');
+            tab.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+            host.appendChild(tab);
+            var shown = parseInt(lsGet(HINT_KEY) || '0', 10) || 0;
+            if (isHome() && shown < 3) {
+              lsSet(HINT_KEY, String(shown + 1));
+              var hint = document.createElement('div');
+              hint.id = 'tv-sm-hint';
+              hint.className = 'notranslate';
+              hint.setAttribute('translate', 'no');
+              hint.textContent = '◀  ' + T('Press Left for the menu', '左キーでメニュー');
+              host.appendChild(hint);
+              setTimeout(function() { hint.style.opacity = '0'; }, 12000);
+              setTimeout(function() { if (hint.parentNode) hint.parentNode.removeChild(hint); }, 13000);
+            }
+          }
+          // The "New" entry in Shows opens wherever the home page's New row sends its View All tile: remembered
+          // from the home page, which is where that row is drawn.
+          function rememberNewHref() {
+            var grid = document.getElementById('tv-test-grid');
+            if (!grid) return false;
+            var rows = grid.querySelectorAll('.tv-grid-row');
+            if (!rows.length) return false;
+            var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
+            var last = tiles.length ? tiles[tiles.length - 1] : null;
+            if (last && last.href) lsSet(NEW_KEY, last.href);
+            // every row the site draws on the home page (not the app's own Recently Watched / Favorites rows) with its View All address
+            var list = [];
+            Array.prototype.forEach.call(rows, function(row) {
+              var wrap = row.parentNode;
+              if (!wrap || wrap.id) return;
+              var h2 = wrap.querySelector('h2');
+              var title = h2 ? (h2.textContent || '').replace(/\s+/g, ' ').trim() : '';
+              var t2 = row.querySelectorAll('a.tv-card.notranslate');
+              var va = t2.length ? t2[t2.length - 1] : null;
+              if (title && va && va.href) list.push([title, va.href]);
+            });
+            if (list.length) {
+              // keep an English and a Japanese name per row: the page shows whichever language it is in when it is read
+              var prev = {};
+              try { (JSON.parse(lsGet(HOME_ROWS_KEY) || '[]') || []).forEach(function(r) { prev[r[1]] = r; }); } catch (e) {}
+              lsSet(HOME_ROWS_KEY, JSON.stringify(list.map(function(r) {
+                var pr = prev[r[1]], en = null, ja = null;
+                if (pr) { var pj = pr[2] || pr[0]; if (hasJa(pr[0])) ja = pr[0]; else { en = pr[0]; if (hasJa(pj)) ja = pj; } }
+                if (hasJa(r[0])) ja = r[0]; else en = r[0];
+                return [en || ja, r[1], ja || en];
+              })));
+            }
+            return true;
+          }
+          if (isHome()) {
+            var nhTries = 0;
+            var nhTimer = setInterval(function() {
+              nhTries++;
+              if (rememberNewHref() || nhTries > 40) clearInterval(nhTimer);
+            }, 1000);
+            setTimeout(function() { homeRows(); }, 2500);
+            // once the page has been translated, read the rows again to learn the other language's names
+            setTimeout(rememberNewHref, 8000);
+            setTimeout(rememberNewHref, 16000);
+          }
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addCues);
+          else addCues();
+
+          // A page title in the home-row style (gold bar + large white text) at the top of every destination page.
+          function pageTitleText() {
+            var loc = location;
+            var params = new URLSearchParams(loc.search);
+            var h1 = document.querySelector('h1.ttl-lg, .box-content > h1, h1');
+            var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
+            var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
+            var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
+            for (var i = 0; i < all.length; i++) {
+              var u = new URL(all[i][1], BASE);
+              if (u.pathname !== loc.pathname) continue;
+              if (u.pathname === '/contents/search') {
+                var up = u.searchParams;
+                if ((up.get('s') || '') !== (params.get('s') || '')) continue;
+                if ((up.get('q[keyword]') || '') !== (params.get('q[keyword]') || '')) continue;
+              }
+              return isJa() ? (all[i][2] || fallback) : all[i][0];
+            }
+            if (isJa()) return fallback;
+            var kw = params.get('q[keyword]');
+            if (loc.pathname === '/contents/search' && kw) return 'Search: ' + kw;
+            return fallback;
+          }
+          function addPageTitle() {
+            var p = location.pathname;
+            if (isHome() || isDetail() || p.indexOf('/login') === 0) return true;
+            if (!document.body) return false;
+            var el = document.getElementById('tv-page-title');
+            var txt = pageTitleText();
+            if (!txt) return false;
+            if (!el) {
+              el = document.createElement('div');
+              el.id = 'tv-page-title';
+              el.className = 'notranslate';
+              el.setAttribute('translate', 'no');
+              el.innerHTML = '<span class="tv-pt-bar"></span><span class="tv-pt-txt"></span>';
+              document.body.insertBefore(el, document.body.firstChild);
+            }
+            var t = el.querySelector('.tv-pt-txt');
+            if (t.textContent !== txt) t.textContent = txt;
+            // line the title up with the left edge of the first video card
+            var card = document.querySelector('a.tv-thumbnail-link');
+            var c = card ? (card.closest('.content-list-item, article') || card) : null;
+            var left = c ? c.getBoundingClientRect().left + window.scrollX : 0;
+            el.style.paddingLeft = (left > 16 ? left : 40) + 'px';
+            return true;
+          }
+          var ptTries = 0;
+          var ptTimer = setInterval(function() {
+            ptTries++;
+            addPageTitle();
+            if (ptTries > 25) clearInterval(ptTimer);
+          }, 800);
+        })();
+    """.trimIndent()
+
+    // Video (detail) pages: a title bar above the player, and Up from the first row of related videos to the player.
+    private val playerPageJs = """
+        (function(){
+          if (window.__tvPlayerPage) return;
+          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          window.__tvPlayerPage = true;
+
+          function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+          function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
+          function focusPlayer() {
+            var f = playerFrame();
+            if (!f) return false;
+            try { f.focus(); } catch (e) {}
+            try { f.scrollIntoView({ block: 'center' }); } catch (e) {}
+            return true;
+          }
+          function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+
+          // After leaving full screen the player's picture can stay offset inside its frame until the frame is
+          // resized; nudge the frame's width and put it back so the player lays itself out again.
+          window.__tvRefitPlayer = function() {
+            var f = playerFrame();
+            if (!f) return;
+            try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+            var w = f.style.width;
+            var r = f.getBoundingClientRect();
+            if (r.width < 10) return;
+            f.style.width = Math.round(r.width - 2) + 'px';
+            setTimeout(function() {
+              f.style.width = w;
+              try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+            }, 150);
+          };
+
+          var st = document.createElement('style');
+          st.id = 'tv-player-style';
+          st.textContent = [
+            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
+            '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
+            '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+          ].join('\n');
+          (document.head || document.documentElement).appendChild(st);
+
+          function titleText() {
+            var el = document.querySelector('.content-ttl-wrap h1, .content-ttl-wrap h2, h1.ttl-lg, h1, h2.ttl-md');
+            var t = el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            var d = (document.title || '').replace(/\s*[|｜\-]\s*Stardom World.*$/i, '').trim();
+            return t || d;
+          }
+
+          var bar = null;
+          function addBar() {
+            if (!document.body) return;
+            if (!bar) {
+              bar = document.createElement('div');
+              bar.id = 'tv-player-bar';
+              bar.innerHTML = '<span class="tv-pb-bar"></span><span class="tv-pb-title"></span>';
+              document.body.insertBefore(bar, document.body.firstChild);
+            }
+            var tt = bar.querySelector('.tv-pb-title');
+            var txt = titleText();
+            if (txt && tt.textContent !== txt) tt.textContent = txt;
+          }
+          addBar();
+          var barTries = 0;
+          var barTimer = setInterval(function() { barTries++; addBar(); if (barTries > 40) clearInterval(barTimer); }, 1000);
+
+          // Up from the first row of related videos goes to the player.
+          window.addEventListener('keydown', function(e) {
+            if (e.keyCode !== 38 || menuOpen()) return;
+            var ae = document.activeElement;
+            if (!ae || !ae.classList || !(ae.classList.contains('tv-thumbnail-link') || ae.classList.contains('tv-card'))) return;
+            var c = ae.closest('.content-list-item, article, a.tv-card') || ae;
+            var fr = c.getBoundingClientRect();
+            var above = false;
+            Array.prototype.forEach.call(document.querySelectorAll('a.tv-thumbnail-link, .tv-related-row a.tv-card'), function(a) {
+              if (a.closest('.slick-cloned')) return;
+              var cc = a.closest('.content-list-item, article, a.tv-card') || a;
+              var r = cc.getBoundingClientRect();
+              if (r.width > 0 && r.height > 0 && fr.top - r.top > fr.height * 0.5) above = true;
+            });
+            if (above) return;
+            if (window.__tvFocusBar && window.__tvFocusBar()) { e.preventDefault(); e.stopPropagation(); }
+            else if (focusPlayer()) { e.preventDefault(); e.stopPropagation(); }
+          }, true);
+        })();
+    """.trimIndent()
+
+    // Video pages: every related-videos row is rebuilt with the same markup and styles as the main page rows
+    // (so the main page's own keyboard handling drives it: one card per press, focus follows the scroll,
+    // View All as the last tile). The site's carousel stays in the page, hidden, because play-next reads it.
+    private val relatedRowJs = """
+        (function(){
+          if (window.__tvRelatedRows) return;
+          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          window.__tvRelatedRows = true;
+
+          var st = document.createElement('style');
+          st.textContent = '.box-related-content.tv-related-done > .ttl-wrap, .box-related-content.tv-related-done > .content-list{display:none !important;}';
+          (document.head || document.documentElement).appendChild(st);
+
+          // Same values as the main page rows.
+          var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+          var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+          var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
+
+          function esc(t) {
+            return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+          }
+          function clean(txt) {
+            return String(txt || '').replace(/月額見放題/g, '')
+              .replace(/Unlimited viewing for a monthly fee/gi, '')
+              .replace(/Monthly subscription available/gi, '')
+              .replace(/Monthly subscription/gi, '')
+              .replace(/Registration date\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+              .replace(/登録日\s*[:：]?\s*\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/gi, '')
+              .replace(/Registration date\s*[:：]?/gi, '')
+              .replace(/登録日\s*[:：]?/g, '')
+              .replace(/\d{4}[\/\.\-]\d{2}[\/\.\-]\d{2}/g, '')
+              .replace(/\s+/g, ' ').trim();
+          }
+
+          function build(sec) {
+            var c = sec.querySelector('.js-list-slide');
+            if (!c) return false;
+            var items = Array.from(c.querySelectorAll('.content-list-item')).filter(function(el) {
+              return !el.classList.contains('slick-cloned') && !el.closest('.slick-cloned');
+            });
+            var cards = [];
+            var seen = {};
+            items.forEach(function(item) {
+              var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+              if (!link || !link.href || seen[link.href]) return;
+              seen[link.href] = true;
+              var thumbInner = item.querySelector('.content-thumbnail-box-inner, [style*="background-image"]');
+              var imgEl = item.querySelector('img');
+              var titleBox = item.querySelector('h3, .ttl-xs, .content-info-box');
+              var bg = '';
+              if (thumbInner) {
+                var b = thumbInner.style.backgroundImage || getComputedStyle(thumbInner).backgroundImage;
+                var m = b && b.match(/url\(['"]?(.*?)['"]?\)/);
+                if (m && m[1]) bg = m[1];
+              }
+              if (!bg && imgEl) bg = imgEl.src;
+              cards.push({ href: link.href, title: clean(titleBox ? titleBox.textContent : '') || 'Stardom World Video', bg: bg });
+            });
+            if (!cards.length) return false;
+
+            var head = sec.querySelector('.ttl-wrap h2, .ttl-md');
+            var title = head ? (head.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            var all = sec.querySelector('.ttl-wrap > a[href]');
+            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+
+            var html = '<h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:700 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span>' + esc(title) + '</span></h2>' +
+              '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
+            cards.forEach(function(it) {
+              var bgStyle = it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '';
+              html += '<a class="tv-card" tabindex="0" href="' + esc(it.href) + '" style="' + cardCss + '"><div style="' + imgCss + ' ' + bgStyle + '"></div><div style="' + titleCss + '">' + esc(it.title) + '</div></a>';
+            });
+            if (all && all.href) {
+              html += '<a class="tv-card notranslate" tabindex="0" href="' + esc(all.href) + '" style="flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); box-sizing:border-box; border-radius:8px; background:#11171E; border:2px solid #2a323c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-decoration:none; cursor:pointer; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:24px; font-weight:bold; min-height:165px;"><span>' + (ja ? 'すべて見る' : 'View All') + '</span><span style="color:#F4C242; font-size:34px; line-height:1;">&#8594;</span></a>';
+            }
+            html += '</div>';
+
+            var wrap = document.createElement('div');
+            wrap.className = 'tv-related-row';
+            wrap.style.cssText = 'margin-bottom:35px;';
+            wrap.innerHTML = html;
+            sec.classList.add('tv-related-done');
+            sec.insertBefore(wrap, sec.firstChild);
+            return true;
+          }
+
+          var started = Date.now();
+          var timer = setInterval(function() {
+            var secs = Array.from(document.querySelectorAll('.box-related-content')).filter(function(s) { return !s.classList.contains('tv-related-done'); });
+            var elapsed = Date.now() - started;
+            // The first carousel is reversed and re-initialised by another script within about 4 seconds; wait for it.
+            if (!window.__tvReverseCarouselDone && elapsed < 4600) return;
+            secs.forEach(function(s) { build(s); });
+            if (elapsed > 12000) clearInterval(timer);
+          }, 500);
+        })();
+    """.trimIndent()
+
+    // Video pages: the player's control bar under the picture. Same buttons, labels and actions as the full screen
+    // bar (the app supplies them: AndroidHost.barIds / barLabels / barAction), in one compact row. Focus lives on
+    // these buttons, not inside the player frame, so Left/Right can never wander off into the player's hidden controls.
+    private val playerBarJs = """
+        (function(){
+          if (window.__tvPlayerBar) return;
+          if (!/^\/(contents|set)\/[0-9]+/.test(location.pathname)) return;
+          if (!window.AndroidHost || !AndroidHost.barIds) return;
+          window.__tvPlayerBar = true;
+
+          var ACCENT = '${BAR_ACCENT}', DARK = '${BAR_TEXT_ON_ACCENT}', RADIUS = '${BAR_RADIUS_DP}px';
+          var ids = [];
+          try { ids = JSON.parse(AndroidHost.barIds()); } catch (e) {}
+          if (!ids.length) return;
+
+          var st = document.createElement('style');
+          st.textContent =
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:64px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
+            '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
+            '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
+            '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
+            '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
+            '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}' +
+            '#tv-pskip{position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc;}' +
+            '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center;}' +
+            '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + ';}' +
+            '.tv-nb, .tv-nb:focus{border:0 !important;box-shadow:none !important;outline:0 !important;}';
+          (document.head || document.documentElement).appendChild(st);
+
+          function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
+          function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+
+          var bar = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
+
+          var buildTries = 0;
+          function build() {
+            var f = playerFrame();
+            if (!f || !f.parentElement) return false;
+            // The bar goes right above the related-videos section: the player's own wrapper can clip anything
+            // placed inside it (it is a fixed-ratio box), which cut the bar off. Wait briefly for the section.
+            var sec = document.querySelector('.box-related-content');
+            if (!sec && ++buildTries < 8) return false;
+            f.setAttribute('tabindex', '-1');   // the frame itself is never a keyboard stop
+            // No thin outlines around the player or its wrappers.
+            var n = f, depth = 0;
+            while (n && n !== document.body && depth < 6) { n.classList.add('tv-nb'); n = n.parentElement; depth++; }
+            bar = document.createElement('div');
+            bar.id = 'tv-pbar';
+            var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
+            ids.forEach(function(id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
+            bar.innerHTML = html + '</span>';
+            if (sec && sec.parentElement) sec.parentElement.insertBefore(bar, sec);
+            else {
+              var host = f.parentElement;
+              host.insertAdjacentElement('afterend', bar);
+            }
+            timeEl = bar.querySelector('.tv-pb-time');
+            fillEl = bar.querySelector('.tv-pb-fill');
+            Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
+              btns[b.getAttribute('data-id')] = b;
+              b.addEventListener('focus', function() { lastId = b.getAttribute('data-id'); });
+              b.addEventListener('click', function(e) { e.preventDefault(); act(b.getAttribute('data-id')); });
+            });
+            fit();
+            refresh();
+            return true;
+          }
+
+          // The bar is exactly as wide as, and lined up with, the picture above it.
+          function fit() {
+            var f = playerFrame();
+            if (!bar || !f) return;
+            var r = f.getBoundingClientRect();
+            if (r.width < 50) return;
+            bar.style.width = Math.round(r.width) + 'px';
+            // Close the gap the player's wrapper leaves under the picture.
+            bar.style.marginTop = '0px';
+            var gap = bar.getBoundingClientRect().top - r.bottom;
+            bar.style.marginTop = (gap > 1 ? -Math.round(gap) : 0) + 'px';
+            bar.style.marginLeft = '0px';
+            var bl = bar.getBoundingClientRect().left;
+            bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';
+          }
+
+          function fmt(sec) {
+            sec = Math.max(0, Math.floor(sec || 0));
+            var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+            return (h > 0 ? h + ':' + (m < 10 ? '0' : '') + m : m) + ':' + (s < 10 ? '0' : '') + s;
+          }
+
+          function refresh() {
+            if (!bar) return;
+            try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); } catch (e) {}
+            var json = window.__tvStatusJson || '';
+            var labels = {};
+            try { labels = JSON.parse(AndroidHost.barLabels(json)); } catch (e) {}
+            ids.forEach(function(id) { if (labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+            if (json) {
+              try {
+                var j = JSON.parse(json);
+                timeEl.textContent = fmt(j.t) + ' / ' + fmt(j.d);
+                fillEl.style.width = (j.d > 0 ? Math.min(100, j.t / j.d * 100) : 0) + '%';
+              } catch (e) {}
+            }
+          }
+
+          var skipBox = null, skipTimer = 0;
+          function showSkip(info, anchor) {
+            if (!skipBox) { skipBox = document.createElement('div'); skipBox.id = 'tv-pskip'; document.body.appendChild(skipBox); }
+            skipBox.innerHTML = '';
+            // Largest at the top, so Up = bigger and Down = smaller, as on the remote.
+            for (var i = info.sizes.length - 1; i >= 0; i--) {
+              var d = document.createElement('div');
+              d.textContent = info.sizes[i];
+              if (i === info.idx) d.className = 'on';
+              skipBox.appendChild(d);
+            }
+            skipBox.style.display = 'flex';
+            var r = anchor.getBoundingClientRect();
+            var h = skipBox.offsetHeight, w = skipBox.offsetWidth;
+            skipBox.style.left = Math.max(8, Math.round(r.left + r.width / 2 - w / 2)) + 'px';
+            skipBox.style.top = Math.max(8, Math.round(r.top - h - 10)) + 'px';
+            clearTimeout(skipTimer);
+            skipTimer = setTimeout(function() { if (skipBox) skipBox.style.display = 'none'; }, 2500);
+          }
+
+          function act(id) {
+            try { AndroidHost.barAction(id); } catch (e) {}
+            setTimeout(refresh, 300);
+          }
+
+          window.__tvFocusBar = function(id) {
+            var b = btns[id || lastId] || btns[ids[0]];
+            if (!b) return false;
+            try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
+            // Title, picture and bar all fit on screen together, so show the page from the top.
+            try { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+            return true;
+          };
+
+          function firstCard() {
+            return document.querySelector('.tv-related-row a.tv-card, a.tv-thumbnail-link');
+          }
+
+          document.addEventListener('keydown', function(e) {
+            if (menuOpen()) return;
+            var ae = document.activeElement;
+            if (!ae || !ae.classList || !ae.classList.contains('tv-pbtn')) return;
+            var k = e.keyCode;
+            var i = ids.indexOf(ae.getAttribute('data-id'));
+            var did = ae.getAttribute('data-id');
+            if ((k === 38 || k === 40) && (did === 'back' || did === 'fwd') && AndroidHost.skipStep) {
+              // Up / Down on -/+: choose the skip size (Up = bigger, Down = smaller); OK skips by it.
+              e.preventDefault(); e.stopPropagation();
+              var info = null;
+              try { info = JSON.parse(AndroidHost.skipStep(k === 38 ? 1 : -1)); } catch (x) {}
+              refresh();
+              if (info) showSkip(info, ae);
+              return;
+            }
+            if (k === 39) {                       // Right: next button, stops at the last
+              e.preventDefault(); e.stopPropagation();
+              if (i < ids.length - 1) btns[ids[i + 1]].focus();
+            } else if (k === 37) {                // Left: previous button; before the first, the menu
+              e.preventDefault(); e.stopPropagation();
+              if (i > 0) btns[ids[i - 1]].focus();
+              else if (window.__tvOpenMenu) window.__tvOpenMenu();
+            } else if (k === 38) {                // Up: nothing above the bar
+              e.preventDefault(); e.stopPropagation();
+            } else if (k === 40) {                // Down: on to the first related video
+              var c = firstCard();
+              if (c) {
+                e.preventDefault(); e.stopPropagation();
+                try { c.focus({ preventScroll: true }); } catch (x) { c.focus(); }
+                try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {}
+              }
+            } else if (k === 13 || k === 23) {
+              e.preventDefault(); e.stopPropagation();
+              act(ae.getAttribute('data-id'));
+            }
+          }, true);
+
+          var tries = 0, focused = false;
+          var timer = setInterval(function() {
+            tries++;
+            if (!bar) { build(); }
+            else {
+              fit();
+              if (!focused) {
+                focused = true;
+                var ae = document.activeElement;
+                if (!ae || ae === document.body || ae.tagName === 'IFRAME') window.__tvFocusBar('play');
+              }
+            }
+            if (tries > 120) clearInterval(timer);
+          }, 500);
+          setInterval(function() { if (bar && !document.hidden) refresh(); }, 500);
+          window.addEventListener('resize', fit);
+        })();
+    """.trimIndent()
+
+    // Factions page: reached from the menu's Factions entry (a search page address carrying "tvfaction=<id>").
+    // The faction's members are listed on the left (they stay put); OK or Right on one loads that member's videos
+    // into a grid on the right, one page at a time as the remote reaches the bottom. The names come from the
+    // app's factions.json; nothing is requested until a member is chosen, and never more than one request at once.
+    private val factionJs = """
+(function(){
+  if (window.__tvFaction) return;
+  var mm = /[?&]tvfaction=([A-Za-z0-9_-]+)/.exec(location.search);
+  if (!mm || location.pathname.indexOf('/contents/search') !== 0) return;
+  if (!window.AndroidHost || !AndroidHost.factionsJson) return;
+  var data = null;
+  try { data = JSON.parse(AndroidHost.factionsJson()); } catch (e) {}
+  var fac = null;
+  ((data && data.factions) || []).forEach(function(f) { if (f.id === mm[1]) fac = f; });
+  if (!fac || !fac.members || !fac.members.length) return;
+  window.__tvFaction = true;
+  window.__tvInfiniteScroll = true;   // the site's own result list is not used; this page loads its own pages
+  var logoSrc = '';
+  try { logoSrc = AndroidHost.factionLogo(fac.id) || ''; } catch (e) {}
+
+  var GAP_MS = 1200;                 // pause between two requests to the site
+  var CACHE_KEY = 'tvFacCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1';
+  var CACHE_TTL = 12 * 3600 * 1000;
+  var MAX_SAVED = 40;                // videos kept per member on the TV (the first pages only)
+
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+  function absUrl(u) { try { return new URL(u, location.origin).href; } catch (e) { return u; } }
+  function clean(t) {
+    return (t || '').replace(/月額見放題/g, '')
+      .replace(/Unlimited viewing for a monthly fee/gi, '')
+      .replace(/Monthly subscription available/gi, '')
+      .replace(/Monthly subscription/gi, '')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#tv-fac{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fac, #tv-fac *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
+    '#tv-fac-nav{flex:0 0 330px;box-sizing:border-box;padding:30px 20px 20px 30px;display:flex;flex-direction:column;min-height:0;border-right:1px solid #222b36;}',
+    '#tv-fac .tv-fh-brandwrap{display:flex;justify-content:center;align-items:center;margin:0 0 16px 0;}',
+    '#tv-fac .tv-fh-brand{max-width:100%;max-height:130px;object-fit:contain;}',
+    '#tv-fac .tv-fh{display:flex;align-items:center;gap:14px;margin:0 0 18px 8px;min-height:48px;}',
+    '#tv-fac .tv-fh-bar{flex:0 0 auto;width:8px;align-self:stretch;min-height:40px;background:#F4C242;}',
+    '#tv-fac .tv-fh-name{min-width:0;font-size:26px;font-weight:700;line-height:1.15;white-space:normal;}',
+    '#tv-fac-members{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;padding:2px;}',
+    '#tv-fac-members::-webkit-scrollbar{display:none;}',
+    '#tv-fac .tv-fm{display:flex;align-items:center;box-sizing:border-box;min-height:50px;margin:3px 0;padding:0 14px;font-size:22px;font-weight:600;color:#c9d2dc;border:3px solid transparent;border-left:6px solid transparent;border-radius:8px;outline:none !important;cursor:pointer;}',
+    '#tv-fac .tv-fm.tv-sel{color:#F4C242;border-left-color:#F4C242;}',
+    '#tv-fac .tv-fm:focus{background:#172029;border-color:#F4C242;color:#ffffff;box-shadow:none !important;}',
+    '#tv-fac-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;min-height:0;}',
+    '#tv-fac-title{display:flex;align-items:center;gap:14px;padding:30px 40px 6px 40px;font-size:28px;font-weight:700;}',
+    '#tv-fac-title .tv-ft-bar{width:8px;height:32px;background:#F4C242;}',
+    '#tv-fac-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 40px 30px;scrollbar-width:none;}',
+    '#tv-fac-scroll::-webkit-scrollbar{display:none;}',
+    '#tv-fac-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;}',
+    '#tv-fac .tv-fc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-fac .tv-fc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
+    '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
+    '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}',
+    '#tv-fac-empty{flex:1 1 auto;display:none;align-items:center;justify-content:center;}',
+    '#tv-fac.tv-empty #tv-fac-empty{display:flex;}',
+    '#tv-fac.tv-empty #tv-fac-title, #tv-fac.tv-empty #tv-fac-scroll{display:none;}',
+    '#tv-fac .tv-em{max-width:560px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 30px;}',
+    '#tv-fac .tv-em-name{font-size:44px;font-weight:700;line-height:1.15;}',
+    '#tv-fac .tv-em-text{font-size:24px;color:#c9d2dc;line-height:1.4;}',
+    '#tv-fac .tv-em-hint{padding:10px 22px;border-radius:28px;background:#172029;border:2px solid #2a323c;font-size:18px;font-weight:700;color:#F4C242;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  // ------------------------------------------------------------------ data
+  var members = fac.members;
+  var S = [];                       // per member: { items, seen, page, more, loaded, err }
+  members.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
+  var sel = -1;                     // no member is opened until one is chosen
+  var seedIdx = 0;                  // the member whose results the opened page itself holds
+  var kw = /[?&]q%5Bkeyword%5D=([^&]*)/i.exec(location.search) || /[?&]q\[keyword\]=([^&]*)/i.exec(location.search);
+  if (kw) {
+    var want = ''; try { want = decodeURIComponent(kw[1].replace(/\+/g, ' ')); } catch (e) {}
+    members.forEach(function(m, i) { if (m.search === want) seedIdx = i; });
+  }
+
+  function readCache() { try { return JSON.parse(lsGet(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function writeCache(term, s) {
+    var c = readCache();
+    c[term] = { t: Date.now(), items: s.items.slice(0, MAX_SAVED), more: s.more };
+    var keys = Object.keys(c);
+    if (keys.length > 80) {
+      keys.sort(function(a, b) { return c[a].t - c[b].t; });
+      for (var i = 0; i < keys.length - 80; i++) delete c[keys[i]];
+    }
+    lsSet(CACHE_KEY, JSON.stringify(c));
+  }
+
+  function parseCards(doc) {
+    var scope = doc.querySelector('.content-list, [class*="content-list"]') || doc;
+    var nodes = scope.querySelectorAll('.content-list-item, article');
+    var out = [], seen = {};
+    Array.prototype.forEach.call(nodes, function(item) {
+      if (item.closest && item.closest('.slick-cloned')) return;
+      var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+      if (!link) return;
+      var href = absUrl(link.getAttribute('href') || '');
+      if (!href || seen[href]) return;
+      seen[href] = true;
+      var bg = '';
+      var th = item.querySelector('[style*="background-image"]');
+      if (th) {
+        var m = (th.style.backgroundImage || '').match(/url\(['"]?(.*?)['"]?\)/);
+        if (m && m[1]) bg = m[1];
+      }
+      if (!bg) {
+        var img = item.querySelector('img');
+        if (img) bg = img.getAttribute('data-src') || img.getAttribute('data-lazy') || img.getAttribute('data-original') || img.getAttribute('src') || '';
+      }
+      if (bg.indexOf('data:') === 0) bg = '';
+      if (bg) bg = absUrl(bg);
+      var tEl = item.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
+      var title = clean(tEl ? tEl.textContent : item.textContent) || 'Stardom World Video';
+      out.push({ href: href, title: title, bgUrl: bg });
+    });
+    return out;
+  }
+  function hasNext(doc) {
+    return !!doc.querySelector('a[rel="next"], .pagination a.next, .pagination .next a, li.next a');
+  }
+
+  // ------------------------------------------------------------------ requests: one at a time, spaced out
+  var busy = false, lastReq = 0;
+  function blockedFor() {
+    var until = parseInt(lsGet(BLOCK_KEY) || '0', 10) || 0;
+    return until > Date.now() ? Math.ceil((until - Date.now()) / 60000) : 0;
+  }
+  function blockNow(mins) { lsSet(BLOCK_KEY, String(Date.now() + mins * 60000)); }
+
+  function fetchPage(term, page, cb) {
+    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term) + (page > 1 ? '&page=' + page : '');
+    fetch(url, { credentials: 'include' }).then(function(res) {
+      if (res.status === 429 || res.status === 403 || res.status === 503) { blockNow(10); throw 'blocked'; }
+      if (!res.ok) throw 'http';
+      if (res.redirected && /login|sign_in|signin/.test(res.url)) throw 'login';
+      return res.text();
+    }).then(function(html) {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var items = parseCards(doc);
+      if (!items.length && /captcha|verify you are human|are you a robot/i.test(html)) { blockNow(10); throw 'blocked'; }
+      var more = hasNext(doc) || items.length >= 12;
+      cb('', items, more);
+    }).catch(function(err) { cb(typeof err === 'string' ? err : 'error'); });
+  }
+
+  // Loads the next page of member i (the first one when nothing is loaded yet). done(newItems) afterwards.
+  function loadNext(i, done) {
+    var s = S[i];
+    if (s.loading) return;
+    if (busy) { setTimeout(function() { loadNext(i, done); }, 400); return; }
+    if (!s.more && s.loaded) { if (done) done([]); return; }
+    var wait = blockedFor();
+    if (wait) { s.err = 'blocked'; if (done) done([]); return; }
+    // first page: the saved copy, if fresh, costs no request
+    if (!s.loaded) {
+      var c = readCache()[members[i].search];
+      if (c && c.items && c.items.length && Date.now() - c.t < CACHE_TTL) {
+        c.items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
+        s.page = 1; s.more = !!c.more; s.loaded = true; s.err = '';
+        if (done) done(s.items.slice());
+        return;
+      }
+    }
+    s.loading = true; busy = true;
+    var go = function() {
+      lastReq = Date.now();
+      fetchPage(members[i].search, s.page + 1, function(err, items, more) {
+        s.loading = false; busy = false;
+        if (err) { s.err = err; if (done) done([]); return; }
+        s.err = '';
+        var added = [];
+        items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); added.push(it); } });
+        s.page += 1; s.loaded = true;
+        s.more = more && added.length > 0;
+        if (s.page === 1) writeCache(members[i].search, s);
+        if (done) done(added);
+      });
+    };
+    var gap = lastReq + GAP_MS - Date.now();
+    if (gap > 0) setTimeout(go, gap); else go();
+  }
+
+  // ------------------------------------------------------------------ page
+  var root = document.createElement('div');
+  root.id = 'tv-fac';
+  var head = '';
+  // Builds that may show logos: the logo, centered, above the name; the name is laid out the same either way.
+  if (logoSrc) head += '<div class="tv-fh-brandwrap"><img class="tv-fh-brand" src="' + esc(logoSrc) + '" alt=""></div>';
+  head += '<div class="tv-fh"><span class="tv-fh-bar"></span><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div></div>';
+  var mh = '';
+  members.forEach(function(m, i) {
+    mh += '<div class="tv-fm notranslate" translate="no" tabindex="0" role="button" data-i="' + i + '">' + esc(m.name) + '</div>';
+  });
+  root.innerHTML =
+    '<div id="tv-fac-nav">' + head + '<div id="tv-fac-members">' + mh + '</div></div>' +
+    '<div id="tv-fac-main"><div id="tv-fac-title"><span class="tv-ft-bar"></span><span id="tv-fac-name" class="notranslate" translate="no"></span></div>' +
+    '<div id="tv-fac-scroll"><div id="tv-fac-grid"></div><div id="tv-fac-status"></div></div>' +
+    '<div id="tv-fac-empty"><div class="tv-em"><div class="tv-em-name notranslate" translate="no">' + esc(fac.name) + '</div>' +
+    '<div class="tv-em-text">' + esc(T('Choose a wrestler on the left to see their videos.', '\u5de6\u306e\u9078\u624b\u3092\u9078\u3093\u3067\u52d5\u753b\u3092\u898b\u307e\u3057\u3087\u3046\u3002')) + '</div>' +
+    '<div class="tv-em-hint">\u2190 ' + esc(T('Up / Down to browse, OK or Right to open', '\u4e0a\u4e0b\u3067\u9078\u629e\u3001OK\u304b\u53f3\u3067\u958b\u304f')) + '</div></div></div></div>';
+  root.classList.add('tv-empty');
+  (document.body || document.documentElement).appendChild(root);
+  document.documentElement.style.overflow = 'hidden';
+  var logoImg = root.querySelector('.tv-fh-brand'); // not named *logo*: the app's header-logo swap would replace it
+  if (logoImg) logoImg.addEventListener('error', function() {
+    var w = logoImg.parentNode;
+    if (w && w.parentNode) w.parentNode.removeChild(w);
+  });
+
+  var nav = root.querySelector('#tv-fac-members');
+  var grid = root.querySelector('#tv-fac-grid');
+  var status = root.querySelector('#tv-fac-status');
+  var scroller = root.querySelector('#tv-fac-scroll');
+  var nameEl = root.querySelector('#tv-fac-name');
+  var fmEls = Array.prototype.slice.call(root.querySelectorAll('.tv-fm'));
+
+  function cardHtml(it) {
+    return '<a class="tv-fc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-fc-img" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '"></div><div class="tv-fc-t">' + esc(it.title) + '</div></a>';
+  }
+  function cards() { return Array.prototype.slice.call(grid.children); }
+  function setStatus(i) {
+    var s = S[i];
+    var t = '';
+    if (s.loading) t = T('Loading...', '読み込み中...');
+    else if (s.err === 'blocked') t = T('The site asked us to slow down. Try again in a few minutes.', 'サイトからアクセス制限がかかりました。数分後にお試しください。');
+    else if (s.err === 'login') t = T('Please log in to see these videos.', 'ログインしてください。');
+    else if (s.err) t = T('Could not load. Press OK on the name to try again.', '読み込めませんでした。名前でOKを押して再試行。');
+    else if (s.loaded && !s.items.length) t = T('No videos found for this name.', '動画が見つかりませんでした。');
+    status.textContent = t;
+  }
+  function renderGrid() {
+    var s = S[sel];
+    var h = '';
+    s.items.forEach(function(it) { h += cardHtml(it); });
+    grid.innerHTML = h;
+    scroller.scrollTop = 0;
+    setStatus(sel);
+  }
+  function markSel() {
+    fmEls.forEach(function(el, i) { el.classList.toggle('tv-sel', i === sel); });
+    root.classList.toggle('tv-empty', sel < 0);
+    nameEl.textContent = sel >= 0 ? members[sel].name : '';
+  }
+  function focusEl(el, mode) {
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    try { el.scrollIntoView({ block: mode || 'nearest' }); } catch (e) {}
+  }
+  function focusNav() { focusEl(fmEls[sel >= 0 ? sel : 0]); }
+  window.__tvFacFocusNav = function() { focusNav(); };
+  window.__tvFacBase = function() { return sel >= 0 ? members[sel].search : ''; };
+  function inNav(el) { return !!(el && el.classList && el.classList.contains('tv-fm')); }
+  function inGrid(el) { return !!(el && el.classList && el.classList.contains('tv-fc')); }
+
+  function cols() {
+    var c = grid.children;
+    if (!c.length) return 1;
+    var top = c[0].offsetTop, n = 0;
+    while (n < c.length && c[n].offsetTop === top) n++;
+    return Math.max(1, n);
+  }
+
+  function more(i) {
+    var s = S[i];
+    if (s.loading || s.queued || !s.more || !s.loaded) return;
+    s.queued = true;
+    status.textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...');
+    loadNext(i, function(added) {
+      s.queued = false;
+      if (i !== sel) return;
+      if (added.length) {
+        var h = ''; added.forEach(function(it) { h += cardHtml(it); });
+        grid.insertAdjacentHTML('beforeend', h);
+      }
+      setStatus(i);
+    });
+  }
+
+  // Opens member i: its saved/loaded videos at once, or one request when it has never been opened.
+  function openMember(i, enter) {
+    sel = i;
+    markSel();
+    var s = S[i];
+    if (s.err && !s.loaded) { s.err = ''; }
+    if (s.loaded) {
+      renderGrid();
+      if (enter) { var f = grid.firstElementChild; if (f) focusEl(f, 'center'); }
+      return;
+    }
+    grid.innerHTML = '';
+    status.textContent = T('Loading...', '読み込み中...');
+    loadNext(i, function() {
+      if (i !== sel) return;
+      renderGrid();
+      var ae = document.activeElement;
+      if (enter && (inNav(ae) || !ae || ae === document.body)) { var f2 = grid.firstElementChild; if (f2) focusEl(f2, 'center'); }
+    });
+  }
+
+  // ------------------------------------------------------------------ keys
+  window.addEventListener('keydown', function(e) {
+    if (!document.getElementById('tv-fac') || menuOpen()) return;
+    var k = e.keyCode, ae = document.activeElement;
+    var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
+    if (inNav(ae)) {
+      var i = parseInt(ae.getAttribute('data-i'), 10);
+      if (k === 40) { stop(); if (i < fmEls.length - 1) focusEl(fmEls[i + 1]); }
+      else if (k === 38) { stop(); if (i > 0) focusEl(fmEls[i - 1]); }
+      else if (k === 39) { stop(); openMember(i, true); }
+      else if (k === 37) { stop(); if (window.__tvOpenMenu) window.__tvOpenMenu(); }
+      else if (k === 13 || k === 23) { stop(); openMember(i, false); }
+      return;
+    }
+    if (inGrid(ae)) {
+      var list = cards(), idx = list.indexOf(ae), n = cols();
+      if (k === 37) {
+        stop();
+        if (idx % n === 0) focusNav(); else focusEl(list[idx - 1]);
+      } else if (k === 39) {
+        stop();
+        if (idx < list.length - 1 && (idx + 1) % n !== 0) focusEl(list[idx + 1]);
+      } else if (k === 38) {
+        stop();
+        if (idx - n >= 0) focusEl(list[idx - n], 'nearest');
+        else if (!(window.__tvFacFocusBar && window.__tvFacFocusBar())) scroller.scrollTop = 0;
+      } else if (k === 40) {
+        stop();
+        var row = Math.floor(idx / n), last = Math.floor((list.length - 1) / n);
+        if (row < last) focusEl(list[Math.min(idx + n, list.length - 1)], 'nearest');
+        else if (S[sel].more) more(sel);
+      }
+      // Prefetch the next page while the last two rows are on screen
+      if ((k === 38 || k === 39 || k === 40) && S[sel].more && !S[sel].loading) {
+        var nowIdx = cards().indexOf(document.activeElement);
+        if (nowIdx >= 0 && cards().length - nowIdx <= n * 2) more(sel);
+      }
+    }
+  }, true);
+
+  // ------------------------------------------------------------------ start
+  markSel();
+  // The page that was just opened holds one member's first page of results: keep it as that member's saved copy
+  // (shown with no request if that member is chosen later). Nothing is drawn or loaded until a member is chosen.
+  (function seedQuietly() {
+    var c0 = readCache()[members[seedIdx].search];
+    if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) return;
+    var n = 0;
+    (function poll() {
+      var items = [];
+      try { items = parseCards(document); } catch (e) {}
+      n++;
+      if (items.length) {
+        var s = { items: items.slice(0, MAX_SAVED), more: items.length >= 12 || hasNext(document) };
+        writeCache(members[seedIdx].search, s);
+      } else if (n <= 8) setTimeout(poll, 300);
+    })();
+  })();
+  var tries = 0;
+  var tm = setInterval(function() {
+    tries++;
+    var ae = document.activeElement;
+    if (menuOpen() || inNav(ae) || inGrid(ae)) { if (tries > 6) clearInterval(tm); return; }
+    focusNav();
+    if (tries > 10) clearInterval(tm);
+  }, 300);
+})();
+    """.trimIndent()
+
+    // Recently Watched page: reached from the menu or the home row's View All (the My page address carrying
+    // "tvrecent=1"). It takes the viewing history that page already holds and draws it as a full video grid,
+    // like My Favorites, instead of the My page layout. No extra request is made.
+    private val recentPageJs = """
+(function(){
+  if (window.__tvRecentPage) return;
+  if (location.pathname !== '/mypage' || !/[?&]tvrecent=1/.test(location.search)) return;
+  window.__tvRecentPage = true;
+
+  var HISTORY_RE = /viewing history|視聴履歴|閲覧履歴|履歴/i;
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+  function absUrl(u) { try { return new URL(u, location.origin).href; } catch (e) { return u; } }
+  function clean(t) {
+    return (t || '').replace(/月額見放題/g, '')
+      .replace(/Unlimited viewing for a monthly fee/gi, '')
+      .replace(/Monthly subscription available/gi, '')
+      .replace(/Monthly subscription/gi, '')
+      .replace(/(Viewing date|視聴日時|視聴日)\s*[:：]?\s*[0-9.\/\- :]*/gi, '')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // The video cards listed under the "Viewing history" heading of this very page (no extra request).
+  function readHistory() {
+    var heads = Array.prototype.slice.call(document.querySelectorAll('h1, h2, h3, h4, h5, .ttl-md, .ttl-lg'));
+    var hi = -1;
+    for (var i = 0; i < heads.length; i++) {
+      if (root && root.contains(heads[i])) continue;
+      if (HISTORY_RE.test(heads[i].textContent || '')) { hi = i; break; }
+    }
+    if (hi < 0) return [];
+    var head = heads[hi], nextHead = null;
+    for (var j = hi + 1; j < heads.length; j++) {
+      if (root && root.contains(heads[j])) continue;
+      if (!heads[j].closest('.content-list-item, article')) { nextHead = heads[j]; break; }
+    }
+    var out = [], seen = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.content-list-item, article'), function(item) {
+      if (root && root.contains(item)) return;
+      if (item.closest('.slick-cloned')) return;
+      if (!(head.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+      if (nextHead && !(nextHead.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_PRECEDING)) return;
+      var link = item.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+      if (!link) return;
+      var href = absUrl(link.getAttribute('href') || '');
+      if (!href || seen[href]) return;
+      seen[href] = true;
+      var bg = '';
+      var th = item.querySelector('[style*="background-image"]');
+      if (th) {
+        var m = (th.style.backgroundImage || '').match(/url\(['"]?(.*?)['"]?\)/);
+        if (m && m[1]) bg = m[1];
+      }
+      if (!bg) {
+        var img = item.querySelector('img');
+        if (img) bg = img.getAttribute('data-src') || img.getAttribute('data-lazy') || img.getAttribute('data-original') || img.getAttribute('src') || '';
+      }
+      if (bg.indexOf('data:') === 0) bg = '';
+      if (bg) bg = absUrl(bg);
+      var tEl = item.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
+      var title = clean(tEl ? tEl.textContent : item.textContent) || 'Stardom World Video';
+      out.push({ href: href, title: title, bgUrl: bg });
+    });
+    return out;
+  }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#tv-rp{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-rp, #tv-rp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
+    '#tv-rp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 40px 12px 40px;font-size:36px;}',
+    '#tv-rp-title .tv-rp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
+    '#tv-rp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 40px 40px;scrollbar-width:none;}',
+    '#tv-rp-scroll::-webkit-scrollbar{display:none;}',
+    '#tv-rp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
+    '#tv-rp .tv-rc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
+    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
+    '#tv-rp .tv-rc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  var root = document.createElement('div');
+  root.id = 'tv-rp';
+  root.innerHTML =
+    '<div id="tv-rp-title"><span class="tv-rp-bar"></span><span class="notranslate" translate="no">' + esc(T('Recently Watched', '最近視聴した動画')) + '</span></div>' +
+    '<div id="tv-rp-scroll"><div id="tv-rp-grid"></div><div id="tv-rp-status">' + esc(T('Loading...', '読み込み中...')) + '</div></div>';
+  (document.body || document.documentElement).appendChild(root);
+  document.documentElement.style.overflow = 'hidden';
+  var grid = root.querySelector('#tv-rp-grid');
+  var status = root.querySelector('#tv-rp-status');
+  var scroller = root.querySelector('#tv-rp-scroll');
+
+  function cards() { return Array.prototype.slice.call(grid.children); }
+  function cols() {
+    var c = grid.children;
+    if (!c.length) return 1;
+    var top = c[0].offsetTop, n = 0;
+    while (n < c.length && c[n].offsetTop === top) n++;
+    return Math.max(1, n);
+  }
+  function focusEl(el) {
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  }
+
+  var shown = false;
+  function render(items) {
+    shown = true;
+    var h = '';
+    items.forEach(function(it) {
+      h += '<a class="tv-rc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-rc-img" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '"></div><div class="tv-rc-t">' + esc(it.title) + '</div></a>';
+    });
+    grid.innerHTML = h;
+    status.textContent = items.length ? '' : T('No viewing history yet.', '視聴履歴はまだありません。');
+    if (items.length) focusEl(grid.firstElementChild);
+  }
+
+  // The list may be drawn by the page's own script a moment after it loads: wait until it stops growing.
+  var tries = 0, lastCount = -1;
+  var tm = setInterval(function() {
+    tries++;
+    var items = [];
+    try { items = readHistory(); } catch (e) {}
+    if ((items.length && items.length === lastCount) || tries > 24) {
+      clearInterval(tm);
+      render(items);
+      return;
+    }
+    lastCount = items.length;
+  }, 400);
+
+  window.addEventListener('keydown', function(e) {
+    if (!document.getElementById('tv-rp') || menuOpen()) return;
+    var k = e.keyCode, ae = document.activeElement;
+    if (!ae || !ae.classList || !ae.classList.contains('tv-rc')) {
+      if (shown && (k === 37 || k === 38 || k === 39 || k === 40) && grid.firstElementChild) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        focusEl(grid.firstElementChild);
+      } else if (k === 37) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (window.__tvOpenMenu) window.__tvOpenMenu();
+      }
+      return;
+    }
+    var list = cards(), idx = list.indexOf(ae), n = cols();
+    var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
+    if (k === 37) {
+      stop();
+      if (idx % n === 0) { if (window.__tvOpenMenu) window.__tvOpenMenu(); } else focusEl(list[idx - 1]);
+    } else if (k === 39) {
+      stop();
+      if (idx < list.length - 1 && (idx + 1) % n !== 0) focusEl(list[idx + 1]);
+    } else if (k === 38) {
+      stop();
+      if (idx - n >= 0) focusEl(list[idx - n]); else scroller.scrollTop = 0;
+    } else if (k === 40) {
+      stop();
+      var row = Math.floor(idx / n), last = Math.floor((list.length - 1) / n);
+      if (row < last) focusEl(list[Math.min(idx + n, list.length - 1)]);
+    }
+  }, true);
+})();
+    """.trimIndent()
+
+    // Filter bar on search pages (wrestler pages, keyword searches): replaces the site sort row with Sort, Match type,
+    // Championship, Competitors and Year drop-downs. Each choice only adds words to the keyword search.
+    private val filterBarJs = """
+(function(){
+  if (window.__tvFilterBar) return;
+  var CHAMP_PAGES = { '/contents/category/iwgp': 'iwgp', '/contents/category/world-sd': 'world', '/contents/category/wonder-sd': 'wonder', '/contents/category/high_speed': 'highspeed' };
+  var champCat = CHAMP_PAGES[location.pathname.replace(/\/+$/, '')] || '';
+  var YM = /^\/contents\/category\/(20[0-9]{2}|_2020)\/?$/.exec(location.pathname);
+  var yearCat = YM ? (YM[1] === '_2020' ? '2020' : YM[1]) : '';
+  var FAC_MODE = /[?&]tvfaction=/.test(location.search);
+  if (location.pathname.indexOf('/contents/search') !== 0 && !champCat && !yearCat) return;
+  if (/[?&](tvrecent|tvev)=/.test(location.search)) return;
+  window.__tvFilterBar = true;
+
+  // Every choice just adds words to the site's own keyword search and opens that page: one request per
+  // choice, same as opening any list. The lists below are fixed, so opening a drop-down loads nothing.
+  var MT = [
+    ['single', 'Single match', 'Single Match'],
+    ['tag', 'Tag team', 'Tag Team'],
+    ['trio', '3-way', '3-Way'],
+    ['six', '6-person', '6-person'],
+    ['eight', '8-person', '8-person'],
+    ['eightman', '8-man', '8-man'],
+    ['royal', 'Battle royal', 'Battle Royal'],
+    ['cage', 'Cage match', 'Cage Match']
+  ];
+  var CH = [
+    ['any', 'Any championship match', 'Championship'],
+    ['artist', 'Artist of Stardom', 'Artist of Stardom'],
+    ['future', 'Future of Stardom', 'Future of Stardom'],
+    ['goddess', 'Goddess of Stardom', 'Goddess of Stardom'],
+    ['highspeed', 'High-Speed', 'High-Speed Championship'],
+    ['iwgp', "IWGP Women's", "IWGP Women's"],
+    ['newblood', 'NEW BLOOD Tag Team', 'NEW BLOOD'],
+    ['wonder', 'Wonder of Stardom', 'Wonder of Stardom'],
+    ['world', 'World of Stardom', 'World of Stardom'],
+    ['other', 'Other title matches', 'Title Match']
+  ];
+  var SH = [], LO = [];
+  try {
+    var ED = (window.AndroidHost && AndroidHost.eventFiltersJson) ? JSON.parse(AndroidHost.eventFiltersJson()) : null;
+    if (ED) {
+      SH = (ED.shows || []).map(function(x) { return [x.name, x.name, x.search]; });
+      (ED.locations || []).forEach(function(c) {
+        LO.push(['c:' + c.name, c.name, c.search, 'city']);
+        (c.venues || []).forEach(function(v) { LO.push(['v:' + v.name, v.name, v.search, 'venue']); });
+      });
+    }
+  } catch (e) {}
+  var YR = [];
+  for (var y = new Date().getFullYear(); y >= 2011; y--) YR.push([String(y), String(y), y + '/']);
+
+  var facs = [];
+  try {
+    var fd = JSON.parse(AndroidHost.factionsJson());
+    facs = ((fd && fd.factions) || []).map(function(f) {
+      return { id: f.id, name: f.name, members: (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); }) };
+    }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+  } catch (e) {}
+
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function qp(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
+    if (!m) return '';
+    try { return decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { return m[1]; }
+  }
+  var kwNow = '';
+  (function() {
+    var m = /[?&]q(?:%5B|\[)keyword(?:%5D|\])=([^&]*)/i.exec(location.search);
+    if (m) { try { kwNow = decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { kwNow = m[1]; } }
+  })();
+
+  var S = {
+    base: (champCat || yearCat || FAC_MODE) ? '' : (location.search.indexOf('tvb=') !== -1 ? qp('tvb') : kwNow),
+    mt: qp('tvmt'), ch: champCat || qp('tvch'), co: qp('tvco'), yr: yearCat || qp('tvyr'), sh: qp('tvsh'), lo: qp('tvlo'),
+    s: qp('s'), o: qp('o')
+  };
+  var SORTS = [
+    ['', '', 'Newest'],
+    ['di_s', 'a', 'Oldest'],
+    ['pc', 'd', 'Most played'],
+    ['fc', 'd', 'Most favorited']
+  ];
+
+  function wrestlerName(search) {
+    var low = String(search || '').toLowerCase(), out = '';
+    facs.forEach(function(f) { (f.members || []).forEach(function(m) { if (!out && String(m.search).toLowerCase() === low) out = m.name; }); });
+    return out;
+  }
+  function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
+  function buildUrl(n) {
+    var words = [n.base];
+    var a = find(MT, n.mt); if (a) words.push(a[2]);
+    var b = find(CH, n.ch); if (b) words.push(b[2]);
+    if (n.co && n.co !== n.base) words.push(n.co);
+    var sh0 = find(SH, n.sh); if (sh0) words.push(sh0[2]);
+    var lo0 = find(LO, n.lo); if (lo0) words.push(lo0[2]);
+    var c = find(YR, n.yr); if (c) words.push(c[2]);
+    var kw = words.filter(function(w) { return w; }).join(' ');
+    if (!kw && !n.s) return '/';
+    var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
+    if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
+    u += '&activetab=contents&page=1';
+    if (n.base && (n.mt || n.ch || n.co || n.yr || n.sh || n.lo)) u += '&tvb=' + encodeURIComponent(n.base);
+    if (n.mt) u += '&tvmt=' + encodeURIComponent(n.mt);
+    if (n.ch) u += '&tvch=' + encodeURIComponent(n.ch);
+    if (n.co) u += '&tvco=' + encodeURIComponent(n.co);
+    if (n.sh) u += '&tvsh=' + encodeURIComponent(n.sh);
+    if (n.lo) u += '&tvlo=' + encodeURIComponent(n.lo);
+    if (n.yr) u += '&tvyr=' + encodeURIComponent(n.yr);
+    return u;
+  }
+  function go(patch) {
+    var n = {};
+    Object.keys(S).forEach(function(k) { n[k] = S[k]; });
+    Object.keys(patch).forEach(function(k) { n[k] = patch[k]; });
+    if (FAC_MODE && window.__tvFacBase) n.base = window.__tvFacBase();
+    location.href = buildUrl(n);
+  }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    'html body .box-sort{display:none !important;}',
+    '#tv-fb{display:flex;flex-wrap:wrap;align-items:center;gap:12px 10px;margin:6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fb .tv-fbb{box-sizing:border-box;padding:10px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.45);color:#ffffff;font-size:19px;font-weight:700;line-height:1.2;white-space:nowrap;background:transparent;cursor:pointer;outline:none !important;}',
+    '#tv-fb .tv-fbb.tv-on{border-color:#F4C242;color:#F4C242;}',
+    '#tv-fb .tv-fbb:focus, #tv-fb .tv-fbb.tv-open{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}',
+    '#tv-fbp{position:fixed;z-index:99100;box-sizing:border-box;padding:12px;border-radius:14px;background:#121922;border:2px solid #2a323c;font-family:Arial,Helvetica,sans-serif;color:#ffffff;max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:none;}',
+    '#tv-fbp::-webkit-scrollbar{display:none;}',
+    '#tv-fbp .tv-fbi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:nowrap;}',
+    '#tv-fbp .tv-fbi{break-inside:avoid;}',
+    '#tv-fbp.tv-flo .tv-fbi, #tv-fbp.tv-fsh .tv-fbi{white-space:normal;}',
+    '#tv-fbp .tv-fblo{column-count:4;column-gap:14px;}',
+    '#tv-fbp .tv-fbcity{break-inside:avoid;margin:0 0 10px 0;}',
+    '#tv-fbp .tv-fbch{font-weight:700;color:#F4C242;font-size:17px;}',
+    '#tv-fbp .tv-fbv{font-size:16px;padding:7px 8px 7px 22px;}',
+    '#tv-fac-main #tv-fb{margin:6px 40px 12px 40px;}',
+    '#tv-fac.tv-empty #tv-fb{display:none;}',
+    '#tv-fbp .tv-fbi.tv-cur{color:#F4C242;}',
+    '#tv-fbp .tv-fbi:focus{background:#172029;border-color:#F4C242;color:#ffffff;font-weight:700;box-shadow:none !important;}',
+    '#tv-fbp .tv-fbh{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:0;color:#F4C242;white-space:nowrap;}',
+    '#tv-fbp .tv-fbcols{display:flex;gap:6px;width:max-content;min-width:100%;}',
+    '#tv-fbp .tv-fbcol{flex:1 0 auto;}',
+    '#tv-fbp .tv-fbcol .tv-fbi{font-size:15px;padding:7px 8px;white-space:nowrap;}',
+    '#tv-fbp.tv-co{overflow-x:auto;overflow-y:auto;padding:10px;}',
+    '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fbc .tv-fbl{font-size:17px;color:#9aa6b4;}',
+    '#tv-fbc .tv-fbchip{box-sizing:border-box;padding:7px 14px;border-radius:20px;background:#172029;border:2px solid #3b4656;color:#ffffff;font-size:17px;font-weight:700;white-space:nowrap;outline:none !important;cursor:pointer;}',
+    '#tv-fbc .tv-fbchip.tv-base{background:#FFB347;border-color:#FFB347;color:#1A1A1A;cursor:default;}',
+    '#tv-fbc .tv-fbchip.tv-clr{background:transparent;border-color:transparent;color:#F4C242;}',
+    '#tv-fbc .tv-fbchip:focus{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  var bar = null, btns = [], lastBtn = 0, panel = null, openBtn = null, prevClose = null;
+
+  function labelFor(kind) {
+    var cur, nm;
+    if (kind === 'wr') {
+      var wn = S.base ? wrestlerName(S.base) : '';
+      if (wn) return { text: T('Wrestler', '選手') + ': ' + wn, on: true };
+      if (S.base) return { text: T('Search', '検索') + ': ' + S.base, on: true };
+      return { text: T('Wrestler', '選手'), on: false };
+    }
+    if (kind === 'sort') {
+      nm = T('Sort', '並び替え');
+      for (var i = 0; i < SORTS.length; i++) if (SORTS[i][0] === S.s && (SORTS[i][0] === '' || SORTS[i][1] === (S.o || 'd'))) { cur = SORTS[i]; break; }
+      return { text: nm + ': ' + (cur ? T(cur[2], cur[2] === 'Newest' ? '新着順' : cur[2]) : T('Newest', '新着順')), on: !!S.s };
+    }
+    if (kind === 'mt') { cur = find(MT, S.mt); nm = T('Match type', '試合形式'); }
+    if (kind === 'ch') { cur = find(CH, S.ch); nm = T('Championship', '選手権'); }
+    if (kind === 'yr') { cur = find(YR, S.yr); nm = T('Year', '年'); }
+    if (kind === 'co') { cur = S.co ? [S.co, S.co] : null; nm = T('Competitors', '出場選手'); }
+    if (kind === 'sh') { cur = find(SH, S.sh); nm = T('Show', '大会名'); }
+    if (kind === 'lo') { cur = find(LO, S.lo); nm = T('Location', '開催地'); }
+    return { text: nm + (cur ? ': ' + cur[1] : ''), on: !!cur };
+  }
+
+  function mount() {
+    if (document.getElementById('tv-fb')) return true;
+    var anchor = FAC_MODE ? document.querySelector('#tv-fac-main #tv-fac-scroll') : (document.querySelector('.box-sort') || document.querySelector('.content-list, [class*="content-list"]'));
+    if (!anchor || !anchor.parentNode) return false;
+    bar = document.createElement('div');
+    bar.id = 'tv-fb';
+    var kinds = [];
+    if (facs.length && !FAC_MODE) kinds.push('wr');
+    kinds.push('sort', 'mt', 'ch');
+    if (facs.length) kinds.push('co');
+    if (SH.length) kinds.push('sh');
+    if (LO.length) kinds.push('lo');
+    kinds.push('yr');
+    btns = [];
+    kinds.forEach(function(k) {
+      var b = document.createElement('div');
+      b.className = 'tv-fbb';
+      b.tabIndex = 0;
+      b.setAttribute('role', 'button');
+      b.setAttribute('data-k', k);
+      b.addEventListener('click', function() { openPanel(b); });
+      btns.push(b);
+      bar.appendChild(b);
+    });
+    refreshLabels();
+    anchor.parentNode.insertBefore(bar, anchor);
+    if (FAC_MODE) {
+      window.__tvFacFocusBar = function() { var b0 = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (b0) { b0.focus(); return true; } return false; };
+      return true;
+    }
+    buildChips();
+    return true;
+  }
+  var chipBar = null, chips = [];
+  function buildChips() {
+    var defs = [];
+    var a = find(MT, S.mt); if (a) defs.push([a[1], { mt: '' }]);
+    var b = find(CH, S.ch); if (b) defs.push([b[1], { ch: '' }]);
+    if (S.co) defs.push([T('With ', '対戦: ') + S.co, { co: '' }]);
+    var sh1 = find(SH, S.sh); if (sh1) defs.push([sh1[1], { sh: '' }]);
+    var lo1 = find(LO, S.lo); if (lo1) defs.push([lo1[1], { lo: '' }]);
+    var c = find(YR, S.yr); if (c) defs.push([c[1], { yr: '' }]);
+    chips = [];
+    var baseName = S.base ? (wrestlerName(S.base) || S.base) : '';
+    if (!defs.length && !baseName) return;
+    chipBar = document.createElement('div');
+    chipBar.id = 'tv-fbc';
+    var l = document.createElement('span');
+    l.className = 'tv-fbl';
+    l.textContent = T('Showing', '絞り込み');
+    chipBar.appendChild(l);
+    if (baseName) {
+      var bc = document.createElement('div');
+      bc.className = 'tv-fbchip tv-base';
+      bc.textContent = baseName;
+      chipBar.appendChild(bc);
+    }
+    function chip(text, patch, clr) {
+      var d = document.createElement('div');
+      d.className = 'tv-fbchip' + (clr ? ' tv-clr' : '');
+      d.tabIndex = 0;
+      d.setAttribute('role', 'button');
+      d.textContent = text;
+      d._fn = function() { go(patch); };
+      d.addEventListener('click', d._fn);
+      chips.push(d);
+      chipBar.appendChild(d);
+    }
+    defs.forEach(function(x) { chip(x[0] + ' \u00D7', x[1], false); });
+    if (defs.length) chip(T('Clear all', 'すべて解除'), { mt: '', ch: '', co: '', sh: '', lo: '', yr: '' }, true);
+    bar.parentNode.insertBefore(chipBar, bar.nextSibling);
+    setTimeout(alignBars, 0);
+  }
+  function refreshLabels() {
+    btns.forEach(function(b) {
+      var k = b.getAttribute('data-k');
+      var l = labelFor(k);
+      b.textContent = l.text + ' ▾';
+      b.classList.toggle('tv-on', l.on);
+    });
+  }
+
+  function closePanel(refocus) {
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    panel = null;
+    if (openBtn) openBtn.classList.remove('tv-open');
+    var b = openBtn; openBtn = null;
+    if (prevClose) { window.__tvMenuClose = prevClose; prevClose = null; }
+    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(false); } catch (e) {}
+    if (refocus && b) { try { b.focus(); } catch (e) {} }
+  }
+
+  function item(text, cur, fn) {
+    var d = document.createElement('div');
+    d.className = 'tv-fbi' + (cur ? ' tv-cur' : '');
+    d.tabIndex = -1;
+    d.textContent = text;
+    d.addEventListener('click', fn);
+    d._fn = fn;
+    return d;
+  }
+
+  function openPanel(btn) {
+    if (panel) closePanel(false);
+    var k = btn.getAttribute('data-k');
+    panel = document.createElement('div');
+    panel.id = 'tv-fbp';
+    var all = T('All', 'すべて');
+    var first = null;
+    function list(rows, curId, key) {
+      var a = item(all, !curId, function() { var p = {}; p[key] = ''; go(p); });
+      panel.appendChild(a);
+      rows.forEach(function(r) {
+        var it = item(r[1], r[0] === curId, function() { var p = {}; p[key] = r[0]; go(p); });
+        panel.appendChild(it);
+        if (r[0] === curId) first = it;
+      });
+      if (!first) first = a;
+    }
+    if (k === 'sort') {
+      SORTS.forEach(function(r) {
+        var cur = (r[0] === S.s) && (r[0] === '' || r[1] === (S.o || 'd'));
+        var it = item(r[2], cur, function() { go({ s: r[0], o: r[1] }); });
+        panel.appendChild(it);
+        if (cur) first = it; else if (!first) first = it;
+      });
+    } else if (k === 'sh') {
+      panel.className = 'tv-fsh';
+      panel.style.columnCount = 3; panel.style.columnGap = '10px';
+      list(SH, S.sh, 'sh');
+    } else if (k === 'lo') {
+      panel.className = 'tv-flo';
+      first = item(T('All locations', 'すべての開催地'), !S.lo, function() { go({ lo: '' }); });
+      panel.appendChild(first);
+      var lcols = document.createElement('div');
+      lcols.className = 'tv-fblo';
+      var lblock = null;
+      LO.forEach(function(r) {
+        var it = item(r[1], r[0] === S.lo, function() { go({ lo: r[0] }); });
+        if (r[3] === 'city') { lblock = document.createElement('div'); lblock.className = 'tv-fbcity'; it.classList.add('tv-fbch'); lcols.appendChild(lblock); }
+        else it.classList.add('tv-fbv');
+        if (lblock) lblock.appendChild(it);
+        if (r[0] === S.lo) first = it;
+      });
+      panel.appendChild(lcols);
+    } else if (k === 'mt') list(MT, S.mt, 'mt');
+    else if (k === 'ch') list(CH, S.ch, 'ch');
+    else if (k === 'yr') {
+      panel.style.columnCount = 2;
+      list(YR, S.yr, 'yr');
+    } else if (k === 'co' || k === 'wr') {
+      panel.className = 'tv-co';
+      var isWr = k === 'wr';
+      var top = isWr
+        ? item(T('Any wrestler', 'すべての選手'), !S.base, function() { go({ base: '' }); })
+        : item(T('All competitors', 'すべての選手'), !S.co, function() { go({ co: '' }); });
+      panel.appendChild(top);
+      first = top;
+      var cols = document.createElement('div');
+      cols.className = 'tv-fbcols';
+      facs.forEach(function(f) {
+        var col = document.createElement('div');
+        col.className = 'tv-fbcol';
+        var h = document.createElement('div');
+        h.className = 'tv-fbh';
+        h.textContent = String(f.name || '').toUpperCase();
+        col.appendChild(h);
+        (f.members || []).forEach(function(m) {
+          var curM = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
+          var it = item(m.name, curM, function() {
+            if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
+            else go({ co: m.search });
+          });
+          col.appendChild(it);
+          if (curM) first = it;
+        });
+        cols.appendChild(col);
+      });
+      panel.appendChild(cols);
+    }
+    document.body.appendChild(panel);
+    var r = btn.getBoundingClientRect();
+    panel.style.top = Math.max(10, r.bottom + 8) + 'px';
+    if (k === 'co' || k === 'wr' || k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    else if (k === 'sh') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 900)) + 'px'; panel.style.width = '880px'; }
+    else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
+    else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';
+    btn.classList.add('tv-open');
+    openBtn = btn;
+    prevClose = window.__tvMenuClose || null;
+    window.__tvMenuClose = function() { closePanel(true); return true; };
+    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(true); } catch (e) {}
+    if (first) { try { first.focus(); } catch (e) {} }
+  }
+
+  function panelItems() { return Array.prototype.slice.call(panel.querySelectorAll('.tv-fbi')); }
+  function move(dir) {
+    var cur = document.activeElement;
+    var items = panelItems();
+    if (items.indexOf(cur) === -1) { if (items[0]) items[0].focus(); return; }
+    var cr = cur.getBoundingClientRect();
+    var cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+    var best = null, bs = 1e9;
+    items.forEach(function(it) {
+      if (it === cur) return;
+      var r = it.getBoundingClientRect();
+      var x = r.left + r.width / 2, y = r.top + r.height / 2;
+      var dx = x - cx, dy = y - cy, prim, orth;
+      if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
+      else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
+      else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
+      else { if (dx >= -4) return; prim = -dx; orth = Math.abs(dy); }
+      var sc = prim + orth * 2;
+      if (sc < bs) { bs = sc; best = it; }
+    });
+    if (best) { best.focus(); try { best.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+
+  function stop(e) { e.preventDefault(); e.stopImmediatePropagation(); }
+  function cardAbove(a) {
+    var r = a.getBoundingClientRect();
+    var list = document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]');
+    for (var i = 0; i < list.length; i++) {
+      var q = list[i].getBoundingClientRect();
+      if (q.width > 0 && q.height > 0 && q.top < r.top - 10) return true;
+    }
+    return false;
+  }
+  function firstCard() {
+    var list = document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]');
+    for (var i = 0; i < list.length; i++) {
+      var q = list[i].getBoundingClientRect();
+      if (q.width > 0 && q.height > 0) return list[i];
+    }
+    return null;
+  }
+
+  window.addEventListener('keydown', function(e) {
+    var k = e.keyCode;
+    var menuOpen = document.documentElement.classList.contains('tv-sm-open');
+    if (menuOpen) return;
+    if (panel) {
+      if (k === 38) { stop(e); move('up'); }
+      else if (k === 40) { stop(e); move('down'); }
+      else if (k === 37) { stop(e); move('left'); }
+      else if (k === 39) { stop(e); move('right'); }
+      else if (k === 13 || k === 23) {
+        var a = document.activeElement;
+        if (a && a._fn) { stop(e); a._fn(); }
+      } else if (k === 27) { stop(e); closePanel(true); }
+      return;
+    }
+    var ae = document.activeElement;
+    if (!ae) return;
+    var bi = btns.indexOf(ae);
+    if (bi !== -1) {
+      lastBtn = bi;
+      if (k === 39) { stop(e); if (bi < btns.length - 1) btns[bi + 1].focus(); }
+      else if (k === 37) { if (bi > 0) { stop(e); btns[bi - 1].focus(); } else if (FAC_MODE && window.__tvFacFocusNav) { stop(e); window.__tvFacFocusNav(); } }   // at the first button Left opens the menu as usual
+      else if (k === 40) { var c = FAC_MODE ? document.querySelector('#tv-fac-grid .tv-fc') : (chips.length ? chips[0] : firstCard()); if (c) { stop(e); c.focus(); try { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
+      else if (k === 13 || k === 23) { stop(e); openPanel(ae); }
+      return;
+    }
+    var ci = chips.indexOf(ae);
+    if (ci !== -1) {
+      if (k === 39) { stop(e); if (ci < chips.length - 1) chips[ci + 1].focus(); }
+      else if (k === 37) { if (ci > 0) { stop(e); chips[ci - 1].focus(); } }
+      else if (k === 38) { stop(e); var ub = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (ub) ub.focus(); }
+      else if (k === 40) { var fc = firstCard(); if (fc) { stop(e); fc.focus(); try { fc.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
+      else if (k === 13 || k === 23) { stop(e); if (ae._fn) ae._fn(); }
+      return;
+    }
+    if (k === 38 && bar && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardAbove(ae)) {
+      stop(e);
+      var tb = chips.length ? chips[0] : (btns[Math.min(lastBtn, btns.length - 1)] || btns[0]);
+      if (tb) { tb.focus(); try { tb.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} }
+    }
+  }, true);
+
+  // Line the bar and the chip row up with the left edge of the first thumbnail.
+  function alignBars() {
+    if (FAC_MODE) return;
+    try {
+      var t = document.querySelector('.content-list-item .tv-thumbnail-link') || document.querySelector('.content-list-item img') || document.querySelector('.content-list-item');
+      if (!t) return;
+      var target = t.getBoundingClientRect().left;
+      ['tv-fb', 'tv-fbc'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.style.marginLeft = '0px';
+        el.style.marginLeft = (target - el.getBoundingClientRect().left) + 'px';
+      });
+    } catch (e) {}
+  }
+  window.addEventListener('resize', alignBars);
+  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+
+  var tries = 0;
+  (function tick() {
+    if (mount()) return;
+    if (++tries < 25) setTimeout(tick, 400);
+  })();
+})();
+    """.trimIndent()
+
+    // Tournament Archives filter bar: Sort, Location, Show and Year drop-downs; each choice adds a word to the keyword search.
+    private val eventBarJs = """
+(function(){
+  if (window.__tvEventBar) return;
+  var onArchive = location.pathname === '/contents/category/events' || location.pathname === '/contents/category/events/';
+  var onShowCat = /^\/contents\/category\//.test(location.pathname) && !/^\/contents\/category\/(iwgp|world-sd|wonder-sd|high_speed|20[0-9]{2}|_2020)\/?$/.test(location.pathname) && !/^\/contents\/category\/(iwgp|world-sd|wonder-sd|high_speed)/.test(location.pathname);
+  var onEvSearch = location.pathname.indexOf('/contents/search') === 0 && /[?&]tvev=1/.test(location.search);
+  if (!onArchive && !onEvSearch && !onShowCat) return;
+  if (!window.AndroidHost || !AndroidHost.eventFiltersJson) return;
+  var D = null;
+  try { D = JSON.parse(AndroidHost.eventFiltersJson()); } catch (e) {}
+  if (!D) return;
+  window.__tvEventBar = true;
+
+  // Every choice adds a word to the site's own keyword search and opens that page: one request per choice.
+  // The lists are fixed (assets/event_filters.json), so opening a drop-down loads nothing.
+  var KINDS = [
+    ['sort', null, 'Sort', '並び替え'],
+    ['lo', null, 'Location', '開催地'],
+    ['sh', null, 'Show', '大会名'],
+    ['yr', null, 'Year', '年']
+  ];
+  var SORTS = [
+    ['', '', 'Newest'],
+    ['di_s', 'a', 'Oldest'],
+    ['pc', 'd', 'Most played'],
+    ['fc', 'd', 'Most favorited']
+  ];
+  var LISTS = {};
+  LISTS.lo = [];
+  (D.locations || []).forEach(function(c) {
+    LISTS.lo.push(['c:' + c.name, c.name, c.search, 'city']);
+    (c.venues || []).forEach(function(v) { LISTS.lo.push(['v:' + v.name, v.name, v.search, 'venue']); });
+  });
+  LISTS.sh = (D.shows || []).map(function(x) { return [x.name, x.name, x.search]; });
+  LISTS.yr = [];
+  for (var y = new Date().getFullYear(); y >= 2011; y--) LISTS.yr.push([String(y), String(y), String(y)]);
+
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function qp(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
+    if (!m) return '';
+    try { return decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { return m[1]; }
+  }
+  var S = { lo: qp('tvlo'), sh: qp('tvsh'), yr: qp('tvyr'), s: qp('s'), o: qp('o') };
+  function find(k, id) { var l = LISTS[k]; for (var i = 0; i < l.length; i++) if (l[i][0] === id) return l[i]; return null; }
+  function buildUrl(n) {
+    var words = [];
+    ['sh', 'lo', 'yr'].forEach(function(k) { var f = find(k, n[k]); if (f) words.push(f[2]); });
+    var sortQ = n.s ? 's=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd') : '';
+    if (!words.length) return '/contents/category/events' + (sortQ ? '?' + sortQ : '');
+    var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(words.join(' ')) + '&activetab=contents&page=1&tvev=1';
+    if (sortQ) u += '&' + sortQ;
+    ['lo', 'sh', 'yr'].forEach(function(k) { if (n[k]) u += '&tv' + k + '=' + encodeURIComponent(n[k]); });
+    return u;
+  }
+  function go(patch) {
+    var n = {};
+    Object.keys(S).forEach(function(k) { n[k] = S[k]; });
+    Object.keys(patch).forEach(function(k) { n[k] = patch[k]; });
+    location.href = buildUrl(n);
+  }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#tv-eb{display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;margin:6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-eb .tv-ebb{box-sizing:border-box;padding:10px 18px;border-radius:10px;border:2px solid rgba(255,255,255,0.45);color:#ffffff;font-size:19px;font-weight:700;line-height:1.2;white-space:nowrap;background:transparent;cursor:pointer;outline:none !important;}',
+    '#tv-eb .tv-ebb.tv-on{border-color:#F4C242;color:#F4C242;}',
+    '#tv-eb .tv-ebb:focus, #tv-eb .tv-ebb.tv-open{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}',
+    '#tv-ebp{position:fixed;z-index:99100;box-sizing:border-box;padding:12px;border-radius:14px;background:#121922;border:2px solid #2a323c;font-family:Arial,Helvetica,sans-serif;color:#ffffff;max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:none;}',
+    '#tv-ebp::-webkit-scrollbar{display:none;}',
+    '#tv-ebp .tv-ebi{break-inside:avoid;}',
+    '#tv-ebp .tv-ebi{box-sizing:border-box;padding:9px 14px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:19px;font-weight:600;color:#c9d2dc;outline:none !important;cursor:pointer;white-space:normal;}',
+    '#tv-ebp .tv-ebi.tv-cur{color:#F4C242;}',
+    '#tv-ebp .tv-ebi:focus{background:#172029;border-color:#F4C242;color:#ffffff;font-weight:700;box-shadow:none !important;}',
+    '#tv-ebp .tv-ebcols{column-count:4;column-gap:14px;}',
+    '#tv-ebp .tv-ebcity{break-inside:avoid;margin:0 0 10px 0;}',
+    '#tv-ebp .tv-ebh{font-weight:700;color:#F4C242;font-size:17px;}',
+    '#tv-ebp .tv-ebv{font-size:16px;padding:7px 8px 7px 22px;}',
+    '#tv-ebp.tv-lo .tv-ebi{white-space:normal;}',
+    'html body .box-sort{display:none !important;}',
+    '#tv-ec{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-ec .tv-ebl{font-size:17px;color:#9aa6b4;}',
+    '#tv-ec .tv-ebchip{box-sizing:border-box;padding:7px 14px;border-radius:20px;background:#172029;border:2px solid #3b4656;color:#ffffff;font-size:17px;font-weight:700;white-space:nowrap;outline:none !important;cursor:pointer;}',
+    '#tv-ec .tv-ebchip.tv-clr{background:transparent;border-color:transparent;color:#F4C242;}',
+    '#tv-ec .tv-ebchip:focus{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  var bar = null, btns = [], lastBtn = 0, panel = null, openBtn = null, prevClose = null, chips = [];
+
+  function sortCur() {
+    for (var i = 0; i < SORTS.length; i++) if (SORTS[i][0] === S.s && (SORTS[i][0] === '' || SORTS[i][1] === (S.o || 'd'))) return SORTS[i];
+    return null;
+  }
+  function kindInfo(k) { for (var i = 0; i < KINDS.length; i++) if (KINDS[i][0] === k) return KINDS[i]; return null; }
+  function labelFor(k) {
+    var ki = kindInfo(k);
+    if (k === 'sort') {
+      var sc = sortCur();
+      return { text: T(ki[2], ki[3]) + ': ' + T(sc ? sc[2] : 'Newest', (!sc || sc[2] === 'Newest') ? '新着順' : sc[2]), on: !!S.s };
+    }
+    var cur = find(k, S[k]);
+    return { text: T(ki[2], ki[3]) + (cur ? ': ' + cur[1] : ''), on: !!cur };
+  }
+  function mount() {
+    if (document.getElementById('tv-eb')) return true;
+    var anchor = document.querySelector('.box-sort') || document.querySelector('.content-list, [class*="content-list"]');
+    if (!anchor || !anchor.parentNode) return false;
+    bar = document.createElement('div');
+    bar.id = 'tv-eb';
+    bar.setAttribute('translate', 'no'); bar.setAttribute('lang', 'en'); bar.className = 'notranslate';
+    btns = [];
+    KINDS.forEach(function(ki) {
+      var b = document.createElement('div');
+      b.className = 'tv-ebb';
+      b.tabIndex = 0;
+      b.setAttribute('role', 'button');
+      b.setAttribute('data-k', ki[0]);
+      var l = labelFor(ki[0]);
+      b.textContent = l.text + ' ▾';
+      if (l.on) b.classList.add('tv-on');
+      b.addEventListener('click', function() { openPanel(b); });
+      btns.push(b);
+      bar.appendChild(b);
+    });
+    anchor.parentNode.insertBefore(bar, anchor);
+    buildChips();
+    return true;
+  }
+  function buildChips() {
+    var defs = [];
+    ['lo', 'sh', 'yr'].forEach(function(k) { var f = find(k, S[k]); if (f) { var p = {}; p[k] = ''; defs.push([f[1], p]); } });
+    chips = [];
+    if (!defs.length) return;
+    var cb = document.createElement('div');
+    cb.id = 'tv-ec';
+    cb.setAttribute('translate', 'no'); cb.setAttribute('lang', 'en');
+    var l = document.createElement('span');
+    l.className = 'tv-ebl';
+    l.textContent = T('Showing', '絞り込み');
+    cb.appendChild(l);
+    function chip(text, patch, clr) {
+      var d = document.createElement('div');
+      d.className = 'tv-ebchip' + (clr ? ' tv-clr' : '');
+      d.tabIndex = 0;
+      d.setAttribute('role', 'button');
+      d.textContent = text;
+      d._fn = function() { go(patch); };
+      d.addEventListener('click', d._fn);
+      chips.push(d);
+      cb.appendChild(d);
+    }
+    defs.forEach(function(x) { chip(x[0] + ' ×', x[1], false); });
+    chip(T('Clear all', 'すべて解除'), { lo: '', sh: '', yr: '' }, true);
+    bar.parentNode.insertBefore(cb, bar.nextSibling);
+    setTimeout(alignBars, 0);
+  }
+
+  function closePanel(refocus) {
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    panel = null;
+    if (openBtn) openBtn.classList.remove('tv-open');
+    var b = openBtn; openBtn = null;
+    if (prevClose) { window.__tvMenuClose = prevClose; prevClose = null; }
+    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(false); } catch (e) {}
+    if (refocus && b) { try { b.focus(); } catch (e) {} }
+  }
+  function item(text, cur, fn) {
+    var d = document.createElement('div');
+    d.className = 'tv-ebi' + (cur ? ' tv-cur' : '');
+    d.tabIndex = -1;
+    d.textContent = text;
+    d.addEventListener('click', fn);
+    d._fn = fn;
+    return d;
+  }
+  function openPanel(btn) {
+    if (panel) closePanel(false);
+    var k = btn.getAttribute('data-k');
+    panel = document.createElement('div');
+    panel.setAttribute('translate', 'no'); panel.setAttribute('lang', 'en');
+    panel.id = 'tv-ebp';
+    var first = null;
+    if (k === 'sort') {
+      SORTS.forEach(function(r) {
+        var cur = (r[0] === S.s) && (r[0] === '' || r[1] === (S.o || 'd'));
+        var it = item(r[2], cur, function() { go({ s: r[0], o: r[1] }); });
+        panel.appendChild(it);
+        if (cur) first = it; else if (!first) first = it;
+      });
+    } else if (k === 'lo') {
+      panel.className = 'tv-lo';
+      first = item(T('All locations', 'すべての開催地'), !S.lo, function() { go({ lo: '' }); });
+      panel.appendChild(first);
+      var cols = document.createElement('div');
+      cols.className = 'tv-ebcols';
+      var block = null;
+      LISTS.lo.forEach(function(r) {
+        var it = item(r[3] === 'city' ? r[1] : r[1], r[0] === S.lo, function() { go({ lo: r[0] }); });
+        if (r[3] === 'city') {
+          block = document.createElement('div');
+          block.className = 'tv-ebcity';
+          it.classList.add('tv-ebh');
+          cols.appendChild(block);
+        } else it.classList.add('tv-ebv');
+        if (block) block.appendChild(it);
+        if (r[0] === S.lo) first = it;
+      });
+      panel.appendChild(cols);
+    } else {
+      first = item(T('All', 'すべて'), !S[k], function() { var p = {}; p[k] = ''; go(p); });
+      panel.appendChild(first);
+      LISTS[k].forEach(function(r) {
+        var it = item(r[1], r[0] === S[k], function() { var p = {}; p[k] = r[0]; go(p); });
+        panel.appendChild(it);
+        if (r[0] === S[k]) first = it;
+      });
+      if (k === 'yr') panel.style.columnCount = 2;
+      if (k === 'sh') { panel.style.columnCount = 3; panel.style.columnGap = '10px'; }
+    }
+    document.body.appendChild(panel);
+    var r = btn.getBoundingClientRect();
+    panel.style.top = Math.max(10, r.bottom + 8) + 'px';
+    if (k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : (k === 'sh' ? 900 : 440)))) + 'px';
+    if (k === 'yr') panel.style.width = '440px';
+    if (k === 'sh') panel.style.width = '880px';
+    btn.classList.add('tv-open');
+    openBtn = btn;
+    prevClose = window.__tvMenuClose || null;
+    window.__tvMenuClose = function() { closePanel(true); return true; };
+    try { if (window.AndroidHost && AndroidHost.setSideMenuOpen) AndroidHost.setSideMenuOpen(true); } catch (e) {}
+    try { first.focus(); first.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  }
+  function move(dir) {
+    var cur = document.activeElement;
+    var items = Array.prototype.slice.call(panel.querySelectorAll('.tv-ebi'));
+    var i = items.indexOf(cur);
+    if (i === -1) { if (items[0]) items[0].focus(); return; }
+    var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+    var best = null, bs = 1e9;
+    items.forEach(function(it) {
+      if (it === cur) return;
+      var r = it.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim, orth;
+      if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
+      else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
+      else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
+      else { if (dx >= -4) return; prim = -dx; orth = Math.abs(dy); }
+      var sc = prim + orth * 2;
+      if (sc < bs) { bs = sc; best = it; }
+    });
+    if (best) { best.focus(); try { best.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+
+  function stop(e) { e.preventDefault(); e.stopImmediatePropagation(); }
+  function cards() { return document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href]'); }
+  function firstCard() {
+    var l = cards();
+    for (var i = 0; i < l.length; i++) { var q = l[i].getBoundingClientRect(); if (q.width > 0 && q.height > 0) return l[i]; }
+    return null;
+  }
+  function cardAbove(a) {
+    var r = a.getBoundingClientRect(), l = cards();
+    for (var i = 0; i < l.length; i++) { var q = l[i].getBoundingClientRect(); if (q.width > 0 && q.height > 0 && q.top < r.top - 10) return true; }
+    return false;
+  }
+  function focusScroll(el) { try { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} }
+
+  window.addEventListener('keydown', function(e) {
+    var k = e.keyCode;
+    if (document.documentElement.classList.contains('tv-sm-open')) return;
+    if (panel) {
+      if (k === 38) { stop(e); move('up'); }
+      else if (k === 40) { stop(e); move('down'); }
+      else if (k === 37) { stop(e); move('left'); }
+      else if (k === 39) { stop(e); move('right'); }
+      else if (k === 13 || k === 23) { var a = document.activeElement; if (a && a._fn) { stop(e); a._fn(); } }
+      else if (k === 27) { stop(e); closePanel(true); }
+      return;
+    }
+    var ae = document.activeElement;
+    if (!ae) return;
+    var bi = btns.indexOf(ae);
+    if (bi !== -1) {
+      lastBtn = bi;
+      if (k === 39) { stop(e); if (bi < btns.length - 1) btns[bi + 1].focus(); }
+      else if (k === 37) { if (bi > 0) { stop(e); btns[bi - 1].focus(); } }
+      else if (k === 40) { var c = chips.length ? chips[0] : firstCard(); if (c) { stop(e); focusScroll(c); } }
+      else if (k === 13 || k === 23) { stop(e); openPanel(ae); }
+      return;
+    }
+    var ci = chips.indexOf(ae);
+    if (ci !== -1) {
+      if (k === 39) { stop(e); if (ci < chips.length - 1) chips[ci + 1].focus(); }
+      else if (k === 37) { if (ci > 0) { stop(e); chips[ci - 1].focus(); } }
+      else if (k === 38) { stop(e); var ub = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (ub) ub.focus(); }
+      else if (k === 40) { var fc = firstCard(); if (fc) { stop(e); focusScroll(fc); } }
+      else if (k === 13 || k === 23) { stop(e); if (ae._fn) ae._fn(); }
+      return;
+    }
+    if (k === 38 && bar && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardAbove(ae)) {
+      stop(e);
+      var tb = chips.length ? chips[0] : (btns[Math.min(lastBtn, btns.length - 1)] || btns[0]);
+      if (tb) focusScroll(tb);
+    }
+  }, true);
+
+  // Line the bar and the chip row up with the left edge of the first thumbnail.
+  function alignBars() {
+    try {
+      var t = document.querySelector('.content-list-item .tv-thumbnail-link') || document.querySelector('.content-list-item img') || document.querySelector('.content-list-item');
+      if (!t) return;
+      var target = t.getBoundingClientRect().left;
+      ['tv-eb', 'tv-ec'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.style.marginLeft = '0px';
+        el.style.marginLeft = (target - el.getBoundingClientRect().left) + 'px';
+      });
+    } catch (e) {}
+  }
+  window.addEventListener('resize', alignBars);
+  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+
+  var tries = 0;
+  (function tick() { if (mount()) return; if (++tries < 25) setTimeout(tick, 400); })();
+})();
     """.trimIndent()
 
     private val listNavJs = """
@@ -3579,8 +6498,8 @@ class MainActivity : Activity() {
             var first = document.querySelector('#tv-test-grid .tv-grid-row');
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
-            // Row order under the first row: Recently Watched, Most Watched, Favorites, Most Favorited.
-            var ORDER = ['tv-recent-row', 'tv-most-row', 'tv-favorites-row', 'tv-mostfav-row'];
+            // Row order under the first row: Recently Watched, Favorites.
+            var ORDER = ['tv-recent-row', 'tv-favorites-row'];
             var after = firstWrap;
             for (var oi = ORDER.indexOf(id) - 1; oi >= 0; oi--) {
               var prev = document.getElementById(ORDER[oi]);
@@ -3624,7 +6543,8 @@ class MainActivity : Activity() {
           var FAV_URL = 'https://www.stardom-world.com/mypage/favorites';
 
           function showRecent(items, css) {
-            upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items, '', '', css);
+            upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items,
+              'https://www.stardom-world.com/mypage?tvrecent=1', isJa() ? 'すべて見る' : 'View All', css);
           }
           function showFavorites(items, more, css) {
             upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'My Favorites', items,
@@ -3637,53 +6557,9 @@ class MainActivity : Activity() {
             var c = readCache();
             if (c.recent && c.recent.length) showRecent(c.recent, css);
             if (c.fav && c.fav.items && c.fav.items.length) showFavorites(c.fav.items, !!c.fav.more, css);
-            MOST_ROWS.forEach(function(r, n) {
-              var mc = readMostCache(r.key);
-              if (mc && mc.length) showMost(r, mc, css);
-              setTimeout(function() { loadMostRow(r, css); }, 1500 + n * 1500);
-            });
+            // Most Watched / Most Favorited are no longer drawn on the home page: forget their saved copies.
+            try { localStorage.removeItem('tvMostWatchedV1'); localStorage.removeItem('tvMostFavoritedV1'); } catch (e) {}
             loadRecentlyWatched(css);
-          }
-
-          // "Most Watched" and "Most Favorited": the site's own lists sorted by plays / favorites, the first 12,
-          // then a View All tile. One small request each to the address the search page uses; not tied to
-          // signing in, so each has its own saved copy that signing out does not clear.
-          var MOST_ROWS = [
-            { id: 'tv-most-row', key: 'tvMostWatchedV1', sort: 'pc', en: 'Most Watched', ja: '再生数の多い動画' },
-            { id: 'tv-mostfav-row', key: 'tvMostFavoritedV1', sort: 'fc', en: 'Most Favorited', ja: 'お気に入り数の多い動画' }
-          ];
-          function readMostCache(key) {
-            try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
-          }
-          function showMost(r, items, css) {
-            upsertRow(r.id, isJa() ? r.ja : r.en, items,
-              'https://www.stardom-world.com/contents/search?s=' + r.sort + '&o=d&activetab=contents&page=1',
-              isJa() ? 'すべて見る' : 'View All', css);
-          }
-          function loadMostRow(r, css) {
-            if (window['__tvLoading_' + r.id]) return;
-            window['__tvLoading_' + r.id] = true;
-            fetch('/user_api/contents?size=12&sort=' + r.sort + '&order=d', { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-              .then(function(res) { return res.ok ? res.json() : null; })
-              .then(function(list) {
-                if (!list || !list.length) return;
-                var items = [];
-                list.forEach(function(v) {
-                  if (!v || !v.id || v.displayable === false) return;
-                  var t = v.thumbnails || {};
-                  var bg = t.md || t.sm || t.original || t.xs || '';
-                  items.push({
-                    href: v.web_detail_url || ('https://www.stardom-world.com/contents/' + v.id),
-                    title: cleanHistoryTitle(v.display_name || '') || 'Stardom World Video',
-                    bgUrl: bg
-                  });
-                });
-                items = items.slice(0, 12);
-                if (!items.length) return;
-                try { localStorage.setItem(r.key, JSON.stringify(items)); } catch (e) {}
-                showMost(r, items, css);
-              })
-              .catch(function() {});
           }
 
           function loadRecentlyWatched(css) {
@@ -3935,6 +6811,11 @@ class MainActivity : Activity() {
         view.evaluateJavascript(headerJs, null)
         view.evaluateJavascript(authJs, null)
         view.evaluateJavascript(loginPageJs(), null)
+        view.evaluateJavascript(cookieBannerJs(), null)
+        view.evaluateJavascript(factionJs, null)
+        view.evaluateJavascript(recentPageJs, null)
+        view.evaluateJavascript(filterBarJs, null)
+        view.evaluateJavascript(eventBarJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
@@ -3943,6 +6824,10 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
+        view.evaluateJavascript(sideMenuJs, null)
+        view.evaluateJavascript(playerPageJs, null)
+        view.evaluateJavascript(relatedRowJs, null)
+        view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
@@ -3997,6 +6882,8 @@ class MainActivity : Activity() {
     private var fsBtnCc: android.widget.TextView? = null
     private var fsBtnSpeed: android.widget.TextView? = null
     private var fsBtnQuality: android.widget.TextView? = null
+    private val fsBtns = LinkedHashMap<String, android.widget.TextView>()
+    private var barQuality: String = ""
     private var fsDebugView: android.widget.TextView? = null
 
     // ---- Captions drawn by the app (translated when needed) ----
@@ -4026,20 +6913,20 @@ class MainActivity : Activity() {
         val tv = android.widget.TextView(this)
         tv.text = label
         tv.setTextColor(Color.WHITE)
-        tv.textSize = 18f
+        tv.textSize = 15f
         tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
         tv.gravity = Gravity.CENTER
-        val padH = (16 * density).toInt()
-        val padV = (12 * density).toInt()
+        val padH = (12 * density).toInt()
+        val padV = (8 * density).toInt()
         tv.setPadding(padH, padV, padH, padV)
         tv.isFocusable = true
         tv.isClickable = true
         fun paint(focused: Boolean) {
             val d = android.graphics.drawable.GradientDrawable()
-            d.cornerRadius = 10 * density
+            d.cornerRadius = BAR_RADIUS_DP * density
             if (focused) {
-                d.setColor(0xFFFFB347.toInt())
-                tv.setTextColor(0xFF1A1A1A.toInt())
+                d.setColor(Color.parseColor(BAR_ACCENT))
+                tv.setTextColor(Color.parseColor(BAR_TEXT_ON_ACCENT))
             } else {
                 d.setColor(0x66000000)
                 d.setStroke((2 * density).toInt(), 0x88FFFFFF.toInt())
@@ -4063,24 +6950,41 @@ class MainActivity : Activity() {
         o.orientation = android.widget.LinearLayout.VERTICAL
         o.setBackgroundColor(0xCC000000.toInt())
         val pad = (28 * density).toInt()
-        o.setPadding(pad, (18 * density).toInt(), pad, (22 * density).toInt())
+        o.setPadding(pad, (14 * density).toInt(), pad, (14 * density).toInt())
+
+        val hint = android.widget.TextView(this)
+        hint.setTextColor(Color.WHITE)
+        hint.textSize = 15f
+        hint.visibility = View.GONE
+        hint.setPadding(0, 0, 0, (10 * density).toInt())
+        o.addView(hint)
+        fsSkipHint = hint
+
+        // One compact row, like the bar under the picture on the video page: time, progress, buttons.
+        val main = android.widget.LinearLayout(this)
+        main.orientation = android.widget.LinearLayout.HORIZONTAL
+        main.gravity = Gravity.CENTER_VERTICAL
 
         val time = android.widget.TextView(this)
         time.setTextColor(Color.WHITE)
-        time.textSize = 16f
+        time.textSize = 14f
         time.text = "0:00 / 0:00"
-        o.addView(time)
+        main.addView(
+            time,
+            android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { rightMargin = (14 * density).toInt() }
+        )
         fsTimeText = time
 
         val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
         bar.max = 1000
-        bar.progressDrawable.setColorFilter(0xFFFFB347.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
-        o.addView(
+        bar.progressDrawable.setColorFilter(Color.parseColor(BAR_ACCENT), android.graphics.PorterDuff.Mode.SRC_IN)
+        main.addView(
             bar,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                (10 * density).toInt()
-            ).apply { topMargin = (6 * density).toInt(); bottomMargin = (14 * density).toInt() }
+            android.widget.LinearLayout.LayoutParams(0, (8 * density).toInt(), 1f)
+                .apply { rightMargin = (14 * density).toInt() }
         )
         fsProgress = bar
 
@@ -4093,26 +6997,23 @@ class MainActivity : Activity() {
                 android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
                     android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { rightMargin = (10 * density).toInt() }
+                ).apply { rightMargin = (6 * density).toInt() }
             )
         }
-        fsBtnPlay = fsButton(tr("Pause", "一時停止")) { playerCommand("toggle", 0) }
-        add(fsBtnPlay!!)
-        add(fsButton(tr("-10s", "-10秒")) { playerCommand("seek", -10) })
-        add(fsButton(tr("+10s", "+10秒")) { playerCommand("seek", 10) })
-        fsBtnMute = fsButton(tr("Mute", "ミュート")) { playerCommand("mute", 0) }
-        add(fsBtnMute!!)
-        fsBtnCc = fsButton(ccLabel()) { cycleCc() }
-        add(fsBtnCc!!)
-        fsBtnQuality = fsButton(tr("Auto", "自動")) { playerCommand("quality", 0) }
-        add(fsBtnQuality!!)
-        fsBtnSpeed = fsButton("1.0x") { playerCommand("speed", 0) }
-        add(fsBtnSpeed!!)
-        add(fsButton(tr("Exit full screen", "全画面を終了")) {
-            hideFsOverlay()
-            hideCustomView()
-        })
-        o.addView(row)
+        for (id in BAR_IDS) {
+            val b = fsButton(barLabel(id, null)) { barAction(id) }
+            when (id) {
+                "play" -> fsBtnPlay = b
+                "mute" -> fsBtnMute = b
+                "cc" -> fsBtnCc = b
+                "quality" -> fsBtnQuality = b
+                "speed" -> fsBtnSpeed = b
+            }
+            fsBtns[id] = b
+            add(b)
+        }
+        main.addView(row)
+        o.addView(main)
 
         // Caption debug panel: only shown after the CC button is pressed.
         val dbg = android.widget.TextView(this)
@@ -4152,9 +7053,89 @@ class MainActivity : Activity() {
 
     private fun hideFsOverlay() {
         fsControlsMode = false
+        fsSkipHint?.visibility = View.GONE
         fsDebugView?.visibility = View.GONE
         handler.removeCallbacks(fsStatusRunnable)
         fsOverlay?.visibility = View.GONE
+    }
+
+    // Skip size of the -/+ buttons (shared by the bar under the picture and the full screen bar).
+    // Up / Down while one of them is focused steps through the sizes; OK skips by the chosen size.
+    private val SKIP_SIZES = intArrayOf(10, 30, 60, 300, 600, 1800)
+    @Volatile private var skipIdx = 1   // starts at 30 s
+
+    private fun skipText(sec: Int): String =
+        if (sec < 60) tr("${sec}s", "${sec}秒") else tr("${sec / 60}m", "${sec / 60}分")
+
+    private fun skipInfoJson(): String {
+        val o = org.json.JSONObject()
+        o.put("idx", skipIdx)
+        o.put("sizes", org.json.JSONArray(SKIP_SIZES.map { skipText(it) }))
+        return o.toString()
+    }
+
+    // dir > 0: next larger size, dir < 0: next smaller. Stops at the ends.
+    private fun skipStep(dir: Int) {
+        skipIdx = (skipIdx + if (dir > 0) 1 else -1).coerceIn(0, SKIP_SIZES.size - 1)
+    }
+
+    private var fsSkipHint: android.widget.TextView? = null
+    private val fsSkipHintHide = Runnable { fsSkipHint?.visibility = View.GONE }
+
+    private fun showFsSkipHint() {
+        val tv = fsSkipHint ?: return
+        val sb = android.text.SpannableStringBuilder()
+        sb.append(tr("Skip size   ", "スキップ幅   "))
+        SKIP_SIZES.forEachIndexed { i, sec ->
+            val t = skipText(sec)
+            val start = sb.length
+            sb.append(if (i == skipIdx) "[ $t ]" else " $t ")
+            if (i == skipIdx) {
+                sb.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor(BAR_ACCENT)), start, sb.length, 0)
+                sb.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), start, sb.length, 0)
+            }
+            sb.append("  ")
+        }
+        tv.text = sb
+        tv.visibility = View.VISIBLE
+        handler.removeCallbacks(fsSkipHintHide)
+        handler.postDelayed(fsSkipHintHide, 2500)
+    }
+
+    // Label of one control-bar button, from the player's latest status (null = not known yet).
+    private fun barLabel(id: String, j: org.json.JSONObject?): String = when (id) {
+        "play" -> if (j?.optBoolean("paused") == true) tr("Play", "再生") else tr("Pause", "一時停止")
+        "back" -> "-" + skipText(SKIP_SIZES[skipIdx])
+        "fwd" -> "+" + skipText(SKIP_SIZES[skipIdx])
+        "mute" -> if (j != null && j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
+        "cc" -> ccLabel()
+        "quality" -> {
+            val q = j?.optString("q", "") ?: ""
+            if (q.isNotEmpty()) barQuality = if (q.equals("auto", true)) tr("Auto", "自動") else q
+            if (barQuality.isEmpty()) tr("Auto", "自動") else barQuality
+        }
+        "speed" -> (j?.optDouble("rate", 1.0) ?: 1.0).toString() + "x"
+        "full" -> if (fullScreenActive()) tr("Exit full screen", "全画面を終了") else tr("Full screen", "全画面")
+        else -> id
+    }
+
+    // What a control-bar button does; used by the full screen overlay and the in-page bar alike.
+    private fun barAction(id: String) {
+        when (id) {
+            "play" -> playerCommand("toggle", 0)
+            "back" -> playerCommand("seek", -SKIP_SIZES[skipIdx])
+            "fwd" -> playerCommand("seek", SKIP_SIZES[skipIdx])
+            "mute" -> playerCommand("mute", 0)
+            "cc" -> cycleCc()
+            "quality" -> playerCommand("quality", 0)
+            "speed" -> playerCommand("speed", 0)
+            "full" -> if (fullScreenActive()) {
+                hideFsOverlay()
+                hideCustomView()
+            } else {
+                webAppInterface.triggerFullScreen()
+            }
+        }
     }
 
     private fun fmtTime(sec: Double): String {
@@ -4176,14 +7157,9 @@ class MainActivity : Activity() {
                 val j = org.json.JSONObject(str)
                 val t = j.optDouble("t", 0.0)
                 val d = j.optDouble("d", 0.0)
-                fsBtnPlay?.text = if (j.optBoolean("paused")) tr("Play", "再生") else tr("Pause", "一時停止")
-                fsBtnMute?.text = if (j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
                 // The player may have its own captions on from the start: show that as the current state.
                 if (ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
-                fsBtnCc?.text = ccLabel()
-                fsBtnSpeed?.text = j.optDouble("rate", 1.0).toString() + "x"
-                val qName = j.optString("q", "")
-                if (qName.isNotEmpty()) fsBtnQuality?.text = if (qName.equals("auto", true)) tr("Auto", "自動") else qName
+                for ((id, btn) in fsBtns) btn.text = barLabel(id, j)
                 fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
                 fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
             } catch (_: Exception) {
@@ -4889,6 +7865,11 @@ class MainActivity : Activity() {
         handler.removeCallbacks(fsPulse)
         fsPulseRunning = false
         refreshCursorVisibility()
+        playerCtrlPos = 0
+        handler.postDelayed({ webView.evaluateJavascript("window.__tvFocusBar && window.__tvFocusBar('full')", null) }, 400)
+        for (delay in longArrayOf(250L, 900L, 1800L)) {
+            handler.postDelayed({ webView.evaluateJavascript("window.__tvRefitPlayer && window.__tvRefitPlayer()", null) }, delay)
+        }
     }
 
     // ---------------------------------------------------------------- remote keys
@@ -4915,6 +7896,12 @@ class MainActivity : Activity() {
                 }
 
                 KeyEvent.KEYCODE_BACK -> {
+                    if (sideMenuOpen) {
+                        // Back puts the side menu away before it does anything else.
+                        webView.evaluateJavascript("(function(){ return window.__tvMenuClose ? window.__tvMenuClose() : false; })()", null)
+                        sideMenuOpen = false
+                        return true
+                    }
                     if (awaitingLogin && !onboardingShowing) {
                         // Backing out of the login page: the normal signed-out start.
                         exitGuideToSite()
@@ -4936,17 +7923,26 @@ class MainActivity : Activity() {
             }
         }
 
-        // Full screen: Left/Right skip 10 s (30 s while held or with the FF/RW keys), OK plays/pauses.
+        // Full screen: Left/Right skip 30 s (60 s while held or with the FF/RW keys), OK plays/pauses.
         // The keys never reach the player itself, so its controls are not stuck in keyboard mode.
         if (fullScreenActive()) {
             if (fsControlsMode) {
                 // The button bar is showing: the remote moves between its buttons and OK presses one.
                 when (event.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_UP -> {
-                        if (event.action == KeyEvent.ACTION_DOWN) hideFsOverlay()
+                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val onSkip = fsBtns["back"]?.isFocused == true || fsBtns["fwd"]?.isFocused == true
+                        if (event.action == KeyEvent.ACTION_DOWN) {
+                            if (onSkip) {
+                                skipStep(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) 1 else -1)
+                                for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") btn.text = barLabel(id, null)
+                                showFsSkipHint()
+                                fullScreenInteraction()
+                            } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                                hideFsOverlay()
+                            }
+                        }
                         return true
                     }
-                    KeyEvent.KEYCODE_DPAD_DOWN -> return true
                     KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
                         if (event.action == KeyEvent.ACTION_DOWN) fullScreenInteraction()
@@ -4965,7 +7961,7 @@ class MainActivity : Activity() {
                             event.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
                         val media = event.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ||
                             event.keyCode == KeyEvent.KEYCODE_MEDIA_REWIND
-                        val step = if (media || event.repeatCount > 0) 30 else 10
+                        val step = if (media || event.repeatCount > 0) 60 else 30
                         playerCommand("seek", if (forward) step else -step)
                         fullScreenInteraction()
                     }
@@ -5039,12 +8035,16 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
                     if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                         val dir = if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) "down" else "up"
-                        playerFocused = false
                         webView.evaluateJavascript("window.__tvLeavePlayer && window.__tvLeavePlayer('" + dir + "')", null)
                     }
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    if (event.action == KeyEvent.ACTION_DOWN) {
+                        if (event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) playerCtrlPos++
+                        else if (playerCtrlPos > 1) playerCtrlPos--
+                        else return true
+                    }
                     val meta = if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                         KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON
                     } else 0
@@ -5534,245 +8534,285 @@ private var appJa = false
 private val isJa: Boolean get() = appJa
 private fun tr(en: String, ja: String): String = if (isJa) ja else en
 
-// Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
-// the splash logo exactly where the splash drew it, so the two flow into each other. The last
-// button opens the site's own login page (restyled to match).
+// Unauthenticated experience: a language screen, then seven full-screen guide screens drawn in a
+// bold poster style (white and yellow on black, a TV and a remote in a yellow frame). The picture on
+// the right of each screen is a small web page in assets/guide (drawings and, on the pointer screen,
+// an animation); everything else is native. The first screens keep the splash logo exactly where the
+// splash drew it, so the two flow into each other. The last button opens the site's own login page.
 private class OnboardingView(
     context: android.content.Context,
     private val density: Float,
-    private val wand: Bitmap,
     private val onLogin: () -> Unit,
     private val onBrowse: () -> Unit,
     private val onLanguage: (String) -> Unit
 ) : FrameLayout(context) {
 
-    private class Slide(val title: String, val body: String)
+    private class Slide(val jp: String, val en: String, val capJp: String, val capEn: String, val art: Int)
 
-    private fun buildSlides() = if (isJa) listOf(
-        Slide(
-            "テレビで Stardom World へようこそ",
-            "リモコンでの操作方法をかんたんにご紹介します。"
-        ),
-        Slide(
-            "移動のしかた",
-            "矢印ボタンで動画やメニューを移動します。OKで選択した項目を開き、戻るボタンで前のページに戻ります。"
-        ),
-        Slide(
-            "お気に入りに追加",
-            "動画を選択して、リモコンのオプション(メニュー)ボタンを押すと、お気に入りに追加・削除できます。ログインが必要です。"
-        ),
-        Slide(
-            "カーソルモード",
-            "OKを約0.5秒長押しするとポインターが表示されます。「人間であることを確認」のチェックなどに使えます。もう一度長押しすると解除されます。"
-        ),
-        Slide(
-            "動画と全画面表示",
-            "動画は全画面で開き、次の動画が自動で再生されます。下ボタンでコントロールバー、左右ボタンでスキップ、戻るボタンで全画面を終了します。"
-        ),
-        Slide(
-            "日本語と英語",
-            "ページ上部の EN / JA ボタンで、いつでも言語を切り替えられます。"
-        )
-    ) else listOf(
-        Slide(
-            "Welcome to Stardom World on TV",
-            "A quick tour of getting around with your remote."
-        ),
-        Slide(
-            "Moving around",
-            "Use the arrow buttons to move between videos and menus. OK opens what is highlighted, and Back returns to the previous page."
-        ),
-        Slide(
-            "Add to favorites",
-            "Highlight a video and press the Options (menu) button on your remote to add it to, or remove it from, your favorites. You need to be signed in."
-        ),
-        Slide(
-            "Cursor mode",
-            "Hold OK for about half a second to turn on a pointer, for things like the \"Verify you are human\" box. Hold OK again to turn it off."
-        ),
-        Slide(
-            "Videos and full screen",
-            "Videos open in full screen and the next one plays by itself. Press Down for the controls bar, Left and Right to skip, and Back to leave full screen."
-        ),
-        Slide(
-            "English or Japanese",
-            "Use the EN / JA button at the top of the page to switch language at any time."
-        )
+    private val slides = listOf(
+        Slide("ようこそ。", "Welcome to Stardom World on TV", "リモコンの使い方をご紹介", "A quick tour of your remote.", 0),
+        Slide("えらぼう。", "Move around", "矢印で移動 ・ OKで決定 ・ 戻るで前へ", "Arrows move. OK opens. Back returns.", 1),
+        Slide("左を押そう。", "Press Left for the menu", "右でリストを開く ・ 左で戻る", "Right opens a list. Left steps back.", 2),
+        Slide("言語。", "English or 日本語", "メニュー下部で言語を切り替え", "Language switch at bottom of the menu.", 6),
+        Slide("お気に入り。", "Save a favorite", "動画で「オプション」ボタンを押す", "Press Options on a video. Sign-in needed.", 3),
+        Slide("長押し。", "Hold OK for a pointer", "もう一度長押しで解除", "Hold again to turn it off.", 4),
+        Slide("全画面。", "Full screen", "下でバー ・ 左右でスキップ ・ 戻るで終了", "Down for controls. Left/Right skips. Back exits.", 5)
     )
 
-    private var slides = buildSlides()
-
-    private val gold = 0xFFFFB347.toInt()
+    private val yellow = 0xFFF7D117.toInt()
+    private val ink = 0xFF111111.toInt()
     private var index = 0
 
     // The first screen asks which language to use; the device language is pre-selected.
     private var langStep = true
 
-    private fun p(v: Int): Int = (v * density).toInt()
+    private val screenW = context.resources.displayMetrics.widthPixels
+    private val screenH = context.resources.displayMetrics.heightPixels
+    // One unit is a pixel of the 1280 x 720 design.
+    private val u = screenW / 1280f
 
-    private val art = ArtView(context)
-    private val titleView = android.widget.TextView(context)
-    private val bodyView = android.widget.TextView(context)
-    private val counter = android.widget.TextView(context)
+    private val logoView = android.widget.ImageView(context)
+    private val jpView = android.widget.TextView(context)
+    private val enView = android.widget.TextView(context)
+    private val pill = android.widget.LinearLayout(context)
+    private val capJp = android.widget.TextView(context)
+    private val capEn = android.widget.TextView(context)
+    private val btnRow = android.widget.LinearLayout(context)
     private val skipBtn = android.widget.TextView(context)
     private val backBtn = android.widget.TextView(context)
     private val nextBtn = android.widget.TextView(context)
     private var focused: android.widget.TextView = if (isJa) nextBtn else skipBtn
-
-    // The splash logo, at the splash's own size and position.
-    private val logoView = android.widget.ImageView(context)
-    private val screenW = context.resources.displayMetrics.widthPixels
-    private val screenH = context.resources.displayMetrics.heightPixels
+    private val dots = DotsView(context)
+    private val artWeb = android.webkit.WebView(context)
     private val logoH: Int
+
+    private inner class BackdropView(c: android.content.Context) : View(c) {
+        private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x21F7D117 }
+        override fun onDraw(canvas: Canvas) {
+            val step = 16f * u
+            var y = step / 2
+            while (y < height) {
+                var x = step / 2
+                while (x < width) {
+                    canvas.drawCircle(x, y, 2f * u, dot)
+                    x += step
+                }
+                y += step
+            }
+        }
+    }
+
+    private inner class DotsView(c: android.content.Context) : View(c) {
+        private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = yellow; strokeWidth = 3f * u }
+        private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = yellow }
+        override fun onDraw(canvas: Canvas) {
+            for (k in slides.indices) {
+                val cx = (8f + k * 26f) * u
+                val cy = height / 2f
+                if (k == index) canvas.drawCircle(cx, cy, 8f * u, fill) else canvas.drawCircle(cx, cy, 6.5f * u, ring)
+            }
+        }
+    }
+
+    private fun px(v: Float): Int = (v * u).toInt()
+
+    private fun place(v: View, x: Float, y: Float, w: Int, h: Int) {
+        val lp = FrameLayout.LayoutParams(w, h)
+        lp.leftMargin = px(x)
+        lp.topMargin = px(y)
+        v.layoutParams = lp
+    }
+
+    private fun fit(tv: android.widget.TextView, text: String, base: Float, maxW: Float) {
+        tv.text = text
+        var size = base * u
+        tv.paint.textSize = size
+        val lines = text.split("\n")
+        fun widest(): Float { var m = 0f; for (l in lines) m = maxOf(m, tv.paint.measureText(l)); return m }
+        while (widest() > maxW * u && size > 12f * u) {
+            size -= 2f * u
+            tv.paint.textSize = size
+        }
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size)
+    }
 
     init {
         setBackgroundColor(Color.BLACK)
         isClickable = true
+        addView(BackdropView(context), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
 
         logoView.setImageResource(R.drawable.splash_logo)
         logoView.adjustViewBounds = true
         val ld = logoView.drawable
         val logoW = (screenW * 0.6f).toInt()
-        logoH = if (ld != null && ld.intrinsicWidth > 0) {
-            logoW * ld.intrinsicHeight / ld.intrinsicWidth
-        } else {
-            (logoW * 0.25f).toInt()
+        logoH = if (ld != null && ld.intrinsicWidth > 0) logoW * ld.intrinsicHeight / ld.intrinsicWidth else (logoW * 0.25f).toInt()
+        addView(logoView, FrameLayout.LayoutParams(logoW, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+
+        artWeb.setBackgroundColor(Color.TRANSPARENT)
+        artWeb.isFocusable = false
+        artWeb.isFocusableInTouchMode = false
+        artWeb.isClickable = false
+        artWeb.isVerticalScrollBarEnabled = false
+        artWeb.isHorizontalScrollBarEnabled = false
+        artWeb.overScrollMode = View.OVER_SCROLL_NEVER
+        addView(artWeb)
+
+        for (t in listOf(jpView, enView, capJp, capEn)) {
+            t.setTypeface(t.typeface, android.graphics.Typeface.BOLD)
+            t.setSingleLine(false)
+            t.includeFontPadding = false
         }
-        addView(
-            logoView,
-            FrameLayout.LayoutParams(logoW, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER)
-        )
+        jpView.setSingleLine(true)
+        capJp.setSingleLine(true)
+        capEn.setSingleLine(true)
+        capJp.setTextColor(ink)
+        capEn.setTextColor(ink)
+        addView(jpView)
+        addView(enView)
 
-        val col = android.widget.LinearLayout(context)
-        col.orientation = android.widget.LinearLayout.VERTICAL
-        col.gravity = Gravity.CENTER_HORIZONTAL
-        col.setPadding(p(72), p(32), p(72), p(30))
+        pill.orientation = android.widget.LinearLayout.VERTICAL
+        pill.setPadding(px(26f), px(16f), px(26f), px(18f))
+        val pd = android.graphics.drawable.GradientDrawable()
+        pd.setColor(yellow)
+        pd.setStroke(px(5f), Color.WHITE)
+        pd.cornerRadius = 36f * u
+        pill.background = pd
+        pill.addView(capJp, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT))
+        pill.addView(capEn, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = px(6f) })
+        addView(pill)
 
-        col.addView(
-            art,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.25f
-            )
-        )
-
-        titleView.setTextColor(gold)
-        titleView.textSize = 34f
-        titleView.setTypeface(titleView.typeface, android.graphics.Typeface.BOLD)
-        titleView.gravity = Gravity.CENTER
-        col.addView(
-            titleView,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        bodyView.setTextColor(Color.WHITE)
-        bodyView.textSize = 22f
-        bodyView.gravity = Gravity.CENTER
-        bodyView.setLineSpacing(0f, 1.15f)
-        col.addView(
-            bodyView,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = p(10); bottomMargin = p(8) }
-        )
-
-        counter.setTextColor(0x99FFFFFF.toInt())
-        counter.textSize = 16f
-        counter.gravity = Gravity.CENTER
-        col.addView(
-            counter,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = p(10) }
-        )
-
-        val row = android.widget.LinearLayout(context)
-        row.orientation = android.widget.LinearLayout.HORIZONTAL
-        row.gravity = Gravity.CENTER
+        btnRow.orientation = android.widget.LinearLayout.HORIZONTAL
+        btnRow.gravity = Gravity.CENTER_VERTICAL
+        btnRow.setPadding(px(6f), px(6f), px(6f), px(6f))
         for (b in listOf(skipBtn, backBtn, nextBtn)) {
-            b.textSize = 20f
             b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
             b.gravity = Gravity.CENTER
-            b.setPadding(p(30), p(12), p(30), p(12))
-            row.addView(
-                b,
-                android.widget.LinearLayout.LayoutParams(
-                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
-                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { leftMargin = p(10); rightMargin = p(10) }
-            )
-        }
-        col.addView(
-            row,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            b.setSingleLine(true)
+            b.includeFontPadding = false
+            b.setPadding(px(24f), px(10f), px(24f), px(10f))
+            btnRow.addView(b, android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+            ).apply { leftMargin = px(6f); rightMargin = px(6f) })
+        }
+        addView(btnRow)
+        addView(dots)
         render()
     }
 
-    private fun visibleButtons(): List<android.widget.TextView> =
-        if (!langStep && index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        try {
+            removeView(artWeb)
+            artWeb.destroy()
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun visibleButtons(): List<android.widget.TextView> = when {
+        langStep || index == 0 -> listOf(skipBtn, nextBtn)
+        index == slides.size - 1 -> listOf(backBtn, nextBtn)
+        else -> listOf(skipBtn, backBtn, nextBtn)
+    }
 
     private fun paintButton(b: android.widget.TextView, isFocused: Boolean) {
         val d = android.graphics.drawable.GradientDrawable()
-        d.cornerRadius = 12 * density
+        d.cornerRadius = 100f * u
         if (isFocused) {
-            d.setColor(gold)
-            d.setStroke((4 * density).toInt(), Color.WHITE)
-            b.setTextColor(0xFF1A1A1A.toInt())
+            d.setColor(yellow)
+            d.setStroke(px(4f), Color.WHITE)
+            b.setTextColor(ink)
         } else {
-            d.setColor(0x33000000)
-            d.setStroke((2 * density).toInt(), gold)
+            d.setColor(Color.TRANSPARENT)
+            d.setStroke(px(4f), Color.WHITE)
             b.setTextColor(Color.WHITE)
         }
         b.background = d
     }
 
     private fun render() {
+        val wide = langStep || index == 0
+        val s = slides[index]
+        // buttons
         if (langStep) {
-            titleView.text = "Language  /  言語"
-            bodyView.text = "Choose your language  ·  言語を選択してください"
-            counter.text = ""
             skipBtn.text = "English"
             nextBtn.text = "日本語"
-            backBtn.visibility = View.GONE
         } else {
-            val s = slides[index]
-            titleView.text = s.title
-            bodyView.text = s.body
-            counter.text = (index + 1).toString() + " / " + slides.size
             skipBtn.text = tr("Skip to log in", "スキップしてログイン")
             backBtn.text = tr("Back", "戻る")
-            backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
             nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
         }
-        if (!visibleButtons().contains(focused)) focused = nextBtn
+        val bs = (if (isJa && !langStep) 19f else 21f) * u
+        for (b in listOf(skipBtn, backBtn, nextBtn)) b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, bs)
+        val vis = visibleButtons()
+        for (b in listOf(skipBtn, backBtn, nextBtn)) b.visibility = if (vis.contains(b)) View.VISIBLE else View.GONE
+        if (!vis.contains(focused)) focused = nextBtn
         for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
 
-        val lp = art.layoutParams as android.widget.LinearLayout.LayoutParams
-        if (langStep || index == 0) {
-            // Leave exactly the splash logo's space (it is centred on the screen) above the title.
+        val wrap = FrameLayout.LayoutParams.WRAP_CONTENT
+        if (wide) {
             logoView.visibility = View.VISIBLE
-            counter.visibility = View.GONE
-            lp.weight = 0f
-            lp.height = ((screenH + logoH) / 2f + 10 * density - 32 * density).toInt().coerceAtLeast(0)
+            artWeb.visibility = View.GONE
+            val logoTop = (screenH - logoH) / 2f
+            val jpText = if (langStep) "言語。" else s.jp
+            jpView.setTextColor(yellow)
+            jpView.gravity = Gravity.CENTER
+            fit(jpView, jpText, 100f, 1100f)
+            place(jpView, 0f, 0f, screenW, wrap)
+            (jpView.layoutParams as FrameLayout.LayoutParams).topMargin = (logoTop - 190f * u).toInt().coerceAtLeast(px(8f))
+            enView.setTextColor(Color.WHITE)
+            enView.gravity = Gravity.CENTER
+            fit(enView, if (langStep) "Language" else s.en, 36f, 1100f)
+            place(enView, 0f, 0f, screenW, wrap)
+            val enTop = (logoTop + logoH + 10f * u).toInt()
+            (enView.layoutParams as FrameLayout.LayoutParams).topMargin = enTop
+            fit(capJp, if (langStep) "言語を選択してください" else s.capJp, 24f, 700f)
+            fit(capEn, if (langStep) "Choose your language" else s.capEn, 20f, 700f)
+            capJp.gravity = Gravity.CENTER
+            capEn.gravity = Gravity.CENTER
+            place(pill, 260f, 0f, px(760f), wrap)
+            (pill.layoutParams as FrameLayout.LayoutParams).topMargin = enTop + px(52f)
+            if (langStep) {
+                dots.visibility = View.GONE
+                place(btnRow, 0f, 0f, screenW, wrap)
+                (btnRow.layoutParams as FrameLayout.LayoutParams).apply { topMargin = 0; gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL; bottomMargin = px(28f) }
+                btnRow.gravity = Gravity.CENTER
+            } else {
+                dots.visibility = View.VISIBLE
+                place(dots, 90f, 0f, px(7 * 26f), px(24f))
+                (dots.layoutParams as FrameLayout.LayoutParams).apply { gravity = Gravity.BOTTOM; bottomMargin = px(44f) }
+                place(btnRow, 0f, 0f, wrap, wrap)
+                (btnRow.layoutParams as FrameLayout.LayoutParams).apply { topMargin = 0; leftMargin = 0; rightMargin = px(84f); gravity = Gravity.BOTTOM or Gravity.END; bottomMargin = px(30f) }
+                btnRow.gravity = Gravity.CENTER_VERTICAL
+            }
         } else {
             logoView.visibility = View.GONE
-            counter.visibility = View.VISIBLE
-            lp.weight = 1.25f
-            lp.height = 0
+            jpView.setTextColor(Color.WHITE)
+            jpView.gravity = Gravity.START
+            fit(jpView, s.jp, 74f, 470f)
+            place(jpView, 60f, 56f, px(470f), wrap)
+            enView.setTextColor(yellow)
+            enView.gravity = Gravity.START
+            fit(enView, s.en, 30f, 470f)
+            place(enView, 60f, 146f, px(470f), wrap)
+            capJp.gravity = Gravity.START
+            capEn.gravity = Gravity.START
+            fit(capJp, s.capJp, 25f, 426f)
+            fit(capEn, s.capEn, 21f, 426f)
+            place(pill, 60f, 350f, px(480f), wrap)
+            place(btnRow, 56f, 556f, wrap, wrap)
+            btnRow.gravity = Gravity.CENTER_VERTICAL
+            dots.visibility = View.VISIBLE
+            place(dots, 66f, 648f, px(7 * 26f), px(24f))
+            place(artWeb, 550f, 50f, px(700f), px(620f))
+            artWeb.visibility = View.VISIBLE
+            val url = "file:///android_asset/guide/art_" + s.art + ".html"
+            if (artWeb.tag != url) {
+                artWeb.tag = url
+                artWeb.loadUrl(url)
+            }
         }
-        art.layoutParams = lp
-        art.type = if (langStep) 0 else index
-        art.invalidate()
+        dots.invalidate()
     }
 
     private fun moveFocus(step: Int) {
@@ -5785,7 +8825,6 @@ private class OnboardingView(
     private fun activate() {
         if (langStep) {
             onLanguage(if (focused === skipBtn) "en" else "ja")
-            slides = buildSlides()
             langStep = false
             index = 0
             focused = nextBtn
@@ -5812,123 +8851,5 @@ private class OnboardingView(
             }
         }
         return true
-    }
-
-    // Simple line drawings, one per slide.
-    private inner class ArtView(c: android.content.Context) : View(c) {
-        var type = 0
-        private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            color = gold
-            strokeWidth = 3f * density
-        }
-        private val fillGold = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
-        private val fillWhite = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
-        private val fillDim = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x22FFFFFF }
-        private val fillShade = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x66000000 }
-        private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textAlign = Paint.Align.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        }
-        private val tmp = RectF()
-        private val path = Path()
-
-        private fun triangle(canvas: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, paint: Paint) {
-            path.reset()
-            path.moveTo(x1, y1)
-            path.lineTo(x2, y2)
-            path.lineTo(x3, y3)
-            path.close()
-            canvas.drawPath(path, paint)
-        }
-
-        private fun heart(canvas: Canvas, cx: Float, cy: Float, r: Float, paint: Paint) {
-            canvas.drawCircle(cx - r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
-            canvas.drawCircle(cx + r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
-            triangle(canvas, cx - r * 1.02f, cy - r * 0.05f, cx + r * 1.02f, cy - r * 0.05f, cx, cy + r * 1.1f, paint)
-        }
-
-        override fun onDraw(canvas: Canvas) {
-            val u = minOf(width, height) / 100f
-            val cx = width / 2f
-            val cy = height / 2f
-            when (type) {
-                0 -> {}
-                1 -> {
-                    canvas.drawCircle(cx, cy, 44f * u, fillDim)
-                    canvas.drawCircle(cx, cy, 44f * u, line)
-                    triangle(canvas, cx, cy - 36f * u, cx - 9f * u, cy - 24f * u, cx + 9f * u, cy - 24f * u, fillWhite)
-                    triangle(canvas, cx, cy + 36f * u, cx - 9f * u, cy + 24f * u, cx + 9f * u, cy + 24f * u, fillWhite)
-                    triangle(canvas, cx - 36f * u, cy, cx - 24f * u, cy - 9f * u, cx - 24f * u, cy + 9f * u, fillWhite)
-                    triangle(canvas, cx + 36f * u, cy, cx + 24f * u, cy - 9f * u, cx + 24f * u, cy + 9f * u, fillWhite)
-                    canvas.drawCircle(cx, cy, 15f * u, fillGold)
-                    text.color = 0xFF1A1A1A.toInt()
-                    text.textSize = 11f * u
-                    canvas.drawText("OK", cx, cy + 4f * u, text)
-                }
-                2 -> {
-                    // A video card with a heart, and the remote's Options button pointing at it.
-                    tmp.set(cx - 82f * u, cy - 30f * u, cx + 8f * u, cy + 30f * u)
-                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, line)
-                    heart(canvas, cx - 8f * u, cy - 14f * u, 9f * u, fillGold)
-                    tmp.set(cx - 74f * u, cy + 8f * u, cx, cy + 14f * u)
-                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillWhite)
-                    tmp.set(cx - 74f * u, cy + 19f * u, cx - 30f * u, cy + 24f * u)
-                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillDim)
-                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, fillDim)
-                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, line)
-                    for (k in -1..1) {
-                        canvas.drawLine(cx + 49f * u, cy + k * 6f * u, cx + 67f * u, cy + k * 6f * u, line)
-                    }
-                    canvas.drawLine(cx + 34f * u, cy, cx + 14f * u, cy - 8f * u, line)
-                }
-                3 -> {
-                    tmp.set(cx - 84f * u, cy - 14f * u, cx - 56f * u, cy + 14f * u)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
-                    text.color = Color.WHITE
-                    text.textSize = 9f * u
-                    text.textAlign = Paint.Align.LEFT
-                    canvas.drawText("Verify you are human", cx - 48f * u, cy + 4f * u, text)
-                    text.textAlign = Paint.Align.CENTER
-                    val ws = 30f * u
-                    val ratio = wand.height.toFloat() / wand.width.toFloat()
-                    tmp.set(cx - 70f * u, cy - 2f * u, cx - 70f * u + ws, cy - 2f * u + ws * ratio)
-                    canvas.drawBitmap(wand, null, tmp, null)
-                    canvas.drawCircle(cx + 62f * u, cy, 22f * u, fillDim)
-                    tmp.set(cx + 62f * u - 22f * u, cy - 22f * u, cx + 62f * u + 22f * u, cy + 22f * u)
-                    canvas.drawArc(tmp, -90f, 270f, false, line)
-                    text.color = Color.WHITE
-                    text.textSize = 10f * u
-                    canvas.drawText("hold OK", cx + 62f * u, cy + 4f * u, text)
-                }
-                4 -> {
-                    tmp.set(cx - 70f * u, cy - 42f * u, cx + 70f * u, cy + 22f * u)
-                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, line)
-                    tmp.set(cx - 62f * u, cy + 8f * u, cx + 62f * u, cy + 16f * u)
-                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillShade)
-                    for (k in 0..4) {
-                        tmp.set(cx - 58f * u + k * 24f * u, cy + 10f * u, cx - 44f * u + k * 24f * u, cy + 14f * u)
-                        canvas.drawRoundRect(tmp, 2f * u, 2f * u, if (k == 1) fillGold else fillWhite)
-                    }
-                    triangle(canvas, cx, cy + 46f * u, cx - 9f * u, cy + 34f * u, cx + 9f * u, cy + 34f * u, fillGold)
-                    triangle(canvas, cx - 18f * u, cy - 14f * u, cx - 18f * u, cy - 2f * u, cx - 7f * u, cy - 8f * u, fillWhite)
-                }
-                else -> {
-                    tmp.set(cx - 34f * u, cy - 14f * u, cx + 34f * u, cy + 14f * u)
-                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, line)
-                    tmp.set(cx - 32f * u, cy - 12f * u, cx, cy + 12f * u)
-                    canvas.drawRoundRect(tmp, 12f * u, 12f * u, fillGold)
-                    text.textSize = 13f * u
-                    text.color = 0xFF1A1A1A.toInt()
-                    canvas.drawText("EN", cx - 16f * u, cy + 5f * u, text)
-                    text.color = Color.WHITE
-                    canvas.drawText("JA", cx + 17f * u, cy + 5f * u, text)
-                }
-            }
-        }
     }
 }

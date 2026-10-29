@@ -2,6 +2,232 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.0
+- Release 2.0.0: Redesigned TV navigation with slide-out side menu, Factions and roster explorer, advanced match/event filters, universal TV player control bar with quality selector and 30s/60s seeking, poster-style onboarding guide, and restyled TV login page.
+
+## 1.3.135
+- Cookie card: the grey "Choose one to continue" line (which showed with a light highlight) is gone, and text on the card can no longer be selected.
+- After the cookie banner is answered, anything of it still stuck to the bottom edge of the screen (an empty strip or bar) is put away.
+
+## 1.3.134
+- Cookie banner: when the site shows its cookie banner (found by its Allow / Deny buttons, on any page), a large card in the new look appears above it with the same two choices, Deny and Allow all, with Deny selected. Left/Right switches, OK answers. Pressing a button presses the site's own button, so the answer is the site's real answer. If no banner appears, nothing is shown.
+- Log in page: the logo drawn over the top is gone, and so is the grey status line at the bottom.
+
+## 1.3.133
+- Log in page: everything now fits on screen. The empty space at the top is gone, and the heading, fields, buttons and the two links are a little smaller and closer together.
+- The Japanese heading "ログイン。" is marked as not to be translated, so it no longer turns into "Log in." in English.
+
+## 1.3.132
+- Log in page: the site's top bar holds its own small login form, and the styling was being applied to that one instead of the real form. It now picks the real form (the password field outside the top bar), and the top bar stays hidden. The top bar's "New registration" link is no longer brought back.
+
+## 1.3.131
+- Fixed: the login page styling in 1.3.130 also ran on the Home page (which has a hidden login form), bringing the site's old header back and adding the sparkles and status line. It now only runs on the login page.
+
+## 1.3.130
+- Log in page: the look is now also set directly on each element, because the site's own rules were out-ranking the style sheet. It re-applies as the page settles and when the focus moves. The site's top bar (categories, search, log in, language) is hidden on this page, and boxes around the form lose their frames. The two helper links stay. The grey status line at the bottom now also shows the scale values.
+
+## 1.3.129
+- Favorite guide picture: the toast with the heart now pops up over the video grid, not over a full-screen video.
+- Guide captions are always one line (the text shrinks to fit), so the full-screen text no longer changes between one and two lines, in English or Japanese.
+
+## 1.3.128
+- First-run guide pictures are animated, like the pointer screen: Move around (the red focus box travels over the cards), Menu (the menu slides out, then the sub-menu flies out of it), Favorite (a toast pops up with the heart in it, replacing the heart over the video), Full screen (the video control bar slides up) and Language (the switch slides to the other side).
+- Full screen text is now "Down for controls. Left/Right skips. Back exits."
+- Log in page: the styling is applied even if the form appears late or sits at another address (it now finds the page by its password field and retries for about ten seconds). The site's two links under the form ("If you are unable to log in", "Register here") are kept. A small grey status line at the bottom of the login page shows what ran, so a photo can show what happened.
+
+## 1.3.127
+- First-run guide: the language-switch screen now comes right after the menu screen (4 of 7), with the text "Language switch at bottom of the menu." The full-screen screen is last and reads "In full screen press down for controls." then "Left/Right to skip. Back to exit." on two lines (the caption box is a little wider so the text stays full size).
+- Log in page: closer to the mock-up using styling only, no change to the form itself: dotted background, sparkles, bilingual field labels (EMAIL ・ メール, PASSWORD ・ パスワード), a yellow glow around the selected Log in button, and the site's own boxes made transparent.
+
+## 1.3.126
+- First-run guide redesigned in a bold poster style: black background, a Japanese headline with a short English line, one yellow caption, and a TV and remote drawn in a yellow frame (a wrestling match on the TV where it fits). Order is unchanged: language screen first, then seven guide screens.
+- Buttons are pills in the existing order, Skip to log in, Back, Next, with Next selected by default (yellow). The welcome screen has Skip to log in and Next; the last screen has Back and Log in. The splash logo stays where it is on the language and welcome screens.
+- The pointer screen is now an animated demonstration: the app's own wand pointer moves to a "verify you are human" box while OK is held, and the box gets ticked. The pictures are small web pages in assets/guide.
+- Log in page restyled to match: a yellow Japanese heading, white-outlined fields and pill buttons (Log in is yellow when selected). The explanatory line is hidden.
+- Not built on a device yet: please check text sizes and the pictures on the TV.
+
+## 1.3.125
+- Slide-out menu: Left on a top-level menu row (with no list or drop-down open) now closes the menu, like Right and Back. Inside a list beside the menu, Left steps back to the menu row first.
+- First-run guide: the menu screen now explains the lists that open beside the menu, that Left steps back and closes the menu, and the current section names (Home, Factions, Wrestlers). Its picture shows a list opened beside the menu. English and Japanese.
+
+## 1.3.124
+- Home list: any row name still in Japanese after the known names are applied is now translated to English once (one short translation request per new name, then remembered), so new or unusual rows no longer stay Japanese. The first time a new row appears it may take a few seconds to turn English.
+
+## 1.3.123
+- Language switch menu reopening made sturdier: it keeps trying for a few seconds, covers a page that reloads or rebuilds itself while translating, and stops once the menu is closed.
+
+## 1.3.122
+- Switching language from the slide-out menu: the menu now comes straight back (with the language switch selected) as soon as the reloaded page appears, instead of leaving you on the bare page. The page reloads and translates behind it.
+
+## 1.3.121
+- Home list: championship rows (IWGP Women's, World of Stardom, Wonder of Stardom, High Speed) and decade rows like "2020s" now show English names. The Home flyout is slightly wider so long titles fit.
+
+## 1.3.120
+- The shelf menu is now the only slide-out menu; the Left-key switch to the classic menu is gone.
+- Home list now shows English names (it was showing the Japanese names the home page uses). The app learns both names for each row as the home page loads.
+- Current and Past Wrestlers flyouts are wider so long names like Utami Hayashishita stay on one line.
+
+## 1.3.119
+- Home in the slide-out menu now opens a list instead of going straight to the main page, in both menu styles. The list starts with "Main page", then the categories the main page features.
+- Shelf menu: every section now opens as a flyout. Added Home, Championships, Factions (columns of members per faction), My Videos, Community and the account menu. Current Wrestlers is now plain alphabetical columns with no factions, like Past Wrestlers.
+
+## 1.3.118
+- Trial: shelf menu. In the slide-out menu, Shows, Years, Current Wrestlers and Past Wrestlers now open as a panel to the right of the menu instead of an inline list. Right or OK opens it, arrows move between entries, OK goes there, Left from the first column or Back returns to the menu row. Current Wrestlers is a column per faction; Past Wrestlers is alphabetical columns. Home, Championships, Factions, My Videos and Community stay inline.
+- Press Left on any top-level menu row to switch between the shelf menu and the classic inline menu; a short note at the bottom says which one is showing. The choice is remembered, so the two can be compared side by side before one is picked.
+
+## 1.3.117
+- Slide-out menu: the house icon and logo row at the top is now also a drop-down. OK still opens the main page; Right opens or closes a list under it of the rows the home page itself shows (New, Big Match and so on). The app notes those rows each time the home page loads (no extra request) and keeps the last list, so it follows whatever the site features; until the first visit it shows the five known ones.
+- Shows now means the big shows only: "All tournaments", then the same list as the Show filter. Each opens a search for that show with the Show chip set and the tournament bar on top. Big Match, English Commentary, LIVE & On-demand and the 5★STAR GP special feature live under Home.
+
+## 1.3.116
+- Year pages (2011–2026) now use the match filter bar with the year already set as a chip, instead of the tournament bar.
+- Show and Location drop-downs added to the match filter bar (search results, championship pages, year pages), same lists as the tournament bar. These add the show or venue name to the keyword search, so combined with a wrestler or match type they only find videos whose title or description names that show or venue.
+- Faction pages: once a member is chosen, a filter bar (Sort, Match type, Championship, Competitors, Show, Location, Year) sits above their videos. Picking a filter opens a search for that member with the filter applied and the member as the first chip. Left from the first pill goes back to the member list; Up from the first row of videos goes to the bar.
+
+## 1.3.115
+- The in-page control bar (play, -/+, mute, quality, speed, full screen) is now also built on event (set) pages that have a player, not only on single-video pages. It still only appears when the page has the player.
+
+## 1.3.114
+- The championships added to the side menu now open with the championship as the removable chip and the wrestler pill left on "Wrestler" (any wrestler), instead of treating the championship as the search subject.
+- The four older championship pages (IWGP Women's, World of Stardom, Wonder of Stardom, High Speed) now show the same filter bar as the search pages (Wrestler, Sort, Match type, Championship, Competitors, Year) with their championship chip already set. Changing anything there opens a keyword search for that championship.
+- Removed the Probe (the menu entry and all its code).
+
+## 1.3.113
+- Side menu, Championships: the four site pages stay, and the filter bar's other championships are added under them (Artist, Future, Goddess of Stardom, NEW BLOOD Tag Team, Any championship match, Other title matches). These open a keyword search with the filter bar on top.
+
+## 1.3.112
+- Show list: added All Star Grand Queendom, New Year Dream, Spring Vacation, Supreme Fight, The Conversion and To the World (found with the Big Match probe); Dream Queendom now searches "DREAM QUEENDOM" so it no longer also catches All Star Grand Queendom.
+
+## 1.3.111
+- Probe on a category page (Big Match, English Commentary, LIVE & On-demand, 5★STAR GP special): reads that category's pages one at a time, 1.2 s apart (at most 12), and lists the show names found in quotes in the titles with how many times each appears, so more shows can be added to the Show list. Run it from the menu's Probe entry while on the Big Match page.
+- The Tournament Archives bar (Sort, Location, Show, Year) now also appears on category pages such as Big Match, English Commentary, LIVE & On-demand and the 5★STAR GP feature, replacing the site's sort row there. The four championship pages keep the site's own layout.
+- The Show drop-down is now a three-column shelf, so a long list no longer runs off the bottom of the screen.
+
+## 1.3.110
+- Filter bars (wrestler search pages and Tournament Archives): the drop-down row and the "Showing" chip row now line up with the left edge of the first video thumbnail.
+- 5★STAR GP show now searches "5★STAR".
+- Location names are marked as not to be auto-translated (a prefecture was showing up as "Clean"/"Cleaner" on one TV).
+
+## 1.3.109
+- Tournament Archives bar: the page's sort row is now a Sort drop-down (Newest, Oldest, Most played, Most favorited) like the wrestler filter bar, and the old row is hidden.
+- City and Venue are merged into one Location drop-down shelf: prefectures as gold headings with their venues underneath, in columns. Picking a prefecture searches the prefecture name; picking a venue searches the venue.
+- Show: 5★STAR GP now searches "GP" (the old "STAR GP" matched poorly). Added NEW BLOOD and Queens Dynasty; added Toyohashi and Toyota Gosei venues under Aichi.
+
+## 1.3.108
+- Tournament Archives gets a filter bar: City, Venue, Show and Year. Each is a fixed list (kept in assets/event_filters.json, edit freely: the name you see and the word searched for), so opening one loads nothing; picking one adds the word to the site's keyword search and opens the results (one request), with a "Showing" row of removable chips and "Clear all". Clearing everything returns to the plain archive page.
+- Year on its own searches for the year, which also finds match clips from that year, not only events; picking a city, venue or show with it narrows it to events.
+- Probe: on the Tournament Archives page (or its filtered results) it now runs nine one-off test searches to check how events are titled and what a year search returns.
+
+## 1.3.107
+- The first pill in the filter bar is now the page's main subject: "Wrestler: Syuri". It opens the faction shelf; picking another wrestler switches the whole page to them and keeps any match type, championship, competitor and year already set. "Any wrestler" clears the subject. On a keyword search that is not a known wrestler it reads "Search: ..." and works the same way.
+- The "Showing" row starts with the subject as a highlighted chip (no x on it), followed by the removable filter chips.
+
+## 1.3.106
+- Filter bar: the sort now says "Newest" (the site's own order) instead of "Default", and the Default row is gone. Newest no longer adds any sort setting to the address, so clearing every filter gives the plain search page.
+- A "Showing" row of chips appears under the drop-downs for each filter in use (press OK on a chip to remove it), with "Clear all" at the end. Down from the bar goes to the chips, then the videos; Up from the first row of videos goes back to the chips.
+- Competitors shelf: names no longer wrap onto two lines; factions run alphabetically left to right and wrestlers alphabetically within each faction.
+- Championship list is alphabetical (Any championship match first), and the last row is now "Other title matches".
+
+## 1.3.105
+- Search pages (wrestler pages and keyword searches) get a filter bar in place of the sort row: Sort, Match type, Championship, Competitors and Year. Every list is fixed, so opening one loads nothing; each choice adds words to the search and opens that result page (one request, like any list), and more results load as you scroll as before.
+- Match type: Single match, Tag team, 3-way, 6-person, 8-person, 8-man, Battle royal, Cage match.
+- Championship: any championship match, the individual titles as written in the video titles, and an "Other" row for the older "Title Match" wording.
+- Competitors: a shelf with a column per faction (same list as the Factions pages).
+- Year: 2026 back to 2011. Finds titles that start with the date, so a few older clips without a date in the title are not found.
+- "Clear filters" appears when any filter is set. Up from the first row of videos returns to the bar; Down from the bar goes to the videos. Back closes an open drop-down.
+
+## 1.3.104
+- Probe, round 3: on a search or category page it lists the page's own search form fields and runs nine one-off test searches, 1.2 seconds apart (year, a third word, venue, search inside a category), to see which filters can be done through the web address alone.
+
+## 1.3.103
+- Probe, round 2: on a search page it now only runs the follow-up tests (which list-data address filters by keyword, whether match videos carry a description in the list data, and how the search treats two names, "Cage", "Battle Royal", "Singles" and "Title Match") and shows the results compactly.
+
+## 1.3.102
+- Probe: also reads the site's list data on every page, lists links to sets (events), and on a search page tries three test searches (two names, "Tag Team", "Steel Cage").
+
+## 1.3.101
+- The Probe button is now in every build (including the public test build), not just your own, while the data is being checked.
+
+## 1.3.100
+- A "Probe" button next to the language switch in the side menu. It lists, on screen, everything the current video page or list page and the site's data address say about the videos (tags, categories, descriptions, data fields), paged with Left and Right, to find out what could be filtered on. Back closes it.
+
+## 1.3.99
+- Menu: a little less space around the logo at the top, so the whole list fits above the language switch without scrolling.
+- Menu: Current Wrestlers now lists everyone in the factions list, alphabetically (Japanese names are kept where the app already had them).
+- Home page: the Most Watched and Most Favorited rows are removed (the Community menu entries stay).
+- Recently Watched (menu entry and the row's new View All tile) now opens a video grid page like My Favorites, built from the viewing history already on the My page, with no extra request. The My page link in the account section is unchanged.
+
+## 1.3.98
+- Faction pages: fixed the faction logo showing the Stardom header logo instead (the app's header-logo swap was catching it).
+
+## 1.3.97
+- Faction pages now open with no wrestler selected: the right side shows the faction name and a prompt to choose a wrestler. Videos are requested only when you pick a member. The results of the page the app just opened are kept quietly, so the first member in the list loads instantly if chosen.
+- Faction logos now come from the private branding folder (res/drawable-nodpi/faction_logo_<name>.png) instead of the wrestling site, so nothing is fetched from their site. Builds without those files show text.
+
+## 1.3.96
+- Menu: Factions now sits above Current Wrestlers.
+- Faction pages: faction names no longer break in the middle of a word, the member count is gone, and in builds that show logos the logo is centered at the top of the left side with the faction name below it (laid out the same as in public builds).
+
+## 1.3.95
+- New Factions entry in the side menu, listing STARS, COSMIC ANGELS, God's Eye, NEO GENESIS, HATE, Mi Vida Loca, Itoh Respect Gundan and Unaffiliated. A faction page keeps its members in a list on the left; pressing OK or Right on a member loads that member's videos into a grid on the right, loading more pages as you move down. Left from the grid returns to the member list, and Left from the list opens the main menu.
+- Only one request is made at a time, a second apart, and each member's first page is remembered on the TV for 12 hours so reopening one costs nothing. If the site asks for slower access, loading pauses for ten minutes.
+- The faction names live in app/src/main/assets/factions.json (edit it when members change). Faction logos show only in builds with the private branding folder; other builds show text.
+
+## 1.3.94
+- Full screen: Left and Right now skip 30 seconds per press (60 seconds while held or with the fast-forward / rewind keys), instead of 10 and 30.
+
+## 1.3.93
+- Skip size: the -/+ buttons (in full screen and under the picture) now skip 30 seconds by default. Press Up or Down while one of them is selected to choose 10s, 30s, 1m, 5m, 10m or 30m (a small list shows the choice and both buttons change their label); OK then skips by that amount. Nothing needs to be held down.
+
+## 1.3.92
+- Full screen: the button bar is now the same compact one-row design as the bar under the picture (time, slim progress bar, smaller buttons), so it covers less of the picture.
+- The bar under the picture no longer shows the captions button; captions (EN / 日本語) are only offered in full screen, where they are drawn.
+
+## 1.3.91
+- Video pages: closed the gap between the picture and the control bar, removed the thin grey outlines around the player and the bar, and asked the player to hide its own control bar (controls=0) since the page's bar replaces it. If the player ignores that for live events, its bar will still show.
+
+## 1.3.90
+- Video pages: fixed the new control bar being cut off (it now sits just above the related videos instead of inside the player's clipping box), and focusing the bar (on load, after full screen, or coming up from the row) now scrolls to the top of the page so the title and the top of the picture are never cut off.
+
+## 1.3.89
+- Video pages: a compact control bar under the picture (time, progress, then Pause, -10s, +10s, Mute, CC, quality, speed, Full screen), styled like the full screen bar. Keyboard focus now lives on these buttons instead of inside the player frame: Left/Right stop at the ends (Left before Pause opens the menu), Down goes to the first related video, Up from the first related row comes back to the bar. This fixes getting stuck or lost in the player's own controls. The progress bar is display only; skip with -10s / +10s.
+- The bar and the full screen bar share one button list, one set of labels and one set of actions, so changing a control changes both. After leaving full screen, focus returns to the Full screen button.
+- Captions: the CC button cycles Off / EN / 日本語 as in full screen; the app's own captions are drawn in full screen.
+
+## 1.3.88
+- Video pages: the related-videos rows are now built exactly like the main page rows (same cards, sizes and View All tile) and use the main page's navigation: Right/Left move one video at a time and focus follows the row, Up/Down move between rows and to the player. The site's own carousel stays in the page hidden because play-next reads it. This replaces the 1.3.87 tile.
+- Leaving full screen now re-lays out the player so the picture no longer sits shifted down and right with its edges cut off.
+- Pressing Left at the player's Play button stops there instead of jumping to hidden controls in the top corner of the player.
+
+## 1.3.87
+- Video pages: the related-videos row now ends with a "View All" tile (same look as the main page rows) and the small "View all" text link above the row is hidden. The tile is skipped by auto-play-next.
+- Includes everything in 1.3.86, 1.3.85 and 1.3.84.
+
+## 1.3.86
+- Video pages: the player now sits lower, under a title bar with the video's name (gold marker, large white text). The menu stays on the side tab: press Left on the first related video to open it (Left inside the player still rewinds). The edge tab is shown on video pages again.
+- Up from the player no longer sends focus to the hidden old header (which lost focus); with nothing above the player it now stays put. Down only leaves the player when there is a video to land on.
+- Up from the first row of related videos now goes straight to the player.
+- Includes everything in 1.3.85 and 1.3.84.
+
+## 1.3.85
+- Intro screens: a new "The menu" screen after "Moving around" explains how to open the menu (Left on the first video of a row or list), how to close it (Right or Back) and what is inside, with a small drawing. The language screen now points to the menu's language switch instead of the old header button. (New installs only; no "what's new" logic for people who already saw the intro.)
+- Includes everything in 1.3.84 (the left slide-out menu).
+
+## 1.3.84
+- New left slide-out menu replaces the site's top header on every page. Press Left on the first card of any row or list to open it, Right (or Back) to close it. It holds: search, Home with the logo, Shows, Championships, Years (current year back to 2011), Wrestlers (opens the search box), My Videos (Recently Watched, My Favorites; signed in only), Community (Most Watched, Most Favorited), then your account (or Log in) and the EN / 日本語 switch at the bottom. Groups open one at a time.
+- A slim arrow tab on the left edge shows the menu is there, and "Press Left for the menu" appears on the first three launches of the home page (it stops once the menu has been opened).
+- Left on the home banner opens the menu (Right still changes slides). Long titles in the menu wrap at spaces, never inside a word.
+- The account is now a drop-down in the list like the others (My page, Log out, ...), the language switch is a full-width pill at the very bottom (reached with Down), and Wrestlers is split into Current Wrestlers and Past Wrestlers, each name opening a search for that wrestler.
+- Menu search: OK on the search box now opens the on-screen keyboard, and a blue microphone at the right end of the box starts voice search (press Right from the box to reach it).
+- Menu: more room around the logo, slightly larger text, and the list sits centred in the space so it spreads evenly if items are added.
+- Every destination page (shows, championships, years, wrestlers, My Videos, Community, search results) now starts with a title in the home-row style: gold bar and large white text, lined up with the first video card.
+- Menu in Japanese mode: Shows, Championships, My Videos, Community and wrestler names now show in Japanese (the site's own category names), and the page titles follow. The 2020 entry in Years now opens the site's correct page.
+- The blue microphone beside the menu's search box stays as an icon only: it is not selectable and does nothing (the keyboard's own microphone key does the job).
+- Account name and links in the menu now get translated (they come from the hidden header, which the translator skips) and the English is remembered so the next opening shows it at once.
+- Menu search: uses the site's own search box (and the page's tidy-up that hides stray search boxes now leaves the menu alone) (the one the old header had, which opens the keyboard properly), moved into the menu while it is open; the blue microphone beside it starts voice search. The logo sits evenly between the search box and the first item. "New" is the first entry in Shows (it opens whatever the home page's New row sends its View All tile to).
+- Sort bar on listing pages (Registration date / Number of plays / Number of favorites / Price): larger text, centred, evenly spaced, with one arrow after each label that no longer overlaps the text.
+- The home page content now starts higher, since the header is gone.
+
 ## 1.3.83
 - Home page: a new "Most Favorited" row (the site's most-favorited videos, first 12, then a "View All" tile for the full list sorted by favorites) is added as the last of the new rows.
 - The "Favorites" row is now titled "My Favorites" (English).
