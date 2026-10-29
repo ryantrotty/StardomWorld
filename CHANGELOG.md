@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.126
+- First-run guide redesigned in a bold poster style: black background, a Japanese headline with a short English line, one yellow caption, and a TV and remote drawn in a yellow frame (a wrestling match on the TV where it fits). Order is unchanged: language screen first, then seven guide screens.
+- Buttons are pills in the existing order, Skip to log in, Back, Next, with Next selected by default (yellow). The welcome screen has Skip to log in and Next; the last screen has Back and Log in. The splash logo stays where it is on the language and welcome screens.
+- The pointer screen is now an animated demonstration: the app's own wand pointer moves to a "verify you are human" box while OK is held, and the box gets ticked. The pictures are small web pages in assets/guide.
+- Log in page restyled to match: a yellow Japanese heading, white-outlined fields and pill buttons (Log in is yellow when selected). The explanatory line is hidden.
+- Not built on a device yet: please check text sizes and the pictures on the TV.
+
 ## 1.3.125
 - Slide-out menu: Left on a top-level menu row (with no list or drop-down open) now closes the menu, like Right and Back. Inside a list beside the menu, Left steps back to the menu row first.
 - First-run guide: the menu screen now explains the lists that open beside the menu, that Left steps back and closes the menu, and the current section names (Home, Factions, Wrestlers). Its picture shows a list opened beside the menu. English and Japanese.

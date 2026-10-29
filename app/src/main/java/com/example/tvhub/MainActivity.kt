@@ -716,7 +716,7 @@ class MainActivity : Activity() {
               if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(false);
               return;
             }
-            var gold = '#FFB347';
+            var gold = '#F7D117';
             function f(n) { return (n * U).toFixed(1) + 'px'; }
             if (!document.getElementById('tv-login-style')) {
               var st = document.createElement('style');
@@ -727,15 +727,16 @@ class MainActivity : Activity() {
                 'body{padding-top:' + TOP.toFixed(1) + 'px !important;}' +
                 'form{width:' + f(620) + ' !important;max-width:100% !important;margin:0 auto !important;}' +
                 'label{color:' + gold + ' !important;font-size:' + f(16) + ' !important;font-weight:bold !important;}' +
-                'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(2) + ' solid rgba(255,179,71,.4) !important;border-radius:' + f(12) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
-                'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2210 !important;border:' + f(5) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
-                'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:rgba(0,0,0,.2) !important;color:#fff !important;border:' + f(2) + ' solid ' + gold + ' !important;border-radius:' + f(12) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
-                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#1a1a1a !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
+                'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(16) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
+                'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2410 !important;border:' + f(6) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
+                'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:transparent !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(60) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
                 'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
                 'p,li,span,div{font-size:' + f(18) + ';}' +
                 '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]{color:#FF7A66 !important;font-size:' + f(20) + ' !important;text-align:center !important;}' +
-                '.tv-login-title{color:' + gold + ';font-size:' + f(34) + ';font-weight:bold;text-align:center;margin:0 0 ' + f(8) + ' 0;}' +
-                '.tv-login-hint{color:#fff;font-size:' + f(22) + ';text-align:center;margin:0 0 ' + f(10) + ' 0;}';
+                '.tv-login-jp{color:' + gold + ';font-size:' + f(54) + ';font-weight:900;text-align:center;margin:0;line-height:1.05;}' +
+                '.tv-login-title{color:#fff;font-size:' + f(26) + ';font-weight:900;text-align:center;margin:' + f(4) + ' 0 ' + f(8) + ' 0;}' +
+                '.tv-login-hint{display:none !important;}';
               document.head.appendChild(st);
             }
 
@@ -788,6 +789,10 @@ class MainActivity : Activity() {
                 var hint = document.createElement('div');
                 hint.className = 'tv-login-hint';
                 hint.textContent = JA ? 'Stardom World のアカウントでログインするか、ログインせずに続けられます。' : 'Use your Stardom World account, or carry on without one.';
+                var jpt = document.createElement('div');
+                jpt.className = 'tv-login-jp';
+                jpt.textContent = 'ログイン。';
+                f0.parentNode.insertBefore(jpt, f0);
                 f0.parentNode.insertBefore(ttl, f0);
                 f0.parentNode.insertBefore(hint, f0);
               }
@@ -2078,7 +2083,6 @@ class MainActivity : Activity() {
         val v = OnboardingView(
             this,
             density,
-            BitmapFactory.decodeResource(resources, R.drawable.cursor_wand),
             { startWebLogin() },
             { exitGuideToSite() },
             { lang ->
@@ -8292,267 +8296,281 @@ private var appJa = false
 private val isJa: Boolean get() = appJa
 private fun tr(en: String, ja: String): String = if (isJa) ja else en
 
-// Unauthenticated experience: a few full-screen slides explaining the remote. The first slide keeps
-// the splash logo exactly where the splash drew it, so the two flow into each other. The last
-// button opens the site's own login page (restyled to match).
+// Unauthenticated experience: a language screen, then seven full-screen guide screens drawn in a
+// bold poster style (white and yellow on black, a TV and a remote in a yellow frame). The picture on
+// the right of each screen is a small web page in assets/guide (drawings and, on the pointer screen,
+// an animation); everything else is native. The first screens keep the splash logo exactly where the
+// splash drew it, so the two flow into each other. The last button opens the site's own login page.
 private class OnboardingView(
     context: android.content.Context,
     private val density: Float,
-    private val wand: Bitmap,
     private val onLogin: () -> Unit,
     private val onBrowse: () -> Unit,
     private val onLanguage: (String) -> Unit
 ) : FrameLayout(context) {
 
-    private class Slide(val title: String, val body: String, val art: Int)
+    private class Slide(val jp: String, val en: String, val capJp: String, val capEn: String)
 
-    private fun buildSlides() = if (isJa) listOf(
-        Slide(
-            "テレビで Stardom World へようこそ",
-            "リモコンでの操作方法をかんたんにご紹介します。",
-            0
-        ),
-        Slide(
-            "移動のしかた",
-            "矢印ボタンで動画やメニューを移動します。OKで選択した項目を開き、戻るボタンで前のページに戻ります。",
-            1
-        ),
-        Slide(
-            "メニュー",
-            "各列や一覧の一番左の動画で左ボタンを押すとメニューが開きます。番組や選手などの項目で右ボタンを押すとメニューの横に一覧が開き、左ボタンで戻ります。もう一度左ボタン(または戻るボタン)でメニューが閉じます。検索、ホーム、番組、王座、年別、ユニット、選手、マイビデオ、みんなの動画、アカウント、言語の切り替えがあります。",
-            6
-        ),
-        Slide(
-            "お気に入りに追加",
-            "動画を選択して、リモコンのオプション(メニュー)ボタンを押すと、お気に入りに追加・削除できます。ログインが必要です。",
-            2
-        ),
-        Slide(
-            "カーソルモード",
-            "OKを約0.5秒長押しするとポインターが表示されます。「人間であることを確認」のチェックなどに使えます。もう一度長押しすると解除されます。",
-            3
-        ),
-        Slide(
-            "動画と全画面表示",
-            "動画は全画面で開き、次の動画が自動で再生されます。下ボタンでコントロールバー、左右ボタンでスキップ、戻るボタンで全画面を終了します。",
-            4
-        ),
-        Slide(
-            "日本語と英語",
-            "メニューを開き、一番下の EN / 日本語 の切り替えでいつでも言語を変えられます。",
-            5
-        )
-    ) else listOf(
-        Slide(
-            "Welcome to Stardom World on TV",
-            "A quick tour of getting around with your remote.",
-            0
-        ),
-        Slide(
-            "Moving around",
-            "Use the arrow buttons to move between videos and menus. OK opens what is highlighted, and Back returns to the previous page.",
-            1
-        ),
-        Slide(
-            "The menu",
-            "Press Left on the first video in any row or list to open the menu. Press Right on a section such as Shows or Wrestlers to open its list beside the menu, and Left to step back. Press Left again (or Back) to close the menu. Inside: Search, Home, Shows, Championships, Years, Factions, Wrestlers, My Videos, Community, your Account and the language switch.",
-            6
-        ),
-        Slide(
-            "Add to favorites",
-            "Highlight a video and press the Options (menu) button on your remote to add it to, or remove it from, your favorites. You need to be signed in.",
-            2
-        ),
-        Slide(
-            "Cursor mode",
-            "Hold OK for about half a second to turn on a pointer, for things like the \"Verify you are human\" box. Hold OK again to turn it off.",
-            3
-        ),
-        Slide(
-            "Videos and full screen",
-            "Videos open in full screen and the next one plays by itself. Press Down for the controls bar, Left and Right to skip, and Back to leave full screen.",
-            4
-        ),
-        Slide(
-            "English or Japanese",
-            "Open the menu and use the EN / 日本語 switch at the bottom to change language at any time.",
-            5
-        )
+    private val slides = listOf(
+        Slide("ようこそ。", "Welcome to Stardom World on TV", "リモコンの使い方をご紹介", "A quick tour of your remote."),
+        Slide("えらぼう。", "Move around", "矢印で移動 ・ OKで決定 ・ 戻るで前へ", "Arrows move. OK opens. Back returns."),
+        Slide("左を押そう。", "Press Left for the menu", "右でリストを開く ・ 左で戻る", "Right opens a list. Left steps back."),
+        Slide("お気に入り。", "Save a favorite", "動画で「オプション」ボタンを押す", "Press Options on a video. Sign-in needed."),
+        Slide("長押し。", "Hold OK for a pointer", "もう一度長押しで解除", "Hold again to turn it off."),
+        Slide("全画面。", "Full screen", "下でバー ・ 左右でスキップ", "Down: controls. Left/Right: skip. Back: exit."),
+        Slide("言語。", "English or 日本語", "メニュー下部のスイッチ", "Use the switch at the bottom of the menu.")
     )
 
-    private var slides = buildSlides()
-
-    private val gold = 0xFFFFB347.toInt()
+    private val yellow = 0xFFF7D117.toInt()
+    private val ink = 0xFF111111.toInt()
     private var index = 0
 
     // The first screen asks which language to use; the device language is pre-selected.
     private var langStep = true
 
-    private fun p(v: Int): Int = (v * density).toInt()
+    private val screenW = context.resources.displayMetrics.widthPixels
+    private val screenH = context.resources.displayMetrics.heightPixels
+    // One unit is a pixel of the 1280 x 720 design.
+    private val u = screenW / 1280f
 
-    private val art = ArtView(context)
-    private val titleView = android.widget.TextView(context)
-    private val bodyView = android.widget.TextView(context)
-    private val counter = android.widget.TextView(context)
+    private val logoView = android.widget.ImageView(context)
+    private val jpView = android.widget.TextView(context)
+    private val enView = android.widget.TextView(context)
+    private val pill = android.widget.LinearLayout(context)
+    private val capJp = android.widget.TextView(context)
+    private val capEn = android.widget.TextView(context)
+    private val btnRow = android.widget.LinearLayout(context)
     private val skipBtn = android.widget.TextView(context)
     private val backBtn = android.widget.TextView(context)
     private val nextBtn = android.widget.TextView(context)
     private var focused: android.widget.TextView = if (isJa) nextBtn else skipBtn
-
-    // The splash logo, at the splash's own size and position.
-    private val logoView = android.widget.ImageView(context)
-    private val screenW = context.resources.displayMetrics.widthPixels
-    private val screenH = context.resources.displayMetrics.heightPixels
+    private val dots = DotsView(context)
+    private val artWeb = android.webkit.WebView(context)
     private val logoH: Int
+
+    private inner class BackdropView(c: android.content.Context) : View(c) {
+        private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x21F7D117 }
+        override fun onDraw(canvas: Canvas) {
+            val step = 16f * u
+            var y = step / 2
+            while (y < height) {
+                var x = step / 2
+                while (x < width) {
+                    canvas.drawCircle(x, y, 2f * u, dot)
+                    x += step
+                }
+                y += step
+            }
+        }
+    }
+
+    private inner class DotsView(c: android.content.Context) : View(c) {
+        private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = yellow; strokeWidth = 3f * u }
+        private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = yellow }
+        override fun onDraw(canvas: Canvas) {
+            for (k in slides.indices) {
+                val cx = (8f + k * 26f) * u
+                val cy = height / 2f
+                if (k == index) canvas.drawCircle(cx, cy, 8f * u, fill) else canvas.drawCircle(cx, cy, 6.5f * u, ring)
+            }
+        }
+    }
+
+    private fun px(v: Float): Int = (v * u).toInt()
+
+    private fun place(v: View, x: Float, y: Float, w: Int, h: Int) {
+        val lp = FrameLayout.LayoutParams(w, h)
+        lp.leftMargin = px(x)
+        lp.topMargin = px(y)
+        v.layoutParams = lp
+    }
+
+    private fun fit(tv: android.widget.TextView, text: String, base: Float, maxW: Float) {
+        tv.text = text
+        var size = base * u
+        tv.paint.textSize = size
+        while (tv.paint.measureText(text) > maxW * u && size > 12f * u) {
+            size -= 2f * u
+            tv.paint.textSize = size
+        }
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size)
+    }
 
     init {
         setBackgroundColor(Color.BLACK)
         isClickable = true
+        addView(BackdropView(context), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
 
         logoView.setImageResource(R.drawable.splash_logo)
         logoView.adjustViewBounds = true
         val ld = logoView.drawable
         val logoW = (screenW * 0.6f).toInt()
-        logoH = if (ld != null && ld.intrinsicWidth > 0) {
-            logoW * ld.intrinsicHeight / ld.intrinsicWidth
-        } else {
-            (logoW * 0.25f).toInt()
+        logoH = if (ld != null && ld.intrinsicWidth > 0) logoW * ld.intrinsicHeight / ld.intrinsicWidth else (logoW * 0.25f).toInt()
+        addView(logoView, FrameLayout.LayoutParams(logoW, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+
+        artWeb.setBackgroundColor(Color.TRANSPARENT)
+        artWeb.isFocusable = false
+        artWeb.isFocusableInTouchMode = false
+        artWeb.isClickable = false
+        artWeb.isVerticalScrollBarEnabled = false
+        artWeb.isHorizontalScrollBarEnabled = false
+        artWeb.overScrollMode = View.OVER_SCROLL_NEVER
+        addView(artWeb)
+
+        for (t in listOf(jpView, enView, capJp, capEn)) {
+            t.setTypeface(t.typeface, android.graphics.Typeface.BOLD)
+            t.setSingleLine(false)
+            t.includeFontPadding = false
         }
-        addView(
-            logoView,
-            FrameLayout.LayoutParams(logoW, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER)
-        )
+        jpView.setSingleLine(true)
+        capJp.setTextColor(ink)
+        capEn.setTextColor(ink)
+        addView(jpView)
+        addView(enView)
 
-        val col = android.widget.LinearLayout(context)
-        col.orientation = android.widget.LinearLayout.VERTICAL
-        col.gravity = Gravity.CENTER_HORIZONTAL
-        col.setPadding(p(72), p(32), p(72), p(30))
+        pill.orientation = android.widget.LinearLayout.VERTICAL
+        pill.setPadding(px(26f), px(16f), px(26f), px(18f))
+        val pd = android.graphics.drawable.GradientDrawable()
+        pd.setColor(yellow)
+        pd.setStroke(px(5f), Color.WHITE)
+        pd.cornerRadius = 36f * u
+        pill.background = pd
+        pill.addView(capJp, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT))
+        pill.addView(capEn, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = px(6f) })
+        addView(pill)
 
-        col.addView(
-            art,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.25f
-            )
-        )
-
-        titleView.setTextColor(gold)
-        titleView.textSize = 34f
-        titleView.setTypeface(titleView.typeface, android.graphics.Typeface.BOLD)
-        titleView.gravity = Gravity.CENTER
-        col.addView(
-            titleView,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        bodyView.setTextColor(Color.WHITE)
-        bodyView.textSize = 22f
-        bodyView.gravity = Gravity.CENTER
-        bodyView.setLineSpacing(0f, 1.15f)
-        col.addView(
-            bodyView,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = p(10); bottomMargin = p(8) }
-        )
-
-        counter.setTextColor(0x99FFFFFF.toInt())
-        counter.textSize = 16f
-        counter.gravity = Gravity.CENTER
-        col.addView(
-            counter,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = p(10) }
-        )
-
-        val row = android.widget.LinearLayout(context)
-        row.orientation = android.widget.LinearLayout.HORIZONTAL
-        row.gravity = Gravity.CENTER
+        btnRow.orientation = android.widget.LinearLayout.HORIZONTAL
+        btnRow.gravity = Gravity.CENTER_VERTICAL
+        btnRow.setPadding(px(6f), px(6f), px(6f), px(6f))
         for (b in listOf(skipBtn, backBtn, nextBtn)) {
-            b.textSize = 20f
             b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
             b.gravity = Gravity.CENTER
-            b.setPadding(p(30), p(12), p(30), p(12))
-            row.addView(
-                b,
-                android.widget.LinearLayout.LayoutParams(
-                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
-                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { leftMargin = p(10); rightMargin = p(10) }
-            )
-        }
-        col.addView(
-            row,
-            android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            b.setSingleLine(true)
+            b.includeFontPadding = false
+            b.setPadding(px(24f), px(10f), px(24f), px(10f))
+            btnRow.addView(b, android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+            ).apply { leftMargin = px(6f); rightMargin = px(6f) })
+        }
+        addView(btnRow)
+        addView(dots)
         render()
     }
 
-    private fun visibleButtons(): List<android.widget.TextView> =
-        if (!langStep && index > 0) listOf(skipBtn, backBtn, nextBtn) else listOf(skipBtn, nextBtn)
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        try {
+            removeView(artWeb)
+            artWeb.destroy()
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun visibleButtons(): List<android.widget.TextView> = when {
+        langStep || index == 0 -> listOf(skipBtn, nextBtn)
+        index == slides.size - 1 -> listOf(backBtn, nextBtn)
+        else -> listOf(skipBtn, backBtn, nextBtn)
+    }
 
     private fun paintButton(b: android.widget.TextView, isFocused: Boolean) {
         val d = android.graphics.drawable.GradientDrawable()
-        d.cornerRadius = 12 * density
+        d.cornerRadius = 100f * u
         if (isFocused) {
-            d.setColor(gold)
-            d.setStroke((4 * density).toInt(), Color.WHITE)
-            b.setTextColor(0xFF1A1A1A.toInt())
+            d.setColor(yellow)
+            d.setStroke(px(4f), Color.WHITE)
+            b.setTextColor(ink)
         } else {
-            d.setColor(0x33000000)
-            d.setStroke((2 * density).toInt(), gold)
+            d.setColor(Color.TRANSPARENT)
+            d.setStroke(px(4f), Color.WHITE)
             b.setTextColor(Color.WHITE)
         }
         b.background = d
     }
 
     private fun render() {
+        val wide = langStep || index == 0
+        val s = slides[index]
+        // buttons
         if (langStep) {
-            titleView.text = "Language  /  言語"
-            bodyView.text = "Choose your language  ·  言語を選択してください"
-            counter.text = ""
             skipBtn.text = "English"
             nextBtn.text = "日本語"
-            backBtn.visibility = View.GONE
         } else {
-            val s = slides[index]
-            titleView.text = s.title
-            bodyView.text = s.body
-            counter.text = (index + 1).toString() + " / " + slides.size
             skipBtn.text = tr("Skip to log in", "スキップしてログイン")
             backBtn.text = tr("Back", "戻る")
-            backBtn.visibility = if (index > 0) View.VISIBLE else View.GONE
             nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
         }
-        if (!visibleButtons().contains(focused)) focused = nextBtn
+        val bs = (if (isJa && !langStep) 19f else 21f) * u
+        for (b in listOf(skipBtn, backBtn, nextBtn)) b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, bs)
+        val vis = visibleButtons()
+        for (b in listOf(skipBtn, backBtn, nextBtn)) b.visibility = if (vis.contains(b)) View.VISIBLE else View.GONE
+        if (!vis.contains(focused)) focused = nextBtn
         for (b in listOf(skipBtn, backBtn, nextBtn)) paintButton(b, b === focused)
 
-        val lp = art.layoutParams as android.widget.LinearLayout.LayoutParams
-        if (langStep || index == 0) {
-            // Leave exactly the splash logo's space (it is centred on the screen) above the title.
+        val wrap = FrameLayout.LayoutParams.WRAP_CONTENT
+        if (wide) {
             logoView.visibility = View.VISIBLE
-            counter.visibility = View.GONE
-            lp.weight = 0f
-            lp.height = ((screenH + logoH) / 2f + 10 * density - 32 * density).toInt().coerceAtLeast(0)
+            artWeb.visibility = View.GONE
+            val logoTop = (screenH - logoH) / 2f
+            val jpText = if (langStep) "言語。" else s.jp
+            jpView.setTextColor(yellow)
+            jpView.gravity = Gravity.CENTER
+            fit(jpView, jpText, 100f, 1100f)
+            place(jpView, 0f, 0f, screenW, wrap)
+            (jpView.layoutParams as FrameLayout.LayoutParams).topMargin = (logoTop - 190f * u).toInt().coerceAtLeast(px(8f))
+            enView.setTextColor(Color.WHITE)
+            enView.gravity = Gravity.CENTER
+            fit(enView, if (langStep) "Language" else s.en, 36f, 1100f)
+            place(enView, 0f, 0f, screenW, wrap)
+            val enTop = (logoTop + logoH + 10f * u).toInt()
+            (enView.layoutParams as FrameLayout.LayoutParams).topMargin = enTop
+            fit(capJp, if (langStep) "言語を選択してください" else s.capJp, 24f, 700f)
+            fit(capEn, if (langStep) "Choose your language" else s.capEn, 20f, 700f)
+            capJp.gravity = Gravity.CENTER
+            capEn.gravity = Gravity.CENTER
+            place(pill, 260f, 0f, px(760f), wrap)
+            (pill.layoutParams as FrameLayout.LayoutParams).topMargin = enTop + px(52f)
+            if (langStep) {
+                dots.visibility = View.GONE
+                place(btnRow, 0f, 0f, screenW, wrap)
+                (btnRow.layoutParams as FrameLayout.LayoutParams).apply { topMargin = 0; gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL; bottomMargin = px(28f) }
+                btnRow.gravity = Gravity.CENTER
+            } else {
+                dots.visibility = View.VISIBLE
+                place(dots, 90f, 0f, px(7 * 26f), px(24f))
+                (dots.layoutParams as FrameLayout.LayoutParams).apply { gravity = Gravity.BOTTOM; bottomMargin = px(44f) }
+                place(btnRow, 0f, 0f, wrap, wrap)
+                (btnRow.layoutParams as FrameLayout.LayoutParams).apply { topMargin = 0; leftMargin = 0; rightMargin = px(84f); gravity = Gravity.BOTTOM or Gravity.END; bottomMargin = px(30f) }
+                btnRow.gravity = Gravity.CENTER_VERTICAL
+            }
         } else {
             logoView.visibility = View.GONE
-            counter.visibility = View.VISIBLE
-            lp.weight = 1.25f
-            lp.height = 0
+            jpView.setTextColor(Color.WHITE)
+            jpView.gravity = Gravity.START
+            fit(jpView, s.jp, 74f, 470f)
+            place(jpView, 60f, 56f, px(470f), wrap)
+            enView.setTextColor(yellow)
+            enView.gravity = Gravity.START
+            fit(enView, s.en, 30f, 470f)
+            place(enView, 60f, 146f, px(470f), wrap)
+            capJp.gravity = Gravity.START
+            capEn.gravity = Gravity.START
+            fit(capJp, s.capJp, 25f, 396f)
+            fit(capEn, s.capEn, 21f, 396f)
+            place(pill, 60f, 350f, px(450f), wrap)
+            place(btnRow, 56f, 556f, wrap, wrap)
+            btnRow.gravity = Gravity.CENTER_VERTICAL
+            dots.visibility = View.VISIBLE
+            place(dots, 66f, 648f, px(7 * 26f), px(24f))
+            place(artWeb, 550f, 50f, px(700f), px(620f))
+            artWeb.visibility = View.VISIBLE
+            val url = "file:///android_asset/guide/art_" + index + ".html"
+            if (artWeb.tag != url) {
+                artWeb.tag = url
+                artWeb.loadUrl(url)
+            }
         }
-        art.layoutParams = lp
-        art.type = if (langStep) 0 else slides[index].art
-        art.invalidate()
+        dots.invalidate()
     }
 
     private fun moveFocus(step: Int) {
@@ -8565,7 +8583,6 @@ private class OnboardingView(
     private fun activate() {
         if (langStep) {
             onLanguage(if (focused === skipBtn) "en" else "ja")
-            slides = buildSlides()
             langStep = false
             index = 0
             focused = nextBtn
@@ -8592,148 +8609,5 @@ private class OnboardingView(
             }
         }
         return true
-    }
-
-    // Simple line drawings, one per slide.
-    private inner class ArtView(c: android.content.Context) : View(c) {
-        var type = 0
-        private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            color = gold
-            strokeWidth = 3f * density
-        }
-        private val fillGold = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
-        private val fillWhite = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
-        private val fillDim = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x22FFFFFF }
-        private val fillShade = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x66000000 }
-        private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textAlign = Paint.Align.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        }
-        private val tmp = RectF()
-        private val path = Path()
-
-        private fun triangle(canvas: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, paint: Paint) {
-            path.reset()
-            path.moveTo(x1, y1)
-            path.lineTo(x2, y2)
-            path.lineTo(x3, y3)
-            path.close()
-            canvas.drawPath(path, paint)
-        }
-
-        private fun heart(canvas: Canvas, cx: Float, cy: Float, r: Float, paint: Paint) {
-            canvas.drawCircle(cx - r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
-            canvas.drawCircle(cx + r * 0.5f, cy - r * 0.3f, r * 0.55f, paint)
-            triangle(canvas, cx - r * 1.02f, cy - r * 0.05f, cx + r * 1.02f, cy - r * 0.05f, cx, cy + r * 1.1f, paint)
-        }
-
-        override fun onDraw(canvas: Canvas) {
-            val u = minOf(width, height) / 100f
-            val cx = width / 2f
-            val cy = height / 2f
-            when (type) {
-                0 -> {}
-                1 -> {
-                    canvas.drawCircle(cx, cy, 44f * u, fillDim)
-                    canvas.drawCircle(cx, cy, 44f * u, line)
-                    triangle(canvas, cx, cy - 36f * u, cx - 9f * u, cy - 24f * u, cx + 9f * u, cy - 24f * u, fillWhite)
-                    triangle(canvas, cx, cy + 36f * u, cx - 9f * u, cy + 24f * u, cx + 9f * u, cy + 24f * u, fillWhite)
-                    triangle(canvas, cx - 36f * u, cy, cx - 24f * u, cy - 9f * u, cx - 24f * u, cy + 9f * u, fillWhite)
-                    triangle(canvas, cx + 36f * u, cy, cx + 24f * u, cy - 9f * u, cx + 24f * u, cy + 9f * u, fillWhite)
-                    canvas.drawCircle(cx, cy, 15f * u, fillGold)
-                    text.color = 0xFF1A1A1A.toInt()
-                    text.textSize = 11f * u
-                    canvas.drawText("OK", cx, cy + 4f * u, text)
-                }
-                2 -> {
-                    // A video card with a heart, and the remote's Options button pointing at it.
-                    tmp.set(cx - 82f * u, cy - 30f * u, cx + 8f * u, cy + 30f * u)
-                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 6f * u, 6f * u, line)
-                    heart(canvas, cx - 8f * u, cy - 14f * u, 9f * u, fillGold)
-                    tmp.set(cx - 74f * u, cy + 8f * u, cx, cy + 14f * u)
-                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillWhite)
-                    tmp.set(cx - 74f * u, cy + 19f * u, cx - 30f * u, cy + 24f * u)
-                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillDim)
-                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, fillDim)
-                    canvas.drawCircle(cx + 58f * u, cy, 20f * u, line)
-                    for (k in -1..1) {
-                        canvas.drawLine(cx + 49f * u, cy + k * 6f * u, cx + 67f * u, cy + k * 6f * u, line)
-                    }
-                    canvas.drawLine(cx + 34f * u, cy, cx + 14f * u, cy - 8f * u, line)
-                }
-                3 -> {
-                    tmp.set(cx - 84f * u, cy - 14f * u, cx - 56f * u, cy + 14f * u)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
-                    text.color = Color.WHITE
-                    text.textSize = 9f * u
-                    text.textAlign = Paint.Align.LEFT
-                    canvas.drawText("Verify you are human", cx - 48f * u, cy + 4f * u, text)
-                    text.textAlign = Paint.Align.CENTER
-                    val ws = 30f * u
-                    val ratio = wand.height.toFloat() / wand.width.toFloat()
-                    tmp.set(cx - 70f * u, cy - 2f * u, cx - 70f * u + ws, cy - 2f * u + ws * ratio)
-                    canvas.drawBitmap(wand, null, tmp, null)
-                    canvas.drawCircle(cx + 62f * u, cy, 22f * u, fillDim)
-                    tmp.set(cx + 62f * u - 22f * u, cy - 22f * u, cx + 62f * u + 22f * u, cy + 22f * u)
-                    canvas.drawArc(tmp, -90f, 270f, false, line)
-                    text.color = Color.WHITE
-                    text.textSize = 10f * u
-                    canvas.drawText("hold OK", cx + 62f * u, cy + 4f * u, text)
-                }
-                4 -> {
-                    tmp.set(cx - 70f * u, cy - 42f * u, cx + 70f * u, cy + 22f * u)
-                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 4f * u, 4f * u, line)
-                    tmp.set(cx - 62f * u, cy + 8f * u, cx + 62f * u, cy + 16f * u)
-                    canvas.drawRoundRect(tmp, 3f * u, 3f * u, fillShade)
-                    for (k in 0..4) {
-                        tmp.set(cx - 58f * u + k * 24f * u, cy + 10f * u, cx - 44f * u + k * 24f * u, cy + 14f * u)
-                        canvas.drawRoundRect(tmp, 2f * u, 2f * u, if (k == 1) fillGold else fillWhite)
-                    }
-                    triangle(canvas, cx, cy + 46f * u, cx - 9f * u, cy + 34f * u, cx + 9f * u, cy + 34f * u, fillGold)
-                    triangle(canvas, cx - 18f * u, cy - 14f * u, cx - 18f * u, cy - 2f * u, cx - 7f * u, cy - 8f * u, fillWhite)
-                }
-                6 -> {
-                    // The menu on the left with a list opened beside it, and the remote's Left button.
-                    tmp.set(cx - 92f * u, cy - 44f * u, cx - 52f * u, cy + 44f * u)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
-                    for (k in 0..5) {
-                        val top = cy - 36f * u + k * 13f * u
-                        tmp.set(cx - 87f * u, top, cx - 87f * u + (if (k % 2 == 0) 26f else 20f) * u, top + 5f * u)
-                        canvas.drawRoundRect(tmp, 2.5f * u, 2.5f * u, if (k == 1) fillGold else fillWhite)
-                    }
-                    tmp.set(cx - 48f * u, cy - 30f * u, cx + 8f * u, cy + 18f * u)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 5f * u, 5f * u, line)
-                    for (k in 0..3) {
-                        val top = cy - 22f * u + k * 10f * u
-                        tmp.set(cx - 42f * u, top, cx - 42f * u + (if (k % 2 == 0) 32f else 24f) * u, top + 4f * u)
-                        canvas.drawRoundRect(tmp, 2f * u, 2f * u, if (k == 0) fillGold else fillWhite)
-                    }
-                    canvas.drawCircle(cx + 62f * u, cy, 24f * u, fillDim)
-                    canvas.drawCircle(cx + 62f * u, cy, 24f * u, line)
-                    triangle(canvas, cx + 44f * u, cy, cx + 54f * u, cy - 8f * u, cx + 54f * u, cy + 8f * u, fillGold)
-                    triangle(canvas, cx + 80f * u, cy, cx + 70f * u, cy - 8f * u, cx + 70f * u, cy + 8f * u, fillWhite)
-                    canvas.drawLine(cx + 36f * u, cy, cx + 14f * u, cy, line)
-                    triangle(canvas, cx + 10f * u, cy, cx + 18f * u, cy - 5f * u, cx + 18f * u, cy + 5f * u, fillGold)
-                }
-                else -> {
-                    tmp.set(cx - 34f * u, cy - 14f * u, cx + 34f * u, cy + 14f * u)
-                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, fillDim)
-                    canvas.drawRoundRect(tmp, 14f * u, 14f * u, line)
-                    tmp.set(cx - 32f * u, cy - 12f * u, cx, cy + 12f * u)
-                    canvas.drawRoundRect(tmp, 12f * u, 12f * u, fillGold)
-                    text.textSize = 13f * u
-                    text.color = 0xFF1A1A1A.toInt()
-                    canvas.drawText("EN", cx - 16f * u, cy + 5f * u, text)
-                    text.color = Color.WHITE
-                    canvas.drawText("JA", cx + 17f * u, cy + 5f * u, text)
-                }
-            }
-        }
     }
 }
