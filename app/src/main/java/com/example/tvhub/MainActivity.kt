@@ -3040,8 +3040,8 @@ class MainActivity : Activity() {
           // A video that never started in full screen: load the player again (once per page).
           window.__tvReloadPlayer = function() {
             var f = playerFrame();
-            if (!f || window.__tvReloaded) return false;
-            window.__tvReloaded = true;
+            if (!f || (window.__tvReloaded || 0) >= 2) return false;
+            window.__tvReloaded = (window.__tvReloaded || 0) + 1;
             try {
               var src = f.src;
               f.src = 'about:blank';
@@ -3051,9 +3051,9 @@ class MainActivity : Activity() {
             return true;
           };
 
-          // Start the video ourselves right away (the page's own autoplay is not reliable on the TV): ask for Play
-          // at 1.5 s and again at 4 s while it is still at 0:00, load the player again at 14 s (once), and ask once
-          // more at 30 s. Once it has played, pausing and seeking are left alone.
+          // Get the video going quickly. On the TV the first load often sits on the spinner and only a fresh load of the
+          // player starts it, so: Play at 1.5 s, load the player again at 5 s if still at 0:00, Play at 9 s, load it again
+          // at 16 s (at most twice per page), Play at 30 s. Once it has played, pausing and seeking are left alone.
           (function() {
             var born = Date.now(), step = 0;
             setInterval(function() {
@@ -3061,9 +3061,10 @@ class MainActivity : Activity() {
               if (tvTime > 0.5) return;
               var t = (Date.now() - born) / 1000;
               if (t > 1.5 && step < 1) { step = 1; try { window.__tvPlayerCmd('play'); } catch (e1) {} }
-              else if (t > 4 && step < 2) { step = 2; try { window.__tvPlayerCmd('play'); } catch (e2) {} }
-              else if (t > 14 && step < 3) { step = 3; try { window.__tvReloadPlayer(); } catch (e3) {} }
-              else if (t > 30 && step < 4) { step = 4; try { window.__tvPlayerCmd('play'); } catch (e4) {} }
+              else if (t > 5 && step < 2) { step = 2; try { window.__tvReloadPlayer(); } catch (e2) {} }
+              else if (t > 9 && step < 3) { step = 3; try { window.__tvPlayerCmd('play'); } catch (e3) {} }
+              else if (t > 16 && step < 4) { step = 4; try { window.__tvReloadPlayer(); } catch (e4) {} }
+              else if (t > 30 && step < 5) { step = 5; try { window.__tvPlayerCmd('play'); } catch (e5) {} }
             }, 500);
           })();
 

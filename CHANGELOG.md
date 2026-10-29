@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.5
+- First video of a page sat on the spinner for about 15 seconds: in the recording the picture only appeared after the player was loaded again. The app now loads the player again after 5 seconds if it is still at 0:00 (Play is still requested at 1.5 s), and once more at 16 seconds if needed. A video that has played, or that you paused, is left alone.
+
 ## 2.0.4
 - Videos now get a Play request straight away (1.5 s and 4 s after the page opens, if still at 0:00) instead of waiting about 8 seconds; the player reload follows at 14 s. A video that has played, or that you paused, is left alone.
 - Pages of a video inside a set (the address contains /set/...) now get the same video row as the main page: same cards, one-by-one Left/Right, a View All tile at the end, and Up to the player. They were showing the site's own row before.
