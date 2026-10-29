@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.0
+- Release 2.0.0: Redesigned TV navigation with slide-out side menu, Factions and roster explorer, advanced match/event filters, universal TV player control bar with quality selector and 30s/60s seeking, poster-style onboarding guide, and restyled TV login page.
+
 ## 1.3.135
 - Cookie card: the grey "Choose one to continue" line (which showed with a light highlight) is gone, and text on the card can no longer be selected.
 - After the cookie banner is answered, anything of it still stuck to the bottom edge of the screen (an empty strip or bar) is put away.
