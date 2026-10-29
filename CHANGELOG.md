@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.133
+- Log in page: everything now fits on screen. The empty space at the top is gone, and the heading, fields, buttons and the two links are a little smaller and closer together.
+- The Japanese heading "ログイン。" is marked as not to be translated, so it no longer turns into "Log in." in English.
+
 ## 1.3.132
 - Log in page: the site's top bar holds its own small login form, and the styling was being applied to that one instead of the real form. It now picks the real form (the password field outside the top bar), and the top bar stays hidden. The top bar's "New registration" link is no longer brought back.
 

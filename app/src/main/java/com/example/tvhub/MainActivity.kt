@@ -860,6 +860,8 @@ class MainActivity : Activity() {
                 hint.textContent = JA ? 'Stardom World のアカウントでログインするか、ログインせずに続けられます。' : 'Use your Stardom World account, or carry on without one.';
                 var jpt = document.createElement('div');
                 jpt.className = 'tv-login-jp';
+                jpt.setAttribute('translate', 'no');
+                jpt.classList.add('notranslate');
                 jpt.textContent = 'ログイン。';
                 f0.parentNode.insertBefore(jpt, f0);
                 f0.parentNode.insertBefore(ttl, f0);
@@ -909,11 +911,11 @@ class MainActivity : Activity() {
                 var fm = scope();
                 var active = document.activeElement;
                 imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
-                imp(document.body, { 'background-color': 'transparent', 'background-image': 'none', 'color': '#fff', 'padding-top': TOP.toFixed(1) + 'px' });
+                imp(document.body, { 'background-color': 'transparent', 'background-image': 'none', 'color': '#fff', 'padding-top': f(14), 'margin': '0' });
                 // boxes around the form: no cards, no frames
                 if (fm && fm !== document) {
                   for (var an = fm; an && an !== document.body && an !== document.documentElement; an = an.parentElement) {
-                    imp(an, { 'background': 'transparent', 'border': '0', 'box-shadow': 'none', 'filter': 'none', 'opacity': '1' });
+                    imp(an, { 'background': 'transparent', 'border': '0', 'box-shadow': 'none', 'filter': 'none', 'opacity': '1', 'padding-top': '0', 'margin-top': '0', 'min-height': '0' });
                   }
                   imp(fm, { 'width': f(620), 'max-width': '100%', 'margin': '0 auto' });
                 }
@@ -929,29 +931,29 @@ class MainActivity : Activity() {
                 for (var ii = 0; ii < ins.length; ii++) {
                   var fo = ins[ii] === active;
                   imp(ins[ii], {
-                    'display': 'block', 'height': f(64), 'font-size': f(24), 'padding': '0 ' + f(24), 'margin': f(12) + ' 0 0 0',
+                    'display': 'block', 'height': f(52), 'font-size': f(22), 'padding': '0 ' + f(22), 'margin': f(6) + ' 0 0 0',
                     'background': fo ? '#2A2410' : '#111', 'color': '#fff', 'border': (fo ? f(6) : f(4)) + ' solid ' + (fo ? gold : '#fff'),
                     'border-radius': f(16), 'width': '100%', 'box-sizing': 'border-box', 'box-shadow': 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none', '-webkit-appearance': 'none'
                   });
                   var lb2 = (ins[ii].id && document.querySelector('label[for="' + ins[ii].id + '"]')) || ins[ii].closest('label') || (ins[ii].previousElementSibling && ins[ii].previousElementSibling.tagName === 'LABEL' ? ins[ii].previousElementSibling : null);
-                  if (lb2) imp(lb2, { 'color': gold, 'font-size': f(16), 'font-weight': '900', 'text-shadow': 'none' });
+                  if (lb2) imp(lb2, { 'color': gold, 'font-size': f(14), 'font-weight': '900', 'text-shadow': 'none', 'margin': f(8) + ' 0 0 0', 'padding': '0', 'line-height': '1.2', 'display': 'block' });
                 }
                 var bs = [].slice.call(fm.querySelectorAll('button, input[type=submit]')).concat([].slice.call(document.querySelectorAll('.tv-continue')));
                 for (var bi = 0; bi < bs.length; bi++) {
                   if (!visible(bs[bi])) continue;
                   var bf = bs[bi] === active;
                   imp(bs[bi], {
-                    'display': 'block', 'width': f(620), 'max-width': '100%', 'height': f(60), 'margin': f(14) + ' auto 0 auto', 'font-size': f(20), 'font-weight': 'bold',
+                    'display': 'block', 'width': f(620), 'max-width': '100%', 'height': f(48), 'margin': f(10) + ' auto 0 auto', 'padding': '0', 'font-size': f(18), 'font-weight': 'bold',
                     'background': bf ? gold : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
                     'box-shadow': bf ? '0 0 0 ' + f(5) + ' ' + gold : 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
                   });
                 }
                 var jp = document.querySelector('.tv-login-jp');
-                if (jp) imp(jp, { 'display': 'block', 'color': gold, 'font-size': f(54), 'font-weight': '900', 'text-align': 'center', 'margin': '0', 'line-height': '1.05' });
+                if (jp) imp(jp, { 'display': 'block', 'color': gold, 'font-size': f(44), 'font-weight': '900', 'text-align': 'center', 'margin': '0', 'line-height': '1.05' });
                 var tt = document.querySelector('.tv-login-title');
-                if (tt) imp(tt, { 'display': 'block', 'color': '#fff', 'font-size': f(26), 'font-weight': '900', 'text-align': 'center', 'margin': f(4) + ' 0 ' + f(8) + ' 0' });
+                if (tt) imp(tt, { 'display': 'block', 'color': '#fff', 'font-size': f(22), 'font-weight': '900', 'text-align': 'center', 'margin': f(2) + ' 0 ' + f(2) + ' 0' });
                 var kk = document.querySelectorAll('a.tv-keep');
-                for (var ki = 0; ki < kk.length; ki++) imp(kk[ki], { 'color': gold, 'font-size': f(18), 'display': 'inline-block', 'margin': f(12) + ' ' + f(14) + ' 0 ' + f(14), 'text-shadow': 'none' });
+                for (var ki = 0; ki < kk.length; ki++) imp(kk[ki], { 'color': gold, 'font-size': f(16), 'display': 'inline-block', 'margin': f(8) + ' ' + f(12) + ' 0 ' + f(12), 'text-shadow': 'none' });
               } catch (e4) { var d4 = document.getElementById('tv-login-dbg'); if (d4) d4.textContent = 'restyle error: ' + e4; }
             }
             restyle();
