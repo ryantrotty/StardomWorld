@@ -711,11 +711,38 @@ class MainActivity : Activity() {
 
     private val LOGIN_PAGE_JS_BODY = """
         (function() {
-          try {
-            if (location.pathname.indexOf('/login') !== 0) {
+          // The login form may be drawn a moment after the page loads (or sit at another address), so
+          // this looks for it by its password field and tries again for about ten seconds.
+          var attempts = 0;
+          function isLogin() { return location.pathname.indexOf('/login') === 0 || !!document.querySelector('input[type=password]'); }
+          function attempt() {
+            attempts++;
+            var done = !!document.getElementById('tv-login-style') && !!document.querySelector('.tv-continue');
+            if (done) { debugNote(); return; }
+            if (isLogin()) {
+              run();
+              debugNote();
+            } else if (attempts === 1) {
               if (window.AndroidHost && window.AndroidHost.loginPageReady) window.AndroidHost.loginPageReady(false);
-              return;
             }
+            if (attempts < 20) setTimeout(attempt, 500);
+          }
+          // Small status line kept on screen on the login page, so a photo shows what ran.
+          function debugNote() {
+            if (!isLogin()) return;
+            var d = document.getElementById('tv-login-dbg');
+            if (!d) {
+              d = document.createElement('div');
+              d.id = 'tv-login-dbg';
+              d.style.cssText = 'position:fixed;left:8px;bottom:6px;z-index:2147483647;font:12px monospace;color:#999;background:#000;padding:2px 6px;pointer-events:none;';
+              document.body.appendChild(d);
+            }
+            d.textContent = 'login-js ' + attempts + ' path=' + location.pathname + ' pw=' + (document.querySelector('input[type=password]') ? 1 : 0) +
+              ' style=' + (document.getElementById('tv-login-style') ? 1 : 0) + ' form=' + (document.querySelector('input[type=password]') && document.querySelector('input[type=password]').closest('form') ? 1 : 0) +
+              ' title=' + (document.querySelector('.tv-login-title') ? 1 : 0) + ' cont=' + (document.querySelector('.tv-continue') ? 1 : 0) + ' lbl=' + document.querySelectorAll('.tv-lbl').length;
+          }
+          function run() {
+          try {
             var gold = '#F7D117';
             function f(n) { return (n * U).toFixed(1) + 'px'; }
             if (!document.getElementById('tv-login-style')) {
@@ -736,6 +763,7 @@ class MainActivity : Activity() {
                 'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:transparent !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(60) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
                 'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ' !important;outline:none !important;}' +
                 'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
+                'a.tv-keep{display:inline-block !important;margin:' + f(12) + ' ' + f(14) + ' 0 ' + f(14) + ' !important;}' +
                 'p,li,span,div{font-size:' + f(18) + ';}' +
                 '.error,.errors,.alert,.alert-danger,.notice,.flash,[role=alert],[class*=error],[class*=Error],[class*=alert],[id*=error]{color:#FF7A66 !important;font-size:' + f(20) + ' !important;text-align:center !important;}' +
                 '.tv-login-jp{color:' + gold + ';font-size:' + f(54) + ';font-weight:900;text-align:center;margin:0;line-height:1.05;}' +
@@ -796,6 +824,21 @@ class MainActivity : Activity() {
               }
             } catch (e1) {}
 
+            // The site's two helper links under the form ("unable to log in", "Register here") stay: if any
+            // hiding rule above caught a box around them, that box is shown again.
+            try {
+              var anchors = document.querySelectorAll('a');
+              for (var ai = 0; ai < anchors.length; ai++) {
+                var at = (anchors[ai].textContent || '').toLowerCase();
+                if (/unable to log|register|ログイン(でき|できない)|新規|登録|アカウント/.test(at)) {
+                  anchors[ai].classList.add('tv-keep');
+                  for (var el = anchors[ai]; el && el !== document.body; el = el.parentElement) {
+                    if (getComputedStyle(el).display === 'none') el.style.setProperty('display', el.tagName === 'A' ? 'inline' : 'block', 'important');
+                  }
+                }
+              }
+            } catch (e2) {}
+
             // Title, hint and the "continue without logging in" button, added around the site's form.
             var pw0 = pwInput();
             var f0 = pw0 && pw0.closest('form');
@@ -827,7 +870,7 @@ class MainActivity : Activity() {
             if (!window.__tvLoginKeys) {
               window.__tvLoginKeys = true;
               document.addEventListener('keydown', function(e) {
-                if (location.pathname.indexOf('/login') !== 0) return;
+                if (!isLogin()) return;
                 var list = order();
                 var i = list.indexOf(document.activeElement);
                 if (i < 0) return;
@@ -865,7 +908,9 @@ class MainActivity : Activity() {
                 clearInterval(timer);
               }
             }, 300);
-          } catch (e) {}
+          } catch (e) { var dd = document.getElementById('tv-login-dbg'); if (dd) dd.textContent = 'login-js error: ' + e; }
+          }
+          attempt();
         })();
     """
 
@@ -8336,7 +8381,7 @@ private class OnboardingView(
         Slide("言語。", "English or 日本語", "メニュー下部で言語を切り替え", "Language switch at bottom of the menu.", 6),
         Slide("お気に入り。", "Save a favorite", "動画で「オプション」ボタンを押す", "Press Options on a video. Sign-in needed.", 3),
         Slide("長押し。", "Hold OK for a pointer", "もう一度長押しで解除", "Hold again to turn it off.", 4),
-        Slide("全画面。", "Full screen", "全画面で下を押すとバー ・ 左右でスキップ ・ 戻るで終了", "In full screen press down for controls.\nLeft/Right to skip. Back to exit.", 5)
+        Slide("全画面。", "Full screen", "下でバー ・ 左右でスキップ ・ 戻るで終了", "Down for controls. Left/Right skips. Back exits.", 5)
     )
 
     private val yellow = 0xFFF7D117.toInt()

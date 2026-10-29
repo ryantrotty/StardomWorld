@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 1.3.128
+- First-run guide pictures are animated, like the pointer screen: Move around (the red focus box travels over the cards), Menu (the menu slides out, then the sub-menu flies out of it), Favorite (a toast pops up with the heart in it, replacing the heart over the video), Full screen (the video control bar slides up) and Language (the switch slides to the other side).
+- Full screen text is now "Down for controls. Left/Right skips. Back exits."
+- Log in page: the styling is applied even if the form appears late or sits at another address (it now finds the page by its password field and retries for about ten seconds). The site's two links under the form ("If you are unable to log in", "Register here") are kept. A small grey status line at the bottom of the login page shows what ran, so a photo can show what happened.
+
 ## 1.3.127
 - First-run guide: the language-switch screen now comes right after the menu screen (4 of 7), with the text "Language switch at bottom of the menu." The full-screen screen is last and reads "In full screen press down for controls." then "Left/Right to skip. Back to exit." on two lines (the caption box is a little wider so the text stays full size).
 - Log in page: closer to the mock-up using styling only, no change to the form itself: dotted background, sparkles, bilingual field labels (EMAIL ・ メール, PASSWORD ・ パスワード), a yellow glow around the selected Log in button, and the site's own boxes made transparent.
