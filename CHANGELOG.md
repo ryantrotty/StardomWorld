@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.0.9
+- Same as 2.0.7 (video starts quickly, keeps your place, video row on set pages, focus recovery) with the temporary on-screen player line turned off.
+
 ## 2.0.7
 - When the player has to be loaded again, it now keeps your place: the video that had resumed where you left off (for example at 5:00) used to jump back to 0:00 after the reload. The app reads the position first, then starts the new load at that time.
 

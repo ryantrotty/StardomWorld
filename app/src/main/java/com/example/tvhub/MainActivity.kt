@@ -7975,7 +7975,7 @@ class MainActivity : Activity() {
 
     // ---- Temporary on-screen player diagnostics (they stay on screen so they can be photographed) and a
     // watchdog for a video that never starts after entering full screen.
-    private val DEBUG_PLAYER = true
+    private val DEBUG_PLAYER = false
     private var dbgView: android.widget.TextView? = null
     private var fsEnteredAt = 0L
     private var fsStallAction = 0
