@@ -3051,17 +3051,20 @@ class MainActivity : Activity() {
             return true;
           };
 
-          // First video of a page that never starts (spinner for good): nudge Play, then load the player again.
+          // Start the video ourselves right away (the page's own autoplay is not reliable on the TV): ask for Play
+          // at 1.5 s and again at 4 s while it is still at 0:00, load the player again at 14 s (once), and ask once
+          // more at 30 s. Once it has played, pausing and seeking are left alone.
           (function() {
-            var born = Date.now(), nudged = 0;
+            var born = Date.now(), step = 0;
             setInterval(function() {
               if (document.hidden || !playerFrame()) return;
-              if (tvTime > 0.5) return;   // it has played: leave pausing and seeking alone
-              var stuck = (Date.now() - born) / 1000;
-              if (stuck > 8 && nudged < 1) { nudged = 1; try { window.__tvPlayerCmd('play'); } catch (e1) {} }
-              else if (stuck > 18 && nudged < 2) { nudged = 2; try { window.__tvReloadPlayer(); } catch (e2) {} }
-              else if (stuck > 40 && nudged < 3) { nudged = 3; try { window.__tvPlayerCmd('play'); } catch (e3) {} }
-            }, 1500);
+              if (tvTime > 0.5) return;
+              var t = (Date.now() - born) / 1000;
+              if (t > 1.5 && step < 1) { step = 1; try { window.__tvPlayerCmd('play'); } catch (e1) {} }
+              else if (t > 4 && step < 2) { step = 2; try { window.__tvPlayerCmd('play'); } catch (e2) {} }
+              else if (t > 14 && step < 3) { step = 3; try { window.__tvReloadPlayer(); } catch (e3) {} }
+              else if (t > 30 && step < 4) { step = 4; try { window.__tvPlayerCmd('play'); } catch (e4) {} }
+            }, 500);
           })();
 
           // Quality list from the player: Auto first, then the resolutions from highest to lowest.
@@ -3533,7 +3536,7 @@ class MainActivity : Activity() {
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
           function T(en, ja) { return isJa() ? ja : en; }
           function isHome() { return path0 === '/' || path0 === '/index.html' || path0 === ''; }
-          function isDetail() { return /^\/contents\/[0-9]+/.test(path0); }
+          function isDetail() { return /^\/(set\/[0-9]+\/)?contents\/[0-9]+/.test(path0); }
           function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
           function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
           function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -4210,7 +4213,7 @@ class MainActivity : Activity() {
     private val playerPageJs = """
         (function(){
           if (window.__tvPlayerPage) return;
-          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          if (!/^\/(set\/[0-9]+\/)?contents\/[0-9]+/.test(location.pathname)) return;
           window.__tvPlayerPage = true;
 
           function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -4300,7 +4303,7 @@ class MainActivity : Activity() {
     private val relatedRowJs = """
         (function(){
           if (window.__tvRelatedRows) return;
-          if (!/^\/contents\/[0-9]+/.test(location.pathname)) return;
+          if (!/^\/(set\/[0-9]+\/)?contents\/[0-9]+/.test(location.pathname)) return;
           window.__tvRelatedRows = true;
 
           var st = document.createElement('style');
