@@ -4023,7 +4023,7 @@ class MainActivity : Activity() {
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
-                h = '<div class="tv-shl-t">' + esc(key === 'acct' ? acctName() : L[0]) + '</div><div>' + body + '</div>';
+                h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
               }
             }
             return { html: h, width: w };
