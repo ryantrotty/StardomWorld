@@ -2,6 +2,38 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.1.5
+- Menu is in alphabetical order: Championships, Factions, Match Types, Shows, Wrestlers, Years. A divider then sets the account link apart as the last item, with a gold person icon.
+- My Videos and Community now sit below the account name (still their own menu items). When signed out, the menu shows only "Log in" and neither appears.
+
+## 2.1.4
+- Special rules match type: Rumble added (list sorted A to Z).
+- Menu: the Shows list now starts with "All Shows", shown above the columns. "All championship matches" also sits above the columns, and "Other title matches" is no longer listed in the menu (it is still in the filter bar).
+
+## 2.1.3
+- Championships are grouped, in the menu and in the Championship filter: Stardom (IWGP Women's removed, Kawaii of Kawaii added, with Cutest of Cute results included), New Japan (IWGP Women's, STRONG Women's) and Other Promotions (AEW, CMLL, POP, Regina di WAVE, ROH, RPW, Sendai Girls).
+- For the short promotion names (AEW, CMLL, POP, ROH, RPW) the app removes search results whose title does not contain the name as a word. Other names for the same title are searched once and added to the list.
+
+## 2.1.2
+- Brings together 2.1.0 (menu lists A to Z, faction names open their faction pages, version number under the language toggle) and 2.1.1 (match types).
+- Menu: no more red glow above and below the gold outline on the highlighted item.
+- Menu: "Current Wrestlers" is now "Wrestlers", with a Past column next to the current ones, and the separate "Past Wrestlers" entry is gone, so the menu is one row shorter.
+- Filter bar: past wrestlers have their own column in the Wrestler and Competitors lists.
+
+## 2.1.1
+- More specific match types, in the Match type filter and in a new Match Types entry in the menu, both laid out as a shelf with headings: Singles & tags, 3-Way, 4-Way, 5-Way & 6-Way, Multi-person and Special rules.
+- 3-Way and 4-Way are split into Battle, Tag Battle (Tag Team matches included) and Trios, and each shows only its own videos. The site's search finds the shared words, so the app takes out titles that do not belong, including pages added as you scroll.
+- New: 5-Way (5Way and Five Way included), 6-Way, Ladder, Gauntlet and High Speed. 8-person now includes 8-man videos.
+- Other spellings (5Way, Five Way, 6Way, Six Way, 8-man) are searched once each, one after the other (1.3 s apart), and added to the list.
+- Choosing a filter from a page opened by the menu no longer repeats the menu's own search word in the keyword.
+
+## 2.1.0
+- Menu, Shows: listed A to Z like the Show filter's drop-down (All tournaments stays on top), reading down each column.
+- Menu, Championships: same order as the Championship filter (Any championship match, then A to Z, Other title matches last).
+- Menu, Factions: each faction's name is now a link to its faction page.
+- Faction pages: if the filter bar is ever missing above the video grid, it is put back.
+- A small grey version number sits under the language toggle in the menu, in the space that was already there.
+
 ## 2.0.9
 - Same as 2.0.7 (video starts quickly, keeps your place, video row on set pages, focus recovery) with the temporary on-screen player line turned off.
 

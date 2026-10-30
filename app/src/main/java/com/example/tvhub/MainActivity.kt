@@ -2482,6 +2482,26 @@ class MainActivity : Activity() {
         } catch (_: Exception) { "" }
 
         @android.webkit.JavascriptInterface
+        fun matchTypesJson(): String = try {
+            this@MainActivity.assets.open("match_types.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun championshipsJson(): String = try {
+            this@MainActivity.assets.open("championships.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun pastWrestlersJson(): String = try {
+            this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun appVersion(): String = try {
+            this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, 0).versionName ?: ""
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
         fun factionsJson(): String = try {
             this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
@@ -3430,7 +3450,7 @@ class MainActivity : Activity() {
           var BASE = 'https://www.stardom-world.com';
           // Each entry: [English label, path, Japanese label]
           var SHOWS = [
-            ['All tournaments', '/contents/category/events', '大会アーカイブス（新着大会）'],
+            ['All Shows', '/contents/category/events', '大会アーカイブス（新着大会）'],
             ['LIVE & On-demand streaming', '/contents/category/live-archives', 'LIVE&見逃し配信'],
             ['Big Match', '/contents/category/bm2025', 'ビッグマッチ'],
             ['English Commentary', '/contents/category/english', 'English Commentary'],
@@ -3494,21 +3514,50 @@ class MainActivity : Activity() {
                 out.push([x.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvev=1&tvsh=' + encodeURIComponent(x.name), x.name]);
               });
             } catch (e) {}
+            // Same order as the Show filter's drop-down: A to Z (the first entry stays on top).
+            var rest = out.slice(1).sort(function(a, b) { return String(a[0]).localeCompare(String(b[0]), 'en', { sensitivity: 'base' }); });
+            out = [out[0]].concat(rest);
             return out;
           }
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
-          var CHAMPS = [
-            ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
-            ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
-            ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
-            ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
+          // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword
+          // search with the type remembered ("tvmt"), and the filter bar's script tells similar titles apart.
+          function matchTypeGroups() {
+            try { var d = JSON.parse(AndroidHost.matchTypesJson()); return (d && d.groups) || []; } catch (e) { return []; }
+          }
+          function matchTypePath(x) {
+            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id);
+          }
+          function matchTypeRows() {
+            var out = [];
+            matchTypeGroups().forEach(function(g) { (g.items || []).forEach(function(x) { out.push([x.name, matchTypePath(x), x.ja || x.name]); }); });
+            return out;
+          }
+          // Championships: grouped (Stardom / New Japan / Other Promotions) from assets/championships.json, the same list as
+          // the Championship filter. Entries with a "path" open the site's own category page; the rest open a keyword
+          // search with the championship remembered ("tvch"), and the filter bar's script narrows the results.
+          function champGroups() {
+            try { var d = JSON.parse(AndroidHost.championshipsJson()); return (d && d.groups) || []; } catch (e) { return []; }
+          }
+          function champPath(x) {
+            if (x.path) return x.path;
+            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id);
+          }
+          var CHAMPS_OLD = [
+            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
             ['Artist of Stardom', '/contents/search?q%5Bkeyword%5D=Artist%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=artist', 'アーティスト・オブ・スターダム'],
             ['Future of Stardom', '/contents/search?q%5Bkeyword%5D=Future%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=future', 'フューチャー・オブ・スターダム'],
             ['Goddess of Stardom', '/contents/search?q%5Bkeyword%5D=Goddess%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=goddess', 'ゴッデス・オブ・スターダム'],
+            ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
+            ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
             ['NEW BLOOD Tag Team', '/contents/search?q%5Bkeyword%5D=NEW%20BLOOD&activetab=contents&page=1&tvb=&tvch=newblood', 'NEW BLOOD タッグ'],
-            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
+            ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
+            ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
             ['Other title matches', '/contents/search?q%5Bkeyword%5D=Title%20Match&activetab=contents&page=1&tvb=&tvch=other', 'その他のタイトルマッチ']
           ];
+          var CHAMPS = [];
+          champGroups().forEach(function(g) { (g.items || []).forEach(function(x) { CHAMPS.push([x.name, champPath(x), x.ja || x.name]); }); });
+          if (!CHAMPS.length) CHAMPS = CHAMPS_OLD;
           var MINE = [
             ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
             ['My Favorites', '/mypage/favorites', 'お気に入り']
@@ -3584,6 +3633,7 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
             '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
+            '#tv-sm *:focus, #tv-sm-shelf *:focus{box-shadow:none !important;outline:none !important;}',
             '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:48px;}',
             '#tv-sm .tv-sm-subs{margin-left:24px;padding-left:10px;border-left:2px solid #2a323c;display:none;}',
             '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-subs{display:block;}',
@@ -3608,11 +3658,20 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-grid{display:grid;gap:2px 8px;}',
             '#tv-sm-shelf .tv-shl-h{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242;white-space:nowrap;}',
             '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
+            '#tv-sm-shelf .tv-shl-top{margin:0 0 12px 0;}',
+            '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
-            '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-acctgrp{border-top:1px solid #222b36;margin-top:8px;padding-top:8px;}',
+            '#tv-sm .tv-sm-acct{color:#F4C242 !important;}',
+            '#tv-sm .tv-sm-acl{display:flex;align-items:center;gap:12px;}',
+            '#tv-sm .tv-sm-acct .tv-sm-person{flex:0 0 auto;}',
+            '#tv-sm .tv-sm-foot{position:relative;border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-ver{position:absolute;left:0;right:0;bottom:-19px;height:14px;line-height:14px;text-align:center;font-size:12px;color:#7d8794;pointer-events:none;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
             '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:20px;font-weight:700;color:#c9d2dc;}',
@@ -3708,35 +3767,35 @@ class MainActivity : Activity() {
             var h = '';
             h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
             h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" ' + (shelfMode() ? 'data-shelf="home"' : 'data-go="/" data-homegrp="1"') + ' href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + (shelfMode() ? [] : homeList()).map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
-            h += group(T('Shows', '番組'), showsList(), 'shows');
+            // A to Z by English name; the account (or Log in) is last, set apart by a divider.
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
-            h += group(T('Years', '年別'), years, 'years');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
-            h += group(T('Current Wrestlers', '現役選手'), currentWrestlers(), 'current');
-            h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W), 'past');
-            if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
-            h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
+            if (matchTypeGroups().length) h += group(T('Match Types', '試合形式'), matchTypeRows(), 'matchtypes');
+            h += group(T('Shows', '番組'), showsList(), 'shows');
+            h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
+            h += group(T('Years', '年別'), years, 'years');
+            var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
               var links = acctLinks();
               window.__tvMenuAcct = links;
-              if (links.length) {
-                var an = acctName();
-                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
-                (shelfMode() ? [] : links).forEach(function(l, i) {
-                  h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span data-orig="' + esc(l.label) + '">' + esc(xl(l.label)) + '</span></div>';
-                });
-                h += '</div></div>';
-              } else {
-                h += '<a class="tv-sm-item" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage"><span data-orig="' + esc(acctName()) + '">' + esc(xl(acctName())) + '</span></a>';
-              }
+              var an = acctName();
+              h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
+              h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
+              h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             } else {
-              h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
+              h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
             }
             h += '</div>';
-            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>';
+            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>' + appVerHtml();
             h += '</div>';
             panel.innerHTML = h;
+          }
+
+          function appVerHtml() {
+            var v = '';
+            try { v = window.AndroidHost && AndroidHost.appVersion ? AndroidHost.appVersion() : ''; } catch (e) {}
+            return v ? '<div class="tv-sm-ver">v' + esc(v) + '</div>' : '';
           }
 
           function ensureDom() {
@@ -3889,7 +3948,34 @@ class MainActivity : Activity() {
           function shelfBody(key) {
             var h = '', w = 760;
             if (key === 'shows') {
-              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">' + rowsHtml(showsList()) + '</div>';
+              var sl = showsList();
+              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
+                '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
+                '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
+            } else if (key === 'champs') {
+              w = 760;
+              var cblocks = '', ctop = '';
+              champGroups().forEach(function(g) {
+                var inner = '';
+                (g.items || []).forEach(function(x) {
+                  if (x.id === 'any') { ctop = fiHtml(T('All championship matches', x.ja || 'すべての王座戦'), champPath(x)); return; }
+                  if (x.id === 'other') return;   // not listed in the menu (still in the filter)
+                  inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x));
+                });
+                if (inner) cblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>' + inner + '</div>';
+              });
+              h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div>' +
+                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') +
+                '<div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + cblocks + '</div>';
+            } else if (key === 'matchtypes') {
+              w = 760;
+              var mblocks = '';
+              matchTypeGroups().forEach(function(g) {
+                var inner = '';
+                (g.items || []).forEach(function(x) { inner += fiHtml(isJa() && x.ja ? x.ja : x.name, matchTypePath(x)); });
+                if (inner) mblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>' + inner + '</div>';
+              });
+              h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + mblocks + '</div>';
             } else if (key === 'years') {
               w = 400;
               h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
@@ -3901,6 +3987,7 @@ class MainActivity : Activity() {
                 var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
                 var seen = {};
                 facs.forEach(function(f) {
+                  var fpage = (f.members && f.members.length) ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) : '';
                   var ms = (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
                   var inner = '';
                   ms.forEach(function(m) {
@@ -3908,19 +3995,22 @@ class MainActivity : Activity() {
                     seen[m.name] = 1;
                     inner += fiHtml(isJa() && JA_NAMES[m.name] ? JA_NAMES[m.name] : m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name));
                   });
-                  if (inner) blocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>' + inner + '</div>';
+                  var fhead = fpage
+                    ? '<a class="tv-sm-fi tv-shl-hl" tabindex="0" data-go="' + esc(fpage) + '" href="' + esc(absUrl(fpage)) + '">' + esc(String(f.name).toUpperCase()) + '</a>'
+                    : '<div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>';
+                  if (inner || fpage) blocks += '<div class="tv-shl-blk">' + fhead + inner + '</div>';
                 });
               } catch (e) {}
               if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
               h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
             } else if (key === 'current') {
-              w = 880;
+              w = 900;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>';
-            } else if (key === 'past') {
-              w = 880;
-              var rows = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              h = '<div class="tv-shl-t">' + esc(T('PAST WRESTLERS', '元所属選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(rows) + '</div>';
+              var prow = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
+                '<div style="display:grid;grid-template-columns:3fr 1fr;gap:18px;">' +
+                '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
+                '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
             }
             else {
               var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
@@ -3929,7 +4019,9 @@ class MainActivity : Activity() {
                 w = (key === 'champs' || key === 'home') ? 440 : 360;
                 var body = '';
                 if (key === 'acct') {
-                  (window.__tvMenuAcct || []).forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  var al = window.__tvMenuAcct || [];
+                  al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
                 h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
               }
@@ -5213,7 +5305,18 @@ class MainActivity : Activity() {
     private val filterBarJs = """
 (function(){
   if (window.__tvFilterBar) return;
-  var CHAMP_PAGES = { '/contents/category/iwgp': 'iwgp', '/contents/category/world-sd': 'world', '/contents/category/wonder-sd': 'wonder', '/contents/category/high_speed': 'highspeed' };
+  // Championships: from assets/championships.json (grouped); entries with a "path" are the site's own category pages.
+  var CHG = [];
+  try {
+    var CHD = (window.AndroidHost && AndroidHost.championshipsJson) ? JSON.parse(AndroidHost.championshipsJson()) : null;
+    if (CHD && CHD.groups) CHG = CHD.groups;
+  } catch (e) {}
+  var CHAMP_PAGES = {};
+  if (CHG.length) {
+    CHG.forEach(function(g) { (g.items || []).forEach(function(x) { if (x.path) CHAMP_PAGES[x.path] = x.id; }); });
+  } else {
+    CHAMP_PAGES = { '/contents/category/iwgp': 'iwgp', '/contents/category/world-sd': 'world', '/contents/category/wonder-sd': 'wonder', '/contents/category/high_speed': 'highspeed' };
+  }
   var champCat = CHAMP_PAGES[location.pathname.replace(/\/+$/, '')] || '';
   var YM = /^\/contents\/category\/(20[0-9]{2}|_2020)\/?$/.exec(location.pathname);
   var yearCat = YM ? (YM[1] === '_2020' ? '2020' : YM[1]) : '';
@@ -5224,28 +5327,42 @@ class MainActivity : Activity() {
 
   // Every choice just adds words to the site's own keyword search and opens that page: one request per
   // choice, same as opening any list. The lists below are fixed, so opening a drop-down loads nothing.
-  var MT = [
-    ['single', 'Single match', 'Single Match'],
-    ['tag', 'Tag team', 'Tag Team'],
-    ['trio', '3-way', '3-Way'],
-    ['six', '6-person', '6-person'],
-    ['eight', '8-person', '8-person'],
-    ['eightman', '8-man', '8-man'],
-    ['royal', 'Battle royal', 'Battle Royal'],
-    ['cage', 'Cage match', 'Cage Match']
-  ];
-  var CH = [
-    ['any', 'Any championship match', 'Championship'],
-    ['artist', 'Artist of Stardom', 'Artist of Stardom'],
-    ['future', 'Future of Stardom', 'Future of Stardom'],
-    ['goddess', 'Goddess of Stardom', 'Goddess of Stardom'],
-    ['highspeed', 'High-Speed', 'High-Speed Championship'],
-    ['iwgp', "IWGP Women's", "IWGP Women's"],
-    ['newblood', 'NEW BLOOD Tag Team', 'NEW BLOOD'],
-    ['wonder', 'Wonder of Stardom', 'Wonder of Stardom'],
-    ['world', 'World of Stardom', 'World of Stardom'],
-    ['other', 'Other title matches', 'Title Match']
-  ];
+  // Match types: from assets/match_types.json (grouped, with the title patterns used to tell them apart);
+  // each entry is [id, English name, search word, details].
+  var MT = [], MTG = [];
+  try {
+    var MD = (window.AndroidHost && AndroidHost.matchTypesJson) ? JSON.parse(AndroidHost.matchTypesJson()) : null;
+    if (MD && MD.groups) {
+      MTG = MD.groups;
+      MTG.forEach(function(g) { (g.items || []).forEach(function(x) { MT.push([x.id, x.name, x.search, x]); }); });
+    }
+  } catch (e) {}
+  if (!MT.length) {
+    MT = [
+      ['single', 'Single match', 'Single Match', {}],
+      ['tag', 'Tag team', 'Tag Team', {}],
+      ['six', '6-person', '6-person', {}],
+      ['eight', '8-person', '8-person', {}],
+      ['royal', 'Battle royal', 'Battle Royal', {}],
+      ['cage', 'Cage match', 'Cage Match', {}]
+    ];
+    MTG = [{ name: 'Match type', ja: '試合形式', items: MT.map(function(r) { return { id: r[0], name: r[1], ja: r[1] }; }) }];
+  }
+  function mtName(r) { return isJa() && r[3] && r[3].ja ? r[3].ja : r[1]; }
+  var CH = [];
+  if (CHG.length) {
+    CHG.forEach(function(g) { (g.items || []).forEach(function(x) { CH.push([x.id, x.name, x.search, x]); }); });
+  } else {
+    CHG = [{ name: 'Championships', ja: '王座', items: [] }];
+    [['any', 'Any championship match', 'Championship'], ['artist', 'Artist of Stardom', 'Artist of Stardom'], ['future', 'Future of Stardom', 'Future of Stardom'],
+     ['goddess', 'Goddess of Stardom', 'Goddess of Stardom'], ['highspeed', 'High-Speed', 'High-Speed Championship'], ['iwgp', "IWGP Women's", "IWGP Women's"],
+     ['newblood', 'NEW BLOOD Tag Team', 'NEW BLOOD'], ['wonder', 'Wonder of Stardom', 'Wonder of Stardom'], ['world', 'World of Stardom', 'World of Stardom'],
+     ['other', 'Other title matches', 'Title Match']].forEach(function(r) {
+      CH.push([r[0], r[1], r[2], { id: r[0], name: r[1], ja: r[1] }]);
+      CHG[0].items.push({ id: r[0], name: r[1], ja: r[1] });
+    });
+  }
+  function chName(r) { return isJa() && r[3] && r[3].ja ? r[3].ja : r[1]; }
   var SH = [], LO = [];
   try {
     var ED = (window.AndroidHost && AndroidHost.eventFiltersJson) ? JSON.parse(AndroidHost.eventFiltersJson()) : null;
@@ -5293,16 +5410,22 @@ class MainActivity : Activity() {
     ['fc', 'd', 'Most favorited']
   ];
 
+  var PW = [];
+  try {
+    var pwd = (window.AndroidHost && AndroidHost.pastWrestlersJson) ? JSON.parse(AndroidHost.pastWrestlersJson()) : null;
+    PW = ((pwd && pwd.past) || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+  } catch (e) {}
   function wrestlerName(search) {
     var low = String(search || '').toLowerCase(), out = '';
     facs.forEach(function(f) { (f.members || []).forEach(function(m) { if (!out && String(m.search).toLowerCase() === low) out = m.name; }); });
+    PW.forEach(function(m) { if (!out && String(m.search).toLowerCase() === low) out = m.name; });
     return out;
   }
   function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
-  function buildUrl(n) {
+  function buildUrl(n, mtWord, chWord) {
     var words = [n.base];
-    var a = find(MT, n.mt); if (a) words.push(a[2]);
-    var b = find(CH, n.ch); if (b) words.push(b[2]);
+    var a = find(MT, n.mt); if (a) words.push(mtWord || a[2]);
+    var b = find(CH, n.ch); if (b) words.push(chWord || b[2]);
     if (n.co && n.co !== n.base) words.push(n.co);
     var sh0 = find(SH, n.sh); if (sh0) words.push(sh0[2]);
     var lo0 = find(LO, n.lo); if (lo0) words.push(lo0[2]);
@@ -5312,7 +5435,7 @@ class MainActivity : Activity() {
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
     if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
     u += '&activetab=contents&page=1';
-    if (n.base && (n.mt || n.ch || n.co || n.yr || n.sh || n.lo)) u += '&tvb=' + encodeURIComponent(n.base);
+    if (n.mt || n.ch || n.co || n.yr || n.sh || n.lo) u += '&tvb=' + encodeURIComponent(n.base || '');   // (empty = the words in the address are all filters)
     if (n.mt) u += '&tvmt=' + encodeURIComponent(n.mt);
     if (n.ch) u += '&tvch=' + encodeURIComponent(n.ch);
     if (n.co) u += '&tvco=' + encodeURIComponent(n.co);
@@ -5378,8 +5501,8 @@ class MainActivity : Activity() {
       for (var i = 0; i < SORTS.length; i++) if (SORTS[i][0] === S.s && (SORTS[i][0] === '' || SORTS[i][1] === (S.o || 'd'))) { cur = SORTS[i]; break; }
       return { text: nm + ': ' + (cur ? T(cur[2], cur[2] === 'Newest' ? '新着順' : cur[2]) : T('Newest', '新着順')), on: !!S.s };
     }
-    if (kind === 'mt') { cur = find(MT, S.mt); nm = T('Match type', '試合形式'); }
-    if (kind === 'ch') { cur = find(CH, S.ch); nm = T('Championship', '選手権'); }
+    if (kind === 'mt') { cur = find(MT, S.mt); if (cur) cur = [cur[0], mtName(cur)]; nm = T('Match type', '試合形式'); }
+    if (kind === 'ch') { cur = find(CH, S.ch); if (cur) cur = [cur[0], chName(cur)]; nm = T('Championship', '選手権'); }
     if (kind === 'yr') { cur = find(YR, S.yr); nm = T('Year', '年'); }
     if (kind === 'co') { cur = S.co ? [S.co, S.co] : null; nm = T('Competitors', '出場選手'); }
     if (kind === 'sh') { cur = find(SH, S.sh); nm = T('Show', '大会名'); }
@@ -5423,8 +5546,8 @@ class MainActivity : Activity() {
   var chipBar = null, chips = [];
   function buildChips() {
     var defs = [];
-    var a = find(MT, S.mt); if (a) defs.push([a[1], { mt: '' }]);
-    var b = find(CH, S.ch); if (b) defs.push([b[1], { ch: '' }]);
+    var a = find(MT, S.mt); if (a) defs.push([mtName(a), { mt: '' }]);
+    var b = find(CH, S.ch); if (b) defs.push([chName(b), { ch: '' }]);
     if (S.co) defs.push([T('With ', '対戦: ') + S.co, { co: '' }]);
     var sh1 = find(SH, S.sh); if (sh1) defs.push([sh1[1], { sh: '' }]);
     var lo1 = find(LO, S.lo); if (lo1) defs.push([lo1[1], { lo: '' }]);
@@ -5532,8 +5655,52 @@ class MainActivity : Activity() {
         if (r[0] === S.lo) first = it;
       });
       panel.appendChild(lcols);
-    } else if (k === 'mt') list(MT, S.mt, 'mt');
-    else if (k === 'ch') list(CH, S.ch, 'ch');
+    } else if (k === 'mt') {
+      panel.className = 'tv-co tv-fmt';
+      var mtTop = item(T('All match types', 'すべての試合形式'), !S.mt, function() { go({ mt: '' }); });
+      panel.appendChild(mtTop);
+      first = mtTop;
+      var mcols = document.createElement('div');
+      mcols.className = 'tv-fbcols';
+      MTG.forEach(function(g) {
+        var col = document.createElement('div');
+        col.className = 'tv-fbcol';
+        var h = document.createElement('div');
+        h.className = 'tv-fbh';
+        h.textContent = String(isJa() && g.ja ? g.ja : g.name).toUpperCase();
+        col.appendChild(h);
+        (g.items || []).forEach(function(x) {
+          var it = item(isJa() && x.ja ? x.ja : x.name, x.id === S.mt, function() { go({ mt: x.id }); });
+          col.appendChild(it);
+          if (x.id === S.mt) first = it;
+        });
+        mcols.appendChild(col);
+      });
+      panel.appendChild(mcols);
+    }
+    else if (k === 'ch') {
+      panel.className = 'tv-co tv-fmt';
+      var chTop = item(T('All championships', 'すべての王座'), !S.ch, function() { go({ ch: '' }); });
+      panel.appendChild(chTop);
+      first = chTop;
+      var ccols = document.createElement('div');
+      ccols.className = 'tv-fbcols';
+      CHG.forEach(function(g) {
+        var col = document.createElement('div');
+        col.className = 'tv-fbcol';
+        var h = document.createElement('div');
+        h.className = 'tv-fbh';
+        h.textContent = String(isJa() && g.ja ? g.ja : g.name).toUpperCase();
+        col.appendChild(h);
+        (g.items || []).forEach(function(x) {
+          var it = item(isJa() && x.ja ? x.ja : x.name, x.id === S.ch, function() { go({ ch: x.id }); });
+          col.appendChild(it);
+          if (x.id === S.ch) first = it;
+        });
+        ccols.appendChild(col);
+      });
+      panel.appendChild(ccols);
+    }
     else if (k === 'yr') {
       panel.style.columnCount = 2;
       list(YR, S.yr, 'yr');
@@ -5565,12 +5732,30 @@ class MainActivity : Activity() {
         });
         cols.appendChild(col);
       });
+      if (PW.length) {
+        var pcol = document.createElement('div');
+        pcol.className = 'tv-fbcol';
+        var ph = document.createElement('div');
+        ph.className = 'tv-fbh';
+        ph.textContent = T('PAST WRESTLERS', '元所属選手');
+        pcol.appendChild(ph);
+        PW.forEach(function(m) {
+          var curP = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
+          var pit = item(m.name, curP, function() {
+            if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
+            else go({ co: m.search });
+          });
+          pcol.appendChild(pit);
+          if (curP) first = pit;
+        });
+        cols.appendChild(pcol);
+      }
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
-    if (k === 'co' || k === 'wr' || k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    if (k === 'co' || k === 'wr' || k === 'lo' || k === 'mt' || k === 'ch') { panel.style.left = '30px'; panel.style.right = '30px'; }
     else if (k === 'sh') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 900)) + 'px'; panel.style.width = '880px'; }
     else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';
@@ -5684,11 +5869,88 @@ class MainActivity : Activity() {
   window.addEventListener('resize', alignBars);
   [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
+  // ---- match types that share words (4-Way Battle / Tag / Trios ...): the site's search finds the common words,
+  // so the results are narrowed here by the titles. Titles that do not fit are taken out of the list, including
+  // pages added later by scrolling. Other spellings (5Way, Five Way, 8-man ...) are searched once each, one request
+  // after the other, and the matching videos are added to the list.
+  var MTR = null, ALTS = [];
+  (function() {
+    var e = S.mt ? find(MT, S.mt) : null, c = S.ch ? find(CH, S.ch) : null;
+    var all = [], none = [];
+    try {
+      [e, c].forEach(function(r) {
+        var d = r && r[3];
+        if (!d) return;
+        (d.all || []).forEach(function(x) { all.push(new RegExp(x, 'i')); });
+        (d.none || []).forEach(function(x) { none.push(new RegExp(x, 'i')); });
+      });
+    } catch (err) { all = []; none = []; }
+    if (e && e[3] && e[3].alts) e[3].alts.forEach(function(w) { ALTS.push({ mt: w }); });
+    if (c && c[3] && c[3].alts) c[3].alts.forEach(function(w) { ALTS.push({ ch: w }); });
+    if (all.length || none.length || ALTS.length) MTR = { all: all, none: none };
+  })();
+  function mtFits(title) {
+    if (!MTR) return true;
+    var t = String(title || '');
+    if (!t.replace(/\s+/g, '')) return true;   // no title to judge by: keep it
+    for (var i = 0; i < MTR.all.length; i++) if (!MTR.all[i].test(t)) return false;
+    for (var j = 0; j < MTR.none.length; j++) if (MTR.none[j].test(t)) return false;
+    return true;
+  }
+  function itemTitle(el) {
+    var t = el.querySelector('h3, .ttl-xs, .content-info-box');
+    return (t ? t.textContent : el.textContent) || '';
+  }
+  function idOf(el) {
+    var a = el.querySelector('a[href*="/contents/"], a[href*="/set/"]');
+    var m = a && /(?:contents|set)\/(\d+)/.exec(a.getAttribute('href') || '');
+    return m ? m[1] : '';
+  }
+  function narrowList() {
+    if (!MTR) return;
+    var list = document.querySelectorAll('.content-list-item');
+    Array.prototype.forEach.call(list, function(el) {
+      if (el.__tvMt || el.closest('#tv-fac')) return;
+      el.__tvMt = 1;
+      if (!mtFits(itemTitle(el)) && el.parentNode) el.parentNode.removeChild(el);
+    });
+  }
+  function loadAlts() {
+    if (!MTR || !ALTS.length) return;
+    var i = 0;
+    function one() {
+      if (i >= ALTS.length) return;
+      var alt = ALTS[i++];
+      var n = {}; Object.keys(S).forEach(function(k) { n[k] = S[k]; });
+      var url = buildUrl(n, alt.mt, alt.ch);
+      fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var box = document.querySelector('.content-list');
+        if (box) {
+          Array.prototype.forEach.call(doc.querySelectorAll('.content-list .content-list-item'), function(el) {
+            var id = idOf(el);
+            if (!mtFits(itemTitle(el))) return;
+            if (id && box.querySelector('a[href*="/' + id + '"]')) return;
+            var c = document.importNode(el, true);
+            c.__tvMt = 1;
+            box.appendChild(c);
+          });
+        }
+      }).catch(function() {}).then(function() { setTimeout(one, 1300); });
+    }
+    setTimeout(one, 1500);
+  }
+  if (MTR && !FAC_MODE) { narrowList(); setInterval(narrowList, 700); loadAlts(); }
+
   var tries = 0;
   (function tick() {
     if (mount()) return;
     if (++tries < 25) setTimeout(tick, 400);
   })();
+  // Faction pages: put the filter bar back above the video grid if it is ever missing once the grid is there.
+  if (FAC_MODE) setInterval(function() {
+    if (!document.getElementById('tv-fb') && document.querySelector('#tv-fac-main #tv-fac-scroll')) { try { mount(); } catch (e) {} }
+  }, 1000);
 })();
     """.trimIndent()
 
