@@ -3450,7 +3450,7 @@ class MainActivity : Activity() {
           var BASE = 'https://www.stardom-world.com';
           // Each entry: [English label, path, Japanese label]
           var SHOWS = [
-            ['All tournaments', '/contents/category/events', '大会アーカイブス（新着大会）'],
+            ['All Shows', '/contents/category/events', '大会アーカイブス（新着大会）'],
             ['LIVE & On-demand streaming', '/contents/category/live-archives', 'LIVE&見逃し配信'],
             ['Big Match', '/contents/category/bm2025', 'ビッグマッチ'],
             ['English Commentary', '/contents/category/english', 'English Commentary'],
@@ -3658,6 +3658,8 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-grid{display:grid;gap:2px 8px;}',
             '#tv-sm-shelf .tv-shl-h{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242;white-space:nowrap;}',
             '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
+            '#tv-sm-shelf .tv-shl-top{margin:0 0 12px 0;}',
+            '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
@@ -3948,16 +3950,25 @@ class MainActivity : Activity() {
           function shelfBody(key) {
             var h = '', w = 760;
             if (key === 'shows') {
-              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div><div style="column-count:3;column-gap:8px;">' + rowsHtml(showsList()) + '</div>';
+              var sl = showsList();
+              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
+                '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
+                '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
             } else if (key === 'champs') {
               w = 760;
-              var cblocks = '';
+              var cblocks = '', ctop = '';
               champGroups().forEach(function(g) {
                 var inner = '';
-                (g.items || []).forEach(function(x) { inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x)); });
+                (g.items || []).forEach(function(x) {
+                  if (x.id === 'any') { ctop = fiHtml(T('All championship matches', x.ja || 'すべての王座戦'), champPath(x)); return; }
+                  if (x.id === 'other') return;   // not listed in the menu (still in the filter)
+                  inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x));
+                });
                 if (inner) cblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>' + inner + '</div>';
               });
-              h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + cblocks + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div>' +
+                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') +
+                '<div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + cblocks + '</div>';
             } else if (key === 'matchtypes') {
               w = 760;
               var mblocks = '';

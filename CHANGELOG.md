@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.1.4
+- Special rules match type: Rumble added (list sorted A to Z).
+- Menu: the Shows list now starts with "All Shows", shown above the columns. "All championship matches" also sits above the columns, and "Other title matches" is no longer listed in the menu (it is still in the filter bar).
+
 ## 2.1.3
 - Championships are grouped, in the menu and in the Championship filter: Stardom (IWGP Women's removed, Kawaii of Kawaii added, with Cutest of Cute results included), New Japan (IWGP Women's, STRONG Women's) and Other Promotions (AEW, CMLL, POP, Regina di WAVE, ROH, RPW, Sendai Girls).
 - For the short promotion names (AEW, CMLL, POP, ROH, RPW) the app removes search results whose title does not contain the name as a word. Other names for the same title are searched once and added to the list.

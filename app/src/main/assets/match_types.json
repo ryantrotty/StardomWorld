@@ -176,12 +176,6 @@
      "search": "Cage Match"
     },
     {
-     "id": "ladder",
-     "name": "Ladder",
-     "ja": "ラダーマッチ",
-     "search": "Ladder"
-    },
-    {
      "id": "gauntlet",
      "name": "Gauntlet",
      "ja": "ガントレット",
@@ -195,6 +189,18 @@
      "all": [
       "high[\\s\\-‐]*speed|ハイスピード"
      ]
+    },
+    {
+     "id": "ladder",
+     "name": "Ladder",
+     "ja": "ラダーマッチ",
+     "search": "Ladder"
+    },
+    {
+     "id": "rumble",
+     "name": "Rumble",
+     "ja": "ランブル",
+     "search": "Rumble"
     }
    ]
   }
