@@ -2487,6 +2487,16 @@ class MainActivity : Activity() {
         } catch (_: Exception) { "" }
 
         @android.webkit.JavascriptInterface
+        fun pastWrestlersJson(): String = try {
+            this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun appVersion(): String = try {
+            this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, 0).versionName ?: ""
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
         fun factionsJson(): String = try {
             this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
@@ -3499,6 +3509,9 @@ class MainActivity : Activity() {
                 out.push([x.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvev=1&tvsh=' + encodeURIComponent(x.name), x.name]);
               });
             } catch (e) {}
+            // Same order as the Show filter's drop-down: A to Z (the first entry stays on top).
+            var rest = out.slice(1).sort(function(a, b) { return String(a[0]).localeCompare(String(b[0]), 'en', { sensitivity: 'base' }); });
+            out = [out[0]].concat(rest);
             return out;
           }
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
@@ -3516,15 +3529,15 @@ class MainActivity : Activity() {
             return out;
           }
           var CHAMPS = [
-            ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
-            ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
-            ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
-            ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
+            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
             ['Artist of Stardom', '/contents/search?q%5Bkeyword%5D=Artist%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=artist', 'アーティスト・オブ・スターダム'],
             ['Future of Stardom', '/contents/search?q%5Bkeyword%5D=Future%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=future', 'フューチャー・オブ・スターダム'],
             ['Goddess of Stardom', '/contents/search?q%5Bkeyword%5D=Goddess%20of%20Stardom&activetab=contents&page=1&tvb=&tvch=goddess', 'ゴッデス・オブ・スターダム'],
+            ['High Speed', '/contents/category/high_speed', 'ハイスピード'],
+            ["IWGP Women's", '/contents/category/iwgp', 'IWGP女子'],
             ['NEW BLOOD Tag Team', '/contents/search?q%5Bkeyword%5D=NEW%20BLOOD&activetab=contents&page=1&tvb=&tvch=newblood', 'NEW BLOOD タッグ'],
-            ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
+            ['Wonder of Stardom', '/contents/category/wonder-sd', 'ワンダー・オブ・スターダム'],
+            ['World of Stardom', '/contents/category/world-sd', 'ワールド・オブ・スターダム'],
             ['Other title matches', '/contents/search?q%5Bkeyword%5D=Title%20Match&activetab=contents&page=1&tvb=&tvch=other', 'その他のタイトルマッチ']
           ];
           var MINE = [
@@ -3602,6 +3615,7 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
             '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
+            '#tv-sm *:focus, #tv-sm-shelf *:focus{box-shadow:none !important;outline:none !important;}',
             '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:48px;}',
             '#tv-sm .tv-sm-subs{margin-left:24px;padding-left:10px;border-left:2px solid #2a323c;display:none;}',
             '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-subs{display:block;}',
@@ -3626,11 +3640,14 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-grid{display:grid;gap:2px 8px;}',
             '#tv-sm-shelf .tv-shl-h{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242;white-space:nowrap;}',
             '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
-            '#tv-sm .tv-sm-foot{border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-foot{position:relative;border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-ver{position:absolute;left:0;right:0;bottom:-19px;height:14px;line-height:14px;text-align:center;font-size:12px;color:#7d8794;pointer-events:none;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
             '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:20px;font-weight:700;color:#c9d2dc;}',
@@ -3732,8 +3749,7 @@ class MainActivity : Activity() {
             h += group(T('Years', '年別'), years, 'years');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
-            h += group(T('Current Wrestlers', '現役選手'), currentWrestlers(), 'current');
-            h += group(T('Past Wrestlers', '元所属選手'), wrestlers(PAST_W), 'past');
+            h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
             if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
             h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             if (signedIn()) {
@@ -3753,9 +3769,15 @@ class MainActivity : Activity() {
               h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
             }
             h += '</div>';
-            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>';
+            h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>' + appVerHtml();
             h += '</div>';
             panel.innerHTML = h;
+          }
+
+          function appVerHtml() {
+            var v = '';
+            try { v = window.AndroidHost && AndroidHost.appVersion ? AndroidHost.appVersion() : ''; } catch (e) {}
+            return v ? '<div class="tv-sm-ver">v' + esc(v) + '</div>' : '';
           }
 
           function ensureDom() {
@@ -3908,7 +3930,7 @@ class MainActivity : Activity() {
           function shelfBody(key) {
             var h = '', w = 760;
             if (key === 'shows') {
-              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">' + rowsHtml(showsList()) + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div><div style="column-count:3;column-gap:8px;">' + rowsHtml(showsList()) + '</div>';
             } else if (key === 'matchtypes') {
               w = 760;
               var mblocks = '';
@@ -3929,6 +3951,7 @@ class MainActivity : Activity() {
                 var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
                 var seen = {};
                 facs.forEach(function(f) {
+                  var fpage = (f.members && f.members.length) ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) : '';
                   var ms = (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
                   var inner = '';
                   ms.forEach(function(m) {
@@ -3936,19 +3959,22 @@ class MainActivity : Activity() {
                     seen[m.name] = 1;
                     inner += fiHtml(isJa() && JA_NAMES[m.name] ? JA_NAMES[m.name] : m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name));
                   });
-                  if (inner) blocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>' + inner + '</div>';
+                  var fhead = fpage
+                    ? '<a class="tv-sm-fi tv-shl-hl" tabindex="0" data-go="' + esc(fpage) + '" href="' + esc(absUrl(fpage)) + '">' + esc(String(f.name).toUpperCase()) + '</a>'
+                    : '<div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>';
+                  if (inner || fpage) blocks += '<div class="tv-shl-blk">' + fhead + inner + '</div>';
                 });
               } catch (e) {}
               if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
               h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
             } else if (key === 'current') {
-              w = 880;
+              w = 900;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              h = '<div class="tv-shl-t">' + esc(T('CURRENT WRESTLERS', '現役選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>';
-            } else if (key === 'past') {
-              w = 880;
-              var rows = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              h = '<div class="tv-shl-t">' + esc(T('PAST WRESTLERS', '元所属選手')) + '</div><div style="column-count:4;column-gap:10px;">' + rowsHtml(rows) + '</div>';
+              var prow = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
+                '<div style="display:grid;grid-template-columns:3fr 1fr;gap:18px;">' +
+                '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
+                '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
             }
             else {
               var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
@@ -5333,9 +5359,15 @@ class MainActivity : Activity() {
     ['fc', 'd', 'Most favorited']
   ];
 
+  var PW = [];
+  try {
+    var pwd = (window.AndroidHost && AndroidHost.pastWrestlersJson) ? JSON.parse(AndroidHost.pastWrestlersJson()) : null;
+    PW = ((pwd && pwd.past) || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+  } catch (e) {}
   function wrestlerName(search) {
     var low = String(search || '').toLowerCase(), out = '';
     facs.forEach(function(f) { (f.members || []).forEach(function(m) { if (!out && String(m.search).toLowerCase() === low) out = m.name; }); });
+    PW.forEach(function(m) { if (!out && String(m.search).toLowerCase() === low) out = m.name; });
     return out;
   }
   function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
@@ -5627,6 +5659,24 @@ class MainActivity : Activity() {
         });
         cols.appendChild(col);
       });
+      if (PW.length) {
+        var pcol = document.createElement('div');
+        pcol.className = 'tv-fbcol';
+        var ph = document.createElement('div');
+        ph.className = 'tv-fbh';
+        ph.textContent = T('PAST WRESTLERS', '元所属選手');
+        pcol.appendChild(ph);
+        PW.forEach(function(m) {
+          var curP = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
+          var pit = item(m.name, curP, function() {
+            if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
+            else go({ co: m.search });
+          });
+          pcol.appendChild(pit);
+          if (curP) first = pit;
+        });
+        cols.appendChild(pcol);
+      }
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);
@@ -5821,6 +5871,10 @@ class MainActivity : Activity() {
     if (mount()) return;
     if (++tries < 25) setTimeout(tick, 400);
   })();
+  // Faction pages: put the filter bar back above the video grid if it is ever missing once the grid is there.
+  if (FAC_MODE) setInterval(function() {
+    if (!document.getElementById('tv-fb') && document.querySelector('#tv-fac-main #tv-fac-scroll')) { try { mount(); } catch (e) {} }
+  }, 1000);
 })();
     """.trimIndent()
 
