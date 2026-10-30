@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.1.3
+- Championships are grouped, in the menu and in the Championship filter: Stardom (IWGP Women's removed, Kawaii of Kawaii added, with Cutest of Cute results included), New Japan (IWGP Women's, STRONG Women's) and Other Promotions (AEW, CMLL, POP, Regina di WAVE, ROH, RPW, Sendai Girls).
+- For the short promotion names (AEW, CMLL, POP, ROH, RPW) the app removes search results whose title does not contain the name as a word. Other names for the same title are searched once and added to the list.
+
 ## 2.1.2
 - Brings together 2.1.0 (menu lists A to Z, faction names open their faction pages, version number under the language toggle) and 2.1.1 (match types).
 - Menu: no more red glow above and below the gold outline on the highlighted item.

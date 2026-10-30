@@ -1,0 +1,159 @@
+{
+ "_note": "Championships for the filter bar and the menu. search = the word sent to the site's keyword search; path = a site page that already lists it; all = patterns the title must contain; alts = other names searched once more and merged in.",
+ "groups": [
+  {
+   "name": "Stardom",
+   "ja": "スターダム",
+   "items": [
+    {
+     "id": "any",
+     "name": "Any championship match",
+     "ja": "すべての王座戦",
+     "search": "Championship"
+    },
+    {
+     "id": "artist",
+     "name": "Artist of Stardom",
+     "ja": "アーティスト・オブ・スターダム",
+     "search": "Artist of Stardom"
+    },
+    {
+     "id": "future",
+     "name": "Future of Stardom",
+     "ja": "フューチャー・オブ・スターダム",
+     "search": "Future of Stardom"
+    },
+    {
+     "id": "goddess",
+     "name": "Goddess of Stardom",
+     "ja": "ゴッデス・オブ・スターダム",
+     "search": "Goddess of Stardom"
+    },
+    {
+     "id": "highspeed",
+     "name": "High Speed",
+     "ja": "ハイスピード",
+     "search": "High-Speed Championship",
+     "path": "/contents/category/high_speed"
+    },
+    {
+     "id": "kawaii",
+     "name": "Kawaii of Kawaii",
+     "ja": "Kawaii of Kawaii",
+     "search": "Kawaii of Kawaii",
+     "alts": [
+      "Cutest of Cute"
+     ]
+    },
+    {
+     "id": "newblood",
+     "name": "NEW BLOOD Tag Team",
+     "ja": "NEW BLOOD タッグ",
+     "search": "NEW BLOOD"
+    },
+    {
+     "id": "wonder",
+     "name": "Wonder of Stardom",
+     "ja": "ワンダー・オブ・スターダム",
+     "search": "Wonder of Stardom",
+     "path": "/contents/category/wonder-sd"
+    },
+    {
+     "id": "world",
+     "name": "World of Stardom",
+     "ja": "ワールド・オブ・スターダム",
+     "search": "World of Stardom",
+     "path": "/contents/category/world-sd"
+    },
+    {
+     "id": "other",
+     "name": "Other title matches",
+     "ja": "その他のタイトルマッチ",
+     "search": "Title Match"
+    }
+   ]
+  },
+  {
+   "name": "New Japan",
+   "ja": "新日本プロレス",
+   "items": [
+    {
+     "id": "iwgp",
+     "name": "IWGP Women's",
+     "ja": "IWGP女子",
+     "search": "IWGP Women's",
+     "path": "/contents/category/iwgp"
+    },
+    {
+     "id": "strong",
+     "name": "STRONG Women's",
+     "ja": "STRONG女子",
+     "search": "STRONG Women's"
+    }
+   ]
+  },
+  {
+   "name": "Other Promotions",
+   "ja": "他団体",
+   "items": [
+    {
+     "id": "aew",
+     "name": "AEW",
+     "ja": "AEW",
+     "search": "AEW",
+     "all": [
+      "\\bAEW\\b"
+     ]
+    },
+    {
+     "id": "cmll",
+     "name": "CMLL",
+     "ja": "CMLL",
+     "search": "CMLL",
+     "all": [
+      "\\bCMLL\\b"
+     ]
+    },
+    {
+     "id": "pop",
+     "name": "POP",
+     "ja": "POP",
+     "search": "POP",
+     "all": [
+      "\\bPOP\\b"
+     ]
+    },
+    {
+     "id": "regina",
+     "name": "Regina di WAVE",
+     "ja": "Regina di WAVE",
+     "search": "Regina di WAVE"
+    },
+    {
+     "id": "roh",
+     "name": "ROH",
+     "ja": "ROH",
+     "search": "ROH",
+     "all": [
+      "\\bROH\\b"
+     ]
+    },
+    {
+     "id": "rpw",
+     "name": "RPW",
+     "ja": "RPW",
+     "search": "RPW",
+     "all": [
+      "\\bRPW\\b"
+     ]
+    },
+    {
+     "id": "sendai",
+     "name": "Sendai Girls",
+     "ja": "センダイガールズ",
+     "search": "Sendai Girls"
+    }
+   ]
+  }
+ ]
+}
