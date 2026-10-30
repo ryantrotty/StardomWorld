@@ -3666,6 +3666,10 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
+            '#tv-sm .tv-sm-acctgrp{border-top:1px solid #222b36;margin-top:8px;padding-top:8px;}',
+            '#tv-sm .tv-sm-acct{color:#F4C242 !important;}',
+            '#tv-sm .tv-sm-acl{display:flex;align-items:center;gap:12px;}',
+            '#tv-sm .tv-sm-acct .tv-sm-person{flex:0 0 auto;}',
             '#tv-sm .tv-sm-foot{position:relative;border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-ver{position:absolute;left:0;right:0;bottom:-19px;height:14px;line-height:14px;text-align:center;font-size:12px;color:#7d8794;pointer-events:none;}',
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
@@ -3763,30 +3767,22 @@ class MainActivity : Activity() {
             var h = '';
             h += '<div class="tv-sm-item tv-sm-search notranslate" translate="no" data-search="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa6b4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="tv-sm-formhost"></span><span class="tv-sm-mic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span></div>';
             h += '<div class="tv-sm-list"><div class="tv-sm-logorow"><div class="tv-sm-grp tv-sm-homegrp notranslate" translate="no"><a class="tv-sm-item tv-sm-home notranslate" translate="no" tabindex="0" ' + (shelfMode() ? 'data-shelf="home"' : 'data-go="/" data-homegrp="1"') + ' href="' + BASE + '/" aria-label="Home"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + chev() + '</a><div class="tv-sm-subs">' + (shelfMode() ? [] : homeList()).map(function(r) { return '<a class="tv-sm-item tv-sm-sub" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + esc(isJa() && r[2] ? r[2] : r[0]) + '</a>'; }).join('') + '</div></div></div>';
-            h += group(T('Shows', '番組'), showsList(), 'shows');
+            // A to Z by English name; the account (or Log in) is last, set apart by a divider.
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
-            if (matchTypeGroups().length) h += group(T('Match Types', '試合形式'), matchTypeRows(), 'matchtypes');
-            h += group(T('Years', '年別'), years, 'years');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
+            if (matchTypeGroups().length) h += group(T('Match Types', '試合形式'), matchTypeRows(), 'matchtypes');
+            h += group(T('Shows', '番組'), showsList(), 'shows');
             h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
-            if (signedIn()) h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
-            h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
+            h += group(T('Years', '年別'), years, 'years');
+            var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
               var links = acctLinks();
               window.__tvMenuAcct = links;
-              if (links.length) {
-                var an = acctName();
-                h += '<div class="tv-sm-grp"><div class="tv-sm-item" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span>' + chev() + '</div><div class="tv-sm-subs">';
-                (shelfMode() ? [] : links).forEach(function(l, i) {
-                  h += '<div class="tv-sm-item tv-sm-sub" tabindex="0" role="button" data-acctlink="' + i + '"><span data-orig="' + esc(l.label) + '">' + esc(xl(l.label)) + '</span></div>';
-                });
-                h += '</div></div>';
-              } else {
-                h += '<a class="tv-sm-item" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage"><span data-orig="' + esc(acctName()) + '">' + esc(xl(acctName())) + '</span></a>';
-              }
+              var an = acctName();
+              h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
             } else {
-              h += '<a class="tv-sm-item" tabindex="0" data-go="/login" href="' + BASE + '/login"><span>' + esc(T('Log in', 'ログイン')) + '</span></a>';
+              h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
             }
             h += '</div>';
             h += '<div class="tv-sm-foot notranslate" translate="no"><div class="tv-sm-item tv-sm-lang" tabindex="0" role="button" data-lang="1" aria-label="Language"><span class="' + (ja ? '' : 'tv-sm-on') + '">EN</span><span class="' + (ja ? 'tv-sm-on' : '') + '">\u65e5\u672c\u8a9e</span></div>' + appVerHtml();
@@ -4021,9 +4017,15 @@ class MainActivity : Activity() {
                 w = (key === 'champs' || key === 'home') ? 440 : 360;
                 var body = '';
                 if (key === 'acct') {
-                  (window.__tvMenuAcct || []).forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  var al = window.__tvMenuAcct || [];
+                  body = '<div class="tv-shl-h">' + esc(T('MY VIDEOS', 'マイビデオ')) + '</div>' + rowsHtml(MINE) +
+                    '<div class="tv-shl-h" style="margin-top:8px;">' + esc(T('COMMUNITY', 'みんなの動画')) + '</div>' + rowsHtml(COMMUNITY);
+                  if (al.length) {
+                    body += '<div class="tv-shl-h" style="margin-top:8px;">' + esc(T('ACCOUNT', 'アカウント')) + '</div>';
+                    al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  } else body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
-                h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
+                h = '<div class="tv-shl-t">' + esc(key === 'acct' ? acctName() : L[0]) + '</div><div>' + body + '</div>';
               }
             }
             return { html: h, width: w };
