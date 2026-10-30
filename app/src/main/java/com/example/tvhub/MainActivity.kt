@@ -3781,6 +3781,8 @@ class MainActivity : Activity() {
               window.__tvMenuAcct = links;
               var an = acctName();
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
+              h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
+              h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             } else {
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
             }
@@ -4018,12 +4020,8 @@ class MainActivity : Activity() {
                 var body = '';
                 if (key === 'acct') {
                   var al = window.__tvMenuAcct || [];
-                  body = '<div class="tv-shl-h">' + esc(T('MY VIDEOS', 'マイビデオ')) + '</div>' + rowsHtml(MINE) +
-                    '<div class="tv-shl-h" style="margin-top:8px;">' + esc(T('COMMUNITY', 'みんなの動画')) + '</div>' + rowsHtml(COMMUNITY);
-                  if (al.length) {
-                    body += '<div class="tv-shl-h" style="margin-top:8px;">' + esc(T('ACCOUNT', 'アカウント')) + '</div>';
-                    al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
-                  } else body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
+                  al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
                 h = '<div class="tv-shl-t">' + esc(key === 'acct' ? acctName() : L[0]) + '</div><div>' + body + '</div>';
               }

@@ -4,7 +4,7 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 ## 2.1.5
 - Menu is in alphabetical order: Championships, Factions, Match Types, Shows, Wrestlers, Years. A divider then sets the account link apart as the last item, with a gold person icon.
-- My Videos and Community moved into the account menu (opens from your account name). When signed out, the menu shows only "Log in" and neither appears.
+- My Videos and Community now sit below the account name (still their own menu items). When signed out, the menu shows only "Log in" and neither appears.
 
 ## 2.1.4
 - Special rules match type: Rumble added (list sorted A to Z).
