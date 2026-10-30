@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.1.1
+- More specific match types, in the Match type filter and in a new Match Types entry in the menu, both laid out as a shelf with headings: Singles & tags, 3-Way, 4-Way, 5-Way & 6-Way, Multi-person and Special rules.
+- 3-Way and 4-Way are split into Battle, Tag Battle (Tag Team matches included) and Trios, and each shows only its own videos. The site's search finds the shared words, so the app takes out titles that do not belong, including pages added as you scroll.
+- New: 5-Way (5Way and Five Way included), 6-Way, Ladder, Gauntlet and High Speed. 8-person now includes 8-man videos.
+- Other spellings (5Way, Five Way, 6Way, Six Way, 8-man) are searched once each, one after the other (1.3 s apart), and added to the list.
+- Choosing a filter from a page opened by the menu no longer repeats the menu's own search word in the keyword.
+
 ## 2.0.9
 - Same as 2.0.7 (video starts quickly, keeps your place, video row on set pages, focus recovery) with the temporary on-screen player line turned off.
 

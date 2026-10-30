@@ -1,0 +1,202 @@
+{
+ "_note": "Match types for the filter bar and the menu. search = the word sent to the site's keyword search; all = patterns the title must contain; none = patterns it must not contain; alts = other spellings searched once more and merged in.",
+ "groups": [
+  {
+   "name": "Singles & tags",
+   "ja": "シングル・タッグ",
+   "items": [
+    {
+     "id": "single",
+     "name": "Single match",
+     "ja": "シングルマッチ",
+     "search": "Single Match"
+    },
+    {
+     "id": "tag",
+     "name": "Tag team",
+     "ja": "タッグマッチ",
+     "search": "Tag Team"
+    }
+   ]
+  },
+  {
+   "name": "3-Way",
+   "ja": "3WAY",
+   "items": [
+    {
+     "id": "way3",
+     "name": "3-Way Battle",
+     "ja": "3WAYバトル",
+     "search": "3-Way",
+     "all": [
+      "(?:3|three|３)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "none": [
+      "tag|タッグ",
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way3tag",
+     "name": "3-Way Tag Battle",
+     "ja": "3WAYタッグバトル",
+     "search": "3-Way",
+     "all": [
+      "(?:3|three|３)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "tag|タッグ"
+     ],
+     "none": [
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way3trio",
+     "name": "3-Way Trios",
+     "ja": "3WAYトリオバトル",
+     "search": "3-Way",
+     "all": [
+      "(?:3|three|３)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "trio|トリオ"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "4-Way",
+   "ja": "4WAY",
+   "items": [
+    {
+     "id": "way4",
+     "name": "4-Way Battle",
+     "ja": "4WAYバトル",
+     "search": "4-Way",
+     "all": [
+      "(?:4|four|４)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "none": [
+      "tag|タッグ",
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way4tag",
+     "name": "4-Way Tag Battle",
+     "ja": "4WAYタッグバトル",
+     "search": "4-Way",
+     "all": [
+      "(?:4|four|４)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "tag|タッグ"
+     ],
+     "none": [
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way4trio",
+     "name": "4-Way Trios",
+     "ja": "4WAYトリオバトル",
+     "search": "4-Way",
+     "all": [
+      "(?:4|four|４)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "trio|トリオ"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "5-Way & 6-Way",
+   "ja": "5WAY・6WAY",
+   "items": [
+    {
+     "id": "way5",
+     "name": "5-Way",
+     "ja": "5WAY",
+     "search": "5-Way",
+     "all": [
+      "(?:5|five|５)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "alts": [
+      "5Way",
+      "Five Way"
+     ]
+    },
+    {
+     "id": "way6",
+     "name": "6-Way",
+     "ja": "6WAY",
+     "search": "6-Way",
+     "all": [
+      "(?:6|six|６)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "alts": [
+      "6Way",
+      "Six Way"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Multi-person",
+   "ja": "多人数",
+   "items": [
+    {
+     "id": "six",
+     "name": "6-person",
+     "ja": "6人タッグ",
+     "search": "6-person"
+    },
+    {
+     "id": "eight",
+     "name": "8-person",
+     "ja": "8人タッグ",
+     "search": "8-person",
+     "all": [
+      "8[\\s\\-‐]*(?:person|man|men)|8人"
+     ],
+     "alts": [
+      "8-man"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Special rules",
+   "ja": "特殊ルール",
+   "items": [
+    {
+     "id": "royal",
+     "name": "Battle royal",
+     "ja": "バトルロイヤル",
+     "search": "Battle Royal"
+    },
+    {
+     "id": "cage",
+     "name": "Cage match",
+     "ja": "ケージマッチ",
+     "search": "Cage Match"
+    },
+    {
+     "id": "ladder",
+     "name": "Ladder",
+     "ja": "ラダーマッチ",
+     "search": "Ladder"
+    },
+    {
+     "id": "gauntlet",
+     "name": "Gauntlet",
+     "ja": "ガントレット",
+     "search": "Gauntlet"
+    },
+    {
+     "id": "highspeed",
+     "name": "High Speed",
+     "ja": "ハイスピード",
+     "search": "High Speed",
+     "all": [
+      "high[\\s\\-‐]*speed|ハイスピード"
+     ]
+    }
+   ]
+  }
+ ]
+}
