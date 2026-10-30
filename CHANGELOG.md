@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.1.0
+- Menu, Shows: listed A to Z like the Show filter's drop-down (All tournaments stays on top), reading down each column.
+- Menu, Championships: same order as the Championship filter (Any championship match, then A to Z, Other title matches last).
+- Menu, Factions: each faction's name is now a link to its faction page.
+- Faction pages: if the filter bar is ever missing above the video grid, it is put back.
+- A small grey version number sits under the language toggle in the menu, in the space that was already there.
+
 ## 2.0.9
 - Same as 2.0.7 (video starts quickly, keeps your place, video row on set pages, focus recovery) with the temporary on-screen player line turned off.
 
