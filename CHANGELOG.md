@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.7
+- Shows menu: the Remind me and Details buttons (and the show rows and bells) get the gold focus outline again.
+
 ## 2.2.6
 - Event page: the match card has no title and sits higher, with slightly tighter boxes, so the last row is no longer cut off.
 
