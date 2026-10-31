@@ -3807,10 +3807,16 @@ class MainActivity : Activity() {
           function matchCardHtml(e) {
             var ms = e.matches;
             if (!ms || !ms.length) return '';
+            var priv = false;
+            try { priv = !!(AndroidHost.showPosters && AndroidHost.showPosters()); } catch (x) {}
             return '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('MATCH CARD', '対戦カード')) + '</div><div class="tv-ev-mc">' +
               ms.map(function(m) {
-                var sides = (m.sides || []).map(function(x) { return esc(x); }).join(' <span class="tv-ev-vs">vs</span> ');
-                return '<div class="tv-ev-m"><div class="tv-ev-mt">' + esc(m.type || '') + '</div><div class="tv-ev-ms">' + sides + '</div></div>';
+                var ja = isJa() && m.sides_ja && m.sides_ja.length === (m.sides || []).length;
+                var list = ja ? m.sides_ja : (m.sides || []);
+                var sep = ' <span class="tv-ev-vs">vs</span> ';
+                // Private build: one line break per match, after the first vs (Name vs / Name vs Name).
+                var sides = list.map(function(x) { return esc(x); }).map(function(x, i, a) { return i === 0 ? x : (i === 1 && priv ? ' <span class="tv-ev-vs">vs</span><br>' : sep) + x; }).join('');
+                return '<div class="tv-ev-m"><div class="tv-ev-mt">' + esc(isJa() && m.type_ja ? m.type_ja : (m.type || '')) + '</div><div class="tv-ev-ms">' + sides + '</div></div>';
               }).join('') + '</div>';
           }
           function evOpen(id) {
@@ -3861,11 +3867,11 @@ class MainActivity : Activity() {
           }
           function evHalt(e) { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
           window.addEventListener('keydown', function(e) {
-            if (!evEl) return;
+            if (!evEl || isOpen) return;   // while the menu is open on top, the menu handles the keys
             var k = e.keyCode, bs = Array.prototype.slice.call(evEl.querySelectorAll('.tv-ev-b')), cur = document.activeElement, i = bs.indexOf(cur);
             evHalt(e);
             if (k === 27 || k === 4 || k === 8) { evClose(); return; }
-            if (k === 37 && i <= 0) { evClose(); openMenu(); return; }
+            if (k === 37 && i <= 0) { openMenu(); return; }   // the menu opens over this page, which stays underneath
             if (k === 37 || k === 38) { if (bs.length) { var a = bs[Math.max(0, i - 1)]; a.focus(); } return; }
             if (k === 39 || k === 40) { if (bs.length) { var b2 = bs[Math.min(bs.length - 1, i + 1)]; b2.focus(); } return; }
             if ((k === 13 || k === 23 || k === 32) && i >= 0) evPick(cur);
@@ -4124,6 +4130,9 @@ class MainActivity : Activity() {
             '#tv-ev, #tv-ev *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-ev .tv-ev-top{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
             'html.tv-ev-open #tv-sm-tab{z-index:2147483001;}',
+            'html.tv-ev-open #tv-sm-scrim{z-index:2147483001;}',
+            'html.tv-ev-open #tv-sm{z-index:2147483002;}',
+            'html.tv-ev-open #tv-sm-shelf{z-index:2147483003;}',
             '#tv-ev .tv-ev-tx{flex:1 1 0;min-width:0;padding:4vh 3vw;display:flex;flex-direction:column;gap:12px;overflow:hidden;}',
             '#tv-ev .tv-ev-tag{display:flex;gap:10px;align-items:center;font-size:14px;color:#9aa6b4;}',
             '#tv-ev .tv-ev-h{font-size:30px;font-weight:700;line-height:1.15;}',
@@ -4376,7 +4385,7 @@ class MainActivity : Activity() {
             isOpen = false;
             unmountSearch();
             document.documentElement.classList.remove('tv-sm-open');
-            setNativeFlag(false);
+            setNativeFlag(!!evEl);   // an open event page still wants Back
             try { if (document.activeElement && panel && panel.contains(document.activeElement)) document.activeElement.blur(); } catch (e) {}
             var back = prevFocus;
             if (back && back.isConnected) {
@@ -4384,7 +4393,7 @@ class MainActivity : Activity() {
             }
             return true;
           }
-          window.__tvMenuClose = function() { if (evEl) { evClose(); return true; } if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
+          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } if (isOpen) { closeMenu(); return true; } if (evEl) { evClose(); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
           // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
           (function() {

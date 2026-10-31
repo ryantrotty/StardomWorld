@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.4
+- Event page: the menu now opens over the show page and Back closes only the menu, so you stay on the show.
+- Match card: wrestler names come from the site's English fighter list (the card itself shows machine-romanised names), and the daily job also reads the Japanese card for kanji names and match types, used when the app is in Japanese.
+- Match card (private build only): one line break per match, after the first "vs".
+
 ## 2.2.3
 - Event page: an "UPCOMING SHOW" header, the title now wraps on whole words, and the menu tab shows on the left like other pages.
 - Event page: the match card is two columns so it fits without scrolling. The first show (Nov 1) has its card bundled with the app; the daily job reads the rest from each show's Matchups page and keeps team mates together.

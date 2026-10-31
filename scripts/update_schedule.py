@@ -6,7 +6,7 @@ yet have a start time (or all of them with --full). Requests are spaced 1.5 s ap
 time (+09:00). Anything the page doesn't give is kept from the previous file, so a layout change can only stop
 updates, never wipe the list. Exits with an error (so the job turns red) when the month pages show no events.
 """
-import argparse, datetime, html, json, re, sys, time, urllib.request
+import argparse, datetime, html, json, re, sys, time, urllib.parse, urllib.request
 
 BASE = "https://wwr-stardom.com"
 UA = "StardomWorldTVApp-schedule/1.0 (unofficial fan app; once a day; contact via GitHub ryantrotty/StardomWorld)"
@@ -89,18 +89,44 @@ def _clean(x):
     return re.sub(r"\s+", " ", x).strip()
 
 
-def _side_names(seg):
-    """One side of a match -> "A & B". Prefers the list items (one per wrestler), else the links, else the plain text."""
-    names = [_clean(m) for m in re.findall(r"(?is)<li[^>]*>(.*?)</li>", seg)]
-    if not any(names):
-        names = [_clean(m) for m in re.findall(r"(?is)<a[^>]*>(.*?)</a>", seg)]
-    names = [re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", n).strip(" ,&") for n in names if n]
+def _tidy(name):
+    """Roster names sometimes repeat a word or SHOUT a surname: 'HANAKO HANAKO' -> 'HANAKO', 'SAYA KAMITANI' -> 'Saya Kamitani'."""
+    w = name.split()
+    w = [x for i, x in enumerate(w) if i == 0 or x.lower() != w[i - 1].lower()]
+    if len(w) > 1:
+        w = [x.title() if x.isupper() and len(x) > 1 else x for x in w]
+    return " ".join(w)
+
+
+def parse_roster(page):
+    """English fighters page -> {slug: name}. The match card shows machine-romanised names; the fighter list has the real ones."""
+    out = {}
+    for m in re.finditer(r'(?is)<a[^>]+href="[^"]*/fighters/([^/"]+)/?"[^>]*>(.*?)</a>', page):
+        slug = urllib.parse.unquote(m.group(1))
+        nm = _clean(m.group(2)) or _clean(" ".join(re.findall(r'(?i)alt="([^"]*)"', m.group(2))))
+        if nm and slug not in out:
+            out[slug] = _tidy(nm)
+    return out
+
+
+def _side_names(seg, roster=None):
+    """One side of a match -> "A & B". One name per list item; real names come from the roster by link, else the shown text."""
+    items = re.findall(r"(?is)<li[^>]*>(.*?)</li>", seg) or re.findall(r"(?is)<a[^>]*>.*?</a>", seg)
+    names = []
+    for it in items:
+        nm = _clean(it)
+        mm = re.search(r'href="[^"]*/fighters/([^/"]+)/?"', it)
+        if roster and mm:
+            nm = roster.get(urllib.parse.unquote(mm.group(1)), nm)
+        nm = re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", nm).strip(" ,&")
+        if nm:
+            names.append(nm)
     if not names:
         names = [re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", _clean(seg)).strip(" ,&")]
     return " & ".join(n for n in names if n)[:160]
 
 
-def parse_matches(page):
+def parse_matches(page, roster=None):
     """Match card page -> [{"type": "Tag Match", "sides": ["A & B", "C & D"]}]. Text only (no photos).
     Layout on the site: a heading with the match type, then one list of names per side with a "VS" between them.
     The sides are split at the VS marker in the HTML so that team mates stay together."""
@@ -116,11 +142,36 @@ def parse_matches(page):
             segs = re.split(r"(?i)\s+vs\.?\s+", body)
         if not head or len(segs) < 2:
             continue
-        sides = [_side_names(x) for x in segs]
+        sides = [_side_names(x, roster) for x in segs]
         sides = [x for x in sides if x]
         if len(sides) >= 2:
             out.append({"type": head[:80], "sides": sides[:4]})
     return out[:14]
+
+
+_roster = None
+
+
+def matches_for(url):
+    """English card with real names, plus the Japanese card (kanji names and headings) when it can be read."""
+    global _roster
+    if _roster is None:
+        try:
+            _roster = parse_roster(get(BASE + "/en/fighters/"))
+        except Exception as ex:
+            print("no roster", ex)
+            _roster = {}
+    ms = parse_matches(get(url), _roster)
+    if ms:
+        try:
+            jm = parse_matches(get(url.replace("/en/event/", "/event/")))
+            if len(jm) == len(ms) and all(len(a["sides"]) == len(b["sides"]) for a, b in zip(ms, jm)):
+                for a, b in zip(ms, jm):
+                    a["type_ja"] = b["type"]
+                    a["sides_ja"] = b["sides"]
+        except Exception as ex:
+            print("no Japanese card", ex)
+    return ms
 
 
 def main():
@@ -179,7 +230,7 @@ def main():
             posters.setdefault(eid[:6], info["poster"])
         if info.get("matchurl") and (soon or not e.get("matches")):
             try:
-                ms = parse_matches(get(info["matchurl"]))
+                ms = matches_for(info["matchurl"])
                 if ms:
                     e["matches"] = ms
             except Exception as ex:
