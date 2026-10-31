@@ -4296,13 +4296,13 @@ class MainActivity : Activity() {
             h += showsRow;
             h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
             h += group(T('Years', '年別'), years, 'years');
-            h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               var an = acctName();
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
+              h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
               h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             } else {
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
@@ -5730,13 +5730,13 @@ class MainActivity : Activity() {
     '#tv-rp, #tv-rp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-rp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 40px 12px 40px;font-size:36px;}',
     '#tv-rp-title .tv-rp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
-    '#tv-rp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 40px 40px;scrollbar-width:none;}',
+    '#tv-rp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 60px 40px;scroll-padding-bottom:40px;scrollbar-width:none;}',
     '#tv-rp-scroll::-webkit-scrollbar{display:none;}',
     '#tv-rp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
-    '#tv-rp .tv-rc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
-    '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
-    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
-    '#tv-rp .tv-rc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-rp .tv-rc{display:block;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#1a1a1a;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:none !important;}',
+    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
+    '#tv-rp .tv-rc-t{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;box-sizing:border-box;}',
     '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);

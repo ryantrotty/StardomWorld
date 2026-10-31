@@ -437,7 +437,7 @@
     '#tv-fp, #tv-fp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;box-sizing:border-box;}',
     '#tv-fp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 24px 8px 30px;font-size:36px;}',
     '#tv-fp-title .tv-fp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
-    '#tv-fp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 24px 30px 24px;scrollbar-width:none;}',
+    '#tv-fp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 24px 60px 24px;scroll-padding-bottom:40px;scrollbar-width:none;}',
     '#tv-fp-in{max-width:1440px;margin:0 auto;}',
     '#tv-fp-scroll::-webkit-scrollbar{display:none;}',
     '.tv-fp-h{display:flex;align-items:baseline;gap:12px;margin:18px 0 8px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
@@ -447,7 +447,7 @@
     '.tv-fp-grid{display:grid;gap:24px;padding:6px;}',
     '.tv-fp-grid .tv-fp-t{flex:none;max-width:none;}',
     '.tv-fp-t{display:block;position:relative;flex:0 0 calc(25% - 18px);max-width:calc(25% - 18px);min-width:0;text-decoration:none !important;color:#fff !important;border-radius:8px;background:#1a1a1a;overflow:hidden;border:3px solid transparent;outline:none !important;cursor:pointer;}',
-    '.tv-fp-t:focus, .tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:0 0 0 3px rgba(244,194,66,.35) !important;}',
+    '.tv-fp-t:focus, .tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
     '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
     '.tv-fp-badge{position:absolute;right:8px;top:8px;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,.8);color:#F4C242;font-size:15px;font-weight:800;}',
     '.tv-fp-tt{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;}',
@@ -470,7 +470,7 @@
     '.tv-fp-tk .a{font-size:13px;font-weight:800;color:#7a5a36;letter-spacing:.5px;}',
     '.tv-fp-tk .b{font-size:23px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '.tv-fp-tk .c{font-size:14px;color:#7a5a36;}',
-    '#tv-fp-hint{flex:0 0 auto;padding:8px 40px 12px 40px;font-size:16px;color:#9aa6b4;min-height:40px;border-top:1px solid #1d2630;}'
+    '#tv-fp-hint{margin-left:auto;font-size:16px;font-weight:600;color:#9aa6b4;text-align:right;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
 
@@ -564,7 +564,7 @@
       title = T('Favorite Wrestlers', 'お気に入り選手');
       body += d.w.length ? '<div class="tv-fp-grid" style="grid-template-columns:repeat(6,minmax(0,1fr));">' + d.w.map(cardHtml).join('') + '</div>' : emptyHtml(T('No favorite wrestlers yet.', 'まだありません'));
     }
-    root.innerHTML = '<div id="tv-fp-title"><span class="tv-fp-bar"></span><span>' + esc(title) + '</span></div><div id="tv-fp-scroll"><div id="tv-fp-in">' + body + '</div></div><div id="tv-fp-hint"></div>';
+    root.innerHTML = '<div id="tv-fp-title"><span class="tv-fp-bar"></span><span>' + esc(title) + '</span><span id="tv-fp-hint"></span></div><div id="tv-fp-scroll"><div id="tv-fp-in">' + body + '</div></div>';
     sc = root.querySelector('#tv-fp-scroll');
     if (keep && sc) sc.scrollTop = pscroll;
     var all = focusables(), target = null;

@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.4.1
+- Menu: My Favorites sits under the account name and shows only when signed in.
+- My Favorites page: the bottom hint bar is gone (the hint is at the top right), so the last row is no longer covered, and there is more room below it.
+- Recently Watched page: tiles now use the home page card style (size, font, four-line titles) and are no longer cut off at the bottom.
+- Focus: one gold ring around a highlighted tile (the second, glowing ring is gone).
+
 ## 2.4.0
 - My Favorites: video tiles now match the home page (same size, font and four-line titles), and the last row is no longer cut off at the bottom of the overview and sub pages.
 - Factions menu: just the faction names in one short list (no scrolling). Menu button on a name picks your one favorite faction; wrestlers are added from the Wrestlers list.
