@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.0
+- Schedule: the Shows menu now has two sides. Upcoming Shows (left) has a Next Live tile and the four shows after it, each with a bell; Past Shows (right) has All Shows and the shows list in two columns. A gold "NEXT 1D 3H" pill sits next to Shows in the main menu.
+- Times are shown in your device's time zone, with the Japan time (JST) beside them.
+- Event page: opens from a tile or row. Pick a reminder (15 minutes before, at start, 1 hour before, day before); press the same one again to clear it.
+- Reminders show as a toast at the top right while the app is open.
+- Home page: the Next Live tile is the first card of the first row.
+- Loading screen between pages: an "Up next" line along the bottom when the next show is within 7 days (not on the launch splash).
+- Poster art is only fetched and shown in builds that have the private branding folder; public builds show text only.
+- The list comes from assets/schedule.json and is refreshed at most every six hours from the schedule-data branch, which a daily GitHub job (scripts/update_schedule.py) keeps up to date.
+
 ## 2.1.5
 - Menu is in alphabetical order: Championships, Factions, Match Types, Shows, Wrestlers, Years. A divider then sets the account link apart as the last item, with a gold person icon.
 - My Videos and Community now sit below the account name (still their own menu items). When signed out, the menu shows only "Log in" and neither appears.
