@@ -1,0 +1,318 @@
+{
+ "updated": "2026-10-31T07:00:52Z",
+ "note": "Times are Japan time (+09:00). own = a Stardom show.",
+ "posters": {
+  "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+  "202612": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg"
+ },
+ "events": [
+  {
+   "id": "20261101-korakuen",
+   "title": "The 16th Goddesses of Stardom - Tag League Opening Match",
+   "short": "Tag League Opening Match",
+   "venue": "Korakuen Hall, Tokyo",
+   "start": "2026-11-01T11:30:00+09:00",
+   "doors": "2026-11-01T10:45:00+09:00",
+   "fc": "2026-11-01T10:30:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261101-korakuen/",
+   "poster": "202611",
+   "own": true,
+   "matches": [
+    {
+     "type": "Red Goddess Official Tournament",
+     "sides": [
+      "Hanan & Waka Tsukiyama",
+      "Kikyo Furusawa & Kiyoka Kotatsu"
+     ],
+     "type_ja": "レッドゴッデス公式戦",
+     "sides_ja": [
+      "羽南 & 月山和香",
+      "古沢稀杏 & 虎龍清花"
+     ]
+    },
+    {
+     "type": "Red Goddess Official Tournament",
+     "sides": [
+      "Sakura Aya & Sayaka Kurara",
+      "Saori Anou & Fuwa-chan"
+     ],
+     "type_ja": "レッドゴッデス公式戦",
+     "sides_ja": [
+      "さくらあや & 玖麗さやか",
+      "安納サオリ & フワちゃん"
+     ]
+    },
+    {
+     "type": "Red Goddess Official Tournament",
+     "sides": [
+      "Mei Seira & Ema Maishima",
+      "Starlight Kid & Maki Ito"
+     ],
+     "type_ja": "レッドゴッデス公式戦",
+     "sides_ja": [
+      "星来芽依 & 儛島エマ",
+      "スターライト・キッド & 伊藤麻希"
+     ]
+    },
+    {
+     "type": "Red Goddess Official Tournament",
+     "sides": [
+      "Maika & HANAKO",
+      "Momo Watanabe & Saya Kamitani"
+     ],
+     "type_ja": "レッドゴッデス公式戦",
+     "sides_ja": [
+      "舞華 & HANAKO",
+      "渡辺桃 & 上谷沙弥"
+     ]
+    },
+    {
+     "type": "Blue Goddess Official Tournament",
+     "sides": [
+      "Saya Iida & Utami Hayashishita",
+      "Dark Silueta (CMLL) & Valkyria (CMLL)"
+     ],
+     "type_ja": "ブルーゴッデス公式戦",
+     "sides_ja": [
+      "飯田沙耶 & 林下詩美",
+      "ダーク・シルエタ（CMLL） & バルキリア(CMLL)"
+     ]
+    },
+    {
+     "type": "Blue Goddess Official Tournament",
+     "sides": [
+      "Suzuki & Rina Yamashita",
+      "Natsuko Toura & RUAKA"
+     ],
+     "type_ja": "ブルーゴッデス公式戦",
+     "sides_ja": [
+      "鈴季すず & 山下りな",
+      "刀羅ナツコ & 琉悪夏"
+     ]
+    },
+    {
+     "type": "Blue Goddess Official Tournament",
+     "sides": [
+      "Hina & Lady C",
+      "Ranna Yagami & Iron Akira"
+     ],
+     "type_ja": "ブルーゴッデス公式戦",
+     "sides_ja": [
+      "妃南 & レディ・Ｃ",
+      "八神蘭奈 & 鉄アキラ"
+     ]
+    },
+    {
+     "type": "Single Match",
+     "sides": [
+      "Yuna Mizumori",
+      "Anne Kanaya"
+     ]
+    },
+    {
+     "type": "6-person tag match",
+     "sides": [
+      "Hazuki & RIAN & Matoi Hamabe",
+      "Konami & RINA & Bea Priestley"
+     ]
+    },
+    {
+     "type": "3WAY Battle",
+     "sides": [
+      "Natsupoi",
+      "Koguma",
+      "Hime Yuria"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "20261103-numazu",
+   "title": "The 16th Goddesses of Stardom Tag League Tournament in NUMAZU",
+   "short": "Tag League in Numazu",
+   "venue": "Kiramesse Numazu, Shizuoka",
+   "start": "2026-11-03T13:00:00+09:00",
+   "doors": "2026-11-03T12:15:00+09:00",
+   "fc": "2026-11-03T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261103-numazu/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261104-gxw",
+   "own": true,
+   "url": "https://wwr-stardom.com/en/schedule/20261104-gxw/",
+   "poster": "202611",
+   "title": "GXW DOJO ~You can't go home until you win 10 matches~",
+   "short": "GXW DOJO ~You can't go home until you win 10 matches~",
+   "start": "2026-11-04T19:00:00+09:00"
+  },
+  {
+   "id": "20261106-senjo",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261106-senjo/",
+   "poster": "202611",
+   "title": "[Participation from another organization] Sendai Girls",
+   "short": "[Participation from another organization] Sendai Girls",
+   "start": "2026-11-06T19:00:00+09:00"
+  },
+  {
+   "id": "20261107-event",
+   "own": true,
+   "url": "https://wwr-stardom.com/en/schedule/20261107-event/",
+   "poster": "202611",
+   "title": "Kozuen♡Maid Cafe ~The fighting angels are maids today~",
+   "short": "Kozuen♡Maid Cafe ~The fighting angels are maids today~",
+   "start": "2026-11-07T13:00:00+09:00",
+   "fc": "2026-11-07T12:00:00+09:00"
+  },
+  {
+   "id": "20261108-takasaki",
+   "title": "Tag League in Takasaki",
+   "short": "Tag League in Takasaki",
+   "venue": "G Messe Gunma, Takasaki",
+   "start": "2026-11-08T13:00:00+09:00",
+   "doors": "2026-11-08T12:15:00+09:00",
+   "fc": "2026-11-08T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261108-takasaki/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261111-korakuen",
+   "title": "Tag League KORAKUEN vol.1",
+   "short": "Tag League KORAKUEN vol.1",
+   "venue": "Korakuen Hall, Tokyo",
+   "start": "2026-11-11T18:30:00+09:00",
+   "doors": "2026-11-11T17:40:00+09:00",
+   "fc": "2026-11-11T17:30:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261111-korakuen/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261114-matsuyama",
+   "title": "Tag League Matsuyama-Ehime",
+   "short": "Tag League Matsuyama-Ehime",
+   "venue": "Item Ehime, Matsuyama",
+   "start": "2026-11-14T17:00:00+09:00",
+   "doors": "2026-11-14T16:15:00+09:00",
+   "fc": "2026-11-14T16:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261114-matsuyama/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261115-kochi",
+   "title": "Tag League Kochi",
+   "short": "Tag League Kochi",
+   "venue": "CHRES Cerise Gymnasium, Kochi",
+   "start": "2026-11-15T16:00:00+09:00",
+   "doors": "2026-11-15T15:15:00+09:00",
+   "fc": "2026-11-15T15:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261115-kochi/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261118-korakuen",
+   "title": "Tag League KORAKUEN vol.2",
+   "short": "Tag League KORAKUEN vol.2",
+   "venue": "Korakuen Hall, Tokyo",
+   "start": "2026-11-18T18:30:00+09:00",
+   "doors": "2026-11-18T17:40:00+09:00",
+   "fc": "2026-11-18T17:30:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261118-korakuen/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261121-akita",
+   "title": "Tag League Akita",
+   "short": "Tag League Akita",
+   "venue": "Akita Terrsa, Akita",
+   "start": "2026-11-21T13:00:00+09:00",
+   "doors": "2026-11-21T12:15:00+09:00",
+   "fc": "2026-11-21T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261121-akita/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261122-fukushima",
+   "title": "Tag League Fukushima",
+   "short": "Tag League Fukushima",
+   "venue": "Fukushima Toyota Crown Arena",
+   "start": "2026-11-22T13:00:00+09:00",
+   "doors": "2026-11-22T12:15:00+09:00",
+   "fc": "2026-11-22T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261122-fukushima/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261123-koriyama",
+   "title": "Tag League Koriyama",
+   "short": "Tag League Koriyama",
+   "venue": "Big Palette Fukushima, Koriyama",
+   "start": "2026-11-23T13:00:00+09:00",
+   "doors": "2026-11-23T12:15:00+09:00",
+   "fc": "2026-11-23T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261123-koriyama/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261126-ppp",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261126-ppp/",
+   "poster": "202611",
+   "title": "[Participation from another organization] PPP TOKYO",
+   "short": "[Participation from another organization] PPP TOKYO",
+   "start": "2026-11-26T18:30:00+09:00"
+  },
+  {
+   "id": "20261128-okazaki",
+   "title": "Tag League Okazaki",
+   "short": "Tag League Okazaki",
+   "venue": "Okazaki City Gymnasium, Aichi",
+   "start": "2026-11-28T13:00:00+09:00",
+   "doors": "2026-11-28T12:15:00+09:00",
+   "fc": "2026-11-28T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261128-okazaki/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261129-hamamatsu",
+   "title": "Tag League Championship Match",
+   "short": "Tag League Championship Match",
+   "venue": "Hamamatsu Industrial Exhibition Hall, Shizuoka",
+   "start": "2026-11-29T13:00:00+09:00",
+   "doors": "2026-11-29T12:15:00+09:00",
+   "fc": "2026-11-29T12:00:00+09:00",
+   "url": "https://wwr-stardom.com/en/schedule/20261129-hamamatsu/",
+   "poster": "202611",
+   "own": true
+  },
+  {
+   "id": "20261204-ryukyu",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261204-ryukyu/",
+   "poster": "202612",
+   "title": "[Other organizations participating] Ryukyu Dragon \"Ryukyu Dragon Champloo 2026\"",
+   "short": "[Other organizations participating] Ryukyu Dragon \"Ryukyu Dragon Champloo 2026\"",
+   "start": "2026-12-04T19:00:00+09:00"
+  },
+  {
+   "id": "20261205-himeji",
+   "own": true,
+   "url": "https://wwr-stardom.com/en/schedule/20261205-himeji/",
+   "poster": "202612",
+   "title": "STARDOM in HIMEJI 2026 Dec.",
+   "short": "STARDOM in HIMEJI 2026 Dec.",
+   "start": "2026-12-05T13:00:00+09:00",
+   "fc": "2026-12-05T12:00:00+09:00"
+  }
+ ]
+}
