@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.6.1
+- My Favorites menu panel: "Open My Favorites" only shows the gold highlight when it is the highlighted row, and rows that were opened before (such as Wrestlers) are no longer drawn dim. Visited links on the My Favorites pages are kept at full brightness too.
+
 ## 2.6.0
 - Playlists can be named: "+ New playlist" (from a video's Add to a Playlist list) asks for a name with a text box that opens the TV keyboard, suggesting "Playlist 1, 2, ..." which you can keep. Press OK on the box to type; Enter saves once you have typed, or move Down to Save.
 - Rename a playlist: Menu button on its tile on the My Favorites page opens Rename playlist and Remove playlist.
