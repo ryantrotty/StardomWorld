@@ -163,14 +163,29 @@ def matches_for(url):
             _roster = {}
     ms = parse_matches(get(url), _roster)
     if ms:
-        try:
-            jm = parse_matches(get(url.replace("/en/event/", "/event/")))
-            if len(jm) == len(ms) and all(len(a["sides"]) == len(b["sides"]) for a, b in zip(ms, jm)):
-                for a, b in zip(ms, jm):
+        # Japanese page: no /en/, and an underscore after the date (…/en/event/20261101-korakuen/ -> …/event/20261101_korakuen/).
+        # Later dashes ("korakuen-2") are tried both ways because only the first pattern is confirmed.
+        slug = url.rstrip("/").rsplit("/", 1)[-1]
+        cands = []
+        for sl in (slug.replace("-", "_", 1), slug.replace("-", "_")):
+            if sl not in cands:
+                cands.append(sl)
+        for sl in cands:
+            try:
+                jm = parse_matches(get(BASE + "/event/" + sl + "/"))
+            except Exception as ex:
+                print("no Japanese card at", sl, ex)
+                continue
+            # The Japanese page can list fewer matches than the English one, so pair them in order and only
+            # use a Japanese entry where the number of sides agrees.
+            used = 0
+            for a, b in zip(ms, jm):
+                if len(a["sides"]) == len(b["sides"]):
                     a["type_ja"] = b["type"]
                     a["sides_ja"] = b["sides"]
-        except Exception as ex:
-            print("no Japanese card", ex)
+                    used += 1
+            if used:
+                break
     return ms
 
 

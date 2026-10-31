@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.5
+- Match card: the Japanese card is read from the Japanese page (no /en/, underscore after the date, e.g. /event/20261101_korakuen/). Where that page lists fewer matches, the rest show in English. The Nov 1 card now has its Japanese names bundled.
+
 ## 2.2.4
 - Event page: the menu now opens over the show page and Back closes only the menu, so you stay on the show.
 - Match card: wrestler names come from the site's English fighter list (the card itself shows machine-romanised names), and the daily job also reads the Japanese card for kanji names and match types, used when the app is in Japanese.
