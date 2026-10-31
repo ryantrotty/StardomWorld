@@ -67,7 +67,7 @@
     var now = new Date();
     if (o.w === 'm') return monthWords(now);
     if (o.w === 'y') return String(now.getFullYear());
-    if (o.w === 'yr') return String(o.y || now.getFullYear());
+    if (o.w === 'yr') return o.y ? String(o.y) : '';
     return '';
   }
   function chartUrl(o) {
@@ -75,7 +75,7 @@
     var m = o.m === 'fc' ? 'fc' : 'pc', w = o.w || 'a';
     var kw = [o.k || '', windowWords({ w: w, y: o.y })].filter(function(x) { return x; }).join(' ');
     var u = '/contents/search?' + (kw ? 'q%5Bkeyword%5D=' + encodeURIComponent(kw) + '&' : '') + 's=' + m + '&o=d&activetab=contents&page=1&tvcomm=1&tvcw=' + w;
-    if (w === 'yr') u += '&tvcy=' + encodeURIComponent(o.y || new Date().getFullYear());
+    if (w === 'yr' && o.y) u += '&tvcy=' + encodeURIComponent(o.y);
     if (o.s) u += '&tvcs=' + encodeURIComponent(o.s) + '&tvck=' + encodeURIComponent(o.k || '');
     return u;
   }
@@ -135,7 +135,7 @@
     var c = topCache(), items = c ? c.items : [];
     if (!items.length) return '<div style="color:#9aa6b4;font-size:15px;padding:6px 4px;">' + esc(T('Loading the Top 10...', 'トップ10を読み込み中...')) + '</div>';
     var h = '';
-    items.forEach(function(it, i) {
+    items.slice(0, 5).forEach(function(it, i) {
       var go = relUrl(it.href);
       if (i === 0) {
         h += '<a class="tv-sm-fi tv-cm-h1" tabindex="0" data-go="' + esc(go) + '" href="' + esc(it.href) + '"><div class="tv-cm-h1i" style="' + (it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '') + '"><span class="tv-cm-rk">1</span></div><div class="tv-cm-h1t">' + esc(it.title) + '</div></a>';
@@ -143,12 +143,13 @@
         h += '<a class="tv-sm-fi tv-cm-li" tabindex="0" data-go="' + esc(go) + '" href="' + esc(it.href) + '"><span class="tv-cm-n">' + (i + 1) + '</span><span class="tv-cm-lt">' + esc(it.title) + '</span></a>';
       }
     });
+    h += '<a class="tv-sm-fi tv-cm-more" tabindex="0" data-go="' + esc(chartUrl({ m: 'pc', w: 'a' })) + '" href="' + esc(absUrl(chartUrl({ m: 'pc', w: 'a' }))) + '">' + esc(T('View all Top 10', 'トップ10をすべて見る')) + ' &rsaquo;</a>';
     return h;
   }
   function top10Html() {
     var c = topCache();
     if (!c || Date.now() - c.t > TOP_TTL) fetchTop();
-    return '<div class="tv-shl-t" style="color:#F4C242;">' + esc(T('TOP 10 · MOST WATCHED · ALL TIME', 'トップ10 · 再生数 · 全期間')) + '</div><div id="tv-cm-top">' + topInner() + '</div>';
+    return '<div class="tv-shl-t" style="color:#F4C242;">' + esc(T('TOP 5 · MOST WATCHED · ALL TIME', 'トップ5 · 再生数 · 全期間')) + '</div><div id="tv-cm-top">' + topInner() + '</div>';
   }
 
   // the menu's Top 10 (inside the shelf) is styled on every page, not only on the Community page
@@ -159,9 +160,10 @@
     '#tv-sm-shelf .tv-cm-rk{position:absolute;line-height:1;font-weight:900;color:#F4C242;text-shadow:0 2px 8px rgba(0,0,0,.9);}',
     '#tv-sm-shelf .tv-cm-h1i .tv-cm-rk{font-size:58px;left:12px;bottom:6px;}',
     '#tv-sm-shelf .tv-cm-h1t{padding:8px 4px 2px 4px;font-size:16px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
-    '#tv-sm-shelf .tv-cm-li{display:flex !important;align-items:center;gap:12px;padding:4px 8px !important;margin:0 !important;font-size:15px !important;}',
+    '#tv-sm-shelf .tv-cm-li{display:flex !important;align-items:flex-start;gap:12px;padding:6px 8px !important;margin:0 !important;font-size:15px !important;}',
+    '#tv-sm-shelf .tv-cm-more{color:#F4C242 !important;font-weight:700 !important;font-size:15px !important;padding:8px 8px !important;margin:2px 0 0 0 !important;}',
     '#tv-sm-shelf .tv-cm-n{flex:0 0 26px;font-size:18px;font-weight:900;color:#F4C242;text-align:center;}',
-    '#tv-sm-shelf .tv-cm-lt{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+    '#tv-sm-shelf .tv-cm-lt{flex:1 1 0;min-width:0;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(shelfCss);
 
@@ -175,6 +177,7 @@
   var CUR = { m: PARAMS.get('s') === 'fc' ? 'fc' : 'pc', w: PARAMS.get('tvcw') || 'a', y: PARAMS.get('tvcy') || '', s: PARAMS.get('tvcs') || '', k: PARAMS.get('tvck') || '' };
   if (!/^(a|y|m|yr)$/.test(CUR.w)) CUR.w = 'a';
   var KW = PARAMS.get('q[keyword]') || '';
+  var PICK = CUR.w === 'yr' && !CUR.y;   // "Pick a year" chosen, no year yet: nothing is searched
 
   var css = document.createElement('style');
   css.textContent = [
@@ -206,6 +209,9 @@
     '.tv-cm-chips .k{font-size:12px;font-weight:700;letter-spacing:.14em;color:#9aa6b4;margin-right:6px;}',
     '.tv-cm-chip{padding:7px 14px;border-radius:999px;background:#222b36;font-size:14px;font-weight:700;color:#e6edf5;}',
     '.tv-cm-chip.main{background:#F4C242;color:#111;}',
+    '.tv-cm-x{display:block;cursor:pointer;border:2px solid transparent;}',
+    '.tv-cm-x b{margin-left:9px;font-size:13px;}',
+    '#tv-cm .tv-cm-x:focus{outline:3px solid #FFD700 !important;outline-offset:1px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;}',
     '.tv-cm-clear{display:block;font-size:14px;font-weight:700;color:#F4C242 !important;padding:6px 10px;border-radius:8px;border:2px solid transparent;margin-left:6px;}',
     '#tv-cm .tv-cm-clear:focus{outline:3px solid #FFD700 !important;outline-offset:1px !important;}',
     '.tv-cm-h{display:flex;align-items:baseline;gap:12px;margin:22px 0 12px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
@@ -257,9 +263,10 @@
   function metricLabel(m) { return m === 'fc' ? T('Most favorited', 'お気に入り数') : T('Most watched', '再生数'); }
   function windowLabel() {
     var now = new Date();
+    if (PICK) return T('Pick a year', '年を選ぶ');
     if (CUR.w === 'm') { try { return now.toLocaleDateString(isJa() ? 'ja-JP' : 'en-US', { month: 'long', year: 'numeric' }); } catch (e) { return monthWords(now); } }
     if (CUR.w === 'y') return String(now.getFullYear());
-    if (CUR.w === 'yr') return String(CUR.y || now.getFullYear());
+    if (CUR.w === 'yr') return CUR.y ? String(CUR.y) : T('Pick a year', '年を選ぶ');
     return T('All time', '全期間');
   }
   function link(cls, ck, cv, href, inner, extra) {
@@ -328,16 +335,20 @@
     var thisYear = new Date().getFullYear();
     var bar = '<div class="tv-cm-bar">' +
       seg([{ id: 'pc', label: T('Most watched', '再生数'), on: CUR.m === 'pc', href: u({ m: 'pc' }) }, { id: 'fc', label: T('Most favorited', 'お気に入り数'), on: CUR.m === 'fc', href: u({ m: 'fc' }) }]) +
-      seg([{ id: 'm', label: T('This month', '今月'), on: CUR.w === 'm', href: u({ w: 'm' }) }, { id: 'y', label: T('This year', '今年'), on: CUR.w === 'y', href: u({ w: 'y' }) },
-        { id: 'a', label: T('All time', '全期間'), on: CUR.w === 'a', href: u({ w: 'a' }) }, { id: 'yr', label: T('Pick a year', '年を選ぶ'), on: CUR.w === 'yr', href: u({ w: 'yr', y: CUR.y || String(thisYear) }) }]) +
+      seg([{ id: 'm', label: T('This month', '今月'), on: !PICK && CUR.w === 'm', href: u({ w: 'm' }) }, { id: 'y', label: T('This year', '今年'), on: !PICK && CUR.w === 'y', href: u({ w: 'y' }) },
+        { id: 'a', label: T('All time', '全期間'), on: !PICK && CUR.w === 'a', href: u({ w: 'a' }) }, { id: 'yr', label: T('Pick a year', '年を選ぶ'), on: PICK || CUR.w === 'yr', href: u({ w: 'yr', y: CUR.y }) }]) +
       link('tv-cm-pill', 'b', 'build', BUILD, esc(T('Build a chart', 'チャートを作る')) + ' &rsaquo;') + '</div>';
     var chips = '';
-    if (CUR.s) {
-      chips = '<div class="tv-cm-chips"><span class="k">' + esc(T('SHOWING', '表示中')) + '</span><span class="tv-cm-chip main">' + esc(CUR.s) + '</span><span class="tv-cm-chip">' + esc(metricLabel(CUR.m)) + '</span><span class="tv-cm-chip">' + esc(windowLabel()) + '</span>' +
+    function chipX(label, main, href, id) { return link('tv-cm-chip tv-cm-x' + (main ? ' main' : ''), 'c', id, href, esc(label) + '<b>\u2715</b>'); }
+    if (!PICK && (CUR.s || CUR.w !== 'a')) {
+      chips = '<div class="tv-cm-chips"><span class="k">' + esc(T('SHOWING', '表示中')) + '</span>' +
+        (CUR.s ? chipX(CUR.s, true, u({ s: '', k: '' }), 'subj') : '') +
+        '<span class="tv-cm-chip">' + esc(metricLabel(CUR.m)) + '</span>' +
+        (CUR.w !== 'a' ? chipX(windowLabel(), false, u({ w: 'a', y: '' }), 'win') : '') +
         link('tv-cm-clear', 'c', 'clear', chartUrl({ m: CUR.m, w: 'a' }), esc(T('Clear all', 'すべて解除'))) + '</div>';
     }
     var years = '';
-    if (CUR.w === 'yr') {
+    if (CUR.w === 'yr' || PICK) {
       years = '<div class="tv-cm-years" data-row="yr">';
       for (var y = thisYear; y >= 2011; y--) years += link('tv-cm-y' + (String(y) === String(CUR.y) ? ' on' : ''), 'y', String(y), u({ w: 'yr', y: String(y) }), String(y));
       years += '</div>';
@@ -345,7 +356,9 @@
     var head = [metricLabel(CUR.m), CUR.s, windowLabel()].filter(function(x) { return x; }).join(' · ').toUpperCase();
     var n = Math.min(cards.length, 10);
     var res = '';
-    if (!cards.length) {
+    if (PICK) {
+      res = '<div class="tv-cm-empty">' + esc(T('Choose a year above to see its chart.', '上の年を選ぶとチャートが表示されます。')) + '</div>';
+    } else if (!cards.length) {
       res = '<div class="tv-cm-empty">' + esc(CUR.w === 'm' ? T('No videos found for "' + KW + '". The site may write dates differently; MONTH_FMT in community.js sets how the month is searched.', '「' + KW + '」の動画は見つかりませんでした。') : T('No videos found for this chart.', 'この条件の動画は見つかりませんでした。')) + '</div>';
     } else {
       var mv = rankMoves(cards.slice(0, 10));
@@ -365,7 +378,7 @@
     }
     body = bar + chips + years +
       '<div class="tv-cm-h">' + esc(head) + '<span>' + esc(T('Top 10', 'トップ10')) + (cards.length ? '' : '') + '</span></div>' +
-      '<div class="tv-cm-cap">' + esc(T('Searching: ', '検索: ') + (KW || T('all videos', 'すべての動画'))) + '</div>' + res;
+      (PICK ? '' : '<div class="tv-cm-cap">' + esc(T('Searching: ', '検索: ') + (KW || T('all videos', 'すべての動画'))) + '</div>') + res;
     if (!CUR.s) {
       body += '<div class="tv-cm-h" style="font-size:22px;letter-spacing:0;color:#fff;margin-top:34px;"><span style="width:12px;height:30px;background:#F4C242;display:inline-block;"></span>' + esc(T('Collections', 'コレクション')) + '<span>' + esc(T('Most watched in...', '再生数の多い動画')) + '</span>' +
         link('tv-cm-clear r', 'a', 'seeall', COLL_URL, esc(T('See all', 'すべて見る')) + ' &rsaquo;') + '</div>' + collections(false);
@@ -381,6 +394,7 @@
     var all = focusables(), want = ssGet(FOCUS_KEY), t = null, i;
     ssSet(FOCUS_KEY, null);
     if (want) for (i = 0; i < all.length; i++) if (all[i].getAttribute('data-ck') + '|' + all[i].getAttribute('data-cv') === want) { t = all[i]; break; }
+    if (!t && PICK) for (i = 0; i < all.length; i++) if (all[i].getAttribute('data-ck') === 'y') { t = all[i]; break; }
     if (!t) for (i = 0; i < all.length; i++) if (all[i].getAttribute('data-ck') === 't' || all[i].getAttribute('data-ck') === 'p') { t = all[i]; break; }
     if (!t) t = all[0];
     if (t) focusEl(t, true);
@@ -454,6 +468,11 @@
   }, true);
   root.addEventListener('click', function(e) {
     var t = e.target && e.target.closest ? e.target.closest('[data-ck]') : null;
+    if (t && t.getAttribute('data-ck') === 's' && t.getAttribute('data-cv') === 'yr') {
+      e.preventDefault();
+      if (!PICK) { PICK = true; ssSet(FOCUS_KEY, 'y|' + new Date().getFullYear()); render(); }
+      return;
+    }
     if (t) { var ck = t.getAttribute('data-ck'); if (ck === 's' || ck === 'y' || ck === 'c' || ck === 'b') ssSet(FOCUS_KEY, ck + '|' + t.getAttribute('data-cv')); }
   }, true);
   document.addEventListener('focusin', function() { if (document.getElementById('tv-cm')) hint(); }, true);

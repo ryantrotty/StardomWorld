@@ -4544,14 +4544,15 @@ class MainActivity : Activity() {
                 };
                 var cmYears = '';
                 for (var yy = cy; yy > cy - 4; yy--) cmYears += fiHtml(String(yy), cm.url({ m: 'pc', w: 'yr', y: String(yy) }));
-                h = '<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;">' +
+                var cmHome = cm.url({ m: 'pc', w: 'a' });
+                h = '<a class="tv-sm-fi tv-fv-open" tabindex="0" data-go="' + esc(cmHome) + '" href="' + esc(absUrl(cmHome)) + '"><span style="font-size:24px;color:#F4C242">&#9733;</span><span class="tv-fv-l"><b>' + esc(T('Open Community', 'コミュニティを開く')) + '</b></span></a>' +
+                  '<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;align-items:start;">' +
                   '<div>' + cm.top10Html() + '</div>' +
-                  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">' +
-                    '<div><div class="tv-shl-top">' + fiHtml(T('Community page', 'コミュニティ'), cm.url({ m: 'pc', w: 'a' })) + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST WATCHED', '再生数')) + '</div>' + cmRows('pc') + '</div>' +
+                  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;">' +
+                    '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST WATCHED', '再生数')) + '</div>' + cmRows('pc') + '</div>' +
                       '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST FAVORITED', 'お気に入り数')) + '</div>' + cmRows('fc') + '</div>' +
                       '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('TOOLS', 'ツール')) + '</div>' + fiHtml(T('Build a chart', 'チャートを作る'), cm.buildUrl) + '</div></div>' +
-                    '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('BY YEAR', '年別')) + '</div>' + cmYears + fiHtml(T('More years...', 'ほかの年'), cm.url({ m: 'pc', w: 'yr', y: String(cy) })) + '</div>' +
+                    '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('BY YEAR', '年別')) + '</div>' + cmYears + fiHtml(T('More years...', 'ほかの年'), cm.url({ m: 'pc', w: 'yr' })) + '</div>' +
                       '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' + fiHtml(T('Places, shows, titles', '開催地・大会・王座'), cm.collUrl) + '</div></div>' +
                   '</div></div>';
               }

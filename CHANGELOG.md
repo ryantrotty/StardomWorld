@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.8.3
+
+- Community menu shelf follows the other shelves: "Open Community" is the first link, the columns line up at the top, and the Top 10 became a Top 5 (large #1, then #2 to #5 on two lines each) ending in a "View all Top 10" link.
+- Showing chips on a chart now have an x (subject and month/year); OK on one removes it. Clear all is still there.
+- Pick a year no longer loads a chart: it shows the year strip with nothing selected (no request), and the chart opens when you choose a year. "More years..." in the menu does the same.
+
 ## 2.8.2
 
 - Community, This month: searches the date as it is written at the start of match titles (2026/10), instead of 2026.10.
