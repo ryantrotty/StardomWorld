@@ -163,13 +163,10 @@ def matches_for(url):
             _roster = {}
     ms = parse_matches(get(url), _roster)
     if ms:
-        # Japanese page: no /en/, and an underscore after the date (…/en/event/20261101-korakuen/ -> …/event/20261101_korakuen/).
-        # Later dashes ("korakuen-2") are tried both ways because only the first pattern is confirmed.
+        # Japanese page: no /en/, and only the first dash (after the date) becomes an underscore:
+        # /en/event/20261101-korakuen/ -> /event/20261101_korakuen/, /en/event/20261111-korakuen-2/ -> /event/20261111_korakuen-2/
         slug = url.rstrip("/").rsplit("/", 1)[-1]
-        cands = []
-        for sl in (slug.replace("-", "_", 1), slug.replace("-", "_")):
-            if sl not in cands:
-                cands.append(sl)
+        cands = [slug.replace("-", "_", 1)]
         for sl in cands:
             try:
                 jm = parse_matches(get(BASE + "/event/" + sl + "/"))
