@@ -151,6 +151,20 @@
     return '<div class="tv-shl-t" style="color:#F4C242;">' + esc(T('TOP 10 · MOST WATCHED · ALL TIME', 'トップ10 · 再生数 · 全期間')) + '</div><div id="tv-cm-top">' + topInner() + '</div>';
   }
 
+  // the menu's Top 10 (inside the shelf) is styled on every page, not only on the Community page
+  var shelfCss = document.createElement('style');
+  shelfCss.textContent = [
+    '#tv-sm-shelf .tv-cm-h1{padding:0 !important;border-radius:10px !important;margin:0 0 8px 0 !important;}',
+    '#tv-sm-shelf .tv-cm-h1i{position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;background:#222 center/cover no-repeat;}',
+    '#tv-sm-shelf .tv-cm-rk{position:absolute;line-height:1;font-weight:900;color:#F4C242;text-shadow:0 2px 8px rgba(0,0,0,.9);}',
+    '#tv-sm-shelf .tv-cm-h1i .tv-cm-rk{font-size:58px;left:12px;bottom:6px;}',
+    '#tv-sm-shelf .tv-cm-h1t{padding:8px 4px 2px 4px;font-size:16px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
+    '#tv-sm-shelf .tv-cm-li{display:flex !important;align-items:center;gap:12px;padding:4px 8px !important;margin:0 !important;font-size:15px !important;}',
+    '#tv-sm-shelf .tv-cm-n{flex:0 0 26px;font-size:18px;font-weight:900;color:#F4C242;text-align:center;}',
+    '#tv-sm-shelf .tv-cm-lt{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(shelfCss);
+
   window.__tvComm = { url: chartUrl, top10Html: top10Html, collUrl: COLL_URL, buildUrl: BUILD };
 
   // ============================================================ the Community page
@@ -230,13 +244,6 @@
     '.tv-cm-all{align-items:center;text-align:center;font-size:20px;font-weight:800;color:#F4C242 !important;}',
     '.tv-cm-empty{display:flex;align-items:center;min-height:110px;padding:0 24px;border-radius:10px;border:2px dashed #2a323c;color:#9aa6b4;font-size:17px;line-height:1.4;}',
     // the menu's Top 10 (inside the shelf)
-    '#tv-sm-shelf .tv-cm-h1{padding:0 !important;border-radius:10px !important;margin:0 0 8px 0 !important;}',
-    '#tv-sm-shelf .tv-cm-h1i{position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;background:#222 center/cover no-repeat;}',
-    '#tv-sm-shelf .tv-cm-h1i .tv-cm-rk{font-size:58px;left:12px;bottom:6px;}',
-    '#tv-sm-shelf .tv-cm-h1t{padding:8px 4px 2px 4px;font-size:16px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
-    '#tv-sm-shelf .tv-cm-li{display:flex !important;align-items:center;gap:12px;padding:4px 8px !important;margin:0 !important;font-size:15px !important;}',
-    '#tv-sm-shelf .tv-cm-n{flex:0 0 26px;font-size:18px;font-weight:900;color:#F4C242;text-align:center;}',
-    '#tv-sm-shelf .tv-cm-lt{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
 

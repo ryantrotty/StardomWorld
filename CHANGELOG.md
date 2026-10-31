@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.8.1
+
+- Community menu shelf: the Top 10 now has its own styling on every page (ranks beside the titles on one line each, large #1 picture), instead of only on the Community page.
+
 ## 2.8.0
 
 - Community is now a page: Most watched / Most favorited, This month / This year / All time / Pick a year (with a year strip, 2026 back to 2011), a large #1 with #2 to #4 beside it and #5 to #10 below (the large layout needs at least 3 results; fewer show as a plain row).
