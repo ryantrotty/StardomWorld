@@ -255,8 +255,7 @@
 
   var root = document.createElement('div');
   root.id = 'tv-cm';
-  root.className = 'notranslate';
-  root.setAttribute('translate', 'no');
+  // Only the video titles are left for the page's translator (the site writes them in Japanese); everything else is marked below.
   (document.body || document.documentElement).appendChild(root);
   document.documentElement.style.overflow = 'hidden';
 
@@ -390,7 +389,25 @@
     return link('tv-cm-t', 't', String(idx), it.href, '<div class="tv-cm-ti" style="' + bgStyle(it) + '"><span class="tv-cm-rk">' + (idx + 1) + '</span>' + (mv ? '<span class="tv-cm-mv">' + esc(mv) + '</span>' : '') + '</div><div class="tv-cm-tt">' + esc(it.title) + '</div>');
   }
   function focusables() { return Array.prototype.slice.call(root.querySelectorAll('[data-ck]')); }
+  function markNoTr() {
+    Array.prototype.forEach.call(root.querySelectorAll('#tv-cm-title, .tv-cm-bar, .tv-cm-chips, .tv-cm-years, .tv-cm-h, .tv-cm-cap, .tv-cm-pr, .tv-cm-empty, .tv-cm-clear, .tv-cm-mv, .tv-cm-rk, .tv-cm-big, .tv-cm-grid'), function(el) {
+      el.classList.add('notranslate'); el.setAttribute('translate', 'no');
+    });
+  }
+  // Once the translator has rewritten the titles, take the English ones back for the Favorites pop-up and the menu's Top 5.
+  function syncTitles() {
+    var ch = false, h = root.querySelector('.tv-cm-ht');
+    if (h && cards[0]) { var t0 = clean(h.textContent); if (t0 && t0 !== cards[0].title) { cards[0].title = t0; ch = true; } }
+    Array.prototype.forEach.call(root.querySelectorAll('a[data-ck="t"]'), function(a) {
+      var i = parseInt(a.getAttribute('data-cv'), 10), te = a.querySelector('.tv-cm-st, .tv-cm-tt');
+      if (isNaN(i) || !cards[i] || !te) return;
+      var t = clean(te.textContent);
+      if (t && t !== cards[i].title) { cards[i].title = t; ch = true; }
+    });
+    if (ch && MODE === '1' && !CUR.s && CUR.w === 'a' && CUR.m === 'pc') saveTop(cards);
+  }
   function focusFirst() {
+    markNoTr();
     var all = focusables(), want = ssGet(FOCUS_KEY), t = null, i;
     ssSet(FOCUS_KEY, null);
     if (want) for (i = 0; i < all.length; i++) if (all[i].getAttribute('data-ck') + '|' + all[i].getAttribute('data-cv') === want) { t = all[i]; break; }
@@ -479,6 +496,7 @@
 
   // The results of this very page (the site's own sorted search), read once the list has drawn.
   var tries = 0, last = -1;
+  [3500, 7000, 12000].forEach(function(ms) { setTimeout(function() { try { syncTitles(); } catch (e) {} }, ms); });
   var tm = setInterval(function() {
     tries++;
     var items = [];

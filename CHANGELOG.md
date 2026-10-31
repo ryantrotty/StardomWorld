@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.8.4
+
+- Community: video titles are left to the page's English translation (they were shown in the site's Japanese), and the translated titles are kept for the Favorites pop-up and the menu's Top 5. The menu's Top 5 shows the site's own wording until the Community page has been opened once.
+
 ## 2.8.3
 
 - Community menu shelf follows the other shelves: "Open Community" is the first link, the columns line up at the top, and the Top 10 became a Top 5 (large #1, then #2 to #5 on two lines each) ending in a "View all Top 10" link.
