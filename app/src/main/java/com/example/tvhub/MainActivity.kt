@@ -3794,7 +3794,7 @@ class MainActivity : Activity() {
           }
           // The event page: poster (private builds), your time, the venue's time and when to be reminded.
           var evEl = null, evId = null;
-          function evClose() { if (evEl && evEl.parentNode) evEl.parentNode.removeChild(evEl); evEl = null; evId = null; setNativeFlag(false); }
+          function evClose() { if (evEl && evEl.parentNode) evEl.parentNode.removeChild(evEl); evEl = null; evId = null; setNativeFlag(false); try { document.documentElement.classList.remove('tv-ev-open'); } catch (x) {} }
           function evStatus() {
             if (!evEl) return;
             var e = schedById(evId), off = remGet()[evId], st = evEl.querySelector('.tv-ev-st');
@@ -3833,6 +3833,7 @@ class MainActivity : Activity() {
             evEl.innerHTML = '<div class="tv-ev-in">' +
               (p ? '<div class="tv-ev-pc"><img src="' + p + '" alt=""></div>' : '') +
               '<div class="tv-ev-tx">' +
+              '<div class="tv-ev-top">' + esc(e._t + 3 * 3600000 > Date.now() ? T('UPCOMING SHOW', '今後の大会') : T('SHOW', '大会')) + '</div>' +
               '<div class="tv-ev-tag">' + (first && first.id === e.id ? '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>' : '') + '<span>' + esc(e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Live now or just ended', '開催中または終了')) + '</span></div>' +
               '<div class="tv-ev-h">' + esc(e.title) + '</div>' +
               '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
@@ -3842,6 +3843,7 @@ class MainActivity : Activity() {
               '<div class="tv-ev-hint">' + esc(T('Left for the menu \u00b7 OK on a time again clears it \u00b7 Back closes this page', '左でメニュー \u00b7 同じ時間をもう一度押すと解除 \u00b7 戻るで閉じる')) + '</div>' +
               '</div></div>';
             document.body.appendChild(evEl);
+            try { document.documentElement.classList.add('tv-ev-open'); } catch (x) {}
             setNativeFlag(true);   // Back now comes to this page first, not to the app
             evStatus();
             var cur = remGet()[id], fb = null;
@@ -4119,9 +4121,12 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-in{display:flex;height:100%;}',
             '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#000;display:flex;align-items:center;}',
             '#tv-ev .tv-ev-pc img{height:100%;width:auto;display:block;}',
-            '#tv-ev .tv-ev-tx{flex:1 1 0;min-width:0;padding:5vh 4vw;display:flex;flex-direction:column;gap:14px;}',
+            '#tv-ev, #tv-ev *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
+            '#tv-ev .tv-ev-top{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
+            'html.tv-ev-open #tv-sm-tab{z-index:2147483001;}',
+            '#tv-ev .tv-ev-tx{flex:1 1 0;min-width:0;padding:4vh 3vw;display:flex;flex-direction:column;gap:12px;overflow:hidden;}',
             '#tv-ev .tv-ev-tag{display:flex;gap:10px;align-items:center;font-size:14px;color:#9aa6b4;}',
-            '#tv-ev .tv-ev-h{font-size:32px;font-weight:700;line-height:1.15;}',
+            '#tv-ev .tv-ev-h{font-size:30px;font-weight:700;line-height:1.15;}',
             '#tv-ev .tv-ev-cols{display:flex;gap:40px;flex-wrap:wrap;}',
             '#tv-ev .tv-ev-k{font-size:12px;font-weight:700;letter-spacing:1.2px;color:#9aa6b4;}',
             '#tv-ev .tv-ev-big{font-size:28px;font-weight:800;color:#F4C242;}',
@@ -4132,10 +4137,10 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
             '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:none;outline:3px solid #F4C242;outline-offset:2px;}',
             '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
-            '#tv-ev .tv-ev-mc{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:34vh;}',
-            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:8px 14px;}',
+            '#tv-ev .tv-ev-mc{display:grid;grid-template-columns:1fr 1fr;gap:6px;}',
+            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:6px 12px;}',
             '#tv-ev .tv-ev-mt{font-size:12px;font-weight:700;letter-spacing:1px;color:#F4C242;}',
-            '#tv-ev .tv-ev-ms{font-size:16px;font-weight:600;line-height:1.35;}',
+            '#tv-ev .tv-ev-ms{font-size:15px;font-weight:600;line-height:1.3;}',
             '#tv-ev .tv-ev-vs{color:#9aa6b4;font-weight:400;}',
             '#tv-ev .tv-ev-hint{margin-top:auto;font-size:13px;color:#9aa6b4;}',
             '#tv-rem-toast{position:fixed;right:28px;top:24px;z-index:2147483001;width:420px;max-width:80vw;box-sizing:border-box;display:flex;gap:14px;padding:14px 16px;border-radius:12px;background:#121a24;border:2px solid #2a323c;border-left:6px solid #F4C242;color:#fff;font-family:Arial,Helvetica,sans-serif;cursor:pointer;}',

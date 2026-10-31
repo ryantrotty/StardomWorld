@@ -83,24 +83,44 @@ def parse_event(eid, page):
             "poster": poster, "venue": venue, "other": other, "matchurl": matchurl}
 
 
+def _clean(x):
+    x = html.unescape(re.sub(r"<[^>]+>", " ", x))
+    x = re.sub("[\u200b\u200c\u200d\ufeff]", "", x)
+    return re.sub(r"\s+", " ", x).strip()
+
+
+def _side_names(seg):
+    """One side of a match -> "A & B". Prefers the list items (one per wrestler), else the links, else the plain text."""
+    names = [_clean(m) for m in re.findall(r"(?is)<li[^>]*>(.*?)</li>", seg)]
+    if not any(names):
+        names = [_clean(m) for m in re.findall(r"(?is)<a[^>]*>(.*?)</a>", seg)]
+    names = [re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", n).strip(" ,&") for n in names if n]
+    if not names:
+        names = [re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", _clean(seg)).strip(" ,&")]
+    return " & ".join(n for n in names if n)[:160]
+
+
 def parse_matches(page):
-    """Match card page -> [{"type": "Tag Match", "sides": ["A & B", "C & D"]}]. Text only; the site has no photos for most names.
-    Best effort: a heading (the match type) followed by a line with "vs". Matches without "vs" are skipped."""
+    """Match card page -> [{"type": "Tag Match", "sides": ["A & B", "C & D"]}]. Text only (no photos).
+    Layout on the site: a heading with the match type, then one list of names per side with a "VS" between them.
+    The sides are split at the VS marker in the HTML so that team mates stay together."""
     out = []
     for chunk in re.split(r"(?i)<h[23][ >]", page)[1:]:
         parts = re.split(r"(?i)</h[1-6]>", chunk, maxsplit=1)
         if len(parts) < 2:
             continue
-        head = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", parts[0].split(">", 1)[-1] if parts[0].lstrip().startswith(("class", "id", "style")) else parts[0]))).strip()
-        body = text_of(parts[1])
-        body = re.split(r"(?i)\b(?:report|result|finish)\b|\d{1,2}:\d{2}", body)[0]
-        if not head or not re.search(r"(?i)\bvs\.?\s", body):
+        head = _clean(parts[0].split(">", 1)[-1] if parts[0].lstrip().startswith(("class", "id", "style")) else parts[0])
+        body = re.split(r"(?i)<footer|view all|<h[1-6][ >]", parts[1])[0]
+        segs = re.split(r"(?i)(?<=>)\s*vs\.?\s*(?=<)", body)
+        if len(segs) < 2:
+            segs = re.split(r"(?i)\s+vs\.?\s+", body)
+        if not head or len(segs) < 2:
             continue
-        sides = [re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", x).strip(" ,&") for x in re.split(r"(?i)\s+vs\.?\s+", body)]
-        sides = [x[:160] for x in sides if x]
+        sides = [_side_names(x) for x in segs]
+        sides = [x for x in sides if x]
         if len(sides) >= 2:
             out.append({"type": head[:80], "sides": sides[:4]})
-    return out[:12]
+    return out[:14]
 
 
 def main():
@@ -157,7 +177,7 @@ def main():
             e["own"] = False
         if info["poster"]:
             posters.setdefault(eid[:6], info["poster"])
-        if info.get("matchurl") and (datetime.datetime.strptime(eid[:8], "%Y%m%d").date() - now.date()).days <= 7:
+        if info.get("matchurl") and (soon or not e.get("matches")):
             try:
                 ms = parse_matches(get(info["matchurl"]))
                 if ms:

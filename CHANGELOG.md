@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.3
+- Event page: an "UPCOMING SHOW" header, the title now wraps on whole words, and the menu tab shows on the left like other pages.
+- Event page: the match card is two columns so it fits without scrolling. The first show (Nov 1) has its card bundled with the app; the daily job reads the rest from each show's Matchups page and keeps team mates together.
+
 ## 2.2.2
 - Home: the Next Live tile is now a wide card with the poster at the left and the details beside it (private builds). Public builds show a normal tile with a countdown instead of artwork.
 - Shows menu: Upcoming Shows is wider and show names are kept on whole words.
