@@ -447,6 +447,7 @@
     '.tv-fp-grid{display:grid;gap:24px;padding:6px;}',
     '.tv-fp-grid .tv-fp-t{flex:none;max-width:none;}',
     '.tv-fp-t{display:block;position:relative;flex:0 0 calc(25% - 18px);max-width:calc(25% - 18px);min-width:0;text-decoration:none !important;color:#fff !important;border-radius:8px;background:#1a1a1a;overflow:hidden;border:3px solid transparent;outline:none !important;cursor:pointer;}',
+    '#tv-fp *:focus, #tv-fp-pop *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
     '.tv-fp-t:focus, .tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
     '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
     '.tv-fp-badge{position:absolute;right:8px;top:8px;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,.8);color:#F4C242;font-size:15px;font-weight:800;}',

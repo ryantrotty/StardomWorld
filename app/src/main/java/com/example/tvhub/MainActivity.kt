@@ -5734,6 +5734,7 @@ class MainActivity : Activity() {
     '#tv-rp-scroll::-webkit-scrollbar{display:none;}',
     '#tv-rp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
     '#tv-rp .tv-rc{display:block;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#1a1a1a;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-rp *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
     '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:none !important;}',
     '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
     '#tv-rp .tv-rc-t{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;box-sizing:border-box;}',

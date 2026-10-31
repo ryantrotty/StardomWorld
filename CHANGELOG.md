@@ -2,6 +2,9 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.4.2
+- My Favorites and Recently Watched pages: the highlighted tile has a single gold border. The app's general focus ring (an outline plus glow) was drawing a second one on top.
+
 ## 2.4.1
 - Menu: My Favorites sits under the account name and shows only when signed in.
 - My Favorites page: the bottom hint bar is gone (the hint is at the top right), so the last row is no longer covered, and there is more room below it.
