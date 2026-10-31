@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.4.0
+- My Favorites: video tiles now match the home page (same size, font and four-line titles), and the last row is no longer cut off at the bottom of the overview and sub pages.
+- Factions menu: just the faction names in one short list (no scrolling). Menu button on a name picks your one favorite faction; wrestlers are added from the Wrestlers list.
+- New rows and pages: Playlists, Favorite Matches and Favorite Shows (View All opens the full page). The Menu button on a video now offers Add to Favorites, Add to Watch Later, Add to Favorite Matches (or Favorite Shows for a show / video set) and Add to a Playlist (pick one or start a new one, named Playlist 1, 2, ...). It also works while watching a video.
+- On the My Favorites page the Menu button removes the highlighted item, including a whole playlist or a video inside one.
+
 ## 2.3.0
 - New "My Favorites" section in the menu (replaces My Videos): Overview, Favorite Wrestlers, Watch Later, Recently Watched and the site's Favorite Videos.
 - My Favorites page: your one favorite faction as a round sticker, your reminders as tickets, favorite wrestlers as cards, then Watch Later and Recently Watched in the same rows as the home page (four across, View All at the end). Private builds show wrestler photos (res/drawable-nodpi/wrestler_<name>.jpg or .png in the private branding folder) and faction logos; other builds show initials and the faction name.

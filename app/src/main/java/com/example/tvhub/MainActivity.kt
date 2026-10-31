@@ -4013,6 +4013,9 @@ class MainActivity : Activity() {
             ['Favorite Wrestlers', '/mypage?tvfav=wrestlers', 'お気に入り選手'],
             ['Watch Later', '/mypage?tvfav=later', 'あとで見る'],
             ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
+            ['Playlists', '/mypage?tvfav=plall', 'プレイリスト'],
+            ['Favorite Matches', '/mypage?tvfav=m', 'お気に入りの試合'],
+            ['Favorite Shows', '/mypage?tvfav=s', 'お気に入りの大会'],
             ['Favorite Videos', '/mypage/favorites', 'お気に入り動画']
           ];
           var COMMUNITY = [
@@ -4511,29 +4514,17 @@ class MainActivity : Activity() {
               w = 400;
               h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
             } else if (key === 'factions') {
-              w = 858;
-              var blocks = '';
+              w = 380;
+              var fl = '';
               try {
                 var d = JSON.parse(AndroidHost.factionsJson());
                 var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
-                var seen = {};
                 facs.forEach(function(f) {
-                  var fpage = (f.members && f.members.length) ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) : '';
-                  var ms = (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
-                  var inner = '';
-                  ms.forEach(function(m) {
-                    if (!m || !m.name || seen[m.name]) return;
-                    seen[m.name] = 1;
-                    inner += fiHtml(isJa() && JA_NAMES[m.name] ? JA_NAMES[m.name] : m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name));
-                  });
-                  var fhead = fpage
-                    ? '<a class="tv-sm-fi tv-shl-hl" tabindex="0" data-go="' + esc(fpage) + '" href="' + esc(absUrl(fpage)) + '">' + esc(String(f.name).toUpperCase()) + '</a>'
-                    : '<div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>';
-                  if (inner || fpage) blocks += '<div class="tv-shl-blk">' + fhead + inner + '</div>';
+                  if (!f.members || !f.members.length) return;
+                  fl += fiHtml(f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id));
                 });
               } catch (e) {}
-              if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
-              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 900;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });

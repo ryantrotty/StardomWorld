@@ -6,6 +6,7 @@
   var H = window.AndroidHost || {};
   var KEY = 'tvFavV1', REM_KEY = 'tvSchedRemV1';
   var BASE = 'https://www.stardom-world.com';
+  var PLI = 0, MODE = 'home';
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -22,6 +23,9 @@
     try { d = JSON.parse(lsGet(KEY) || '{}') || {}; } catch (e) { d = {}; }
     if (!Array.isArray(d.w)) d.w = [];
     if (!Array.isArray(d.later)) d.later = [];
+    if (!Array.isArray(d.m)) d.m = [];
+    if (!Array.isArray(d.s)) d.s = [];
+    if (!Array.isArray(d.pl)) d.pl = [];
     if (typeof d.f !== 'string') d.f = '';
     return d;
   }
@@ -67,15 +71,40 @@
     toast(T('★ ' + n + ' is now your favorite faction', '★ ' + n + ' をお気に入りユニットにしました'));
     return true;
   }
-  function laterIdx(d, href) { var p = pathOf(href); for (var i = 0; i < d.later.length; i++) if (pathOf(d.later[i].href) === p) return i; return -1; }
   function pathOf(h) { try { return new URL(h, location.href).pathname; } catch (e) { return String(h); } }
-  function toggleLater(info) {
-    var d = load(), i = laterIdx(d, info.href);
-    if (i >= 0) { d.later.splice(i, 1); save(d); toast(T('Removed from Watch Later', 'あとで見るから削除しました')); return false; }
-    d.later.unshift({ id: info.id, href: info.href, title: info.title, bg: info.bg });
+  function idxIn(arr, href) { var p = pathOf(href); for (var i = 0; i < arr.length; i++) if (pathOf(arr[i].href) === p) return i; return -1; }
+  var LISTS = {
+    later: { en: 'Watch Later', ja: 'あとで見る' },
+    m: { en: 'Favorite Matches', ja: 'お気に入りの試合' },
+    s: { en: 'Favorite Shows', ja: 'お気に入りの大会' }
+  };
+  function item(info) { return { id: info.id, href: info.href, title: info.title, bg: info.bg }; }
+  function toggleList(kind, info) {
+    var d = load(), arr = d[kind], i = idxIn(arr, info.href), L = LISTS[kind];
+    if (i >= 0) { arr.splice(i, 1); save(d); toast(T('Removed from ' + L.en, L.ja + 'から削除しました')); return false; }
+    arr.unshift(item(info));
     save(d);
-    toast(T('★ Added to Watch Later', '★ あとで見るに追加しました'));
+    toast(T('\u2605 Added to ' + L.en, '\u2605 ' + L.ja + 'に追加しました'));
     return true;
+  }
+  function togglePlaylist(pi, info) {
+    var d = load(), pl = d.pl[pi];
+    if (!pl) return false;
+    var i = idxIn(pl.items, info.href);
+    if (i >= 0) { pl.items.splice(i, 1); save(d); toast(T('Removed from ' + pl.name, pl.name + ' から削除しました')); return false; }
+    pl.items.unshift(item(info));
+    save(d);
+    toast(T('\u2605 Added to ' + pl.name, '\u2605 ' + pl.name + ' に追加しました'));
+    return true;
+  }
+  function newPlaylist(info) {
+    var d = load(), n = d.pl.length + 1, names = {};
+    d.pl.forEach(function(p) { names[p.name] = 1; });
+    while (names[T('Playlist ', 'プレイリスト ') + n]) n++;
+    var pl = { name: T('Playlist ', 'プレイリスト ') + n, items: [item(info)] };
+    d.pl.push(pl);
+    save(d);
+    toast(T('\u2605 Added to new playlist ' + pl.name, '\u2605 新しいプレイリスト ' + pl.name + ' に追加しました'));
   }
   function removeReminder(id) {
     var r = {};
@@ -112,7 +141,7 @@
         var hint = document.createElement('div');
         hint.className = 'tv-shl-hint';
         hint.textContent = key === 'factions'
-          ? T('Menu button on a wrestler adds or removes a favorite. On a faction name it picks your one favorite faction.', 'メニューボタン：選手はお気に入りの追加・削除、ユニット名はお気に入りユニットの選択')
+          ? T('Menu button on a faction picks it as your one favorite faction (choosing another replaces it).', 'メニューボタン：お気に入りユニットに選択（1つだけ）')
           : T('Menu button on a wrestler adds or removes a favorite.', 'メニューボタン：お気に入りの追加・削除');
         shelf.appendChild(hint);
       }
@@ -165,8 +194,30 @@
     return null;
   }
 
-  // ---- the two-choice pop-up on a video card: Favorites (the site's list) or Watch Later (this app's list)
-  var pop = null, popPrev = null, popFocus = null, popClose0 = null, popInfo = null;
+  // ---- the video this page is about (the Menu button while watching): its title and picture from the page itself
+  function pageInfo() {
+    var m = location.pathname.match(/^\/(?:set\/\d+\/)?(contents|set)\/(\d+)/);
+    if (!m) return null;
+    var t = '', bg = '';
+    var h1 = document.querySelector('h1.ttl-lg, .content-title, h1');
+    if (h1) t = clean(h1.textContent);
+    if (!t) t = clean((document.title || '').split('|')[0]);
+    var og = document.querySelector('meta[property="og:image"]');
+    if (og) bg = og.getAttribute('content') || '';
+    return { id: m[2], href: location.origin + location.pathname, title: t || 'Stardom World Video', bg: bg, card: null };
+  }
+  function siteFav(id) {
+    var $ = window.jQuery || window.$;
+    if (!$ || !$.apiCall) { toast('Favorites API not available'); return; }
+    $.apiCall({ url: '/user_api/contents/' + id + '/favorites', type: 'POST' }).done(function() { toast('♥ Added to Favorites!'); })
+      .fail(function(x) {
+        if (x.status === 400) toast('Please log in on Stardom World to sync favorites');
+        else $.apiCall({ url: '/user_api/contents/' + id + '/favorites', type: 'DELETE' }).done(function() { toast('Removed from Favorites'); });
+      });
+  }
+
+  // ---- the pop-up on a video: Favorites (the site's list), Watch Later, Favorite Matches / Shows, Playlist
+  var pop = null, popFocus = null, popClose0 = null, popInfo = null;
   function popHide() {
     if (!pop) return;
     if (pop.parentNode) pop.parentNode.removeChild(pop);
@@ -179,12 +230,43 @@
     if (f && f.isConnected) { try { f.focus({ preventScroll: true }); } catch (e) { try { f.focus(); } catch (e2) {} } }
   }
   function popBtns() { return pop ? Array.prototype.slice.call(pop.querySelectorAll('.tv-fpb')) : []; }
+  function kindFor(info) { return /\/set\/\d+/.test(info.href) ? 's' : 'm'; }
+  function popFill(mode) {
+    var info = popInfo, d = load(), h = '<div class="tv-fpp-t">' + esc(info.title) + '</div>';
+    if (mode === 'pl') {
+      d.pl.forEach(function(pl, i) {
+        var has = idxIn(pl.items, info.href) >= 0;
+        h += '<a class="tv-fpb" tabindex="0" data-act="pl" data-i="' + i + '">' + esc((has ? T('Remove from ', '削除：') : T('Add to ', '追加：')) + pl.name) + '</a>';
+      });
+      h += '<a class="tv-fpb" tabindex="0" data-act="newpl">' + esc(T('+ New playlist', '+ 新しいプレイリスト')) + '</a>';
+    } else {
+      var k = kindFor(info), L = LISTS[k], inLater = idxIn(d.later, info.href) >= 0, inK = idxIn(d[k], info.href) >= 0;
+      var isFav = !!(info.card && (info.card.classList.contains('is-favorite') || (info.card.dataset && info.card.dataset.tvFav === 'true')));
+      h += '<a class="tv-fpb" tabindex="0" data-act="fav">' + esc(isFav ? T('Remove from Favorites', 'お気に入りから削除') : T('Add to Favorites', 'お気に入りに追加')) + '</a>' +
+        '<a class="tv-fpb" tabindex="0" data-act="later">' + esc(inLater ? T('Remove from Watch Later', 'あとで見るから削除') : T('Add to Watch Later', 'あとで見るに追加')) + '</a>' +
+        '<a class="tv-fpb" tabindex="0" data-act="kind">' + esc(inK ? T('Remove from ' + L.en, L.ja + 'から削除') : T('Add to ' + L.en, L.ja + 'に追加')) + '</a>' +
+        '<a class="tv-fpb" tabindex="0" data-act="plmenu">' + esc(T('Add to a Playlist...', 'プレイリストに追加...')) + '</a>';
+    }
+    pop.innerHTML = h;
+    Array.prototype.forEach.call(pop.querySelectorAll('.tv-fpb'), function(b) {
+      b.addEventListener('click', function(ev) { ev.preventDefault(); ev.stopPropagation(); popAct(b); });
+    });
+    var first = pop.querySelector('.tv-fpb');
+    if (first) first.focus();
+  }
   function popAct(b) {
     var act = b.getAttribute('data-act'), info = popInfo;
+    if (act === 'plmenu') { popFill('pl'); return; }
     popHide();
     if (!info) return;
-    if (act === 'later') { toggleLater(info); if (window.__tvFpRefresh) window.__tvFpRefresh(); }
-    else if (act === 'fav') { try { if (window.__tvToggleCardFavorite) window.__tvToggleCardFavorite(info.card); } catch (e) {} }
+    if (act === 'later') toggleList('later', info);
+    else if (act === 'kind') toggleList(kindFor(info), info);
+    else if (act === 'pl') togglePlaylist(parseInt(b.getAttribute('data-i'), 10), info);
+    else if (act === 'newpl') newPlaylist(info);
+    else if (act === 'fav') {
+      try { if (info.card) { if (window.__tvToggleCardFavorite) window.__tvToggleCardFavorite(info.card); } else siteFav(info.id); } catch (e) {}
+    }
+    if (window.__tvFpRefresh) window.__tvFpRefresh();
   }
   function popKey(e) {
     var k = e.keyCode, bs = popBtns(), i = bs.indexOf(document.activeElement);
@@ -197,26 +279,17 @@
   function popShow(info) {
     popHide();
     popInfo = info;
-    var d = load(), inLater = laterIdx(d, info.href) >= 0;
-    var isFav = !!(info.card && (info.card.classList.contains('is-favorite') || (info.card.dataset && info.card.dataset.tvFav === 'true')));
     pop = document.createElement('div');
     pop.id = 'tv-fp-pop';
     pop.className = 'notranslate';
     pop.setAttribute('translate', 'no');
-    pop.innerHTML = '<div class="tv-fpp-t">' + esc(info.title) + '</div>' +
-      '<a class="tv-fpb" tabindex="0" data-act="fav">' + esc(isFav ? T('Remove from Favorites', 'お気に入りから削除') : T('Add to Favorites', 'お気に入りに追加')) + '</a>' +
-      '<a class="tv-fpb" tabindex="0" data-act="later">' + esc(inLater ? T('Remove from Watch Later', 'あとで見るから削除') : T('Add to Watch Later', 'あとで見るに追加')) + '</a>';
     (document.body || document.documentElement).appendChild(pop);
     popFocus = document.activeElement;
     popClose0 = window.__tvMenuClose || null;
     window.__tvMenuClose = function() { popHide(); return true; };
     try { if (H.setSideMenuOpen) H.setSideMenuOpen(true); } catch (e) {}
     window.addEventListener('keydown', popKey, true);
-    Array.prototype.forEach.call(pop.querySelectorAll('.tv-fpb'), function(b) {
-      b.addEventListener('click', function(ev) { ev.preventDefault(); ev.stopPropagation(); popAct(b); });
-    });
-    var first = pop.querySelector('.tv-fpb');
-    if (first) first.focus();
+    popFill('main');
   }
 
   // ---- the Menu button
@@ -228,6 +301,7 @@
     if (document.activeElement && out.indexOf(document.activeElement) === -1) out.push(document.activeElement);
     return out;
   }
+  var ARR = { l: 'later', m: 'm', s: 's' };
   function menuKey(arg) {
     if (pop) return true;
     var c = candidates(arg), i, el, t;
@@ -242,10 +316,12 @@
       // on the My Favorites page
       t = el.closest('#tv-fp [data-fk]');
       if (t) {
-        var fk = t.getAttribute('data-fk'), fv = t.getAttribute('data-fv') || '';
-        if (fk === 'w') { var d = load(), ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
-        else if (fk === 'f') { var d2 = load(); if (d2.f) { var fo = facById(d2.f); d2.f = ''; save(d2); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
-        else if (fk === 'l') { var d3 = load(), li = parseInt(fv, 10); if (d3.later[li]) { d3.later.splice(li, 1); save(d3); toast(T('Removed from Watch Later', 'あとで見るから削除しました')); } }
+        var fk = t.getAttribute('data-fk'), fv = t.getAttribute('data-fv') || '', d = load(), ix;
+        if (fk === 'w') { ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
+        else if (fk === 'f') { if (d.f) { var fo = facById(d.f); d.f = ''; save(d); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
+        else if (ARR[fk]) { var arr = d[ARR[fk]], li = parseInt(fv, 10); if (arr[li]) { arr.splice(li, 1); save(d); toast(T('Removed from ' + LISTS[ARR[fk]].en, LISTS[ARR[fk]].ja + 'から削除しました')); } }
+        else if (fk === 'p') { var pi = parseInt(fv, 10); if (d.pl[pi]) { var pn = d.pl[pi].name; d.pl.splice(pi, 1); save(d); toast(T('Removed playlist ' + pn, pn + ' を削除しました')); } }
+        else if (fk === 'pi') { var pl = d.pl[PLI]; var ii = parseInt(fv, 10); if (pl && pl.items[ii]) { pl.items.splice(ii, 1); save(d); toast(T('Removed from ' + pl.name, pl.name + ' から削除しました')); } }
         else if (fk === 'r') { removeReminder(fv); }
         else if (fk === 'h') { var hi = cardInfo([t]); if (hi) popShow(hi); return true; }
         else return true;
@@ -253,8 +329,8 @@
         return true;
       }
     }
-    // a video card anywhere else
-    var info = cardInfo(c);
+    // a video card anywhere else, or the video being watched
+    var info = cardInfo(c) || pageInfo();
     if (info) { popShow(info); return true; }
     return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(arg) : false;
   }
@@ -264,9 +340,12 @@
 
   // =============================================================== the My Favorites page
   var P = null;
-  try { if (location.pathname === '/mypage') P = new URLSearchParams(location.search).get('tvfav'); } catch (e) { P = null; }
+  var PARAMS = null;
+  try { if (location.pathname === '/mypage') { PARAMS = new URLSearchParams(location.search); P = PARAMS.get('tvfav'); } } catch (e) { P = null; }
   if (!P) return;
-  var MODE = P === 'later' ? 'later' : (P === 'wrestlers' ? 'wrestlers' : 'home');
+  MODE = ({ later: 'later', wrestlers: 'wrestlers', m: 'm', s: 's', pl: 'pl', plall: 'plall' })[P] || 'home';
+  PLI = parseInt(PARAMS.get('pi') || '0', 10) || 0;
+  
 
   var HISTORY_RE = /viewing history|視聴履歴|閲覧履歴|履歴/i;
   var hist = [], histDone = false;
@@ -356,20 +435,24 @@
   css.textContent = [
     '#tv-fp{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#fff;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-fp, #tv-fp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;box-sizing:border-box;}',
-    '#tv-fp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 40px 8px 40px;font-size:36px;}',
+    '#tv-fp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 24px 8px 30px;font-size:36px;}',
     '#tv-fp-title .tv-fp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
-    '#tv-fp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 40px 70px 40px;scrollbar-width:none;}',
+    '#tv-fp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 24px 30px 24px;scrollbar-width:none;}',
+    '#tv-fp-in{max-width:1440px;margin:0 auto;}',
     '#tv-fp-scroll::-webkit-scrollbar{display:none;}',
     '.tv-fp-h{display:flex;align-items:baseline;gap:12px;margin:18px 0 8px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
     '.tv-fp-h span{font-size:15px;color:#9aa6b4;letter-spacing:0;font-weight:700;}',
     '.tv-fp-track{display:flex;gap:24px;overflow-x:auto;padding:6px 6px 10px 6px;margin:0 -6px;scrollbar-width:none;}',
     '.tv-fp-track::-webkit-scrollbar{display:none;}',
     '.tv-fp-grid{display:grid;gap:24px;padding:6px;}',
-    '.tv-fp-t{display:flex;flex-direction:column;flex:0 0 calc((100% - 72px) / 4);min-width:0;text-decoration:none !important;color:#fff !important;border-radius:8px;background:#172029;border:3px solid transparent;outline:none !important;cursor:pointer;}',
+    '.tv-fp-grid .tv-fp-t{flex:none;max-width:none;}',
+    '.tv-fp-t{display:block;position:relative;flex:0 0 calc(25% - 18px);max-width:calc(25% - 18px);min-width:0;text-decoration:none !important;color:#fff !important;border-radius:8px;background:#1a1a1a;overflow:hidden;border:3px solid transparent;outline:none !important;cursor:pointer;}',
     '.tv-fp-t:focus, .tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:0 0 0 3px rgba(244,194,66,.35) !important;}',
-    '.tv-fp-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
-    '.tv-fp-tt{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
-    '.tv-fp-all{align-items:center;justify-content:center;border-color:#F4C242;background:#161f2a;font-size:22px;font-weight:800;aspect-ratio:auto;min-height:150px;}',
+    '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
+    '.tv-fp-badge{position:absolute;right:8px;top:8px;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,.8);color:#F4C242;font-size:15px;font-weight:800;}',
+    '.tv-fp-tt{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;}',
+    '.tv-fp-all{display:flex;align-items:center;justify-content:center;border-color:#2a323c;background:#11171E;font-size:22px;font-weight:800;min-height:200px;}',
+    '.tv-fp-all:focus{border-color:#F4C242 !important;}',
     '.tv-fp-all b{display:block;font-size:34px;color:#F4C242;margin-top:2px;}',
     '.tv-fp-empty{flex:1 1 auto;display:flex;align-items:center;min-height:90px;padding:0 22px;border-radius:10px;border:2px dashed #2a323c;color:#9aa6b4;font-size:17px;line-height:1.4;outline:none !important;}',
     '.tv-fp-empty:focus{border-color:#F4C242;}',
@@ -387,7 +470,7 @@
     '.tv-fp-tk .a{font-size:13px;font-weight:800;color:#7a5a36;letter-spacing:.5px;}',
     '.tv-fp-tk .b{font-size:23px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '.tv-fp-tk .c{font-size:14px;color:#7a5a36;}',
-    '#tv-fp-hint{position:absolute;left:0;right:0;bottom:0;padding:10px 40px 14px 40px;background:linear-gradient(0deg,#0B0F14 70%,rgba(11,15,20,0));font-size:16px;color:#9aa6b4;pointer-events:none;min-height:44px;}'
+    '#tv-fp-hint{flex:0 0 auto;padding:8px 40px 12px 40px;font-size:16px;color:#9aa6b4;min-height:40px;border-top:1px solid #1d2630;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
 
@@ -398,8 +481,15 @@
   (document.body || document.documentElement).appendChild(root);
   document.documentElement.style.overflow = 'hidden';
 
-  function tileHtml(it, fk, idx) {
-    return '<a class="tv-fp-t" tabindex="0" data-fk="' + fk + '" data-fv="' + idx + '" href="' + esc(it.href) + '"><div class="tv-fp-img" style="' + (it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '') + '"></div><div class="tv-fp-tt">' + esc(it.title) + '</div></a>';
+  function tileHtml(it, fk, idx, badge) {
+    return '<a class="tv-fp-t" tabindex="0" data-fk="' + fk + '" data-fv="' + idx + '" href="' + esc(it.href) + '"><div class="tv-fp-img" style="' + (it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '') + '"></div>' + (badge ? '<div class="tv-fp-badge">' + esc(badge) + '</div>' : '') + '<div class="tv-fp-tt">' + esc(it.title) + '</div></a>';
+  }
+  function plTile(pl, i) {
+    var first = pl.items[0] || {};
+    return tileHtml({ href: absUrl('/mypage?tvfav=pl&pi=' + i), title: pl.name, bg: first.bg || '' }, 'p', i, pl.items.length + T(' videos', '本'));
+  }
+  function row(key, tiles, all, n, empty) {
+    return '<div class="tv-fp-track" data-row="' + key + '">' + (n ? tiles + all : emptyHtml(empty)) + '</div>';
   }
   function cardHtml(w) {
     var u = photo(w.k), n = w.n || nameFor(w.k);
@@ -440,22 +530,41 @@
     if (sc) pscroll = sc.scrollTop;
     if (prev && root.contains(prev)) pidx = Array.prototype.indexOf.call(root.querySelectorAll('[data-fk]'), prev);
     var body = '';
+    var EMPTY_L = T('Nothing saved yet. Press the Menu button on a video and choose Add to Watch Later.', '保存した動画はありません。動画でメニューボタンを押してください。');
+    function vtiles(arr, fk, max) { return arr.slice(0, max).map(function(it, i) { return tileHtml(it, fk, i); }).join(''); }
+    function gridOf(arr, fk) { return arr.length ? '<div class="tv-fp-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">' + arr.map(function(it, i) { return tileHtml(it, fk, i); }).join('') + '</div>' : emptyHtml(T('Nothing here yet.', 'まだありません')); }
     if (MODE === 'home') {
       body += topRow(d);
       body += head(T('FAVORITE WRESTLERS', 'お気に入り選手'), d.w.length);
-      body += '<div class="tv-fp-track" data-row="w">' + (d.w.length ? d.w.slice(0, 14).map(cardHtml).join('') + (d.w.length > 14 ? allTile(absUrl('/mypage?tvfav=wrestlers'), d.w.length) : '') : emptyHtml(T('No favorite wrestlers yet. Open Wrestlers or Factions in the menu, highlight a name and press the Menu button.', '選手はまだありません。メニューの選手から選び、メニューボタンを押してください。'))) + '</div>';
+      body += '<div class="tv-fp-track" data-row="w">' + (d.w.length ? d.w.slice(0, 14).map(cardHtml).join('') + (d.w.length > 14 ? allTile(absUrl('/mypage?tvfav=wrestlers'), d.w.length) : '') : emptyHtml(T('No favorite wrestlers yet. Open Wrestlers in the menu, highlight a name and press the Menu button.', '選手はまだありません。メニューの選手から選び、メニューボタンを押してください。'))) + '</div>';
       body += head(T('WATCH LATER', 'あとで見る'), d.later.length);
-      body += '<div class="tv-fp-track" data-row="l">' + (d.later.length ? d.later.slice(0, 12).map(function(it, i) { return tileHtml(it, 'l', i); }).join('') + (d.later.length > 12 ? allTile(absUrl('/mypage?tvfav=later'), d.later.length) : '') : emptyHtml(T('Nothing saved yet. Press the Menu button on a video and choose Add to Watch Later.', '保存した動画はありません。動画でメニューボタンを押してください。'))) + '</div>';
+      body += row('l', vtiles(d.later, 'l', 11), d.later.length > 11 ? allTile(absUrl('/mypage?tvfav=later'), d.later.length) : '', d.later.length, EMPTY_L);
       body += head(T('RECENTLY WATCHED', '最近視聴した動画'), hist.length ? hist.length : '');
-      body += '<div class="tv-fp-track" data-row="h">' + (hist.length ? hist.slice(0, 12).map(function(it, i) { return tileHtml(it, 'h', i); }).join('') + allTile(absUrl('/mypage?tvrecent=1'), hist.length) : emptyHtml(histDone ? T('Nothing here yet (log in to see your history).', 'まだありません（ログインが必要です）') : T('Loading...', '読み込み中...'))) + '</div>';
+      body += '<div class="tv-fp-track" data-row="h">' + (hist.length ? hist.slice(0, 11).map(function(it, i) { return tileHtml(it, 'h', i); }).join('') + allTile(absUrl('/mypage?tvrecent=1'), hist.length) : emptyHtml(histDone ? T('Nothing here yet (log in to see your history).', 'まだありません（ログインが必要です）') : T('Loading...', '読み込み中...'))) + '</div>';
+      body += head(T('PLAYLISTS', 'プレイリスト'), d.pl.length);
+      body += row('p', d.pl.slice(0, 11).map(plTile).join(''), d.pl.length > 11 ? allTile(absUrl('/mypage?tvfav=plall'), d.pl.length) : '', d.pl.length, T('No playlists yet. Press the Menu button on a video and choose Add to a Playlist.', 'プレイリストはまだありません。動画でメニューボタンを押してください。'));
+      body += head(T('FAVORITE MATCHES', 'お気に入りの試合'), d.m.length);
+      body += row('m', vtiles(d.m, 'm', 11), d.m.length > 11 ? allTile(absUrl('/mypage?tvfav=m'), d.m.length) : '', d.m.length, T('No favorite matches yet. Press the Menu button on a video or while watching.', '試合はまだありません。'));
+      body += head(T('FAVORITE SHOWS', 'お気に入りの大会'), d.s.length);
+      body += row('s', vtiles(d.s, 's', 11), d.s.length > 11 ? allTile(absUrl('/mypage?tvfav=s'), d.s.length) : '', d.s.length, T('No favorite shows yet. Press the Menu button on a show (video set).', '大会はまだありません。'));
     } else if (MODE === 'later') {
-      title = T('Watch Later', 'あとで見る');
-      body += d.later.length ? '<div class="tv-fp-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">' + d.later.map(function(it, i) { return tileHtml(it, 'l', i).replace('class="tv-fp-t"', 'class="tv-fp-t" style="flex:none"'); }).join('') + '</div>' : emptyHtml(T('Nothing saved yet.', 'まだありません'));
+      title = T('Watch Later', 'あとで見る'); body += gridOf(d.later, 'l');
+    } else if (MODE === 'm') {
+      title = T('Favorite Matches', 'お気に入りの試合'); body += gridOf(d.m, 'm');
+    } else if (MODE === 's') {
+      title = T('Favorite Shows', 'お気に入りの大会'); body += gridOf(d.s, 's');
+    } else if (MODE === 'plall') {
+      title = T('Playlists', 'プレイリスト');
+      body += d.pl.length ? '<div class="tv-fp-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">' + d.pl.map(plTile).join('') + '</div>' : emptyHtml(T('No playlists yet.', 'まだありません'));
+    } else if (MODE === 'pl') {
+      var pls = d.pl[PLI];
+      title = pls ? pls.name : T('Playlist', 'プレイリスト');
+      body += pls ? gridOf(pls.items, 'pi') : emptyHtml(T('This playlist is gone.', 'このプレイリストはありません'));
     } else {
       title = T('Favorite Wrestlers', 'お気に入り選手');
       body += d.w.length ? '<div class="tv-fp-grid" style="grid-template-columns:repeat(6,minmax(0,1fr));">' + d.w.map(cardHtml).join('') + '</div>' : emptyHtml(T('No favorite wrestlers yet.', 'まだありません'));
     }
-    root.innerHTML = '<div id="tv-fp-title"><span class="tv-fp-bar"></span><span>' + esc(title) + '</span></div><div id="tv-fp-scroll">' + body + '</div><div id="tv-fp-hint"></div>';
+    root.innerHTML = '<div id="tv-fp-title"><span class="tv-fp-bar"></span><span>' + esc(title) + '</span></div><div id="tv-fp-scroll"><div id="tv-fp-in">' + body + '</div></div><div id="tv-fp-hint"></div>';
     sc = root.querySelector('#tv-fp-scroll');
     if (keep && sc) sc.scrollTop = pscroll;
     var all = focusables(), target = null;
@@ -470,14 +579,14 @@
     hint();
   }
   function firstRealTarget(all) {
-    for (var i = 0; i < all.length; i++) if (all[i].getAttribute('data-fk') === 'w' || all[i].getAttribute('data-fk') === 'l' || all[i].getAttribute('data-fk') === 'f') return all[i];
+    for (var i = 0; i < all.length; i++) if (/^(w|l|f|m|s|p|pi)$/.test(all[i].getAttribute('data-fk'))) return all[i];
     return all[0] || null;
   }
   function focusables() { return Array.prototype.slice.call(root.querySelectorAll('[data-fk]')); }
   function hint() {
     var el = document.getElementById('tv-fp-hint'), ae = document.activeElement, fk = ae && ae.getAttribute ? ae.getAttribute('data-fk') : '';
     if (!el) return;
-    el.textContent = (fk === 'w' || fk === 'f' || fk === 'l' || fk === 'r') ? T('Menu button: remove', 'メニューボタン：削除')
+    el.textContent = (fk === 'w' || fk === 'f' || fk === 'l' || fk === 'm' || fk === 's' || fk === 'p' || fk === 'pi' || fk === 'r') ? T('Menu button: remove', 'メニューボタン：削除')
       : (fk === 'h' ? T('Menu button: add to Favorites or Watch Later', 'メニューボタン：お気に入り／あとで見る') : '');
   }
   function focusEl(el) {
