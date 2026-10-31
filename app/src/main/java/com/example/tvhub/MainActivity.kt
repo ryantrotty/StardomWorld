@@ -5741,7 +5741,7 @@ class MainActivity : Activity() {
     '#tv-rp a, #tv-rp a *{opacity:1 !important;filter:none !important;}',
     '#tv-rp a::before, #tv-rp a::after{content:none !important;display:none !important;}',
     '#tv-rp *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
-    '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:none !important;}',
+    '#tv-rp .tv-rc:focus{outline:3px solid #FFD700 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
     '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
     '#tv-rp .tv-rc-t{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;box-sizing:border-box;}',
     '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
@@ -7417,7 +7417,7 @@ class MainActivity : Activity() {
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
             // Row order under the first row: Recently Watched, Favorites.
-            var ORDER = ['tv-recent-row', 'tv-favorites-row'];
+            var ORDER = ['tv-recent-row', 'tv-watchlater-row'];
             var after = firstWrap;
             for (var oi = ORDER.indexOf(id) - 1; oi >= 0; oi--) {
               var prev = document.getElementById(ORDER[oi]);
@@ -7464,9 +7464,17 @@ class MainActivity : Activity() {
             upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items,
               'https://www.stardom-world.com/mypage?tvrecent=1', isJa() ? 'すべて見る' : 'View All', css);
           }
-          function showFavorites(items, more, css) {
-            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'My Favorites', items,
-              more ? FAV_URL : '', isJa() ? 'すべて見る' : 'Show All', css);
+          // The row under Recently Watched is the app's own Watch Later list (kept on this device, no request).
+          function showWatchLater(css, hide) {
+            var items = [];
+            if (!hide) {
+              try {
+                var wl = (JSON.parse(localStorage.getItem('tvFavV1') || '{}') || {}).later || [];
+                items = wl.slice(0, 12).map(function(x) { return { href: x.href, title: x.title, bgUrl: x.bg || '' }; });
+              } catch (e) { items = []; }
+            }
+            upsertRow('tv-watchlater-row', isJa() ? 'あとで見る' : 'Watch Later', items,
+              'https://www.stardom-world.com/mypage?tvfav=later', isJa() ? 'すべて見る' : 'View All', css);
           }
 
           // Called as soon as the grid exists: draws the saved copies straight away, then refreshes them.
@@ -7474,7 +7482,8 @@ class MainActivity : Activity() {
             var css = { card: cardCss, img: imgCss, title: titleCss };
             var c = readCache();
             if (c.recent && c.recent.length) showRecent(c.recent, css);
-            if (c.fav && c.fav.items && c.fav.items.length) showFavorites(c.fav.items, !!c.fav.more, css);
+            showWatchLater(css, false);
+            if (c.fav) writeCache('fav', null);
             // Most Watched / Most Favorited are no longer drawn on the home page: forget their saved copies.
             try { localStorage.removeItem('tvMostWatchedV1'); localStorage.removeItem('tvMostFavoritedV1'); } catch (e) {}
             loadRecentlyWatched(css);
@@ -7495,7 +7504,7 @@ class MainActivity : Activity() {
                   // Signed out: forget what was saved and show nothing.
                   clearCache();
                   showRecent([], css);
-                  showFavorites([], false, css);
+                  showWatchLater(css, true);
                   return;
                 }
                 var items = extractList(doc, HISTORY_RE, 12);
@@ -7507,19 +7516,8 @@ class MainActivity : Activity() {
                 } else {
                   finish([]);   // heading present, no videos yet: nothing is shown
                 }
-                loadFavorites(css);   // signed in: the Favorites row is read as well
               })
               .catch(function() {});
-          }
-
-          // The first 12 favorites (what the site's own first page shows); a "Show All" tile when there are more.
-          function loadFavorites(css) {
-            if (window.__tvFavLoading) return;
-            window.__tvFavLoading = true;
-            readViaFrame('/mypage/favorites', FAVORITES_RE, 12, function(items, more) {
-              writeCache('fav', items.length ? { items: items, more: !!more } : null);
-              showFavorites(items, more, css);
-            });
           }
 
           if (!window.__tvGridNavHandlerAttached) {

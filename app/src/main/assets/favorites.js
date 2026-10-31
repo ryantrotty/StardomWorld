@@ -430,7 +430,7 @@
     var pls = d.pl.slice(0, 5).map(function(pl, i) { return lk('/mypage?tvfav=pl&pi=' + i, 'tv-fv-pl', '<span>' + esc(pl.name) + '</span><span style="color:#9aa6b4;font-size:14px">' + pl.items.length + '</span>'); }).join('');
     var colB = '<div class="tv-fv-k">' + esc(T('LISTS', 'リスト')) + '</div>' +
       row('/mypage?tvfav=later', T('Watch Later', 'あとで見る'), n(d.later.length)) +
-      row('/mypage?tvrecent=1', T('Recently Watched', '最近視聴した動画'), '') +
+      row('/mypage?tvrecent=1', T('Recently Watched', '最近視聴した動画'), (parseInt(lsGet('tvFavHistN') || '0', 10) > 0 ? n(parseInt(lsGet('tvFavHistN'), 10)) : '')) +
       row('/mypage?tvfav=plall', T('Playlists', 'プレイリスト'), n(d.pl.length)) +
       row('/mypage/favorites', T('Favorite Videos', 'お気に入り動画'), '') +
       (pls ? '<div class="tv-fv-k2">' + esc(T('YOUR PLAYLISTS', 'プレイリスト')) + '</div>' + pls : '');
@@ -554,7 +554,7 @@
     '#tv-fp-scroll::-webkit-scrollbar{display:none;}',
     '.tv-fp-h{display:flex;align-items:baseline;gap:12px;margin:18px 0 8px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
     '.tv-fp-h span{font-size:15px;color:#9aa6b4;letter-spacing:0;font-weight:700;}',
-    '.tv-fp-track{display:flex;gap:24px;overflow-x:auto;padding:6px 6px 10px 6px;margin:0 -6px;scrollbar-width:none;}',
+    '.tv-fp-track{display:flex;gap:24px;overflow-x:auto;padding:12px 10px;margin:0 -10px;scrollbar-width:none;}',
     '.tv-fp-track::-webkit-scrollbar{display:none;}',
     '.tv-fp-grid{display:grid;gap:24px;padding:6px;}',
     '.tv-fp-grid .tv-fp-t{flex:none;max-width:none;}',
@@ -563,7 +563,8 @@
     '#tv-fp a:visited, #tv-fp a:hover{color:#fff !important;}',
     '#tv-fp a::before, #tv-fp a::after{content:none !important;display:none !important;}',
     '#tv-fp *:focus, #tv-fp-pop *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
-    '.tv-fp-t:focus, .tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
+    '.tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
+    '#tv-fp .tv-fp-t:focus{outline:3px solid #FFD700 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
     '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
     '.tv-fp-badge{position:absolute;right:8px;top:8px;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,.8);color:#F4C242;font-size:15px;font-weight:800;}',
     '.tv-fp-tt{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;}',
@@ -577,6 +578,9 @@
     '.tv-fp-mono{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:54px;font-weight:800;color:#fff;}',
     '.tv-fp-cn{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 7px 8px;background:linear-gradient(0deg,rgba(0,0,0,.88),rgba(0,0,0,0));font-size:16px;font-weight:700;line-height:1.15;}',
     '.tv-fp-top{display:flex;gap:26px;align-items:center;padding:6px;}',
+    '.tv-fp-two{display:flex;gap:26px;align-items:flex-start;}',
+    '.tv-fp-c1{flex:0 0 190px;}',
+    '.tv-fp-c2{flex:1 1 0;min-width:0;}',
     '.tv-fp-stk{flex:0 0 150px;height:150px;border-radius:50%;background:#fff;border:5px solid #F4C242;padding:14px;display:flex;align-items:center;justify-content:center;text-align:center;color:#111 !important;font-weight:800;font-size:20px;line-height:1.1;text-decoration:none !important;outline:none !important;transform:rotate(-5deg);box-shadow:0 8px 16px rgba(0,0,0,.6);}',
     '.tv-fp-stk img{width:100%;height:100%;object-fit:contain;}',
     '.tv-fp-stk-e{flex:0 0 150px;height:150px;border-radius:50%;border:3px dashed #2a323c;display:flex;align-items:center;justify-content:center;text-align:center;color:#9aa6b4;font-size:14px;padding:16px;outline:none !important;}',
@@ -621,23 +625,23 @@
   function head(label, n) { return '<div class="tv-fp-h">' + esc(label) + (n !== '' ? '<span>' + n + '</span>' : '') + '</div>'; }
 
   function topRow(d) {
-    var fac = d.f ? facById(d.f) : null, h = '<div class="tv-fp-top">';
+    var fac = d.f ? facById(d.f) : null, hf = '';
     if (fac) {
       var lg = logo(fac.id);
       var page = (fac.members && fac.members.length) ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) : '/';
-      h += '<a class="tv-fp-stk" tabindex="0" data-fk="f" data-fv="' + esc(fac.id) + '" href="' + esc(absUrl(page)) + '">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</a>';
+      hf = '<a class="tv-fp-stk" tabindex="0" data-fk="f" data-fv="' + esc(fac.id) + '" href="' + esc(absUrl(page)) + '">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</a>';
     } else {
-      h += '<div class="tv-fp-stk-e" tabindex="0" data-fk="e">' + esc(T('Pick your faction in the menu: Factions, then the Menu button', 'メニューのユニットで選んでください')) + '</div>';
+      hf = '<div class="tv-fp-stk-e" tabindex="0" data-fk="e">' + esc(T('Pick your faction in the menu: Factions, then the Menu button', 'メニューのユニットで選んでください')) + '</div>';
     }
-    var rs = reminders().slice(0, 2);
-    h += '<div class="tv-fp-tks">';
+    var all = reminders(), rs = all.slice(0, 2), ht = '<div class="tv-fp-tks">';
     if (rs.length) {
       rs.forEach(function(r) {
-        h += '<a class="tv-fp-tk" tabindex="0" data-fk="r" data-fv="' + esc(r.e.id) + '" href="#"><div class="a">' + esc(fmtWhen(r.e._t)) + '</div><div class="b">' + esc(r.e.short || r.e.title) + '</div><div class="c">🔔 ' + esc(offText(r.off)) + '</div></a>';
+        ht += '<a class="tv-fp-tk" tabindex="0" data-fk="r" data-fv="' + esc(r.e.id) + '" href="#"><div class="a">' + esc(fmtWhen(r.e._t)) + '</div><div class="b">' + esc(r.e.short || r.e.title) + '</div><div class="c">\ud83d\udd14 ' + esc(offText(r.off)) + '</div></a>';
       });
-    } else h += emptyHtml(T('No reminders yet. Open a show under Shows and choose Remind me.', 'リマインダーはまだありません'));
-    var allRs = reminders().length;
-    return h + '</div>' + (allRs > 2 ? '<div class="tv-fp-more">+' + (allRs - 2) + T(' more', '件') + '</div>' : '') + '</div>';
+    } else ht += emptyHtml(T('No reminders yet. Open a show under Shows and choose Remind me.', 'リマインダーはまだありません'));
+    ht += '</div>' + (all.length > 2 ? '<div class="tv-fp-more">+' + (all.length - 2) + T(' more', '件') + '</div>' : '');
+    return '<div class="tv-fp-two"><div class="tv-fp-c1">' + head(T('MY FACTION', 'お気に入りユニット'), '') + '<div class="tv-fp-top">' + hf + '</div></div>' +
+      '<div class="tv-fp-c2">' + head(T('MY REMINDERS', 'マイリマインダー'), all.length || '') + '<div class="tv-fp-top">' + ht + '</div></div></div>';
   }
 
   function render(keep) {
@@ -770,6 +774,7 @@
       if ((items.length && items.length === last) || tries > 24) {
         clearInterval(tm);
         hist = items; histDone = true;
+        if (items.length) lsSet('tvFavHistN', String(items.length));
         render(true);
         return;
       }

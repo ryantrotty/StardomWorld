@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.7.0
+- Home page: the site's "My Favorites" row under Recently Watched is replaced by your Watch Later row (the same list as on the My Favorites page; View All opens it). The app no longer loads the site's favorites page in the background when the home page opens.
+- My Favorites overview: "My Faction" and "My Reminders" headings above the sticker and the tickets.
+- Highlighted video tiles on the My Favorites pages and Recently Watched use the same gold outline and glow as the home page.
+- Menu panel: Recently Watched shows a count once the My Favorites overview has read your history (Favorite Videos has none, because the count would need a request to the site).
+
 ## 2.6.1
 - My Favorites menu panel: "Open My Favorites" only shows the gold highlight when it is the highlighted row, and rows that were opened before (such as Wrestlers) are no longer drawn dim. Visited links on the My Favorites pages are kept at full brightness too.
 
