@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.3.0
+- New "My Favorites" section in the menu (replaces My Videos): Overview, Favorite Wrestlers, Watch Later, Recently Watched and the site's Favorite Videos.
+- My Favorites page: your one favorite faction as a round sticker, your reminders as tickets, favorite wrestlers as cards, then Watch Later and Recently Watched in the same rows as the home page (four across, View All at the end). Private builds show wrestler photos (res/drawable-nodpi/wrestler_<name>.jpg or .png in the private branding folder) and faction logos; other builds show initials and the faction name.
+- Menu button in the Wrestlers and Factions lists: on a wrestler it adds or removes a favorite; on a faction name it picks your one favorite faction (choosing another replaces it). A toast confirms each change, and favorites show a star.
+- Menu button on a video card now shows a small choice: Add to Favorites (the site's list, as before) or Add to Watch Later.
+- On the My Favorites page the Menu button removes the highlighted wrestler, faction, Watch Later video or reminder.
+
 ## 2.2.7
 - Shows menu: the Remind me and Details buttons (and the show rows and bells) get the gold focus outline again.
 

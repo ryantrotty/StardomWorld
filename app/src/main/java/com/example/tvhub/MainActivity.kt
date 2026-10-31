@@ -2463,6 +2463,8 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- schedule
 
     // The schedule list: the copy downloaded by refreshScheduleAsync() or the one bundled in assets, whichever is newer.
+    private fun assetText(name: String): String = try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+
     private fun scheduleText(): String {
         var downloaded = ""
         try {
@@ -2685,6 +2687,22 @@ class MainActivity : Activity() {
                 if (resId == 0) return ""
                 val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
                 "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
+        // A wrestler's photo from the private branding folder (res/drawable-nodpi/wrestler_<name>.jpg or .png, lower
+        // case, anything that is not a letter or digit written as "_"), as a data address. Private builds only;
+        // empty when the build doesn't have it: the page shows initials.
+        @android.webkit.JavascriptInterface
+        fun wrestlerPhoto(name: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+                val resId = this@MainActivity.resources.getIdentifier("wrestler_" + slug, "drawable", this@MainActivity.packageName)
+                if (resId == 0) return ""
+                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
+                val mime = if (bytes.size > 3 && bytes[0] == 0x89.toByte()) "image/png" else "image/jpeg"
+                "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             } catch (_: Exception) { "" }
         }
 
@@ -3990,9 +4008,12 @@ class MainActivity : Activity() {
           var CHAMPS = [];
           champGroups().forEach(function(g) { (g.items || []).forEach(function(x) { CHAMPS.push([x.name, champPath(x), x.ja || x.name]); }); });
           if (!CHAMPS.length) CHAMPS = CHAMPS_OLD;
-          var MINE = [
+          var FAVS = [
+            ['Overview', '/mypage?tvfav=1', '一覧'],
+            ['Favorite Wrestlers', '/mypage?tvfav=wrestlers', 'お気に入り選手'],
+            ['Watch Later', '/mypage?tvfav=later', 'あとで見る'],
             ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
-            ['My Favorites', '/mypage/favorites', 'お気に入り']
+            ['Favorite Videos', '/mypage/favorites', 'お気に入り動画']
           ];
           var COMMUNITY = [
             ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1', '再生数の多い動画'],
@@ -4272,13 +4293,13 @@ class MainActivity : Activity() {
             h += showsRow;
             h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
             h += group(T('Years', '年別'), years, 'years');
+            h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               var an = acctName();
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
-              h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
               h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             } else {
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
@@ -4396,6 +4417,7 @@ class MainActivity : Activity() {
           }
           window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } if (isOpen) { closeMenu(); return true; } if (evEl) { evClose(); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
+          window.__tvEvOpen = function(id) { evOpen(id); };
           // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
           (function() {
             var t0 = parseInt(lsGet(REOPEN_KEY) || '0', 10) || 0;
@@ -4522,7 +4544,7 @@ class MainActivity : Activity() {
                 '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
             }
             else {
-              var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
+              var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], favs: [T('MY FAVORITES', 'お気に入り'), FAVS], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
               var L = lists[key];
               if (L) {
                 w = (key === 'champs' || key === 'home') ? 440 : 360;
@@ -4557,6 +4579,7 @@ class MainActivity : Activity() {
             shelfEl.style.width = Math.min(b.width, window.innerWidth - 430 - 16) + 'px';
             shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
             document.body.appendChild(shelfEl);
+            try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
             var rr = row.getBoundingClientRect();
             shelfEl.style.top = Math.max(12, Math.min(rr.top, window.innerHeight - shelfEl.offsetHeight - 12)) + 'px';
             var list = fiItems(), first = list[0];
@@ -4792,7 +4815,7 @@ class MainActivity : Activity() {
             var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
             var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
-            var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
+            var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, FAVS, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
             for (var i = 0; i < all.length; i++) {
               var u = new URL(all[i][1], BASE);
               if (u.pathname !== loc.pathname) continue;
@@ -7719,6 +7742,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(pageFullyLoadedJs, null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
+        view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(sideMenuJs, null)
@@ -8856,9 +8880,9 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
                 KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
                     val evalJs = if (cursorMode) {
-                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y); return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(list) : false; })()"
+                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y); return window.__tvMenuKey ? window.__tvMenuKey(list) : (window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(list) : false); })()"
                     } else {
-                        "(function(){ return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(document.activeElement) : false; })()"
+                        "(function(){ return window.__tvMenuKey ? window.__tvMenuKey(document.activeElement) : (window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(document.activeElement) : false); })()"
                     }
                     webView.evaluateJavascript(evalJs, null)
                     return true
