@@ -5,9 +5,9 @@
   // exactly one request and nothing else is fetched (except the menu's Top 10, at most once a day).
   if (window.__tvComm) return;
   var H = window.AndroidHost || {};
-  // How a show's date starts a video title; "This month" searches for it (e.g. "2026.10").
+  // How a show's date starts a video title; "This month" searches for it (e.g. "2026/10").
   // The chart prints the words it searched for, so a different style of date is easy to spot and change here.
-  var MONTH_FMT = '{y}.{m}';
+  var MONTH_FMT = '{y}/{m}';
   var TOP_KEY = 'tvCommTop', TOP_TTL = 24 * 3600 * 1000, RANK_KEY = 'tvCommRank', FOCUS_KEY = 'tvCommFocus';
   var BUILD = '/contents/search?s=pc&o=d&activetab=contents&page=1';
 

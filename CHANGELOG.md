@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.8.2
+
+- Community, This month: searches the date as it is written at the start of match titles (2026/10), instead of 2026.10.
+
 ## 2.8.1
 
 - Community menu shelf: the Top 10 now has its own styling on every page (ranks beside the titles on one line each, large #1 picture), instead of only on the Community page.
