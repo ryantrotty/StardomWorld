@@ -2,6 +2,52 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.7.1
+
+- My Favorites rows: the first tile is no longer clipped on the left.
+- Pressing Right on the last tile of a row wraps round to the first tile.
+
+## 2.7.0
+- Home page: the site's "My Favorites" row under Recently Watched is replaced by your Watch Later row (the same list as on the My Favorites page; View All opens it). The app no longer loads the site's favorites page in the background when the home page opens.
+- My Favorites overview: "My Faction" and "My Reminders" headings above the sticker and the tickets.
+- Highlighted video tiles on the My Favorites pages and Recently Watched use the same gold outline and glow as the home page.
+- Menu panel: Recently Watched shows a count once the My Favorites overview has read your history (Favorite Videos has none, because the count would need a request to the site).
+
+## 2.6.1
+- My Favorites menu panel: "Open My Favorites" only shows the gold highlight when it is the highlighted row, and rows that were opened before (such as Wrestlers) are no longer drawn dim. Visited links on the My Favorites pages are kept at full brightness too.
+
+## 2.6.0
+- Playlists can be named: "+ New playlist" (from a video's Add to a Playlist list) asks for a name with a text box that opens the TV keyboard, suggesting "Playlist 1, 2, ..." which you can keep. Press OK on the box to type; Enter saves once you have typed, or move Down to Save.
+- Rename a playlist: Menu button on its tile on the My Favorites page opens Rename playlist and Remove playlist.
+
+## 2.5.0
+- My Favorites menu panel redesigned: "Open My Favorites" on top, then Collections (Wrestlers with photos in private builds, My Faction with its logo, Matches, Shows, each with a count), Lists (Watch Later, Recently Watched, Playlists, Favorite Videos, then your playlists by name) and your next three reminders (OK opens the event page).
+- My Favorites pages: the Menu button on a video (Watch Later, Matches, Shows, or inside a playlist) now opens the same choices as anywhere else: add it to the other lists or remove it from this one. Wrestlers, factions, reminders and whole playlists still remove straight away.
+- The first tile on the sub pages is no longer dimmed (the app's general highlight rule was fading it).
+- The overview shows "+N more" beside the two reminder tickets when more are set.
+
+## 2.4.2
+- My Favorites and Recently Watched pages: the highlighted tile has a single gold border. The app's general focus ring (an outline plus glow) was drawing a second one on top.
+
+## 2.4.1
+- Menu: My Favorites sits under the account name and shows only when signed in.
+- My Favorites page: the bottom hint bar is gone (the hint is at the top right), so the last row is no longer covered, and there is more room below it.
+- Recently Watched page: tiles now use the home page card style (size, font, four-line titles) and are no longer cut off at the bottom.
+- Focus: one gold ring around a highlighted tile (the second, glowing ring is gone).
+
+## 2.4.0
+- My Favorites: video tiles now match the home page (same size, font and four-line titles), and the last row is no longer cut off at the bottom of the overview and sub pages.
+- Factions menu: just the faction names in one short list (no scrolling). Menu button on a name picks your one favorite faction; wrestlers are added from the Wrestlers list.
+- New rows and pages: Playlists, Favorite Matches and Favorite Shows (View All opens the full page). The Menu button on a video now offers Add to Favorites, Add to Watch Later, Add to Favorite Matches (or Favorite Shows for a show / video set) and Add to a Playlist (pick one or start a new one, named Playlist 1, 2, ...). It also works while watching a video.
+- On the My Favorites page the Menu button removes the highlighted item, including a whole playlist or a video inside one.
+
+## 2.3.0
+- New "My Favorites" section in the menu (replaces My Videos): Overview, Favorite Wrestlers, Watch Later, Recently Watched and the site's Favorite Videos.
+- My Favorites page: your one favorite faction as a round sticker, your reminders as tickets, favorite wrestlers as cards, then Watch Later and Recently Watched in the same rows as the home page (four across, View All at the end). Private builds show wrestler photos (res/drawable-nodpi/wrestler_<name>.jpg or .png in the private branding folder) and faction logos; other builds show initials and the faction name.
+- Menu button in the Wrestlers and Factions lists: on a wrestler it adds or removes a favorite; on a faction name it picks your one favorite faction (choosing another replaces it). A toast confirms each change, and favorites show a star.
+- Menu button on a video card now shows a small choice: Add to Favorites (the site's list, as before) or Add to Watch Later.
+- On the My Favorites page the Menu button removes the highlighted wrestler, faction, Watch Later video or reminder.
+
 ## 2.2.7
 - Shows menu: the Remind me and Details buttons (and the show rows and bells) get the gold focus outline again.
 

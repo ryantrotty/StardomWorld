@@ -2463,6 +2463,8 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- schedule
 
     // The schedule list: the copy downloaded by refreshScheduleAsync() or the one bundled in assets, whichever is newer.
+    private fun assetText(name: String): String = try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+
     private fun scheduleText(): String {
         var downloaded = ""
         try {
@@ -2685,6 +2687,22 @@ class MainActivity : Activity() {
                 if (resId == 0) return ""
                 val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
                 "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
+        // A wrestler's photo from the private branding folder (res/drawable-nodpi/wrestler_<name>.jpg or .png, lower
+        // case, anything that is not a letter or digit written as "_"), as a data address. Private builds only;
+        // empty when the build doesn't have it: the page shows initials.
+        @android.webkit.JavascriptInterface
+        fun wrestlerPhoto(name: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+                val resId = this@MainActivity.resources.getIdentifier("wrestler_" + slug, "drawable", this@MainActivity.packageName)
+                if (resId == 0) return ""
+                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
+                val mime = if (bytes.size > 3 && bytes[0] == 0x89.toByte()) "image/png" else "image/jpeg"
+                "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             } catch (_: Exception) { "" }
         }
 
@@ -3990,9 +4008,15 @@ class MainActivity : Activity() {
           var CHAMPS = [];
           champGroups().forEach(function(g) { (g.items || []).forEach(function(x) { CHAMPS.push([x.name, champPath(x), x.ja || x.name]); }); });
           if (!CHAMPS.length) CHAMPS = CHAMPS_OLD;
-          var MINE = [
+          var FAVS = [
+            ['Overview', '/mypage?tvfav=1', '一覧'],
+            ['Favorite Wrestlers', '/mypage?tvfav=wrestlers', 'お気に入り選手'],
+            ['Watch Later', '/mypage?tvfav=later', 'あとで見る'],
             ['Recently Watched', '/mypage?tvrecent=1', '最近視聴した動画'],
-            ['My Favorites', '/mypage/favorites', 'お気に入り']
+            ['Playlists', '/mypage?tvfav=plall', 'プレイリスト'],
+            ['Favorite Matches', '/mypage?tvfav=m', 'お気に入りの試合'],
+            ['Favorite Shows', '/mypage?tvfav=s', 'お気に入りの大会'],
+            ['Favorite Videos', '/mypage/favorites', 'お気に入り動画']
           ];
           var COMMUNITY = [
             ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1', '再生数の多い動画'],
@@ -4278,7 +4302,7 @@ class MainActivity : Activity() {
               window.__tvMenuAcct = links;
               var an = acctName();
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
-              h += group(T('My Videos', 'マイビデオ'), MINE, 'mine');
+              h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
               h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
             } else {
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
@@ -4396,6 +4420,7 @@ class MainActivity : Activity() {
           }
           window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } if (isOpen) { closeMenu(); return true; } if (evEl) { evClose(); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
+          window.__tvEvOpen = function(id) { evOpen(id); };
           // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
           (function() {
             var t0 = parseInt(lsGet(REOPEN_KEY) || '0', 10) || 0;
@@ -4489,29 +4514,17 @@ class MainActivity : Activity() {
               w = 400;
               h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
             } else if (key === 'factions') {
-              w = 858;
-              var blocks = '';
+              w = 380;
+              var fl = '';
               try {
                 var d = JSON.parse(AndroidHost.factionsJson());
                 var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
-                var seen = {};
                 facs.forEach(function(f) {
-                  var fpage = (f.members && f.members.length) ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) : '';
-                  var ms = (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
-                  var inner = '';
-                  ms.forEach(function(m) {
-                    if (!m || !m.name || seen[m.name]) return;
-                    seen[m.name] = 1;
-                    inner += fiHtml(isJa() && JA_NAMES[m.name] ? JA_NAMES[m.name] : m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name));
-                  });
-                  var fhead = fpage
-                    ? '<a class="tv-sm-fi tv-shl-hl" tabindex="0" data-go="' + esc(fpage) + '" href="' + esc(absUrl(fpage)) + '">' + esc(String(f.name).toUpperCase()) + '</a>'
-                    : '<div class="tv-shl-h">' + esc(String(f.name).toUpperCase()) + '</div>';
-                  if (inner || fpage) blocks += '<div class="tv-shl-blk">' + fhead + inner + '</div>';
+                  if (!f.members || !f.members.length) return;
+                  fl += fiHtml(f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id));
                 });
               } catch (e) {}
-              if (!blocks) blocks = rowsHtml(wrestlers(CURRENT_W));
-              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 10px;">' + blocks + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 900;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
@@ -4521,8 +4534,12 @@ class MainActivity : Activity() {
                 '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
                 '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
             }
+            else if (key === 'favs') {
+              w = 1000;
+              try { h = window.__tvFav ? window.__tvFav.shelfHtml() : ''; } catch (e) { h = ''; }
+            }
             else {
-              var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], mine: [T('MY VIDEOS', 'マイビデオ'), MINE], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
+              var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], favs: [T('MY FAVORITES', 'お気に入り'), FAVS], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
               var L = lists[key];
               if (L) {
                 w = (key === 'champs' || key === 'home') ? 440 : 360;
@@ -4557,6 +4574,7 @@ class MainActivity : Activity() {
             shelfEl.style.width = Math.min(b.width, window.innerWidth - 430 - 16) + 'px';
             shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
             document.body.appendChild(shelfEl);
+            try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
             var rr = row.getBoundingClientRect();
             shelfEl.style.top = Math.max(12, Math.min(rr.top, window.innerHeight - shelfEl.offsetHeight - 12)) + 'px';
             var list = fiItems(), first = list[0];
@@ -4792,7 +4810,7 @@ class MainActivity : Activity() {
             var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
             var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
-            var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, MINE, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
+            var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, FAVS, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
             for (var i = 0; i < all.length; i++) {
               var u = new URL(all[i][1], BASE);
               if (u.pathname !== loc.pathname) continue;
@@ -5716,13 +5734,16 @@ class MainActivity : Activity() {
     '#tv-rp, #tv-rp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-rp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 40px 12px 40px;font-size:36px;}',
     '#tv-rp-title .tv-rp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
-    '#tv-rp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 40px 40px;scrollbar-width:none;}',
+    '#tv-rp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 40px 60px 40px;scroll-padding-bottom:40px;scrollbar-width:none;}',
     '#tv-rp-scroll::-webkit-scrollbar{display:none;}',
     '#tv-rp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
-    '#tv-rp .tv-rc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
-    '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
-    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
-    '#tv-rp .tv-rc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-rp .tv-rc{display:block;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#1a1a1a;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-rp a, #tv-rp a *{opacity:1 !important;filter:none !important;}',
+    '#tv-rp a::before, #tv-rp a::after{content:none !important;display:none !important;}',
+    '#tv-rp *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
+    '#tv-rp .tv-rc:focus{outline:3px solid #FFD700 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
+    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
+    '#tv-rp .tv-rc-t{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;box-sizing:border-box;}',
     '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);
@@ -7396,7 +7417,7 @@ class MainActivity : Activity() {
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
             // Row order under the first row: Recently Watched, Favorites.
-            var ORDER = ['tv-recent-row', 'tv-favorites-row'];
+            var ORDER = ['tv-recent-row', 'tv-watchlater-row'];
             var after = firstWrap;
             for (var oi = ORDER.indexOf(id) - 1; oi >= 0; oi--) {
               var prev = document.getElementById(ORDER[oi]);
@@ -7443,9 +7464,17 @@ class MainActivity : Activity() {
             upsertRow('tv-recent-row', isJa() ? '最近視聴した動画' : 'Recently Watched', items,
               'https://www.stardom-world.com/mypage?tvrecent=1', isJa() ? 'すべて見る' : 'View All', css);
           }
-          function showFavorites(items, more, css) {
-            upsertRow('tv-favorites-row', isJa() ? 'お気に入り' : 'My Favorites', items,
-              more ? FAV_URL : '', isJa() ? 'すべて見る' : 'Show All', css);
+          // The row under Recently Watched is the app's own Watch Later list (kept on this device, no request).
+          function showWatchLater(css, hide) {
+            var items = [];
+            if (!hide) {
+              try {
+                var wl = (JSON.parse(localStorage.getItem('tvFavV1') || '{}') || {}).later || [];
+                items = wl.slice(0, 12).map(function(x) { return { href: x.href, title: x.title, bgUrl: x.bg || '' }; });
+              } catch (e) { items = []; }
+            }
+            upsertRow('tv-watchlater-row', isJa() ? 'あとで見る' : 'Watch Later', items,
+              'https://www.stardom-world.com/mypage?tvfav=later', isJa() ? 'すべて見る' : 'View All', css);
           }
 
           // Called as soon as the grid exists: draws the saved copies straight away, then refreshes them.
@@ -7453,7 +7482,8 @@ class MainActivity : Activity() {
             var css = { card: cardCss, img: imgCss, title: titleCss };
             var c = readCache();
             if (c.recent && c.recent.length) showRecent(c.recent, css);
-            if (c.fav && c.fav.items && c.fav.items.length) showFavorites(c.fav.items, !!c.fav.more, css);
+            showWatchLater(css, false);
+            if (c.fav) writeCache('fav', null);
             // Most Watched / Most Favorited are no longer drawn on the home page: forget their saved copies.
             try { localStorage.removeItem('tvMostWatchedV1'); localStorage.removeItem('tvMostFavoritedV1'); } catch (e) {}
             loadRecentlyWatched(css);
@@ -7474,7 +7504,7 @@ class MainActivity : Activity() {
                   // Signed out: forget what was saved and show nothing.
                   clearCache();
                   showRecent([], css);
-                  showFavorites([], false, css);
+                  showWatchLater(css, true);
                   return;
                 }
                 var items = extractList(doc, HISTORY_RE, 12);
@@ -7486,19 +7516,8 @@ class MainActivity : Activity() {
                 } else {
                   finish([]);   // heading present, no videos yet: nothing is shown
                 }
-                loadFavorites(css);   // signed in: the Favorites row is read as well
               })
               .catch(function() {});
-          }
-
-          // The first 12 favorites (what the site's own first page shows); a "Show All" tile when there are more.
-          function loadFavorites(css) {
-            if (window.__tvFavLoading) return;
-            window.__tvFavLoading = true;
-            readViaFrame('/mypage/favorites', FAVORITES_RE, 12, function(items, more) {
-              writeCache('fav', items.length ? { items: items, more: !!more } : null);
-              showFavorites(items, more, css);
-            });
           }
 
           if (!window.__tvGridNavHandlerAttached) {
@@ -7719,6 +7738,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(pageFullyLoadedJs, null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
+        view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(sideMenuJs, null)
@@ -8856,9 +8876,9 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,
                 KeyEvent.KEYCODE_SETTINGS, KeyEvent.KEYCODE_BOOKMARK, KeyEvent.KEYCODE_BUTTON_Y -> {
                     val evalJs = if (cursorMode) {
-                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y); return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(list) : false; })()"
+                        "(function(){ var x = window.__tvLastMouseX || 0; var y = window.__tvLastMouseY || 0; var list = document.elementsFromPoint(x, y); return window.__tvMenuKey ? window.__tvMenuKey(list) : (window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(list) : false); })()"
                     } else {
-                        "(function(){ return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(document.activeElement) : false; })()"
+                        "(function(){ return window.__tvMenuKey ? window.__tvMenuKey(document.activeElement) : (window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(document.activeElement) : false); })()"
                     }
                     webView.evaluateJavascript(evalJs, null)
                     return true
