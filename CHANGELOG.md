@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.7.1
+
+- My Favorites rows: the first tile is no longer clipped on the left.
+- Pressing Right on the last tile of a row wraps round to the first tile.
+
 ## 2.7.0
 - Home page: the site's "My Favorites" row under Recently Watched is replaced by your Watch Later row (the same list as on the My Favorites page; View All opens it). The app no longer loads the site's favorites page in the background when the home page opens.
 - My Favorites overview: "My Faction" and "My Reminders" headings above the sticker and the tickets.

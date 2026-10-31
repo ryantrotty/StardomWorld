@@ -549,12 +549,12 @@
     '#tv-fp, #tv-fp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;box-sizing:border-box;}',
     '#tv-fp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 24px 8px 30px;font-size:36px;}',
     '#tv-fp-title .tv-fp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
-    '#tv-fp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 24px 60px 24px;scroll-padding-bottom:40px;scrollbar-width:none;}',
+    '#tv-fp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 24px 60px 24px;scroll-padding:24px 0 40px 0;scrollbar-width:none;}',
     '#tv-fp-in{max-width:1440px;margin:0 auto;}',
     '#tv-fp-scroll::-webkit-scrollbar{display:none;}',
     '.tv-fp-h{display:flex;align-items:baseline;gap:12px;margin:18px 0 8px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
     '.tv-fp-h span{font-size:15px;color:#9aa6b4;letter-spacing:0;font-weight:700;}',
-    '.tv-fp-track{display:flex;gap:24px;overflow-x:auto;padding:12px 10px;margin:0 -10px;scrollbar-width:none;}',
+    '.tv-fp-track{display:flex;gap:24px;overflow-x:auto;padding:12px 10px;margin:0 -10px;scroll-padding:0 24px;scrollbar-width:none;}',
     '.tv-fp-track::-webkit-scrollbar{display:none;}',
     '.tv-fp-grid{display:grid;gap:24px;padding:6px;}',
     '.tv-fp-grid .tv-fp-t{flex:none;max-width:none;}',
@@ -733,7 +733,15 @@
       else if (dir === 'up' && dy < -4 && !sameRow) cand.push({ it: it, s: -dy * 1000 + Math.abs(dx) });
       else if (dir === 'down' && dy > 4 && !sameRow) cand.push({ it: it, s: dy * 1000 + Math.abs(dx) });
     });
-    if (!cand.length) return false;
+    if (!cand.length) {
+      // the end of a row wraps round to its first tile
+      if (dir === 'right') {
+        var trk = cur.closest ? cur.closest('.tv-fp-track') : null;
+        var firstT = trk ? trk.querySelector('[data-fk]') : null;
+        if (firstT && firstT !== cur) { focusEl(firstT); return true; }
+      }
+      return false;
+    }
     cand.sort(function(a, b) { return a.s - b.s; });
     focusEl(cand[0].it);
     return true;
