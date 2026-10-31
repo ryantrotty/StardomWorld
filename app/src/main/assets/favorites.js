@@ -98,14 +98,25 @@
     toast(T('\u2605 Added to ' + pl.name, '\u2605 ' + pl.name + ' に追加しました'));
     return true;
   }
-  function newPlaylist(info) {
-    var d = load(), n = d.pl.length + 1, names = {};
+  function defaultPlName(d) {
+    var n = d.pl.length + 1, names = {};
     d.pl.forEach(function(p) { names[p.name] = 1; });
     while (names[T('Playlist ', 'プレイリスト ') + n]) n++;
-    var pl = { name: T('Playlist ', 'プレイリスト ') + n, items: [item(info)] };
+    return T('Playlist ', 'プレイリスト ') + n;
+  }
+  function newPlaylist(info, name) {
+    var d = load(), nm = String(name || '').replace(/\s+/g, ' ').trim() || defaultPlName(d);
+    var pl = { name: nm, items: info ? [item(info)] : [] };
     d.pl.push(pl);
     save(d);
     toast(T('\u2605 Added to new playlist ' + pl.name, '\u2605 新しいプレイリスト ' + pl.name + ' に追加しました'));
+  }
+  function renamePlaylist(i, name) {
+    var d = load(), pl = d.pl[i], nm = String(name || '').replace(/\s+/g, ' ').trim();
+    if (!pl || !nm) return;
+    pl.name = nm;
+    save(d);
+    toast(T('Playlist renamed to ' + nm, 'プレイリスト名を ' + nm + ' に変更しました'));
   }
   function removeReminder(id) {
     var r = {};
@@ -140,6 +151,8 @@
     '#tv-fp-pop{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:2147483600;width:560px;max-width:90vw;box-sizing:border-box;background:#0f161e;border:2px solid #2a323c;border-radius:14px;padding:18px 20px;color:#fff;font-family:Arial,Helvetica,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.7);}',
     '#tv-fp-pop, #tv-fp-pop *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-fp-pop .tv-fpp-t{font-size:15px;color:#9aa6b4;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '#tv-fp-pop .tv-fpi{display:block;width:100%;box-sizing:border-box;padding:12px 16px;margin:6px 0;border-radius:10px;border:3px solid #2a323c;background:#0b1118;color:#fff;font-size:22px;font-weight:700;outline:none;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fp-pop .tv-fpi:focus{border-color:#F4C242;}',
     '#tv-fp-pop .tv-fpb{display:block;box-sizing:border-box;padding:12px 16px;margin:6px 0;border-radius:10px;border:3px solid #2a323c;background:#161f2a;font-size:20px;font-weight:700;color:#fff;outline:none;cursor:pointer;}',
     '#tv-fp-pop .tv-fpb:focus{border-color:#F4C242;background:#172029;}'
   ].join('\n');
@@ -235,7 +248,7 @@
   }
 
   // ---- the pop-up on a video: Favorites (the site's list), Watch Later, Favorite Matches / Shows, Playlist
-  var pop = null, popFocus = null, popClose0 = null, popInfo = null;
+  var pop = null, popFocus = null, popClose0 = null, popInfo = null, popCtx = null;
   function popHide() {
     if (!pop) return;
     if (pop.parentNode) pop.parentNode.removeChild(pop);
@@ -251,7 +264,17 @@
   function kindFor(info) { return /\/set\/\d+/.test(info.href) ? 's' : 'm'; }
   function popFill(mode) {
     var info = popInfo, d = load(), h = '<div class="tv-fpp-t">' + esc(info.title) + '</div>';
-    if (mode === 'pl') {
+    if (mode === 'name') {
+      var cur = popCtx && popCtx.kind === 'rename' && d.pl[popCtx.idx] ? d.pl[popCtx.idx].name : defaultPlName(d);
+      h = '<div class="tv-fpp-t">' + esc(popCtx && popCtx.kind === 'rename' ? T('Rename playlist', 'プレイリスト名を変更') : T('Name your playlist', 'プレイリスト名')) + '</div>' +
+        '<input id="tv-fpi" class="tv-fpi" type="text" maxlength="40" autocomplete="off" enterkeyhint="done" data-orig="' + esc(cur) + '" value="' + esc(cur) + '">' +
+        '<div class="tv-fpp-t" style="margin:2px 0 6px 0;font-size:13px">' + esc(T('Press OK on the box to type, then Down to Save.', 'OKで入力、下キーで保存へ')) + '</div>' +
+        '<a class="tv-fpb" tabindex="0" data-act="save">' + esc(T('Save', '保存')) + '</a>' +
+        '<a class="tv-fpb" tabindex="0" data-act="cancel">' + esc(T('Cancel', 'キャンセル')) + '</a>';
+    } else if (mode === 'plopts') {
+      h += '<a class="tv-fpb" tabindex="0" data-act="rename">' + esc(T('Rename playlist', '名前を変更')) + '</a>' +
+        '<a class="tv-fpb" tabindex="0" data-act="delpl">' + esc(T('Remove playlist', 'プレイリストを削除')) + '</a>';
+    } else if (mode === 'pl') {
       d.pl.forEach(function(pl, i) {
         var has = idxIn(pl.items, info.href) >= 0;
         h += '<a class="tv-fpb" tabindex="0" data-act="pl" data-i="' + i + '">' + esc((has ? T('Remove from ', '削除：') : T('Add to ', '追加：')) + pl.name) + '</a>';
@@ -270,34 +293,68 @@
     Array.prototype.forEach.call(pop.querySelectorAll('.tv-fpb'), function(b) {
       b.addEventListener('click', function(ev) { ev.preventDefault(); ev.stopPropagation(); popAct(b); });
     });
+    var inp = pop.querySelector('#tv-fpi');
+    if (inp) { inp.focus(); try { inp.select(); } catch (e) {} return; }
     var first = pop.querySelector('.tv-fpb');
     if (first) first.focus();
   }
   function popAct(b) {
     var act = b.getAttribute('data-act'), info = popInfo;
     if (act === 'plmenu') { popFill('pl'); return; }
+    if (act === 'newpl') { popCtx = { kind: 'new' }; popFill('name'); return; }
+    if (act === 'rename') { popCtx = { kind: 'rename', idx: popCtx ? popCtx.idx : 0 }; popFill('name'); return; }
+    if (act === 'save') {
+      var inpv = pop && pop.querySelector('#tv-fpi'), val = inpv ? inpv.value : '', ctx = popCtx;
+      popHide();
+      if (ctx && ctx.kind === 'rename') renamePlaylist(ctx.idx, val); else if (info) newPlaylist(info, val);
+      if (window.__tvFpRefresh) window.__tvFpRefresh();
+      return;
+    }
+    if (act === 'cancel') { popHide(); return; }
+    if (act === 'delpl') {
+      var di = popCtx ? popCtx.idx : -1;
+      popHide();
+      var dd = load();
+      if (dd.pl[di]) { var dn = dd.pl[di].name; dd.pl.splice(di, 1); save(dd); toast(T('Removed playlist ' + dn, dn + ' を削除しました')); }
+      if (window.__tvFpRefresh) window.__tvFpRefresh();
+      return;
+    }
     popHide();
     if (!info) return;
     if (act === 'later') toggleList('later', info);
     else if (act === 'kind') toggleList(kindFor(info), info);
     else if (act === 'pl') togglePlaylist(parseInt(b.getAttribute('data-i'), 10), info);
-    else if (act === 'newpl') newPlaylist(info);
     else if (act === 'fav') {
       try { if (info.card) { if (window.__tvToggleCardFavorite) window.__tvToggleCardFavorite(info.card); } else siteFav(info.id); } catch (e) {}
     }
     if (window.__tvFpRefresh) window.__tvFpRefresh();
   }
   function popKey(e) {
-    var k = e.keyCode, bs = popBtns(), i = bs.indexOf(document.activeElement);
+    var k = e.keyCode, bs = popBtns(), ae = document.activeElement, i = bs.indexOf(ae);
+    var inp = ae && ae.id === 'tv-fpi' ? ae : null;
     function stop() { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
-    if (k === 27 || k === 4 || k === 8) { stop(); popHide(); return; }
-    if (k === 38 || k === 37) { stop(); if (bs.length) bs[Math.max(0, i - 1)].focus(); return; }
+    if (k === 27 || k === 4) { stop(); popHide(); return; }
+    if (inp) {
+      if (k === 40) { stop(); if (bs.length) bs[0].focus(); return; }
+      if (k === 38) { stop(); return; }
+      // OK on the box opens the keyboard; once something has been typed, Enter saves
+      if ((k === 13 || k === 23) && inp.value !== inp.getAttribute('data-orig') && inp.value.trim()) { stop(); popAct(bs[0]); return; }
+      return;
+    }
+    if (k === 8) { stop(); popHide(); return; }
+    if (k === 38 || k === 37) {
+      stop();
+      var pin = pop && pop.querySelector('#tv-fpi');
+      if (i <= 0 && pin) pin.focus(); else if (bs.length) bs[Math.max(0, i - 1)].focus();
+      return;
+    }
     if (k === 40 || k === 39) { stop(); if (bs.length) bs[Math.min(bs.length - 1, i + 1)].focus(); return; }
     if (k === 13 || k === 23 || k === 32) { stop(); if (i >= 0) popAct(bs[i]); return; }
   }
-  function popShow(info) {
+  function popShow(info, mode, ctx) {
     popHide();
     popInfo = info;
+    popCtx = ctx || null;
     pop = document.createElement('div');
     pop.id = 'tv-fp-pop';
     pop.className = 'notranslate';
@@ -308,7 +365,7 @@
     window.__tvMenuClose = function() { popHide(); return true; };
     try { if (H.setSideMenuOpen) H.setSideMenuOpen(true); } catch (e) {}
     window.addEventListener('keydown', popKey, true);
-    popFill('main');
+    popFill(mode || 'main');
   }
 
   // ---- the Menu button
@@ -339,7 +396,7 @@
         if (fk === 'w') { ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
         else if (fk === 'f') { if (d.f) { var fo = facById(d.f); d.f = ''; save(d); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
         else if (ARR[fk] || fk === 'pi') { var vi = cardInfo([t]); if (vi) { if (fk === 'pi') vi.fromPl = PLI; popShow(vi); } return true; }
-        else if (fk === 'p') { var pi = parseInt(fv, 10); if (d.pl[pi]) { var pn = d.pl[pi].name; d.pl.splice(pi, 1); save(d); toast(T('Removed playlist ' + pn, pn + ' を削除しました')); } }
+        else if (fk === 'p') { var pi = parseInt(fv, 10); if (d.pl[pi]) popShow({ title: d.pl[pi].name, href: '', id: '', bg: '', card: null }, 'plopts', { kind: 'opts', idx: pi }); return true; }
         else if (fk === 'r') { removeReminder(fv); }
         else if (fk === 'h') { var hi = cardInfo([t]); if (hi) popShow(hi); return true; }
         else return true;
@@ -645,8 +702,10 @@
   function hint() {
     var el = document.getElementById('tv-fp-hint'), ae = document.activeElement, fk = ae && ae.getAttribute ? ae.getAttribute('data-fk') : '';
     if (!el) return;
-    el.textContent = (fk === 'w' || fk === 'f' || fk === 'l' || fk === 'm' || fk === 's' || fk === 'p' || fk === 'pi' || fk === 'r') ? T('Menu button: remove', 'メニューボタン：削除')
-      : (fk === 'h' ? T('Menu button: add to Favorites or Watch Later', 'メニューボタン：お気に入り／あとで見る') : '');
+    el.textContent = (fk === 'w' || fk === 'f' || fk === 'r') ? T('Menu button: remove', 'メニューボタン：削除')
+      : (fk === 'p' ? T('Menu button: rename or remove', 'メニューボタン：名前変更／削除')
+      : (fk === 'l' || fk === 'm' || fk === 's' || fk === 'pi') ? T('Menu button: options', 'メニューボタン：オプション')
+      : (fk === 'h' ? T('Menu button: add to Favorites or Watch Later', 'メニューボタン：お気に入り／あとで見る') : ''));
   }
   function focusEl(el) {
     if (!el) return;
