@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: ['**']
+    branches: ['**', '!schedule-data']   # the schedule data branch never needs an APK
     tags: ['v*']
   pull_request:
 

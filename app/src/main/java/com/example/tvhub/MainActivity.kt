@@ -592,6 +592,7 @@ class MainActivity : Activity() {
 
     private lateinit var transitionOverlay: FrameLayout
     private lateinit var transitionView: TransitionOverlayView
+    private var transitionStrip: android.widget.LinearLayout? = null
     private var transitionShowing = false
     private var lastNavigatedUrl: String? = null
 
@@ -1984,6 +1985,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         density = resources.displayMetrics.density
+        refreshScheduleAsync()
 
         root = FrameLayout(this)
         root.setBackgroundColor(Color.BLACK)
@@ -2453,8 +2455,158 @@ class MainActivity : Activity() {
             root.bringChildToFront(cursorView)
         }
         transitionView.startAnimation()
+        updateTransitionStrip()
 
         handler.postDelayed(hideTransitionRunnable, 5000L)
+    }
+
+    // ---------------------------------------------------------------- schedule
+
+    // The schedule list: the copy downloaded by refreshScheduleAsync() or the one bundled in assets, whichever is newer.
+    private fun scheduleText(): String {
+        var downloaded = ""
+        try {
+            val f = java.io.File(filesDir, "schedule.json")
+            if (f.exists() && f.length() > 0) downloaded = f.readText()
+        } catch (_: Exception) {}
+        val bundled = try { assets.open("schedule.json").bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+        if (downloaded.isEmpty()) return bundled
+        if (bundled.isEmpty()) return downloaded
+        return try {
+            val d = org.json.JSONObject(downloaded).optString("updated", "")
+            val b = org.json.JSONObject(bundled).optString("updated", "")
+            if (b > d) bundled else downloaded
+        } catch (_: Exception) { bundled }
+    }
+
+    // At most one small download every six hours; the last good copy stays if anything fails.
+    private fun refreshScheduleAsync() {
+        val prefs = getSharedPreferences("sched", MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val due = now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
+        Thread {
+            try {
+                if (due) {
+                    val conn = java.net.URL(BuildConfig.SCHEDULE_URL).openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 8000
+                    conn.readTimeout = 8000
+                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    conn.disconnect()
+                    val j = org.json.JSONObject(body)
+                    if (j.optJSONArray("events") != null) {
+                        java.io.File(filesDir, "schedule.json").writeText(body)
+                        prefs.edit().putLong("last", now).apply()
+                    }
+                }
+            } catch (_: Exception) {}
+            try { if (BuildConfig.SHOW_POSTERS) cacheSchedulePosters() } catch (_: Exception) {}
+        }.start()
+    }
+
+    // Private builds only: keeps a small copy of the poster for the months that still have events coming up.
+    private fun cacheSchedulePosters() {
+        val j = org.json.JSONObject(scheduleText())
+        val posters = j.optJSONObject("posters") ?: return
+        val events = j.optJSONArray("events") ?: return
+        val nowMs = System.currentTimeMillis()
+        val months = HashSet<String>()
+        for (i in 0 until events.length()) {
+            val e = events.getJSONObject(i)
+            val t = try { java.time.OffsetDateTime.parse(e.optString("start")).toInstant().toEpochMilli() } catch (_: Exception) { 0L }
+            if (t > nowMs) months.add(e.optString("poster"))
+        }
+        val prefs = getSharedPreferences("sched", MODE_PRIVATE)
+        for (m in months) {
+            val url = posters.optString(m, "")
+            if (url.isEmpty()) continue
+            val out = java.io.File(filesDir, "poster_$m.jpg")
+            if (out.exists() && prefs.getString("poster_$m", "") == url) continue
+            val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            conn.connectTimeout = 8000
+            conn.readTimeout = 15000
+            val bmp = conn.inputStream.use { BitmapFactory.decodeStream(it) }
+            conn.disconnect()
+            if (bmp == null) continue
+            val w = 640
+            val h = bmp.height * w / bmp.width
+            val small = Bitmap.createScaledBitmap(bmp, w, h, true)
+            java.io.FileOutputStream(out).use { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }
+            prefs.edit().putString("poster_$m", url).apply()
+        }
+    }
+
+    // The next Stardom show: its JSON object, or null.
+    private fun nextScheduledEvent(): org.json.JSONObject? {
+        return try {
+            val events = org.json.JSONObject(scheduleText()).optJSONArray("events") ?: return null
+            val nowMs = System.currentTimeMillis()
+            var best: org.json.JSONObject? = null
+            var bestT = Long.MAX_VALUE
+            for (i in 0 until events.length()) {
+                val e = events.getJSONObject(i)
+                if (!e.optBoolean("own", true)) continue
+                val t = java.time.OffsetDateTime.parse(e.optString("start")).toInstant().toEpochMilli()
+                if (t > nowMs && t < bestT) { best = e; bestT = t }
+            }
+            best
+        } catch (_: Exception) { null }
+    }
+
+    // "Up next" line along the bottom of the page-transition screen. Only the transition overlay shows it
+    // (never the launch splash), and only when the next show is within seven days.
+    private fun updateTransitionStrip() {
+        val e = nextScheduledEvent()
+        var strip = transitionStrip
+        try {
+            val startMs = if (e != null) java.time.OffsetDateTime.parse(e.optString("start")).toInstant().toEpochMilli() else 0L
+            val leftMs = startMs - System.currentTimeMillis()
+            if (e == null || leftMs <= 0L || leftMs > 7L * 24L * 3600L * 1000L) {
+                strip?.visibility = View.GONE
+                return
+            }
+            if (strip == null) {
+                strip = android.widget.LinearLayout(this).apply {
+                    orientation = android.widget.LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER
+                    setBackgroundColor(0xFF0F1620.toInt())
+                    setPadding((24 * density).toInt(), (14 * density).toInt(), (24 * density).toInt(), (14 * density).toInt())
+                }
+                transitionOverlay.addView(
+                    strip,
+                    FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM)
+                )
+                transitionStrip = strip
+            }
+            strip.removeAllViews()
+            if (BuildConfig.SHOW_POSTERS) {
+                val pf = java.io.File(filesDir, "poster_" + e.optString("poster") + ".jpg")
+                if (pf.exists()) {
+                    val bmp = BitmapFactory.decodeFile(pf.absolutePath)
+                    if (bmp != null) {
+                        val iv = ImageView(this)
+                        iv.setImageBitmap(bmp)
+                        iv.scaleType = ImageView.ScaleType.CENTER_CROP
+                        val lp = android.widget.LinearLayout.LayoutParams((56 * density).toInt(), (80 * density).toInt())
+                        lp.rightMargin = (18 * density).toInt()
+                        strip.addView(iv, lp)
+                    }
+                }
+            }
+            val days = leftMs / 86400000L
+            val hours = (leftMs % 86400000L) / 3600000L
+            val mins = (leftMs % 3600000L) / 60000L
+            val left = if (days > 0) "${days}D ${hours}H" else if (hours > 0) "${hours}H ${mins}M" else "${mins}M"
+            val zdt = java.time.OffsetDateTime.parse(e.optString("start")).atZoneSameInstant(java.time.ZoneId.systemDefault())
+            val when_ = java.time.format.DateTimeFormatter.ofPattern("EEE MMM d · h:mm a z", java.util.Locale.getDefault()).format(zdt)
+            val tv = android.widget.TextView(this)
+            tv.setTextColor(Color.WHITE)
+            tv.text = "UP NEXT · IN $left\n" + e.optString("short", e.optString("title")) + "\n" + when_ + " · " + e.optString("venue")
+            tv.textSize = 16f
+            strip.addView(tv)
+            strip.visibility = View.VISIBLE
+        } catch (_: Exception) {
+            strip?.visibility = View.GONE
+        }
     }
 
     private val hideTransitionRunnable = Runnable {
@@ -2495,6 +2647,22 @@ class MainActivity : Activity() {
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
+
+        // Schedule list (downloaded copy if present, else the bundled one), and the private-build poster as a data address.
+        @android.webkit.JavascriptInterface
+        fun scheduleJson(): String = this@MainActivity.scheduleText()
+
+        @android.webkit.JavascriptInterface
+        fun showPosters(): Boolean = BuildConfig.SHOW_POSTERS
+
+        @android.webkit.JavascriptInterface
+        fun posterDataUrl(month: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val f = java.io.File(this@MainActivity.filesDir, "poster_" + month.filter { it.isDigit() } + ".jpg")
+                if (!f.exists()) "" else "data:image/jpeg;base64," + android.util.Base64.encodeToString(f.readBytes(), android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
 
         @android.webkit.JavascriptInterface
         fun appVersion(): String = try {
@@ -3519,6 +3687,270 @@ class MainActivity : Activity() {
             out = [out[0]].concat(rest);
             return out;
           }
+          // ---- schedule: assets/schedule.json (or the copy the app downloaded), all times kept as moments in time
+          var SCHED_REM_KEY = 'tvSchedRemV1', SCHED_FIRED_KEY = 'tvSchedFiredV1';
+          var schedCache = null, posterCache = {};
+          function schedEvents() {
+            if (schedCache) return schedCache;
+            var out = [];
+            try {
+              var d = JSON.parse(AndroidHost.scheduleJson());
+              (d.events || []).forEach(function(e) {
+                var t = Date.parse(e.start);
+                if (isNaN(t) || e.own === false) return;
+                e._t = t;
+                e._doors = Date.parse(e.doors || '') || 0;
+                e._fc = Date.parse(e.fc || '') || 0;
+                out.push(e);
+              });
+              out.sort(function(a, b) { return a._t - b._t; });
+            } catch (err) {}
+            schedCache = out;
+            return out;
+          }
+          function schedUpcoming() { var n = Date.now(); return schedEvents().filter(function(e) { return e._t + 3 * 3600000 > n; }); }
+          function schedById(id) { var l = schedEvents(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+          function schedLeft(e) {
+            var ms = e._t - Date.now();
+            if (ms <= 0) return T('LIVE NOW', '開催中');
+            var m = Math.floor(ms / 60000), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+            if (d > 0) return d + 'D ' + h + 'H';
+            if (h > 0) return h + 'H ' + (m % 60) + 'M';
+            return m + 'M';
+          }
+          function schedLoc() { return isJa() ? 'ja-JP' : undefined; }
+          function fmtDay(ms) { try { return new Date(ms).toLocaleDateString(schedLoc(), { weekday: 'short', month: 'short', day: 'numeric' }); } catch (x) { return ''; } }
+          function fmtTime(ms) { try { return new Date(ms).toLocaleTimeString(schedLoc(), { hour: 'numeric', minute: '2-digit' }); } catch (x) { return ''; } }
+          function fmtTimeZ(ms) {
+            var t = fmtTime(ms), z = '';
+            try {
+              new Intl.DateTimeFormat(schedLoc(), { hour: 'numeric', timeZoneName: 'short' }).formatToParts(new Date(ms)).forEach(function(p) { if (p.type === 'timeZoneName') z = p.value; });
+            } catch (x) {}
+            return z ? t + ' ' + z : t;
+          }
+          function fmtJst(ms, withDate) {
+            try {
+              var o = { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false };
+              if (withDate) { o.month = 'short'; o.day = 'numeric'; }
+              return new Date(ms).toLocaleString('en-US', o).replace(',', '') + ' JST';
+            } catch (x) { return ''; }
+          }
+          function remGet() { try { return JSON.parse(lsGet(SCHED_REM_KEY) || '{}') || {}; } catch (x) { return {}; } }
+          function remSet(id, off) {
+            var r = remGet();
+            if (off === null || off === undefined) delete r[id]; else r[id] = off;
+            lsSet(SCHED_REM_KEY, JSON.stringify(r));
+          }
+          // Poster art: only private builds have it; public builds return an empty address and show no artwork.
+          function posterFor(e) {
+            var m = e.poster || '';
+            if (posterCache[m] !== undefined) return posterCache[m];
+            var u = '';
+            try { if (AndroidHost.showPosters && AndroidHost.showPosters()) u = AndroidHost.posterDataUrl(m) || ''; } catch (x) {}
+            posterCache[m] = u;
+            return u;
+          }
+          function bellSvg(on, size) {
+            return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="' + (on ? '#F4C242' : 'none') + '" stroke="' + (on ? '#F4C242' : 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>';
+          }
+          function schedPillHtml() {
+            var up = schedUpcoming()[0];
+            if (!up) return '';
+            var l = schedLeft(up);
+            return '<em class="tv-sch-pill">' + esc(up._t <= Date.now() ? l : T('NEXT ', 'あと') + l) + '</em>';
+          }
+          function schedTileHtml(e) {
+            var p = posterFor(e), on = remGet()[e.id] !== undefined;
+            return '<div class="tv-sch-tile">' +
+              (p ? '<img class="tv-sch-poster" src="' + p + '" alt="">' : '') +
+              '<div class="tv-sch-info">' +
+              '<div class="tv-sch-tag"><span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span></div>' +
+              '<div class="tv-sch-ttl">' + esc(e.title) + '</div>' +
+              '<div class="tv-sch-v">' + esc(e.venue || '') + '</div>' +
+              '<div class="tv-sch-when">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</div>' +
+              '<div class="tv-sch-jst">' + esc(T('Your time', 'お使いの時刻') + ' · ' + fmtJst(e._t, true)) + '</div>' +
+              '<div class="tv-sch-btns">' +
+              '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-rem="' + esc(e.id) + '">' + bellSvg(on, 18) + '<span>' + esc(on ? T('Reminder set', '通知オン') : T('Remind me', '通知する')) + '</span></a>' +
+              '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-ev="' + esc(e.id) + '">' + esc(T('Details', '詳細')) + '</a>' +
+              '</div></div></div>';
+          }
+          function schedRowHtml(e) {
+            var on = remGet()[e.id] !== undefined;
+            return '<div class="tv-sch-row">' +
+              '<a class="tv-sm-fi tv-sch-main" tabindex="0" data-ev="' + esc(e.id) + '">' +
+              '<span class="tv-sch-d">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</span>' +
+              '<span class="tv-sch-t">' + esc(e.short || e.title) + '</span>' +
+              '<span class="tv-sch-s">' + esc((e.venue || '') + ' · ' + fmtJst(e._t, true)) + '</span></a>' +
+              '<a class="tv-sm-fi tv-sch-bellb" tabindex="0" data-rem="' + esc(e.id) + '" aria-label="Reminder">' + bellSvg(on, 20) + '</a></div>';
+          }
+          // Reminder buttons: one press sets a 15 minute reminder, or clears the one that is set.
+          function schedToggleRem(id) {
+            var on = remGet()[id] !== undefined;
+            remSet(id, on ? null : 15);
+            if (shelfEl) { var up = shelfEl.querySelectorAll('[data-rem="' + id + '"]'); Array.prototype.forEach.call(up, function(a) {
+              var big = a.classList.contains('tv-sch-btn');
+              a.innerHTML = bellSvg(!on, big ? 18 : 20) + (big ? '<span>' + esc(!on ? T('Reminder set', '通知オン') : T('Remind me', '通知する')) + '</span>' : '');
+            }); }
+          }
+          // The event page: poster (private builds), your time, the venue's time and when to be reminded.
+          var evEl = null, evId = null;
+          function evClose() { if (evEl && evEl.parentNode) evEl.parentNode.removeChild(evEl); evEl = null; evId = null; setNativeFlag(false); try { document.documentElement.classList.remove('tv-ev-open'); } catch (x) {} }
+          function evStatus() {
+            if (!evEl) return;
+            var e = schedById(evId), off = remGet()[evId], st = evEl.querySelector('.tv-ev-st');
+            if (!e || !st) return;
+            st.textContent = off === undefined ? T('No reminder set', '通知は設定されていません') : T('Reminder: ', '通知: ') + fmtDay(e._t - off * 60000) + ' ' + fmtTime(e._t - off * 60000);
+            Array.prototype.forEach.call(evEl.querySelectorAll('.tv-ev-b'), function(b) {
+              b.classList.toggle('tv-ev-on', off !== undefined && parseInt(b.getAttribute('data-off'), 10) === off);
+            });
+          }
+          function matchCardHtml(e) {
+            var ms = e.matches;
+            if (!ms || !ms.length) return '';
+            var priv = false;
+            try { priv = !!(AndroidHost.showPosters && AndroidHost.showPosters()); } catch (x) {}
+            return '<div class="tv-ev-mc">' +
+              ms.map(function(m) {
+                var ja = isJa() && m.sides_ja && m.sides_ja.length === (m.sides || []).length;
+                var list = ja ? m.sides_ja : (m.sides || []);
+                var sep = ' <span class="tv-ev-vs">vs</span> ';
+                // Private build: one line break per match, after the first vs (Name vs / Name vs Name).
+                var sides = list.map(function(x) { return esc(x); }).map(function(x, i, a) { return i === 0 ? x : (i === 1 && priv ? ' <span class="tv-ev-vs">vs</span><br>' : sep) + x; }).join('');
+                return '<div class="tv-ev-m"><div class="tv-ev-mt">' + esc(isJa() && m.type_ja ? m.type_ja : (m.type || '')) + '</div><div class="tv-ev-ms">' + sides + '</div></div>';
+              }).join('') + '</div>';
+          }
+          function evOpen(id) {
+            var e = schedById(id);
+            if (!e) return;
+            try { closeMenu(); } catch (x) {}
+            evClose();
+            evId = id;
+            var p = posterFor(e);
+            var offs = [[15, T('15 min before', '15分前')], [0, T('At start', '開始時')], [60, T('1 hour before', '1時間前')], [1440, T('Day before', '前日')]];
+            var btns = offs.map(function(o) { return '<a class="tv-ev-b" tabindex="0" data-off="' + o[0] + '">' + esc(o[1]) + '</a>'; }).join('');
+            var times = '';
+            if (e._doors) times += esc(T('Doors ', '開場 ') + fmtTime(e._doors));
+            if (e._fc) times += esc((times ? ' · ' : '') + T('FC priority entry ', 'FC先行 ') + fmtTime(e._fc));
+            var first = schedUpcoming()[0];
+            evEl = document.createElement('div');
+            evEl.id = 'tv-ev';
+            evEl.className = 'notranslate';
+            evEl.setAttribute('translate', 'no');
+            evEl.innerHTML = '<div class="tv-ev-in">' +
+              (p ? '<div class="tv-ev-pc"><img src="' + p + '" alt=""></div>' : '') +
+              '<div class="tv-ev-tx">' +
+              '<div class="tv-ev-top">' + esc(e._t + 3 * 3600000 > Date.now() ? T('UPCOMING SHOW', '今後の大会') : T('SHOW', '大会')) + '</div>' +
+              '<div class="tv-ev-tag">' + (first && first.id === e.id ? '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>' : '') + '<span>' + esc(e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Live now or just ended', '開催中または終了')) + '</span></div>' +
+              '<div class="tv-ev-h">' + esc(e.title) + '</div>' +
+              '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
+              '<div><div class="tv-ev-k">' + esc(T('AT THE VENUE (JST)', '現地時間 (JST)')) + '</div><div class="tv-ev-mid">' + esc(fmtJst(e._t, true)) + '</div><div class="tv-ev-s">' + esc(e.venue || '') + '</div></div></div>' +
+              '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('REMIND ME', '通知')) + '</div>' +
+              '<div class="tv-ev-bs">' + btns + '</div><div class="tv-ev-st"></div>' + matchCardHtml(e) +
+              '<div class="tv-ev-hint">' + esc(T('Left for the menu \u00b7 OK on a time again clears it \u00b7 Back closes this page', '左でメニュー \u00b7 同じ時間をもう一度押すと解除 \u00b7 戻るで閉じる')) + '</div>' +
+              '</div></div>';
+            document.body.appendChild(evEl);
+            try { document.documentElement.classList.add('tv-ev-open'); } catch (x) {}
+            setNativeFlag(true);   // Back now comes to this page first, not to the app
+            evStatus();
+            var cur = remGet()[id], fb = null;
+            Array.prototype.forEach.call(evEl.querySelectorAll('.tv-ev-b'), function(b) { if (cur !== undefined && parseInt(b.getAttribute('data-off'), 10) === cur) fb = b; });
+            if (!fb) fb = evEl.querySelector('.tv-ev-b');
+            if (fb) { try { fb.focus({ preventScroll: true }); } catch (x) { fb.focus(); } }
+          }
+          function evPick(b) {
+            var off = parseInt(b.getAttribute('data-off'), 10), cur = remGet()[evId];
+            remSet(evId, cur === off ? null : off);
+            var f = {}; try { f = JSON.parse(lsGet(SCHED_FIRED_KEY) || '{}') || {}; } catch (x) {}
+            Object.keys(f).forEach(function(k) { if (k.indexOf(evId + ':') === 0) delete f[k]; });
+            lsSet(SCHED_FIRED_KEY, JSON.stringify(f));
+            evStatus();
+          }
+          function evHalt(e) { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
+          window.addEventListener('keydown', function(e) {
+            if (!evEl || isOpen) return;   // while the menu is open on top, the menu handles the keys
+            var k = e.keyCode, bs = Array.prototype.slice.call(evEl.querySelectorAll('.tv-ev-b')), cur = document.activeElement, i = bs.indexOf(cur);
+            evHalt(e);
+            if (k === 27 || k === 4 || k === 8) { evClose(); return; }
+            if (k === 37 && i <= 0) { openMenu(); return; }   // the menu opens over this page, which stays underneath
+            if (k === 37 || k === 38) { if (bs.length) { var a = bs[Math.max(0, i - 1)]; a.focus(); } return; }
+            if (k === 39 || k === 40) { if (bs.length) { var b2 = bs[Math.min(bs.length - 1, i + 1)]; b2.focus(); } return; }
+            if ((k === 13 || k === 23 || k === 32) && i >= 0) evPick(cur);
+          }, true);
+          document.addEventListener('click', function(e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-ev],[data-rem],.tv-ev-b,#tv-rem-toast') : null;
+            if (!t) return;
+            if (t.id === 'tv-rem-toast') { evHalt(e); var tid = t.getAttribute('data-id'); toastHide(); evOpen(tid); return; }
+            if (t.classList.contains('tv-ev-b')) { evHalt(e); evPick(t); return; }
+            if (t.getAttribute('data-ev')) { evHalt(e); evOpen(t.getAttribute('data-ev')); return; }
+            if (t.getAttribute('data-rem')) { evHalt(e); schedToggleRem(t.getAttribute('data-rem')); }
+          }, true);
+          // Reminder toast (while the app is open): top right, leaves by itself.
+          var toastTimer = null;
+          function toastHide() { var t = document.getElementById('tv-rem-toast'); if (t && t.parentNode) t.parentNode.removeChild(t); if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } }
+          function toastShow(e) {
+            toastHide();
+            var ms = e._t - Date.now(), mins = Math.max(0, Math.ceil(ms / 60000));
+            var head = ms <= 0 ? T('STARTING NOW', 'まもなく開始') : mins >= 120 ? T('STARTS IN ', 'あと') + Math.floor(mins / 60) + T(' H', '時間') : T('STARTS IN ', 'あと') + mins + T(' MIN', '分');
+            var p = posterFor(e);
+            var t = document.createElement('div');
+            t.id = 'tv-rem-toast';
+            t.className = 'notranslate';
+            t.setAttribute('translate', 'no');
+            t.setAttribute('data-id', e.id);
+            t.innerHTML = (p ? '<img src="' + p + '" alt="">' : '') + '<div><div class="tv-rt-h">' + esc(head) + '</div><div class="tv-rt-t">' + esc(e.short || e.title) + '</div><div class="tv-rt-s">' + esc((e.venue || '') + ' · ' + fmtTimeZ(e._t)) + '</div></div>';
+            document.body.appendChild(t);
+            toastTimer = setTimeout(toastHide, 12000);
+          }
+          function schedTick() {
+            var r = remGet(), fired = {}, changed = false, now = Date.now();
+            try { fired = JSON.parse(lsGet(SCHED_FIRED_KEY) || '{}') || {}; } catch (x) {}
+            Object.keys(r).forEach(function(id) {
+              var e = schedById(id);
+              if (!e) return;
+              var key = id + ':' + r[id];
+              if (now >= e._t - r[id] * 60000 && now < e._t + 30 * 60000 && !fired[key]) { fired[key] = 1; changed = true; toastShow(e); }
+            });
+            if (changed) lsSet(SCHED_FIRED_KEY, JSON.stringify(fired));
+          }
+          setTimeout(schedTick, 4000);
+          setInterval(schedTick, 20000);
+          // Home page: the next show is the first tile of the first row (the app's own row, so the tile shares its look).
+          function ensureHomeTile() {
+            if (!isHome()) return;
+            var row = document.querySelector('#tv-test-grid .tv-grid-row');
+            if (!row || document.getElementById('tv-next-live')) return;
+            var up = schedUpcoming()[0];
+            if (!up) return;
+            var p = posterFor(up), a = document.createElement('a');
+            a.id = 'tv-next-live';
+            a.className = 'tv-card';
+            a.tabIndex = 0;
+            a.href = 'javascript:void(0)';
+            a.setAttribute('translate', 'no');
+            a.setAttribute('data-ev', up.id);
+            var whenTxt = esc(fmtDay(up._t) + ' \u00b7 ' + fmtTimeZ(up._t));
+            var tagTxt = esc(T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a') + ' \u00b7 ' + T('in ', '\u3042\u3068') + schedLeft(up).toLowerCase());
+            if (p) {
+              // Private build: wide card, poster on the left, details beside it.
+              a.style.cssText = 'flex:0 0 calc(50% - 12px); max-width:calc(50% - 12px); height:228px; background:#1a1a1a; border:2px solid #F4C242; border-radius:10px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:flex;';
+              a.innerHTML = '<img src="' + p + '" alt="" style="flex:0 0 161px; width:161px; height:100%; object-fit:cover; object-position:top; display:block;">' +
+                '<div style="padding:14px 18px; color:#fff; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:4px; box-sizing:border-box;">' +
+                '<div style="color:#F4C242; font-size:12px; font-weight:800; letter-spacing:1px;">' + tagTxt + '</div>' +
+                '<div style="font-size:21px; font-weight:bold; line-height:1.2em; word-break:normal; overflow-wrap:normal;">' + esc(up.title) + '</div>' +
+                '<div style="font-size:16px; font-weight:800; color:#F4C242;">' + whenTxt + '</div>' +
+                '<div style="font-size:14px; color:#c9d2dc;">' + esc(up.venue || '') + '</div></div>';
+            } else {
+              // Public build: normal tile, countdown in place of artwork.
+              a.style.cssText = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border:2px solid #F4C242; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+              a.innerHTML = '<div style="width:100%; aspect-ratio:16/9; min-height:165px; background:linear-gradient(135deg,#2a2210,#11171E); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-sizing:border-box;">' +
+                '<div style="color:#F4C242; font-size:12px; font-weight:800; letter-spacing:2px;">' + esc(T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a')) + '</div>' +
+                '<div style="color:#fff; font-size:44px; font-weight:800; line-height:1em;">' + esc(schedLeft(up)) + '</div>' +
+                '<div style="color:#c9d2dc; font-size:14px;">' + whenTxt + '</div></div>' +
+                '<div style="padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; line-height:1.35em; box-sizing:border-box;"><div>' + esc(up.short || up.title) + '</div><div style="font-size:13px; font-weight:normal; color:#9aa6b4;">' + esc(up.venue || '') + '</div></div>';
+            }
+            row.insertBefore(a, row.firstChild);
+          }
+          setInterval(ensureHomeTile, 1500);
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword
           // search with the type remembered ("tvmt"), and the filter bar's script tells similar titles apart.
@@ -3575,7 +4007,7 @@ class MainActivity : Activity() {
           }
           // [English name, Japanese name]
           var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
-          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
@@ -3664,6 +4096,68 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
+            '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
+            '#tv-sm-shelf, #tv-sm-shelf *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
+            '#tv-sm-shelf .tv-sch-wrap{display:flex;align-items:stretch;}',
+            '#tv-sm-shelf .tv-sch-up{flex:1 1 0;min-width:0;padding-right:18px;}',
+            '#tv-sm-shelf .tv-sch-up .tv-shl-t{color:#F4C242;}',
+            '#tv-sm-shelf .tv-sch-sep{flex:0 0 1px;background:#2a323c;}',
+            '#tv-sm-shelf .tv-sch-past{flex:0 0 50%;box-sizing:border-box;padding-left:20px;}',
+            '#tv-sm-shelf .tv-sch-tile{display:flex;gap:14px;padding:10px;border:2px solid #2a323c;border-radius:12px;background:#0f1620;margin:0 0 10px 0;}',
+            '#tv-sm-shelf .tv-sch-poster{flex:0 0 28%;width:28%;height:auto;align-self:flex-start;border-radius:8px;object-fit:cover;}',
+            '#tv-sm-shelf .tv-sch-info{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:5px;}',
+            '#tv-sm-shelf .tv-sch-tag{display:flex;gap:8px;align-items:center;font-size:13px;color:#9aa6b4;}',
+            '#tv-sm-shelf .tv-sch-tg, #tv-ev .tv-sch-tg{background:#F4C242;color:#111;font-weight:800;font-size:11px;letter-spacing:1px;padding:3px 7px;border-radius:4px;}',
+            '#tv-sm-shelf .tv-sch-ttl{font-size:19px;font-weight:700;line-height:1.2;color:#fff;}',
+            '#tv-sm-shelf .tv-sch-v{font-size:14px;color:#c9d2dc;}',
+            '#tv-sm-shelf .tv-sch-when{font-size:19px;font-weight:800;color:#F4C242;}',
+            '#tv-sm-shelf .tv-sch-jst{font-size:12px;color:#9aa6b4;}',
+            '#tv-sm-shelf .tv-sch-btns{display:flex;gap:8px;margin-top:6px;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-sch-btn{display:flex;align-items:center;gap:8px;font-size:15px;padding:7px 12px;margin:0;border:2px solid #2a323c;}',
+            '#tv-sm-shelf .tv-sch-then{font-size:11px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:8px 4px 6px 4px;}',
+            '#tv-sm-shelf .tv-sch-row{display:flex;gap:6px;align-items:stretch;margin:0 0 6px 0;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-sch-main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:1px;margin:0;padding:7px 12px;background:#161f2a;}',
+            '#tv-sm-shelf .tv-sch-d{font-size:12px;font-weight:800;color:#F4C242;}',
+            '#tv-sm-shelf .tv-sch-t{font-size:15px;font-weight:700;line-height:1.2;}',
+            '#tv-sm-shelf .tv-sch-s{font-size:11px;font-weight:600;color:#9aa6b4;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-sch-bellb{flex:0 0 auto;display:flex;align-items:center;margin:0;padding:0 12px;background:#161f2a;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-sch-btn:focus, #tv-sm-shelf .tv-sm-fi.tv-sch-main:focus, #tv-sm-shelf .tv-sm-fi.tv-sch-bellb:focus{border-color:#F4C242 !important;background:#172029 !important;color:#ffffff !important;}',
+            '#tv-sm-shelf .tv-sch-pastcols{column-count:2;column-gap:6px;}',
+            '#tv-sm-shelf .tv-sch-pastcols .tv-sm-fi{font-size:16px;word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;}',
+            '#tv-ev{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#0b1118;color:#fff;font-family:Arial,Helvetica,sans-serif;}',
+            '#tv-ev .tv-ev-in{display:flex;height:100%;}',
+            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#000;display:flex;align-items:center;}',
+            '#tv-ev .tv-ev-pc img{height:100%;width:auto;display:block;}',
+            '#tv-ev, #tv-ev *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
+            '#tv-ev .tv-ev-top{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
+            'html.tv-ev-open #tv-sm-tab{z-index:2147483001;}',
+            'html.tv-ev-open #tv-sm-scrim{z-index:2147483001;}',
+            'html.tv-ev-open #tv-sm{z-index:2147483002;}',
+            'html.tv-ev-open #tv-sm-shelf{z-index:2147483003;}',
+            '#tv-ev .tv-ev-tx{flex:1 1 0;min-width:0;padding:4vh 3vw;display:flex;flex-direction:column;gap:12px;overflow:hidden;}',
+            '#tv-ev .tv-ev-tag{display:flex;gap:10px;align-items:center;font-size:14px;color:#9aa6b4;}',
+            '#tv-ev .tv-ev-h{font-size:30px;font-weight:700;line-height:1.15;}',
+            '#tv-ev .tv-ev-cols{display:flex;gap:40px;flex-wrap:wrap;}',
+            '#tv-ev .tv-ev-k{font-size:12px;font-weight:700;letter-spacing:1.2px;color:#9aa6b4;}',
+            '#tv-ev .tv-ev-big{font-size:28px;font-weight:800;color:#F4C242;}',
+            '#tv-ev .tv-ev-mid{font-size:20px;font-weight:700;}',
+            '#tv-ev .tv-ev-s{font-size:14px;color:#c9d2dc;}',
+            '#tv-ev .tv-ev-bs{display:flex;gap:10px;flex-wrap:wrap;}',
+            '#tv-ev .tv-ev-b{cursor:pointer;padding:11px 18px;border-radius:8px;border:2px solid #2a323c;font-size:16px;font-weight:600;color:#fff;outline:none;}',
+            '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
+            '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:none;outline:3px solid #F4C242;outline-offset:2px;}',
+            '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
+            '#tv-ev .tv-ev-mc{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:16px;}',
+            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:5px 12px;}',
+            '#tv-ev .tv-ev-mt{font-size:12px;font-weight:700;letter-spacing:1px;color:#F4C242;}',
+            '#tv-ev .tv-ev-ms{font-size:15px;font-weight:600;line-height:1.3;}',
+            '#tv-ev .tv-ev-vs{color:#9aa6b4;font-weight:400;}',
+            '#tv-ev .tv-ev-hint{margin-top:auto;font-size:13px;color:#9aa6b4;}',
+            '#tv-rem-toast{position:fixed;right:28px;top:24px;z-index:2147483001;width:420px;max-width:80vw;box-sizing:border-box;display:flex;gap:14px;padding:14px 16px;border-radius:12px;background:#121a24;border:2px solid #2a323c;border-left:6px solid #F4C242;color:#fff;font-family:Arial,Helvetica,sans-serif;cursor:pointer;}',
+            '#tv-rem-toast img{width:58px;height:82px;object-fit:cover;border-radius:6px;flex:0 0 auto;}',
+            '#tv-rem-toast .tv-rt-h{font-size:11px;font-weight:800;letter-spacing:1.2px;color:#F4C242;}',
+            '#tv-rem-toast .tv-rt-t{font-size:18px;font-weight:700;line-height:1.2;margin:3px 0;}',
+            '#tv-rem-toast .tv-rt-s{font-size:13px;color:#c9d2dc;}',
             '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
             '#tv-sm .tv-sm-acctgrp{border-top:1px solid #222b36;margin-top:8px;padding-top:8px;}',
@@ -3772,7 +4266,10 @@ class MainActivity : Activity() {
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
             if (matchTypeGroups().length) h += group(T('Match Types', '試合形式'), matchTypeRows(), 'matchtypes');
-            h += group(T('Shows', '番組'), showsList(), 'shows');
+            var showsRow = group(T('Shows', '番組'), showsList(), 'shows');
+            var showsPill = schedPillHtml();
+            if (showsPill) showsRow = showsRow.replace('<span>' + esc(T('Shows', '番組')) + '</span>', '<span>' + esc(T('Shows', '番組')) + showsPill + '</span>');
+            h += showsRow;
             h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
             h += group(T('Years', '年別'), years, 'years');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
@@ -3889,7 +4386,7 @@ class MainActivity : Activity() {
             isOpen = false;
             unmountSearch();
             document.documentElement.classList.remove('tv-sm-open');
-            setNativeFlag(false);
+            setNativeFlag(!!evEl);   // an open event page still wants Back
             try { if (document.activeElement && panel && panel.contains(document.activeElement)) document.activeElement.blur(); } catch (e) {}
             var back = prevFocus;
             if (back && back.isConnected) {
@@ -3897,7 +4394,7 @@ class MainActivity : Activity() {
             }
             return true;
           }
-          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
+          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } if (isOpen) { closeMenu(); return true; } if (evEl) { evClose(); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
           // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
           (function() {
@@ -3949,9 +4446,21 @@ class MainActivity : Activity() {
             var h = '', w = 760;
             if (key === 'shows') {
               var sl = showsList();
-              h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
+              var upList = schedUpcoming();
+              var past = '<div class="tv-shl-t">' + esc(T('PAST SHOWS', '過去の大会')) + '</div>' +
                 '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
-                '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
+                '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>';
+              if (!upList.length) {
+                h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
+                  '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
+                  '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
+              } else {
+                w = 1200;
+                h = '<div class="tv-sch-wrap"><div class="tv-sch-up"><div class="tv-shl-t">' + esc(T('UPCOMING SHOWS', '今後の大会')) + '</div>' +
+                  schedTileHtml(upList[0]) +
+                  (upList.length > 1 ? '<div class="tv-sch-then">' + esc(T('THEN', 'その後')) + '</div>' + upList.slice(1, 5).map(schedRowHtml).join('') : '') +
+                  '</div><div class="tv-sch-sep"></div><div class="tv-sch-past">' + past + '</div></div>';
+              }
             } else if (key === 'champs') {
               w = 760;
               var cblocks = '', ctop = '';
@@ -4151,6 +4660,8 @@ class MainActivity : Activity() {
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
                   if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  else if (fa.getAttribute('data-ev')) { evOpen(fa.getAttribute('data-ev')); }
+                  else if (fa.getAttribute('data-rem')) { schedToggleRem(fa.getAttribute('data-rem')); }
                   else go(fa.getAttribute('data-go'));
                 }
               }

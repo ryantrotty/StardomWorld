@@ -2,6 +2,45 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.7
+- Shows menu: the Remind me and Details buttons (and the show rows and bells) get the gold focus outline again.
+
+## 2.2.6
+- Event page: the match card has no title and sits higher, with slightly tighter boxes, so the last row is no longer cut off.
+
+## 2.2.5
+- Match card: the Japanese card is read from the Japanese page (no /en/, underscore after the date, e.g. /event/20261101_korakuen/; only the first dash changes, so korakuen-2 stays as it is). Where that page lists fewer matches, the rest show in English. The Nov 1 card now has its Japanese names bundled.
+
+## 2.2.4
+- Event page: the menu now opens over the show page and Back closes only the menu, so you stay on the show.
+- Match card: wrestler names come from the site's English fighter list (the card itself shows machine-romanised names), and the daily job also reads the Japanese card for kanji names and match types, used when the app is in Japanese.
+- Match card (private build only): one line break per match, after the first "vs".
+
+## 2.2.3
+- Event page: an "UPCOMING SHOW" header, the title now wraps on whole words, and the menu tab shows on the left like other pages.
+- Event page: the match card is two columns so it fits without scrolling. The first show (Nov 1) has its card bundled with the app; the daily job reads the rest from each show's Matchups page and keeps team mates together.
+
+## 2.2.2
+- Home: the Next Live tile is now a wide card with the poster at the left and the details beside it (private builds). Public builds show a normal tile with a countdown instead of artwork.
+- Shows menu: Upcoming Shows is wider and show names are kept on whole words.
+- Gold show times now include the time zone, for example "10:30 PM EDT".
+- Past wrestlers: Saki Kashima added.
+
+## 2.2.1
+- Event page: Back now closes it (it no longer leaves the app), and Left from the first button opens the global menu.
+- Event page: a text match card (match type and who faces whom, no photos) appears once the site lists it. The daily job reads it for shows within 7 days.
+- Shows menu: the Past Shows side is wider so show names stay on whole words; the Upcoming side is a little narrower.
+
+## 2.2.0
+- Schedule: the Shows menu now has two sides. Upcoming Shows (left) has a Next Live tile and the four shows after it, each with a bell; Past Shows (right) has All Shows and the shows list in two columns. A gold "NEXT 1D 3H" pill sits next to Shows in the main menu.
+- Times are shown in your device's time zone, with the Japan time (JST) beside them.
+- Event page: opens from a tile or row. Pick a reminder (15 minutes before, at start, 1 hour before, day before); press the same one again to clear it.
+- Reminders show as a toast at the top right while the app is open.
+- Home page: the Next Live tile is the first card of the first row.
+- Loading screen between pages: an "Up next" line along the bottom when the next show is within 7 days (not on the launch splash).
+- Poster art is only fetched and shown in builds that have the private branding folder; public builds show text only.
+- The list comes from assets/schedule.json and is refreshed at most every six hours from the schedule-data branch, which a daily GitHub job (scripts/update_schedule.py) keeps up to date.
+
 ## 2.1.5
 - Menu is in alphabetical order: Championships, Factions, Match Types, Shows, Wrestlers, Years. A divider then sets the account link apart as the last item, with a gold person icon.
 - My Videos and Community now sit below the account name (still their own menu items). When signed out, the menu shows only "Log in" and neither appears.

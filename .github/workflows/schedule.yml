@@ -1,0 +1,56 @@
+name: Update schedule
+
+# Once a day (and on demand from the Actions tab): reads the Stardom schedule pages and publishes schedule.json on
+# the "schedule-data" branch, which the app downloads. Main is never touched.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: 'Re-read every upcoming event page'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: schedule-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Previous file
+        run: |
+          if git show origin/schedule-data:schedule.json > prev.json 2>/dev/null; then echo "using published copy"; else cp app/src/main/assets/schedule.json prev.json; echo "using bundled copy"; fi
+
+      - name: Build schedule.json
+        run: python scripts/update_schedule.py --prev prev.json --out new.json ${{ inputs.full && '--full' || '' }}
+
+      - name: Publish
+        run: |
+          cp new.json /tmp/schedule.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git rev-parse --verify origin/schedule-data >/dev/null 2>&1; then
+            git checkout -B schedule-data origin/schedule-data
+          else
+            git checkout --orphan schedule-data
+            git rm -rf . >/dev/null
+          fi
+          cp /tmp/schedule.json schedule.json
+          git add schedule.json
+          if git diff --cached --quiet; then echo "nothing to publish"; exit 0; fi
+          git commit -m "Update schedule"
+          git push origin schedule-data

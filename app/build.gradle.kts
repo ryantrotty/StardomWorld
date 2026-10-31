@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 215
-        versionName = "2.1.5"
+        versionCode = 223
+        versionName = "2.2.7"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -20,6 +20,12 @@ android {
 
         val hasPrivateBranding = rootProject.file("branding-private/res").exists()
         buildConfigField("Boolean", "ENABLE_CC_TRANSLATE", hasPrivateBranding.toString())
+        // Event poster artwork is only fetched and shown in builds that have the private branding folder.
+        buildConfigField("Boolean", "SHOW_POSTERS", hasPrivateBranding.toString())
+        // The schedule list kept up to date by a scheduled GitHub job (see .github/workflows/schedule.yml).
+        val scheduleUrl = (project.findProperty("tvhub.scheduleUrl") as String?)
+            ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/schedule-data/schedule.json"
+        buildConfigField("String", "SCHEDULE_URL", "\"$scheduleUrl\"")
     }
 
     buildFeatures {
