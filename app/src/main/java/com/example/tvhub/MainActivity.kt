@@ -3787,7 +3787,7 @@ class MainActivity : Activity() {
           }
           // The event page: poster (private builds), your time, the venue's time and when to be reminded.
           var evEl = null, evId = null;
-          function evClose() { if (evEl && evEl.parentNode) evEl.parentNode.removeChild(evEl); evEl = null; evId = null; }
+          function evClose() { if (evEl && evEl.parentNode) evEl.parentNode.removeChild(evEl); evEl = null; evId = null; setNativeFlag(false); }
           function evStatus() {
             if (!evEl) return;
             var e = schedById(evId), off = remGet()[evId], st = evEl.querySelector('.tv-ev-st');
@@ -3796,6 +3796,15 @@ class MainActivity : Activity() {
             Array.prototype.forEach.call(evEl.querySelectorAll('.tv-ev-b'), function(b) {
               b.classList.toggle('tv-ev-on', off !== undefined && parseInt(b.getAttribute('data-off'), 10) === off);
             });
+          }
+          function matchCardHtml(e) {
+            var ms = e.matches;
+            if (!ms || !ms.length) return '';
+            return '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('MATCH CARD', '対戦カード')) + '</div><div class="tv-ev-mc">' +
+              ms.map(function(m) {
+                var sides = (m.sides || []).map(function(x) { return esc(x); }).join(' <span class="tv-ev-vs">vs</span> ');
+                return '<div class="tv-ev-m"><div class="tv-ev-mt">' + esc(m.type || '') + '</div><div class="tv-ev-ms">' + sides + '</div></div>';
+              }).join('') + '</div>';
           }
           function evOpen(id) {
             var e = schedById(id);
@@ -3822,10 +3831,11 @@ class MainActivity : Activity() {
               '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTime(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
               '<div><div class="tv-ev-k">' + esc(T('AT THE VENUE (JST)', '現地時間 (JST)')) + '</div><div class="tv-ev-mid">' + esc(fmtJst(e._t, true)) + '</div><div class="tv-ev-s">' + esc(e.venue || '') + '</div></div></div>' +
               '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('REMIND ME', '通知')) + '</div>' +
-              '<div class="tv-ev-bs">' + btns + '</div><div class="tv-ev-st"></div>' +
-              '<div class="tv-ev-hint">' + esc(T('Press OK on a time again to clear it. Back closes this page.', '同じ時間をもう一度押すと解除。戻るで閉じます。')) + '</div>' +
+              '<div class="tv-ev-bs">' + btns + '</div><div class="tv-ev-st"></div>' + matchCardHtml(e) +
+              '<div class="tv-ev-hint">' + esc(T('Left for the menu \u00b7 OK on a time again clears it \u00b7 Back closes this page', '左でメニュー \u00b7 同じ時間をもう一度押すと解除 \u00b7 戻るで閉じる')) + '</div>' +
               '</div></div>';
             document.body.appendChild(evEl);
+            setNativeFlag(true);   // Back now comes to this page first, not to the app
             evStatus();
             var cur = remGet()[id], fb = null;
             Array.prototype.forEach.call(evEl.querySelectorAll('.tv-ev-b'), function(b) { if (cur !== undefined && parseInt(b.getAttribute('data-off'), 10) === cur) fb = b; });
@@ -3846,6 +3856,7 @@ class MainActivity : Activity() {
             var k = e.keyCode, bs = Array.prototype.slice.call(evEl.querySelectorAll('.tv-ev-b')), cur = document.activeElement, i = bs.indexOf(cur);
             evHalt(e);
             if (k === 27 || k === 4 || k === 8) { evClose(); return; }
+            if (k === 37 && i <= 0) { evClose(); openMenu(); return; }
             if (k === 37 || k === 38) { if (bs.length) { var a = bs[Math.max(0, i - 1)]; a.focus(); } return; }
             if (k === 39 || k === 40) { if (bs.length) { var b2 = bs[Math.min(bs.length - 1, i + 1)]; b2.focus(); } return; }
             if ((k === 13 || k === 23 || k === 32) && i >= 0) evPick(cur);
@@ -4055,12 +4066,12 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sch-wrap{display:flex;align-items:stretch;}',
-            '#tv-sm-shelf .tv-sch-up{flex:1 1 0;min-width:0;padding-right:20px;}',
+            '#tv-sm-shelf .tv-sch-up{flex:1 1 0;min-width:0;padding-right:18px;}',
             '#tv-sm-shelf .tv-sch-up .tv-shl-t{color:#F4C242;}',
             '#tv-sm-shelf .tv-sch-sep{flex:0 0 1px;background:#2a323c;}',
-            '#tv-sm-shelf .tv-sch-past{flex:0 0 42%;box-sizing:border-box;padding-left:20px;}',
+            '#tv-sm-shelf .tv-sch-past{flex:0 0 54%;box-sizing:border-box;padding-left:20px;}',
             '#tv-sm-shelf .tv-sch-tile{display:flex;gap:14px;padding:10px;border:2px solid #2a323c;border-radius:12px;background:#0f1620;margin:0 0 10px 0;}',
-            '#tv-sm-shelf .tv-sch-poster{flex:0 0 30%;width:30%;height:auto;align-self:flex-start;border-radius:8px;object-fit:cover;}',
+            '#tv-sm-shelf .tv-sch-poster{flex:0 0 28%;width:28%;height:auto;align-self:flex-start;border-radius:8px;object-fit:cover;}',
             '#tv-sm-shelf .tv-sch-info{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:5px;}',
             '#tv-sm-shelf .tv-sch-tag{display:flex;gap:8px;align-items:center;font-size:13px;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-sch-tg, #tv-ev .tv-sch-tg{background:#F4C242;color:#111;font-weight:800;font-size:11px;letter-spacing:1px;padding:3px 7px;border-radius:4px;}',
@@ -4078,6 +4089,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-s{font-size:11px;font-weight:600;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-sm-fi.tv-sch-bellb{flex:0 0 auto;display:flex;align-items:center;margin:0;padding:0 12px;background:#161f2a;}',
             '#tv-sm-shelf .tv-sch-pastcols{column-count:2;column-gap:6px;}',
+            '#tv-sm-shelf .tv-sch-pastcols .tv-sm-fi{font-size:16px;word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;}',
             '#tv-ev{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#0b1118;color:#fff;font-family:Arial,Helvetica,sans-serif;}',
             '#tv-ev .tv-ev-in{display:flex;height:100%;}',
             '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#000;display:flex;align-items:center;}',
@@ -4095,6 +4107,11 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
             '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:none;outline:3px solid #F4C242;outline-offset:2px;}',
             '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
+            '#tv-ev .tv-ev-mc{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:34vh;}',
+            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:8px 14px;}',
+            '#tv-ev .tv-ev-mt{font-size:12px;font-weight:700;letter-spacing:1px;color:#F4C242;}',
+            '#tv-ev .tv-ev-ms{font-size:16px;font-weight:600;line-height:1.35;}',
+            '#tv-ev .tv-ev-vs{color:#9aa6b4;font-weight:400;}',
             '#tv-ev .tv-ev-hint{margin-top:auto;font-size:13px;color:#9aa6b4;}',
             '#tv-rem-toast{position:fixed;right:28px;top:24px;z-index:2147483001;width:420px;max-width:80vw;box-sizing:border-box;display:flex;gap:14px;padding:14px 16px;border-radius:12px;background:#121a24;border:2px solid #2a323c;border-left:6px solid #F4C242;color:#fff;font-family:Arial,Helvetica,sans-serif;cursor:pointer;}',
             '#tv-rem-toast img{width:58px;height:82px;object-fit:cover;border-radius:6px;flex:0 0 auto;}',
@@ -4337,7 +4354,7 @@ class MainActivity : Activity() {
             }
             return true;
           }
-          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
+          window.__tvMenuClose = function() { if (evEl) { evClose(); return true; } if (shelfEl) { closeShelf(true); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
           // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
           (function() {
@@ -4398,7 +4415,7 @@ class MainActivity : Activity() {
                   '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
                   '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
               } else {
-                w = 1040;
+                w = 1120;
                 h = '<div class="tv-sch-wrap"><div class="tv-sch-up"><div class="tv-shl-t">' + esc(T('UPCOMING SHOWS', '今後の大会')) + '</div>' +
                   schedTileHtml(upList[0]) +
                   (upList.length > 1 ? '<div class="tv-sch-then">' + esc(T('THEN', 'その後')) + '</div>' + upList.slice(1, 5).map(schedRowHtml).join('') : '') +

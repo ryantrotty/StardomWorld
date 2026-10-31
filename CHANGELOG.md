@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.1
+- Event page: Back now closes it (it no longer leaves the app), and Left from the first button opens the global menu.
+- Event page: a text match card (match type and who faces whom, no photos) appears once the site lists it. The daily job reads it for shows within 7 days.
+- Shows menu: the Past Shows side is wider so show names stay on whole words; the Upcoming side is a little narrower.
+
 ## 2.2.0
 - Schedule: the Shows menu now has two sides. Upcoming Shows (left) has a Next Live tile and the four shows after it, each with a bell; Past Shows (right) has All Shows and the shows list in two columns. A gold "NEXT 1D 3H" pill sits next to Shows in the main menu.
 - Times are shown in your device's time zone, with the Japan time (JST) beside them.

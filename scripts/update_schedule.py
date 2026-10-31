@@ -76,9 +76,31 @@ def parse_event(eid, page):
     m = re.search(r"(?<!\w)Venue(?! opens)\s*[:\uff1a]\s*(.{3,70}?)(?:\s+(?:Address|Tel|Access|Doors|Ticket)\b|$)", txt)
     if m:
         venue = m.group(1).strip()
+    mm = re.search(r'href="(?:https://wwr-stardom\.com)?(/en/event/[A-Za-z0-9_/-]+?)/?"', page)
+    matchurl = (BASE + mm.group(1) + "/") if mm else None
     other = bool(re.search(r"other (?:organization|group|promotion)", txt[:400], re.I))
     return {"day": day, "title": title, "start": iso(day, start), "doors": iso(day, doors), "fc": iso(day, fc),
-            "poster": poster, "venue": venue, "other": other}
+            "poster": poster, "venue": venue, "other": other, "matchurl": matchurl}
+
+
+def parse_matches(page):
+    """Match card page -> [{"type": "Tag Match", "sides": ["A & B", "C & D"]}]. Text only; the site has no photos for most names.
+    Best effort: a heading (the match type) followed by a line with "vs". Matches without "vs" are skipped."""
+    out = []
+    for chunk in re.split(r"(?i)<h[23][ >]", page)[1:]:
+        parts = re.split(r"(?i)</h[1-6]>", chunk, maxsplit=1)
+        if len(parts) < 2:
+            continue
+        head = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", parts[0].split(">", 1)[-1] if parts[0].lstrip().startswith(("class", "id", "style")) else parts[0]))).strip()
+        body = text_of(parts[1])
+        body = re.split(r"(?i)\b(?:report|result|finish)\b|\d{1,2}:\d{2}", body)[0]
+        if not head or not re.search(r"(?i)\bvs\.?\s", body):
+            continue
+        sides = [re.sub(r"\s*\((?:WIN|LOSE|win|lose)\)", "", x).strip(" ,&") for x in re.split(r"(?i)\s+vs\.?\s+", body)]
+        sides = [x[:160] for x in sides if x]
+        if len(sides) >= 2:
+            out.append({"type": head[:80], "sides": sides[:4]})
+    return out[:12]
 
 
 def main():
@@ -112,7 +134,8 @@ def main():
         if eid[:8] < today:
             continue
         old = events.get(eid)
-        if old and old.get("start") and not a.full:
+        soon = (datetime.datetime.strptime(eid[:8], "%Y%m%d").date() - now.date()).days <= 7
+        if old and old.get("start") and not a.full and not soon:
             continue
         try:
             info = parse_event(eid, get("%s/en/schedule/%s/" % (BASE, eid)))
@@ -134,6 +157,13 @@ def main():
             e["own"] = False
         if info["poster"]:
             posters.setdefault(eid[:6], info["poster"])
+        if info.get("matchurl") and (datetime.datetime.strptime(eid[:8], "%Y%m%d").date() - now.date()).days <= 7:
+            try:
+                ms = parse_matches(get(info["matchurl"]))
+                if ms:
+                    e["matches"] = ms
+            except Exception as ex:
+                print("no match card for", eid, ex)
         if e.get("start") and e.get("title"):
             events[eid] = e
             changed += 1
