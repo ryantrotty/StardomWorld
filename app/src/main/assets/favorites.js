@@ -7,6 +7,7 @@
   var KEY = 'tvFavV1', REM_KEY = 'tvSchedRemV1';
   var BASE = 'https://www.stardom-world.com';
   var PLI = 0, MODE = 'home';
+  var photoCache = {}, logoCache = {};
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -119,6 +120,23 @@
   st.textContent = [
     '#tv-sm-shelf .tv-sm-fi.tv-fav-on::before{content:"\\2605  ";color:#F4C242;}',
     '#tv-sm-shelf .tv-shl-hint{margin:10px 6px 2px 6px;padding-top:8px;border-top:1px solid #2a323c;font-size:13px;color:#9aa6b4;font-weight:600;}',
+    '#tv-sm-shelf .tv-sm-fi.tv-fv-row{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:0 0 8px 0;background:#161f2a;border:2px solid #222b36;font-size:18px;}',
+    '#tv-sm-shelf .tv-fv-l{flex:1 1 auto;min-width:0;}',
+    '#tv-sm-shelf .tv-fv-n{color:#F4C242;font-weight:800;font-size:18px;}',
+    '#tv-sm-shelf .tv-fv-av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#2a323c center top/cover no-repeat;border:2px solid #121a24;margin-left:-8px;}',
+    '#tv-sm-shelf .tv-fv-lg{flex:0 0 auto;height:30px;max-width:130px;padding:3px 10px;border-radius:7px;background:#fff;display:flex;align-items:center;font-size:13px;font-weight:800;color:#111;}',
+    '#tv-sm-shelf .tv-fv-lg img{height:100%;width:auto;max-width:110px;object-fit:contain;}',
+    '#tv-sm-shelf .tv-sm-fi.tv-fv-open{display:flex;align-items:center;gap:14px;padding:12px 16px;border:3px solid #F4C242;background:#161f2a;margin:0 0 14px 0;font-size:20px;}',
+    '#tv-sm-shelf .tv-fv-k{font-size:13px;font-weight:800;letter-spacing:.14em;color:#F4C242;margin:6px 0 10px 2px;}',
+    '#tv-sm-shelf .tv-fv-k2{font-size:12px;font-weight:700;letter-spacing:.12em;color:#9aa6b4;margin:10px 0 6px 4px;}',
+    '#tv-sm-shelf .tv-sm-fi.tv-fv-pl{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;font-size:16px;background:#161f2a;border:2px solid #222b36;margin:0 0 6px 0;}',
+    '#tv-sm-shelf .tv-sm-fi.tv-fv-rem{display:flex;gap:12px;padding:10px;background:#0f1620;border:2px solid #222b36;margin:0 0 8px 0;}',
+    '#tv-sm-shelf .tv-fv-rem img{flex:0 0 auto;width:54px;height:76px;object-fit:cover;object-position:top;border-radius:6px;}',
+    '#tv-sm-shelf .tv-fv-rem .tv-fv-bell{flex:0 0 auto;width:54px;height:54px;border-radius:8px;background:#161f2a;display:flex;align-items:center;justify-content:center;font-size:22px;}',
+    '#tv-sm-shelf .tv-fv-rem .a{font-size:13px;font-weight:800;color:#F4C242;}',
+    '#tv-sm-shelf .tv-fv-rem .b{font-size:15px;font-weight:700;line-height:1.2;margin:2px 0;}',
+    '#tv-sm-shelf .tv-fv-rem .c{font-size:13px;color:#9aa6b4;}',
+    '#tv-sm-shelf .tv-fv-note{font-size:13px;color:#9aa6b4;line-height:1.5;margin:10px 4px 0 4px;}',
     '#tv-fp-pop{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:2147483600;width:560px;max-width:90vw;box-sizing:border-box;background:#0f161e;border:2px solid #2a323c;border-radius:14px;padding:18px 20px;color:#fff;font-family:Arial,Helvetica,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.7);}',
     '#tv-fp-pop, #tv-fp-pop *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-fp-pop .tv-fpp-t{font-size:15px;color:#9aa6b4;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
@@ -242,6 +260,7 @@
     } else {
       var k = kindFor(info), L = LISTS[k], inLater = idxIn(d.later, info.href) >= 0, inK = idxIn(d[k], info.href) >= 0;
       var isFav = !!(info.card && (info.card.classList.contains('is-favorite') || (info.card.dataset && info.card.dataset.tvFav === 'true')));
+      if (info.fromPl !== undefined && d.pl[info.fromPl]) h += '<a class="tv-fpb" tabindex="0" data-act="pl" data-i="' + info.fromPl + '">' + esc(T('Remove from ', '削除：') + d.pl[info.fromPl].name) + '</a>';
       h += '<a class="tv-fpb" tabindex="0" data-act="fav">' + esc(isFav ? T('Remove from Favorites', 'お気に入りから削除') : T('Add to Favorites', 'お気に入りに追加')) + '</a>' +
         '<a class="tv-fpb" tabindex="0" data-act="later">' + esc(inLater ? T('Remove from Watch Later', 'あとで見るから削除') : T('Add to Watch Later', 'あとで見るに追加')) + '</a>' +
         '<a class="tv-fpb" tabindex="0" data-act="kind">' + esc(inK ? T('Remove from ' + L.en, L.ja + 'から削除') : T('Add to ' + L.en, L.ja + 'に追加')) + '</a>' +
@@ -319,9 +338,8 @@
         var fk = t.getAttribute('data-fk'), fv = t.getAttribute('data-fv') || '', d = load(), ix;
         if (fk === 'w') { ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
         else if (fk === 'f') { if (d.f) { var fo = facById(d.f); d.f = ''; save(d); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
-        else if (ARR[fk]) { var arr = d[ARR[fk]], li = parseInt(fv, 10); if (arr[li]) { arr.splice(li, 1); save(d); toast(T('Removed from ' + LISTS[ARR[fk]].en, LISTS[ARR[fk]].ja + 'から削除しました')); } }
+        else if (ARR[fk] || fk === 'pi') { var vi = cardInfo([t]); if (vi) { if (fk === 'pi') vi.fromPl = PLI; popShow(vi); } return true; }
         else if (fk === 'p') { var pi = parseInt(fv, 10); if (d.pl[pi]) { var pn = d.pl[pi].name; d.pl.splice(pi, 1); save(d); toast(T('Removed playlist ' + pn, pn + ' を削除しました')); } }
-        else if (fk === 'pi') { var pl = d.pl[PLI]; var ii = parseInt(fv, 10); if (pl && pl.items[ii]) { pl.items.splice(ii, 1); save(d); toast(T('Removed from ' + pl.name, pl.name + ' から削除しました')); } }
         else if (fk === 'r') { removeReminder(fv); }
         else if (fk === 'h') { var hi = cardInfo([t]); if (hi) popShow(hi); return true; }
         else return true;
@@ -335,7 +353,44 @@
     return window.__tvToggleCardFavorite ? window.__tvToggleCardFavorite(arg) : false;
   }
 
-  window.__tvFav = { decorate: decorate, mark: mark, load: load, toggleWrestler: toggleWrestler, setFaction: setFaction };
+  function posterFor(e) { try { if (H.showPosters && H.showPosters()) return H.posterDataUrl(e.poster || '') || ''; } catch (x) {} return ''; }
+  function shelfHtml() {
+    var d = load(), fac = d.f ? facById(d.f) : null, rs = reminders();
+    function lk(path, cls, inner) { return '<a class="tv-sm-fi ' + cls + '" tabindex="0" data-go="' + esc(path) + '" href="' + esc(BASE + path) + '">' + inner + '</a>'; }
+    function row(path, label, right) { return lk(path, 'tv-fv-row', '<span class="tv-fv-l">' + esc(label) + '</span>' + right); }
+    function n(v) { return '<span class="tv-fv-n">' + v + '</span>'; }
+    var av = '';
+    d.w.slice(0, 4).forEach(function(w) { var u = photo(w.k); if (u) av += '<span class="tv-fv-av" style="background-image:url(' + u + ')"></span>'; });
+    var facPage = fac && fac.members && fac.members.length ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) : '/mypage?tvfav=1';
+    var lg = fac ? logo(fac.id) : '';
+    var facRight = fac ? '<span class="tv-fv-lg">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</span>' : '<span style="color:#9aa6b4;font-size:15px">' + esc(T('none yet', 'なし')) + '</span>';
+    var colA = '<div class="tv-fv-k">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' +
+      row('/mypage?tvfav=wrestlers', T('Wrestlers', 'お気に入り選手'), av + n(d.w.length)) +
+      row(facPage, T('My Faction', 'お気に入りユニット'), facRight) +
+      row('/mypage?tvfav=m', T('Matches', '試合'), n(d.m.length)) +
+      row('/mypage?tvfav=s', T('Shows', '大会'), n(d.s.length));
+    var pls = d.pl.slice(0, 5).map(function(pl, i) { return lk('/mypage?tvfav=pl&pi=' + i, 'tv-fv-pl', '<span>' + esc(pl.name) + '</span><span style="color:#9aa6b4;font-size:14px">' + pl.items.length + '</span>'); }).join('');
+    var colB = '<div class="tv-fv-k">' + esc(T('LISTS', 'リスト')) + '</div>' +
+      row('/mypage?tvfav=later', T('Watch Later', 'あとで見る'), n(d.later.length)) +
+      row('/mypage?tvrecent=1', T('Recently Watched', '最近視聴した動画'), '') +
+      row('/mypage?tvfav=plall', T('Playlists', 'プレイリスト'), n(d.pl.length)) +
+      row('/mypage/favorites', T('Favorite Videos', 'お気に入り動画'), '') +
+      (pls ? '<div class="tv-fv-k2">' + esc(T('YOUR PLAYLISTS', 'プレイリスト')) + '</div>' + pls : '');
+    var rh = '';
+    rs.slice(0, 3).forEach(function(r) {
+      var pu = posterFor(r.e);
+      rh += '<a class="tv-sm-fi tv-fv-rem" tabindex="0" data-ev="' + esc(r.e.id) + '">' + (pu ? '<img src="' + pu + '" alt="">' : '<span class="tv-fv-bell">\ud83d\udd14</span>') +
+        '<div style="min-width:0"><div class="a">' + esc(fmtWhen(r.e._t)) + '</div><div class="b">' + esc(r.e.short || r.e.title) + '</div><div class="c">\ud83d\udd14 ' + esc(offText(r.off)) + '</div></div></a>';
+    });
+    var colC = '<div class="tv-fv-k">' + esc(T('COMING UP \u00b7 REMINDERS', '今後の予定・通知')) + '</div>' +
+      (rh || '<div class="tv-fv-note">' + esc(T('No reminders yet. Set one from Shows.', 'リマインダーはまだありません')) + '</div>') +
+      (rs.length > 3 ? '<div class="tv-fv-note">' + esc('+' + (rs.length - 3) + T(' more reminders', '件')) + '</div>' : '') +
+      '<div class="tv-fv-note">' + esc(T('Reminders are the ones you set from Shows. Press OK on one to open the event page.', 'Showsで設定した通知です。OKでイベントページを開きます')) + '</div>';
+    return lk('/mypage?tvfav=1', 'tv-fv-open', '<span style="font-size:24px;color:#F4C242">\u2605</span><span class="tv-fv-l"><b>' + esc(T('Open My Favorites', 'お気に入りを開く')) + '</b></span>') +
+      '<div style="display:grid;grid-template-columns:1.15fr 1fr 1.05fr;gap:22px;"><div>' + colA + '</div><div>' + colB + '</div><div>' + colC + '</div></div>';
+  }
+
+  window.__tvFav = { shelfHtml: shelfHtml, decorate: decorate, mark: mark, load: load, toggleWrestler: toggleWrestler, setFaction: setFaction };
   window.__tvMenuKey = menuKey;
 
   // =============================================================== the My Favorites page
@@ -376,7 +431,6 @@
     return out;
   }
 
-  var photoCache = {}, logoCache = {};
   function photo(k) {
     var key = String(k).toLowerCase();
     if (photoCache[key] !== undefined) return photoCache[key];
@@ -447,6 +501,8 @@
     '.tv-fp-grid{display:grid;gap:24px;padding:6px;}',
     '.tv-fp-grid .tv-fp-t{flex:none;max-width:none;}',
     '.tv-fp-t{display:block;position:relative;flex:0 0 calc(25% - 18px);max-width:calc(25% - 18px);min-width:0;text-decoration:none !important;color:#fff !important;border-radius:8px;background:#1a1a1a;overflow:hidden;border:3px solid transparent;outline:none !important;cursor:pointer;}',
+    '#tv-fp a, #tv-fp a *{opacity:1 !important;filter:none !important;}',
+    '#tv-fp a::before, #tv-fp a::after{content:none !important;display:none !important;}',
     '#tv-fp *:focus, #tv-fp-pop *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
     '.tv-fp-t:focus, .tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
     '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
@@ -466,6 +522,7 @@
     '.tv-fp-stk img{width:100%;height:100%;object-fit:contain;}',
     '.tv-fp-stk-e{flex:0 0 150px;height:150px;border-radius:50%;border:3px dashed #2a323c;display:flex;align-items:center;justify-content:center;text-align:center;color:#9aa6b4;font-size:14px;padding:16px;outline:none !important;}',
     '.tv-fp-stk-e:focus{border-color:#F4C242;}',
+    '.tv-fp-more{flex:0 0 auto;font-size:18px;font-weight:800;color:#F4C242;white-space:nowrap;}',
     '.tv-fp-tks{flex:1 1 0;min-width:0;display:flex;gap:22px;}',
     '.tv-fp-tk{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:14px 22px;border-radius:10px;background:#f3e2b8;color:#2a1c10 !important;text-decoration:none !important;border:3px solid transparent;outline:none !important;cursor:pointer;min-height:98px;}',
     '.tv-fp-tk .a{font-size:13px;font-weight:800;color:#7a5a36;letter-spacing:.5px;}',
@@ -520,7 +577,8 @@
         h += '<a class="tv-fp-tk" tabindex="0" data-fk="r" data-fv="' + esc(r.e.id) + '" href="#"><div class="a">' + esc(fmtWhen(r.e._t)) + '</div><div class="b">' + esc(r.e.short || r.e.title) + '</div><div class="c">🔔 ' + esc(offText(r.off)) + '</div></a>';
       });
     } else h += emptyHtml(T('No reminders yet. Open a show under Shows and choose Remind me.', 'リマインダーはまだありません'));
-    return h + '</div></div>';
+    var allRs = reminders().length;
+    return h + '</div>' + (allRs > 2 ? '<div class="tv-fp-more">+' + (allRs - 2) + T(' more', '件') + '</div>' : '') + '</div>';
   }
 
   function render(keep) {

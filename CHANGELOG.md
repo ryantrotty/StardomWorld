@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.5.0
+- My Favorites menu panel redesigned: "Open My Favorites" on top, then Collections (Wrestlers with photos in private builds, My Faction with its logo, Matches, Shows, each with a count), Lists (Watch Later, Recently Watched, Playlists, Favorite Videos, then your playlists by name) and your next three reminders (OK opens the event page).
+- My Favorites pages: the Menu button on a video (Watch Later, Matches, Shows, or inside a playlist) now opens the same choices as anywhere else: add it to the other lists or remove it from this one. Wrestlers, factions, reminders and whole playlists still remove straight away.
+- The first tile on the sub pages is no longer dimmed (the app's general highlight rule was fading it).
+- The overview shows "+N more" beside the two reminder tickets when more are set.
+
 ## 2.4.2
 - My Favorites and Recently Watched pages: the highlighted tile has a single gold border. The app's general focus ring (an outline plus glow) was drawing a second one on top.
 

@@ -4534,6 +4534,10 @@ class MainActivity : Activity() {
                 '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
                 '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
             }
+            else if (key === 'favs') {
+              w = 1000;
+              try { h = window.__tvFav ? window.__tvFav.shelfHtml() : ''; } catch (e) { h = ''; }
+            }
             else {
               var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], favs: [T('MY FAVORITES', 'お気に入り'), FAVS], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
               var L = lists[key];
@@ -5734,6 +5738,8 @@ class MainActivity : Activity() {
     '#tv-rp-scroll::-webkit-scrollbar{display:none;}',
     '#tv-rp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
     '#tv-rp .tv-rc{display:block;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#1a1a1a;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
+    '#tv-rp a, #tv-rp a *{opacity:1 !important;filter:none !important;}',
+    '#tv-rp a::before, #tv-rp a::after{content:none !important;display:none !important;}',
     '#tv-rp *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
     '#tv-rp .tv-rc:focus{border-color:#FFB347;box-shadow:none !important;}',
     '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
