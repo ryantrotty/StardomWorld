@@ -4534,6 +4534,28 @@ class MainActivity : Activity() {
                 '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
                 '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
             }
+            else if (key === 'community') {
+              w = 980;
+              var cm = window.__tvComm;
+              if (cm) {
+                var cy = new Date().getFullYear();
+                var cmRows = function(m) {
+                  return fiHtml(T('This month', '今月'), cm.url({ m: m, w: 'm' })) + fiHtml(T('This year', '今年'), cm.url({ m: m, w: 'y' })) + fiHtml(T('All time', '全期間'), cm.url({ m: m, w: 'a' }));
+                };
+                var cmYears = '';
+                for (var yy = cy; yy > cy - 4; yy--) cmYears += fiHtml(String(yy), cm.url({ m: 'pc', w: 'yr', y: String(yy) }));
+                h = '<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;">' +
+                  '<div>' + cm.top10Html() + '</div>' +
+                  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">' +
+                    '<div><div class="tv-shl-top">' + fiHtml(T('Community page', 'コミュニティ'), cm.url({ m: 'pc', w: 'a' })) + '</div>' +
+                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST WATCHED', '再生数')) + '</div>' + cmRows('pc') + '</div>' +
+                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST FAVORITED', 'お気に入り数')) + '</div>' + cmRows('fc') + '</div>' +
+                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('TOOLS', 'ツール')) + '</div>' + fiHtml(T('Build a chart', 'チャートを作る'), cm.buildUrl) + '</div></div>' +
+                    '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('BY YEAR', '年別')) + '</div>' + cmYears + fiHtml(T('More years...', 'ほかの年'), cm.url({ m: 'pc', w: 'yr', y: String(cy) })) + '</div>' +
+                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' + fiHtml(T('Places, shows, titles', '開催地・大会・王座'), cm.collUrl) + '</div></div>' +
+                  '</div></div>';
+              }
+            }
             else if (key === 'favs') {
               w = 1000;
               try { h = window.__tvFav ? window.__tvFav.shelfHtml() : ''; } catch (e) { h = ''; }
@@ -5854,7 +5876,7 @@ class MainActivity : Activity() {
   var yearCat = YM ? (YM[1] === '_2020' ? '2020' : YM[1]) : '';
   var FAC_MODE = /[?&]tvfaction=/.test(location.search);
   if (location.pathname.indexOf('/contents/search') !== 0 && !champCat && !yearCat) return;
-  if (/[?&](tvrecent|tvev)=/.test(location.search)) return;
+  if (/[?&](tvrecent|tvev|tvcomm)=/.test(location.search)) return;
   window.__tvFilterBar = true;
 
   // Every choice just adds words to the site's own keyword search and opens that page: one request per
@@ -6821,6 +6843,7 @@ class MainActivity : Activity() {
         (function(){
           if (window.__tvListNav) return;
           window.__tvListNav = true;
+          if (/[?&]tvcomm=/.test(location.search)) return;   // the Community page does its own key handling
 
           function isHome() {
             var p = location.pathname;
@@ -7739,6 +7762,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
+        view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
         view.evaluateJavascript(sideMenuJs, null)

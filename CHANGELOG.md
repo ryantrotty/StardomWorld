@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.8.0
+
+- Community is now a page: Most watched / Most favorited, This month / This year / All time / Pick a year (with a year strip, 2026 back to 2011), a large #1 with #2 to #4 beside it and #5 to #10 below (the large layout needs at least 3 results; fewer show as a plain row).
+- Each chart is one search address (the site's own sort by plays or favorites plus a keyword) and opens with one request; nothing else is fetched. No play or favorite counts are shown.
+- "This month" searches for the show's date at the start of the title (written 2026.10 by default). The page prints the words it searched for; if the site writes dates another way, change MONTH_FMT at the top of assets/community.js.
+- Collections at the bottom of the page and on their own "See all" page: Places (venues), Shows and Titles & match types, from the lists the filter bars already use. OK opens the most watched; the Menu button opens the most favorited.
+- A "Showing" row (place, metric, window) with Clear all appears when a collection is open; the year strip sits below it.
+- Rank movement (up, down, new) since your last visit, kept on the device.
+- Menu button on a chart video offers Favorites / Watch Later, like everywhere else.
+- Community menu shelf: Top 10 most watched of all time on the left (large #1, then #2 to #10; kept from the last visit and refreshed at most once a day), with the page, windows, years, collections and Build a chart on the right.
+- "Build a chart" opens the site's most-played list with the usual filter bar (Sort, Match type, Championship, Competitors, Show, Location, Year).
+
 ## 2.7.1
 
 - My Favorites rows: the first tile is no longer clipped on the left.
