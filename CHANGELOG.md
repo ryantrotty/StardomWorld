@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.2.2
+- Home: the Next Live tile is now a wide card with the poster at the left and the details beside it (private builds). Public builds show a normal tile with a countdown instead of artwork.
+- Shows menu: Upcoming Shows is wider and show names are kept on whole words.
+- Gold show times now include the time zone, for example "10:30 PM EDT".
+- Past wrestlers: Saki Kashima added.
+
 ## 2.2.1
 - Event page: Back now closes it (it no longer leaves the app), and Left from the first button opens the global menu.
 - Event page: a text match card (match type and who faces whom, no photos) appears once the site lists it. The daily job reads it for shows within 7 days.

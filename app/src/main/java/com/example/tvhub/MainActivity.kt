@@ -2597,7 +2597,7 @@ class MainActivity : Activity() {
             val mins = (leftMs % 3600000L) / 60000L
             val left = if (days > 0) "${days}D ${hours}H" else if (hours > 0) "${hours}H ${mins}M" else "${mins}M"
             val zdt = java.time.OffsetDateTime.parse(e.optString("start")).atZoneSameInstant(java.time.ZoneId.systemDefault())
-            val when_ = java.time.format.DateTimeFormatter.ofPattern("EEE MMM d · h:mm a", java.util.Locale.getDefault()).format(zdt)
+            val when_ = java.time.format.DateTimeFormatter.ofPattern("EEE MMM d · h:mm a z", java.util.Locale.getDefault()).format(zdt)
             val tv = android.widget.TextView(this)
             tv.setTextColor(Color.WHITE)
             tv.text = "UP NEXT · IN $left\n" + e.optString("short", e.optString("title")) + "\n" + when_ + " · " + e.optString("venue")
@@ -3721,6 +3721,13 @@ class MainActivity : Activity() {
           function schedLoc() { return isJa() ? 'ja-JP' : undefined; }
           function fmtDay(ms) { try { return new Date(ms).toLocaleDateString(schedLoc(), { weekday: 'short', month: 'short', day: 'numeric' }); } catch (x) { return ''; } }
           function fmtTime(ms) { try { return new Date(ms).toLocaleTimeString(schedLoc(), { hour: 'numeric', minute: '2-digit' }); } catch (x) { return ''; } }
+          function fmtTimeZ(ms) {
+            var t = fmtTime(ms), z = '';
+            try {
+              new Intl.DateTimeFormat(schedLoc(), { hour: 'numeric', timeZoneName: 'short' }).formatToParts(new Date(ms)).forEach(function(p) { if (p.type === 'timeZoneName') z = p.value; });
+            } catch (x) {}
+            return z ? t + ' ' + z : t;
+          }
           function fmtJst(ms, withDate) {
             try {
               var o = { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false };
@@ -3760,7 +3767,7 @@ class MainActivity : Activity() {
               '<div class="tv-sch-tag"><span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span></div>' +
               '<div class="tv-sch-ttl">' + esc(e.title) + '</div>' +
               '<div class="tv-sch-v">' + esc(e.venue || '') + '</div>' +
-              '<div class="tv-sch-when">' + esc(fmtDay(e._t) + ' · ' + fmtTime(e._t)) + '</div>' +
+              '<div class="tv-sch-when">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</div>' +
               '<div class="tv-sch-jst">' + esc(T('Your time', 'お使いの時刻') + ' · ' + fmtJst(e._t, true)) + '</div>' +
               '<div class="tv-sch-btns">' +
               '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-rem="' + esc(e.id) + '">' + bellSvg(on, 18) + '<span>' + esc(on ? T('Reminder set', '通知オン') : T('Remind me', '通知する')) + '</span></a>' +
@@ -3771,7 +3778,7 @@ class MainActivity : Activity() {
             var on = remGet()[e.id] !== undefined;
             return '<div class="tv-sch-row">' +
               '<a class="tv-sm-fi tv-sch-main" tabindex="0" data-ev="' + esc(e.id) + '">' +
-              '<span class="tv-sch-d">' + esc(fmtDay(e._t) + ' · ' + fmtTime(e._t)) + '</span>' +
+              '<span class="tv-sch-d">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</span>' +
               '<span class="tv-sch-t">' + esc(e.short || e.title) + '</span>' +
               '<span class="tv-sch-s">' + esc((e.venue || '') + ' · ' + fmtJst(e._t, true)) + '</span></a>' +
               '<a class="tv-sm-fi tv-sch-bellb" tabindex="0" data-rem="' + esc(e.id) + '" aria-label="Reminder">' + bellSvg(on, 20) + '</a></div>';
@@ -3828,7 +3835,7 @@ class MainActivity : Activity() {
               '<div class="tv-ev-tx">' +
               '<div class="tv-ev-tag">' + (first && first.id === e.id ? '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>' : '') + '<span>' + esc(e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Live now or just ended', '開催中または終了')) + '</span></div>' +
               '<div class="tv-ev-h">' + esc(e.title) + '</div>' +
-              '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTime(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
+              '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
               '<div><div class="tv-ev-k">' + esc(T('AT THE VENUE (JST)', '現地時間 (JST)')) + '</div><div class="tv-ev-mid">' + esc(fmtJst(e._t, true)) + '</div><div class="tv-ev-s">' + esc(e.venue || '') + '</div></div></div>' +
               '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('REMIND ME', '通知')) + '</div>' +
               '<div class="tv-ev-bs">' + btns + '</div><div class="tv-ev-st"></div>' + matchCardHtml(e) +
@@ -3882,7 +3889,7 @@ class MainActivity : Activity() {
             t.className = 'notranslate';
             t.setAttribute('translate', 'no');
             t.setAttribute('data-id', e.id);
-            t.innerHTML = (p ? '<img src="' + p + '" alt="">' : '') + '<div><div class="tv-rt-h">' + esc(head) + '</div><div class="tv-rt-t">' + esc(e.short || e.title) + '</div><div class="tv-rt-s">' + esc((e.venue || '') + ' · ' + fmtTime(e._t)) + '</div></div>';
+            t.innerHTML = (p ? '<img src="' + p + '" alt="">' : '') + '<div><div class="tv-rt-h">' + esc(head) + '</div><div class="tv-rt-t">' + esc(e.short || e.title) + '</div><div class="tv-rt-s">' + esc((e.venue || '') + ' · ' + fmtTimeZ(e._t)) + '</div></div>';
             document.body.appendChild(t);
             toastTimer = setTimeout(toastHide, 12000);
           }
@@ -3913,9 +3920,26 @@ class MainActivity : Activity() {
             a.href = 'javascript:void(0)';
             a.setAttribute('translate', 'no');
             a.setAttribute('data-ev', up.id);
-            a.style.cssText = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border:2px solid #F4C242; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
-            a.innerHTML = '<div style="width:100%; aspect-ratio:16/9; min-height:165px; background:#11171E ' + (p ? 'url(' + p + ') center top/contain no-repeat' : '') + '; display:flex; align-items:center; justify-content:center; color:#F4C242; font-size:20px; font-weight:bold; letter-spacing:1px;">' + (p ? '' : esc(T('NEXT LIVE', '次の大会'))) + '</div>' +
-              '<div style="padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; line-height:1.4em; box-sizing:border-box;"><div style="color:#F4C242; font-size:13px; letter-spacing:1px;">' + esc(T('NEXT LIVE', '次の大会') + ' · ' + T('in ', 'あと') + schedLeft(up).toLowerCase()) + '</div><div>' + esc(up.short || up.title) + '</div><div style="color:#F4C242;">' + esc(fmtDay(up._t) + ' · ' + fmtTime(up._t)) + '</div></div>';
+            var whenTxt = esc(fmtDay(up._t) + ' \u00b7 ' + fmtTimeZ(up._t));
+            var tagTxt = esc(T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a') + ' \u00b7 ' + T('in ', '\u3042\u3068') + schedLeft(up).toLowerCase());
+            if (p) {
+              // Private build: wide card, poster on the left, details beside it.
+              a.style.cssText = 'flex:0 0 calc(50% - 12px); max-width:calc(50% - 12px); height:228px; background:#1a1a1a; border:2px solid #F4C242; border-radius:10px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:flex;';
+              a.innerHTML = '<img src="' + p + '" alt="" style="flex:0 0 161px; width:161px; height:100%; object-fit:cover; object-position:top; display:block;">' +
+                '<div style="padding:14px 18px; color:#fff; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:4px; box-sizing:border-box;">' +
+                '<div style="color:#F4C242; font-size:12px; font-weight:800; letter-spacing:1px;">' + tagTxt + '</div>' +
+                '<div style="font-size:21px; font-weight:bold; line-height:1.2em; word-break:normal; overflow-wrap:normal;">' + esc(up.title) + '</div>' +
+                '<div style="font-size:16px; font-weight:800; color:#F4C242;">' + whenTxt + '</div>' +
+                '<div style="font-size:14px; color:#c9d2dc;">' + esc(up.venue || '') + '</div></div>';
+            } else {
+              // Public build: normal tile, countdown in place of artwork.
+              a.style.cssText = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border:2px solid #F4C242; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+              a.innerHTML = '<div style="width:100%; aspect-ratio:16/9; min-height:165px; background:linear-gradient(135deg,#2a2210,#11171E); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-sizing:border-box;">' +
+                '<div style="color:#F4C242; font-size:12px; font-weight:800; letter-spacing:2px;">' + esc(T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a')) + '</div>' +
+                '<div style="color:#fff; font-size:44px; font-weight:800; line-height:1em;">' + esc(schedLeft(up)) + '</div>' +
+                '<div style="color:#c9d2dc; font-size:14px;">' + whenTxt + '</div></div>' +
+                '<div style="padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; line-height:1.35em; box-sizing:border-box;"><div>' + esc(up.short || up.title) + '</div><div style="font-size:13px; font-weight:normal; color:#9aa6b4;">' + esc(up.venue || '') + '</div></div>';
+            }
             row.insertBefore(a, row.firstChild);
           }
           setInterval(ensureHomeTile, 1500);
@@ -3975,7 +3999,7 @@ class MainActivity : Activity() {
           }
           // [English name, Japanese name]
           var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
-          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
@@ -4065,11 +4089,12 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
+            '#tv-sm-shelf, #tv-sm-shelf *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-sm-shelf .tv-sch-wrap{display:flex;align-items:stretch;}',
             '#tv-sm-shelf .tv-sch-up{flex:1 1 0;min-width:0;padding-right:18px;}',
             '#tv-sm-shelf .tv-sch-up .tv-shl-t{color:#F4C242;}',
             '#tv-sm-shelf .tv-sch-sep{flex:0 0 1px;background:#2a323c;}',
-            '#tv-sm-shelf .tv-sch-past{flex:0 0 54%;box-sizing:border-box;padding-left:20px;}',
+            '#tv-sm-shelf .tv-sch-past{flex:0 0 50%;box-sizing:border-box;padding-left:20px;}',
             '#tv-sm-shelf .tv-sch-tile{display:flex;gap:14px;padding:10px;border:2px solid #2a323c;border-radius:12px;background:#0f1620;margin:0 0 10px 0;}',
             '#tv-sm-shelf .tv-sch-poster{flex:0 0 28%;width:28%;height:auto;align-self:flex-start;border-radius:8px;object-fit:cover;}',
             '#tv-sm-shelf .tv-sch-info{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:5px;}',
@@ -4415,7 +4440,7 @@ class MainActivity : Activity() {
                   '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
                   '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
               } else {
-                w = 1120;
+                w = 1200;
                 h = '<div class="tv-sch-wrap"><div class="tv-sch-up"><div class="tv-shl-t">' + esc(T('UPCOMING SHOWS', '今後の大会')) + '</div>' +
                   schedTileHtml(upList[0]) +
                   (upList.length > 1 ? '<div class="tv-sch-then">' + esc(T('THEN', 'その後')) + '</div>' + upList.slice(1, 5).map(schedRowHtml).join('') : '') +
