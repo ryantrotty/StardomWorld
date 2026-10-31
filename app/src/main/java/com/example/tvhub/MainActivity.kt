@@ -3809,7 +3809,7 @@ class MainActivity : Activity() {
             if (!ms || !ms.length) return '';
             var priv = false;
             try { priv = !!(AndroidHost.showPosters && AndroidHost.showPosters()); } catch (x) {}
-            return '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('MATCH CARD', '対戦カード')) + '</div><div class="tv-ev-mc">' +
+            return '<div class="tv-ev-mc">' +
               ms.map(function(m) {
                 var ja = isJa() && m.sides_ja && m.sides_ja.length === (m.sides || []).length;
                 var list = ja ? m.sides_ja : (m.sides || []);
@@ -4146,8 +4146,8 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
             '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:none;outline:3px solid #F4C242;outline-offset:2px;}',
             '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
-            '#tv-ev .tv-ev-mc{display:grid;grid-template-columns:1fr 1fr;gap:6px;}',
-            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:6px 12px;}',
+            '#tv-ev .tv-ev-mc{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:16px;}',
+            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:5px 12px;}',
             '#tv-ev .tv-ev-mt{font-size:12px;font-weight:700;letter-spacing:1px;color:#F4C242;}',
             '#tv-ev .tv-ev-ms{font-size:15px;font-weight:600;line-height:1.3;}',
             '#tv-ev .tv-ev-vs{color:#9aa6b4;font-weight:400;}',
