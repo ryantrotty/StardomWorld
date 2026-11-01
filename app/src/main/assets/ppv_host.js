@@ -1,3 +1,6 @@
+(function () {
+if (window.__tvPpvAll) return;
+window.__tvPpvAll = 1;
 // Runs only on Stagecrowd pages (PPV shows), instead of the Stardom World scripts.
 // Gives the page a visible D-pad focus ring and room under the app's top bar, and keeps a test report on screen
 // (never fades) so it can be photographed: page, player, video state, DRM and codec support, errors.
@@ -510,4 +513,5 @@
       if (k === 38 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
     }
   }, true);
+})();
 })();

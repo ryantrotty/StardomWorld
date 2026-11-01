@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.22
+
+- Stagecrowd video page: found why the commentary buttons could not be reached. The page script was being loaded twice, so there were two overlapping button rows, and the D-pad code was walking the hidden one. The whole script now runs only once per page.
+
 ## 2.10.21
 
 - Stagecrowd video page: fixed a stray `+ +` in the button styles (introduced in 2.10.20) that dropped all of them, so the row showed as plain pink text. A small yellow line at the bottom left shows the last key pressed and what had focus, to find why the commentary buttons were not reachable.
