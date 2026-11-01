@@ -4039,24 +4039,25 @@ class MainActivity : Activity() {
           }
           function liveRender(a, e, id, bg) {
             var st = liveStateOf(e, id), ms = e._t - Date.now(), mins = Math.max(0, Math.round(Math.abs(ms) / 60000));
-            var chip, tag;
+            var chip, pill;
             if (st === 'soon') {
               chip = '<span style="background:#F4C242; color:#111; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px;">' + esc(T('STARTS IN ', '開始まで') + schedLeft(e)) + '</span>';
-              tag = '<div style="color:#F4C242; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('NEXT LIVE', '次の大会') + ' · ' + T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</div>';
+              pill = T('NEXT LIVE', '次の大会');
             } else if (st === 'starting') {
               chip = '<span style="background:#F4C242; color:#111; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px;">' + esc(T('STARTING', 'まもなく')) + '</span>';
-              tag = '<div style="color:#F4C242; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('STARTING NOW', 'まもなく開始')) + '</div>';
+              pill = T('Stream not up yet', '配信準備中');
             } else {
               chip = '<span style="background:#D62839; color:#fff; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:5px; background:#fff; animation:tvLivePulse 1.4s infinite;"></span>LIVE</span>';
-              tag = '<div style="color:#FF6B78; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(ms > 0 ? T('LIVE NOW · STREAM IS UP', '配信中') : T('LIVE NOW · STARTED ', '配信中 · ') + mins + T(' MIN AGO', '分前開始')) + '</div>';
+              pill = ms > 0 ? T('Stream is up', '配信中') : T('Started ', '') + mins + T(' min ago', '分前に開始');
             }
             var p = posterFor(e);
             var dbg = LIVE_DEBUG ? '<div style="color:#9aa6b4; font-size:11px; margin-top:2px;">state=' + st + ' · card=' + esc(id) + ' · confirmed=' + (liveConfirmed(e, id) ? 'yes' : 'no') + ' · t' + (ms > 0 ? '-' : '+') + mins + 'm</div>' : '';
             a.style.borderColor = st === 'live' ? '#D62839' : '#F4C242';
-            a.innerHTML = '<div style="position:absolute; left:14px; top:14px;">' + chip + '</div>' +
+            a.innerHTML = '<div style="position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:10px;">' + chip +
+              '<span style="background:rgba(10,13,18,0.82); color:#fff; font-size:15px; font-weight:800; padding:6px 12px; border-radius:6px;">' + esc(pill) + '</span></div>' +
               '<div style="position:absolute; left:0; right:0; bottom:0; padding:60px 20px 16px 20px; background:linear-gradient(rgba(10,13,18,0), rgba(10,13,18,0.96) 60%); display:flex; gap:16px; align-items:flex-end; box-sizing:border-box;">' +
               (p ? '<img src="' + p + '" alt="" style="flex:0 0 auto; width:70px; height:98px; object-fit:cover; object-position:top; border-radius:6px; border:1px solid #2a3442; display:block;">' : '') +
-              '<div style="min-width:0; display:flex; flex-direction:column; gap:3px; color:#fff;">' + tag +
+              '<div style="min-width:0; display:flex; flex-direction:column; gap:3px; color:#fff;">' +
               '<div style="font-size:22px; font-weight:bold; line-height:1.2em;">' + esc(e.title) + '</div>' +
               '<div style="font-size:15px; font-weight:800; color:#F4C242;">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + ' <span style="color:#c9d2dc; font-weight:normal;">· ' + esc(e.venue || '') + '</span></div>' + dbg + '</div></div>';
             return st + ':' + (st === 'soon' ? schedLeft(e) : mins);

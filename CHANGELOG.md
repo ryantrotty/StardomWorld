@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.7
+
+- Live card: the status line (Next live / Stream is up / Started 12 min ago) moved from over the artwork to a dark label beside the LIVE chip at the top, so it is always readable.
+
 ## 2.9.6
 
 - Live card: if the stream is already playing a few minutes before the listed start time, the tile says LIVE NOW straight away instead of "Starts in 1M".
