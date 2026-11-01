@@ -2721,7 +2721,11 @@ class MainActivity : Activity() {
             if (!BuildConfig.SHOW_POSTERS) return ""
             return try {
                 val f = java.io.File(this@MainActivity.filesDir, "poster_" + month.filter { it.isLetterOrDigit() || it == '-' || it == '_' } + ".jpg")
-                if (!f.exists()) "" else "data:image/jpeg;base64," + android.util.Base64.encodeToString(f.readBytes(), android.util.Base64.NO_WRAP)
+                val bytes = if (f.exists()) f.readBytes() else try {
+                    // A poster that ships inside the app (PPV shows, whose pages aren't on the schedule site).
+                    this@MainActivity.assets.open("posters/" + month.filter { it.isLetterOrDigit() || it == '-' || it == '_' } + ".jpg").use { it.readBytes() }
+                } catch (_: Exception) { null }
+                if (bytes == null) "" else "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             } catch (_: Exception) { "" }
         }
 
