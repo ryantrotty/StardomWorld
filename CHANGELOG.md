@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.20
+
+- Shows menu: removed the temporary PPV playback-test link from the bottom of the list (the test is still step 1 on the details page).
+- Stagecrowd video page: Full screen, English and 日本語 now sit in one row above the player, centred. Left/Right walk the row, Down goes to the player, Up from the player or its control bar returns to the row. The row takes focus first, and again when leaving full screen. Their logo header is hidden and the player is centred.
+
 ## 2.10.19
 
 - Stagecrowd video page: the English / 日本語 buttons are now created once and kept. Their page re-draws its own controls often, and the old code rebuilt ours each time, which dropped the D-pad focus and made them unreachable. Their theater icon is hidden along with its label.

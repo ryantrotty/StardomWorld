@@ -4924,12 +4924,6 @@ class MainActivity : Activity() {
               var past = '<div class="tv-shl-t">' + esc(T('PAST SHOWS', '過去の大会')) + '</div>' + ppvReplayBox() +
                 '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
                 '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>';
-              try {
-                if (AndroidHost.showPosters && AndroidHost.showPosters()) {
-                  past += '<div class="tv-shl-t" style="margin-top:12px">' + esc(T('PPV TEST (TEMPORARY)', 'PPVテスト（一時）')) + '</div>' +
-                    fiHtml(T('Playback test \u00b7 Stagecrowd', '再生テスト \u00b7 Stagecrowd'), 'https://intl.stagecrowd.live/s/scint/page/live_player_test');
-                }
-              } catch (x) {}
               if (!upList.length) {
                 h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
                   '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +

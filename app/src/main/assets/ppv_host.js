@@ -89,10 +89,13 @@
   var PAGE = /\/(live_player_test|plan_player|live_player)/;
   var css = document.createElement('style');
   css.textContent =
-    '#tv-ppv-rail{position:fixed;right:24px;top:72px;width:280px;z-index:2147483646;display:none;flex-direction:column;gap:12px;font-family:Arial,Helvetica,sans-serif}' +
-    '#tv-ppv-rail .tv-ppv-lb{font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:6px 2px 0}' +
-    '#tv-ppv-rail .tv-ppv-row{display:flex;gap:8px}' +
-    '#tv-ppv-rail .tv-ppv-rb{display:flex;align-items:center;justify-content:center;gap:10px;flex:1 1 0;min-width:0;box-sizing:border-box;padding:13px 16px;border-radius:8px;border:2px solid #2a323c !important;background:#161f2a !important;color:#fff !important;font:700 18px/1.2 Arial,Helvetica,sans-serif !important;text-decoration:none !important;cursor:pointer;outline:none !important;box-shadow:none !important}' +
+    '#tv-ppv-rail{position:fixed;left:50%;transform:translateX(-50%);top:66px;z-index:2147483646;display:none;flex-direction:row;align-items:center;gap:12px;font-family:Arial,Helvetica,sans-serif}' +
+    '#tv-ppv-rail .tv-ppv-lb{display:none;font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:6px 2px 0}' +
+    '#tv-ppv-rail .tv-ppv-comm{display:flex;gap:12px}' +
+    '#tv-ppv-rail .tv-ppv-row{display:flex;gap:12px}' +
+    '.tv-ppv-c{margin-left:auto !important;margin-right:auto !important;justify-content:center !important}' +
+    'header,.Header{display:none !important}' + +
+    '#tv-ppv-rail .tv-ppv-rb{display:flex;align-items:center;justify-content:center;gap:10px;flex:0 0 auto;box-sizing:border-box;min-width:170px;padding:13px 24px;border-radius:8px;border:2px solid #2a323c !important;background:#161f2a !important;color:#fff !important;font:700 18px/1.2 Arial,Helvetica,sans-serif !important;text-decoration:none !important;cursor:pointer;outline:none !important;box-shadow:none !important}' +
     '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main{background:#D62839 !important;border-color:#D62839 !important;font-size:20px !important}' +
     '#tv-ppv-rail .tv-ppv-rb.tv-ppv-on{background:#F4C242 !important;border-color:#F4C242 !important;color:#111 !important}' +
     '#tv-ppv-rail .tv-ppv-rb:focus{border-color:#F4C242 !important;outline:none !important;box-shadow:none !important}' +
@@ -196,6 +199,11 @@
       while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v)) p = p.parentElement;
       if (p && !p.contains(v) && p !== document.body) p.classList.add('tv-ppv-gone');
     }
+    if (v) {
+      var cp = v.closest('.video-js') || v, n = 0;
+      while (cp && cp !== document.body && n++ < 12) { cp.classList.add('tv-ppv-c'); cp = cp.parentElement; }
+      var mn = document.querySelector('main'); if (mn) mn.style.paddingTop = '70px';
+    }
     finds(/^theat(er|re)\s*mode$/i, 30).forEach(hideUp);
     var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
     for (var i = 0; i < tg.length; i++) if (!inRail(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
@@ -221,7 +229,16 @@
     var d = document.getElementById('tv-ppv-dbg');
     if (d && PAGE.test(location.pathname) && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
     if (!shown) { shown = true; try { fsb.focus(); } catch (e) {} }
+    else if (!keyed && Date.now() - t0 < 8000 && !rail.contains(document.activeElement)) { try { fsb.focus(); } catch (e) {} }
   }, 800);
+  var keyed = false, t0 = Date.now();
+  window.addEventListener('keydown', function () { keyed = true; }, true);
+  function back() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    [60, 350, 900].forEach(function (ms) { setTimeout(function () { try { fsb.focus(); } catch (e) {} }, ms); });
+  }
+  document.addEventListener('fullscreenchange', back);
+  document.addEventListener('webkitfullscreenchange', back);
 })();
 
 
@@ -464,9 +481,10 @@
   };
 })();
 
-// Their player's control bar keeps the D-pad inside it. Up from a bar button (or Right from the player) goes to our
-// column; Left from the column goes back to the player. Up and Down walk the column.
+// The three buttons sit in one row above the player. Left/Right walk the row, Down goes to the player. Up from the
+// player or its control bar comes back to the row (to the button last used).
 (function () {
+  var last = null;
   function items() {
     var r = document.getElementById('tv-ppv-rail');
     return r ? Array.prototype.slice.call(r.querySelectorAll('.tv-ppv-rb')) : [];
@@ -478,16 +496,15 @@
     var a = document.activeElement, k = e.keyCode, its = items(), i = its.indexOf(a);
     function eat() { e.preventDefault(); e.stopPropagation(); }
     if (i >= 0) {
-      var row = a.parentElement && a.parentElement.classList.contains('tv-ppv-row') ? its.filter(function (x) { return x.parentElement === a.parentElement; }) : null;
-      if (k === 39 && row && row.indexOf(a) < row.length - 1) { eat(); row[row.indexOf(a) + 1].focus(); }
-      else if (k === 37 && row && row.indexOf(a) > 0) { eat(); row[row.indexOf(a) - 1].focus(); }
-      else if (k === 37) { eat(); player(); }
-      else if (k === 39) { eat(); }
-      else if (k === 40) { eat(); var n = row ? its[its.indexOf(row[row.length - 1]) + 1] : its[i + 1]; if (n) n.focus(); }
-      else if (k === 38) { eat(); var p = row ? its[its.indexOf(row[0]) - 1] : its[i - 1]; if (p) p.focus(); }
-    } else if (its.length) {
-      if (k === 38 && a && a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu')) { eat(); its[0].focus(); }
-      else if (k === 39 && a && (a.classList && a.classList.contains('video-js') || a.tagName === 'VIDEO')) { eat(); its[0].focus(); }
+      last = a;
+      if (k === 39) { eat(); if (its[i + 1]) its[i + 1].focus(); }
+      else if (k === 37) { eat(); if (its[i - 1]) its[i - 1].focus(); }
+      else if (k === 40) { eat(); player(); }
+      else if (k === 38) { eat(); }
+    } else if (its.length && a) {
+      var inBar = a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu');
+      var onPlayer = (a.classList && a.classList.contains('video-js')) || a.tagName === 'VIDEO';
+      if (k === 38 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
     }
   }, true);
 })();
