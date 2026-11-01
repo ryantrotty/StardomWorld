@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.1
+
+- Fixed the left edge being cut off: the video page's carousel was left in the site's own centred layout (huge cards) when a set didn't need reversing, so it is now always laid out like the others; the wide live tile no longer grows on focus, which clipped its left side.
+- Fixed the View All tile in the New row being the wrong size while the live tile is shown.
+
 ## 2.9.0
 
 - Live card: from 60 minutes before a show until 3 hours after it starts, the home page's "Next live" tile and the site's own stream card become one 16:9 tile (stream thumbnail, poster inset, title, time, venue). It shows STARTS IN (before), STARTING, then LIVE (red, pulsing) once the player reports play, or 15 minutes after the start. OK opens the player. Afterwards the normal cards come back.

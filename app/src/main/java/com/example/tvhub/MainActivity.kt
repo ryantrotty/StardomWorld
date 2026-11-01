@@ -1404,16 +1404,17 @@ class MainActivity : Activity() {
             var so = window.__tvSetOrder;
             var flip = so ? so.needsFlip(items.map(function(el) { return el.textContent.replace(/\s+/g, ' ').trim(); })) : true;
             window.__tvSetFlip = flip;
-            if (!flip) return;
 
             var isSlick = $ && $(firstCarousel).hasClass('slick-initialized');
             if (isSlick) {
               try { $(firstCarousel).slick('unslick'); } catch(e) {}
             }
 
-            items.reverse().forEach(function(item) {
-              firstCarousel.appendChild(item);
-            });
+            if (flip) {
+              items.reverse().forEach(function(item) {
+                firstCarousel.appendChild(item);
+              });
+            }
 
             if ($ && typeof $(firstCarousel).slick === 'function') {
               try {
@@ -3995,7 +3996,7 @@ class MainActivity : Activity() {
           var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
           (function() {
             var st = document.createElement('style');
-            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}}';
+            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus{transform:none !important;}';
             (document.head || document.documentElement).appendChild(st);
           })();
           function liveCardMatches(e, txt) {
@@ -4052,10 +4053,21 @@ class MainActivity : Activity() {
               '<div style="font-size:15px; font-weight:800; color:#F4C242;">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + ' <span style="color:#c9d2dc; font-weight:normal;">· ' + esc(e.venue || '') + '</span></div>' + dbg + '</div></div>';
             return st + ':' + (st === 'soon' ? schedLeft(e) : mins);
           }
+          // The row is top-aligned while the big tile is shown, so the View All tile no longer stretches: give it the height of a neighbour.
+          function liveFixViewAll(row, on) {
+            var cards = row.querySelectorAll('a.tv-card'), va = null, ref = null;
+            for (var i = 0; i < cards.length; i++) {
+              var c = cards[i];
+              if (c.id === 'tv-live-card' || c.id === 'tv-next-live') continue;
+              if (/View All|\u3059\u3079\u3066\u898b\u308b/.test(c.textContent || '') && (c.textContent || '').length < 20) va = c;
+              else if (!ref) ref = c;
+            }
+            if (va) va.style.height = (on && ref && ref.offsetHeight) ? ref.offsetHeight + 'px' : '';
+          }
           function liveRevert(a, row) {
             if (a.__card && row) row.insertBefore(a.__card, a.nextSibling);
             if (a.parentNode) a.parentNode.removeChild(a);
-            if (row) row.style.alignItems = '';
+            if (row) { row.style.alignItems = ''; liveFixViewAll(row, false); }
           }
           // Returns true while the combined tile is on screen (the plain next-live tile then stays away).
           function ensureLiveCard() {
@@ -4091,6 +4103,7 @@ class MainActivity : Activity() {
               a.__k = '';
             }
             var k = liveRender(a, up, a.__id, a.__bg);
+            liveFixViewAll(row, true);
             return true;
           }
           function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); }
