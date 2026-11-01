@@ -30,7 +30,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Done green | #2E9E5B | Completed step |
 | Tinted fills | #2A2410, #2A2210, #2A1C10, #1C1740 | Login focus, favorites, PPV tile gradient |
 
-Two accent colours: gold for lines and text, orange for fills. Open decision: four focus looks, aim to reduce.
+Two accent colours: gold for lines and text, orange for fills. Open decision: five focus looks, aim to reduce to three.
 
 Fallback for anything not covered above: a single 3 px #F4C242 outline, 2 px offset, no halo.
 
@@ -62,6 +62,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 | B Fill | Player bar, filters, chips | Fill and border #FFB347, text #1A1A1A |
 | C Ring | Video cards, hero, home tiles | 3 px #F4C242 outline, 2 px offset, glow, 1.03 lift |
 | D Form | Login | Input 6 px gold border; button orange fill, white border, no halo |
+| E Gold frame | Wrestler cards (My Favorites) | Dark frame at rest; whole frame turns solid #F4C242, lifts 1.06, glows |
 
 ## Exceptions (do not "fix" these without deciding)
 
@@ -70,6 +71,9 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - Done green for a completed step badge.
 - PPV tile with poster is half width with a 21 px title.
 - Live and PPV tiles show the gold ring on focus with no lift; the related-videos row has no lift; the hero is never dimmed.
+- Wrestler cards use look E (the old rainbow border hid the gold focus).
+- Shelf Left/Right goes straight across a row first, then falls back to the nearest item.
+- Account menu has an Instructions link that reopens the first-run guide (buttons read Close and Done).
 - Details buttons change border only on focus; the selected state is a gold fill.
 - Login and guide use Roboto and thick borders.
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.
