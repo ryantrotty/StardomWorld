@@ -84,7 +84,7 @@ for path in FILES:
             bd = decl.get("border", decl.get("border-color", "")).replace("!important", "").strip()
             has_shadow = bool(sh) and not sh.startswith("none")
             has_edge = (bool(ol) and not ol.startswith(("none", "0"))) or (bd and not bd.startswith(("none", "0", "transparent")))
-            look_c = "#ffd700" in ol.lower() and "255, 215, 0" in sh.replace("255,215,0", "255, 215, 0")
+            look_c = "#f4c242" in ol.lower() and "244,194,66" in sh.replace(" ", "")
             if has_shadow and has_edge and not look_c:
                 add("focus", "edge plus box-shadow on focus (check for a double highlight)", path, i)
 
