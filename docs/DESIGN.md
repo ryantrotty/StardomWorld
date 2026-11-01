@@ -16,10 +16,8 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| Gold | #F4C242 | Focus borders, dates, selected, headings |
-| Orange | #FFB347 | Button focus fill, progress fill |
-| Bright gold | #FFD700 | Video-card ring and glow |
-| Yellow | #F7D117 | Login and guide only |
+| Gold | #F4C242 | Borders, rings and glows, text (dates, headings, selected) |
+| Orange | #FFB347 | Fills: button focus, progress, guide pill, login button focus |
 | Ink on accent | #1A1A1A, #111 | Text on any gold or orange fill |
 | Black / navy | #000, #0B1118 | Login and splash; details and QR |
 | Menu / panel | #0F151C, #121922 | Menu; shelf and drop-down |
@@ -31,7 +29,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
 | Done green | #2E9E5B | Completed step |
 
-Open decision: four golds and four focus looks. Aim to reduce.
+Two accent colours: gold for lines and text, orange for fills. Open decision: four focus looks, aim to reduce.
 
 Fallback for anything not covered above: a single 3 px #F4C242 outline, 2 px offset, no halo.
 
@@ -61,8 +59,8 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 | --- | --- | --- |
 | A Border | Menus, shelf, drop-down items, details buttons | Border to #F4C242, fill #172029 |
 | B Fill | Player bar, filters, chips | Fill and border #FFB347, text #1A1A1A |
-| C Ring | Video cards, hero, home tiles | 3 px #FFD700 outline, 2 px offset, glow, 1.03 lift |
-| D Form | Login | Input 6 px yellow border; button yellow fill, white border, no halo |
+| C Ring | Video cards, hero, home tiles | 3 px #F4C242 outline, 2 px offset, glow, 1.03 lift |
+| D Form | Login | Input 6 px gold border; button orange fill, white border, no halo |
 
 ## Exceptions (do not "fix" these without deciding)
 
@@ -72,7 +70,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - PPV tile with poster is half width with a 21 px title.
 - Live and PPV tiles show the gold ring on focus with no lift; the related-videos row has no lift; the hero is never dimmed.
 - Details buttons change border only on focus; the selected state is a gold fill.
-- Login and guide use yellow, Roboto, thick borders.
+- Login and guide use Roboto and thick borders.
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.
 - Native overlay and guide use Android sp and the system font.
 - Scrollbars are hidden on the menu, shelf and drop-downs.

@@ -492,9 +492,9 @@ class MainActivity : Activity() {
             border: none !important;
         }
         .content-list-item article:focus-within, .content-list-item .tile-inner:focus-within:not(article *), .content-list-item article:focus, .tv-card:focus {
-            outline: 3px solid #FFD700 !important;
+            outline: 3px solid #F4C242 !important;
             outline-offset: 2px !important;
-            box-shadow: 0 0 16px rgba(255, 215, 0, 0.8) !important;
+            box-shadow: 0 0 16px rgba(244, 194, 66, 0.8) !important;
             transform: scale(1.03) !important;
             opacity: 1 !important;
             position: relative !important;
@@ -539,7 +539,7 @@ class MainActivity : Activity() {
         }
         a.tv-hero-card:focus {
             outline: none !important;
-            box-shadow: 0 0 0 2px #000000, 0 0 0 5px #FFD700, 0 0 16px rgba(255, 215, 0, 0.8) !important;
+            box-shadow: 0 0 0 2px #000000, 0 0 0 5px #F4C242, 0 0 16px rgba(244, 194, 66, 0.8) !important;
         }
         #tv-hero-container::before, #tv-hero-container::after,
         a.tv-hero-card::before, a.tv-hero-card::after {
@@ -731,13 +731,13 @@ class MainActivity : Activity() {
           function debugNote() { }
           function run() {
           try {
-            var gold = '#F7D117';
+            var gold = '#F4C242';
             function f(n) { return (n * U).toFixed(1) + 'px'; }
             if (!document.getElementById('tv-login-style')) {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
                 'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
                 'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
                 '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
@@ -749,7 +749,7 @@ class MainActivity : Activity() {
                 'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(16) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
                 'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2410 !important;border:' + f(6) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
                 'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:transparent !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(60) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
-                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:#FFB347 !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
                 'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
                 'a.tv-keep{display:inline-block !important;margin:' + f(12) + ' ' + f(14) + ' 0 ' + f(14) + ' !important;}' +
                 'p,li,span,div{font-size:' + f(18) + ';}' +
@@ -898,7 +898,7 @@ class MainActivity : Activity() {
               try {
                 var fm = scope();
                 var active = document.activeElement;
-                imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
+                imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
                 imp(document.body, { 'background-color': 'transparent', 'background-image': 'none', 'color': '#fff', 'padding-top': f(14), 'margin': '0' });
                 // boxes around the form: no cards, no frames
                 if (fm && fm !== document) {
@@ -932,8 +932,8 @@ class MainActivity : Activity() {
                   var bf = bs[bi] === active;
                   imp(bs[bi], {
                     'display': 'block', 'width': f(620), 'max-width': '100%', 'height': f(48), 'margin': f(10) + ' auto 0 auto', 'padding': '0', 'font-size': f(18), 'font-weight': 'bold',
-                    'background': bf ? gold : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
-                    'box-shadow': bf ? '0 0 0 ' + f(5) + ' ' + gold : 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
+                    'background': bf ? '#FFB347' : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
+                    'box-shadow': 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
                   });
                 }
                 var jp = document.querySelector('.tv-login-jp');
@@ -992,7 +992,7 @@ class MainActivity : Activity() {
         (function() {
           if (window.__tvCookieWatch) return;
           window.__tvCookieWatch = true;
-          var gold = '#F7D117';
+          var gold = '#F4C242';
           function f(n) { return (n * U).toFixed(1) + 'px'; }
           function vis(e) { if (!e || !e.getBoundingClientRect) return false; var r = e.getBoundingClientRect(); var cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; }
           var ALLOW = /^(allow all|accept all|accept|allow|agree|i agree|ok|すべて許可|すべて同意|同意する|同意)$/i;
@@ -1040,7 +1040,7 @@ class MainActivity : Activity() {
           }
           function btnStyle(b, on) {
             b.style.cssText = 'display:block;min-width:' + f(260) + ';height:' + f(56) + ';padding:0 ' + f(28) + ';font:900 ' + f(20) + ' Roboto,Arial,sans-serif;border-radius:' + f(60) + ';border:' + f(4) + ' solid #fff;outline:none;cursor:pointer;' +
-              (on ? 'background:' + gold + ';color:#111;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ';' : 'background:transparent;color:#fff;box-shadow:none;');
+              (on ? 'background:#FFB347;color:#111;box-shadow:none;' : 'background:transparent;color:#fff;box-shadow:none;');
           }
           var btns = [];
           function paint() { var a = document.activeElement; for (var i = 0; i < btns.length; i++) btnStyle(btns[i].el, btns[i].el === a); }
@@ -5510,7 +5510,7 @@ class MainActivity : Activity() {
 
           // Same values as the main page rows.
           var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
-          var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+          var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#F4C242; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
           var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
 
           function esc(t) {
@@ -6289,7 +6289,7 @@ class MainActivity : Activity() {
     '#tv-rp a, #tv-rp a *{opacity:1 !important;filter:none !important;}',
     '#tv-rp a::before, #tv-rp a::after{content:none !important;display:none !important;}',
     '#tv-rp *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
-    '#tv-rp .tv-rc:focus{outline:3px solid #FFD700 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
+    '#tv-rp .tv-rc:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
     '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
     '#tv-rp .tv-rc-t{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;box-sizing:border-box;}',
     '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
@@ -7790,7 +7790,7 @@ class MainActivity : Activity() {
             html += '<div style="max-width:1440px; margin:0 auto; padding:0 24px; box-sizing:border-box;">';
 
             var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
-            var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+            var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#F4C242; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
             var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
 
             if (allRowsData && allRowsData.length > 0) {
@@ -10204,7 +10204,8 @@ private class OnboardingView(
         Slide("全画面。", "Full screen", "下でバー ・ 左右でスキップ ・ 戻るで終了", "Down for controls. Left/Right skips. Back exits.", 5)
     )
 
-    private val yellow = 0xFFF7D117.toInt()
+    private val yellow = 0xFFFFB347.toInt()   // fills
+    private val gold = 0xFFF4C242.toInt()     // text and strokes
     private val ink = 0xFF111111.toInt()
     private var index = 0
 
@@ -10232,7 +10233,7 @@ private class OnboardingView(
     private val logoH: Int
 
     private inner class BackdropView(c: android.content.Context) : View(c) {
-        private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x21F7D117 }
+        private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x21F4C242 }
         override fun onDraw(canvas: Canvas) {
             val step = 16f * u
             var y = step / 2
@@ -10248,7 +10249,7 @@ private class OnboardingView(
     }
 
     private inner class DotsView(c: android.content.Context) : View(c) {
-        private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = yellow; strokeWidth = 3f * u }
+        private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = gold; strokeWidth = 3f * u }
         private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = yellow }
         override fun onDraw(canvas: Canvas) {
             for (k in slides.indices) {
@@ -10400,7 +10401,7 @@ private class OnboardingView(
             artWeb.visibility = View.GONE
             val logoTop = (screenH - logoH) / 2f
             val jpText = if (langStep) "言語。" else s.jp
-            jpView.setTextColor(yellow)
+            jpView.setTextColor(gold)
             jpView.gravity = Gravity.CENTER
             fit(jpView, jpText, 100f, 1100f)
             place(jpView, 0f, 0f, screenW, wrap)
@@ -10436,7 +10437,7 @@ private class OnboardingView(
             jpView.gravity = Gravity.START
             fit(jpView, s.jp, 74f, 470f)
             place(jpView, 60f, 56f, px(470f), wrap)
-            enView.setTextColor(yellow)
+            enView.setTextColor(gold)
             enView.gravity = Gravity.START
             fit(enView, s.en, 30f, 470f)
             place(enView, 60f, 146f, px(470f), wrap)

@@ -26,7 +26,7 @@ FILES = [ROOT + "/app/src/main/java/com/example/tvhub/MainActivity.kt"] + sorted
 
 # Keep in step with docs/DESIGN.md.
 TOKENS = {
-    "#f4c242", "#ffb347", "#ffd700", "#f7d117",          # golds (to be reduced)
+    "#f4c242", "#ffb347",                                 # gold (borders, text) and orange (fills)
     "#1a1a1a", "#111111", "#111",                         # ink on accent
     "#000000", "#000", "#0b1118", "#0f151c", "#121922", "#161f2a", "#141a22",
     "#172029", "#2a323c", "#3b4656", "#222b36", "#0f1620", "#11171e",

@@ -564,7 +564,7 @@
     '#tv-fp a::before, #tv-fp a::after{content:none !important;display:none !important;}',
     '#tv-fp *:focus, #tv-fp-pop *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
     '.tv-fp-card:focus, .tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
-    '#tv-fp .tv-fp-t:focus{outline:3px solid #FFD700 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
+    '#tv-fp .tv-fp-t:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
     '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;border-radius:5px 5px 0 0;}',
     '.tv-fp-badge{position:absolute;right:8px;top:8px;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,.8);color:#F4C242;font-size:15px;font-weight:800;}',
     '.tv-fp-tt{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;}',

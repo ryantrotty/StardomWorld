@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.7
+
+- Colour: two accents instead of four. Gold #F4C242 for borders, rings, glows and text; orange #FFB347 for fills. The video-card ring and the login and first-run yellow are now gold, and the first-run pill, its pictures and the focused login button are orange. The login button no longer has a halo in its second code path either.
+
 ## 2.11.6
 
 - Focus: one highlight everywhere. The catch-all focus rule is now a single gold outline (it was an orange outline plus a red halo), the login buttons lose their gold halo (fill and white border stay), and the faction cards use a gold border without the soft glow.
