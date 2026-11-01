@@ -107,7 +107,7 @@
   fsb.addEventListener('click', go);
   fsb.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
   setInterval(function () {
-    var has = !!document.querySelector('video');
+    var has = !!document.querySelector('video') && /\/(live_player_test|plan_player|live_player)/.test(location.pathname);
     fsb.style.display = has ? 'block' : 'none';
     var d = document.getElementById('tv-ppv-dbg');
     if (d) {
@@ -158,7 +158,7 @@
   }
   b.addEventListener('click', go);
   b.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
-  setInterval(function () { b.style.display = document.querySelector('video') ? 'block' : 'none'; }, 1000);
+  setInterval(function () { b.style.display = (document.querySelector('video') && /\/(live_player_test|plan_player|live_player)/.test(location.pathname)) ? 'block' : 'none'; }, 1000);
 })();
 
 // Our buttons open their show page with #tv=buy or #tv=watch: press their "Purchase tickets" or "Viewing page" tab
@@ -188,7 +188,7 @@
   function sync() {
     var d = document.getElementById('tv-ppv-dbg');
     if (!d) return;
-    var forms = /\/(login|member|password|form|cart|order|mypage|ec_pay)/.test(location.pathname) || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
+    var forms = !/\/(live_player_test|plan_player|live_player)/.test(location.pathname) || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
     d.style.display = forms ? 'none' : '';
   }
   setInterval(sync, 700);
@@ -237,6 +237,8 @@
     '.CpPageTitle{font-size:30px !important}' +
     '.CpClickableText{text-decoration:underline !important}' +
     '[class*="error"],[class*="err"]{color:#ff8a8a !important}' +
+    '[class*="rror"]:not(.vjs-error-display){position:static !important;display:block !important;margin:4px 0 8px !important;line-height:1.3 !important}' +
+    '.CpFormTableRow__header__label{display:block !important;margin:14px 0 6px !important}' +
     '#onetrust-consent-sdk,#onetrust-banner-sdk,.onetrust-pc-dark-filter,#wovn-translate-widget,[id^="wovn"],[class*="wovn-"],iframe[src*="wovn.io"],iframe[src*="onetrust"]{display:none !important}';
   (document.head || document.documentElement).appendChild(st);
 
@@ -267,13 +269,11 @@
       if (e.tagName === 'A') {
         var h = e.getAttribute('href') || '', tx = (e.textContent || '').trim();
         if (!tx || !/(member\/add|login|password\/reminder)/.test(h)) continue;
-        var kk = h.replace(/[?#].*$/, '');
-        if (seen[kk]) continue;
-        seen[kk] = 1;
       }
       if (e.tagName === 'BUTTON' && !/submit|^$/.test(t) && !(e.textContent || '').trim()) continue;
       if (e.tagName === 'BUTTON' && /^(close|cookies settings|allow all|back button|filter icon|clear|apply|cancel|reject all|confirm my choices)$/i.test((e.textContent || '').trim())) continue;
       if (!vis(e)) continue;
+      if (e.tagName === 'A') { var kk = (e.getAttribute('href') || '').replace(/[?#].*$/, ''); if (seen[kk]) continue; seen[kk] = 1; }
       out.push(e);
     }
     return out;
@@ -346,9 +346,72 @@
       if (/return to the original page/i.test((l[i].textContent || '').trim().replace(/\s+/g, ' '))) {
         clearInterval(iv);
         try { l[i].click(); } catch (e) {}
+        // If pressing it does nothing here, go where it would have gone.
+        setTimeout(function () {
+          if (!/\/login_fin\b/.test(location.pathname)) return;
+          try {
+            var f = l[i].form || document.querySelector('form'), g = function (n) { var x = f && f.querySelector('[name="' + n + '"]'); return x ? x.value : ''; };
+            var u = g('my_prevurl'), dm = g('my_prevdom');
+            if (u) { location.href = /^https?:/.test(u) ? u : ((dm && /^https?:/.test(dm) ? dm : location.origin) + u); }
+            else if (f) f.submit();
+          } catch (e2) {}
+        }, 2500);
         return;
       }
     }
     if (++n > 16) clearInterval(iv);
   }, 400);
+})();
+
+// ---- Player bridge: the app's own full screen buttons (play, skip, mute, speed, captions) talk to the page through
+// these two functions. Stardom World's scripts provide them for Vimeo; here they drive Stagecrowd's video element.
+(function () {
+  function vid() { return document.querySelector('video'); }
+  function tracks(v) { var out = []; try { for (var i = 0; i < v.textTracks.length; i++) { var k = v.textTracks[i]; if (k.kind === 'captions' || k.kind === 'subtitles') out.push(k); } } catch (e) {} return out; }
+  window.__tvPlayerCmd = function (cmd, val) {
+    var v = vid();
+    if (!v) return false;
+    try {
+      if (cmd === 'seek') {
+        var end = isFinite(v.duration) ? v.duration - 1 : (v.seekable && v.seekable.length ? v.seekable.end(v.seekable.length - 1) : v.currentTime + val);
+        v.currentTime = Math.min(Math.max(0, v.currentTime + val), Math.max(0, end));
+      } else if (cmd === 'play') { v.play(); }
+      else if (cmd === 'toggle') { if (v.paused) v.play(); else v.pause(); }
+      else if (cmd === 'mute') { v.muted = !v.muted; }
+      else if (cmd === 'speed') { var r = [0.75, 1, 1.25, 1.5, 2], i = r.indexOf(v.playbackRate); v.playbackRate = r[(i + 1) % r.length]; }
+      else if (cmd === 'ccoff') { tracks(v).forEach(function (k) { k.mode = 'disabled'; }); }
+      else if (cmd === 'ccnative' || cmd === 'captions') {
+        var t = tracks(v), cur = -1;
+        for (var j = 0; j < t.length; j++) if (t[j].mode === 'showing') cur = j;
+        t.forEach(function (k) { k.mode = 'disabled'; });
+        if (cmd === 'ccnative') { if (t[0]) t[0].mode = 'showing'; }
+        else if (cur + 1 < t.length) t[cur + 1].mode = 'showing';
+      }
+    } catch (e) {}
+    return true;
+  };
+  window.__tvRefreshStatus = function () {
+    var v = vid();
+    if (!v) return;
+    var cc = 'Off', t = tracks(v);
+    for (var i = 0; i < t.length; i++) if (t[i].mode === 'showing') cc = t[i].label || t[i].language || 'On';
+    var d = isFinite(v.duration) ? v.duration : (v.seekable && v.seekable.length ? v.seekable.end(v.seekable.length - 1) : 0);
+    window.__tvStatusJson = JSON.stringify({ paused: v.paused, t: v.currentTime || 0, d: d, vol: v.muted ? 0 : v.volume, rate: v.playbackRate, cc: cc, ncc: t.length, q: '', nq: 0 });
+  };
+})();
+
+// Their player's control bar keeps the D-pad inside it. Up from a bar button moves to our Full screen button, and Down
+// from there goes back to the video.
+(function () {
+  window.addEventListener('keydown', function (e) {
+    var a = document.activeElement, fsb = document.getElementById('tv-ppv-fs');
+    if (!a || !fsb || fsb.style.display === 'none') return;
+    if (e.keyCode === 38 && a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu')) {
+      e.preventDefault(); e.stopPropagation(); fsb.focus();
+    } else if (e.keyCode === 40 && a === fsb) {
+      var v = document.querySelector('.video-js,video');
+      if (v) { e.preventDefault(); e.stopPropagation(); try { v.setAttribute('tabindex', '0'); v.focus(); } catch (x) {} }
+    } else if (e.keyCode === 39 && a.id === 'tv-ppv-th') { e.preventDefault(); fsb.focus(); }
+    else if (e.keyCode === 37 && a === fsb) { var th = document.getElementById('tv-ppv-th'); if (th) { e.preventDefault(); th.focus(); } }
+  }, true);
 })();

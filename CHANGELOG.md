@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.13
+
+- Stagecrowd player: the app's own full screen controls (play, skip, mute, speed, captions) now drive their video, and show its time and state. Before, only Exit full screen worked.
+- Their player's control bar no longer traps the D-pad: Up from a bar button moves to our Full screen button, Down goes back to the video.
+- Test report and the Full screen / Exit theater buttons only show on the player and test pages, not on their show page or cart pages.
+- Back from a Stagecrowd page (or from the Buy on your phone code) now returns to the show's details page, not the page underneath. Back on the code closes the code first.
+- Sign-in: the login page's D-pad order now reaches the register button (a hidden duplicate was taking its place), and the error line no longer overlaps the password label. If "Return to the original page" does nothing, the page goes where it would have gone by itself.
+
 ## 2.10.12
 
 - PPV, step 3: Buy opens Stagecrowd's show page on the Purchase tab with the precautions tick box selected, then the cart, card and confirmation pages get the same dark look, gold action button and form-order D-pad focus as sign-in. The test report is hidden on all of them.

@@ -3996,7 +3996,22 @@ class MainActivity : Activity() {
             l.sort(function(a, b) { return b._t - a._t; });
             return l.length ? schedTileHtml(l[0]) : '';
           }
-          function ppvGo(url) { go(url); }
+          // Leaving for Stagecrowd from the details page: remember which show, so Back (which reloads this page)
+          // reopens its details page instead of landing on whatever page was underneath.
+          function ppvGo(url) {
+            try { if (evEl && evId) lsSet('tvPpvReturnV1', JSON.stringify({ id: evId, t: Date.now() })); } catch (x) {}
+            go(url);
+          }
+          function ppvReturn() {
+            try {
+              var r = JSON.parse(lsGet('tvPpvReturnV1') || 'null');
+              if (!r) return;
+              lsSet('tvPpvReturnV1', '');
+              if (Date.now() - r.t > 30 * 60000 || !schedById(r.id) || evEl) return;
+              evOpen(r.id);
+            } catch (x) {}
+          }
+          setTimeout(ppvReturn, 1200);
           function ppvAct(id, act) {
             var e = schedById(id), p = e && e.ppv;
             if (!p) return;
@@ -4849,7 +4864,7 @@ class MainActivity : Activity() {
             }
             return true;
           }
-          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } if (isOpen) { closeMenu(); return true; } if (evEl) { evClose(); return true; } return closeMenu(); };
+          window.__tvMenuClose = function() { if (shelfEl) { closeShelf(true); return true; } if (isOpen) { closeMenu(); return true; } if (evEl) { if (!ppvQrClose()) evClose(); return true; } return closeMenu(); };
           window.__tvOpenMenu = openMenu;
           window.__tvEvOpen = function(id) { evOpen(id); };
           // After a language switch: bring the menu straight back (focus on the language switch) while the page loads behind it.
