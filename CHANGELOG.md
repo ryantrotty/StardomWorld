@@ -2,6 +2,30 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.3
+
+- Video pages: the focus outline on the first card of a related row is no longer cut off on its left. The page's own container clipped it, so the rows now sit a few pixels inside it (heading and cards stay aligned).
+
+## 2.9.2
+
+- Live tile: one gold outline when focused instead of two (the tile's own border is hidden while the focus outline shows).
+- Video pages: cards in the related rows no longer grow on focus, so the first card's left edge isn't clipped by the row.
+
+## 2.9.1
+
+- Fixed the left edge being cut off: the video page's carousel was left in the site's own centred layout (huge cards) when a set didn't need reversing, so it is now always laid out like the others; the wide live tile no longer grows on focus, which clipped its left side.
+- Fixed the View All tile in the New row being the wrong size while the live tile is shown.
+
+## 2.9.0
+
+- Live card: from 60 minutes before a show until 3 hours after it starts, the home page's "Next live" tile and the site's own stream card become one 16:9 tile (stream thumbnail, poster inset, title, time, venue). It shows STARTS IN (before), STARTING, then LIVE (red, pulsing) once the player reports play, or 15 minutes after the start. OK opens the player. Afterwards the normal cards come back.
+- A card counts as the live show only if it is tagged [LIVE] and matches the scheduled show by name or Japan date. If the site's card isn't posted yet, the plain Next live tile stays.
+- Testing aid: a small grey line on the tile shows state, card id, whether the player confirmed, and minutes to/from start.
+
+## 2.8.5
+
+- Sets now play in show order whichever way the site lists them. Nighter-style sets (listed in show order) start at the top match and play down the card; PPV-style sets (main event listed first, opener last, 【ダイゼロタイム】 matches at the bottom) start at the opener and play up. The direction is read from the match titles, not the video IDs, which run either way.
+
 ## 2.8.4
 
 - Community: video titles are left to the page's English translation (they were shown in the site's Japanese), and the translated titles are kept for the Favorites pop-up and the menu's Top 5. The menu's Top 5 shows the site's own wording until the Community page has been opened once.
