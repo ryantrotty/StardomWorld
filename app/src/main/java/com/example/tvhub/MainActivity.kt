@@ -2492,9 +2492,25 @@ class MainActivity : Activity() {
         return try {
             val d = org.json.JSONObject(downloaded).optString("updated", "")
             val b = org.json.JSONObject(bundled).optString("updated", "")
-            if (b > d) bundled else downloaded
+            if (b > d) bundled else withBundledPpv(downloaded, bundled)
         } catch (_: Exception) { bundled }
     }
+
+    // PPV shows (sold and streamed by Stagecrowd) are not on the schedule site the daily job reads, so they live in the
+    // bundled file. The downloaded copy never has them: add the bundled PPV shows it is missing.
+    private fun withBundledPpv(downloaded: String, bundled: String): String = try {
+        val dj = org.json.JSONObject(downloaded)
+        val de = dj.optJSONArray("events") ?: org.json.JSONArray()
+        val have = HashSet<String>()
+        for (i in 0 until de.length()) have.add(de.getJSONObject(i).optString("id"))
+        val be = org.json.JSONObject(bundled).optJSONArray("events") ?: org.json.JSONArray()
+        for (i in 0 until be.length()) {
+            val e = be.getJSONObject(i)
+            if (e.has("ppv") && e.optString("id") !in have) de.put(e)
+        }
+        dj.put("events", de)
+        dj.toString()
+    } catch (_: Exception) { downloaded }
 
     // At most one small download every six hours; the last good copy stays if anything fails.
     private fun refreshScheduleAsync() {

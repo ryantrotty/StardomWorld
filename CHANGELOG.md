@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.2
+
+- PPV: the Crimson Nightmare show was not appearing because the downloaded schedule (which has no PPV shows) replaced the bundled one. PPV shows from the bundled file are now added to the downloaded schedule.
+
 ## 2.10.1
 
 - PPV, step 2: pay-per-view shows (sold and streamed by Stagecrowd) appear in the schedule with a PPV tag and a state taken from the dates alone: not on sale yet, on sale, live, replay, replay ended. The Shows menu shows a PPV card (with Watch replay while the replay is up) as the first box of Past shows, and the show details page gets a four step row: test playback, sign up or sign in, buy, watch. "I've bought it" is a switch you set yourself.
