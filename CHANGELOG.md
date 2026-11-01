@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.13
+
+- Captions: the CC button always looks for captions first, also on a show that was live and is now on demand (it still uses the live-style player address, which 2.9.9 wrongly treated as "still live"). If the video has none, it says "Closed captions not available for this video".
+
 ## 2.9.12
 
 - Live shows: the live player sends no end event when a broadcast stops (confirmed on a real show). While the live show's video page is open, the app now treats 90 seconds with no playback-time updates (and not paused) as the broadcast being over, and clears the LIVE states. If the time starts moving again it undoes that. The 3-hour limit still applies when the page isn't open.
@@ -18,7 +22,7 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 ## 2.9.9
 
-- Captions: on a live stream the CC button now says "Captions aren't available on live streams" (the live player publishes no caption tracks). Replays behave as before.
+- Captions: the CC button explained that live streams have no captions (replaced in 2.9.13 by a check for captions on every video).
 
 ## 2.9.8
 

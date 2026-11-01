@@ -8382,28 +8382,6 @@ class MainActivity : Activity() {
     }
 
     private fun cycleCc() {
-        // A live event embed (vimeo.com/event/...) publishes no caption tracks, so say so instead of failing quietly.
-        webView.evaluateJavascript(
-            "(function(){var f=document.querySelector('iframe[src*=vimeo], iframe[src*=player]');return !!(f && f.src.indexOf('/event/')>=0);})()"
-        ) { live ->
-            if (live == "true") ccLiveNote() else cycleCcNow()
-        }
-    }
-
-    private fun ccLiveNote() {
-        ccMode = 0
-        fsBtnCc?.text = ccLabel()
-        playerCommand("ccoff", 0)
-        handler.removeCallbacks(ccTick)
-        ccTicking = false
-        ccShowMessage(tr("Captions aren't available on live streams", "ライブ配信では字幕を利用できません"))
-        handler.removeCallbacks(ccHideNote)
-        handler.postDelayed(ccHideNote, 6000)
-    }
-
-    private val ccHideNote = Runnable { if (ccMode == 0) ccView?.visibility = View.GONE }
-
-    private fun cycleCcNow() {
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
         fsBtnCc?.text = ccLabel()
         // The player's own captions always go off: ours replace them (and are shown or hidden below).
@@ -8415,6 +8393,34 @@ class MainActivity : Activity() {
         } else {
             ccStart()
         }
+    }
+
+    private val ccHideNote = Runnable { if (ccMode == 0) ccView?.visibility = View.GONE }
+
+    // Asks the player whether it has caption tracks of its own: yes -> show them, no -> say there are none.
+    private fun ccCheckPlayerTracks() {
+        webView.evaluateJavascript("window.__tvCcJson = ''; window.__tvCcRefresh && window.__tvCcRefresh(); 1", null)
+        handler.postDelayed({
+            webView.evaluateJavascript("window.__tvCcJson || ''") { raw ->
+                val str = try { org.json.JSONTokener(raw ?: "").nextValue() as? String ?: "" } catch (_: Exception) { "" }
+                val n = try { org.json.JSONObject(str).optJSONArray("tracks")?.length() ?: 0 } catch (_: Exception) { 0 }
+                if (n > 0) {
+                    ccMode = 3
+                    fsBtnCc?.text = ccLabel()
+                    playerCommand("ccnative", 0)
+                } else {
+                    ccMode = 0
+                    fsBtnCc?.text = ccLabel()
+                    playerCommand("ccoff", 0)
+                    handler.removeCallbacks(ccTick)
+                    ccTicking = false
+                    ccSentences = null
+                    ccShowMessage(tr("Closed captions not available for this video", "この動画には字幕がありません"))
+                    handler.removeCallbacks(ccHideNote)
+                    handler.postDelayed(ccHideNote, 6000)
+                }
+            }
+        }, 1200)
     }
 
     private fun ccEnsureView(): android.widget.TextView {
@@ -8487,11 +8493,9 @@ class MainActivity : Activity() {
                                 ccStartWorker(ua)
                             } else {
                                 ccFailed = true
-                                // Fall back to the player's own captions and show why in the debug panel.
-                                ccMode = 3
-                                fsBtnCc?.text = ccLabel()
-                                playerCommand("ccnative", 0)
+                                // No caption file: use the player's own captions if it has any, otherwise say there are none.
                                 ccView?.visibility = View.GONE
+                                ccCheckPlayerTracks()
                                 if (fsControlsMode) showCcDebug()
                             }
                         }
