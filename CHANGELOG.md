@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.12.0
+
+- My Favorites: "My Faction" is now a row of faction bands with the logo on a white tile. One faction fills the width, two take half each, three to six take a third each (two rows). You can keep up to six favorite factions (Menu button on a faction in the Factions list adds or removes it); an existing single favorite carries over.
+- My Favorites: "My Reminders" now shows paper tickets with a stub. A PPV you have watched on this TV appears first, with the days left and the replay end time in your local time (red in the last 24 hours); then your show reminders. If there is only one, the next show without a reminder fills the second place. OK opens the show's page.
+- The app now remembers which PPV replays have played here (it records a replay that has run for 5 seconds), and keeps the replay address it played for shows that had none.
+
+## 2.11.10
+
+- Stagecrowd video page: it no longer leaves full screen by itself after about 25 seconds. The app's "video never started" watchdog could not read Stagecrowd's player, took a playing show for a stuck one, and closed full screen. It is now skipped on Stagecrowd pages, and on any page that cannot report its play state.
+- Auto full screen is more reliable: if the first try after 8 seconds is refused it tries again (up to three times, 3.5 seconds apart), waits a little longer before sending the OK press, and never toggles full screen back out.
+
 ## 2.11.9
 
 - Favorites: wrestler cards now have a plain dark frame. When focused, the whole frame turns solid gold, lifts slightly and glows, so the selected card is easy to see.

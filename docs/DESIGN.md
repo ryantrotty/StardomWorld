@@ -29,14 +29,15 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
 | Done green | #2E9E5B | Completed step |
 | Tinted fills | #2A2410, #2A2210, #2A1C10, #1C1740 | Login focus, favorites, PPV tile gradient |
+| Paper ticket | #F3E2B8 (paper), #2A1C10 (text), #6B4A26 (small text) | My Favorites reminder tickets |
 
-Two accent colours: gold for lines and text, orange for fills. Open decision: four focus looks, aim to reduce.
+Two accent colours: gold for lines and text, orange for fills. Open decision: five focus looks, aim to reduce to three.
 
 Fallback for anything not covered above: a single 3 px #F4C242 outline, 2 px offset, no halo.
 
 ## Type
 
-Arial for everything the app draws; Roboto on login and in native views. Scale (px): 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 28 30 54. Weight carries hierarchy: 600 items, 700 buttons and titles, 800 to 900 emphasis. Labels are uppercase with 1 px spacing.
+Arial for everything the app draws; Roboto on login and in native views. Scale (px): 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 28 30 40 54. Weight carries hierarchy: 600 items, 700 buttons and titles, 800 to 900 emphasis. Labels are uppercase with 1 px spacing.
 
 | Role | Size / weight |
 | --- | --- |
@@ -49,6 +50,8 @@ Arial for everything the app draws; Roboto on login and in native views. Scale (
 | Button | 15 to 21 / 600 to 700 |
 | Description | 14 to 18 |
 | Label / eyebrow | 11 to 13 / 700 to 800 |
+| Faction band name | 40 / 900 (1 faction), 30 (2), 22 (3 to 6) |
+| Ticket date or days number | 40 / 900 on the stub; title 23 / 800 |
 
 ## Shape
 
@@ -60,8 +63,9 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 | --- | --- | --- |
 | A Border | Menus, shelf, drop-down items, details buttons | Border to #F4C242, fill #172029 |
 | B Fill | Player bar, filters, chips | Fill and border #FFB347, text #1A1A1A |
-| C Ring | Video cards, hero, home tiles | 3 px #F4C242 outline, 2 px offset, glow, 1.03 lift |
+| C Ring | Video cards, hero, home tiles, My Favorites faction bands and reminder tickets | 3 px #F4C242 outline, 2 px offset, glow, 1.03 lift |
 | D Form | Login | Input 6 px gold border; button orange fill, white border, no halo |
+| E Gold frame | Wrestler cards (My Favorites) | Dark frame at rest; whole frame turns solid #F4C242, lifts 1.06, glows |
 
 ## Exceptions (do not "fix" these without deciding)
 
@@ -70,6 +74,10 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - Done green for a completed step badge.
 - PPV tile with poster is half width with a 21 px title.
 - Live and PPV tiles show the gold ring on focus with no lift; the related-videos row has no lift; the hero is never dimmed.
+- Wrestler cards use look E (the old rainbow border hid the gold focus).
+- My Favorites top: "My Faction" shows one to six faction bands on white logo tiles (1 faction full width, 2 half, 3 to 6 a third each, two rows at most; the Open pill is shown for 1 and 2). "My Reminders" shows two paper tickets: a stub (purple PPV days left, red for the last 24 hours or live, gold for a show date) beside cream paper with the time in local time. An owned PPV comes first, then reminders; one ticket is topped up with the next show that has no reminder. A PPV counts as owned once the app has seen its replay play for 5 seconds on this TV.
+- Shelf Left/Right goes straight across a row first, then falls back to the nearest item.
+- Account menu has an Instructions link that reopens the first-run guide (buttons read Close and Done).
 - Details buttons change border only on focus; the selected state is a gold fill.
 - Login and guide use Roboto and thick borders.
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.

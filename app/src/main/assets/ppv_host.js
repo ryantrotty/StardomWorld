@@ -281,19 +281,31 @@ window.__tvPpvAll = 1;
 
   // ---- Full screen after 8 seconds on the replay or live page, once. Browsers only allow it after a key press, so
   // if the direct request is refused the app sends an OK key press while the Full screen button has focus.
-  var vSince = 0, autoDone = false;
+  var vSince = 0, autoTries = 0, autoNext = 0;
   function autoFull() {
-    if (autoDone || !/\/(plan_player|live_player)(?!_test)/.test(location.pathname)) return;
+    if (autoTries >= 3 || !/\/(plan_player|live_player)(?!_test)/.test(location.pathname)) return;
+    if (inFull()) { autoTries = 3; return; }   // in full screen already (or it worked): never toggle it back out
     if (!vSince) { vSince = Date.now(); return; }
-    if (Date.now() - vSince < 8000) return;
-    autoDone = true;
-    if (inFull()) return;
+    if (Date.now() - vSince < 8000 || Date.now() < autoNext) return;
+    autoTries++;
+    autoNext = Date.now() + 3500;   // if this try is refused, try again (up to three times)
     try { btns.full.focus(); } catch (e) {}
     goFull();
     setTimeout(function () {
       if (inFull()) return;
       try { btns.full.focus(); if (window.AndroidHost && AndroidHost.ppvPressOk) AndroidHost.ppvPressOk(); } catch (e) {}
-    }, 700);
+    }, 1200);
+  }
+
+  // The video has really played for a few seconds on the replay or live page: tell the app this show is owned, so
+  // My Favorites can list it. Once per page; the test page does not count.
+  var ownedSent = false;
+  function noteOwned() {
+    if (ownedSent || !/\/(plan_player|live_player)\/\d+/.test(location.pathname)) return;
+    var v = document.querySelector('video');
+    if (!v || v.paused || (v.currentTime || 0) < 5) return;
+    ownedSent = true;
+    try { if (window.AndroidHost && AndroidHost.ppvPlayed) AndroidHost.ppvPlayed(location.origin + location.pathname); } catch (e) {}
   }
 
   var shown = false, keyed = false, t0 = Date.now();
@@ -302,7 +314,7 @@ window.__tvPpvAll = 1;
     var has = !!document.querySelector('video') && PAGE.test(location.pathname) && !document.querySelector('.CpSimpleLayout__main');
     bar.style.display = has ? 'flex' : 'none';
     if (!has) return;
-    syncLang(); hideBits(); layout(); autoFull();
+    syncLang(); hideBits(); layout(); autoFull(); noteOwned();
     var d = document.getElementById('tv-ppv-dbg');
     if (d && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
     if (!shown) { shown = true; refresh(); try { btns.full.focus(); } catch (e) {} }

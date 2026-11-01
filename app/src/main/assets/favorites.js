@@ -4,7 +4,7 @@
   // (the My page address carrying tvfav=1 / later / wrestlers). Nothing here calls the site.
   if (window.__tvFav) return;
   var H = window.AndroidHost || {};
-  var KEY = 'tvFavV1', REM_KEY = 'tvSchedRemV1';
+  var KEY = 'tvFavV1', REM_KEY = 'tvSchedRemV1', MAXF = 6;
   var BASE = 'https://www.stardom-world.com';
   var PLI = 0, MODE = 'home';
   var photoCache = {}, logoCache = {};
@@ -18,7 +18,7 @@
   function toast(m) { try { if (H.logDebug) H.logDebug(m); } catch (e) {} }
   function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
 
-  // ---- store: { w: [{k, n}], f: 'faction id' or '', later: [{id, href, title, bg}] }
+  // ---- store: { w: [{k, n}], fs: ['faction id', ...] (f = the first), later: [{id, href, title, bg}] }
   function load() {
     var d = {};
     try { d = JSON.parse(lsGet(KEY) || '{}') || {}; } catch (e) { d = {}; }
@@ -28,9 +28,10 @@
     if (!Array.isArray(d.s)) d.s = [];
     if (!Array.isArray(d.pl)) d.pl = [];
     if (typeof d.f !== 'string') d.f = '';
+    if (!Array.isArray(d.fs)) d.fs = d.f ? [d.f] : [];   // up to MAXF favorite factions; d.f stays as the first one
     return d;
   }
-  function save(d) { lsSet(KEY, JSON.stringify(d)); }
+  function save(d) { d.f = (d.fs && d.fs[0]) || ''; lsSet(KEY, JSON.stringify(d)); }
 
   // ---- names: search keyword (lower case) -> English name, from the faction list and the past wrestlers
   var nameMap = null, facList = null;
@@ -66,10 +67,11 @@
     return i < 0;
   }
   function setFaction(id) {
-    var d = load(), f = facById(id), n = f ? f.name : id;
-    if (d.f === id) { d.f = ''; save(d); toast(T(n + ' is no longer your favorite faction', n + ' をお気に入りユニットから外しました')); return false; }
-    d.f = id; save(d);
-    toast(T('★ ' + n + ' is now your favorite faction', '★ ' + n + ' をお気に入りユニットにしました'));
+    var d = load(), f = facById(id), n = f ? f.name : id, i = d.fs.indexOf(id);
+    if (i >= 0) { d.fs.splice(i, 1); save(d); toast(T(n + ' removed from My Favorites', n + ' をお気に入りユニットから外しました')); return false; }
+    if (d.fs.length >= MAXF) { toast(T('You can keep up to ' + MAXF + ' factions. Remove one first.', 'ユニットは' + MAXF + 'つまでです。先に1つ外してください')); return false; }
+    d.fs.push(id); save(d);
+    toast(T('\u2605 ' + n + ' added to My Favorites', '\u2605 ' + n + ' をお気に入りユニットに追加しました'));
     return true;
   }
   function pathOf(h) { try { return new URL(h, location.href).pathname; } catch (e) { return String(h); } }
@@ -173,7 +175,7 @@
         var hint = document.createElement('div');
         hint.className = 'tv-shl-hint';
         hint.textContent = key === 'factions'
-          ? T('Menu button on a faction picks it as your one favorite faction (choosing another replaces it).', 'メニューボタン：お気に入りユニットに選択（1つだけ）')
+          ? T('Menu button on a faction adds or removes it from My Favorites (up to ' + MAXF + ').', 'メニューボタン：お気に入りユニットの追加・削除（' + MAXF + 'つまで）')
           : T('Menu button on a wrestler adds or removes a favorite.', 'メニューボタン：お気に入りの追加・削除');
         shelf.appendChild(hint);
       }
@@ -185,7 +187,7 @@
     if (!shelf) return;
     var d = load();
     Array.prototype.forEach.call(shelf.querySelectorAll('[data-favw],[data-favf]'), function(a) {
-      var on = a.hasAttribute('data-favw') ? hasW(d, a.getAttribute('data-favw')) >= 0 : d.f === a.getAttribute('data-favf');
+      var on = a.hasAttribute('data-favw') ? hasW(d, a.getAttribute('data-favw')) >= 0 : d.fs.indexOf(a.getAttribute('data-favf')) >= 0;
       a.classList.toggle('tv-fav-on', !!on);
     });
   }
@@ -395,7 +397,7 @@
       if (t) {
         var fk = t.getAttribute('data-fk'), fv = t.getAttribute('data-fv') || '', d = load(), ix;
         if (fk === 'w') { ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
-        else if (fk === 'f') { if (d.f) { var fo = facById(d.f); d.f = ''; save(d); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
+        else if (fk === 'f') { ix = d.fs.indexOf(fv); if (ix >= 0) { var fo = facById(fv); d.fs.splice(ix, 1); save(d); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
         else if (ARR[fk] || fk === 'pi') { var vi = cardInfo([t]); if (vi) { if (fk === 'pi') vi.fromPl = PLI; popShow(vi); } return true; }
         else if (fk === 'p') { var pi = parseInt(fv, 10); if (d.pl[pi]) popShow({ title: d.pl[pi].name, href: '', id: '', bg: '', card: null }, 'plopts', { kind: 'opts', idx: pi }); return true; }
         else if (fk === 'r') { removeReminder(fv); }
@@ -413,7 +415,7 @@
 
   function posterFor(e) { try { if (H.showPosters && H.showPosters()) return H.posterDataUrl(e.poster || '') || ''; } catch (x) {} return ''; }
   function shelfHtml() {
-    var d = load(), fac = d.f ? facById(d.f) : null, rs = reminders();
+    var d = load(), fac = d.fs.length ? facById(d.fs[0]) : null, rs = reminders();
     function lk(path, cls, inner) { return '<a class="tv-sm-fi ' + cls + '" tabindex="0" data-go="' + esc(path) + '" href="' + esc(BASE + path) + '">' + inner + '</a>'; }
     function row(path, label, right) { return lk(path, 'tv-fv-row', '<span class="tv-fv-l">' + esc(label) + '</span>' + right); }
     function n(v) { return '<span class="tv-fv-n">' + v + '</span>'; }
@@ -421,10 +423,10 @@
     d.w.slice(0, 4).forEach(function(w) { var u = photo(w.k); if (u) av += '<span class="tv-fv-av" style="background-image:url(' + u + ')"></span>'; });
     var facPage = fac && fac.members && fac.members.length ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) : '/mypage?tvfav=1';
     var lg = fac ? logo(fac.id) : '';
-    var facRight = fac ? '<span class="tv-fv-lg">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</span>' : '<span style="color:#9aa6b4;font-size:15px">' + esc(T('none yet', 'なし')) + '</span>';
+    var facRight = fac ? '<span class="tv-fv-lg">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</span>' + (d.fs.length > 1 ? n(d.fs.length) : '') : '<span style="color:#9aa6b4;font-size:15px">' + esc(T('none yet', 'なし')) + '</span>';
     var colA = '<div class="tv-fv-k">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' +
       row('/mypage?tvfav=wrestlers', T('Wrestlers', 'お気に入り選手'), av + n(d.w.length)) +
-      row(facPage, T('My Faction', 'お気に入りユニット'), facRight) +
+      row(facPage, d.fs.length > 1 ? T('My Factions', 'お気に入りユニット') : T('My Faction', 'お気に入りユニット'), facRight) +
       row('/mypage?tvfav=m', T('Matches', '試合'), n(d.m.length)) +
       row('/mypage?tvfav=s', T('Shows', '大会'), n(d.s.length));
     var pls = d.pl.slice(0, 5).map(function(pl, i) { return lk('/mypage?tvfav=pl&pi=' + i, 'tv-fv-pl', '<span>' + esc(pl.name) + '</span><span style="color:#9aa6b4;font-size:14px">' + pl.items.length + '</span>'); }).join('');
@@ -563,7 +565,8 @@
     '#tv-fp a:visited, #tv-fp a:hover{color:#fff !important;}',
     '#tv-fp a::before, #tv-fp a::after{content:none !important;display:none !important;}',
     '#tv-fp *:focus, #tv-fp-pop *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
-    '.tv-fp-stk:focus, .tv-fp-tk:focus{border-color:#F4C242 !important;box-shadow:none !important;}',
+    '#tv-fp .tv-fp-bd:focus, #tv-fp .tv-fp-tk:focus{outline:3px solid #F4C242 !important;outline-offset:3px !important;box-shadow:0 0 18px rgba(244,194,66,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
+    '#tv-fp .tv-fp-bd:focus{background:#172029;}',
     '#tv-fp .tv-fp-card:focus, .tv-fp-card:focus{background:#F4C242;border-color:#F4C242 !important;box-shadow:0 0 18px rgba(244,194,66,.8) !important;transform:scale(1.06) !important;position:relative;z-index:5;}',
     '#tv-fp .tv-fp-t:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
     '.tv-fp-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#172029 center/cover no-repeat;border-radius:5px 5px 0 0;}',
@@ -578,20 +581,52 @@
     '.tv-fp-ph{position:relative;width:100%;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:#fff center top/cover no-repeat;}',
     '.tv-fp-mono{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:54px;font-weight:800;color:#fff;}',
     '.tv-fp-cn{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 7px 8px;background:linear-gradient(0deg,rgba(0,0,0,.88),rgba(0,0,0,0));font-size:16px;font-weight:700;line-height:1.15;}',
-    '.tv-fp-top{display:flex;gap:26px;align-items:center;padding:6px;}',
-    '.tv-fp-two{display:flex;gap:26px;align-items:flex-start;}',
-    '.tv-fp-c1{flex:0 0 190px;}',
-    '.tv-fp-c2{flex:1 1 0;min-width:0;}',
-    '.tv-fp-stk{flex:0 0 150px;height:150px;border-radius:50%;background:#fff;border:5px solid #F4C242;padding:14px;display:flex;align-items:center;justify-content:center;text-align:center;color:#111 !important;font-weight:800;font-size:20px;line-height:1.1;text-decoration:none !important;outline:none !important;transform:rotate(-5deg);box-shadow:0 8px 16px rgba(0,0,0,.6);}',
-    '.tv-fp-stk img{width:100%;height:100%;object-fit:contain;}',
-    '.tv-fp-stk-e{flex:0 0 150px;height:150px;border-radius:50%;border:3px dashed #2a323c;display:flex;align-items:center;justify-content:center;text-align:center;color:#9aa6b4;font-size:14px;padding:16px;outline:none !important;}',
-    '.tv-fp-stk-e:focus{border-color:#F4C242;}',
     '.tv-fp-more{flex:0 0 auto;font-size:18px;font-weight:800;color:#F4C242;white-space:nowrap;}',
-    '.tv-fp-tks{flex:1 1 0;min-width:0;display:flex;gap:22px;}',
-    '.tv-fp-tk{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:14px 22px;border-radius:10px;background:#f3e2b8;color:#2a1c10 !important;text-decoration:none !important;border:3px solid transparent;outline:none !important;cursor:pointer;min-height:98px;}',
-    '.tv-fp-tk .a{font-size:13px;font-weight:800;color:#7a5a36;letter-spacing:.5px;}',
-    '.tv-fp-tk .b{font-size:23px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-    '.tv-fp-tk .c{font-size:14px;color:#7a5a36;}',
+    '.tv-fp-sec{padding:6px 10px 12px 10px;}',
+    '.tv-fp-bands{display:grid;gap:16px 20px;}',
+    '.tv-fp-bands.n1{grid-template-columns:1fr;}',
+    '.tv-fp-bands.n2{grid-template-columns:1fr 1fr;}',
+    '.tv-fp-bands.n3{grid-template-columns:1fr 1fr 1fr;}',
+    '.tv-fp-bd{display:flex;align-items:center;min-width:0;border-radius:14px;background:#121922;border:3px solid #2A323C;color:#fff !important;text-decoration:none !important;outline:none !important;cursor:pointer;}',
+    '.tv-fp-bd .tl{flex:none;padding:12px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:#111;font-weight:900;text-align:center;line-height:1.1;overflow:hidden;}',
+    '.tv-fp-bd .tl img{max-width:100%;max-height:100%;object-fit:contain;}',
+    '.tv-fp-bd .tx{min-width:0;}',
+    '.tv-fp-bd .nm{font-weight:900;line-height:1.1;}',
+    '.tv-fp-bd .mm{color:#C9D2DC;}',
+    '.tv-fp-bd .go{margin-left:auto;background:#FFB347;color:#1A1A1A;font-weight:700;font-size:16px;padding:9px 16px;border-radius:10px;white-space:nowrap;}',
+    '.tv-fp-bd.l{height:170px;gap:26px;padding:10px 24px 10px 10px;}',
+    '.tv-fp-bd.l .tl{width:280px;height:146px;font-size:26px;}',
+    '.tv-fp-bd.l .nm{font-size:40px;}',
+    '.tv-fp-bd.l .mm{font-size:16px;margin-top:6px;}',
+    '.tv-fp-bd.m{height:150px;gap:22px;padding:10px 20px 10px 10px;}',
+    '.tv-fp-bd.m .tl{width:230px;height:126px;font-size:22px;}',
+    '.tv-fp-bd.m .nm{font-size:30px;}',
+    '.tv-fp-bd.m .mm{font-size:15px;margin-top:6px;}',
+    '.tv-fp-bd.s{height:140px;gap:16px;padding:10px 14px 10px 10px;}',
+    '.tv-fp-bd.s .tl{width:170px;height:116px;padding:10px;font-size:18px;}',
+    '.tv-fp-bd.s .nm{font-size:22px;}',
+    '.tv-fp-bd.s .mm{font-size:14px;margin-top:5px;}',
+    '.tv-fp-bd.s .go{display:none;}',
+    '.tv-fp-bd-e{display:flex;align-items:center;min-height:90px;padding:0 22px;border-radius:14px;border:3px dashed #2a323c;color:#9aa6b4;font-size:17px;line-height:1.4;outline:none !important;}',
+    '.tv-fp-bd-e:focus{border-color:#F4C242;}',
+    '.tv-fp-tks{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px;padding:6px 10px 18px 10px;}',
+    '.tv-fp-tk{position:relative;display:flex;align-items:stretch;overflow:hidden;min-width:0;min-height:112px;border-radius:12px;background:#F3E2B8;color:#2A1C10 !important;text-decoration:none !important;border:0;outline:none !important;cursor:pointer;}',
+    '.tv-fp-tk .nt{position:absolute;left:112px;width:22px;height:22px;border-radius:50%;background:#0B1118;}',
+    '.tv-fp-tk .nt1{top:-11px;}',
+    '.tv-fp-tk .nt2{bottom:-11px;}',
+    '.tv-fp-tk .dv{position:absolute;left:123px;top:14px;bottom:14px;border-left:2px dashed rgba(42,28,16,.4);}',
+    '.tv-fp-tk .stub{width:124px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px;}',
+    '.tv-fp-tk .stub.ppv{background:#7B5CFF;color:#fff;}',
+    '.tv-fp-tk .stub.gld{background:#F4C242;color:#1A1A1A;}',
+    '.tv-fp-tk .stub.red{background:#D62839;color:#fff;}',
+    '.tv-fp-tk .big{font-size:40px;font-weight:900;line-height:1;}',
+    '.tv-fp-tk .sm{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}',
+    '.tv-fp-tk .body{flex:1 1 0;min-width:0;padding:14px 22px;display:flex;flex-direction:column;justify-content:center;gap:4px;}',
+    '.tv-fp-tk .a{font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#6B4A26;}',
+    '.tv-fp-tk .b{font-size:23px;font-weight:800;line-height:1.15;}',
+    '.tv-fp-tk .c{display:flex;align-items:center;gap:6px;font-size:14px;color:#6B4A26;}',
+    '.tv-fp-tk .go{align-self:center;margin-right:18px;background:#FFB347;color:#1A1A1A;font-weight:700;font-size:15px;padding:9px 14px;border-radius:10px;white-space:nowrap;display:none;}',
+    '#tv-fp .tv-fp-tk:focus .go{display:block;}',
     '#tv-fp-hint{margin-left:auto;font-size:16px;font-weight:600;color:#9aa6b4;text-align:right;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
@@ -625,24 +660,90 @@
   function emptyHtml(msg) { return '<div class="tv-fp-empty" tabindex="0" data-fk="e">' + esc(msg) + '</div>'; }
   function head(label, n) { return '<div class="tv-fp-h">' + esc(label) + (n !== '' ? '<span>' + n + '</span>' : '') + '</div>'; }
 
-  function topRow(d) {
-    var fac = d.f ? facById(d.f) : null, hf = '';
-    if (fac) {
-      var lg = logo(fac.id);
-      var page = (fac.members && fac.members.length) ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) : '/';
-      hf = '<a class="tv-fp-stk" tabindex="0" data-fk="f" data-fv="' + esc(fac.id) + '" href="' + esc(absUrl(page)) + '">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</a>';
-    } else {
-      hf = '<div class="tv-fp-stk-e" tabindex="0" data-fk="e">' + esc(T('Pick your faction in the menu: Factions, then the Menu button', 'メニューのユニットで選んでください')) + '</div>';
-    }
-    var all = reminders(), rs = all.slice(0, 2), ht = '<div class="tv-fp-tks">';
-    if (rs.length) {
-      rs.forEach(function(r) {
-        ht += '<a class="tv-fp-tk" tabindex="0" data-fk="r" data-fv="' + esc(r.e.id) + '" href="#"><div class="a">' + esc(fmtWhen(r.e._t)) + '</div><div class="b">' + esc(r.e.short || r.e.title) + '</div><div class="c">\ud83d\udd14 ' + esc(offText(r.off)) + '</div></a>';
+  // ---- the top of the page: My Faction (one to six bands) and My Reminders (paper tickets)
+  var SVG_BELL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B4A26" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15z"/><path d="M10 21h4"/>';
+  var SVG_BELL_ON = SVG_BELL + '</svg>', SVG_BELL_OFF = SVG_BELL + '<path d="M4 4l16 16"/></svg>';
+  var SVG_OWNED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+  function dateBits(ms) {
+    var loc = isJa() ? 'ja-JP' : undefined, o = { m: '', w: '', d: new Date(ms).getDate() };
+    try { o.m = new Date(ms).toLocaleDateString(loc, { month: 'short' }); o.w = new Date(ms).toLocaleDateString(loc, { weekday: 'short' }); } catch (e) {}
+    return o;
+  }
+  function ppvEnd(e) { var t = Date.parse((e.ppv && e.ppv.replay_end) || ''); return isNaN(t) ? e._t + 14 * 86400000 : t; }
+  // PPV shows this TV has really played (the app records it), still inside their replay window, soonest ending first
+  function ownedPpvs() {
+    var o = {}, now = Date.now(), out = [];
+    try { if (H.ppvOwnedJson) o = JSON.parse(H.ppvOwnedJson() || '{}') || {}; } catch (e) {}
+    events().forEach(function(e) { if (e.ppv && o[e.id] && now < ppvEnd(e)) out.push({ e: e, end: ppvEnd(e) }); });
+    out.sort(function(a, b) { return a.end - b.end; });
+    return out;
+  }
+  function ticketItems() {
+    var now = Date.now(), items = [], seen = {};
+    ownedPpvs().forEach(function(x) {
+      var left = x.end - now, last = left < 86400000;
+      seen[x.e.id] = 1;
+      items.push({
+        fk: 'o', fv: x.e.id, cls: last ? 'red' : 'ppv',
+        stub: last ? '<div class="big">' + Math.max(1, Math.ceil(left / 3600000)) + 'h</div><div class="sm">' + esc(T('left', '残り')) + '</div>'
+          : '<div class="big">' + Math.ceil(left / 86400000) + '</div><div class="sm">' + esc(T('days left', '日')) + '</div>',
+        a: (last ? T('Last day · ends ', '最終日 · ') : T('On demand · until ', 'オンデマンド · ')) + fmtWhen(x.end),
+        b: x.e.short || x.e.title, c: SVG_OWNED + esc(T('Owned · press OK to watch', '購入済み · OKで視聴')), go: T('Open', '開く')
       });
-    } else ht += emptyHtml(T('No reminders yet. Open a show under Shows and choose Remind me.', 'リマインダーはまだありません'));
-    ht += '</div>' + (all.length > 2 ? '<div class="tv-fp-more">+' + (all.length - 2) + T(' more', '件') + '</div>' : '');
-    return '<div class="tv-fp-two"><div class="tv-fp-c1">' + head(T('MY FACTION', 'お気に入りユニット'), '') + '<div class="tv-fp-top">' + hf + '</div></div>' +
-      '<div class="tv-fp-c2">' + head(T('MY REMINDERS', 'マイリマインダー'), all.length || '') + '<div class="tv-fp-top">' + ht + '</div></div></div>';
+    });
+    reminders().forEach(function(r) {
+      if (seen[r.e.id]) return;
+      seen[r.e.id] = 1;
+      var live = r.e._t <= now, b = dateBits(r.e._t);
+      items.push({
+        fk: 'r', fv: r.e.id, cls: live ? 'red' : 'gld',
+        stub: live ? '<div class="big" style="font-size:30px">LIVE</div><div class="sm">' + esc(T('now', '配信中')) + '</div>'
+          : '<div class="sm">' + esc(b.m) + '</div><div class="big">' + b.d + '</div><div class="sm">' + esc(b.w) + '</div>',
+        a: live ? T('On now', '配信中') : fmtWhen(r.e._t),
+        b: r.e.short || r.e.title, c: SVG_BELL_ON + esc(T('Reminder set · ', '通知 · ') + offText(r.off)), go: T('Details', '詳細')
+      });
+    });
+    var total = items.length;
+    if (total < 2) {
+      // fill the second place with the next show that has no reminder yet
+      var nx = events().filter(function(e) { return e._t > now && !seen[e.id]; }).sort(function(a, b) { return a._t - b._t; })[0];
+      if (nx) {
+        var nb = dateBits(nx._t);
+        items.push({
+          fk: 'n', fv: nx.id, cls: 'gld',
+          stub: '<div class="sm">' + esc(nb.m) + '</div><div class="big">' + nb.d + '</div><div class="sm">' + esc(nb.w) + '</div>',
+          a: fmtWhen(nx._t), b: nx.short || nx.title, c: SVG_BELL_OFF + esc(T('No reminder · press OK to add', '通知なし · OKで追加')), go: T('Details', '詳細')
+        });
+      }
+    }
+    return { list: items, total: total };
+  }
+  function tkHtml(o) {
+    return '<a class="tv-fp-tk" tabindex="0" data-fk="' + o.fk + '" data-fv="' + esc(o.fv) + '" href="#"><i class="nt nt1"></i><i class="nt nt2"></i><i class="dv"></i>' +
+      '<div class="stub ' + o.cls + '">' + o.stub + '</div><div class="body"><div class="a">' + esc(o.a) + '</div><div class="b">' + esc(o.b) + '</div><div class="c">' + o.c + '</div></div>' +
+      '<span class="go">' + esc(o.go) + '</span></a>';
+  }
+  function bandHtml(f, cls) {
+    var lg = logo(f.id), cnt = (f.members || []).length;
+    var page = cnt ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) : '/';
+    return '<a class="tv-fp-bd ' + cls + '" tabindex="0" data-fk="f" data-fv="' + esc(f.id) + '" href="' + esc(absUrl(page)) + '">' +
+      '<div class="tl">' + (lg ? '<img src="' + lg + '" alt="">' : esc(f.name)) + '</div>' +
+      '<div class="tx"><div class="nm">' + esc(f.name) + '</div><div class="mm">' + cnt + T(' members', '人') + (cls === 'l' ? T(' · OK opens their videos', ' · OKで動画を開く') : '') + '</div></div>' +
+      '<span class="go">' + esc(T('Open', '開く')) + '</span></a>';
+  }
+  function topRow(d) {
+    var facs = d.fs.map(facById).filter(function(f) { return !!f; }), n = facs.length, hf;
+    if (n) {
+      var cls = n === 1 ? 'l' : (n === 2 ? 'm' : 's');
+      hf = '<div class="tv-fp-bands n' + Math.min(n, 3) + '">' + facs.map(function(f) { return bandHtml(f, cls); }).join('') + '</div>';
+    } else {
+      hf = '<div class="tv-fp-bd-e" tabindex="0" data-fk="e">' + esc(T('Pick your factions in the menu: Factions, then the Menu button', 'メニューのユニットで選んでください')) + '</div>';
+    }
+    var tk = ticketItems(), ht;
+    if (tk.list.length) ht = '<div class="tv-fp-tks">' + tk.list.slice(0, 2).map(tkHtml).join('') + '</div>' + (tk.total > 2 ? '<div class="tv-fp-more" style="padding:4px 12px">+' + (tk.total - 2) + T(' more', '件') + '</div>' : '');
+    else ht = emptyHtml(T('No reminders yet. Open a show under Shows and choose Remind me.', 'リマインダーはまだありません'));
+    return head(n > 1 ? T('MY FACTIONS', 'お気に入りユニット') : T('MY FACTION', 'お気に入りユニット'), n > 1 ? n : '') + '<div class="tv-fp-sec">' + hf + '</div>' +
+      head(T('MY REMINDERS', 'マイリマインダー'), tk.total || '') + ht;
   }
 
   function render(keep) {
@@ -762,13 +863,13 @@
     else if (k === 39) { stop(); move('right'); }
     else if (k === 38) { stop(); if (!move('up')) { var sc = root.querySelector('#tv-fp-scroll'); if (sc) sc.scrollTop = 0; } }
     else if (k === 40) { stop(); move('down'); }
-    else if ((k === 13 || k === 23 || k === 32) && ae.getAttribute('data-fk') === 'r') {
+    else if ((k === 13 || k === 23 || k === 32) && /^(r|o|n)$/.test(ae.getAttribute('data-fk'))) {
       stop();
       if (window.__tvEvOpen) window.__tvEvOpen(ae.getAttribute('data-fv'));
     } else if ((k === 13 || k === 23 || k === 32) && (ae.getAttribute('data-fk') === 'e')) { stop(); }
   }, true);
   root.addEventListener('click', function(e) {
-    var t = e.target && e.target.closest ? e.target.closest('[data-fk="r"]') : null;
+    var t = e.target && e.target.closest ? e.target.closest('[data-fk="r"],[data-fk="o"],[data-fk="n"]') : null;
     if (t) { e.preventDefault(); if (window.__tvEvOpen) window.__tvEvOpen(t.getAttribute('data-fv')); }
   }, true);
   document.addEventListener('focusin', function() { if (document.getElementById('tv-fp')) hint(); }, true);
