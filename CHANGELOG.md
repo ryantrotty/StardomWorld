@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.6
+
+- Stagecrowd pages: the gold focus ring is now drawn on the visible button, link or checkbox label that holds the focus, also where their own styling hid it.
+
 ## 2.10.5
 
 - Stagecrowd sign-in and registration pages: the on-screen test report is hidden there so it no longer covers the form and cookie banner.

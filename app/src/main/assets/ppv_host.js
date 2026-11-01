@@ -7,7 +7,8 @@
 
   var st = document.createElement('style');
   st.textContent = 'body{padding-top:52px !important}' +
-    'a:focus,button:focus,input:focus,select:focus,textarea:focus,[tabindex]:focus,video:focus{outline:4px solid #F4C242 !important;outline-offset:2px !important}';
+    'a:focus,button:focus,input:focus,select:focus,textarea:focus,[tabindex]:focus,video:focus,' +
+    'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tv-ppv-f{outline:4px solid #F4C242 !important;outline-offset:2px !important;box-shadow:none !important}';
   (document.head || document.documentElement).appendChild(st);
 
   var errs = [];
@@ -190,4 +191,27 @@
     d.style.display = forms ? 'none' : '';
   }
   setInterval(sync, 700);
+})();
+
+// Their buttons and checkboxes are styled (and sometimes hidden behind a label), so the browser's own focus ring is
+// not always drawn on the thing you see. Mark the visible element that holds the focus with the same single gold ring.
+(function () {
+  var cur = null;
+  function visible(e) { var r = e.getBoundingClientRect(); return r.width > 4 && r.height > 4; }
+  function mark() {
+    var a = document.activeElement, t = null;
+    if (a && a !== document.body && a !== document.documentElement) {
+      t = a;
+      if (!visible(t) || (a.tagName === 'INPUT' && /^(checkbox|radio)$/.test(a.type))) {
+        var l = (a.id && document.querySelector('label[for="' + a.id + '"]')) || (a.closest && a.closest('label')) || a.parentElement;
+        if (l && visible(l)) t = l;
+      }
+    }
+    if (cur && cur !== t) cur.classList.remove('tv-ppv-f');
+    if (t) t.classList.add('tv-ppv-f');
+    cur = t;
+  }
+  document.addEventListener('focusin', mark, true);
+  document.addEventListener('focusout', function () { setTimeout(mark, 0); }, true);
+  document.addEventListener('keyup', mark, true);
 })();
