@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.5
+
+- Stagecrowd sign-in and registration pages: the on-screen test report is hidden there so it no longer covers the form and cookie banner.
+
 ## 2.10.4
 
 - PPV steps go to the right place on Stagecrowd: Sign in opens their login page (which links to registration, and returns to the show page); Buy opens the show page on its "Purchase tickets" tab; Watch opens it on the "Viewing page" tab.

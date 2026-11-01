@@ -179,3 +179,15 @@
     if (tries > 20) clearInterval(iv);
   }, 500);
 })();
+
+// The test report is only useful on the test and viewing pages. On sign-in and registration it just covers the form
+// and the cookie banner, so it stays out of the way there.
+(function () {
+  function sync() {
+    var d = document.getElementById('tv-ppv-dbg');
+    if (!d) return;
+    var forms = /\/(login|member|password|form)\b/.test(location.pathname);
+    d.style.display = forms ? 'none' : '';
+  }
+  setInterval(sync, 700);
+})();
