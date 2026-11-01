@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.0
+
+- Stagecrowd video page now uses the same control bar as the app's other video pages, under the picture: time, progress, play, skip back / forward (Up / Down on them picks the skip size), mute, speed, language and full screen. Their own control bar is hidden and nothing else on the page can take focus, so the D-pad cannot wander into their controls. Full screen has focus first, the 8 second auto full screen is kept, and leaving full screen puts focus back on it. The three buttons above the player are gone.
+- The language button (English / 日本語) stands in for the captions button, in this bar and in the full screen overlay on these pages, since their player has no captions to offer. The full screen overlay itself is unchanged and still shows in full screen.
+- The picture is about two thirds of the screen width, centred, as large as fits above the bar, like the app's other video pages.
+
 ## 2.10.25
 
 - Stagecrowd video page: Full screen, English and 日本語 are back above the player (Down goes to the player, Up from the player or its control bar returns to them). Still 30% smaller, and auto full screen is unchanged.

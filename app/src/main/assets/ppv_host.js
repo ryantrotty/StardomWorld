@@ -85,37 +85,52 @@ window.__tvPpvAll = 1;
   setInterval(render, 2000);
 })();
 
-// Video page: one column of our own buttons down the right (Full screen first, then the commentary choice),
-// styled like the app's own buttons. Their right-hand column (info tabs, ads), the theater toggle, the light/dark
-// switch and the clickable logo are hidden, so the D-pad only ever lands on the player or on this column.
+// Video page: the same control bar as the app's other video pages, under the picture: time, progress and buttons
+// (play, skip back/forward, mute, speed, language, full screen), built from the app's own labels and actions
+// (AndroidHost.barIds / barLabels / barAction). Their own control bar, right-hand column, theater toggle, light/dark
+// switch and clickable logo are hidden, and nothing else on the page can take focus, so the D-pad only ever lands here.
 (function () {
   var PAGE = /\/(live_player_test|plan_player|live_player)/;
+  var ACCENT = '#FFB347', DARK = '#1A1A1A', TOP = 64, BARH = 64;
   var css = document.createElement('style');
   css.textContent =
-    '#tv-ppv-rail{position:fixed;left:50%;transform:translateX(-50%);top:66px;z-index:2147483646;display:none;flex-direction:row;align-items:center;gap:8px;font-family:Arial,Helvetica,sans-serif}' +
-    '#tv-ppv-rail .tv-ppv-lb{display:none;font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:6px 2px 0}' +
-    '#tv-ppv-rail .tv-ppv-comm{display:flex;gap:8px}' +
-    '#tv-ppv-rail .tv-ppv-row{display:flex;gap:8px}' +
-    '.tv-ppv-c{margin-left:auto !important;margin-right:auto !important;justify-content:center !important}' +
+    '#tv-ppv-bar{position:fixed;display:none;align-items:center;gap:14px;box-sizing:border-box;height:' + BARH + 'px;padding:0 14px;background:rgba(0,0,0,0.8);border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;z-index:2147483646}' +
+    '#tv-ppv-bar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap}' +
+    '#tv-ppv-bar .tv-pb-track{flex:1 1 0;min-width:40px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden}' +
+    '#tv-ppv-bar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + '}' +
+    '#tv-ppv-bar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center}' +
+    '#tv-ppv-bar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,0.4) !important;border:2px solid rgba(255,255,255,0.53) !important;color:#ffffff !important;font:700 15px Arial,Helvetica,sans-serif !important;white-space:nowrap;cursor:pointer;outline:none !important;box-shadow:none !important}' +
+    '#tv-ppv-bar button.tv-pbtn:focus{background:' + ACCENT + ' !important;border-color:' + ACCENT + ' !important;color:' + DARK + ' !important;outline:none !important}' +
+    '#tv-pskip{position:fixed;z-index:2147483647;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc}' +
+    '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center}' +
+    '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + '}' +
+    '.vjs-control-bar,.vjs-big-play-button,.vjs-loading-spinner{display:none !important}' +
     'header,.Header{display:none !important}' +
-    '#tv-ppv-rail .tv-ppv-rb{display:flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;box-sizing:border-box;min-width:120px;padding:9px 16px;border-radius:6px;border:2px solid #2a323c !important;background:#161f2a !important;color:#fff !important;font:700 13px/1.2 Arial,Helvetica,sans-serif !important;text-decoration:none !important;cursor:pointer;outline:none !important;box-shadow:none !important}' +
-    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main{background:#D62839 !important;border-color:#D62839 !important;font-size:14px !important}' +
-    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-on{background:#F4C242 !important;border-color:#F4C242 !important;color:#111 !important}' +
-    '#tv-ppv-rail .tv-ppv-rb:focus{border-color:#F4C242 !important;outline:none !important;box-shadow:none !important}' +
-    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main:focus{background:#E8374A !important}' +
-    '#tv-ppv-rail .tv-ppv-rb:not(.tv-ppv-main):not(.tv-ppv-on):focus{background:#172029 !important}' +
     '.tv-ppv-gone{display:none !important}';
   (document.head || document.documentElement).appendChild(css);
 
-  var rail = document.createElement('div');
-  rail.id = 'tv-ppv-rail';
-  document.documentElement.appendChild(rail);
+  var ids = [];
+  try { ids = JSON.parse(window.AndroidHost.barIds()); } catch (e) {}
+  // The player's quality list is not reachable here, and the language choice stands in for the captions button.
+  ids = ids.filter(function (i) { return i !== 'quality'; });
+  if (ids.indexOf('speed') >= 0) ids.splice(ids.indexOf('speed') + 1, 0, 'cc'); else ids.splice(ids.length - 1, 0, 'cc');
+  if (ids.indexOf('full') < 0) ids.push('full');
 
-  var fsb = document.createElement('a');
-  fsb.id = 'tv-ppv-fs'; fsb.className = 'tv-ppv-rb tv-ppv-main'; fsb.tabIndex = 0;
-  fsb.textContent = '⛶  Full screen';
-  rail.appendChild(fsb);
+  var bar = document.createElement('div');
+  bar.id = 'tv-ppv-bar';
+  var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
+  ids.forEach(function (id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
+  bar.innerHTML = html + '</span>';
+  document.documentElement.appendChild(bar);
+  var timeEl = bar.querySelector('.tv-pb-time'), fillEl = bar.querySelector('.tv-pb-fill'), btns = {}, lastId = 'full';
+  Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function (b) {
+    btns[b.getAttribute('data-id')] = b;
+    b.addEventListener('focus', function () { lastId = b.getAttribute('data-id'); });
+    b.addEventListener('click', function (e) { e.preventDefault(); act(b.getAttribute('data-id')); });
+  });
 
+  function inBar(e) { return bar.contains(e) || e.id === 'tv-ppv-dbg'; }
+  function inFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function target() {
     var v = document.querySelector('video');
     if (!v) return null;
@@ -125,34 +140,27 @@ window.__tvPpvAll = 1;
     var t = target();
     if (!t) return;
     var f = t.requestFullscreen || t.webkitRequestFullscreen;
-    try { if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else if (f) f.call(t); } catch (e) {}
+    try { if (inFull()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else if (f) f.call(t); } catch (e) {}
   }
-  function press(el, fn) {
-    el.addEventListener('click', fn);
-    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); fn(); } });
-  }
-  press(fsb, goFull);
-
   function fire(e) {
     try { e.click(); } catch (x) {}
     try { e.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch (x) {}
   }
-  function inRail(e) { return rail.contains(e) || e.id === 'tv-ppv-dbg'; }
   function txt(e) { return (e.textContent || '').trim(); }
-  // innermost visible-or-not element whose own short text matches
+  // innermost element whose own short text matches
   function finds(re, max) {
     var els = document.querySelectorAll('button,a,[role=button],[role=tab],label,li,div,span,p'), hits = [];
     for (var i = 0; i < els.length; i++) {
-      var e = els[i], t = txt(e);
-      if (inRail(e) || !t || t.length > max || !re.test(t)) continue;
+      var e = els[i], s = txt(e);
+      if (inBar(e) || !s || s.length > max || !re.test(s)) continue;
       hits.push(e);
     }
     return hits.filter(function (e) { return !hits.some(function (o) { return o !== e && e.contains(o); }); });
   }
 
-  // commentary choice: one English and one 日本語 button, created once and kept (their page re-renders its own
-  // controls often; rebuilding ours would drop the D-pad focus). Each click looks the real control up fresh.
-  var comm = {}, commWrap = null;
+  // ---- Language (commentary): their own English / Japanese commentary controls, driven from the bar and the app's
+  // full screen bar. Each press looks the real control up again, because their page redraws its controls often.
+  var curLang = '', heurLang = '';
   function isOn(e) {
     var n = e, k = 0;
     while (n && k++ < 3) {
@@ -162,7 +170,7 @@ window.__tvPpvAll = 1;
     }
     return false;
   }
-  function langOf(h) { var t = txt(h); return /japanese/i.test(t) ? 'ja' : /english/i.test(t) ? 'en' : ''; }
+  function langOf(h) { var s = txt(h); return /japanese/i.test(s) ? 'ja' : /english/i.test(s) ? 'en' : ''; }
   function commSrc(l) {
     var hs = finds(/commentary/i, 40);
     for (var i = 0; i < hs.length; i++) if (langOf(hs[i]) === l) return hs[i];
@@ -173,98 +181,160 @@ window.__tvPpvAll = 1;
     while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v) && txt(p.parentElement) === txt(p)) p = p.parentElement;
     p.classList.add('tv-ppv-gone');
   }
-  function syncComm() {
-    var found = { en: commSrc('en'), ja: commSrc('ja') };
-    if (!found.en && !found.ja) return;
-    if (!commWrap) {
-      commWrap = document.createElement('div'); commWrap.className = 'tv-ppv-comm';
-      var lb = document.createElement('div'); lb.className = 'tv-ppv-lb'; lb.textContent = 'COMMENTARY';
-      var row = document.createElement('div'); row.className = 'tv-ppv-row';
-      commWrap.appendChild(lb); commWrap.appendChild(row); rail.appendChild(commWrap);
-      [['en', 'English'], ['ja', '日本語']].forEach(function (p) {
-        var bt = document.createElement('a'); bt.className = 'tv-ppv-rb'; bt.tabIndex = 0; bt.textContent = p[1];
-        row.appendChild(bt);
-        press(bt, function () { var s = commSrc(p[0]); if (s) fire(s); });
-        comm[p[0]] = bt;
-      });
-    }
-    ['en', 'ja'].forEach(function (l) {
-      var s = found[l];
-      if (s) { hideUp(s); comm[l].classList.toggle('tv-ppv-on', isOn(s)); }
-    });
+  window.__tvLang = function () { return curLang || heurLang; };
+  window.__tvCommentary = function (l) {
+    if (l === 'toggle') l = window.__tvLang() === 'ja' ? 'en' : 'ja';
+    var s = commSrc(l);
+    if (s) { fire(s); curLang = l; }
+    return window.__tvLang();
+  };
+  function syncLang() {
+    heurLang = '';
+    ['en', 'ja'].forEach(function (l) { var s = commSrc(l); if (s) { hideUp(s); if (isOn(s)) heurLang = l; } });
   }
 
+  // ---- Bar contents
+  function fmt(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return (h > 0 ? h + ':' + (m < 10 ? '0' : '') + m : m) + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function refresh() {
+    try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); } catch (e) {}
+    var json = window.__tvStatusJson || '', labels = {};
+    try { labels = JSON.parse(window.AndroidHost.barLabels(json)); } catch (e) {}
+    ids.forEach(function (id) { if (labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+    if (json) {
+      try {
+        var j = JSON.parse(json);
+        timeEl.textContent = fmt(j.t) + ' / ' + fmt(j.d);
+        fillEl.style.width = (j.d > 0 ? Math.min(100, j.t / j.d * 100) : 0) + '%';
+      } catch (e) {}
+    }
+  }
+  function act(id) {
+    if (id === 'full') { goFull(); return; }
+    if (id === 'cc') { window.__tvCommentary('toggle'); }
+    else { try { window.AndroidHost.barAction(id); } catch (e) {} }
+    setTimeout(refresh, 300);
+  }
+  var skipBox = null, skipTimer = 0;
+  function showSkip(info, anchor) {
+    if (!skipBox) { skipBox = document.createElement('div'); skipBox.id = 'tv-pskip'; document.body.appendChild(skipBox); }
+    skipBox.innerHTML = '';
+    for (var i = info.sizes.length - 1; i >= 0; i--) {
+      var d = document.createElement('div');
+      d.textContent = info.sizes[i];
+      if (i === info.idx) d.className = 'on';
+      skipBox.appendChild(d);
+    }
+    skipBox.style.display = 'flex';
+    var r = anchor.getBoundingClientRect(), h = skipBox.offsetHeight, w = skipBox.offsetWidth;
+    skipBox.style.left = Math.max(8, Math.round(r.left + r.width / 2 - w / 2)) + 'px';
+    skipBox.style.top = Math.max(8, Math.round(r.top - h - 10)) + 'px';
+    clearTimeout(skipTimer);
+    skipTimer = setTimeout(function () { if (skipBox) skipBox.style.display = 'none'; }, 2500);
+  }
+
+  // ---- Layout: the picture is the same size as on the app's other video pages (about two thirds of the width,
+  // centred, as large as fits above the bar); the bar sits right under it, as wide as the picture.
+  function layout() {
+    var v = document.querySelector('.video-js');
+    if (!v || inFull()) return;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var W = Math.round(Math.min(vw * 0.66, (vh - TOP - BARH - 24) * 16 / 9)), H = Math.round(W * 9 / 16), L = Math.round((vw - W) / 2);
+    var set = function (k, val) { v.style.setProperty(k, val, 'important'); };
+    set('position', 'fixed'); set('left', L + 'px'); set('top', TOP + 'px'); set('width', W + 'px'); set('height', H + 'px');
+    set('margin', '0'); set('padding-top', '0'); set('max-width', 'none'); set('transform', 'none'); set('z-index', '2147483000');
+    bar.style.left = L + 'px'; bar.style.top = (TOP + H) + 'px'; bar.style.width = W + 'px';
+  }
+
+  // ---- Hide their extras; make everything else on the page unreachable by the D-pad
   function hideBits() {
-    // their right-hand column: climb from "STREAMING INFORMATION" up to just below the common ancestor with the player
     var v = document.querySelector('video'), si = finds(/^(streaming|distribution) information$/i, 40)[0];
     if (v && si) {
       var p = si;
       while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v)) p = p.parentElement;
       if (p && !p.contains(v) && p !== document.body) p.classList.add('tv-ppv-gone');
     }
-    if (v) {
-      var cp = v.closest('.video-js') || v, n = 0;
-      while (cp && cp !== document.body && n++ < 12) { cp.classList.add('tv-ppv-c'); cp = cp.parentElement; }
-    }
     finds(/^theat(er|re)\s*mode$/i, 30).forEach(hideUp);
-    var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
-    for (var i = 0; i < tg.length; i++) if (!inRail(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
     var sw = document.querySelectorAll('.MuiFormControlLabel-root,.MuiSwitch-root,input.MuiSwitch-input');
     for (var q = 0; q < sw.length; q++) sw[q].classList.add('tv-ppv-gone');
+    var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
+    for (var i = 0; i < tg.length; i++) if (!inBar(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
     finds(/^(dark|light)(\s*mode)?$/i, 20).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
-    // nothing else should take focus: the logo and any other leftover control become inert
     var all = document.querySelectorAll('a,button,input,select,textarea,[tabindex]');
     for (var j = 0; j < all.length; j++) {
       var e = all[j];
-      if (inRail(e) || e.closest('.video-js') || e.contains(v)) continue;
+      if (inBar(e) || e.contains(v)) continue;
       if (e.getAttribute('tabindex') !== '-1') e.setAttribute('tabindex', '-1');
       e.style.pointerEvents = 'none';
     }
   }
 
-  // After 8 seconds on the player page, go to full screen on its own (once). The browser only allows that after a
-  // key press, so if the direct request is refused the app sends an OK key press while Full screen has focus.
+  // ---- Full screen after 8 seconds on the replay or live page, once. Browsers only allow it after a key press, so
+  // if the direct request is refused the app sends an OK key press while the Full screen button has focus.
   var vSince = 0, autoDone = false;
-  function inFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function autoFull() {
     if (autoDone || !/\/(plan_player|live_player)(?!_test)/.test(location.pathname)) return;
     if (!vSince) { vSince = Date.now(); return; }
     if (Date.now() - vSince < 8000) return;
     autoDone = true;
     if (inFull()) return;
-    try { fsb.focus(); } catch (e) {}
+    try { btns.full.focus(); } catch (e) {}
     goFull();
     setTimeout(function () {
       if (inFull()) return;
-      try { fsb.focus(); if (window.AndroidHost && AndroidHost.ppvPressOk) AndroidHost.ppvPressOk(); } catch (e) {}
+      try { btns.full.focus(); if (window.AndroidHost && AndroidHost.ppvPressOk) AndroidHost.ppvPressOk(); } catch (e) {}
     }, 700);
   }
-  var shown = false;
+
+  var shown = false, keyed = false, t0 = Date.now();
+  window.addEventListener('keydown', function () { keyed = true; }, true);
   setInterval(function () {
     var has = !!document.querySelector('video') && PAGE.test(location.pathname) && !document.querySelector('.CpSimpleLayout__main');
-    rail.style.display = has ? 'flex' : 'none';
+    bar.style.display = has ? 'flex' : 'none';
     if (!has) return;
-    syncComm(); hideBits();
-    try {
-      var pv = document.querySelector('.video-js') || document.querySelector('video');
-      if (pv) { var rc = pv.getBoundingClientRect(); rail.style.top = Math.max(60, rc.top - 56) + 'px'; }
-    } catch (e) {}
-    autoFull();
+    syncLang(); hideBits(); layout(); autoFull();
     var d = document.getElementById('tv-ppv-dbg');
-    if (d && PAGE.test(location.pathname) && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
-    if (!shown) { shown = true; try { fsb.focus(); } catch (e) {} }
-    else if (!keyed && Date.now() - t0 < 8000 && !rail.contains(document.activeElement)) { try { fsb.focus(); } catch (e) {} }
+    if (d && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
+    if (!shown) { shown = true; refresh(); try { btns.full.focus(); } catch (e) {} }
+    else if (!keyed && Date.now() - t0 < 8000 && !bar.contains(document.activeElement)) { try { btns.full.focus(); } catch (e) {} }
   }, 800);
-  var keyed = false, t0 = Date.now();
-  window.addEventListener('keydown', function () { keyed = true; }, true);
+  setInterval(function () { if (bar.style.display !== 'none' && !document.hidden) refresh(); }, 500);
+  window.addEventListener('resize', layout);
+  // Leaving full screen puts focus back on the bar (on Full screen), not on the player or the page.
   function back() {
-    if (document.fullscreenElement || document.webkitFullscreenElement) return;
-    [60, 350, 900].forEach(function (ms) { setTimeout(function () { try { fsb.focus(); } catch (e) {} }, ms); });
+    if (inFull()) return;
+    layout();
+    [60, 350, 900].forEach(function (ms) { setTimeout(function () { try { (btns[lastId] || btns.full).focus(); } catch (e) {} }, ms); });
   }
   document.addEventListener('fullscreenchange', back);
   document.addEventListener('webkitfullscreenchange', back);
-})();
 
+  // ---- Keys: Left/Right walk the buttons; Up/Down on -/+ choose the skip size; OK presses. Nothing else moves focus.
+  window.addEventListener('keydown', function (e) {
+    if (bar.style.display === 'none') return;
+    var k = e.keyCode, ae = document.activeElement;
+    if (k < 37 || (k > 40 && k !== 13 && k !== 23)) return;
+    function eat() { e.preventDefault(); e.stopPropagation(); }
+    if (!ae || !ae.classList || !ae.classList.contains('tv-pbtn')) {
+      if (k >= 37 && k <= 40) { eat(); try { (btns[lastId] || btns.full).focus(); } catch (x) {} }
+      return;
+    }
+    var did = ae.getAttribute('data-id'), i = ids.indexOf(did);
+    if ((k === 38 || k === 40) && (did === 'back' || did === 'fwd') && window.AndroidHost && AndroidHost.skipStep) {
+      eat();
+      var info = null;
+      try { info = JSON.parse(AndroidHost.skipStep(k === 38 ? 1 : -1)); } catch (x) {}
+      refresh();
+      if (info) showSkip(info, ae);
+    } else if (k === 39) { eat(); if (i < ids.length - 1) btns[ids[i + 1]].focus(); }
+    else if (k === 37) { eat(); if (i > 0) btns[ids[i - 1]].focus(); }
+    else if (k === 38 || k === 40) { eat(); }
+    else if (k === 13 || k === 23) { eat(); act(did); }
+  }, true);
+})();
 
 // Our buttons open their show page with #tv=buy or #tv=watch: press their "Purchase tickets" or "Viewing page" tab
 // for the person, once, so the TV lands on the right part of the page.
@@ -501,35 +571,7 @@ window.__tvPpvAll = 1;
     var cc = 'Off', t = tracks(v);
     for (var i = 0; i < t.length; i++) if (t[i].mode === 'showing') cc = t[i].label || t[i].language || 'On';
     var d = isFinite(v.duration) ? v.duration : (v.seekable && v.seekable.length ? v.seekable.end(v.seekable.length - 1) : 0);
-    window.__tvStatusJson = JSON.stringify({ paused: v.paused, t: v.currentTime || 0, d: d, vol: v.muted ? 0 : v.volume, rate: v.playbackRate, cc: cc, ncc: t.length, q: '', nq: 0 });
+    window.__tvStatusJson = JSON.stringify({ ppv: 1, lang: (window.__tvLang && window.__tvLang()) || '', paused: v.paused, t: v.currentTime || 0, d: d, vol: v.muted ? 0 : v.volume, rate: v.playbackRate, cc: cc, ncc: t.length, q: '', nq: 0 });
   };
-})();
-
-// The three buttons sit in one row above the player. Left/Right walk the row, Down goes to the player. Up from the
-// player or its control bar comes back to the row (to the button last used).
-(function () {
-  var last = null;
-  function items() {
-    var r = document.getElementById('tv-ppv-rail');
-    return r ? Array.prototype.slice.call(r.querySelectorAll('.tv-ppv-rb')) : [];
-  }
-  function player() { var v = document.querySelector('.video-js,video'); if (v) { try { v.setAttribute('tabindex', '0'); v.focus(); } catch (x) {} } return v; }
-  window.addEventListener('keydown', function (e) {
-    var rail = document.getElementById('tv-ppv-rail');
-    if (!rail || rail.style.display === 'none') return;
-    var a = document.activeElement, k = e.keyCode, its = items(), i = its.indexOf(a);
-    function eat() { e.preventDefault(); e.stopPropagation(); }
-    if (i >= 0) {
-      last = a;
-      if (k === 39) { eat(); if (its[i + 1]) its[i + 1].focus(); }
-      else if (k === 37) { eat(); if (its[i - 1]) its[i - 1].focus(); }
-      else if (k === 40) { eat(); player(); }
-      else if (k === 38) { eat(); }
-    } else if (its.length && a) {
-      var inBar = a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu');
-      var onPlayer = (a.classList && a.classList.contains('video-js')) || a.tagName === 'VIDEO';
-      if (k === 38 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
-    }
-  }, true);
 })();
 })();
