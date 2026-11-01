@@ -4024,9 +4024,9 @@ class MainActivity : Activity() {
             return '<div class="tv-sch-tile">' +
               (p ? '<img class="tv-sch-poster" src="' + p + '" alt="">' : '') +
               '<div class="tv-sch-info">' +
-              (ppv ? '<div class="tv-sch-tag">' + ppvChips(e) + '</div>' : live
-                ? '<div class="tv-sch-tag"><span style="display:inline-flex;align-items:center;gap:7px;background:#D62839;color:#fff;font-weight:900;font-size:13px;letter-spacing:1px;padding:4px 10px;border-radius:5px;"><span style="width:8px;height:8px;border-radius:4px;background:#fff;animation:tvLivePulse 1.4s infinite;"></span>' + esc(T('LIVE NOW', '開催中')) + '</span><span>' + esc(T('Streaming now', '配信中')) + '</span></div>'
-                : '<div class="tv-sch-tag"><span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span></div>') +
+              (ppv ? '<div class="tv-sch-lbl">' + ppvChips(e) + '</div>' : live
+                ? '<div class="tv-sch-lbl"><span style="display:inline-flex;align-items:center;gap:7px;background:#D62839;color:#fff;font-weight:900;font-size:13px;letter-spacing:1px;padding:4px 10px;border-radius:5px;"><span style="width:8px;height:8px;border-radius:4px;background:#fff;animation:tvLivePulse 1.4s infinite;"></span>' + esc(T('LIVE NOW', '開催中')) + '</span><span>' + esc(T('Streaming now', '配信中')) + '</span></div>'
+                : '<div class="tv-sch-lbl"><span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span></div>') +
               '<div class="tv-sch-ttl">' + esc(e.title) + '</div>' +
               '<div class="tv-sch-v">' + esc(e.venue || '') + '</div>' +
               '<div class="tv-sch-when">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</div>' +
@@ -4034,7 +4034,7 @@ class MainActivity : Activity() {
               '<div class="tv-sch-btns">' +
               (ppv ? ppvMainBtn(e) : '') +
               (live && !ppv ? '<a class="tv-sm-fi tv-sch-btn tv-sch-watch" tabindex="0" data-go="' + esc(wp) + '" href="' + esc(absUrl(wp)) + '"><span>&#9654;</span><span>' + esc(T('Watch live', 'ライブを見る')) + '</span></a>' : '') +
-              '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-rem="' + esc(e.id) + '">' + bellSvg(on, 18) + '<span>' + esc(on ? T('Reminder set', '通知オン') : T('Remind me', '通知する')) + '</span></a>' +
+              (ppv && pst !== 'soon' && pst !== 'sale' ? '' : '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-rem="' + esc(e.id) + '">' + bellSvg(on, 18) + '<span>' + esc(on ? T('Reminder set', '通知オン') : T('Remind me', '通知する')) + '</span></a>') +
               '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-ev="' + esc(e.id) + '">' + esc(T('Details', '詳細')) + '</a>' +
               '</div></div></div>';
           }
@@ -4105,7 +4105,7 @@ class MainActivity : Activity() {
               (p ? '<div class="tv-ev-pc"><img src="' + p + '" alt=""></div>' : '') +
               '<div class="tv-ev-tx">' +
               '<div class="tv-ev-top">' + esc(e.ppv ? T('PAY-PER-VIEW SHOW', 'PPV大会') : e._t + 3 * 3600000 > Date.now() ? T('UPCOMING SHOW', '今後の大会') : T('SHOW', '大会')) + '</div>' +
-              '<div class="tv-ev-tag">' + (first && first.id === e.id ? (schedIsLive(e) && first.id === e.id ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span>' : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>') : '') + '<span>' + esc(schedIsLive(e) && first && first.id === e.id ? T('Streaming now', '配信中') : e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Show over', '終了')) + '</span></div>' +
+              '<div class="tv-ev-lbl">' + (first && first.id === e.id ? (schedIsLive(e) && first.id === e.id ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span>' : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>') : '') + '<span>' + esc(schedIsLive(e) && first && first.id === e.id ? T('Streaming now', '配信中') : e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Show over', '終了')) + '</span></div>' +
               '<div class="tv-ev-h">' + esc(e.title) + '</div>' +
               '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
               '<div><div class="tv-ev-k">' + esc(T('AT THE VENUE (JST)', '現地時間 (JST)')) + '</div><div class="tv-ev-mid">' + esc(fmtJst(e._t, true)) + '</div><div class="tv-ev-s">' + esc(e.venue || '') + '</div></div></div>' +
@@ -4505,7 +4505,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-tile{display:flex;gap:14px;padding:10px;border:2px solid #2a323c;border-radius:12px;background:#0f1620;margin:0 0 10px 0;}',
             '#tv-sm-shelf .tv-sch-poster{flex:0 0 28%;width:28%;height:auto;align-self:flex-start;border-radius:8px;object-fit:cover;}',
             '#tv-sm-shelf .tv-sch-info{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:5px;}',
-            '#tv-sm-shelf .tv-sch-tag{display:flex;gap:8px;align-items:center;font-size:13px;color:#9aa6b4;}',
+            '#tv-sm-shelf .tv-sch-lbl{display:flex;gap:8px;align-items:center;font-size:13px;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-sch-tg, #tv-ev .tv-sch-tg{background:#F4C242;color:#111;font-weight:800;font-size:11px;letter-spacing:1px;padding:3px 7px;border-radius:4px;}',
             '#tv-sm-shelf .tv-sch-ttl{font-size:19px;font-weight:700;line-height:1.2;color:#fff;}',
             '#tv-sm-shelf .tv-sch-v{font-size:14px;color:#c9d2dc;}',
@@ -4536,7 +4536,7 @@ class MainActivity : Activity() {
             'html.tv-ev-open #tv-sm{z-index:2147483002;}',
             'html.tv-ev-open #tv-sm-shelf{z-index:2147483003;}',
             '#tv-ev .tv-ev-tx{flex:1 1 0;min-width:0;padding:4vh 3vw;display:flex;flex-direction:column;gap:12px;overflow:hidden;}',
-            '#tv-ev .tv-ev-tag{display:flex;gap:10px;align-items:center;font-size:14px;color:#9aa6b4;}',
+            '#tv-ev .tv-ev-lbl{display:flex;gap:10px;align-items:center;font-size:14px;color:#9aa6b4;}',
             '#tv-ev .tv-ev-h{font-size:30px;font-weight:700;line-height:1.15;}',
             '#tv-ev .tv-ev-cols{display:flex;gap:40px;flex-wrap:wrap;}',
             '#tv-ev .tv-ev-k{font-size:12px;font-weight:700;letter-spacing:1.2px;color:#9aa6b4;}',

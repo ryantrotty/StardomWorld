@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.10
+
+- The tag line on schedule cards and the details page (the purple PPV tag and its state, and the "NEXT LIVE" tag) was hidden by the site-wide rule that hides anything with "tag" in its class name. Renamed so it shows.
+- PPV cards no longer show Remind me once the show is live, on replay or ended.
+
 ## 2.10.9
 
 - Stagecrowd registration: their "Back to top" button after the email is sent now says "Back to the show" and returns to the show instead of their home page.
