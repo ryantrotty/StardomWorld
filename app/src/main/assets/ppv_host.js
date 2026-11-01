@@ -247,7 +247,7 @@ window.__tvPpvAll = 1;
     syncComm(); hideBits();
     try {
       var pv = document.querySelector('.video-js') || document.querySelector('video');
-      if (pv) { var rc = pv.getBoundingClientRect(); rail.style.top = Math.max(60, Math.min(rc.bottom + 14, window.innerHeight - 56)) + 'px'; }
+      if (pv) { var rc = pv.getBoundingClientRect(); rail.style.top = Math.max(60, rc.top - 56) + 'px'; }
     } catch (e) {}
     autoFull();
     var d = document.getElementById('tv-ppv-dbg');
@@ -505,7 +505,7 @@ window.__tvPpvAll = 1;
   };
 })();
 
-// The three buttons sit in one row below the player. Left/Right walk the row, Up goes to the player. Down from the
+// The three buttons sit in one row above the player. Left/Right walk the row, Down goes to the player. Up from the
 // player or its control bar comes back to the row (to the button last used).
 (function () {
   var last = null;
@@ -523,12 +523,12 @@ window.__tvPpvAll = 1;
       last = a;
       if (k === 39) { eat(); if (its[i + 1]) its[i + 1].focus(); }
       else if (k === 37) { eat(); if (its[i - 1]) its[i - 1].focus(); }
-      else if (k === 38) { eat(); player(); }
-      else if (k === 40) { eat(); }
+      else if (k === 40) { eat(); player(); }
+      else if (k === 38) { eat(); }
     } else if (its.length && a) {
       var inBar = a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu');
       var onPlayer = (a.classList && a.classList.contains('video-js')) || a.tagName === 'VIDEO';
-      if (k === 40 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
+      if (k === 38 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
     }
   }, true);
 })();

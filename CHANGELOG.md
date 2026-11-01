@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.25
+
+- Stagecrowd video page: Full screen, English and 日本語 are back above the player (Down goes to the player, Up from the player or its control bar returns to them). Still 30% smaller, and auto full screen is unchanged.
+
 ## 2.10.24
 
 - PPV details page: once the show is over the "Your time" column and the "Show over" line are gone (the venue time stays). The heading is now the purple PPV chip with the status chip beside it. The step number sits on the same line as the step title. The match card now lists the participants for each match (from the official card, English names; subject to change).
