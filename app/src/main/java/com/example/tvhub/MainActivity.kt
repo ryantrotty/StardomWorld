@@ -8272,6 +8272,28 @@ class MainActivity : Activity() {
     }
 
     private fun cycleCc() {
+        // A live event embed (vimeo.com/event/...) publishes no caption tracks, so say so instead of failing quietly.
+        webView.evaluateJavascript(
+            "(function(){var f=document.querySelector('iframe[src*=vimeo], iframe[src*=player]');return !!(f && f.src.indexOf('/event/')>=0);})()"
+        ) { live ->
+            if (live == "true") ccLiveNote() else cycleCcNow()
+        }
+    }
+
+    private fun ccLiveNote() {
+        ccMode = 0
+        fsBtnCc?.text = ccLabel()
+        playerCommand("ccoff", 0)
+        handler.removeCallbacks(ccTick)
+        ccTicking = false
+        ccShowMessage(tr("Captions aren't available on live streams", "ライブ配信では字幕を利用できません"))
+        handler.removeCallbacks(ccHideNote)
+        handler.postDelayed(ccHideNote, 6000)
+    }
+
+    private val ccHideNote = Runnable { if (ccMode == 0) ccView?.visibility = View.GONE }
+
+    private fun cycleCcNow() {
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
         fsBtnCc?.text = ccLabel()
         // The player's own captions always go off: ours replace them (and are shown or hidden below).

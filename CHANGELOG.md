@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.9
+
+- Captions: on a live stream the CC button now says "Captions aren't available on live streams" (the live player publishes no caption tracks). Replays behave as before.
+
 ## 2.9.8
 
 - Live card: the tile is only redrawn when its text changes (about once a minute) instead of every 1.5 seconds, which also stops the poster being re-decoded each time.
