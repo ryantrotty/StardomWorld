@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.11
+
+- Schedule panel (Shows menu): while the first show is live its card gets a red pulsing LIVE NOW badge and a red "Watch live" button that opens the show's video page (the LIVE list if the page isn't known yet). Remind me and Details stay.
+
 ## 2.9.10
 
 - Live shows: the Shows menu chip, the schedule panel card, the show details page and the "up next" transition screen all switch to a red LIVE NOW while the show is on (from the listed start, up to 3 hours).

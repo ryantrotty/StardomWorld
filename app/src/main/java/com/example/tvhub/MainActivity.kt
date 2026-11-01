@@ -3865,19 +3865,28 @@ class MainActivity : Activity() {
             if (schedIsLive(up)) return '<em class="tv-sch-pill" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</em>';
             return '<em class="tv-sch-pill">' + esc(T('NEXT ', 'あと') + l) + '</em>';
           }
+          // Where "Watch live" goes: the show's own video page once the home card has been seen, else the LIVE list.
+          function schedWatchPath(e) {
+            try {
+              var c = JSON.parse(lsGet('tvLiveCardEvV1') || 'null');
+              if (c && c.ev === e.id && c.id) return '/contents/' + c.id;
+            } catch (x) {}
+            return '/contents/category/live-archives';
+          }
           function schedTileHtml(e) {
-            var p = posterFor(e), on = remGet()[e.id] !== undefined;
+            var p = posterFor(e), on = remGet()[e.id] !== undefined, live = schedIsLive(e), wp = schedWatchPath(e);
             return '<div class="tv-sch-tile">' +
               (p ? '<img class="tv-sch-poster" src="' + p + '" alt="">' : '') +
               '<div class="tv-sch-info">' +
-              '<div class="tv-sch-tag">' + (schedIsLive(e)
-                ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span><span>' + esc(T('Streaming now', '配信中')) + '</span>'
-                : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span>') + '</div>' +
+              (live
+                ? '<div class="tv-sch-tag"><span style="display:inline-flex;align-items:center;gap:7px;background:#D62839;color:#fff;font-weight:900;font-size:13px;letter-spacing:1px;padding:4px 10px;border-radius:5px;"><span style="width:8px;height:8px;border-radius:4px;background:#fff;animation:tvLivePulse 1.4s infinite;"></span>' + esc(T('LIVE NOW', '開催中')) + '</span><span>' + esc(T('Streaming now', '配信中')) + '</span></div>'
+                : '<div class="tv-sch-tag"><span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span></div>') +
               '<div class="tv-sch-ttl">' + esc(e.title) + '</div>' +
               '<div class="tv-sch-v">' + esc(e.venue || '') + '</div>' +
               '<div class="tv-sch-when">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</div>' +
               '<div class="tv-sch-jst">' + esc(T('Your time', 'お使いの時刻') + ' · ' + fmtJst(e._t, true)) + '</div>' +
               '<div class="tv-sch-btns">' +
+              (live ? '<a class="tv-sm-fi tv-sch-btn tv-sch-watch" tabindex="0" data-go="' + esc(wp) + '" href="' + esc(absUrl(wp)) + '"><span>&#9654;</span><span>' + esc(T('Watch live', 'ライブを見る')) + '</span></a>' : '') +
               '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-rem="' + esc(e.id) + '">' + bellSvg(on, 18) + '<span>' + esc(on ? T('Reminder set', '通知オン') : T('Remind me', '通知する')) + '</span></a>' +
               '<a class="tv-sm-fi tv-sch-btn" tabindex="0" data-ev="' + esc(e.id) + '">' + esc(T('Details', '詳細')) + '</a>' +
               '</div></div></div>';
@@ -4169,7 +4178,7 @@ class MainActivity : Activity() {
               a.__id = im ? im[1] : '';
               a.__bg = m && m[1] ? m[1] : '';
               a.style.cssText = 'flex:0 0 calc(50% - 12px); max-width:calc(50% - 12px); aspect-ratio:16/9; position:relative; border:2px solid #F4C242; border-radius:10px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block; background:#1a1a1a center/cover no-repeat' + (a.__bg ? ' url(' + a.__bg + ')' : '') + ';';
-              try { lsSet('tvLiveCardV1', a.__id); } catch (x) {}
+              try { lsSet('tvLiveCardV1', a.__id); lsSet('tvLiveCardEvV1', JSON.stringify({ id: a.__id, ev: up.id })); } catch (x) {}
               var old = document.getElementById('tv-next-live');
               if (old && old.parentNode) old.parentNode.removeChild(old);
               row.removeChild(card);
@@ -4352,6 +4361,8 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-jst{font-size:12px;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-sch-btns{display:flex;gap:8px;margin-top:6px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-sch-btn{display:flex;align-items:center;gap:8px;font-size:15px;padding:7px 12px;margin:0;border:2px solid #2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-sch-btn.tv-sch-watch{background:#D62839;border-color:#D62839;color:#fff !important;font-weight:800;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-sch-btn.tv-sch-watch:focus{background:#E8374A !important;border-color:#F4C242 !important;color:#fff !important;}',
             '#tv-sm-shelf .tv-sch-then{font-size:11px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:8px 4px 6px 4px;}',
             '#tv-sm-shelf .tv-sch-row{display:flex;gap:6px;align-items:stretch;margin:0 0 6px 0;}',
             '#tv-sm-shelf .tv-sm-fi.tv-sch-main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:1px;margin:0;padding:7px 12px;background:#161f2a;}',
