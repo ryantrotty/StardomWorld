@@ -448,7 +448,7 @@
       '<div style="display:grid;grid-template-columns:1.15fr 1fr 1.05fr;gap:22px;"><div>' + colA + '</div><div>' + colB + '</div><div>' + colC + '</div></div>';
   }
 
-  window.__tvFav = { shelfHtml: shelfHtml, decorate: decorate, mark: mark, load: load, toggleWrestler: toggleWrestler, setFaction: setFaction };
+  window.__tvFav = { popShow: popShow, shelfHtml: shelfHtml, decorate: decorate, mark: mark, load: load, toggleWrestler: toggleWrestler, setFaction: setFaction };
   window.__tvMenuKey = menuKey;
 
   // =============================================================== the My Favorites page
