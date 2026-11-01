@@ -3120,6 +3120,15 @@ class MainActivity : Activity() {
             return -1;
           }
 
+          // The live show's player reports play: remember it, so the home card can say LIVE instead of STARTING
+          function liveConfirm() {
+            try {
+              var m = location.pathname.match(/\/contents\/(\d+)/);
+              var id = localStorage.getItem('tvLiveCardV1');
+              if (m && id && id === m[1]) localStorage.setItem('tvLiveConfirmV1', JSON.stringify({ id: id, t: Date.now() }));
+            } catch (e) {}
+          }
+
           function onEnded() {
             if (window.__tvAutoNextFired) return;
             window.__tvAutoNextFired = true;
@@ -3161,11 +3170,13 @@ class MainActivity : Activity() {
                 try {
                   var player = new Vimeo.Player(iframe);
                   player.on('ended', onEnded);
+                  player.on('play', liveConfirm);
                   iframe.__tvFinishHooked = true;
                 } catch (e) {}
               }
               try {
                 iframe.contentWindow.postMessage('{"method":"addEventListener","value":"finish"}', '*');
+                iframe.contentWindow.postMessage('{"method":"addEventListener","value":"play"}', '*');
               } catch (e) {}
             });
           }
@@ -3174,6 +3185,7 @@ class MainActivity : Activity() {
             try {
               var data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
               if (data && (data.event === 'finish' || data.event === 'ended')) onEnded();
+              if (data && (data.event === 'play' || data.event === 'playing')) liveConfirm();
             } catch (e) {}
           });
 
@@ -3975,7 +3987,114 @@ class MainActivity : Activity() {
             }
             row.insertBefore(a, row.firstChild);
           }
-          setInterval(ensureHomeTile, 1500);
+          // ---- Live card: the "next live" tile and the stream's own card on the site, combined into one
+          // 16:9 tile from 60 minutes before the show until 3 hours after the start.
+          // Live only if the site's card is tagged [LIVE] AND matches this scheduled show (name or JST date);
+          // "LIVE" is shown once the player reports play (or 15 minutes after the start), otherwise "STARTING".
+          var LIVE_DEBUG = true, LIVE_SOON_MS = 60 * 60000, LIVE_END_MS = 3 * 3600000, LIVE_ASSUME_MS = 15 * 60000;
+          var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          (function() {
+            var st = document.createElement('style');
+            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}}';
+            (document.head || document.documentElement).appendChild(st);
+          })();
+          function liveCardMatches(e, txt) {
+            if (!/[\[【]\s*LIVE/i.test(txt)) return false;
+            var n = txt.toLowerCase().replace(/[^a-z0-9]/g, '');
+            var sh = String(e.short || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (sh && n.indexOf(sh) !== -1) return true;
+            var j = new Date(e._t + 9 * 3600000), m = j.getUTCMonth() + 1, d = j.getUTCDate();
+            var re = new RegExp(MON_EN[m - 1] + '\\s*' + d + '(st|nd|rd|th)?\\b|(^|\\D)' + m + '\\s*[\\/\\u30fb]\\s*' + d + '(\\D|$)|' + m + '\\u6708\\s*' + d + '\\u65e5', 'i');
+            return re.test(txt);
+          }
+          function liveCardFind(e, row) {
+            var cards = row.querySelectorAll('a.tv-card');
+            for (var i = 0; i < cards.length; i++) {
+              var c = cards[i];
+              if (c.id === 'tv-next-live' || c.id === 'tv-live-card') continue;
+              if (liveCardMatches(e, c.textContent || '')) return c;
+            }
+            return null;
+          }
+          function liveConfirmed(e, id) {
+            try {
+              var c = JSON.parse(lsGet('tvLiveConfirmV1') || 'null');
+              return !!(c && c.id === id && c.t >= e._t - 5 * 60000);
+            } catch (x) { return false; }
+          }
+          function liveStateOf(e, id) {
+            var ms = e._t - Date.now();
+            if (ms > 0) return 'soon';
+            if (liveConfirmed(e, id) || -ms >= LIVE_ASSUME_MS) return 'live';
+            return 'starting';
+          }
+          function liveRender(a, e, id, bg) {
+            var st = liveStateOf(e, id), ms = e._t - Date.now(), mins = Math.max(0, Math.round(Math.abs(ms) / 60000));
+            var chip, tag;
+            if (st === 'soon') {
+              chip = '<span style="background:#F4C242; color:#111; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px;">' + esc(T('STARTS IN ', '開始まで') + schedLeft(e)) + '</span>';
+              tag = '<div style="color:#F4C242; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('NEXT LIVE', '次の大会') + ' · ' + T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</div>';
+            } else if (st === 'starting') {
+              chip = '<span style="background:#F4C242; color:#111; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px;">' + esc(T('STARTING', 'まもなく')) + '</span>';
+              tag = '<div style="color:#F4C242; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('STARTING NOW', 'まもなく開始')) + '</div>';
+            } else {
+              chip = '<span style="background:#D62839; color:#fff; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:5px; background:#fff; animation:tvLivePulse 1.4s infinite;"></span>LIVE</span>';
+              tag = '<div style="color:#FF6B78; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('LIVE NOW · STARTED ', '配信中 · ') + mins + T(' MIN AGO', '分前開始')) + '</div>';
+            }
+            var p = posterFor(e);
+            var dbg = LIVE_DEBUG ? '<div style="color:#9aa6b4; font-size:11px; margin-top:2px;">state=' + st + ' · card=' + esc(id) + ' · confirmed=' + (liveConfirmed(e, id) ? 'yes' : 'no') + ' · t' + (ms > 0 ? '-' : '+') + mins + 'm</div>' : '';
+            a.style.borderColor = st === 'live' ? '#D62839' : '#F4C242';
+            a.innerHTML = '<div style="position:absolute; left:14px; top:14px;">' + chip + '</div>' +
+              '<div style="position:absolute; left:0; right:0; bottom:0; padding:60px 20px 16px 20px; background:linear-gradient(rgba(10,13,18,0), rgba(10,13,18,0.96) 60%); display:flex; gap:16px; align-items:flex-end; box-sizing:border-box;">' +
+              (p ? '<img src="' + p + '" alt="" style="flex:0 0 auto; width:70px; height:98px; object-fit:cover; object-position:top; border-radius:6px; border:1px solid #2a3442; display:block;">' : '') +
+              '<div style="min-width:0; display:flex; flex-direction:column; gap:3px; color:#fff;">' + tag +
+              '<div style="font-size:22px; font-weight:bold; line-height:1.2em;">' + esc(e.title) + '</div>' +
+              '<div style="font-size:15px; font-weight:800; color:#F4C242;">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + ' <span style="color:#c9d2dc; font-weight:normal;">· ' + esc(e.venue || '') + '</span></div>' + dbg + '</div></div>';
+            return st + ':' + (st === 'soon' ? schedLeft(e) : mins);
+          }
+          function liveRevert(a, row) {
+            if (a.__card && row) row.insertBefore(a.__card, a.nextSibling);
+            if (a.parentNode) a.parentNode.removeChild(a);
+            if (row) row.style.alignItems = '';
+          }
+          // Returns true while the combined tile is on screen (the plain next-live tile then stays away).
+          function ensureLiveCard() {
+            if (!isHome()) return false;
+            var row = document.querySelector('#tv-test-grid .tv-grid-row');
+            if (!row) return false;
+            var a = document.getElementById('tv-live-card');
+            var up = schedUpcoming()[0];
+            var ms = up ? up._t - Date.now() : 0;
+            var inWin = !!up && ms <= LIVE_SOON_MS && ms > -LIVE_END_MS;
+            if (!inWin) { if (a) liveRevert(a, row); return false; }
+            if (!a) {
+              var card = liveCardFind(up, row);
+              if (!card) return false;
+              var d = card.querySelector('div'), b = d ? (d.style.backgroundImage || getComputedStyle(d).backgroundImage) : '', m = b && b.match(/url\(['"]?(.*?)['"]?\)/);
+              var im = card.href.match(/\/contents\/(\d+)/);
+              a = document.createElement('a');
+              a.id = 'tv-live-card';
+              a.className = 'tv-card';
+              a.tabIndex = 0;
+              a.href = card.href;
+              a.setAttribute('translate', 'no');
+              a.__card = card;
+              a.__id = im ? im[1] : '';
+              a.__bg = m && m[1] ? m[1] : '';
+              a.style.cssText = 'flex:0 0 calc(50% - 12px); max-width:calc(50% - 12px); aspect-ratio:16/9; position:relative; border:2px solid #F4C242; border-radius:10px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block; background:#1a1a1a center/cover no-repeat' + (a.__bg ? ' url(' + a.__bg + ')' : '') + ';';
+              try { lsSet('tvLiveCardV1', a.__id); } catch (x) {}
+              var old = document.getElementById('tv-next-live');
+              if (old && old.parentNode) old.parentNode.removeChild(old);
+              row.removeChild(card);
+              row.insertBefore(a, row.firstChild);
+              row.style.alignItems = 'flex-start';
+              a.__k = '';
+            }
+            var k = liveRender(a, up, a.__id, a.__bg);
+            return true;
+          }
+          function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); }
+          setInterval(liveTick, 1500);
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword
           // search with the type remembered ("tvmt"), and the filter bar's script tells similar titles apart.
