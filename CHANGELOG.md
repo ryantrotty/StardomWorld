@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.21
+
+- Stagecrowd video page: fixed a stray `+ +` in the button styles (introduced in 2.10.20) that dropped all of them, so the row showed as plain pink text. A small yellow line at the bottom left shows the last key pressed and what had focus, to find why the commentary buttons were not reachable.
+
 ## 2.10.20
 
 - Shows menu: removed the temporary PPV playback-test link from the bottom of the list (the test is still step 1 on the details page).
