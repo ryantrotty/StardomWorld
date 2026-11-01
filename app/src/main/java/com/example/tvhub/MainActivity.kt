@@ -2737,6 +2737,18 @@ class MainActivity : Activity() {
             this@MainActivity.runOnUiThread { if (isPpvFlow(webView.url)) leavePpv() }
         }
 
+        // A real OK key press into the page, so the page's own "Full screen" button is allowed to go full screen
+        // (browsers refuse it without a key press); only on Stagecrowd pages.
+        @android.webkit.JavascriptInterface
+        fun ppvPressOk() {
+            this@MainActivity.runOnUiThread {
+                if (!isPpvFlow(webView.url)) return@runOnUiThread
+                val t = android.os.SystemClock.uptimeMillis()
+                webView.dispatchKeyEvent(android.view.KeyEvent(t, t, android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_DPAD_CENTER, 0))
+                webView.dispatchKeyEvent(android.view.KeyEvent(t, t + 40, android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_DPAD_CENTER, 0))
+            }
+        }
+
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
         @android.webkit.JavascriptInterface
         fun liveEnded() {
@@ -4062,7 +4074,7 @@ class MainActivity : Activity() {
           function ppvStepsHtml(e) {
             var st = ppvState(e), id = esc(e.id), p = e.ppv, bought = ppvBought(e.id), price = ppvPrice(p);
             function b(act, label, extra) { return '<a class="tv-ev-b tv-ppv-b' + (extra || '') + '" tabindex="0" data-ppv="' + act + '" data-id="' + id + '">' + esc(label) + '</a>'; }
-            function box(n, ttl, sub, btns, done) { return '<div class="tv-ppv-step"><div class="tv-ppv-n' + (done ? ' tv-ppv-done' : '') + '">' + (done ? '\u2713' : n) + '</div><div class="tv-ppv-t">' + esc(ttl) + '</div><div class="tv-ppv-s">' + esc(sub) + '</div><div class="tv-ppv-bt">' + btns + '</div></div>'; }
+            function box(n, ttl, sub, btns, done) { return '<div class="tv-ppv-step"><div class="tv-ppv-h"><div class="tv-ppv-n' + (done ? ' tv-ppv-done' : '') + '">' + (done ? '\u2713' : n) + '</div><div class="tv-ppv-t">' + esc(ttl) + '</div></div><div class="tv-ppv-s">' + esc(sub) + '</div><div class="tv-ppv-bt">' + btns + '</div></div>'; }
             var watchLbl = st === 'live' ? T('Watch live', 'ライブを見る') : st === 'replay' ? T('Watch replay', '見逃し配信を見る') : T('Open their page', '配信ページを開く');
             var buyOk = st !== 'ended';
             return '<div class="tv-ev-k" style="margin-top:14px;">' + esc(T('FOUR STEPS \u00b7 EACH OPENS STAGECROWD INSIDE THE APP, BACK RETURNS HERE', '4つのステップ \u00b7 Stagecrowdがアプリ内で開きます。戻るでここに戻ります')) + '</div>' +
@@ -4158,10 +4170,10 @@ class MainActivity : Activity() {
             evEl.innerHTML = '<div class="tv-ev-in">' +
               (p ? '<div class="tv-ev-pc"><img src="' + p + '" alt=""></div>' : '') +
               '<div class="tv-ev-tx">' +
-              '<div class="tv-ev-top">' + esc(e.ppv ? T('PAY-PER-VIEW SHOW', 'PPV大会') : e._t + 3 * 3600000 > Date.now() ? T('UPCOMING SHOW', '今後の大会') : T('SHOW', '大会')) + '</div>' +
-              '<div class="tv-ev-lbl">' + (first && first.id === e.id ? (schedIsLive(e) && first.id === e.id ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span>' : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>') : '') + '<span>' + esc(schedIsLive(e) && first && first.id === e.id ? T('Streaming now', '配信中') : e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Show over', '終了')) + '</span></div>' +
+              (e.ppv ? '<div class="tv-ev-lbl">' + ppvChips(e) + '</div>' : '<div class="tv-ev-top">' + esc(e._t + 3 * 3600000 > Date.now() ? T('UPCOMING SHOW', '今後の大会') : T('SHOW', '大会')) + '</div>') +
+              ((e.ppv && ppvState(e) !== 'soon' && ppvState(e) !== 'sale') ? '' : '<div class="tv-ev-lbl">' + (first && first.id === e.id ? (schedIsLive(e) && first.id === e.id ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span>' : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>') : '') + '<span>' + esc(schedIsLive(e) && first && first.id === e.id ? T('Streaming now', '配信中') : e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Show over', '終了')) + '</span></div>') +
               '<div class="tv-ev-h">' + esc(e.title) + '</div>' +
-              '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
+              '<div class="tv-ev-cols">' + (e._t + 3 * 3600000 < Date.now() ? '' : '<div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>') +
               '<div><div class="tv-ev-k">' + esc(T('AT THE VENUE (JST)', '現地時間 (JST)')) + '</div><div class="tv-ev-mid">' + esc(fmtJst(e._t, true)) + '</div><div class="tv-ev-s">' + esc(e.venue || '') + '</div></div></div>' +
               (e.ppv ? ppvStepsHtml(e) : '') +
               (!e.ppv || ppvState(e) === 'soon' || ppvState(e) === 'sale' ? '<div class="tv-ev-k" style="margin-top:18px;">' + esc(T('REMIND ME', '通知')) + '</div>' +
@@ -4668,7 +4680,8 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ppv-qru{font-size:13px;color:#9aa6b4;word-break:break-all;}',
             '#tv-ev .tv-ppv-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px;}',
             '#tv-ev .tv-ppv-step{background:#141a22;border:1px solid #2a323c;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;}',
-            '#tv-ev .tv-ppv-n{width:24px;height:24px;border-radius:50%;background:#7B5CFF;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;}',
+            '#tv-ev .tv-ppv-h{display:flex;align-items:center;gap:8px;min-width:0;}',
+            '#tv-ev .tv-ppv-n{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#7B5CFF;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;}',
             '#tv-ev .tv-ppv-n.tv-ppv-done{background:#2e9e5b;}',
             '#tv-ev .tv-ppv-t{font-size:15px;font-weight:700;}',
             '#tv-ev .tv-ppv-s{font-size:12px;color:#9aa6b4;line-height:1.3;}',

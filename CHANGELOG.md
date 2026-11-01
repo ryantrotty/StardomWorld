@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.24
+
+- PPV details page: once the show is over the "Your time" column and the "Show over" line are gone (the venue time stays). The heading is now the purple PPV chip with the status chip beside it. The step number sits on the same line as the step title. The match card now lists the participants for each match (from the official card, English names; subject to change).
+- Stagecrowd video page: buttons are about 30% smaller and sit below the player (Up goes to the player, Down comes back to the buttons). After 8 seconds on the replay or live page it goes to full screen by itself, once; because browsers only allow that after a key press, the app sends an OK key press while Full screen has focus if the direct request is refused (new bridge call ppvPressOk).
+
 ## 2.10.23
 
 - Stagecrowd video page: removed the yellow key-debug line.

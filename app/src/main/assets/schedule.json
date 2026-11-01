@@ -30,27 +30,46 @@
       "matches": [
         {
           "type": "Tag Match",
-          "sides": []
+          "sides": [
+            "AZM & Miyu Amasaki",
+            "Mei Seira & Ema Maishima"
+          ]
         },
         {
           "type": "3WAY Trio Battle",
-          "sides": []
+          "sides": [
+            "Syuri, Ami Sohrei & Hina",
+            "Rina Yamashita, Itsuki Aoki & Akira Kurogane",
+            "Maki Ito, Kikyo Furusawa & Rian"
+          ]
         },
         {
           "type": "8-person Tag Match",
-          "sides": []
+          "sides": [
+            "Sakura Aya, Sayaka Kurara, Saori Anou & Anne Kanaya",
+            "Lady C, Tomoka Inaba, Ranna Yagami & Kiyoka Kotatsu"
+          ]
         },
         {
           "type": "STARS vs HATE Elimination Match",
-          "sides": []
+          "sides": [
+            "STARS: Hanan, Saya Iida, Maika, Utami Hayashishita, HANAKO, Waka Tsukiyama, Yuria Hime, Matoi Hamabe",
+            "HATE: Natsuko Tora, Momo Watanabe, Konami, Saya Kamitani, Ruaka, Rina, Bea Priestley, Azusa Inaba"
+          ]
         },
         {
           "type": "Special Mixed Tag Team Match",
-          "sides": []
+          "sides": [
+            "Natsupoi & Shingo Takagi",
+            "Yuna Mizumori & Hirooki Goto"
+          ]
         },
         {
           "type": "World of Stardom Championship",
-          "sides": []
+          "sides": [
+            "Suzu Suzuki (c)",
+            "Starlight Kid"
+          ]
         }
       ]
     },

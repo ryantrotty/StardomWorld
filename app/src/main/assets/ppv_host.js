@@ -92,14 +92,14 @@ window.__tvPpvAll = 1;
   var PAGE = /\/(live_player_test|plan_player|live_player)/;
   var css = document.createElement('style');
   css.textContent =
-    '#tv-ppv-rail{position:fixed;left:50%;transform:translateX(-50%);top:66px;z-index:2147483646;display:none;flex-direction:row;align-items:center;gap:12px;font-family:Arial,Helvetica,sans-serif}' +
+    '#tv-ppv-rail{position:fixed;left:50%;transform:translateX(-50%);top:66px;z-index:2147483646;display:none;flex-direction:row;align-items:center;gap:8px;font-family:Arial,Helvetica,sans-serif}' +
     '#tv-ppv-rail .tv-ppv-lb{display:none;font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:6px 2px 0}' +
-    '#tv-ppv-rail .tv-ppv-comm{display:flex;gap:12px}' +
-    '#tv-ppv-rail .tv-ppv-row{display:flex;gap:12px}' +
+    '#tv-ppv-rail .tv-ppv-comm{display:flex;gap:8px}' +
+    '#tv-ppv-rail .tv-ppv-row{display:flex;gap:8px}' +
     '.tv-ppv-c{margin-left:auto !important;margin-right:auto !important;justify-content:center !important}' +
     'header,.Header{display:none !important}' +
-    '#tv-ppv-rail .tv-ppv-rb{display:flex;align-items:center;justify-content:center;gap:10px;flex:0 0 auto;box-sizing:border-box;min-width:170px;padding:13px 24px;border-radius:8px;border:2px solid #2a323c !important;background:#161f2a !important;color:#fff !important;font:700 18px/1.2 Arial,Helvetica,sans-serif !important;text-decoration:none !important;cursor:pointer;outline:none !important;box-shadow:none !important}' +
-    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main{background:#D62839 !important;border-color:#D62839 !important;font-size:20px !important}' +
+    '#tv-ppv-rail .tv-ppv-rb{display:flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;box-sizing:border-box;min-width:120px;padding:9px 16px;border-radius:6px;border:2px solid #2a323c !important;background:#161f2a !important;color:#fff !important;font:700 13px/1.2 Arial,Helvetica,sans-serif !important;text-decoration:none !important;cursor:pointer;outline:none !important;box-shadow:none !important}' +
+    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main{background:#D62839 !important;border-color:#D62839 !important;font-size:14px !important}' +
     '#tv-ppv-rail .tv-ppv-rb.tv-ppv-on{background:#F4C242 !important;border-color:#F4C242 !important;color:#111 !important}' +
     '#tv-ppv-rail .tv-ppv-rb:focus{border-color:#F4C242 !important;outline:none !important;box-shadow:none !important}' +
     '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main:focus{background:#E8374A !important}' +
@@ -205,7 +205,6 @@ window.__tvPpvAll = 1;
     if (v) {
       var cp = v.closest('.video-js') || v, n = 0;
       while (cp && cp !== document.body && n++ < 12) { cp.classList.add('tv-ppv-c'); cp = cp.parentElement; }
-      var mn = document.querySelector('main'); if (mn) mn.style.paddingTop = '70px';
     }
     finds(/^theat(er|re)\s*mode$/i, 30).forEach(hideUp);
     var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
@@ -223,12 +222,34 @@ window.__tvPpvAll = 1;
     }
   }
 
+  // After 8 seconds on the player page, go to full screen on its own (once). The browser only allows that after a
+  // key press, so if the direct request is refused the app sends an OK key press while Full screen has focus.
+  var vSince = 0, autoDone = false;
+  function inFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function autoFull() {
+    if (autoDone || !/\/(plan_player|live_player)(?!_test)/.test(location.pathname)) return;
+    if (!vSince) { vSince = Date.now(); return; }
+    if (Date.now() - vSince < 8000) return;
+    autoDone = true;
+    if (inFull()) return;
+    try { fsb.focus(); } catch (e) {}
+    goFull();
+    setTimeout(function () {
+      if (inFull()) return;
+      try { fsb.focus(); if (window.AndroidHost && AndroidHost.ppvPressOk) AndroidHost.ppvPressOk(); } catch (e) {}
+    }, 700);
+  }
   var shown = false;
   setInterval(function () {
     var has = !!document.querySelector('video') && PAGE.test(location.pathname) && !document.querySelector('.CpSimpleLayout__main');
     rail.style.display = has ? 'flex' : 'none';
     if (!has) return;
     syncComm(); hideBits();
+    try {
+      var pv = document.querySelector('.video-js') || document.querySelector('video');
+      if (pv) { var rc = pv.getBoundingClientRect(); rail.style.top = Math.max(60, Math.min(rc.bottom + 14, window.innerHeight - 56)) + 'px'; }
+    } catch (e) {}
+    autoFull();
     var d = document.getElementById('tv-ppv-dbg');
     if (d && PAGE.test(location.pathname) && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
     if (!shown) { shown = true; try { fsb.focus(); } catch (e) {} }
@@ -484,7 +505,7 @@ window.__tvPpvAll = 1;
   };
 })();
 
-// The three buttons sit in one row above the player. Left/Right walk the row, Down goes to the player. Up from the
+// The three buttons sit in one row below the player. Left/Right walk the row, Up goes to the player. Down from the
 // player or its control bar comes back to the row (to the button last used).
 (function () {
   var last = null;
@@ -502,12 +523,12 @@ window.__tvPpvAll = 1;
       last = a;
       if (k === 39) { eat(); if (its[i + 1]) its[i + 1].focus(); }
       else if (k === 37) { eat(); if (its[i - 1]) its[i - 1].focus(); }
-      else if (k === 40) { eat(); player(); }
-      else if (k === 38) { eat(); }
+      else if (k === 38) { eat(); player(); }
+      else if (k === 40) { eat(); }
     } else if (its.length && a) {
       var inBar = a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu');
       var onPlayer = (a.classList && a.classList.contains('video-js')) || a.tagName === 'VIDEO';
-      if (k === 38 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
+      if (k === 40 && (inBar || onPlayer)) { eat(); (last && its.indexOf(last) >= 0 ? last : its[0]).focus(); }
     }
   }, true);
 })();
