@@ -402,6 +402,17 @@
       "url": "https://wwr-stardom.com/en/schedule/20261229-ryogoku/",
       "poster": "20261229-ryogoku",
       "own": true
+    },
+    {
+      "id": "20270103-yokohama",
+      "title": "STARDOM NEW YEAR DREAM 2027 ~Bye-poi Road FINAL~",
+      "short": "New Year Dream",
+      "venue": "Yokohama Budokan, Yokohama",
+      "start": "2027-01-03T14:00:00+09:00",
+      "doors": "2027-01-03T12:50:00+09:00",
+      "fc": "2027-01-03T12:30:00+09:00",
+      "url": "https://wwr-stardom.com/en/schedule/20270103-yokohama/",
+      "own": true
     }
   ]
 }

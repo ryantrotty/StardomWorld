@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.5
+
+- Schedule: added STARDOM NEW YEAR DREAM 2027 (Jan 3, Yokohama Budokan) with doors and start times.
+
 ## 2.11.4
 
 - Schedule: added STARDOM DREAM QUEENDOM 2026 (Dec 29, Ryogoku Kokugikan) with its poster (private builds only).
