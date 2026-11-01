@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.18
+
+- Shows menu: tiles shrink to fit their content (no empty gap above the buttons), so more of the Past shows list is on screen.
+- Stagecrowd video page: the commentary choice is limited to one English and one 日本語 button. Before, every element on the page that mentioned "commentary" got its own button, which produced the garbled strip.
+
 ## 2.10.17
 
 - Stagecrowd video page: now uses their real markup. The light/dark switch is hidden by its own class, and their information tab bar is recognised under either name (Streaming or Distribution information) so the right-hand column hides reliably.

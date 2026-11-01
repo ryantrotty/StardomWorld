@@ -162,7 +162,11 @@
     return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
   }
   function syncComm() {
-    var hits = finds(/commentary/i, 40);
+    var seen = {}, hits = finds(/commentary/i, 40).filter(function (h) {
+      var l = /japanese/i.test(txt(h)) ? 'ja' : /english/i.test(txt(h)) ? 'en' : '';
+      if (!l || seen[l]) return false;
+      seen[l] = 1; return true;
+    });
     if (!hits.length) return;
     var same = hits.length === comm.length && hits.every(function (h, i) { return comm[i].src === h; });
     if (!same) {
