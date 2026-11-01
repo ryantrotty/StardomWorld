@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.19
+
+- Stagecrowd video page: the English / 日本語 buttons are now created once and kept. Their page re-draws its own controls often, and the old code rebuilt ours each time, which dropped the D-pad focus and made them unreachable. Their theater icon is hidden along with its label.
+
 ## 2.10.18
 
 - Shows menu: tiles shrink to fit their content (no empty gap above the buttons), so more of the Past shows list is on screen.

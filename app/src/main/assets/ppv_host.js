@@ -144,8 +144,9 @@
     return hits.filter(function (e) { return !hits.some(function (o) { return o !== e && e.contains(o); }); });
   }
 
-  // commentary choice: one rail button per control found, mirroring its label and highlighting the current one
-  var comm = [];
+  // commentary choice: one English and one 日本語 button, created once and kept (their page re-renders its own
+  // controls often; rebuilding ours would drop the D-pad focus). Each click looks the real control up fresh.
+  var comm = {}, commWrap = null;
   function isOn(e) {
     var n = e, k = 0;
     while (n && k++ < 3) {
@@ -155,39 +156,35 @@
     }
     return false;
   }
-  function label(e) {
-    var t = txt(e).replace(/\s+/g, ' ');
-    if (/japanese/i.test(t)) return '日本語';
-    if (/english/i.test(t)) return 'English';
-    return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+  function langOf(h) { var t = txt(h); return /japanese/i.test(t) ? 'ja' : /english/i.test(t) ? 'en' : ''; }
+  function commSrc(l) {
+    var hs = finds(/commentary/i, 40);
+    for (var i = 0; i < hs.length; i++) if (langOf(hs[i]) === l) return hs[i];
+    return null;
+  }
+  function hideUp(e) {
+    var v = document.querySelector('video'), p = e;
+    while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v) && txt(p.parentElement) === txt(p)) p = p.parentElement;
+    p.classList.add('tv-ppv-gone');
   }
   function syncComm() {
-    var seen = {}, hits = finds(/commentary/i, 40).filter(function (h) {
-      var l = /japanese/i.test(txt(h)) ? 'ja' : /english/i.test(txt(h)) ? 'en' : '';
-      if (!l || seen[l]) return false;
-      seen[l] = 1; return true;
-    });
-    if (!hits.length) return;
-    var same = hits.length === comm.length && hits.every(function (h, i) { return comm[i].src === h; });
-    if (!same) {
-      comm.forEach(function (c) { if (c.btn.parentNode) c.btn.parentNode.removeChild(c.btn); });
-      var old = rail.querySelector('.tv-ppv-comm'); if (old) old.parentNode.removeChild(old);
-      var wrap = document.createElement('div'); wrap.className = 'tv-ppv-comm';
+    var found = { en: commSrc('en'), ja: commSrc('ja') };
+    if (!found.en && !found.ja) return;
+    if (!commWrap) {
+      commWrap = document.createElement('div'); commWrap.className = 'tv-ppv-comm';
       var lb = document.createElement('div'); lb.className = 'tv-ppv-lb'; lb.textContent = 'COMMENTARY';
       var row = document.createElement('div'); row.className = 'tv-ppv-row';
-      wrap.appendChild(lb); wrap.appendChild(row); rail.appendChild(wrap);
-      comm = hits.map(function (h) {
-        var b = document.createElement('a'); b.className = 'tv-ppv-rb'; b.tabIndex = 0; b.setAttribute('data-tvc', '1');
-        row.appendChild(b);
-        press(b, function () { fire(h); });
-        return { src: h, btn: b };
+      commWrap.appendChild(lb); commWrap.appendChild(row); rail.appendChild(commWrap);
+      [['en', 'English'], ['ja', '日本語']].forEach(function (p) {
+        var bt = document.createElement('a'); bt.className = 'tv-ppv-rb'; bt.tabIndex = 0; bt.textContent = p[1];
+        row.appendChild(bt);
+        press(bt, function () { var s = commSrc(p[0]); if (s) fire(s); });
+        comm[p[0]] = bt;
       });
     }
-    comm.forEach(function (c) {
-      c.btn.textContent = label(c.src);
-      var on = comm.length > 1 ? isOn(c.src) : true;
-      c.btn.className = 'tv-ppv-rb' + (on ? ' tv-ppv-on' : '');
-      c.src.classList.add('tv-ppv-gone');
+    ['en', 'ja'].forEach(function (l) {
+      var s = found[l];
+      if (s) { hideUp(s); comm[l].classList.toggle('tv-ppv-on', isOn(s)); }
     });
   }
 
@@ -199,7 +196,7 @@
       while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v)) p = p.parentElement;
       if (p && !p.contains(v) && p !== document.body) p.classList.add('tv-ppv-gone');
     }
-    finds(/^theat(er|re)\s*mode$/i, 30).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
+    finds(/^theat(er|re)\s*mode$/i, 30).forEach(hideUp);
     var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
     for (var i = 0; i < tg.length; i++) if (!inRail(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
     var sw = document.querySelectorAll('.MuiFormControlLabel-root,.MuiSwitch-root,input.MuiSwitch-input');
