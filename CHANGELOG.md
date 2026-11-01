@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.23
+
+- Stagecrowd video page: removed the yellow key-debug line.
+- Home page, step 4: the pay-per-view show gets its own tile next to the next-live tile. It reads PPV · ON SALE SOON, PPV · ON SALE (price and sale end), PPV · LIVE NOW (red border, "Watch live"), or PPV · REPLAY ("Watch until Nov 15"), and disappears when the replay ends. Pressing it opens the show's details page, where the four steps and the Watch button are. The next-live tile now skips pay-per-view shows, so it keeps showing the next regular show.
+
 ## 2.10.22
 
 - Stagecrowd video page: found why the commentary buttons could not be reached. The page script was being loaded twice, so there were two overlapping button rows, and the D-pad code was walking the hidden one. The whole script now runs only once per page.

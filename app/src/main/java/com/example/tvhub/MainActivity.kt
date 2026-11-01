@@ -4242,7 +4242,7 @@ class MainActivity : Activity() {
             if (!isHome()) return;
             var row = document.querySelector('#tv-test-grid .tv-grid-row');
             if (!row || document.getElementById('tv-next-live')) return;
-            var up = schedUpcoming()[0];
+            var up = schedUpcoming().filter(function(e) { return !e.ppv; })[0];   // a pay-per-view show has its own tile
             if (!up) return;
             var p = posterFor(up), a = document.createElement('a');
             a.id = 'tv-next-live';
@@ -4273,6 +4273,61 @@ class MainActivity : Activity() {
             }
             row.insertBefore(a, row.firstChild);
           }
+          // Home page: the pay-per-view show gets its own tile beside the next-live tile while it is worth showing:
+          // on sale (or about to be), live, or in its replay window. Pressing it opens the show's details page.
+          function ppvHomeEvent() {
+            var rank = { live: 0, replay: 1, sale: 2, soon: 3 }, best = null;
+            schedEvents().forEach(function(e) {
+              var st = ppvState(e);
+              if (rank[st] === undefined) return;
+              if (!best || rank[st] < rank[ppvState(best)]) best = e;
+            });
+            return best;
+          }
+          function ensurePpvTile() {
+            var a = document.getElementById('tv-ppv-home');
+            var row = isHome() ? document.querySelector('#tv-test-grid .tv-grid-row') : null;
+            var e = row ? ppvHomeEvent() : null;
+            if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); return; }
+            var st = ppvState(e), p = posterFor(e), key = e.id + ':' + st + ':' + (p ? 1 : 0) + ':' + (ppvBought(e.id) ? 1 : 0);
+            var anchor = document.getElementById('tv-live-card') || document.getElementById('tv-next-live');
+            if (a && a.__k === key && a.parentNode === row) {
+              var want = anchor ? anchor.nextSibling : row.firstChild;
+              if (a !== want && a.previousSibling !== anchor) row.insertBefore(a, want);
+              return;
+            }
+            if (!a) {
+              a = document.createElement('a');
+              a.id = 'tv-ppv-home';
+              a.className = 'tv-card';
+              a.tabIndex = 0;
+              a.href = 'javascript:void(0)';
+              a.setAttribute('translate', 'no');
+            }
+            a.setAttribute('data-ev', e.id);
+            var ss = ppvMs(e.ppv.sale_end), price = ppvPrice(e.ppv), live = st === 'live';
+            var tag = st === 'live' ? T('PPV · LIVE NOW', 'PPV · 開催中') : st === 'replay' ? T('PPV · REPLAY', 'PPV · 見逃し配信') : st === 'sale' ? T('PPV · ON SALE', 'PPV · 発売中') : T('PPV · ON SALE SOON', 'PPV · まもなく発売');
+            var line = st === 'live' ? T('Watch live', 'ライブを見る') : st === 'replay' ? T('Watch until ', '視聴期限 ') + fmtMD(ppvReplayEnd(e)) + T('', 'まで') : (price ? price + ' · ' : '') + (ss ? T('Sale ends ', '販売終了 ') + fmtMD(ss) + T('', '') : '');
+            var when = esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t));
+            var col = live ? '#D62839' : '#7B5CFF';
+            if (p) {
+              a.style.cssText = 'flex:0 0 calc(50% - 12px); max-width:calc(50% - 12px); height:228px; background:#1a1a1a; border:2px solid ' + col + '; border-radius:10px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:flex;';
+              a.innerHTML = '<img src="' + p + '" alt="" style="flex:0 0 161px; width:161px; height:100%; object-fit:cover; object-position:top; display:block;">' +
+                '<div style="padding:14px 18px; color:#fff; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:4px; box-sizing:border-box;">' +
+                '<div style="color:' + (live ? '#ff6b78' : '#b6a4ff') + '; font-size:12px; font-weight:800; letter-spacing:1px;">' + esc(tag) + '</div>' +
+                '<div style="font-size:21px; font-weight:bold; line-height:1.2em; word-break:normal; overflow-wrap:normal;">' + esc(e.title) + '</div>' +
+                '<div style="font-size:16px; font-weight:800; color:#F4C242;">' + when + '</div>' +
+                '<div style="font-size:14px; color:#c9d2dc;">' + esc(line) + '</div></div>';
+            } else {
+              a.style.cssText = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border:2px solid ' + col + '; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
+              a.innerHTML = '<div style="width:100%; aspect-ratio:16/9; min-height:165px; background:linear-gradient(135deg,#1c1740,#11171E); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; box-sizing:border-box; padding:8px;">' +
+                '<div style="color:' + (live ? '#ff6b78' : '#b6a4ff') + '; font-size:12px; font-weight:800; letter-spacing:2px;">' + esc(tag) + '</div>' +
+                '<div style="color:#fff; font-size:20px; font-weight:800; line-height:1.15em; text-align:center;">' + esc(e.short || e.title) + '</div>' +
+                '<div style="color:#c9d2dc; font-size:14px;">' + esc(line) + '</div></div>';
+            }
+            a.__k = key;
+            row.insertBefore(a, anchor ? anchor.nextSibling : row.firstChild);
+          }
           // ---- Live card: the "next live" tile and the stream's own card on the site, combined into one
           // 16:9 tile from 60 minutes before the show until 3 hours after the start.
           // Live only if the site's card is tagged [LIVE] AND matches this scheduled show (name or JST date);
@@ -4281,7 +4336,7 @@ class MainActivity : Activity() {
           var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
           (function() {
             var st = document.createElement('style');
-            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus{transform:none !important; border-color:transparent !important;}';
+            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus, #tv-ppv-home:focus{transform:none !important; border-color:transparent !important;}';
             (document.head || document.documentElement).appendChild(st);
           })();
           function liveCardMatches(e, txt) {
@@ -4396,7 +4451,7 @@ class MainActivity : Activity() {
             liveFixViewAll(row, true);
             return true;
           }
-          function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); }
+          function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); ensurePpvTile(); }
           setInterval(liveTick, 1500);
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword

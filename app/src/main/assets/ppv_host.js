@@ -498,9 +498,6 @@ window.__tvPpvAll = 1;
     if (!rail || rail.style.display === 'none') return;
     var a = document.activeElement, k = e.keyCode, its = items(), i = its.indexOf(a);
     function eat() { e.preventDefault(); e.stopPropagation(); }
-    var dbg = document.getElementById('tv-ppv-key');
-    if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-ppv-key'; dbg.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;font:12px monospace;color:#F4C242;background:rgba(0,0,0,.7);padding:3px 6px'; document.documentElement.appendChild(dbg); }
-    dbg.textContent = 'key ' + k + ' on ' + (a ? (a.id || a.tagName) + '.' + String(a.className).slice(0, 30) : 'none') + ' idx ' + i + '/' + its.length;
     if (i >= 0) {
       last = a;
       if (k === 39) { eat(); if (its[i + 1]) its[i + 1].focus(); }
