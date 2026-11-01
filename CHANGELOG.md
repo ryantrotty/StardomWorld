@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.10
+
+- Live shows: the Shows menu chip, the schedule panel card, the show details page and the "up next" transition screen all switch to a red LIVE NOW while the show is on (from the listed start, up to 3 hours).
+- The show counts as over when the player reports it finished (20+ minutes after it was seen playing); otherwise it ends 3 hours after the start. The next show then takes over everywhere.
+- Show details: shows with no match card yet say "Match card not announced yet".
+
 ## 2.9.9
 
 - Captions: on a live stream the CC button now says "Captions aren't available on live streams" (the live player publishes no caption tracks). Replays behave as before.

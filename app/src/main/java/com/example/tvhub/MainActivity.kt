@@ -2565,15 +2565,34 @@ class MainActivity : Activity() {
         } catch (_: Exception) { null }
     }
 
+    // A show that has started (within 3 hours of its start) and that the player has not reported finished.
+    private fun liveScheduledEvent(): org.json.JSONObject? {
+        return try {
+            val events = org.json.JSONObject(scheduleText()).optJSONArray("events") ?: return null
+            val nowMs = System.currentTimeMillis()
+            val endedAt = getSharedPreferences("sched", MODE_PRIVATE).getLong("liveEndedAt", 0L)
+            var best: org.json.JSONObject? = null
+            var bestT = 0L
+            for (i in 0 until events.length()) {
+                val e = events.getJSONObject(i)
+                if (!e.optBoolean("own", true)) continue
+                val t = java.time.OffsetDateTime.parse(e.optString("start")).toInstant().toEpochMilli()
+                if (t <= nowMs && nowMs < t + 3L * 3600000L && endedAt < t && t > bestT) { best = e; bestT = t }
+            }
+            best
+        } catch (_: Exception) { null }
+    }
+
     // "Up next" line along the bottom of the page-transition screen. Only the transition overlay shows it
     // (never the launch splash), and only when the next show is within seven days.
     private fun updateTransitionStrip() {
-        val e = nextScheduledEvent()
+        val liveE = liveScheduledEvent()
+        val e = liveE ?: nextScheduledEvent()
         var strip = transitionStrip
         try {
             val startMs = if (e != null) java.time.OffsetDateTime.parse(e.optString("start")).toInstant().toEpochMilli() else 0L
             val leftMs = startMs - System.currentTimeMillis()
-            if (e == null || leftMs <= 0L || leftMs > 7L * 24L * 3600L * 1000L) {
+            if (e == null || (liveE == null && (leftMs <= 0L || leftMs > 7L * 24L * 3600L * 1000L))) {
                 strip?.visibility = View.GONE
                 return
             }
@@ -2613,7 +2632,15 @@ class MainActivity : Activity() {
             val when_ = java.time.format.DateTimeFormatter.ofPattern("EEE MMM d · h:mm a z", java.util.Locale.getDefault()).format(zdt)
             val tv = android.widget.TextView(this)
             tv.setTextColor(Color.WHITE)
-            tv.text = "UP NEXT · IN $left\n" + e.optString("short", e.optString("title")) + "\n" + when_ + " · " + e.optString("venue")
+            if (liveE != null) {
+                val head = "● LIVE NOW"
+                val sp = android.text.SpannableString(head + "\n" + e.optString("short", e.optString("title")) + "\n" + e.optString("venue"))
+                sp.setSpan(android.text.style.ForegroundColorSpan(0xFFFF4D5E.toInt()), 0, head.length, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                sp.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                tv.text = sp
+            } else {
+                tv.text = "UP NEXT · IN $left\n" + e.optString("short", e.optString("title")) + "\n" + when_ + " · " + e.optString("venue")
+            }
             tv.textSize = 16f
             strip.addView(tv)
             strip.visibility = View.VISIBLE
@@ -2667,6 +2694,12 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun showPosters(): Boolean = BuildConfig.SHOW_POSTERS
+
+        // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
+        @android.webkit.JavascriptInterface
+        fun liveEnded() {
+            this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).edit().putLong("liveEndedAt", System.currentTimeMillis()).apply()
+        }
 
         @android.webkit.JavascriptInterface
         fun posterDataUrl(month: String): String {
@@ -3133,7 +3166,21 @@ class MainActivity : Activity() {
             } catch (e) {}
           }
 
+          // The live show's player reports finish (20+ minutes after it was seen playing): remember the show is over
+          function liveEnd() {
+            try {
+              var m = location.pathname.match(/\/contents\/(\d+)/);
+              var id = localStorage.getItem('tvLiveCardV1');
+              var c = JSON.parse(localStorage.getItem('tvLiveConfirmV1') || 'null');
+              if (m && id && id === m[1] && c && c.id === id && Date.now() - c.t > 20 * 60000) {
+                localStorage.setItem('tvLiveEndV1', JSON.stringify({ id: id, t: Date.now() }));
+                if (window.AndroidHost && window.AndroidHost.liveEnded) window.AndroidHost.liveEnded();
+              }
+            } catch (e) {}
+          }
+
           function onEnded() {
+            liveEnd();
             if (window.__tvAutoNextFired) return;
             window.__tvAutoNextFired = true;
 
@@ -3749,7 +3796,19 @@ class MainActivity : Activity() {
             schedCache = out;
             return out;
           }
-          function schedUpcoming() { var n = Date.now(); return schedEvents().filter(function(e) { return e._t + 3 * 3600000 > n; }); }
+          // The show is over when the player reported finish after it started (see liveEnd on the video page).
+          function schedEnded(e) {
+            try {
+              var c = JSON.parse(lsGet('tvLiveEndV1') || 'null');
+              return !!(c && c.t >= e._t && c.id === lsGet('tvLiveCardV1'));
+            } catch (x) { return false; }
+          }
+          // Live from the listed start (or when the player has been seen playing a little earlier).
+          function schedIsLive(e) {
+            if (e._t <= Date.now()) return true;
+            try { var c = JSON.parse(lsGet('tvLiveConfirmV1') || 'null'); return !!(c && c.id === lsGet('tvLiveCardV1') && c.t >= e._t - 5 * 60000); } catch (x) { return false; }
+          }
+          function schedUpcoming() { var n = Date.now(); return schedEvents().filter(function(e) { return e._t + 3 * 3600000 > n && !(e._t <= n && schedEnded(e)); }); }
           function schedById(id) { var l = schedEvents(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
           function schedLeft(e) {
             var ms = e._t - Date.now();
@@ -3803,14 +3862,17 @@ class MainActivity : Activity() {
             var up = schedUpcoming()[0];
             if (!up) return '';
             var l = schedLeft(up);
-            return '<em class="tv-sch-pill">' + esc(up._t <= Date.now() ? l : T('NEXT ', 'あと') + l) + '</em>';
+            if (schedIsLive(up)) return '<em class="tv-sch-pill" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</em>';
+            return '<em class="tv-sch-pill">' + esc(T('NEXT ', 'あと') + l) + '</em>';
           }
           function schedTileHtml(e) {
             var p = posterFor(e), on = remGet()[e.id] !== undefined;
             return '<div class="tv-sch-tile">' +
               (p ? '<img class="tv-sch-poster" src="' + p + '" alt="">' : '') +
               '<div class="tv-sch-info">' +
-              '<div class="tv-sch-tag"><span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span></div>' +
+              '<div class="tv-sch-tag">' + (schedIsLive(e)
+                ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span><span>' + esc(T('Streaming now', '配信中')) + '</span>'
+                : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span><span>' + esc(T('in ', 'あと') + schedLeft(e).toLowerCase()) + '</span>') + '</div>' +
               '<div class="tv-sch-ttl">' + esc(e.title) + '</div>' +
               '<div class="tv-sch-v">' + esc(e.venue || '') + '</div>' +
               '<div class="tv-sch-when">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + '</div>' +
@@ -3852,7 +3914,7 @@ class MainActivity : Activity() {
           }
           function matchCardHtml(e) {
             var ms = e.matches;
-            if (!ms || !ms.length) return '';
+            if (!ms || !ms.length) return e._t + 3 * 3600000 > Date.now() ? '<div class="tv-ev-mc-none" style="margin-top:18px;color:#9aa6b4;font-size:15px;">' + esc(T('Match card not announced yet', '対戦カードは未発表です')) + '</div>' : '';
             var priv = false;
             try { priv = !!(AndroidHost.showPosters && AndroidHost.showPosters()); } catch (x) {}
             return '<div class="tv-ev-mc">' +
@@ -3886,7 +3948,7 @@ class MainActivity : Activity() {
               (p ? '<div class="tv-ev-pc"><img src="' + p + '" alt=""></div>' : '') +
               '<div class="tv-ev-tx">' +
               '<div class="tv-ev-top">' + esc(e._t + 3 * 3600000 > Date.now() ? T('UPCOMING SHOW', '今後の大会') : T('SHOW', '大会')) + '</div>' +
-              '<div class="tv-ev-tag">' + (first && first.id === e.id ? '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>' : '') + '<span>' + esc(e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Live now or just ended', '開催中または終了')) + '</span></div>' +
+              '<div class="tv-ev-tag">' + (first && first.id === e.id ? (schedIsLive(e) && first.id === e.id ? '<span class="tv-sch-tg" style="background:#D62839;color:#fff;">' + esc(T('LIVE NOW', '開催中')) + '</span>' : '<span class="tv-sch-tg">' + esc(T('NEXT LIVE', '次の大会')) + '</span>') : '') + '<span>' + esc(schedIsLive(e) && first && first.id === e.id ? T('Streaming now', '配信中') : e._t > Date.now() ? T('in ', 'あと') + schedLeft(e).toLowerCase() : T('Show over', '終了')) + '</span></div>' +
               '<div class="tv-ev-h">' + esc(e.title) + '</div>' +
               '<div class="tv-ev-cols"><div><div class="tv-ev-k">' + esc(T('YOUR TIME', 'お使いの時刻')) + '</div><div class="tv-ev-big">' + esc(fmtDay(e._t) + ', ' + fmtTimeZ(e._t)) + '</div><div class="tv-ev-s">' + times + '</div></div>' +
               '<div><div class="tv-ev-k">' + esc(T('AT THE VENUE (JST)', '現地時間 (JST)')) + '</div><div class="tv-ev-mid">' + esc(fmtJst(e._t, true)) + '</div><div class="tv-ev-s">' + esc(e.venue || '') + '</div></div></div>' +
