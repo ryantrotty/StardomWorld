@@ -28,6 +28,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Live red | #D62839 (hover #E8374A, text #FF6B78) | Live only |
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
 | Done green | #2E9E5B | Completed step |
+| Tinted fills | #2A2410, #2A2210, #2A1C10, #1C1740 | Login focus, favorites, PPV tile gradient |
 
 Two accent colours: gold for lines and text, orange for fills. Open decision: four focus looks, aim to reduce.
 

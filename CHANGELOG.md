@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.8
+
+- Colour tidy-up: 18 near-duplicate greys and navies (for example #222, #333333, #0B0F14, #121A24) now use the app's standard greys and navies. Differences are a few shades at most. Warm tinted fills (login focus, favorites, PPV tile) are kept and recorded in the design spec.
+
 ## 2.11.7
 
 - Colour: two accents instead of four. Gold #F4C242 for borders, rings, glows and text; orange #FFB347 for fills. The video-card ring and the login and first-run yellow are now gold, and the first-run pill, its pictures and the focused login button are orange. The login button no longer has a halo in its second code path either.
