@@ -130,7 +130,8 @@
     var els = document.querySelectorAll('button,a,[role=button],div,span');
     for (var i = 0; i < els.length; i++) {
       var e = els[i], c = ((e.className && e.className.baseVal === undefined ? e.className : '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.title || '')).toLowerCase();
-      if (/theat|theater|cinema/.test(c) && e !== b) { try { e.click(); } catch (x) {} break; }
+      var tx = e.children.length < 3 ? (e.textContent || '').trim().toLowerCase() : '';
+      if (e !== b && (/theat|theater|cinema/.test(c) || (tx.length < 30 && /theat(er|re)\s*mode/.test(tx)))) { try { e.click(); } catch (x) {} break; }
     }
     try {
       var ev = new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true });
