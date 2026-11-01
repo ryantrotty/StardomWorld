@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.4
+
+- Schedule: the Tag League in Takasaki (Nov 8) now shows its match card on the show page. Other shows will get theirs as the official site posts them.
+
 ## 2.9.3
 
 - Video pages: the focus outline on the first card of a related row is no longer cut off on its left. The page's own container clipped it, so the rows now sit a few pixels inside it (heading and cards stay aligned).
