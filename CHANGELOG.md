@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.0
+
+- Live card: from 60 minutes before a show until 3 hours after it starts, the home page's "Next live" tile and the site's own stream card become one 16:9 tile (stream thumbnail, poster inset, title, time, venue). It shows STARTS IN (before), STARTING, then LIVE (red, pulsing) once the player reports play, or 15 minutes after the start. OK opens the player. Afterwards the normal cards come back.
+- A card counts as the live show only if it is tagged [LIVE] and matches the scheduled show by name or Japan date. If the site's card isn't posted yet, the plain Next live tile stays.
+- Testing aid: a small grey line on the tile shows state, card id, whether the player confirmed, and minutes to/from start.
+
 ## 2.8.5
 
 - Sets now play in show order whichever way the site lists them. Nighter-style sets (listed in show order) start at the top match and play down the card; PPV-style sets (main event listed first, opener last, 【ダイゼロタイム】 matches at the bottom) start at the opener and play up. The direction is read from the match titles, not the video IDs, which run either way.
