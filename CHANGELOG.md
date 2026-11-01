@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.3
+
+- Video pages: the focus outline on the first card of a related row is no longer cut off on its left. The page's own container clipped it, so the rows now sit a few pixels inside it (heading and cards stay aligned).
+
 ## 2.9.2
 
 - Live tile: one gold outline when focused instead of two (the tile's own border is hidden while the focus outline shows).

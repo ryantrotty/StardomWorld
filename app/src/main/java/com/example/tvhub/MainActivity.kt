@@ -5187,7 +5187,7 @@ class MainActivity : Activity() {
 
             var wrap = document.createElement('div');
             wrap.className = 'tv-related-row';
-            wrap.style.cssText = 'margin-bottom:35px;';
+            wrap.style.cssText = 'margin-bottom:35px; padding:0 14px;';
             wrap.innerHTML = html;
             sec.classList.add('tv-related-done');
             sec.insertBefore(wrap, sec.firstChild);
