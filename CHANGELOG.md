@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.12
+
+- PPV, step 3: Buy opens Stagecrowd's show page on the Purchase tab with the precautions tick box selected, then the cart, card and confirmation pages get the same dark look, gold action button and form-order D-pad focus as sign-in. The test report is hidden on all of them.
+- New "Buy on your phone" button next to Buy: a full-screen QR code of their show page, with three short steps. Back closes it. (QR code library: qrcode-generator by Kazuhiko Arase, MIT license, bundled as assets/qrcode.js.)
+- Watch now opens the replay's own address when the replay is up, and their Viewing page tab otherwise.
+- Safety: while you are in a Stagecrowd session, a page on any other site (a bank's card-security check) gets no certificate leniency and none of the Stardom World scripts, and the top bar shows its padlock and address. The session ends when a Stardom World page opens.
+- Forgot-password link on their login page shows one line of text instead of two overlapping.
+
 ## 2.10.11
 
 - Stagecrowd: after signing in, their "Login is complete" page presses "Return to the original page" by itself, so you land back on the show page. That page also gets the dark look and no test report.

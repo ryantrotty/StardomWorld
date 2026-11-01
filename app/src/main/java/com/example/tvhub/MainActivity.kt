@@ -2152,6 +2152,7 @@ class MainActivity : Activity() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 sideMenuOpen = false
+                if (isPpvHost(url)) ppvSession = true else if (isSiteHost(url)) ppvSession = false
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
@@ -2198,14 +2199,14 @@ class MainActivity : Activity() {
                 error: SslError
             ) {
                 // Never wave through certificate problems on the PPV site (sign-in and payment); elsewhere proceed (e.g. emulator without CAs).
-                if (isPpvHost(error.url)) handler.cancel() else handler.proceed()
+                if (isPpvFlow(error.url)) handler.cancel() else handler.proceed()
             }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
                 handler.post {
-                    if (isPpvHost(request.origin?.toString())) {
+                    if (isPpvFlow(request.origin?.toString())) {
                         // The PPV site only gets protected-media (DRM) playback, nothing like camera or microphone.
                         val ok = request.resources.filter { it == android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }.toTypedArray()
                         if (ok.isNotEmpty()) request.grant(ok) else request.deny()
@@ -2726,10 +2727,14 @@ class MainActivity : Activity() {
             this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).edit().putLong("liveEndedAt", 0L).apply()
         }
 
+        // The small QR code library, loaded only when the "Buy on your phone" screen opens.
+        @android.webkit.JavascriptInterface
+        fun assetJs(name: String): String = if (name == "qrcode.js") this@MainActivity.assetText("qrcode.js") else ""
+
         // A button on a Stagecrowd page (its "Back to top" after registering) that should return to the show.
         @android.webkit.JavascriptInterface
         fun ppvLeave() {
-            this@MainActivity.runOnUiThread { if (isPpvHost(webView.url)) leavePpv() }
+            this@MainActivity.runOnUiThread { if (isPpvFlow(webView.url)) leavePpv() }
         }
 
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
@@ -3999,11 +4004,45 @@ class MainActivity : Activity() {
             if (act === 'test') { ppvGo(PPV_TEST_URL); return; }
             if (act === 'signup') { ppvGo(PPV_SIGNUP_URL); return; }
             if (act === 'bought') { ppvSetBought(id, !ppvBought(id)); evOpen(id); return; }
+            if (act === 'phone') { ppvQrOpen(e); return; }
+            if (act === 'qrclose') { ppvQrClose(); return; }
             if (act === 'signin') { ppvGo(PPV_LOGIN_URL); return; }   // their login page (it links to registration too); it returns to the show page
             if (!url) return;
             if (act === 'buy') url += '#tv=buy';       // their page opens on the "Purchase tickets" tab
-            else if (act === 'watch') url += '#tv=watch';   // ... or on the "Viewing page" tab
+            else if (act === 'watch') url = (ppvState(e) === 'replay' && p.watch_url) ? p.watch_url : url + '#tv=watch';   // the replay's own address, else their "Viewing page" tab
                         ppvGo(url);
+          }
+          // "Buy on your phone": a QR code of their show page, big and white so a phone camera reads it from the couch.
+          function ppvQrOpen(e) {
+            if (!evEl || !e.ppv) return;
+            var url = e.ppv.page || e.ppv.url || '', svg = '';
+            try {
+              var lib = (new Function(AndroidHost.assetJs('qrcode.js') + ';return qrcode;'))();
+              var qr = lib(0, 'M'); qr.addData(url); qr.make();
+              svg = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+            } catch (x) {}
+            ppvQrClose();
+            var inn = evEl.querySelector('.tv-ev-in'); if (inn) inn.style.display = 'none';
+            var m = document.createElement('div');
+            m.className = 'tv-ppv-qr';
+            m.innerHTML = '<div class="tv-ppv-qrbox">' + (svg || '<div style="color:#111;padding:20px;">QR unavailable</div>') + '</div>' +
+              '<div class="tv-ppv-qrtx"><div class="tv-ev-h">' + esc(T('Buy on your phone', 'スマホで購入')) + '</div>' +
+              '<div class="tv-ppv-qrs">' + esc(T('1. Point your phone camera at the code.', '1. スマホのカメラでコードを読み取ります。')) + '</div>' +
+              '<div class="tv-ppv-qrs">' + esc(T('2. Sign in with the same Stagecrowd account, then buy on the Purchase tab.', '2. 同じStagecrowdアカウントでログインし、購入タブから購入します。')) + '</div>' +
+              '<div class="tv-ppv-qrs">' + esc(T('3. Come back here and press Watch.', '3. ここに戻って「視聴」を押します。')) + '</div>' +
+              '<div class="tv-ppv-qru">' + esc(url.replace(/^https?:\/\//, '')) + '</div>' +
+              '<a class="tv-ev-b tv-ppv-b" tabindex="0" data-ppv="qrclose" data-id="' + esc(e.id) + '" style="align-self:flex-start;">' + esc(T('Close', '閉じる')) + '</a></div>';
+            evEl.appendChild(m);
+            var c = m.querySelector('.tv-ev-b'); if (c) { try { c.focus({ preventScroll: true }); } catch (x) { c.focus(); } }
+          }
+          function ppvQrClose() {
+            if (!evEl) return false;
+            var m = evEl.querySelector('.tv-ppv-qr');
+            if (!m) return false;
+            m.parentNode.removeChild(m);
+            var inn = evEl.querySelector('.tv-ev-in'); if (inn) inn.style.display = '';
+            var b = evEl.querySelector('.tv-ppv-b[data-ppv="phone"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (x) { b.focus(); } }
+            return true;
           }
           function ppvStepsHtml(e) {
             var st = ppvState(e), id = esc(e.id), p = e.ppv, bought = ppvBought(e.id), price = ppvPrice(p);
@@ -4015,7 +4054,7 @@ class MainActivity : Activity() {
               '<div class="tv-ppv-steps">' +
               box(1, T('Test playback', '再生テスト'), T('Free check that it plays on this TV.', 'このテレビで再生できるか無料で確認します。'), b('test', T('Run the test', 'テストする'))) +
               box(2, T('Sign up or sign in', '登録・ログイン'), T('New here? Their sign-in page has Register.', '初めての方は、ログイン画面から新規登録できます。'), b('signin', T('Sign in', 'ログイン'))) +
-              box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Card payment on their page.', 'お支払いは先方のページで。'), buyOk ? b('buy', T('Buy', '購入') + (price ? ' ' + price : '')) : '') +
+              box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Card payment on their page.', 'お支払いは先方のページで。'), buyOk ? b('buy', T('Buy', '購入') + (price ? ' ' + price : '')) + b('phone', T('Buy on your phone', 'スマホで購入')) : '') +
               box(4, T('Watch', '視聴'), T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。'), b('watch', watchLbl), false) +
               '</div>';
           }
@@ -4136,9 +4175,9 @@ class MainActivity : Activity() {
           function evHalt(e) { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
           window.addEventListener('keydown', function(e) {
             if (!evEl || isOpen) return;   // while the menu is open on top, the menu handles the keys
-            var k = e.keyCode, bs = Array.prototype.slice.call(evEl.querySelectorAll('.tv-ev-b')), cur = document.activeElement, i = bs.indexOf(cur);
+            var k = e.keyCode, bs = Array.prototype.slice.call(evEl.querySelectorAll('.tv-ev-b')).filter(function(b) { return b.offsetParent !== null; }), cur = document.activeElement, i = bs.indexOf(cur);
             evHalt(e);
-            if (k === 27 || k === 4 || k === 8) { evClose(); return; }
+            if (k === 27 || k === 4 || k === 8) { if (!ppvQrClose()) evClose(); return; }
             if (k === 37 && i <= 0) { openMenu(); return; }   // the menu opens over this page, which stays underneath
             if (k === 37 || k === 38) { if (bs.length) { var a = bs[Math.max(0, i - 1)]; a.focus(); } return; }
             if (k === 39 || k === 40) { if (bs.length) { var b2 = bs[Math.min(bs.length - 1, i + 1)]; b2.focus(); } return; }
@@ -4548,6 +4587,12 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
             '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:0 0 0 1px #F4C242;outline:none;}',
             '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
+            '#tv-ev .tv-ppv-qr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5vw;padding:5vh 5vw;background:#0b1118;}',
+            '#tv-ev .tv-ppv-qrbox{background:#fff;padding:14px;border-radius:12px;width:34vh;height:34vh;flex:0 0 auto;}',
+            '#tv-ev .tv-ppv-qrbox svg{width:100%;height:100%;display:block;}',
+            '#tv-ev .tv-ppv-qrtx{display:flex;flex-direction:column;gap:12px;max-width:48vw;}',
+            '#tv-ev .tv-ppv-qrs{font-size:18px;color:#c9d2dc;}',
+            '#tv-ev .tv-ppv-qru{font-size:13px;color:#9aa6b4;word-break:break-all;}',
             '#tv-ev .tv-ppv-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px;}',
             '#tv-ev .tv-ppv-step{background:#141a22;border:1px solid #2a323c;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;}',
             '#tv-ev .tv-ppv-n{width:24px;height:24px;border-radius:50%;background:#7B5CFF;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;}',
@@ -8132,6 +8177,19 @@ class MainActivity : Activity() {
     """.trimIndent()
 
     // PPV shows are sold and streamed by Stagecrowd, a different site: none of the Stardom World scripts run there.
+    // True from the moment a Stagecrowd page opens until a Stardom World page does. Inside it, a page on any other
+    // site (the card-security check of a bank, say) is treated like Stagecrowd's own: no certificate leniency, none
+    // of the Stardom World scripts, and the same top bar showing whose page it is.
+    private var ppvSession = false
+
+    private fun isSiteHost(url: String?): Boolean = try {
+        val h = android.net.Uri.parse(url ?: "").host ?: ""
+        h == "stardom-world.com" || h.endsWith(".stardom-world.com")
+    } catch (_: Exception) { false }
+
+    private fun isPpvFlow(url: String?): Boolean =
+        isPpvHost(url) || (ppvSession && url != null && url.startsWith("http") && !isSiteHost(url))
+
     private fun isPpvHost(url: String?): Boolean = try {
         val h = android.net.Uri.parse(url ?: "").host ?: ""
         h == "stagecrowd.live" || h.endsWith(".stagecrowd.live")
@@ -8142,7 +8200,7 @@ class MainActivity : Activity() {
     private fun leavePpv() {
         val hist = webView.copyBackForwardList()
         var i = hist.currentIndex - 1
-        while (i >= 0 && isPpvHost(hist.getItemAtIndex(i).url)) i--
+        while (i >= 0 && isPpvFlow(hist.getItemAtIndex(i).url)) i--
         if (i >= 0) webView.goBackOrForward(i - hist.currentIndex) else webView.loadUrl(START_URL)
     }
 
@@ -8151,7 +8209,7 @@ class MainActivity : Activity() {
 
     // A thin bar of ours along the top of a Stagecrowd page: what Back does, and whose page it is (secure or not).
     private fun updatePpvBar(url: String?) {
-        if (!isPpvHost(url)) {
+        if (!isPpvFlow(url)) {
             ppvBar?.visibility = View.GONE
             return
         }
@@ -8189,7 +8247,7 @@ class MainActivity : Activity() {
     }
 
     private fun injectPageScripts(view: WebView) {
-        if (isPpvHost(view.url)) {
+        if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("ppv_host.js"), null)
             return
         }
@@ -9410,7 +9468,7 @@ class MainActivity : Activity() {
                         hideCustomView()
                         return true
                     }
-                    if (isPpvHost(webView.url)) {
+                    if (isPpvFlow(webView.url)) {
                         leavePpv()
                         return true
                     }

@@ -173,6 +173,7 @@
     for (var i = 0; i < bs.length; i++) {
       if (want.test((bs[i].textContent || '').trim().replace(/\s+/g, ' '))) {
         try { bs[i].click(); bs[i].focus(); bs[i].scrollIntoView({ block: 'center' }); } catch (e) {}
+        if (m[1] === 'buy') setTimeout(function () { var c = document.querySelector('input.agree_chkbox') || document.querySelector('label.check_box'); if (c) { try { c.focus(); c.scrollIntoView({ block: 'center' }); } catch (e) {} } }, 700);
         clearInterval(iv);
         return;
       }
@@ -187,7 +188,7 @@
   function sync() {
     var d = document.getElementById('tv-ppv-dbg');
     if (!d) return;
-    var forms = /\/(login|member|password|form)/.test(location.pathname);
+    var forms = /\/(login|member|password|form|cart|order|mypage|ec_pay)/.test(location.pathname) || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
     d.style.display = forms ? 'none' : '';
   }
   setInterval(sync, 700);
@@ -219,7 +220,7 @@
 // ---- Sign-in, registration and password pages: a cleaner, dark look and a D-pad order that follows the form.
 // Their markup can change, so everything here is light: CSS on top, and an explicit list of controls to step through.
 (function () {
-  if (!/^\/s\/[^/]+\/(login|member|password)/.test(location.pathname)) return;
+  if (!/^\/s\/[^/]+\/(login|member|password|cart|order)/.test(location.pathname)) return;
 
   var st = document.createElement('style');
   st.textContent =
@@ -231,7 +232,7 @@
     'button,input[type=submit]{background:#2a323c !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:8px !important;font-weight:700 !important}' +
     '.CpBaseBtn{display:block !important;background:#1a212b !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:10px !important;padding:12px 24px !important;text-align:center !important;font-size:20px !important;font-weight:700 !important;text-decoration:none !important;box-shadow:none !important}' +
     '.CpBaseBtn *{color:inherit !important}' +
-    'button.CpBaseBtn[type=submit],button.tv-ppv-main,input[type=submit].tv-ppv-main{background:#F4C242 !important;color:#111 !important;border-color:#F4C242 !important}' +
+    '.CpBaseBtn.tv-ppv-main,button.tv-ppv-main,input[type=submit].tv-ppv-main{background:#F4C242 !important;color:#111 !important;border-color:#F4C242 !important}' +
     '.CpFormTableRow__header__label,.CpPageTitle{color:#fff !important}' +
     '.CpPageTitle{font-size:30px !important}' +
     '.CpClickableText{text-decoration:underline !important}' +
@@ -278,11 +279,17 @@
     return out;
   }
   function mainButton() {
-    var l = list(), pick = null;
-    for (var i = 0; i < l.length; i++) if (/(submit)/.test(l[i].type || '') || (l[i].tagName === 'BUTTON' && !pick)) pick = l[i];
+    var l = list(), pick = null, act = /^(confirm your order|pay with this card|proceed to purchase procedure|add to cart|log in|login|send email address|return to the original page)$/i;
+    for (var i = 0; i < l.length; i++) if (act.test((l[i].textContent || l[i].value || '').trim().replace(/\s+/g, ' '))) pick = l[i];
+    if (!pick) for (var j = 0; j < l.length; j++) if (/(submit)/.test(l[j].type || '') || (l[j].tagName === 'BUTTON' && !pick)) pick = l[j];
     if (pick) pick.classList.add('tv-ppv-main');
   }
   setInterval(mainButton, 1500);
+  // Their forgot-password link draws two layers of text once the background is gone: keep one.
+  setInterval(function () {
+    var l = document.querySelectorAll('a.CpClickableText[href*="password/reminder"]');
+    for (var i = 0; i < l.length; i++) if (!l[i].__tvFix) { l[i].__tvFix = 1; l[i].textContent = 'Forgot your password?'; }
+  }, 1000);
 
   function focusEl(e) {
     try { e.focus({ preventScroll: true }); } catch (x) { e.focus(); }
