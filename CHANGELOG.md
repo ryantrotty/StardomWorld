@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.2
+
+- Stagecrowd video page: sizes now follow the app's other video pages. Their page is laid out narrower than the 1440 px the app uses elsewhere, which made the bar and its buttons look too big; the bar's text, buttons and spacing are now scaled to match, and the picture is 60% of the screen width, starting about 7% down.
+
 ## 2.11.1
 
 - Stagecrowd video page: their page can come up in Japanese (英語実況 / 日本語実況 for the commentary, シアターモード for theater mode). The language button, the theater toggle and the dark/light switch are now found in either language, and the info column is found from its tab bar, so it hides either way.

@@ -93,16 +93,19 @@ window.__tvPpvAll = 1;
   var PAGE = /\/(live_player_test|plan_player|live_player)/;
   var ACCENT = '#FFB347', DARK = '#1A1A1A', TOP = 64, BARH = 64;
   var css = document.createElement('style');
+  // Sizes are written for the 1440 px wide layout the app's other video pages use, and scaled by --s to this page's
+  // width (their page is laid out narrower, so the same pixel sizes would look bigger on the TV).
+  function px(n) { return 'calc(' + n + 'px * var(--s,1))'; }
   css.textContent =
-    '#tv-ppv-bar{position:fixed;display:none;align-items:center;gap:14px;box-sizing:border-box;height:' + BARH + 'px;padding:0 14px;background:rgba(0,0,0,0.8);border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;z-index:2147483646}' +
-    '#tv-ppv-bar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap}' +
-    '#tv-ppv-bar .tv-pb-track{flex:1 1 0;min-width:40px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden}' +
+    '#tv-ppv-bar{position:fixed;display:none;align-items:center;gap:' + px(14) + ';box-sizing:border-box;height:' + px(BARH) + ';padding:0 ' + px(14) + ';background:rgba(0,0,0,0.8);border-radius:0 0 ' + px(6) + ' ' + px(6) + ';font-family:Arial,Helvetica,sans-serif;color:#ffffff;z-index:2147483646}' +
+    '#tv-ppv-bar .tv-pb-time{flex:0 0 auto;font-size:' + px(14) + ';white-space:nowrap}' +
+    '#tv-ppv-bar .tv-pb-track{flex:1 1 0;min-width:' + px(60) + ';height:' + px(8) + ';border-radius:' + px(4) + ';background:#3b4656;position:relative;overflow:hidden}' +
     '#tv-ppv-bar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + '}' +
-    '#tv-ppv-bar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center}' +
-    '#tv-ppv-bar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,0.4) !important;border:2px solid rgba(255,255,255,0.53) !important;color:#ffffff !important;font:700 15px Arial,Helvetica,sans-serif !important;white-space:nowrap;cursor:pointer;outline:none !important;box-shadow:none !important}' +
+    '#tv-ppv-bar .tv-pb-btns{flex:0 0 auto;display:flex;gap:' + px(6) + ';align-items:center}' +
+    '#tv-ppv-bar button.tv-pbtn{margin:0;padding:' + px(8) + ' ' + px(12) + ';border-radius:' + px(10) + ';background:rgba(0,0,0,0.4) !important;border:' + px(2) + ' solid rgba(255,255,255,0.53) !important;color:#ffffff !important;font:700 ' + px(15) + ' Arial,Helvetica,sans-serif !important;white-space:nowrap;cursor:pointer;outline:none !important;box-shadow:none !important}' +
     '#tv-ppv-bar button.tv-pbtn:focus{background:' + ACCENT + ' !important;border-color:' + ACCENT + ' !important;color:' + DARK + ' !important;outline:none !important}' +
-    '#tv-pskip{position:fixed;z-index:2147483647;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc}' +
-    '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center}' +
+    '#tv-pskip{position:fixed;z-index:2147483647;display:none;flex-direction:column;gap:' + px(4) + ';padding:' + px(10) + ';border-radius:' + px(12) + ';background:rgba(0,0,0,0.88);border:' + px(2) + ' solid rgba(255,255,255,0.25);font:700 ' + px(15) + ' Arial,Helvetica,sans-serif;color:#c9d2dc}' +
+    '#tv-pskip div{padding:' + px(5) + ' ' + px(14) + ';border-radius:' + px(8) + ';white-space:nowrap;text-align:center}' +
     '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + '}' +
     '.vjs-control-bar,.vjs-big-play-button,.vjs-loading-spinner{display:none !important}' +
     'header,.Header{display:none !important}' +
@@ -241,12 +244,15 @@ window.__tvPpvAll = 1;
   function layout() {
     var v = document.querySelector('.video-js');
     if (!v || inFull()) return;
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var W = Math.round(Math.min(vw * 0.66, (vh - TOP - BARH - 24) * 16 / 9)), H = Math.round(W * 9 / 16), L = Math.round((vw - W) / 2);
+    var vw = window.innerWidth, vh = window.innerHeight, s = vw / 1440;
+    bar.style.setProperty('--s', s);
+    document.documentElement.style.setProperty('--s', s);
+    var barH = Math.round(BARH * s), top = Math.max(56, Math.round(vh * 0.07));
+    var W = Math.round(Math.min(vw * 0.6, (vh - top - barH - 16) * 16 / 9)), H = Math.round(W * 9 / 16), L = Math.round((vw - W) / 2);
     var set = function (k, val) { v.style.setProperty(k, val, 'important'); };
-    set('position', 'fixed'); set('left', L + 'px'); set('top', TOP + 'px'); set('width', W + 'px'); set('height', H + 'px');
+    set('position', 'fixed'); set('left', L + 'px'); set('top', top + 'px'); set('width', W + 'px'); set('height', H + 'px');
     set('margin', '0'); set('padding-top', '0'); set('max-width', 'none'); set('transform', 'none'); set('z-index', '2147483000');
-    bar.style.left = L + 'px'; bar.style.top = (TOP + H) + 'px'; bar.style.width = W + 'px';
+    bar.style.left = L + 'px'; bar.style.top = (top + H) + 'px'; bar.style.width = W + 'px';
   }
 
   // ---- Hide their extras; make everything else on the page unreachable by the D-pad
