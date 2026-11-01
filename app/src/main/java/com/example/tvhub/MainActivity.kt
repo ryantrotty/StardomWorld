@@ -2152,6 +2152,7 @@ class MainActivity : Activity() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 sideMenuOpen = false
+                updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
                     showPageTransitionOverlay()
@@ -2196,15 +2197,21 @@ class MainActivity : Activity() {
                 handler: SslErrorHandler,
                 error: SslError
             ) {
-                // Proceed on SSL errors (e.g. missing CA certificates in emulator)
-                handler.proceed()
+                // Never wave through certificate problems on the PPV site (sign-in and payment); elsewhere proceed (e.g. emulator without CAs).
+                if (isPpvHost(error.url)) handler.cancel() else handler.proceed()
             }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
                 handler.post {
-                    request.grant(request.resources)
+                    if (isPpvHost(request.origin?.toString())) {
+                        // The PPV site only gets protected-media (DRM) playback, nothing like camera or microphone.
+                        val ok = request.resources.filter { it == android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }.toTypedArray()
+                        if (ok.isNotEmpty()) request.grant(ok) else request.deny()
+                    } else {
+                        request.grant(request.resources)
+                    }
                 }
             }
 
@@ -4737,6 +4744,12 @@ class MainActivity : Activity() {
               var past = '<div class="tv-shl-t">' + esc(T('PAST SHOWS', '過去の大会')) + '</div>' +
                 '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
                 '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>';
+              try {
+                if (AndroidHost.showPosters && AndroidHost.showPosters()) {
+                  past += '<div class="tv-shl-t" style="margin-top:12px">' + esc(T('PPV TEST (TEMPORARY)', 'PPVテスト（一時）')) + '</div>' +
+                    fiHtml(T('Playback test \u00b7 Stagecrowd', '再生テスト \u00b7 Stagecrowd'), 'https://intl.stagecrowd.live/s/scint/page/live_player_test');
+                }
+              } catch (x) {}
               if (!upList.length) {
                 h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
                   '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
@@ -8000,7 +8013,59 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    // PPV shows are sold and streamed by Stagecrowd, a different site: none of the Stardom World scripts run there.
+    private fun isPpvHost(url: String?): Boolean = try {
+        val h = android.net.Uri.parse(url ?: "").host ?: ""
+        h == "stagecrowd.live" || h.endsWith(".stagecrowd.live")
+    } catch (_: Exception) { false }
+
+    private var ppvBar: android.widget.LinearLayout? = null
+    private var ppvBarHost: android.widget.TextView? = null
+
+    // A thin bar of ours along the top of a Stagecrowd page: what Back does, and whose page it is (secure or not).
+    private fun updatePpvBar(url: String?) {
+        if (!isPpvHost(url)) {
+            ppvBar?.visibility = View.GONE
+            return
+        }
+        var bar = ppvBar
+        if (bar == null) {
+            bar = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setBackgroundColor(0xFF10151C.toInt())
+                setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), (8 * density).toInt())
+                isFocusable = false
+            }
+            val back = android.widget.TextView(this).apply {
+                text = tr("\u25C0  Back returns to the show", "\u25C0  戻るで番組に戻ります")
+                setTextColor(0xFFF4C242.toInt())
+                textSize = 15f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+            }
+            val sp = android.view.View(this)
+            val host = android.widget.TextView(this).apply {
+                setTextColor(0xFFC9D2DC.toInt())
+                textSize = 14f
+            }
+            bar.addView(back, android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            bar.addView(sp, android.widget.LinearLayout.LayoutParams(0, 1, 1f))
+            bar.addView(host, android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            root.addView(bar, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP))
+            ppvBar = bar
+            ppvBarHost = host
+        }
+        val u = android.net.Uri.parse(url ?: "")
+        ppvBarHost?.text = (if (u.scheme == "https") "\uD83D\uDD12 " else "\u26A0 not secure  ") + (u.host ?: "")
+        bar.visibility = View.VISIBLE
+        root.bringChildToFront(bar)
+    }
+
     private fun injectPageScripts(view: WebView) {
+        if (isPpvHost(view.url)) {
+            view.evaluateJavascript(assetText("ppv_host.js"), null)
+            return
+        }
         // On the home page, the site's own banner and rows (which the app replaces with its own grid) are
         // hidden by CSS from the very first paint, instead of a moment later by a timer.
         view.evaluateJavascript(

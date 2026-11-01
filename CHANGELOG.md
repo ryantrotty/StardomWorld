@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.0
+
+- PPV, step 1 (private builds): Shows menu, Past shows column, "PPV TEST (TEMPORARY)": opens Stagecrowd's free playback test page inside the app. Stagecrowd pages run without any of the Stardom World scripts, with a thin bar on top (what Back does, and the padlock and address of the page), a visible D-pad focus ring, and a test report that stays on screen (page, video state, Widevine and codec support, errors).
+- Stagecrowd pages never get past certificate errors, and only get protected-media (DRM) permission, not camera or microphone.
+
 ## 2.9.13
 
 - Captions: the CC button always looks for captions first, also on a show that was live and is now on demand (it still uses the live-style player address, which 2.9.9 wrongly treated as "still live"). If the video has none, it says "Closed captions not available for this video".
