@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.12
+
+- Live shows: the live player sends no end event when a broadcast stops (confirmed on a real show). While the live show's video page is open, the app now treats 90 seconds with no playback-time updates (and not paused) as the broadcast being over, and clears the LIVE states. If the time starts moving again it undoes that. The 3-hour limit still applies when the page isn't open.
+
 ## 2.9.11
 
 - Schedule panel (Shows menu): while the first show is live its card gets a red pulsing LIVE NOW badge and a red "Watch live" button that opens the show's video page (the LIVE list if the page isn't known yet). Remind me and Details stay.

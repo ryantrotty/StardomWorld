@@ -2695,6 +2695,12 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun showPosters(): Boolean = BuildConfig.SHOW_POSTERS
 
+        // The live show's time is moving again after it was taken for over.
+        @android.webkit.JavascriptInterface
+        fun liveResumed() {
+            this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).edit().putLong("liveEndedAt", 0L).apply()
+        }
+
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
         @android.webkit.JavascriptInterface
         fun liveEnded() {
@@ -3179,6 +3185,30 @@ class MainActivity : Activity() {
             } catch (e) {}
           }
 
+          // The live player sends no end event when the broadcast stops, only the playback time stops moving.
+          // On the live show's own page: no time update for 90 s while not paused means the broadcast is over.
+          function liveWatching() {
+            try {
+              var m = location.pathname.match(/\/contents\/(\d+)/);
+              var id = localStorage.getItem('tvLiveCardV1');
+              return !!(m && id && id === m[1]);
+            } catch (e) { return false; }
+          }
+          function liveStallCheck() {
+            if (!window.__tvTU || window.__tvPaused || window.__tvStallEnded || !liveWatching()) return;
+            if (Date.now() - window.__tvTU > 90000) {
+              liveEnd();
+              try { if (localStorage.getItem('tvLiveEndV1')) window.__tvStallEnded = true; } catch (e) {}
+            }
+          }
+          function liveTimeSeen() {
+            window.__tvTU = Date.now();
+            if (window.__tvStallEnded) {   // the time is moving again: it was only a stall
+              window.__tvStallEnded = false;
+              try { localStorage.removeItem('tvLiveEndV1'); if (window.AndroidHost && window.AndroidHost.liveResumed) window.AndroidHost.liveResumed(); } catch (e) {}
+            }
+          }
+
           function onEnded() {
             liveEnd();
             if (window.__tvAutoNextFired) return;
@@ -3228,6 +3258,10 @@ class MainActivity : Activity() {
               try {
                 iframe.contentWindow.postMessage('{"method":"addEventListener","value":"finish"}', '*');
                 iframe.contentWindow.postMessage('{"method":"addEventListener","value":"play"}', '*');
+                if (liveWatching()) {
+                  iframe.contentWindow.postMessage('{"method":"addEventListener","value":"timeupdate"}', '*');
+                  iframe.contentWindow.postMessage('{"method":"addEventListener","value":"pause"}', '*');
+                }
               } catch (e) {}
             });
           }
@@ -3236,11 +3270,14 @@ class MainActivity : Activity() {
             try {
               var data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
               if (data && (data.event === 'finish' || data.event === 'ended')) onEnded();
-              if (data && (data.event === 'play' || data.event === 'playing')) liveConfirm();
+              if (data && (data.event === 'play' || data.event === 'playing')) { window.__tvPaused = false; liveConfirm(); }
+              if (data && data.event === 'pause') window.__tvPaused = true;
+              if (data && data.event === 'timeupdate') liveTimeSeen();
             } catch (e) {}
           });
 
           setInterval(hook, 1500);
+          setInterval(liveStallCheck, 5000);
         })();
     """.trimIndent()
 
