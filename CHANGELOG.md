@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.16
+
+- Shows menu: show titles are cut to two lines so the Upcoming and Past tiles stay the same size with no big gap.
+- Stagecrowd video page: their right-hand column, the theater toggle, the light/dark switch and the clickable logo are hidden. One column of buttons on the right in the app's style: Full screen (main action) and the commentary choice (English / 日本語). Up/Down walk the column, Left returns to the player, Up from the player's control bar or Right from the player goes to Full screen. Everything else on the page is made unfocusable so no hidden control can take focus.
+
 ## 2.10.15
 
 - Show details page: step 3 is one Buy button that opens the phone QR screen. Buttons now have a single gold outline when focused (no double ring).

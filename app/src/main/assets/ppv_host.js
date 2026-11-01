@@ -9,9 +9,7 @@
   st.textContent = 'body{padding-top:52px !important}' +
     'a:focus,button:focus,input:focus,select:focus,textarea:focus,[tabindex]:focus,video:focus,' +
     'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tv-ppv-f{outline:4px solid #F4C242 !important;outline-offset:0 !important;box-shadow:none !important}' +
-    '#onetrust-consent-sdk,#onetrust-banner-sdk,.onetrust-pc-dark-filter,#wovn-translate-widget,[id^="wovn"],[class*="wovn-"],iframe[src*="wovn.io"],iframe[src*="onetrust"]{display:none !important}' +
-    '#tv-ppv-fs,#tv-ppv-th{background:#1a212b !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:12px !important;font:700 20px/1.2 Arial,Helvetica,sans-serif !important;padding:11px 22px !important;box-shadow:0 4px 14px rgba(0,0,0,.55) !important;outline:none !important}' +
-    '#tv-ppv-fs:focus,#tv-ppv-th:focus{border-color:#F4C242 !important;background:#232c38 !important;outline:none !important;box-shadow:0 4px 14px rgba(0,0,0,.55) !important}';
+    '#onetrust-consent-sdk,#onetrust-banner-sdk,.onetrust-pc-dark-filter,#wovn-translate-widget,[id^="wovn"],[class*="wovn-"],iframe[src*="wovn.io"],iframe[src*="onetrust"]{display:none !important}';
   (document.head || document.documentElement).appendChild(st);
 
   var errs = [];
@@ -84,85 +82,145 @@
   setInterval(render, 2000);
 })();
 
-// Theatre mode on their player only widens the page; it never asks for full screen. This adds our own
-// "Full screen" button (reachable with the D-pad, plain OK) that asks the player area for real full screen,
-// which the app then shows edge to edge. Also shrinks the test report once a video is on the page so the
-// player controls are not covered.
+// Video page: one column of our own buttons down the right (Full screen first, then the commentary choice),
+// styled like the app's own buttons. Their right-hand column (info tabs, ads), the theater toggle, the light/dark
+// switch and the clickable logo are hidden, so the D-pad only ever lands on the player or on this column.
 (function () {
+  var PAGE = /\/(live_player_test|plan_player|live_player)/;
+  var css = document.createElement('style');
+  css.textContent =
+    '#tv-ppv-rail{position:fixed;right:24px;top:72px;width:280px;z-index:2147483646;display:none;flex-direction:column;gap:12px;font-family:Arial,Helvetica,sans-serif}' +
+    '#tv-ppv-rail .tv-ppv-lb{font-size:13px;letter-spacing:1px;font-weight:700;color:#9aa6b4;margin:6px 2px 0}' +
+    '#tv-ppv-rail .tv-ppv-row{display:flex;gap:8px}' +
+    '#tv-ppv-rail .tv-ppv-rb{display:flex;align-items:center;justify-content:center;gap:10px;flex:1 1 0;min-width:0;box-sizing:border-box;padding:13px 16px;border-radius:8px;border:2px solid #2a323c !important;background:#161f2a !important;color:#fff !important;font:700 18px/1.2 Arial,Helvetica,sans-serif !important;text-decoration:none !important;cursor:pointer;outline:none !important;box-shadow:none !important}' +
+    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main{background:#D62839 !important;border-color:#D62839 !important;font-size:20px !important}' +
+    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-on{background:#F4C242 !important;border-color:#F4C242 !important;color:#111 !important}' +
+    '#tv-ppv-rail .tv-ppv-rb:focus{border-color:#F4C242 !important;outline:none !important;box-shadow:none !important}' +
+    '#tv-ppv-rail .tv-ppv-rb.tv-ppv-main:focus{background:#E8374A !important}' +
+    '#tv-ppv-rail .tv-ppv-rb:not(.tv-ppv-main):not(.tv-ppv-on):focus{background:#172029 !important}' +
+    '.tv-ppv-gone{display:none !important}';
+  (document.head || document.documentElement).appendChild(css);
+
+  var rail = document.createElement('div');
+  rail.id = 'tv-ppv-rail';
+  document.documentElement.appendChild(rail);
+
   var fsb = document.createElement('a');
-  fsb.id = 'tv-ppv-fs';
-  fsb.tabIndex = 0;
-  fsb.textContent = '\u26f6  Full screen';
-  fsb.style.cssText = 'position:fixed;right:16px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
-    'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
-  document.documentElement.appendChild(fsb);
+  fsb.id = 'tv-ppv-fs'; fsb.className = 'tv-ppv-rb tv-ppv-main'; fsb.tabIndex = 0;
+  fsb.textContent = '⛶  Full screen';
+  rail.appendChild(fsb);
+
   function target() {
     var v = document.querySelector('video');
     if (!v) return null;
     return v.closest('.video-js') || v.closest('[class*="player"]') || v.parentElement || v;
   }
-  function go() {
+  function goFull() {
     var t = target();
     if (!t) return;
     var f = t.requestFullscreen || t.webkitRequestFullscreen;
     try { if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else if (f) f.call(t); } catch (e) {}
   }
-  fsb.addEventListener('click', go);
-  fsb.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
-  setInterval(function () {
-    var has = !!document.querySelector('video') && /\/(live_player_test|plan_player|live_player)/.test(location.pathname);
-    fsb.style.display = has ? 'block' : 'none';
-    var d = document.getElementById('tv-ppv-dbg');
-    if (d) {
-      if (has) { d.style.left = 'auto'; d.style.right = '8px'; d.style.bottom = 'auto'; d.style.top = '110px'; d.style.maxWidth = '34vw'; d.style.fontSize = '10px'; d.style.opacity = '.7'; }
-    }
-  }, 1000);
-})();
-
-// Theatre mode hides their header behind the app bar, so it can't be reached with the D-pad. This adds an
-// "Exit theatre" button beside Full screen: it clicks their theatre toggle if it can find it, else sends Escape,
-// and scrolls the page back to the top so their header shows again.
-(function () {
-  var b = document.createElement('a');
-  b.id = 'tv-ppv-th';
-  b.tabIndex = 0;
-  b.textContent = '\u25ad  Theater mode';
-  b.style.cssText = 'position:fixed;right:210px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
-    'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
-  document.documentElement.appendChild(b);
-  // Their own "THEATER MODE" label sits under the player. Find the innermost element showing that text (the one
-  // that really holds the click handler or sits inside it), and make it reachable with the D-pad too.
-  function findTheater() {
-    var els = document.querySelectorAll('button,a,[role=button],div,span,label,li,p'), hit = null;
-    for (var i = 0; i < els.length; i++) {
-      var e = els[i];
-      if (e === b || e.id === 'tv-ppv-fs' || e.id === 'tv-ppv-dbg') continue;
-      var tx = (e.textContent || '').trim().toLowerCase();
-      if (tx.length < 30 && /theat(er|re)\s*mode/.test(tx)) hit = e;
-    }
-    return hit;
+  function press(el, fn) {
+    el.addEventListener('click', fn);
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); fn(); } });
   }
-  function theaterClick(e) {
+  press(fsb, goFull);
+
+  function fire(e) {
     try { e.click(); } catch (x) {}
     try { e.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch (x) {}
   }
-  setInterval(function () {
-    var t = findTheater();
-    if (t && !t.__tvTh) {
-      t.__tvTh = 1; t.tabIndex = 0;
-      t.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); theaterClick(t); } });
+  function inRail(e) { return rail.contains(e) || e.id === 'tv-ppv-dbg'; }
+  function txt(e) { return (e.textContent || '').trim(); }
+  // innermost visible-or-not element whose own short text matches
+  function finds(re, max) {
+    var els = document.querySelectorAll('button,a,[role=button],[role=tab],label,li,div,span,p'), hits = [];
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i], t = txt(e);
+      if (inRail(e) || !t || t.length > max || !re.test(t)) continue;
+      hits.push(e);
     }
-  }, 1500);
-  function go() {
-    var t = findTheater();
-    if (t) theaterClick(t);
-    window.scrollTo(0, 0);
-    document.body.classList.remove('theater', 'theatre', 'theater-mode', 'theatre-mode');
+    return hits.filter(function (e) { return !hits.some(function (o) { return o !== e && e.contains(o); }); });
   }
-  b.addEventListener('click', go);
-  b.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
-  setInterval(function () { b.style.display = (document.querySelector('video') && /\/(live_player_test|plan_player|live_player)/.test(location.pathname)) ? 'block' : 'none'; }, 1000);
+
+  // commentary choice: one rail button per control found, mirroring its label and highlighting the current one
+  var comm = [];
+  function isOn(e) {
+    var n = e, k = 0;
+    while (n && k++ < 3) {
+      var c = (typeof n.className === 'string' ? n.className : '') + ' ' + (n.getAttribute('aria-selected') || '') + ' ' + (n.getAttribute('aria-pressed') || '');
+      if (/\b(active|selected|current|is-on|checked|true)\b/i.test(c)) return true;
+      n = n.parentElement;
+    }
+    return false;
+  }
+  function label(e) {
+    var t = txt(e).replace(/\s+/g, ' ');
+    if (/japanese/i.test(t)) return '日本語';
+    if (/english/i.test(t)) return 'English';
+    return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+  }
+  function syncComm() {
+    var hits = finds(/commentary/i, 40);
+    if (!hits.length) return;
+    var same = hits.length === comm.length && hits.every(function (h, i) { return comm[i].src === h; });
+    if (!same) {
+      comm.forEach(function (c) { if (c.btn.parentNode) c.btn.parentNode.removeChild(c.btn); });
+      var old = rail.querySelector('.tv-ppv-comm'); if (old) old.parentNode.removeChild(old);
+      var wrap = document.createElement('div'); wrap.className = 'tv-ppv-comm';
+      var lb = document.createElement('div'); lb.className = 'tv-ppv-lb'; lb.textContent = 'COMMENTARY';
+      var row = document.createElement('div'); row.className = 'tv-ppv-row';
+      wrap.appendChild(lb); wrap.appendChild(row); rail.appendChild(wrap);
+      comm = hits.map(function (h) {
+        var b = document.createElement('a'); b.className = 'tv-ppv-rb'; b.tabIndex = 0; b.setAttribute('data-tvc', '1');
+        row.appendChild(b);
+        press(b, function () { fire(h); });
+        return { src: h, btn: b };
+      });
+    }
+    comm.forEach(function (c) {
+      c.btn.textContent = label(c.src);
+      var on = comm.length > 1 ? isOn(c.src) : true;
+      c.btn.className = 'tv-ppv-rb' + (on ? ' tv-ppv-on' : '');
+      c.src.classList.add('tv-ppv-gone');
+    });
+  }
+
+  function hideBits() {
+    // their right-hand column: climb from "STREAMING INFORMATION" up to just below the common ancestor with the player
+    var v = document.querySelector('video'), si = finds(/^streaming information$/i, 40)[0];
+    if (v && si) {
+      var p = si;
+      while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v)) p = p.parentElement;
+      if (p && !p.contains(v) && p !== document.body) p.classList.add('tv-ppv-gone');
+    }
+    finds(/^theat(er|re)\s*mode$/i, 30).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
+    var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
+    for (var i = 0; i < tg.length; i++) if (!inRail(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
+    finds(/^(dark|light)(\s*mode)?$/i, 20).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
+    // nothing else should take focus: the logo and any other leftover control become inert
+    var all = document.querySelectorAll('a,button,input,select,textarea,[tabindex]');
+    for (var j = 0; j < all.length; j++) {
+      var e = all[j];
+      if (inRail(e) || e.closest('.video-js') || e.contains(v)) continue;
+      if (e.getAttribute('tabindex') !== '-1') e.setAttribute('tabindex', '-1');
+      e.style.pointerEvents = 'none';
+    }
+  }
+
+  var shown = false;
+  setInterval(function () {
+    var has = !!document.querySelector('video') && PAGE.test(location.pathname) && !document.querySelector('.CpSimpleLayout__main');
+    rail.style.display = has ? 'flex' : 'none';
+    if (!has) return;
+    syncComm(); hideBits();
+    var d = document.getElementById('tv-ppv-dbg');
+    if (d && PAGE.test(location.pathname) && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
+    if (!shown) { shown = true; try { fsb.focus(); } catch (e) {} }
+  }, 800);
 })();
+
 
 // Our buttons open their show page with #tv=buy or #tv=watch: press their "Purchase tickets" or "Viewing page" tab
 // for the person, once, so the TV lands on the right part of the page.
@@ -403,18 +461,30 @@
   };
 })();
 
-// Their player's control bar keeps the D-pad inside it. Up from a bar button moves to our Full screen button, and Down
-// from there goes back to the video.
+// Their player's control bar keeps the D-pad inside it. Up from a bar button (or Right from the player) goes to our
+// column; Left from the column goes back to the player. Up and Down walk the column.
 (function () {
+  function items() {
+    var r = document.getElementById('tv-ppv-rail');
+    return r ? Array.prototype.slice.call(r.querySelectorAll('.tv-ppv-rb')) : [];
+  }
+  function player() { var v = document.querySelector('.video-js,video'); if (v) { try { v.setAttribute('tabindex', '0'); v.focus(); } catch (x) {} } return v; }
   window.addEventListener('keydown', function (e) {
-    var a = document.activeElement, fsb = document.getElementById('tv-ppv-fs');
-    if (!a || !fsb || fsb.style.display === 'none') return;
-    if (e.keyCode === 38 && a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu')) {
-      e.preventDefault(); e.stopPropagation(); fsb.focus();
-    } else if (e.keyCode === 40 && a === fsb) {
-      var v = document.querySelector('.video-js,video');
-      if (v) { e.preventDefault(); e.stopPropagation(); try { v.setAttribute('tabindex', '0'); v.focus(); } catch (x) {} }
-    } else if (e.keyCode === 39 && a.id === 'tv-ppv-th') { e.preventDefault(); fsb.focus(); }
-    else if (e.keyCode === 37 && a === fsb) { var th = document.getElementById('tv-ppv-th'); if (th) { e.preventDefault(); th.focus(); } }
+    var rail = document.getElementById('tv-ppv-rail');
+    if (!rail || rail.style.display === 'none') return;
+    var a = document.activeElement, k = e.keyCode, its = items(), i = its.indexOf(a);
+    function eat() { e.preventDefault(); e.stopPropagation(); }
+    if (i >= 0) {
+      var row = a.parentElement && a.parentElement.classList.contains('tv-ppv-row') ? its.filter(function (x) { return x.parentElement === a.parentElement; }) : null;
+      if (k === 39 && row && row.indexOf(a) < row.length - 1) { eat(); row[row.indexOf(a) + 1].focus(); }
+      else if (k === 37 && row && row.indexOf(a) > 0) { eat(); row[row.indexOf(a) - 1].focus(); }
+      else if (k === 37) { eat(); player(); }
+      else if (k === 39) { eat(); }
+      else if (k === 40) { eat(); var n = row ? its[its.indexOf(row[row.length - 1]) + 1] : its[i + 1]; if (n) n.focus(); }
+      else if (k === 38) { eat(); var p = row ? its[its.indexOf(row[0]) - 1] : its[i - 1]; if (p) p.focus(); }
+    } else if (its.length) {
+      if (k === 38 && a && a.closest && a.closest('.vjs-control-bar') && !a.closest('.vjs-menu')) { eat(); its[0].focus(); }
+      else if (k === 39 && a && (a.classList && a.classList.contains('video-js') || a.tagName === 'VIDEO')) { eat(); its[0].focus(); }
+    }
   }, true);
 })();
