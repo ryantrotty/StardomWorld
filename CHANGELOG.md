@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.8
+
+- Live card: the tile is only redrawn when its text changes (about once a minute) instead of every 1.5 seconds, which also stops the poster being re-decoded each time.
+
 ## 2.9.7
 
 - Live card: the status line (Next live / Stream is up / Started 12 min ago) moved from over the artwork to a dark label beside the LIVE chip at the top, so it is always readable.

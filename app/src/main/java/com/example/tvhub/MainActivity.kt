@@ -4039,6 +4039,9 @@ class MainActivity : Activity() {
           }
           function liveRender(a, e, id, bg) {
             var st = liveStateOf(e, id), ms = e._t - Date.now(), mins = Math.max(0, Math.round(Math.abs(ms) / 60000));
+            // Only redraw when something the tile shows has changed (state, the minute, or the poster arriving).
+            var key = st + ':' + (st === 'soon' ? schedLeft(e) : mins) + ':' + (posterFor(e) ? 1 : 0);
+            if (a.__k === key) return key;
             var chip, pill;
             if (st === 'soon') {
               chip = '<span style="background:#F4C242; color:#111; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px;">' + esc(T('STARTS IN ', '開始まで') + schedLeft(e)) + '</span>';
@@ -4060,7 +4063,8 @@ class MainActivity : Activity() {
               '<div style="min-width:0; display:flex; flex-direction:column; gap:3px; color:#fff;">' +
               '<div style="font-size:22px; font-weight:bold; line-height:1.2em;">' + esc(e.title) + '</div>' +
               '<div style="font-size:15px; font-weight:800; color:#F4C242;">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + ' <span style="color:#c9d2dc; font-weight:normal;">· ' + esc(e.venue || '') + '</span></div>' + dbg + '</div></div>';
-            return st + ':' + (st === 'soon' ? schedLeft(e) : mins);
+            a.__k = key;
+            return key;
           }
           // The row is top-aligned while the big tile is shown, so the View All tile no longer stretches: give it the height of a neighbour.
           function liveFixViewAll(row, on) {
