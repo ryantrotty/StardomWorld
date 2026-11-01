@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.7
+
+- Stagecrowd sign-in, registration and password pages: dark look to match the app, a gold main button, and a D-pad order that follows the form (fields, tick boxes, then the button) instead of jumping to the cookie banner and language chip. Up and Down step through the form, OK ticks a box, and focus starts on the first field. Their cookie banner is answered once with Reject All and then stays hidden; their language chip is hidden on these pages.
+
 ## 2.10.6
 
 - Stagecrowd pages: the gold focus ring is now drawn on the visible button, link or checkbox label that holds the focus, also where their own styling hid it.

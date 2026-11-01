@@ -215,3 +215,90 @@
   document.addEventListener('focusout', function () { setTimeout(mark, 0); }, true);
   document.addEventListener('keyup', mark, true);
 })();
+
+// ---- Sign-in, registration and password pages: a cleaner, dark look and a D-pad order that follows the form.
+// Their markup can change, so everything here is light: CSS on top, and an explicit list of controls to step through.
+(function () {
+  if (!/^\/s\/[^/]+\/(login|member|password)\b/.test(location.pathname)) return;
+
+  var st = document.createElement('style');
+  st.textContent =
+    'html,body{background:#0e131a !important;color:#e8edf3 !important}' +
+    'body *:not(img):not(svg):not(path):not(input):not(select):not(textarea):not(button){background-color:transparent !important;color:#e8edf3 !important;border-color:#2a323c !important}' +
+    'a{color:#F4C242 !important}' +
+    'input[type=text],input[type=email],input[type=password],input:not([type]),select,textarea{background:#1a212b !important;color:#fff !important;border:2px solid #2a323c !important;border-radius:8px !important;font-size:20px !important}' +
+    'input[type=checkbox]{width:26px !important;height:26px !important}' +
+    'button,input[type=submit]{background:#2a323c !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:8px !important;font-weight:700 !important}' +
+    'button.tv-ppv-main,input[type=submit].tv-ppv-main{background:#F4C242 !important;color:#111 !important;border-color:#F4C242 !important}' +
+    '[class*="error"],[class*="err"]{color:#ff8a8a !important}' +
+    '#onetrust-consent-sdk,#onetrust-banner-sdk,.onetrust-pc-dark-filter,#wovn-translate-widget,[id^="wovn"],[class*="wovn-"],iframe[src*="wovn.io"],iframe[src*="onetrust"]{display:none !important}';
+  (document.head || document.documentElement).appendChild(st);
+
+  // Their cookie banner would sit in the middle of the focus order: answer it once with Reject All (the choice
+  // that keeps the least), then it stays hidden.
+  var cookieTries = 0, cookieIv = setInterval(function () {
+    var b = document.getElementById('onetrust-reject-all-handler');
+    if (!b) {
+      var bs = document.querySelectorAll('#onetrust-banner-sdk button');
+      for (var i = 0; i < bs.length; i++) if (/^reject all$/i.test((bs[i].textContent || '').trim())) { b = bs[i]; break; }
+    }
+    if (b) { try { b.click(); } catch (e) {} clearInterval(cookieIv); }
+    if (++cookieTries > 20) clearInterval(cookieIv);
+  }, 500);
+
+  function vis(e) {
+    if (!e || e.disabled) return false;
+    var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+    return cs.visibility !== 'hidden' && cs.display !== 'none' && (r.width > 4 && r.height > 4 || e.type === 'checkbox');
+  }
+  function list() {
+    var out = [], q = document.querySelectorAll('input,select,textarea,button,a');
+    for (var i = 0; i < q.length; i++) {
+      var e = q[i], t = (e.type || '').toLowerCase();
+      if (e.closest('#onetrust-consent-sdk,#wovn-translate-widget,[id^="wovn"],header,footer,nav')) continue;
+      if (e.tagName === 'INPUT' && (t === 'hidden')) continue;
+      if (e.tagName === 'TEXTAREA' && e.readOnly) continue;
+      if (e.tagName === 'A') {
+        var h = e.getAttribute('href') || '', tx = (e.textContent || '').trim();
+        if (!tx || !/(member\/add|login|password\/reminder)/.test(h)) continue;
+      }
+      if (e.tagName === 'BUTTON' && !/submit|^$/.test(t) && !(e.textContent || '').trim()) continue;
+      if (e.tagName === 'BUTTON' && /^(close|cookies settings|allow all|back button|filter icon|clear|apply|cancel|reject all|confirm my choices)$/i.test((e.textContent || '').trim())) continue;
+      if (!vis(e)) continue;
+      out.push(e);
+    }
+    return out;
+  }
+  function mainButton() {
+    var l = list(), pick = null;
+    for (var i = 0; i < l.length; i++) if (/(submit)/.test(l[i].type || '') || (l[i].tagName === 'BUTTON' && !pick)) pick = l[i];
+    if (pick) pick.classList.add('tv-ppv-main');
+  }
+  setInterval(mainButton, 1500);
+
+  function focusEl(e) {
+    try { e.focus({ preventScroll: true }); } catch (x) { e.focus(); }
+    try { e.scrollIntoView({ block: 'center' }); } catch (x) {}
+  }
+  window.addEventListener('keydown', function (ev) {
+    var k = ev.keyCode;
+    if (k !== 38 && k !== 40 && k !== 13 && k !== 23) return;
+    var a = document.activeElement, l = list(), i = l.indexOf(a);
+    if (k === 38 || k === 40) {
+      if (a && a.tagName === 'SELECT' && a.size > 1) return;
+      ev.preventDefault(); ev.stopPropagation();
+      var n = i < 0 ? 0 : Math.max(0, Math.min(l.length - 1, i + (k === 40 ? 1 : -1)));
+      if (l[n]) focusEl(l[n]);
+      return;
+    }
+    // OK on a tick box ticks it (a plain Enter does nothing on a checkbox)
+    if (a && a.tagName === 'INPUT' && a.type === 'checkbox') { ev.preventDefault(); ev.stopPropagation(); a.click(); }
+  }, true);
+
+  // Start on the first field, not on the page header.
+  var t0 = 0, ivf = setInterval(function () {
+    var l = list();
+    if (l.length) { if (!document.activeElement || document.activeElement === document.body) focusEl(l[0]); clearInterval(ivf); }
+    if (++t0 > 20) clearInterval(ivf);
+  }, 400);
+})();
