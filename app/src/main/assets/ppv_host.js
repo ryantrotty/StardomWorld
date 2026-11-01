@@ -126,17 +126,32 @@
   b.style.cssText = 'position:fixed;right:200px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
     'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
   document.documentElement.appendChild(b);
-  function go() {
-    var els = document.querySelectorAll('button,a,[role=button],div,span');
+  // Their own "THEATER MODE" label sits under the player. Find the innermost element showing that text (the one
+  // that really holds the click handler or sits inside it), and make it reachable with the D-pad too.
+  function findTheater() {
+    var els = document.querySelectorAll('button,a,[role=button],div,span,label,li,p'), hit = null;
     for (var i = 0; i < els.length; i++) {
-      var e = els[i], c = ((e.className && e.className.baseVal === undefined ? e.className : '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.title || '')).toLowerCase();
-      var tx = e.children.length < 3 ? (e.textContent || '').trim().toLowerCase() : '';
-      if (e !== b && (/theat|theater|cinema/.test(c) || (tx.length < 30 && /theat(er|re)\s*mode/.test(tx)))) { try { e.click(); } catch (x) {} break; }
+      var e = els[i];
+      if (e === b || e.id === 'tv-ppv-fs' || e.id === 'tv-ppv-dbg') continue;
+      var tx = (e.textContent || '').trim().toLowerCase();
+      if (tx.length < 30 && /theat(er|re)\s*mode/.test(tx)) hit = e;
     }
-    try {
-      var ev = new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true });
-      document.dispatchEvent(ev);
-    } catch (x) {}
+    return hit;
+  }
+  function theaterClick(e) {
+    try { e.click(); } catch (x) {}
+    try { e.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch (x) {}
+  }
+  setInterval(function () {
+    var t = findTheater();
+    if (t && !t.__tvTh) {
+      t.__tvTh = 1; t.tabIndex = 0;
+      t.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); theaterClick(t); } });
+    }
+  }, 1500);
+  function go() {
+    var t = findTheater();
+    if (t) theaterClick(t);
     window.scrollTo(0, 0);
     document.body.classList.remove('theater', 'theatre', 'theater-mode', 'theatre-mode');
   }
