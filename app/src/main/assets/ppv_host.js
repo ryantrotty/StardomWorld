@@ -406,13 +406,13 @@ window.__tvPpvAll = 1;
 
   var st = document.createElement('style');
   st.textContent =
-    'html,body{background:#0e131a !important;color:#e8edf3 !important}' +
+    'html,body{background:#0F151C !important;color:#e8edf3 !important}' +
     'body *:not(img):not(svg):not(path):not(input):not(select):not(textarea):not(button){background-color:transparent !important;color:#e8edf3 !important;border-color:#2a323c !important}' +
     'a{color:#F4C242 !important}' +
-    'input[type=text],input[type=email],input[type=password],input:not([type]),select,textarea{background:#1a212b !important;color:#fff !important;border:2px solid #2a323c !important;border-radius:8px !important;font-size:20px !important}' +
+    'input[type=text],input[type=email],input[type=password],input:not([type]),select,textarea{background:#172029 !important;color:#fff !important;border:2px solid #2a323c !important;border-radius:8px !important;font-size:20px !important}' +
     'input[type=checkbox]{width:26px !important;height:26px !important}' +
-    'button,input[type=submit]{background:#2a323c !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:8px !important;font-weight:700 !important}' +
-    '.CpBaseBtn{display:block !important;background:#1a212b !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:10px !important;padding:12px 24px !important;text-align:center !important;font-size:20px !important;font-weight:700 !important;text-decoration:none !important;box-shadow:none !important}' +
+    'button,input[type=submit]{background:#2a323c !important;color:#fff !important;border:2px solid #3B4656 !important;border-radius:8px !important;font-weight:700 !important}' +
+    '.CpBaseBtn{display:block !important;background:#172029 !important;color:#fff !important;border:2px solid #3B4656 !important;border-radius:10px !important;padding:12px 24px !important;text-align:center !important;font-size:20px !important;font-weight:700 !important;text-decoration:none !important;box-shadow:none !important}' +
     '.CpBaseBtn *{color:inherit !important}' +
     '.CpBaseBtn.tv-ppv-main,button.tv-ppv-main,input[type=submit].tv-ppv-main{background:#F4C242 !important;color:#111 !important;border-color:#F4C242 !important}' +
     '.CpFormTableRow__header__label,.CpPageTitle{color:#fff !important}' +

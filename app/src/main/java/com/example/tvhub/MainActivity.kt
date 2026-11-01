@@ -259,7 +259,7 @@ class MainActivity : Activity() {
             padding-left: 14px !important;
             background-color: #1a1a1a !important;
             color: #ffffff !important;
-            border: 1px solid #333333 !important;
+            border: 1px solid #2A323C !important;
             border-radius: 4px 0 0 4px !important;
             box-sizing: border-box !important;
         }
@@ -267,9 +267,9 @@ class MainActivity : Activity() {
             height: 44px !important;
             min-width: 48px !important;
             font-size: 16px !important;
-            background-color: #2a2a2a !important;
+            background-color: #222B36 !important;
             color: #ffffff !important;
-            border: 1px solid #333333 !important;
+            border: 1px solid #2A323C !important;
             border-left: none !important;
             border-radius: 0 4px 4px 0 !important;
             box-sizing: border-box !important;
@@ -313,7 +313,7 @@ class MainActivity : Activity() {
             -webkit-appearance: none !important;
             appearance: none !important;
             color: #ffffff !important;
-            border: 1px solid #333333 !important;
+            border: 1px solid #2A323C !important;
             border-radius: 4px !important;
             font-size: 15px !important;
             font-weight: 500 !important;
@@ -401,7 +401,7 @@ class MainActivity : Activity() {
             background-color: transparent !important;
             border: none !important;
         }
-            background-color: #2a2a2a !important;
+            background-color: #222B36 !important;
             border-color: #FFB347 !important;
         }
         .box-sort {
@@ -492,9 +492,9 @@ class MainActivity : Activity() {
             border: none !important;
         }
         .content-list-item article:focus-within, .content-list-item .tile-inner:focus-within:not(article *), .content-list-item article:focus, .tv-card:focus {
-            outline: 3px solid #FFD700 !important;
+            outline: 3px solid #F4C242 !important;
             outline-offset: 2px !important;
-            box-shadow: 0 0 16px rgba(255, 215, 0, 0.8) !important;
+            box-shadow: 0 0 16px rgba(244, 194, 66, 0.8) !important;
             transform: scale(1.03) !important;
             opacity: 1 !important;
             position: relative !important;
@@ -539,7 +539,7 @@ class MainActivity : Activity() {
         }
         a.tv-hero-card:focus {
             outline: none !important;
-            box-shadow: 0 0 0 2px #000000, 0 0 0 5px #FFD700, 0 0 16px rgba(255, 215, 0, 0.8) !important;
+            box-shadow: 0 0 0 2px #000000, 0 0 0 5px #F4C242, 0 0 16px rgba(244, 194, 66, 0.8) !important;
         }
         #tv-hero-container::before, #tv-hero-container::after,
         a.tv-hero-card::before, a.tv-hero-card::after {
@@ -642,7 +642,7 @@ class MainActivity : Activity() {
           if (document.getElementById('tv-focus-style')) return;
           var s = document.createElement('style');
           s.id = 'tv-focus-style';
-          s.textContent = '*:focus{outline:4px solid #FFB347 !important;outline-offset:3px !important;box-shadow:0 0 0 8px rgba(255,90,78,.55) !important;}';
+          s.textContent = '*:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;}';
           (document.head || document.documentElement).appendChild(s);
         })();
     """.trimIndent()
@@ -731,13 +731,13 @@ class MainActivity : Activity() {
           function debugNote() { }
           function run() {
           try {
-            var gold = '#F7D117';
+            var gold = '#F4C242';
             function f(n) { return (n * U).toFixed(1) + 'px'; }
             if (!document.getElementById('tv-login-style')) {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
                 'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
                 'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
                 '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
@@ -749,7 +749,7 @@ class MainActivity : Activity() {
                 'input[type=text],input[type=email],input[type=password],input:not([type]){display:block !important;height:' + f(64) + ' !important;font-size:' + f(24) + ' !important;padding:0 ' + f(24) + ' !important;margin:' + f(12) + ' 0 0 0 !important;background:#111 !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(16) + ' !important;width:100% !important;box-sizing:border-box !important;box-shadow:none !important;outline:none !important;}' +
                 'input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input:not([type]):focus{background:#2A2410 !important;border:' + f(6) + ' solid ' + gold + ' !important;box-shadow:none !important;outline:none !important;}' +
                 'button[type=submit],input[type=submit],.tv-btn{display:block !important;width:' + f(620) + ' !important;max-width:100% !important;height:' + f(60) + ' !important;margin:' + f(14) + ' auto 0 auto !important;font-size:' + f(20) + ' !important;font-weight:bold !important;font-family:Roboto,Arial,sans-serif !important;background:transparent !important;color:#fff !important;border:' + f(4) + ' solid #fff !important;border-radius:' + f(60) + ' !important;box-shadow:none !important;outline:none !important;cursor:pointer;}' +
-                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:' + gold + ' !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ' !important;outline:none !important;}' +
+                'button[type=submit]:focus,input[type=submit]:focus,.tv-btn:focus{background:#FFB347 !important;color:#111 !important;border:' + f(4) + ' solid #fff !important;box-shadow:none !important;outline:none !important;}' +
                 'a{color:' + gold + ' !important;font-size:' + f(18) + ' !important;}' +
                 'a.tv-keep{display:inline-block !important;margin:' + f(12) + ' ' + f(14) + ' 0 ' + f(14) + ' !important;}' +
                 'p,li,span,div{font-size:' + f(18) + ';}' +
@@ -898,7 +898,7 @@ class MainActivity : Activity() {
               try {
                 var fm = scope();
                 var active = document.activeElement;
-                imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(247,209,23,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
+                imp(document.documentElement, { 'background-color': '#000', 'background-image': 'radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ')', 'background-size': f(16) + ' ' + f(16) });
                 imp(document.body, { 'background-color': 'transparent', 'background-image': 'none', 'color': '#fff', 'padding-top': f(14), 'margin': '0' });
                 // boxes around the form: no cards, no frames
                 if (fm && fm !== document) {
@@ -932,8 +932,8 @@ class MainActivity : Activity() {
                   var bf = bs[bi] === active;
                   imp(bs[bi], {
                     'display': 'block', 'width': f(620), 'max-width': '100%', 'height': f(48), 'margin': f(10) + ' auto 0 auto', 'padding': '0', 'font-size': f(18), 'font-weight': 'bold',
-                    'background': bf ? gold : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
-                    'box-shadow': bf ? '0 0 0 ' + f(5) + ' ' + gold : 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
+                    'background': bf ? '#FFB347' : 'transparent', 'color': bf ? '#111' : '#fff', 'border': f(4) + ' solid #fff', 'border-radius': f(60),
+                    'box-shadow': 'none', 'outline': 'none', 'text-shadow': 'none', 'filter': 'none'
                   });
                 }
                 var jp = document.querySelector('.tv-login-jp');
@@ -992,7 +992,7 @@ class MainActivity : Activity() {
         (function() {
           if (window.__tvCookieWatch) return;
           window.__tvCookieWatch = true;
-          var gold = '#F7D117';
+          var gold = '#F4C242';
           function f(n) { return (n * U).toFixed(1) + 'px'; }
           function vis(e) { if (!e || !e.getBoundingClientRect) return false; var r = e.getBoundingClientRect(); var cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; }
           var ALLOW = /^(allow all|accept all|accept|allow|agree|i agree|ok|すべて許可|すべて同意|同意する|同意)$/i;
@@ -1040,7 +1040,7 @@ class MainActivity : Activity() {
           }
           function btnStyle(b, on) {
             b.style.cssText = 'display:block;min-width:' + f(260) + ';height:' + f(56) + ';padding:0 ' + f(28) + ';font:900 ' + f(20) + ' Roboto,Arial,sans-serif;border-radius:' + f(60) + ';border:' + f(4) + ' solid #fff;outline:none;cursor:pointer;' +
-              (on ? 'background:' + gold + ';color:#111;box-shadow:0 0 0 ' + f(5) + ' ' + gold + ';' : 'background:transparent;color:#fff;box-shadow:none;');
+              (on ? 'background:#FFB347;color:#111;box-shadow:none;' : 'background:transparent;color:#fff;box-shadow:none;');
           }
           var btns = [];
           function paint() { var a = document.activeElement; for (var i = 0; i < btns.length; i++) btnStyle(btns[i].el, btns[i].el === a); }
@@ -2357,7 +2357,22 @@ class MainActivity : Activity() {
         if (awaitingLogin && !loggedOut) loginSucceeded(path)
     }
 
-    private fun showOnboarding() {
+    // Opened from the account menu by someone who is already signed in: same guide, but its buttons close it
+    // (back to the page they were on) instead of heading for the login page.
+    private var guideLangChanged = false
+
+    private fun showGuideFromMenu() {
+        if (onboardingShowing) return
+        guideLangChanged = false
+        showOnboarding(true)
+    }
+
+    private fun closeGuideFromMenu() {
+        closeOnboarding()
+        if (guideLangChanged) { guideLangChanged = false; webView.reload() }
+    }
+
+    private fun showOnboarding(fromMenu: Boolean = false) {
         onboardingShowing = true
         if (cursorMode) setCursorMode(false)
         // Keep the remote's focus inside the guide: nothing underneath may take it.
@@ -2366,13 +2381,14 @@ class MainActivity : Activity() {
         val v = OnboardingView(
             this,
             density,
-            { startWebLogin() },
-            { exitGuideToSite() },
+            { if (fromMenu) closeGuideFromMenu() else startWebLogin() },
+            { if (fromMenu) closeGuideFromMenu() else exitGuideToSite() },
             { lang ->
                 // Chosen on the guide's first screen: remember it and reload the (hidden) login page in it.
                 applyLanguage(lang)
-                webView.loadUrl(LOGIN_URL)
-            }
+                if (fromMenu) { guideLangChanged = true } else { webView.loadUrl(LOGIN_URL) }
+            },
+            fromMenu
         )
         onboardingView = v
         val lp = FrameLayout.LayoutParams(
@@ -2498,16 +2514,23 @@ class MainActivity : Activity() {
     }
 
     // PPV shows (sold and streamed by Stagecrowd) are not on the schedule site the daily job reads, so they live in the
-    // bundled file. The downloaded copy never has them: add the bundled PPV shows it is missing.
+    // bundled file. Add the bundled PPV shows the downloaded copy is missing, and fill in PPV details it lacks.
     private fun withBundledPpv(downloaded: String, bundled: String): String = try {
         val dj = org.json.JSONObject(downloaded)
         val de = dj.optJSONArray("events") ?: org.json.JSONArray()
-        val have = HashSet<String>()
-        for (i in 0 until de.length()) have.add(de.getJSONObject(i).optString("id"))
+        val have = HashMap<String, org.json.JSONObject>()
+        for (i in 0 until de.length()) de.getJSONObject(i).let { have[it.optString("id")] = it }
         val be = org.json.JSONObject(bundled).optJSONArray("events") ?: org.json.JSONArray()
         for (i in 0 until be.length()) {
             val e = be.getJSONObject(i)
-            if (e.has("ppv") && e.optString("id") !in have) de.put(e)
+            val bp = e.optJSONObject("ppv") ?: continue
+            val d = have[e.optString("id")]
+            if (d == null) { de.put(e); continue }
+            // Event is in both: the downloaded PPV details win, the bundled ones fill whatever it lacks
+            // (for example the watch page, which the news posts do not carry).
+            val dp = d.optJSONObject("ppv") ?: org.json.JSONObject().also { d.put("ppv", it) }
+            val ks = bp.keys()
+            while (ks.hasNext()) { val k = ks.next(); if (!dp.has(k)) dp.put(k, bp.get(k)) }
         }
         dj.put("events", de)
         dj.toString()
@@ -2739,6 +2762,12 @@ class MainActivity : Activity() {
 
         // A real OK key press into the page, so the page's own "Full screen" button is allowed to go full screen
         // (browsers refuse it without a key press); only on Stagecrowd pages.
+        // The account menu's "Instructions" link: the first-run guide again, from the language step.
+        @android.webkit.JavascriptInterface
+        fun showGuide() {
+            this@MainActivity.runOnUiThread { showGuideFromMenu() }
+        }
+
         @android.webkit.JavascriptInterface
         fun ppvPressOk() {
             this@MainActivity.runOnUiThread {
@@ -4403,7 +4432,7 @@ class MainActivity : Activity() {
             a.innerHTML = '<div style="position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:10px;">' + chip +
               '<span style="background:rgba(10,13,18,0.82); color:#fff; font-size:15px; font-weight:800; padding:6px 12px; border-radius:6px;">' + esc(pill) + '</span></div>' +
               '<div style="position:absolute; left:0; right:0; bottom:0; padding:60px 20px 16px 20px; background:linear-gradient(rgba(10,13,18,0), rgba(10,13,18,0.96) 60%); display:flex; gap:16px; align-items:flex-end; box-sizing:border-box;">' +
-              (p ? '<img src="' + p + '" alt="" style="flex:0 0 auto; width:70px; height:98px; object-fit:cover; object-position:top; border-radius:6px; border:1px solid #2a3442; display:block;">' : '') +
+              (p ? '<img src="' + p + '" alt="" style="flex:0 0 auto; width:70px; height:98px; object-fit:cover; object-position:top; border-radius:6px; border:1px solid #2A323C; display:block;">' : '') +
               '<div style="min-width:0; display:flex; flex-direction:column; gap:3px; color:#fff;">' +
               '<div style="font-size:22px; font-weight:bold; line-height:1.2em;">' + esc(e.title) + '</div>' +
               '<div style="font-size:15px; font-weight:800; color:#F4C242;">' + esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t)) + ' <span style="color:#c9d2dc; font-weight:normal;">· ' + esc(e.venue || '') + '</span></div>' + dbg + '</div></div>';
@@ -4689,12 +4718,12 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ppv-b{padding:8px 10px;font-size:14px;text-align:center;}',
             '#tv-ev .tv-ppv-b.tv-ppv-on{border-color:#2e9e5b;}',
             '#tv-ev .tv-ev-mc{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:16px;}',
-            '#tv-ev .tv-ev-m{background:#121a24;border:2px solid #222b36;border-radius:10px;padding:5px 12px;}',
+            '#tv-ev .tv-ev-m{background:#121922;border:2px solid #222b36;border-radius:10px;padding:5px 12px;}',
             '#tv-ev .tv-ev-mt{font-size:12px;font-weight:700;letter-spacing:1px;color:#F4C242;}',
             '#tv-ev .tv-ev-ms{font-size:15px;font-weight:600;line-height:1.3;}',
             '#tv-ev .tv-ev-vs{color:#9aa6b4;font-weight:400;}',
             '#tv-ev .tv-ev-hint{margin-top:auto;font-size:13px;color:#9aa6b4;}',
-            '#tv-rem-toast{position:fixed;right:28px;top:24px;z-index:2147483001;width:420px;max-width:80vw;box-sizing:border-box;display:flex;gap:14px;padding:14px 16px;border-radius:12px;background:#121a24;border:2px solid #2a323c;border-left:6px solid #F4C242;color:#fff;font-family:Arial,Helvetica,sans-serif;cursor:pointer;}',
+            '#tv-rem-toast{position:fixed;right:28px;top:24px;z-index:2147483001;width:420px;max-width:80vw;box-sizing:border-box;display:flex;gap:14px;padding:14px 16px;border-radius:12px;background:#121922;border:2px solid #2a323c;border-left:6px solid #F4C242;color:#fff;font-family:Arial,Helvetica,sans-serif;cursor:pointer;}',
             '#tv-rem-toast img{width:58px;height:82px;object-fit:cover;border-radius:6px;flex:0 0 auto;}',
             '#tv-rem-toast .tv-rt-h{font-size:11px;font-weight:800;letter-spacing:1.2px;color:#F4C242;}',
             '#tv-rem-toast .tv-rt-t{font-size:18px;font-weight:700;line-height:1.2;margin:3px 0;}',
@@ -4710,10 +4739,10 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
             '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:20px;font-weight:700;color:#c9d2dc;}',
-            '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B0F14;}',
+            '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B1118;}',
             '#tv-sm-tab{position:fixed;left:0;top:42%;width:26px;height:110px;border-radius:0 12px 12px 0;background:rgba(17,23,30,.92);border:1px solid #2a323c;border-left:0;z-index:99990;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
             'html.tv-sm-open #tv-sm-tab{display:none;}',
-            '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B0F14;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
+            '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B1118;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
             'html.tv-sm-open #tv-sm-hint{display:none;}',
             '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#000000;}',
             '#tv-page-title .tv-pt-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
@@ -5087,6 +5116,7 @@ class MainActivity : Activity() {
                 if (key === 'acct') {
                   var al = window.__tvMenuAcct || [];
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  if (window.AndroidHost && AndroidHost.showGuide) body += '<a class="tv-sm-fi" tabindex="0" data-guide="1">' + esc(T('Instructions', '使い方')) + '</a>';
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
                 h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
@@ -5125,11 +5155,20 @@ class MainActivity : Activity() {
             var list = fiItems(), cur = document.activeElement;
             if (list.indexOf(cur) === -1) { if (list[0]) focusItem(list[0]); return true; }
             var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
-            var best = null, bs = 1e9;
+            var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
             list.forEach(function(it) {
               if (it === cur) return;
               var r = it.getBoundingClientRect();
               var dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim, orth;
+              if (dir === 'right' || dir === 'left') {
+                // Straight across first: an item that shares most of this one's row (the buttons of the featured
+                // shows) beats a nearer one that sits above or below it.
+                var ov = Math.min(r.bottom, cr.bottom) - Math.max(r.top, cr.top);
+                if (ov > 0.5 * Math.min(r.height, cr.height) && (dir === 'right' ? dx > 4 : dx < -4)) {
+                  var adx = Math.abs(dx);
+                  if (adx < rowBs) { rowBs = adx; rowBest = it; }
+                }
+              }
               if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
               else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
               else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
@@ -5137,6 +5176,7 @@ class MainActivity : Activity() {
               var sc = prim + orth * 2;
               if (sc < bs) { bs = sc; best = it; }
             });
+            if (rowBest) { focusItem(rowBest); return true; }
             if (best) { focusItem(best); return true; }
             return false;
           }
@@ -5217,7 +5257,8 @@ class MainActivity : Activity() {
                 var fa = document.activeElement;
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
-                  if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
+                  else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
                   else if (fa.getAttribute('data-ppv')) { ppvAct(fa.getAttribute('data-id'), fa.getAttribute('data-ppv')); }
                   else if (fa.getAttribute('data-ev')) { evOpen(fa.getAttribute('data-ev')); }
                   else if (fa.getAttribute('data-rem')) { schedToggleRem(fa.getAttribute('data-rem')); }
@@ -5503,7 +5544,7 @@ class MainActivity : Activity() {
 
           // Same values as the main page rows.
           var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
-          var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+          var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#172029; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#F4C242; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
           var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
 
           function esc(t) {
@@ -5863,7 +5904,7 @@ class MainActivity : Activity() {
 
   var st = document.createElement('style');
   st.textContent = [
-    '#tv-fac{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-fac{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B1118;color:#ffffff;display:flex;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-fac, #tv-fac *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-fac-nav{flex:0 0 330px;box-sizing:border-box;padding:30px 20px 20px 30px;display:flex;flex-direction:column;min-height:0;border-right:1px solid #222b36;}',
     '#tv-fac .tv-fh-brandwrap{display:flex;justify-content:center;align-items:center;margin:0 0 16px 0;}',
@@ -5883,8 +5924,8 @@ class MainActivity : Activity() {
     '#tv-fac-scroll::-webkit-scrollbar{display:none;}',
     '#tv-fac-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;}',
     '#tv-fac .tv-fc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
-    '#tv-fac .tv-fc:focus{border-color:#FFB347;box-shadow:0 0 0 3px rgba(255,179,71,.35) !important;}',
-    '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#222 center/cover no-repeat;}',
+    '#tv-fac .tv-fc:focus{border-color:#F4C242;box-shadow:none !important;}',
+    '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#172029 center/cover no-repeat;}',
     '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
     '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}',
     '#tv-fac-empty{flex:1 1 auto;display:none;align-items:center;justify-content:center;}',
@@ -6271,7 +6312,7 @@ class MainActivity : Activity() {
 
   var st = document.createElement('style');
   st.textContent = [
-    '#tv-rp{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B0F14;color:#ffffff;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-rp{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B1118;color:#ffffff;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-rp, #tv-rp *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-rp-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 40px 12px 40px;font-size:36px;}',
     '#tv-rp-title .tv-rp-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
@@ -6282,8 +6323,8 @@ class MainActivity : Activity() {
     '#tv-rp a, #tv-rp a *{opacity:1 !important;filter:none !important;}',
     '#tv-rp a::before, #tv-rp a::after{content:none !important;display:none !important;}',
     '#tv-rp *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
-    '#tv-rp .tv-rc:focus{outline:3px solid #FFD700 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(255,215,0,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
-    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#222 center/cover no-repeat;}',
+    '#tv-rp .tv-rc:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
+    '#tv-rp .tv-rc-img{width:100%;aspect-ratio:16/9;height:auto;min-height:165px;background:#172029 center/cover no-repeat;}',
     '#tv-rp .tv-rc-t{word-break:normal;overflow-wrap:break-word;padding:12px 14px;color:#fff;font-size:15px;font-weight:bold;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.45em;min-height:5.8em;max-height:6.2em;box-sizing:border-box;}',
     '#tv-rp-status{padding:40px 6px;font-size:22px;color:#9aa6b4;text-align:center;}'
   ].join('\n');
@@ -7783,7 +7824,7 @@ class MainActivity : Activity() {
             html += '<div style="max-width:1440px; margin:0 auto; padding:0 24px; box-sizing:border-box;">';
 
             var cardCss = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
-            var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#222; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#FFD700; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
+            var imgCss = 'width:100%; aspect-ratio:16/9; height:auto; min-height:165px; background:#172029; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#F4C242; font-size:20px; font-weight:bold; border-radius:8px 8px 0 0;';
             var titleCss = 'word-break:normal; overflow-wrap:break-word; hyphens:none; padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.45em; min-height:5.8em; max-height:6.2em; box-sizing:border-box;';
 
             if (allRowsData && allRowsData.length > 0) {
@@ -10182,7 +10223,8 @@ private class OnboardingView(
     private val density: Float,
     private val onLogin: () -> Unit,
     private val onBrowse: () -> Unit,
-    private val onLanguage: (String) -> Unit
+    private val onLanguage: (String) -> Unit,
+    private val fromMenu: Boolean = false
 ) : FrameLayout(context) {
 
     private class Slide(val jp: String, val en: String, val capJp: String, val capEn: String, val art: Int)
@@ -10197,7 +10239,8 @@ private class OnboardingView(
         Slide("全画面。", "Full screen", "下でバー ・ 左右でスキップ ・ 戻るで終了", "Down for controls. Left/Right skips. Back exits.", 5)
     )
 
-    private val yellow = 0xFFF7D117.toInt()
+    private val yellow = 0xFFFFB347.toInt()   // fills
+    private val gold = 0xFFF4C242.toInt()     // text and strokes
     private val ink = 0xFF111111.toInt()
     private var index = 0
 
@@ -10225,7 +10268,7 @@ private class OnboardingView(
     private val logoH: Int
 
     private inner class BackdropView(c: android.content.Context) : View(c) {
-        private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x21F7D117 }
+        private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x21F4C242 }
         override fun onDraw(canvas: Canvas) {
             val step = 16f * u
             var y = step / 2
@@ -10241,7 +10284,7 @@ private class OnboardingView(
     }
 
     private inner class DotsView(c: android.content.Context) : View(c) {
-        private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = yellow; strokeWidth = 3f * u }
+        private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = gold; strokeWidth = 3f * u }
         private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = yellow }
         override fun onDraw(canvas: Canvas) {
             for (k in slides.indices) {
@@ -10376,9 +10419,9 @@ private class OnboardingView(
             skipBtn.text = "English"
             nextBtn.text = "日本語"
         } else {
-            skipBtn.text = tr("Skip to log in", "スキップしてログイン")
+            skipBtn.text = if (fromMenu) tr("Close", "閉じる") else tr("Skip to log in", "スキップしてログイン")
             backBtn.text = tr("Back", "戻る")
-            nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
+            nextBtn.text = if (index == slides.size - 1) (if (fromMenu) tr("Done", "完了") else tr("Log in", "ログイン")) else tr("Next", "次へ")
         }
         val bs = (if (isJa && !langStep) 19f else 21f) * u
         for (b in listOf(skipBtn, backBtn, nextBtn)) b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, bs)
@@ -10393,7 +10436,7 @@ private class OnboardingView(
             artWeb.visibility = View.GONE
             val logoTop = (screenH - logoH) / 2f
             val jpText = if (langStep) "言語。" else s.jp
-            jpView.setTextColor(yellow)
+            jpView.setTextColor(gold)
             jpView.gravity = Gravity.CENTER
             fit(jpView, jpText, 100f, 1100f)
             place(jpView, 0f, 0f, screenW, wrap)
@@ -10429,7 +10472,7 @@ private class OnboardingView(
             jpView.gravity = Gravity.START
             fit(jpView, s.jp, 74f, 470f)
             place(jpView, 60f, 56f, px(470f), wrap)
-            enView.setTextColor(yellow)
+            enView.setTextColor(gold)
             enView.gravity = Gravity.START
             fit(enView, s.en, 30f, 470f)
             place(enView, 60f, 146f, px(470f), wrap)
