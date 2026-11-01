@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.1
+
+- PPV, step 2: pay-per-view shows (sold and streamed by Stagecrowd) appear in the schedule with a PPV tag and a state taken from the dates alone: not on sale yet, on sale, live, replay, replay ended. The Shows menu shows a PPV card (with Watch replay while the replay is up) as the first box of Past shows, and the show details page gets a four step row: test playback, sign up or sign in, buy, watch. "I've bought it" is a switch you set yourself.
+- The first PPV show (Crimson Nightmare, Oct 29) is in the bundled schedule. Its poster is not added yet.
+- Stagecrowd pages: Back always returns to the show; a Full screen button and an Exit theatre button appear once a video is on the page; the test report shrinks to the corner.
+
 ## 2.10.0
 
 - PPV, step 1 (private builds): Shows menu, Past shows column, "PPV TEST (TEMPORARY)": opens Stagecrowd's free playback test page inside the app. Stagecrowd pages run without any of the Stardom World scripts, with a thin bar on top (what Back does, and the padlock and address of the page), a visible D-pad focus ring, and a test report that stays on screen (page, video state, Widevine and codec support, errors).

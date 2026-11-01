@@ -8,6 +8,52 @@
   },
   "events": [
     {
+      "id": "20261029-otaku",
+      "title": "STARDOM CRIMSON NIGHTMARE 2026",
+      "short": "Crimson Nightmare",
+      "venue": "EBARA WAVE Arena Ota, Tokyo",
+      "start": "2026-10-29T19:00:00+09:00",
+      "doors": "2026-10-29T18:30:00+09:00",
+      "url": "https://wwr-stardom.com/en/schedule/20261029-otaku/",
+      "poster": "",
+      "own": true,
+      "ppv": {
+        "page": "https://intl.stagecrowd.live/s/scint/group/detail/i10415",
+        "url": "https://intl.stagecrowd.live/3944875753/",
+        "price": 3300,
+        "total": 3520,
+        "sale_start": "2026-10-26T12:00:00+09:00",
+        "sale_end": "2026-11-15T19:00:00+09:00",
+        "replay_end": "2026-11-15T23:59:00+09:00"
+      },
+      "matches": [
+        {
+          "type": "Tag Match",
+          "sides": []
+        },
+        {
+          "type": "3WAY Trio Battle",
+          "sides": []
+        },
+        {
+          "type": "8-person Tag Match",
+          "sides": []
+        },
+        {
+          "type": "STARS vs HATE Elimination Match",
+          "sides": []
+        },
+        {
+          "type": "Special Mixed Tag Team Match",
+          "sides": []
+        },
+        {
+          "type": "World of Stardom Championship",
+          "sides": []
+        }
+      ]
+    },
+    {
       "id": "20261101-korakuen",
       "title": "The 16th Goddesses of Stardom ~Tag League Opening Match~",
       "short": "Tag League Opening Match",
