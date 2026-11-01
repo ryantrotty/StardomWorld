@@ -79,3 +79,67 @@
   render();
   setInterval(render, 2000);
 })();
+
+// Theatre mode on their player only widens the page; it never asks for full screen. This adds our own
+// "Full screen" button (reachable with the D-pad, plain OK) that asks the player area for real full screen,
+// which the app then shows edge to edge. Also shrinks the test report once a video is on the page so the
+// player controls are not covered.
+(function () {
+  var fsb = document.createElement('a');
+  fsb.id = 'tv-ppv-fs';
+  fsb.tabIndex = 0;
+  fsb.textContent = '⛶ Full screen';
+  fsb.style.cssText = 'position:fixed;right:16px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
+    'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
+  document.documentElement.appendChild(fsb);
+  function target() {
+    var v = document.querySelector('video');
+    if (!v) return null;
+    return v.closest('.video-js') || v.closest('[class*="player"]') || v.parentElement || v;
+  }
+  function go() {
+    var t = target();
+    if (!t) return;
+    var f = t.requestFullscreen || t.webkitRequestFullscreen;
+    try { if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else if (f) f.call(t); } catch (e) {}
+  }
+  fsb.addEventListener('click', go);
+  fsb.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
+  setInterval(function () {
+    var has = !!document.querySelector('video');
+    fsb.style.display = has ? 'block' : 'none';
+    var d = document.getElementById('tv-ppv-dbg');
+    if (d) {
+      if (has) { d.style.left = 'auto'; d.style.right = '8px'; d.style.bottom = 'auto'; d.style.top = '110px'; d.style.maxWidth = '34vw'; d.style.fontSize = '10px'; d.style.opacity = '.7'; }
+    }
+  }, 1000);
+})();
+
+// Theatre mode hides their header behind the app bar, so it can't be reached with the D-pad. This adds an
+// "Exit theatre" button beside Full screen: it clicks their theatre toggle if it can find it, else sends Escape,
+// and scrolls the page back to the top so their header shows again.
+(function () {
+  var b = document.createElement('a');
+  b.id = 'tv-ppv-th';
+  b.tabIndex = 0;
+  b.textContent = '✕ Exit theatre';
+  b.style.cssText = 'position:fixed;right:200px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
+    'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
+  document.documentElement.appendChild(b);
+  function go() {
+    var els = document.querySelectorAll('button,a,[role=button],div,span');
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i], c = ((e.className && e.className.baseVal === undefined ? e.className : '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.title || '')).toLowerCase();
+      if (/theat|theater|cinema/.test(c) && e !== b) { try { e.click(); } catch (x) {} break; }
+    }
+    try {
+      var ev = new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true });
+      document.dispatchEvent(ev);
+    } catch (x) {}
+    window.scrollTo(0, 0);
+    document.body.classList.remove('theater', 'theatre', 'theater-mode', 'theatre-mode');
+  }
+  b.addEventListener('click', go);
+  b.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
+  setInterval(function () { b.style.display = document.querySelector('video') ? 'block' : 'none'; }, 1000);
+})();
