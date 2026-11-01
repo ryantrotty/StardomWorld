@@ -2,6 +2,45 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.12
+
+- Live shows: the live player sends no end event when a broadcast stops (confirmed on a real show). While the live show's video page is open, the app now treats 90 seconds with no playback-time updates (and not paused) as the broadcast being over, and clears the LIVE states. If the time starts moving again it undoes that. The 3-hour limit still applies when the page isn't open.
+
+## 2.9.11
+
+- Schedule panel (Shows menu): while the first show is live its card gets a red pulsing LIVE NOW badge and a red "Watch live" button that opens the show's video page (the LIVE list if the page isn't known yet). Remind me and Details stay.
+
+## 2.9.10
+
+- Live shows: the Shows menu chip, the schedule panel card, the show details page and the "up next" transition screen all switch to a red LIVE NOW while the show is on (from the listed start, up to 3 hours).
+- The show counts as over when the player reports it finished (20+ minutes after it was seen playing); otherwise it ends 3 hours after the start. The next show then takes over everywhere.
+- Show details: shows with no match card yet say "Match card not announced yet".
+
+## 2.9.9
+
+- Captions: on a live stream the CC button now says "Captions aren't available on live streams" (the live player publishes no caption tracks). Replays behave as before.
+
+## 2.9.8
+
+- Live card: the tile is only redrawn when its text changes (about once a minute) instead of every 1.5 seconds, which also stops the poster being re-decoded each time.
+
+## 2.9.7
+
+- Live card: the status line (Next live / Stream is up / Started 12 min ago) moved from over the artwork to a dark label beside the LIVE chip at the top, so it is always readable.
+
+## 2.9.6
+
+- Live card: if the stream is already playing a few minutes before the listed start time, the tile says LIVE NOW straight away instead of "Starts in 1M".
+
+## 2.9.5
+
+- Live card: the grey testing line is gone.
+- Each show now gets its own poster (the one under its title on the official schedule page) instead of one poster per month. The daily schedule update picks them up, the app downloads each once (small, kept on the device, removed when the show is over), and the poster appears wherever the app shows one. Until a show's own poster has downloaded, the month's poster is used.
+
+## 2.9.4
+
+- Schedule: the Tag League in Takasaki (Nov 8) now shows its match card on the show page. Other shows will get theirs as the official site posts them.
+
 ## 2.9.3
 
 - Video pages: the focus outline on the first card of a related row is no longer cut off on its left. The page's own container clipped it, so the rows now sit a few pixels inside it (heading and cards stay aligned).

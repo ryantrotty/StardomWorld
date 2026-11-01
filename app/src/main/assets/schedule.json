@@ -1,8 +1,10 @@
 {
-  "updated": "2026-10-30T23:00:00Z",
+  "updated": "2026-11-01T02:30:00Z",
   "note": "Times are Japan time (+09:00). Own = a Stardom show.",
   "posters": {
-    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg"
+    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+    "20261103-numazu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.3%E6%B2%BC%E6%B4%A5%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+    "20261108-takasaki": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.8G%E3%83%A1%E3%83%83%E3%82%BB%E7%BE%A4%E9%A6%AC%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg"
   },
   "events": [
     {
@@ -134,7 +136,7 @@
       "doors": "2026-11-03T12:15:00+09:00",
       "fc": "2026-11-03T12:00:00+09:00",
       "url": "https://wwr-stardom.com/en/schedule/20261103-numazu/",
-      "poster": "202611",
+      "poster": "20261103-numazu",
       "own": true
     },
     {
@@ -146,8 +148,74 @@
       "doors": "2026-11-08T12:15:00+09:00",
       "fc": "2026-11-08T12:00:00+09:00",
       "url": "https://wwr-stardom.com/en/schedule/20261108-takasaki/",
-      "poster": "202611",
-      "own": true
+      "poster": "20261108-takasaki",
+      "own": true,
+      "matches": [
+        {
+          "type": "Red Goddess Official Tournament",
+          "sides": [
+            "Yuna Mizumori & Anne Kanaya",
+            "Starlight Kid & Maki Ito"
+          ],
+          "type_ja": "レッドゴッデス公式戦"
+        },
+        {
+          "type": "Red Goddess Official Tournament",
+          "sides": [
+            "Hanan & Waka Tsukiyama",
+            "Sakura Aya & Sayaka Kurara"
+          ],
+          "type_ja": "レッドゴッデス公式戦",
+          "sides_ja": [
+            "羽南 & 月山和香",
+            "さくらあや & 玖麗さやか"
+          ]
+        },
+        {
+          "type": "Red Goddess Official Tournament",
+          "sides": [
+            "Kikyo Furusawa & Kiyoka Kotatsu",
+            "Saori Anou & Fuwa-chan"
+          ],
+          "type_ja": "レッドゴッデス公式戦",
+          "sides_ja": [
+            "古沢稀杏 & 虎龍清花",
+            "安納サオリ & フワちゃん"
+          ]
+        },
+        {
+          "type": "Blue Goddess Official Tournament",
+          "sides": [
+            "Saya Iida & Utami Hayashishita",
+            "Ranna Yagami & Iron Akira"
+          ],
+          "type_ja": "ブルーゴッデス公式戦",
+          "sides_ja": [
+            "飯田沙耶 & 林下詩美",
+            "八神蘭奈 & 鉄アキラ"
+          ]
+        },
+        {
+          "type": "Blue Goddess Official Tournament",
+          "sides": [
+            "Hina & Lady C",
+            "Hazuki & Koguma"
+          ],
+          "type_ja": "ブルーゴッデス公式戦"
+        },
+        {
+          "type": "Blue Goddess Official Tournament",
+          "sides": [
+            "Dark Silueta (CMLL) & Valkyria (CMLL)",
+            "Suzu Suzuki & Rina Yamashita"
+          ],
+          "type_ja": "ブルーゴッデス公式戦",
+          "sides_ja": [
+            "ダーク・シルエタ（CMLL） & バルキリア(CMLL)",
+            "鈴季すず & 山下りな"
+          ]
+        }
+      ]
     },
     {
       "id": "20261111-korakuen",
