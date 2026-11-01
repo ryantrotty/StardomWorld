@@ -2,7 +2,9 @@
 """Builds schedule.json from wwr-stardom.com (run once a day by .github/workflows/schedule.yml).
 
 Reads this month's and next month's schedule pages (2 requests), then each upcoming event page that does not
-yet have a start time (or all of them with --full). Requests are spaced 1.5 s apart. Times on the site are Japan
+yet have a start time (or all of them with --full). Pay-per-view shows (sold and streamed by Stagecrowd) are found
+from Stardom's own PPV news category: each new post names its show, price, sale dates, replay end and the overseas
+(Stagecrowd) purchase link. Requests are spaced 1.5 s apart. Times on the site are Japan
 time (+09:00). Anything the page doesn't give is kept from the previous file, so a layout change can only stop
 updates, never wipe the list. Exits with an error (so the job turns red) when the month pages show no events.
 """
@@ -186,6 +188,118 @@ def matches_for(url):
     return ms
 
 
+MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+_MON = r"(january|february|march|april|may|june|july|august|september|october|november|december)"
+
+
+def _clock(h, m, ap):
+    h, m = int(h), int(m)
+    if ap:
+        ap = ap.lower()
+        if ap == "pm" and h < 12:
+            h += 12
+        if ap == "am" and h == 12:
+            h = 0
+    return h, m
+
+
+def _when(window, year):
+    """First "Month D ... hh:mm" found in the text window -> (month, day, hour, minute), or None."""
+    d = re.search(_MON + r"\s+(\d{1,2})", window, re.I)
+    if not d:
+        return None
+    return int(MONTHS.index(d.group(1).lower()) + 1), int(d.group(2))
+
+
+def _times(window):
+    return [_clock(m.group(1), m.group(2), m.group(3)) for m in re.finditer(r"(\d{1,2}):(\d{2})\s*([AaPp][Mm])?", window)]
+
+
+def parse_ppv_post(page):
+    """A Stardom PPV news post -> (event id, ppv fields found). Everything is optional; anything not found is simply
+    left out, so a post worded differently can only add less, never something wrong.
+    Seen wordings: 'from 12:00 on October 26 to 19:00 on November 15, 2026' and 'October 26, 2026 at 12:00 PM
+    through November 15, 2026 at 7:00 PM'; 'available until 23:59 on November 15, 2026'."""
+    txt = text_of(page)
+    m = re.search(r"/en/schedule/(\d{8}-[A-Za-z0-9_-]+)/?", page)
+    eid = m.group(1) if m else None
+    out = {}
+    if not eid:
+        return None, out
+    year, evm = int(eid[:4]), int(eid[4:6])
+
+    def stamp(month, day, tm):
+        y = year - 1 if month > evm + 6 else year + 1 if month < evm - 6 else year   # a Dec show's replay can end in Jan
+        return "%04d-%02d-%02dT%02d:%02d:00+09:00" % (y, month, day, tm[0], tm[1])
+
+    pm = re.search(r"(\d[\d,]*)\s*yen\s*\(?\s*(?:including\s+)?tax", txt, re.I)
+    fm = re.search(r"(\d[\d,]*)\s*yen\s*(?:system|service|handling)\s*fee", txt, re.I)
+    if pm:
+        out["price"] = int(pm.group(1).replace(",", ""))
+        if fm:
+            out["total"] = out["price"] + int(fm.group(1).replace(",", ""))
+    sm = re.search(r"(?:sales? (?:period|schedule)|on sale|sales)\b", txt, re.I)
+    for sm in re.finditer(r"(?:sales? (?:period|schedule)|on sale|sales)\b", txt, re.I):
+        win = txt[sm.start():sm.start() + 260]
+        dates = [(MONTHS.index(a.group(1).lower()) + 1, int(a.group(2))) for a in re.finditer(_MON + r"\s+(\d{1,2})", win, re.I)]
+        times = _times(win)
+        if len(dates) >= 2 and len(times) >= 2:
+            out["sale_start"] = stamp(dates[0][0], dates[0][1], times[0])
+            out["sale_end"] = stamp(dates[1][0], dates[1][1], times[1])
+            break
+    am = re.search(r"(?:archive|replay)[^.]{0,80}?(?:until|through|till)\s+(.{0,80})", txt, re.I)
+    if am:
+        win = am.group(1)
+        d = _when(win, year)
+        t = _times(win)
+        if d and t:
+            out["replay_end"] = stamp(d[0], d[1], t[0])
+    um = re.search(r'https://intl\.stagecrowd\.live/[0-9A-Za-z_/-]+', page)
+    if um:
+        out["url"] = um.group(0)
+    return eid, out
+
+
+def discover_ppv(events, seen):
+    """Reads the newest posts of Stardom's PPV news category (1 request, plus one per post not read before) and
+    adds a "ppv" entry to the matching show. Fields already set (for example by hand) are never overwritten."""
+    try:
+        listing = get(BASE + "/en/news/news_ppv/")
+    except Exception as ex:
+        print("ppv news list not read:", ex)
+        return 0
+    links = []
+    for m in re.finditer(r'href="(https://wwr-stardom\.com/en/news/[A-Za-z0-9_-]+/)"', listing):
+        u = m.group(1)
+        if "news_ppv" in u or "news-ppv" in u or u in links:
+            continue
+        links.append(u)
+    n = 0
+    for u in links[:10]:
+        if u in seen:
+            continue
+        try:
+            eid, f = parse_ppv_post(get(u))
+        except Exception as ex:
+            print("ppv post not read", u, ex)
+            continue
+        if not eid:
+            continue
+        seen[u] = eid
+        e = events.get(eid)
+        if not e or not f:
+            print("ppv post", u, "->", eid, "(not in the list)" if not e else "(nothing found)")
+            continue
+        cur = e.setdefault("ppv", {})
+        for k, v in f.items():
+            if not cur.get(k):
+                cur[k] = v
+        # the post's date fields were read with the event's own year: fix a sale that began in the previous year
+        print("ppv:", eid, json.dumps(f))
+        n += 1
+    return n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prev", default=None, help="previous schedule.json (kept values)")
@@ -253,14 +367,19 @@ def main():
         if e.get("start") and e.get("title"):
             events[eid] = e
             changed += 1
+    seen = dict(prev.get("ppv_seen", {}))
+    try:
+        changed += discover_ppv(events, seen)
+    except Exception as ex:
+        print("ppv discovery skipped:", ex)   # never lets this block the schedule itself
     keep = [e for e in events.values() if e.get("start")]
     keep.sort(key=lambda e: e["start"])
     used = set(e.get("poster") for e in keep) | set(e["id"][:6] for e in keep)
     posters = {k: v for k, v in posters.items() if k in used}   # nothing kept for shows that are gone
     out = {"updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-           "note": "Times are Japan time (+09:00). own = a Stardom show.", "posters": posters, "events": keep}
-    old_json = json.dumps({k: prev.get(k) for k in ("posters", "events")}, sort_keys=True)
-    new_json = json.dumps({k: out[k] for k in ("posters", "events")}, sort_keys=True)
+           "note": "Times are Japan time (+09:00). own = a Stardom show.", "posters": posters, "ppv_seen": seen, "events": keep}
+    old_json = json.dumps({k: prev.get(k) for k in ("posters", "events", "ppv_seen")}, sort_keys=True)
+    new_json = json.dumps({k: out[k] for k in ("posters", "events", "ppv_seen")}, sort_keys=True)
     if old_json == new_json:
         print("no changes")
         out["updated"] = prev.get("updated", out["updated"])   # an unchanged list stays byte-identical (no daily commit)

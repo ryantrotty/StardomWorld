@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.4
+
+- Schedule: added STARDOM DREAM QUEENDOM 2026 (Dec 29, Ryogoku Kokugikan) with its poster (private builds only).
+- Daily schedule job now also reads Stardom's PPV news category, so a new PPV show gets its price, sale dates, archive end and purchase link filled in automatically. Not yet run against the live site.
+- A downloaded schedule that has a PPV show but lacks some of its details now gets the missing ones from the bundled copy.
+
 ## 2.11.3
 
 - Stagecrowd video page: the language button now reads "Language: English" or "Language: 日本語" (it showed "CC: Off" because the page's flag for the app was sent as a number, which the app does not read as true). Pressing it switches the commentary and the label follows. Until you pick one it shows Japanese, which is what their page starts on.

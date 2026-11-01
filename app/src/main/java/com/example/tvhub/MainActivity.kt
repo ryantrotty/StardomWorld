@@ -2498,16 +2498,23 @@ class MainActivity : Activity() {
     }
 
     // PPV shows (sold and streamed by Stagecrowd) are not on the schedule site the daily job reads, so they live in the
-    // bundled file. The downloaded copy never has them: add the bundled PPV shows it is missing.
+    // bundled file. Add the bundled PPV shows the downloaded copy is missing, and fill in PPV details it lacks.
     private fun withBundledPpv(downloaded: String, bundled: String): String = try {
         val dj = org.json.JSONObject(downloaded)
         val de = dj.optJSONArray("events") ?: org.json.JSONArray()
-        val have = HashSet<String>()
-        for (i in 0 until de.length()) have.add(de.getJSONObject(i).optString("id"))
+        val have = HashMap<String, org.json.JSONObject>()
+        for (i in 0 until de.length()) de.getJSONObject(i).let { have[it.optString("id")] = it }
         val be = org.json.JSONObject(bundled).optJSONArray("events") ?: org.json.JSONArray()
         for (i in 0 until be.length()) {
             val e = be.getJSONObject(i)
-            if (e.has("ppv") && e.optString("id") !in have) de.put(e)
+            val bp = e.optJSONObject("ppv") ?: continue
+            val d = have[e.optString("id")]
+            if (d == null) { de.put(e); continue }
+            // Event is in both: the downloaded PPV details win, the bundled ones fill whatever it lacks
+            // (for example the watch page, which the news posts do not carry).
+            val dp = d.optJSONObject("ppv") ?: org.json.JSONObject().also { d.put("ppv", it) }
+            val ks = bp.keys()
+            while (ks.hasNext()) { val k = ks.next(); if (!dp.has(k)) dp.put(k, bp.get(k)) }
         }
         dj.put("events", de)
         dj.toString()
