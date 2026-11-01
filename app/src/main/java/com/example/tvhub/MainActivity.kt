@@ -2499,7 +2499,26 @@ class MainActivity : Activity() {
     // The schedule list: the copy downloaded by refreshScheduleAsync() or the one bundled in assets, whichever is newer.
     private fun assetText(name: String): String = try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
 
-    private fun scheduleText(): String {
+    private fun scheduleText(): String = withLearnedWatch(scheduleTextRaw())
+
+    // A replay address the app learned by playing a PPV (see ppvPlayed) fills in an event that has none.
+    private fun withLearnedWatch(text: String): String {
+        try {
+            val o = org.json.JSONObject(getSharedPreferences("sched", MODE_PRIVATE).getString("ppvOwned", "{}") ?: "{}")
+            if (o.length() == 0) return text
+            val j = org.json.JSONObject(text)
+            val a = j.optJSONArray("events") ?: return text
+            for (i in 0 until a.length()) {
+                val e = a.getJSONObject(i)
+                val p = e.optJSONObject("ppv") ?: continue
+                val u = o.optJSONObject(e.optString("id"))?.optString("url", "") ?: ""
+                if (u.isNotEmpty() && p.optString("watch_url").isEmpty()) p.put("watch_url", u)
+            }
+            return j.toString()
+        } catch (_: Exception) { return text }
+    }
+
+    private fun scheduleTextRaw(): String {
         var downloaded = ""
         try {
             val f = java.io.File(filesDir, "schedule.json")
@@ -2779,6 +2798,40 @@ class MainActivity : Activity() {
                 webView.dispatchKeyEvent(android.view.KeyEvent(t, t + 40, android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_DPAD_CENTER, 0))
             }
         }
+
+        // The PPV player has really been playing (more than 5 seconds): the show is owned. Remember which show it is,
+        // and the address that played, so My Favorites can show it and the details page can open it.
+        @android.webkit.JavascriptInterface
+        fun ppvPlayed(href: String) {
+            try {
+                val m = Regex("/(plan_player|live_player)/(\\d+)").find(href) ?: return
+                val pid = m.groupValues[2]
+                val now = System.currentTimeMillis()
+                val evs = org.json.JSONObject(this@MainActivity.scheduleText()).optJSONArray("events") ?: return
+                var hit = ""
+                var cur = ""
+                var curN = 0
+                for (i in 0 until evs.length()) {
+                    val e = evs.getJSONObject(i)
+                    val p = e.optJSONObject("ppv") ?: continue
+                    if (p.optString("watch_url").endsWith("/" + pid)) { hit = e.optString("id"); break }
+                    val st = try { java.time.OffsetDateTime.parse(e.optString("start")).toInstant().toEpochMilli() } catch (_: Exception) { 0L }
+                    val en = try { java.time.OffsetDateTime.parse(p.optString("replay_end")).toInstant().toEpochMilli() } catch (_: Exception) { st + 14L * 86400000L }
+                    if (st in 1L..(now + 3600000L) && now < en) { cur = e.optString("id"); curN++ }
+                }
+                if (hit.isEmpty() && curN == 1) hit = cur   // the one PPV that is on now
+                if (hit.isEmpty()) return
+                val prefs = this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE)
+                val o = org.json.JSONObject(prefs.getString("ppvOwned", "{}") ?: "{}")
+                o.put(hit, org.json.JSONObject().put("t", now).put("url", href))
+                prefs.edit().putString("ppvOwned", o.toString()).apply()
+            } catch (_: Exception) {}
+        }
+
+        // The PPV shows this TV has played: { eventId: { t: when first played, url: the address that played } }.
+        @android.webkit.JavascriptInterface
+        fun ppvOwnedJson(): String =
+            this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).getString("ppvOwned", "{}") ?: "{}"
 
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
         @android.webkit.JavascriptInterface

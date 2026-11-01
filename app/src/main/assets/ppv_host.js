@@ -297,13 +297,24 @@ window.__tvPpvAll = 1;
     }, 1200);
   }
 
+  // The video has really played for a few seconds on the replay or live page: tell the app this show is owned, so
+  // My Favorites can list it. Once per page; the test page does not count.
+  var ownedSent = false;
+  function noteOwned() {
+    if (ownedSent || !/\/(plan_player|live_player)\/\d+/.test(location.pathname)) return;
+    var v = document.querySelector('video');
+    if (!v || v.paused || (v.currentTime || 0) < 5) return;
+    ownedSent = true;
+    try { if (window.AndroidHost && AndroidHost.ppvPlayed) AndroidHost.ppvPlayed(location.origin + location.pathname); } catch (e) {}
+  }
+
   var shown = false, keyed = false, t0 = Date.now();
   window.addEventListener('keydown', function () { keyed = true; }, true);
   setInterval(function () {
     var has = !!document.querySelector('video') && PAGE.test(location.pathname) && !document.querySelector('.CpSimpleLayout__main');
     bar.style.display = has ? 'flex' : 'none';
     if (!has) return;
-    syncLang(); hideBits(); layout(); autoFull();
+    syncLang(); hideBits(); layout(); autoFull(); noteOwned();
     var d = document.getElementById('tv-ppv-dbg');
     if (d && !/live_player_test/.test(location.pathname)) d.style.display = 'none';
     if (!shown) { shown = true; refresh(); try { btns.full.focus(); } catch (e) {} }

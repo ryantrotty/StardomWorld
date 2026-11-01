@@ -31,10 +31,11 @@ TOKENS = {
     "#000000", "#000", "#0b1118", "#0f151c", "#121922", "#161f2a", "#141a22",
     "#172029", "#2a323c", "#3b4656", "#222b36", "#0f1620", "#11171e",
     "#2a2410", "#2a2210", "#2a1c10", "#1c1740",          # tinted fills (login focus, favorites, PPV tile)
+    "#f3e2b8", "#6b4a26",                                 # paper reminder tickets (My Favorites)
     "#ffffff", "#fff", "#c9d2dc", "#9aa6b4", "#ff7a66",
     "#d62839", "#e8374a", "#ff6b78", "#7b5cff", "#b6a4ff", "#2e9e5b",
 }
-SIZES = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 30, 54}
+SIZES = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 30, 40, 54}
 RADII = {4, 5, 6, 8, 10, 12, 14, 16, 20, 36, 50}
 FONTS_OK = re.compile(r"arial|roboto|inherit|helvetica|sans-serif|ui-monospace", re.I)
 
