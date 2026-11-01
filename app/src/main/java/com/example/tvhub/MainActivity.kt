@@ -1336,20 +1336,22 @@ class MainActivity : Activity() {
 
               if (links.length > 0) {
                 var contentItems = [];
+                var seenHref = {};
                 links.forEach(function(a) {
                   var m = a.href.match(/\/contents\/(\d+)/);
-                  if (m) {
-                    contentItems.push({ href: a.href, id: parseInt(m[1], 10) });
+                  if (m && !seenHref[a.href]) {
+                    seenHref[a.href] = true;
+                    var card = a.closest('.content-list-item, .sub-category-list-item, li, article') || a;
+                    contentItems.push({ href: a.href, id: parseInt(m[1], 10), title: (card.textContent || '').replace(/\s+/g, ' ').trim() });
                   }
                 });
 
                 if (contentItems.length > 0) {
-                  // First chronological match (Opening Match) is the LAST item in the set list, AND the HIGHEST content ID
-                  var lastItem = contentItems[contentItems.length - 1];
-                  var sortedByIdDescending = contentItems.slice().sort(function(a, b) { return b.id - a.id; });
-                  var highestIdItem = sortedByIdDescending[0];
-
-                  targetLink = lastItem ? lastItem.href : highestIdItem.href;
+                  // Start with the first match on the card: the top of the list, or the bottom when
+                  // this set lists its main event first (see setorder.js)
+                  var so = window.__tvSetOrder;
+                  var flip = so ? so.needsFlip(contentItems.map(function(x) { return x.title; })) : true;
+                  targetLink = (flip ? contentItems[contentItems.length - 1] : contentItems[0]).href;
                   break;
                 }
               }
@@ -1398,6 +1400,11 @@ class MainActivity : Activity() {
 
             firstCarousel.__tvReversed = true;
             window.__tvReverseCarouselDone = true;
+
+            var so = window.__tvSetOrder;
+            var flip = so ? so.needsFlip(items.map(function(el) { return el.textContent.replace(/\s+/g, ' ').trim(); })) : true;
+            window.__tvSetFlip = flip;
+            if (!flip) return;
 
             var isSlick = $ && $(firstCarousel).hasClass('slick-initialized');
             if (isSlick) {
@@ -7757,6 +7764,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(filterBarJs, null)
         view.evaluateJavascript(eventBarJs, null)
         view.evaluateJavascript(infiniteScrollJs, null)
+        view.evaluateJavascript(assetText("setorder.js"), null)
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)

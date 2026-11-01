@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.8.5
+
+- Sets now play in show order whichever way the site lists them. Nighter-style sets (listed in show order) start at the top match and play down the card; PPV-style sets (main event listed first, opener last, 【ダイゼロタイム】 matches at the bottom) start at the opener and play up. The direction is read from the match titles, not the video IDs, which run either way.
+
 ## 2.8.4
 
 - Community: video titles are left to the page's English translation (they were shown in the site's Japanese), and the translated titles are kept for the Favorites pop-up and the menu's Top 5. The menu's Top 5 shows the site's own wording until the Community page has been opened once.
