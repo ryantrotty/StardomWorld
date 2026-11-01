@@ -2726,6 +2726,12 @@ class MainActivity : Activity() {
             this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).edit().putLong("liveEndedAt", 0L).apply()
         }
 
+        // A button on a Stagecrowd page (its "Back to top" after registering) that should return to the show.
+        @android.webkit.JavascriptInterface
+        fun ppvLeave() {
+            this@MainActivity.runOnUiThread { if (isPpvHost(webView.url)) leavePpv() }
+        }
+
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
         @android.webkit.JavascriptInterface
         fun liveEnded() {
@@ -8131,6 +8137,15 @@ class MainActivity : Activity() {
         h == "stagecrowd.live" || h.endsWith(".stagecrowd.live")
     } catch (_: Exception) { false }
 
+    // Stagecrowd pages: leave their site and return to the show, however many of their pages (home, sign-in,
+    // player) were opened on the way.
+    private fun leavePpv() {
+        val hist = webView.copyBackForwardList()
+        var i = hist.currentIndex - 1
+        while (i >= 0 && isPpvHost(hist.getItemAtIndex(i).url)) i--
+        if (i >= 0) webView.goBackOrForward(i - hist.currentIndex) else webView.loadUrl(START_URL)
+    }
+
     private var ppvBar: android.widget.LinearLayout? = null
     private var ppvBarHost: android.widget.TextView? = null
 
@@ -9396,12 +9411,7 @@ class MainActivity : Activity() {
                         return true
                     }
                     if (isPpvHost(webView.url)) {
-                        // Stagecrowd pages: Back leaves their site and returns to the show, however many of
-                        // their pages (home, sign-in, player) were opened on the way.
-                        val hist = webView.copyBackForwardList()
-                        var i = hist.currentIndex - 1
-                        while (i >= 0 && isPpvHost(hist.getItemAtIndex(i).url)) i--
-                        if (i >= 0) webView.goBackOrForward(i - hist.currentIndex) else webView.loadUrl(START_URL)
+                        leavePpv()
                         return true
                     }
                     if (webView.canGoBack()) {

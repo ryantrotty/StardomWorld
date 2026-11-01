@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.9
+
+- Stagecrowd registration: their "Back to top" button after the email is sent now says "Back to the show" and returns to the show instead of their home page.
+
 ## 2.10.8
 
 - Stagecrowd sign-in and registration: styled with their real page classes (buttons, titles, labels, links), a gold Log in / Send button, and the two "register" links on the login page now count as one stop in the D-pad order.

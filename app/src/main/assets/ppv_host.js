@@ -310,3 +310,21 @@
     if (++t0 > 20) clearInterval(ivf);
   }, 400);
 })();
+
+// After registering, their only button says "Back to top" and goes to their home page. Make it go back to the show.
+(function () {
+  if (!/^\/s\/[^/]+\/member\/add\b/.test(location.pathname)) return;
+  setInterval(function () {
+    var l = document.querySelectorAll('a.CpBaseBtn');
+    for (var i = 0; i < l.length; i++) {
+      var a = l[i];
+      if (a.__tvLeave || !/^back to top$/i.test((a.textContent || '').trim())) continue;
+      a.__tvLeave = 1;
+      a.textContent = 'Back to the show';
+      a.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        try { if (window.AndroidHost && AndroidHost.ppvLeave) AndroidHost.ppvLeave(); } catch (x) {}
+      }, true);
+    }
+  }, 700);
+})();
