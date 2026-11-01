@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.2
+
+- Live tile: one gold outline when focused instead of two (the tile's own border is hidden while the focus outline shows).
+- Video pages: cards in the related rows no longer grow on focus, so the first card's left edge isn't clipped by the row.
+
 ## 2.9.1
 
 - Fixed the left edge being cut off: the video page's carousel was left in the site's own centred layout (huge cards) when a set didn't need reversing, so it is now always laid out like the others; the wide live tile no longer grows on focus, which clipped its left side.

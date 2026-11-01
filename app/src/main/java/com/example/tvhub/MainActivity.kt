@@ -3996,7 +3996,7 @@ class MainActivity : Activity() {
           var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
           (function() {
             var st = document.createElement('style');
-            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus{transform:none !important;}';
+            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus{transform:none !important; border-color:transparent !important;}';
             (document.head || document.documentElement).appendChild(st);
           })();
           function liveCardMatches(e, txt) {
@@ -5119,7 +5119,7 @@ class MainActivity : Activity() {
           window.__tvRelatedRows = true;
 
           var st = document.createElement('style');
-          st.textContent = '.box-related-content.tv-related-done > .ttl-wrap, .box-related-content.tv-related-done > .content-list{display:none !important;}';
+          st.textContent = '.box-related-content.tv-related-done > .ttl-wrap, .box-related-content.tv-related-done > .content-list{display:none !important;} .tv-related-row a.tv-card:focus{transform:none !important;}';
           (document.head || document.documentElement).appendChild(st);
 
           // Same values as the main page rows.
