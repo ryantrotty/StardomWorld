@@ -2238,7 +2238,9 @@ class MainActivity : Activity() {
                 fsEnteredAt = SystemClock.uptimeMillis()
                 fsStallAction = 0
                 handler.removeCallbacks(fsStallCheck)
-                handler.postDelayed(fsStallCheck, 10000)
+                // The stall watchdog reads the Stardom player's play state; Stagecrowd pages have none, so it would
+                // mistake a playing show for a stuck one and leave full screen after 25 seconds.
+                if (!isPpvFlow(webView.url)) handler.postDelayed(fsStallCheck, 10000)
                 // Fire TV: GONE collapses the page to 0x0, which shrinks the video layout; keep its size.
                 webView.visibility = if (isFireTv()) View.INVISIBLE else View.GONE
                 view.alpha = 0f
@@ -9499,6 +9501,7 @@ class MainActivity : Activity() {
         if (customView != null) {
             webView.evaluateJavascript("(function(){return window.__tvPlayState ? window.__tvPlayState() : '';})()") { raw ->
                 val st = if (raw == null) "" else raw.trim('"')
+                if (st.isEmpty()) return@evaluateJavascript   // this page cannot say: never guess it is stuck
                 val parts = st.split("|")
                 val secs = parts.getOrNull(0)?.toDoubleOrNull() ?: 0.0
                 if (customView != null && secs < 0.5) {

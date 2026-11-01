@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.10
+
+- Stagecrowd video page: it no longer leaves full screen by itself after about 25 seconds. The app's "video never started" watchdog could not read Stagecrowd's player, took a playing show for a stuck one, and closed full screen. It is now skipped on Stagecrowd pages, and on any page that cannot report its play state.
+- Auto full screen is more reliable: if the first try after 8 seconds is refused it tries again (up to three times, 3.5 seconds apart), waits a little longer before sending the OK press, and never toggles full screen back out.
+
 ## 2.11.9
 
 - Favorites: wrestler cards now have a plain dark frame. When focused, the whole frame turns solid gold, lifts slightly and glows, so the selected card is easy to see.

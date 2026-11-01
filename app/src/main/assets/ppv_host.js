@@ -281,19 +281,20 @@ window.__tvPpvAll = 1;
 
   // ---- Full screen after 8 seconds on the replay or live page, once. Browsers only allow it after a key press, so
   // if the direct request is refused the app sends an OK key press while the Full screen button has focus.
-  var vSince = 0, autoDone = false;
+  var vSince = 0, autoTries = 0, autoNext = 0;
   function autoFull() {
-    if (autoDone || !/\/(plan_player|live_player)(?!_test)/.test(location.pathname)) return;
+    if (autoTries >= 3 || !/\/(plan_player|live_player)(?!_test)/.test(location.pathname)) return;
+    if (inFull()) { autoTries = 3; return; }   // in full screen already (or it worked): never toggle it back out
     if (!vSince) { vSince = Date.now(); return; }
-    if (Date.now() - vSince < 8000) return;
-    autoDone = true;
-    if (inFull()) return;
+    if (Date.now() - vSince < 8000 || Date.now() < autoNext) return;
+    autoTries++;
+    autoNext = Date.now() + 3500;   // if this try is refused, try again (up to three times)
     try { btns.full.focus(); } catch (e) {}
     goFull();
     setTimeout(function () {
       if (inFull()) return;
       try { btns.full.focus(); if (window.AndroidHost && AndroidHost.ppvPressOk) AndroidHost.ppvPressOk(); } catch (e) {}
-    }, 700);
+    }, 1200);
   }
 
   var shown = false, keyed = false, t0 = Date.now();
