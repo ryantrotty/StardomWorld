@@ -9283,6 +9283,17 @@ class MainActivity : Activity() {
                         hideCustomView()
                         return true
                     }
+                    if (isPpvHost(webView.url)) {
+                        // Stagecrowd pages: Back leaves their site and returns to the show, however many of
+                        // their pages (home, sign-in, player) were opened on the way.
+                        val hist = webView.copyBackForwardList()
+                        var i = hist.currentIndex - 1
+                        while (i >= 0 && isPpvHost(hist.getItemAtIndex(i).url)) i--
+                        if (i >= 0) {
+                            webView.goBackOrForward(i - hist.currentIndex)
+                            return true
+                        }
+                    }
                     if (webView.canGoBack()) {
                         webView.goBack()
                         return true
