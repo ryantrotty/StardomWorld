@@ -2529,7 +2529,7 @@ class MainActivity : Activity() {
         for (m in months) {
             val url = posters.optString(m, "")
             if (url.isEmpty()) continue
-            val out = java.io.File(filesDir, "poster_$m.jpg")
+            val out = java.io.File(filesDir, "poster_" + m.filter { it.isLetterOrDigit() || it == '-' || it == '_' } + ".jpg")
             if (out.exists() && prefs.getString("poster_$m", "") == url) continue
             val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
             conn.connectTimeout = 8000
@@ -2543,6 +2543,9 @@ class MainActivity : Activity() {
             java.io.FileOutputStream(out).use { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }
             prefs.edit().putString("poster_$m", url).apply()
         }
+        // Posters of shows that are over are removed, so the folder doesn't grow.
+        val keepNames = months.map { "poster_" + it.filter { c -> c.isLetterOrDigit() || c == '-' || c == '_' } + ".jpg" }.toSet()
+        filesDir.listFiles()?.forEach { f -> if (f.name.startsWith("poster_") && f.name.endsWith(".jpg") && f.name !in keepNames) f.delete() }
     }
 
     // The next Stardom show: its JSON object, or null.
@@ -2669,7 +2672,7 @@ class MainActivity : Activity() {
         fun posterDataUrl(month: String): String {
             if (!BuildConfig.SHOW_POSTERS) return ""
             return try {
-                val f = java.io.File(this@MainActivity.filesDir, "poster_" + month.filter { it.isDigit() } + ".jpg")
+                val f = java.io.File(this@MainActivity.filesDir, "poster_" + month.filter { it.isLetterOrDigit() || it == '-' || it == '_' } + ".jpg")
                 if (!f.exists()) "" else "data:image/jpeg;base64," + android.util.Base64.encodeToString(f.readBytes(), android.util.Base64.NO_WRAP)
             } catch (_: Exception) { "" }
         }
@@ -3782,10 +3785,15 @@ class MainActivity : Activity() {
           // Poster art: only private builds have it; public builds return an empty address and show no artwork.
           function posterFor(e) {
             var m = e.poster || '';
-            if (posterCache[m] !== undefined) return posterCache[m];
+            if (posterCache[m]) return posterCache[m];
             var u = '';
-            try { if (AndroidHost.showPosters && AndroidHost.showPosters()) u = AndroidHost.posterDataUrl(m) || ''; } catch (x) {}
-            posterCache[m] = u;
+            try {
+              if (AndroidHost.showPosters && AndroidHost.showPosters()) {
+                u = AndroidHost.posterDataUrl(m) || '';
+                if (!u && m.length > 6) u = AndroidHost.posterDataUrl(m.slice(0, 6)) || '';   // the month's poster, until this show's own has downloaded
+              }
+            } catch (x) {}
+            if (u) posterCache[m] = u;
             return u;
           }
           function bellSvg(on, size) {
@@ -3992,7 +4000,7 @@ class MainActivity : Activity() {
           // 16:9 tile from 60 minutes before the show until 3 hours after the start.
           // Live only if the site's card is tagged [LIVE] AND matches this scheduled show (name or JST date);
           // "LIVE" is shown once the player reports play (or 15 minutes after the start), otherwise "STARTING".
-          var LIVE_DEBUG = true, LIVE_SOON_MS = 60 * 60000, LIVE_END_MS = 3 * 3600000, LIVE_ASSUME_MS = 15 * 60000;
+          var LIVE_DEBUG = false, LIVE_SOON_MS = 60 * 60000, LIVE_END_MS = 3 * 3600000, LIVE_ASSUME_MS = 15 * 60000;
           var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
           (function() {
             var st = document.createElement('style');

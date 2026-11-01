@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.5
+
+- Live card: the grey testing line is gone.
+- Each show now gets its own poster (the one under its title on the official schedule page) instead of one poster per month. The daily schedule update picks them up, the app downloads each once (small, kept on the device, removed when the show is over), and the poster appears wherever the app shows one. Until a show's own poster has downloaded, the month's poster is used.
+
 ## 2.9.4
 
 - Schedule: the Tag League in Takasaki (Nov 8) now shows its match card on the show page. Other shows will get theirs as the official site posts them.

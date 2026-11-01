@@ -218,7 +218,8 @@ def main():
             continue
         old = events.get(eid)
         soon = (datetime.datetime.strptime(eid[:8], "%Y%m%d").date() - now.date()).days <= 7
-        if old and old.get("start") and not a.full and not soon:
+        # Posters are kept per show; an event still carrying only the month's poster is read once more to pick its own up.
+        if old and old.get("start") and not a.full and not soon and old.get("poster") == eid:
             continue
         try:
             info = parse_event(eid, get("%s/en/schedule/%s/" % (BASE, eid)))
@@ -227,7 +228,7 @@ def main():
             continue
         e = dict(old or {"id": eid, "own": True})
         e["url"] = "%s/en/schedule/%s/" % (BASE, eid)
-        e["poster"] = eid[:6]
+        e["poster"] = eid[:6]   # the month's poster, until this show's own poster is found below
         if info["title"]:
             e["title"] = info["title"]
             e.setdefault("short", info["title"])
@@ -239,7 +240,9 @@ def main():
         if info["other"]:
             e["own"] = False
         if info["poster"]:
-            posters.setdefault(eid[:6], info["poster"])
+            posters[eid] = info["poster"]       # this show's own poster (the first picture under its title)
+            e["poster"] = eid
+            posters.setdefault(eid[:6], info["poster"])   # month fallback for older app versions
         if info.get("matchurl") and (soon or not e.get("matches")):
             try:
                 ms = matches_for(info["matchurl"])
@@ -252,6 +255,8 @@ def main():
             changed += 1
     keep = [e for e in events.values() if e.get("start")]
     keep.sort(key=lambda e: e["start"])
+    used = set(e.get("poster") for e in keep) | set(e["id"][:6] for e in keep)
+    posters = {k: v for k, v in posters.items() if k in used}   # nothing kept for shows that are gone
     out = {"updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
            "note": "Times are Japan time (+09:00). own = a Stardom show.", "posters": posters, "events": keep}
     old_json = json.dumps({k: prev.get(k) for k in ("posters", "events")}, sort_keys=True)
