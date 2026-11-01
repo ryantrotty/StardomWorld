@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.3
+
+- Stagecrowd video page: the language button now reads "Language: English" or "Language: 日本語" (it showed "CC: Off" because the page's flag for the app was sent as a number, which the app does not read as true). Pressing it switches the commentary and the label follows. Until you pick one it shows Japanese, which is what their page starts on.
+
 ## 2.11.2
 
 - Stagecrowd video page: sizes now follow the app's other video pages. Their page is laid out narrower than the 1440 px the app uses elsewhere, which made the bar and its buttons look too big; the bar's text, buttons and spacing are now scaled to match, and the picture is 60% of the screen width, starting about 7% down.

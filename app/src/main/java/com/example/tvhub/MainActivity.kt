@@ -8643,7 +8643,7 @@ class MainActivity : Activity() {
         "back" -> "-" + skipText(SKIP_SIZES[skipIdx])
         "fwd" -> "+" + skipText(SKIP_SIZES[skipIdx])
         "mute" -> if (j != null && j.optDouble("vol", 1.0) <= 0.0) tr("Unmute", "ミュート解除") else tr("Mute", "ミュート")
-        "cc" -> if (j?.optBoolean("ppv") == true) (when (j?.optString("lang")) { "ja" -> "日本語"; "en" -> "English"; else -> tr("Language", "言語") }) else ccLabel()
+        "cc" -> if (j?.optBoolean("ppv") == true) (tr("Language", "言語") + ": " + (if (j?.optString("lang") == "en") "English" else "日本語")) else ccLabel()
         "quality" -> {
             val q = j?.optString("q", "") ?: ""
             if (q.isNotEmpty()) barQuality = if (q.equals("auto", true)) tr("Auto", "自動") else q

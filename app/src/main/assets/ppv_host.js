@@ -184,7 +184,8 @@ window.__tvPpvAll = 1;
     while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v) && txt(p.parentElement) === txt(p)) p = p.parentElement;
     p.classList.add('tv-ppv-gone');
   }
-  window.__tvLang = function () { return curLang || heurLang; };
+  // Their player starts on the Japanese commentary (that is the one their page highlights), until one is chosen here.
+  window.__tvLang = function () { return curLang || heurLang || 'ja'; };
   window.__tvCommentary = function (l) {
     if (l === 'toggle') l = window.__tvLang() === 'ja' ? 'en' : 'ja';
     var s = commSrc(l);
@@ -577,7 +578,7 @@ window.__tvPpvAll = 1;
     var cc = 'Off', t = tracks(v);
     for (var i = 0; i < t.length; i++) if (t[i].mode === 'showing') cc = t[i].label || t[i].language || 'On';
     var d = isFinite(v.duration) ? v.duration : (v.seekable && v.seekable.length ? v.seekable.end(v.seekable.length - 1) : 0);
-    window.__tvStatusJson = JSON.stringify({ ppv: 1, lang: (window.__tvLang && window.__tvLang()) || '', paused: v.paused, t: v.currentTime || 0, d: d, vol: v.muted ? 0 : v.volume, rate: v.playbackRate, cc: cc, ncc: t.length, q: '', nq: 0 });
+    window.__tvStatusJson = JSON.stringify({ ppv: true, lang: (window.__tvLang && window.__tvLang()) || '', paused: v.paused, t: v.currentTime || 0, d: d, vol: v.muted ? 0 : v.volume, rate: v.playbackRate, cc: cc, ncc: t.length, q: '', nq: 0 });
   };
 })();
 })();
