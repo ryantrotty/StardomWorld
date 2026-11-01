@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.3
+
+- PPV details page: one button per step (Run the test, Sign up / sign in, Buy, Watch); the "I've bought it" switch is gone. The buttons on this page now have a single gold focus outline instead of two.
+
 ## 2.10.2
 
 - PPV: the Crimson Nightmare show was not appearing because the downloaded schedule (which has no PPV shows) replaced the bundled one. PPV shows from the bundled file are now added to the downloaded schedule.

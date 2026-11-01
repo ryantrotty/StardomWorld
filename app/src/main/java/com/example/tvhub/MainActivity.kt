@@ -3993,8 +3993,7 @@ class MainActivity : Activity() {
             if (act === 'signup') { ppvGo(PPV_SIGNUP_URL); return; }
             if (act === 'bought') { ppvSetBought(id, !ppvBought(id)); evOpen(id); return; }
             if (!url) return;
-            if (act === 'watch' && !ppvBought(id) && !evEl) { evOpen(id); return; }   // from a tile, not marked as bought yet: show the steps
-            ppvGo(url);
+                        ppvGo(url);
           }
           function ppvStepsHtml(e) {
             var st = ppvState(e), id = esc(e.id), p = e.ppv, bought = ppvBought(e.id), price = ppvPrice(p);
@@ -4005,9 +4004,9 @@ class MainActivity : Activity() {
             return '<div class="tv-ev-k" style="margin-top:14px;">' + esc(T('FOUR STEPS \u00b7 EACH OPENS STAGECROWD INSIDE THE APP, BACK RETURNS HERE', '4つのステップ \u00b7 Stagecrowdがアプリ内で開きます。戻るでここに戻ります')) + '</div>' +
               '<div class="tv-ppv-steps">' +
               box(1, T('Test playback', '再生テスト'), T('Free check that it plays on this TV.', 'このテレビで再生できるか無料で確認します。'), b('test', T('Run the test', 'テストする'))) +
-              box(2, T('Sign up or sign in', '登録・ログイン'), T('One account, kept on this TV.', 'アカウントはこのテレビに保存されます。'), b('signup', T('Sign up', '新規登録')) + b('signin', T('Sign in', 'ログイン'))) +
+              box(2, T('Sign up or sign in', '登録・ログイン'), T('One account, kept on this TV.', 'アカウントはこのテレビに保存されます。'), b('signin', T('Sign up / sign in', '登録・ログイン'))) +
               box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Card payment on their page.', 'お支払いは先方のページで。'), buyOk ? b('buy', T('Buy', '購入') + (price ? ' ' + price : '')) : '') +
-              box(4, T('Watch', '視聴'), T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。'), b('watch', watchLbl) + b('bought', bought ? T('Bought', '購入済み') : T("I've bought it", '購入済みにする'), bought ? ' tv-ppv-on' : ''), bought) +
+              box(4, T('Watch', '視聴'), T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。'), b('watch', watchLbl), false) +
               '</div>';
           }
           function schedTileHtml(e) {
@@ -4537,7 +4536,7 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-bs{display:flex;gap:10px;flex-wrap:wrap;}',
             '#tv-ev .tv-ev-b{cursor:pointer;padding:11px 18px;border-radius:8px;border:2px solid #2a323c;font-size:16px;font-weight:600;color:#fff;outline:none;}',
             '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
-            '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:none;outline:3px solid #F4C242;outline-offset:2px;}',
+            '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:0 0 0 1px #F4C242;outline:none;}',
             '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
             '#tv-ev .tv-ppv-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px;}',
             '#tv-ev .tv-ppv-step{background:#141a22;border:1px solid #2a323c;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;}',
