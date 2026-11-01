@@ -4069,7 +4069,7 @@ class MainActivity : Activity() {
               '<div class="tv-ppv-steps">' +
               box(1, T('Test playback', '再生テスト'), T('Free check that it plays on this TV.', 'このテレビで再生できるか無料で確認します。'), b('test', T('Run the test', 'テストする'))) +
               box(2, T('Sign up or sign in', '登録・ログイン'), T('New here? Their sign-in page has Register.', '初めての方は、ログイン画面から新規登録できます。'), b('signin', T('Sign in', 'ログイン'))) +
-              box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Card payment on their page.', 'お支払いは先方のページで。'), buyOk ? b('buy', T('Buy', '購入') + (price ? ' ' + price : '')) + b('phone', T('Buy on your phone', 'スマホで購入')) : '') +
+              box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Scan a code and pay on your phone.', 'コードを読み取り、スマホで購入します。'), buyOk ? b('phone', T('Buy', '購入')) : '') +
               box(4, T('Watch', '視聴'), T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。'), b('watch', watchLbl), false) +
               '</div>';
           }
@@ -4565,7 +4565,9 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-v{font-size:14px;color:#c9d2dc;}',
             '#tv-sm-shelf .tv-sch-when{font-size:19px;font-weight:800;color:#F4C242;}',
             '#tv-sm-shelf .tv-sch-jst{font-size:12px;color:#9aa6b4;}',
-            '#tv-sm-shelf .tv-sch-btns{display:flex;gap:8px;margin-top:6px;}',
+            '#tv-sm-shelf .tv-sch-btns{display:flex;gap:8px;margin-top:auto;padding-top:6px;}',
+            '#tv-sm-shelf .tv-sch-up .tv-sch-tile, #tv-sm-shelf .tv-sch-past .tv-sch-tile{box-sizing:border-box;min-height:460px;}',
+            '#tv-sm-shelf .tv-sch-past{padding-top:0;}',
             '#tv-sm-shelf .tv-sm-fi.tv-sch-btn{display:flex;align-items:center;gap:8px;font-size:15px;padding:7px 12px;margin:0;border:2px solid #2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-sch-btn.tv-sch-watch{background:#D62839;border-color:#D62839;color:#fff !important;font-weight:800;}',
             '#tv-sm-shelf .tv-sm-fi.tv-sch-btn.tv-sch-watch:focus{background:#E8374A !important;border-color:#F4C242 !important;color:#fff !important;}',
@@ -4600,7 +4602,8 @@ class MainActivity : Activity() {
             '#tv-ev .tv-ev-bs{display:flex;gap:10px;flex-wrap:wrap;}',
             '#tv-ev .tv-ev-b{cursor:pointer;padding:11px 18px;border-radius:8px;border:2px solid #2a323c;font-size:16px;font-weight:600;color:#fff;outline:none;}',
             '#tv-ev .tv-ev-b.tv-ev-on{background:#F4C242;color:#111;border-color:#F4C242;font-weight:800;}',
-            '#tv-ev .tv-ev-b:focus{border-color:#F4C242;box-shadow:0 0 0 1px #F4C242;outline:none;}',
+            '#tv-ev .tv-ev-b:focus{border-color:#F4C242 !important;box-shadow:none !important;outline:none !important;}',
+            '#tv-ev .tv-ev-b{box-shadow:none !important;outline:none !important;}',
             '#tv-ev .tv-ev-st{font-size:14px;color:#F4C242;min-height:20px;}',
             '#tv-ev .tv-ppv-qr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5vw;padding:5vh 5vw;background:#0b1118;}',
             '#tv-ev .tv-ppv-qrbox{background:#fff;padding:14px;border-radius:12px;width:34vh;height:34vh;flex:0 0 auto;}',

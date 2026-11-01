@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.15
+
+- Show details page: step 3 is one Buy button that opens the phone QR screen. Buttons now have a single gold outline when focused (no double ring).
+- Shows menu: the Upcoming and Past tiles are the same height, with buttons along the bottom.
+- Stagecrowd video page: Full screen and Theater mode buttons restyled (dark, single gold focus), test report only on the test page, cookie banner and language chip hidden on every Stagecrowd page.
+
 ## 2.10.14
 
 - Stagecrowd "Login is required" page (when Watch is pressed while signed out): dark look, gold Log in button, form-order focus and no test report, like the sign-in pages. Any Stagecrowd page using the same simple layout gets the same treatment.

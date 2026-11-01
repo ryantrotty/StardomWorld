@@ -8,7 +8,10 @@
   var st = document.createElement('style');
   st.textContent = 'body{padding-top:52px !important}' +
     'a:focus,button:focus,input:focus,select:focus,textarea:focus,[tabindex]:focus,video:focus,' +
-    'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tv-ppv-f{outline:4px solid #F4C242 !important;outline-offset:2px !important;box-shadow:none !important}';
+    'a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tv-ppv-f{outline:4px solid #F4C242 !important;outline-offset:0 !important;box-shadow:none !important}' +
+    '#onetrust-consent-sdk,#onetrust-banner-sdk,.onetrust-pc-dark-filter,#wovn-translate-widget,[id^="wovn"],[class*="wovn-"],iframe[src*="wovn.io"],iframe[src*="onetrust"]{display:none !important}' +
+    '#tv-ppv-fs,#tv-ppv-th{background:#1a212b !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:12px !important;font:700 20px/1.2 Arial,Helvetica,sans-serif !important;padding:11px 22px !important;box-shadow:0 4px 14px rgba(0,0,0,.55) !important;outline:none !important}' +
+    '#tv-ppv-fs:focus,#tv-ppv-th:focus{border-color:#F4C242 !important;background:#232c38 !important;outline:none !important;box-shadow:0 4px 14px rgba(0,0,0,.55) !important}';
   (document.head || document.documentElement).appendChild(st);
 
   var errs = [];
@@ -89,7 +92,7 @@
   var fsb = document.createElement('a');
   fsb.id = 'tv-ppv-fs';
   fsb.tabIndex = 0;
-  fsb.textContent = '⛶ Full screen';
+  fsb.textContent = '\u26f6  Full screen';
   fsb.style.cssText = 'position:fixed;right:16px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
     'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
   document.documentElement.appendChild(fsb);
@@ -123,8 +126,8 @@
   var b = document.createElement('a');
   b.id = 'tv-ppv-th';
   b.tabIndex = 0;
-  b.textContent = '✕ Exit theatre';
-  b.style.cssText = 'position:fixed;right:200px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
+  b.textContent = '\u25ad  Theater mode';
+  b.style.cssText = 'position:fixed;right:210px;top:60px;z-index:2147483646;display:none;padding:10px 18px;border-radius:10px;' +
     'background:rgba(20,16,36,.92);color:#F4C242;font:600 20px/1.2 sans-serif;border:2px solid #F4C242;cursor:pointer';
   document.documentElement.appendChild(b);
   // Their own "THEATER MODE" label sits under the player. Find the innermost element showing that text (the one
@@ -188,7 +191,7 @@
   function sync() {
     var d = document.getElementById('tv-ppv-dbg');
     if (!d) return;
-    var forms = !/\/(live_player_test|plan_player|live_player)/.test(location.pathname) || !!document.querySelector('.CpSimpleLayout__main') || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
+    var forms = !/\/live_player_test/.test(location.pathname) || !!document.querySelector('.CpSimpleLayout__main') || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
     d.style.display = forms ? 'none' : '';
   }
   setInterval(sync, 700);
