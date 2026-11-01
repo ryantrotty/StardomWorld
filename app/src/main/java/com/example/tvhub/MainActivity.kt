@@ -4033,9 +4033,9 @@ class MainActivity : Activity() {
           }
           function liveStateOf(e, id) {
             var ms = e._t - Date.now();
+            if (liveConfirmed(e, id)) return 'live';   // the player is playing (it can start a few minutes before the listed time)
             if (ms > 0) return 'soon';
-            if (liveConfirmed(e, id) || -ms >= LIVE_ASSUME_MS) return 'live';
-            return 'starting';
+            return -ms >= LIVE_ASSUME_MS ? 'live' : 'starting';
           }
           function liveRender(a, e, id, bg) {
             var st = liveStateOf(e, id), ms = e._t - Date.now(), mins = Math.max(0, Math.round(Math.abs(ms) / 60000));
@@ -4048,7 +4048,7 @@ class MainActivity : Activity() {
               tag = '<div style="color:#F4C242; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('STARTING NOW', 'まもなく開始')) + '</div>';
             } else {
               chip = '<span style="background:#D62839; color:#fff; font-weight:900; font-size:15px; letter-spacing:1px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:5px; background:#fff; animation:tvLivePulse 1.4s infinite;"></span>LIVE</span>';
-              tag = '<div style="color:#FF6B78; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(T('LIVE NOW · STARTED ', '配信中 · ') + mins + T(' MIN AGO', '分前開始')) + '</div>';
+              tag = '<div style="color:#FF6B78; font-size:13px; font-weight:800; letter-spacing:1px;">' + esc(ms > 0 ? T('LIVE NOW · STREAM IS UP', '配信中') : T('LIVE NOW · STARTED ', '配信中 · ') + mins + T(' MIN AGO', '分前開始')) + '</div>';
             }
             var p = posterFor(e);
             var dbg = LIVE_DEBUG ? '<div style="color:#9aa6b4; font-size:11px; margin-top:2px;">state=' + st + ' · card=' + esc(id) + ' · confirmed=' + (liveConfirmed(e, id) ? 'yes' : 'no') + ' · t' + (ms > 0 ? '-' : '+') + mins + 'm</div>' : '';

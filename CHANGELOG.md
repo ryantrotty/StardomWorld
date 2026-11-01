@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.9.6
+
+- Live card: if the stream is already playing a few minutes before the listed start time, the tile says LIVE NOW straight away instead of "Starts in 1M".
+
 ## 2.9.5
 
 - Live card: the grey testing line is gone.
