@@ -229,7 +229,12 @@
     'input[type=text],input[type=email],input[type=password],input:not([type]),select,textarea{background:#1a212b !important;color:#fff !important;border:2px solid #2a323c !important;border-radius:8px !important;font-size:20px !important}' +
     'input[type=checkbox]{width:26px !important;height:26px !important}' +
     'button,input[type=submit]{background:#2a323c !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:8px !important;font-weight:700 !important}' +
-    'button.tv-ppv-main,input[type=submit].tv-ppv-main{background:#F4C242 !important;color:#111 !important;border-color:#F4C242 !important}' +
+    '.CpBaseBtn{display:block !important;background:#1a212b !important;color:#fff !important;border:2px solid #3a4452 !important;border-radius:10px !important;padding:12px 24px !important;text-align:center !important;font-size:20px !important;font-weight:700 !important;text-decoration:none !important;box-shadow:none !important}' +
+    '.CpBaseBtn *{color:inherit !important}' +
+    'button.CpBaseBtn[type=submit],button.tv-ppv-main,input[type=submit].tv-ppv-main{background:#F4C242 !important;color:#111 !important;border-color:#F4C242 !important}' +
+    '.CpFormTableRow__header__label,.CpPageTitle{color:#fff !important}' +
+    '.CpPageTitle{font-size:30px !important}' +
+    '.CpClickableText{text-decoration:underline !important}' +
     '[class*="error"],[class*="err"]{color:#ff8a8a !important}' +
     '#onetrust-consent-sdk,#onetrust-banner-sdk,.onetrust-pc-dark-filter,#wovn-translate-widget,[id^="wovn"],[class*="wovn-"],iframe[src*="wovn.io"],iframe[src*="onetrust"]{display:none !important}';
   (document.head || document.documentElement).appendChild(st);
@@ -252,7 +257,7 @@
     return cs.visibility !== 'hidden' && cs.display !== 'none' && (r.width > 4 && r.height > 4 || e.type === 'checkbox');
   }
   function list() {
-    var out = [], q = document.querySelectorAll('input,select,textarea,button,a');
+    var out = [], seen = {}, q = document.querySelectorAll('input,select,textarea,button,a');
     for (var i = 0; i < q.length; i++) {
       var e = q[i], t = (e.type || '').toLowerCase();
       if (e.closest('#onetrust-consent-sdk,#wovn-translate-widget,[id^="wovn"],header,footer,nav')) continue;
@@ -261,6 +266,9 @@
       if (e.tagName === 'A') {
         var h = e.getAttribute('href') || '', tx = (e.textContent || '').trim();
         if (!tx || !/(member\/add|login|password\/reminder)/.test(h)) continue;
+        var kk = h.replace(/[?#].*$/, '');
+        if (seen[kk]) continue;
+        seen[kk] = 1;
       }
       if (e.tagName === 'BUTTON' && !/submit|^$/.test(t) && !(e.textContent || '').trim()) continue;
       if (e.tagName === 'BUTTON' && /^(close|cookies settings|allow all|back button|filter icon|clear|apply|cancel|reject all|confirm my choices)$/i.test((e.textContent || '').trim())) continue;
