@@ -33,6 +33,8 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 
 Open decision: four golds and four focus looks. Aim to reduce.
 
+Fallback for anything not covered above: a single 3 px #F4C242 outline, 2 px offset, no halo.
+
 ## Type
 
 Arial for everything the app draws; Roboto on login and in native views. Scale (px): 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 28 30 54. Weight carries hierarchy: 600 items, 700 buttons and titles, 800 to 900 emphasis. Labels are uppercase with 1 px spacing.
@@ -60,7 +62,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 | A Border | Menus, shelf, drop-down items, details buttons | Border to #F4C242, fill #172029 |
 | B Fill | Player bar, filters, chips | Fill and border #FFB347, text #1A1A1A |
 | C Ring | Video cards, hero, home tiles | 3 px #FFD700 outline, 2 px offset, glow, 1.03 lift |
-| D Form | Login | Input 6 px yellow border; button yellow fill with white border |
+| D Form | Login | Input 6 px yellow border; button yellow fill, white border, no halo |
 
 ## Exceptions (do not "fix" these without deciding)
 

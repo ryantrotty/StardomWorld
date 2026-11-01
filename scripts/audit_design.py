@@ -71,7 +71,7 @@ for path in FILES:
             v = float(m.group(1))
             if v != int(v) or int(v) not in RADII:
                 add("radius", "%gpx" % v, path, i)
-        if re.search(r"(^|['\"{},\s])\*:focus\s*\{[^}]*outline:\s*[1-9]", line):
+        if re.search(r"(^|['\"{},\s])\*:focus\s*\{[^}]*outline:\s*[1-9][^}]*box-shadow", line):
             add("focus", "global *:focus fallback (outline + halo)", path, i)
         for m in re.finditer(r"([^{},']*:focus[^{]*)\{([^}]*)\}", line):
             decl = dict(
@@ -84,7 +84,8 @@ for path in FILES:
             bd = decl.get("border", decl.get("border-color", "")).replace("!important", "").strip()
             has_shadow = bool(sh) and not sh.startswith("none")
             has_edge = (bool(ol) and not ol.startswith(("none", "0"))) or (bd and not bd.startswith(("none", "0", "transparent")))
-            if has_shadow and has_edge:
+            look_c = "#ffd700" in ol.lower() and "255, 215, 0" in sh.replace("255,215,0", "255, 215, 0")
+            if has_shadow and has_edge and not look_c:
                 add("focus", "edge plus box-shadow on focus (check for a double highlight)", path, i)
 
 strict = "--strict" in sys.argv

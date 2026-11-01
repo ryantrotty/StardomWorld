@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.6
+
+- Focus: one highlight everywhere. The catch-all focus rule is now a single gold outline (it was an orange outline plus a red halo), the login buttons lose their gold halo (fill and white border stay), and the faction cards use a gold border without the soft glow.
+
 ## 2.11.5
 
 - Schedule: added STARDOM NEW YEAR DREAM 2027 (Jan 3, Yokohama Budokan) with doors and start times.
