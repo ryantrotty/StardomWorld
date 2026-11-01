@@ -2357,7 +2357,22 @@ class MainActivity : Activity() {
         if (awaitingLogin && !loggedOut) loginSucceeded(path)
     }
 
-    private fun showOnboarding() {
+    // Opened from the account menu by someone who is already signed in: same guide, but its buttons close it
+    // (back to the page they were on) instead of heading for the login page.
+    private var guideLangChanged = false
+
+    private fun showGuideFromMenu() {
+        if (onboardingShowing) return
+        guideLangChanged = false
+        showOnboarding(true)
+    }
+
+    private fun closeGuideFromMenu() {
+        closeOnboarding()
+        if (guideLangChanged) { guideLangChanged = false; webView.reload() }
+    }
+
+    private fun showOnboarding(fromMenu: Boolean = false) {
         onboardingShowing = true
         if (cursorMode) setCursorMode(false)
         // Keep the remote's focus inside the guide: nothing underneath may take it.
@@ -2366,13 +2381,14 @@ class MainActivity : Activity() {
         val v = OnboardingView(
             this,
             density,
-            { startWebLogin() },
-            { exitGuideToSite() },
+            { if (fromMenu) closeGuideFromMenu() else startWebLogin() },
+            { if (fromMenu) closeGuideFromMenu() else exitGuideToSite() },
             { lang ->
                 // Chosen on the guide's first screen: remember it and reload the (hidden) login page in it.
                 applyLanguage(lang)
-                webView.loadUrl(LOGIN_URL)
-            }
+                if (fromMenu) { guideLangChanged = true } else { webView.loadUrl(LOGIN_URL) }
+            },
+            fromMenu
         )
         onboardingView = v
         val lp = FrameLayout.LayoutParams(
@@ -2746,6 +2762,12 @@ class MainActivity : Activity() {
 
         // A real OK key press into the page, so the page's own "Full screen" button is allowed to go full screen
         // (browsers refuse it without a key press); only on Stagecrowd pages.
+        // The account menu's "Instructions" link: the first-run guide again, from the language step.
+        @android.webkit.JavascriptInterface
+        fun showGuide() {
+            this@MainActivity.runOnUiThread { showGuideFromMenu() }
+        }
+
         @android.webkit.JavascriptInterface
         fun ppvPressOk() {
             this@MainActivity.runOnUiThread {
@@ -5094,6 +5116,7 @@ class MainActivity : Activity() {
                 if (key === 'acct') {
                   var al = window.__tvMenuAcct || [];
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
+                  if (window.AndroidHost && AndroidHost.showGuide) body += '<a class="tv-sm-fi" tabindex="0" data-guide="1">' + esc(T('Instructions', '使い方')) + '</a>';
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
                 h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
@@ -5132,11 +5155,20 @@ class MainActivity : Activity() {
             var list = fiItems(), cur = document.activeElement;
             if (list.indexOf(cur) === -1) { if (list[0]) focusItem(list[0]); return true; }
             var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
-            var best = null, bs = 1e9;
+            var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
             list.forEach(function(it) {
               if (it === cur) return;
               var r = it.getBoundingClientRect();
               var dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim, orth;
+              if (dir === 'right' || dir === 'left') {
+                // Straight across first: an item that shares most of this one's row (the buttons of the featured
+                // shows) beats a nearer one that sits above or below it.
+                var ov = Math.min(r.bottom, cr.bottom) - Math.max(r.top, cr.top);
+                if (ov > 0.5 * Math.min(r.height, cr.height) && (dir === 'right' ? dx > 4 : dx < -4)) {
+                  var adx = Math.abs(dx);
+                  if (adx < rowBs) { rowBs = adx; rowBest = it; }
+                }
+              }
               if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
               else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
               else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
@@ -5144,6 +5176,7 @@ class MainActivity : Activity() {
               var sc = prim + orth * 2;
               if (sc < bs) { bs = sc; best = it; }
             });
+            if (rowBest) { focusItem(rowBest); return true; }
             if (best) { focusItem(best); return true; }
             return false;
           }
@@ -5224,7 +5257,8 @@ class MainActivity : Activity() {
                 var fa = document.activeElement;
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
-                  if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
+                  else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
                   else if (fa.getAttribute('data-ppv')) { ppvAct(fa.getAttribute('data-id'), fa.getAttribute('data-ppv')); }
                   else if (fa.getAttribute('data-ev')) { evOpen(fa.getAttribute('data-ev')); }
                   else if (fa.getAttribute('data-rem')) { schedToggleRem(fa.getAttribute('data-rem')); }
@@ -10189,7 +10223,8 @@ private class OnboardingView(
     private val density: Float,
     private val onLogin: () -> Unit,
     private val onBrowse: () -> Unit,
-    private val onLanguage: (String) -> Unit
+    private val onLanguage: (String) -> Unit,
+    private val fromMenu: Boolean = false
 ) : FrameLayout(context) {
 
     private class Slide(val jp: String, val en: String, val capJp: String, val capEn: String, val art: Int)
@@ -10384,9 +10419,9 @@ private class OnboardingView(
             skipBtn.text = "English"
             nextBtn.text = "日本語"
         } else {
-            skipBtn.text = tr("Skip to log in", "スキップしてログイン")
+            skipBtn.text = if (fromMenu) tr("Close", "閉じる") else tr("Skip to log in", "スキップしてログイン")
             backBtn.text = tr("Back", "戻る")
-            nextBtn.text = if (index == slides.size - 1) tr("Log in", "ログイン") else tr("Next", "次へ")
+            nextBtn.text = if (index == slides.size - 1) (if (fromMenu) tr("Done", "完了") else tr("Log in", "ログイン")) else tr("Next", "次へ")
         }
         val bs = (if (isJa && !langStep) 19f else 21f) * u
         for (b in listOf(skipBtn, backBtn, nextBtn)) b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, bs)

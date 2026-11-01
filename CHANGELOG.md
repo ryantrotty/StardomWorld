@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.9
+
+- Favorites: wrestler cards now have a plain dark frame. When focused, the whole frame turns solid gold, lifts slightly and glows, so the selected card is easy to see.
+- Shows menu: Left and Right now go straight across a row (the featured shows' Remind me and Details buttons) before looking above or below, so they no longer jump down to the next show's bell.
+- Account menu: new "Instructions" link opens the first-run guide again from the language choice. Its last button reads "Done" and "Close" instead of heading to the login page, and it returns to the page you were on.
+
 ## 2.11.8
 
 - Colour tidy-up: 18 near-duplicate greys and navies (for example #222, #333333, #0B0F14, #121A24) now use the app's standard greys and navies. Differences are a few shades at most. Warm tinted fills (login focus, favorites, PPV tile) are kept and recorded in the design spec.
