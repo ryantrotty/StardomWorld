@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.17
+
+- Stagecrowd video page: now uses their real markup. The light/dark switch is hidden by its own class, and their information tab bar is recognised under either name (Streaming or Distribution information) so the right-hand column hides reliably.
+
 ## 2.10.16
 
 - Shows menu: show titles are cut to two lines so the Upcoming and Past tiles stay the same size with no big gap.

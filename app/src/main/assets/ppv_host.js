@@ -189,7 +189,7 @@
 
   function hideBits() {
     // their right-hand column: climb from "STREAMING INFORMATION" up to just below the common ancestor with the player
-    var v = document.querySelector('video'), si = finds(/^streaming information$/i, 40)[0];
+    var v = document.querySelector('video'), si = finds(/^(streaming|distribution) information$/i, 40)[0];
     if (v && si) {
       var p = si;
       while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v)) p = p.parentElement;
@@ -198,6 +198,8 @@
     finds(/^theat(er|re)\s*mode$/i, 30).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
     var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
     for (var i = 0; i < tg.length; i++) if (!inRail(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
+    var sw = document.querySelectorAll('.MuiFormControlLabel-root,.MuiSwitch-root,input.MuiSwitch-input');
+    for (var q = 0; q < sw.length; q++) sw[q].classList.add('tv-ppv-gone');
     finds(/^(dark|light)(\s*mode)?$/i, 20).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
     // nothing else should take focus: the logo and any other leftover control become inert
     var all = document.querySelectorAll('a,button,input,select,textarea,[tabindex]');
