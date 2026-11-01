@@ -8,6 +8,72 @@
   },
   "events": [
     {
+      "id": "20261029-otaku",
+      "title": "STARDOM CRIMSON NIGHTMARE 2026",
+      "short": "Crimson Nightmare",
+      "venue": "EBARA WAVE Arena Ota, Tokyo",
+      "start": "2026-10-29T19:00:00+09:00",
+      "doors": "2026-10-29T18:30:00+09:00",
+      "url": "https://wwr-stardom.com/en/schedule/20261029-otaku/",
+      "poster": "20261029-otaku",
+      "own": true,
+      "ppv": {
+        "page": "https://intl.stagecrowd.live/s/scint/group/detail/i10415",
+        "url": "https://intl.stagecrowd.live/3944875753/",
+        "price": 3300,
+        "total": 3520,
+        "sale_start": "2026-10-26T12:00:00+09:00",
+        "sale_end": "2026-11-15T19:00:00+09:00",
+        "replay_end": "2026-11-15T23:59:00+09:00",
+        "watch_url": "https://intl.stagecrowd.live/s/scint/plan_player/10479"
+      },
+      "matches": [
+        {
+          "type": "Tag Match",
+          "sides": [
+            "AZM & Miyu Amasaki",
+            "Mei Seira & Ema Maishima"
+          ]
+        },
+        {
+          "type": "3WAY Trio Battle",
+          "sides": [
+            "Syuri, Ami Sohrei & Hina",
+            "Rina Yamashita, Itsuki Aoki & Akira Kurogane",
+            "Maki Ito, Kikyo Furusawa & Rian"
+          ]
+        },
+        {
+          "type": "8-person Tag Match",
+          "sides": [
+            "Sakura Aya, Sayaka Kurara, Saori Anou & Anne Kanaya",
+            "Lady C, Tomoka Inaba, Ranna Yagami & Kiyoka Kotatsu"
+          ]
+        },
+        {
+          "type": "STARS vs HATE Elimination Match",
+          "sides": [
+            "STARS: Hanan, Saya Iida, Maika, Utami Hayashishita, HANAKO, Waka Tsukiyama, Yuria Hime, Matoi Hamabe",
+            "HATE: Natsuko Tora, Momo Watanabe, Konami, Saya Kamitani, Ruaka, Rina, Bea Priestley, Azusa Inaba"
+          ]
+        },
+        {
+          "type": "Special Mixed Tag Team Match",
+          "sides": [
+            "Natsupoi & Shingo Takagi",
+            "Yuna Mizumori & Hirooki Goto"
+          ]
+        },
+        {
+          "type": "World of Stardom Championship",
+          "sides": [
+            "Suzu Suzuki (c)",
+            "Starlight Kid"
+          ]
+        }
+      ]
+    },
+    {
       "id": "20261101-korakuen",
       "title": "The 16th Goddesses of Stardom ~Tag League Opening Match~",
       "short": "Tag League Opening Match",

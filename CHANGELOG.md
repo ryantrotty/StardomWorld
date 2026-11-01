@@ -2,6 +2,147 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.3
+
+- Stagecrowd video page: the language button now reads "Language: English" or "Language: 日本語" (it showed "CC: Off" because the page's flag for the app was sent as a number, which the app does not read as true). Pressing it switches the commentary and the label follows. Until you pick one it shows Japanese, which is what their page starts on.
+
+## 2.11.2
+
+- Stagecrowd video page: sizes now follow the app's other video pages. Their page is laid out narrower than the 1440 px the app uses elsewhere, which made the bar and its buttons look too big; the bar's text, buttons and spacing are now scaled to match, and the picture is 60% of the screen width, starting about 7% down.
+
+## 2.11.1
+
+- Stagecrowd video page: their page can come up in Japanese (英語実況 / 日本語実況 for the commentary, シアターモード for theater mode). The language button, the theater toggle and the dark/light switch are now found in either language, and the info column is found from its tab bar, so it hides either way.
+
+## 2.11.0
+
+- Stagecrowd video page now uses the same control bar as the app's other video pages, under the picture: time, progress, play, skip back / forward (Up / Down on them picks the skip size), mute, speed, language and full screen. Their own control bar is hidden and nothing else on the page can take focus, so the D-pad cannot wander into their controls. Full screen has focus first, the 8 second auto full screen is kept, and leaving full screen puts focus back on it. The three buttons above the player are gone.
+- The language button (English / 日本語) stands in for the captions button, in this bar and in the full screen overlay on these pages, since their player has no captions to offer. The full screen overlay itself is unchanged and still shows in full screen.
+- The picture is about two thirds of the screen width, centred, as large as fits above the bar, like the app's other video pages.
+
+## 2.10.25
+
+- Stagecrowd video page: Full screen, English and 日本語 are back above the player (Down goes to the player, Up from the player or its control bar returns to them). Still 30% smaller, and auto full screen is unchanged.
+
+## 2.10.24
+
+- PPV details page: once the show is over the "Your time" column and the "Show over" line are gone (the venue time stays). The heading is now the purple PPV chip with the status chip beside it. The step number sits on the same line as the step title. The match card now lists the participants for each match (from the official card, English names; subject to change).
+- Stagecrowd video page: buttons are about 30% smaller and sit below the player (Up goes to the player, Down comes back to the buttons). After 8 seconds on the replay or live page it goes to full screen by itself, once; because browsers only allow that after a key press, the app sends an OK key press while Full screen has focus if the direct request is refused (new bridge call ppvPressOk).
+
+## 2.10.23
+
+- Stagecrowd video page: removed the yellow key-debug line.
+- Home page, step 4: the pay-per-view show gets its own tile next to the next-live tile. It reads PPV · ON SALE SOON, PPV · ON SALE (price and sale end), PPV · LIVE NOW (red border, "Watch live"), or PPV · REPLAY ("Watch until Nov 15"), and disappears when the replay ends. Pressing it opens the show's details page, where the four steps and the Watch button are. The next-live tile now skips pay-per-view shows, so it keeps showing the next regular show.
+
+## 2.10.22
+
+- Stagecrowd video page: found why the commentary buttons could not be reached. The page script was being loaded twice, so there were two overlapping button rows, and the D-pad code was walking the hidden one. The whole script now runs only once per page.
+
+## 2.10.21
+
+- Stagecrowd video page: fixed a stray `+ +` in the button styles (introduced in 2.10.20) that dropped all of them, so the row showed as plain pink text. A small yellow line at the bottom left shows the last key pressed and what had focus, to find why the commentary buttons were not reachable.
+
+## 2.10.20
+
+- Shows menu: removed the temporary PPV playback-test link from the bottom of the list (the test is still step 1 on the details page).
+- Stagecrowd video page: Full screen, English and 日本語 now sit in one row above the player, centred. Left/Right walk the row, Down goes to the player, Up from the player or its control bar returns to the row. The row takes focus first, and again when leaving full screen. Their logo header is hidden and the player is centred.
+
+## 2.10.19
+
+- Stagecrowd video page: the English / 日本語 buttons are now created once and kept. Their page re-draws its own controls often, and the old code rebuilt ours each time, which dropped the D-pad focus and made them unreachable. Their theater icon is hidden along with its label.
+
+## 2.10.18
+
+- Shows menu: tiles shrink to fit their content (no empty gap above the buttons), so more of the Past shows list is on screen.
+- Stagecrowd video page: the commentary choice is limited to one English and one 日本語 button. Before, every element on the page that mentioned "commentary" got its own button, which produced the garbled strip.
+
+## 2.10.17
+
+- Stagecrowd video page: now uses their real markup. The light/dark switch is hidden by its own class, and their information tab bar is recognised under either name (Streaming or Distribution information) so the right-hand column hides reliably.
+
+## 2.10.16
+
+- Shows menu: show titles are cut to two lines so the Upcoming and Past tiles stay the same size with no big gap.
+- Stagecrowd video page: their right-hand column, the theater toggle, the light/dark switch and the clickable logo are hidden. One column of buttons on the right in the app's style: Full screen (main action) and the commentary choice (English / 日本語). Up/Down walk the column, Left returns to the player, Up from the player's control bar or Right from the player goes to Full screen. Everything else on the page is made unfocusable so no hidden control can take focus.
+
+## 2.10.15
+
+- Show details page: step 3 is one Buy button that opens the phone QR screen. Buttons now have a single gold outline when focused (no double ring).
+- Shows menu: the Upcoming and Past tiles are the same height, with buttons along the bottom.
+- Stagecrowd video page: Full screen and Theater mode buttons restyled (dark, single gold focus), test report only on the test page, cookie banner and language chip hidden on every Stagecrowd page.
+
+## 2.10.14
+
+- Stagecrowd "Login is required" page (when Watch is pressed while signed out): dark look, gold Log in button, form-order focus and no test report, like the sign-in pages. Any Stagecrowd page using the same simple layout gets the same treatment.
+
+## 2.10.13
+
+- Stagecrowd player: the app's own full screen controls (play, skip, mute, speed, captions) now drive their video, and show its time and state. Before, only Exit full screen worked.
+- Their player's control bar no longer traps the D-pad: Up from a bar button moves to our Full screen button, Down goes back to the video.
+- Test report and the Full screen / Exit theater buttons only show on the player and test pages, not on their show page or cart pages.
+- Back from a Stagecrowd page (or from the Buy on your phone code) now returns to the show's details page, not the page underneath. Back on the code closes the code first.
+- Sign-in: the login page's D-pad order now reaches the register button (a hidden duplicate was taking its place), and the error line no longer overlaps the password label. If "Return to the original page" does nothing, the page goes where it would have gone by itself.
+
+## 2.10.12
+
+- PPV, step 3: Buy opens Stagecrowd's show page on the Purchase tab with the precautions tick box selected, then the cart, card and confirmation pages get the same dark look, gold action button and form-order D-pad focus as sign-in. The test report is hidden on all of them.
+- New "Buy on your phone" button next to Buy: a full-screen QR code of their show page, with three short steps. Back closes it. (QR code library: qrcode-generator by Kazuhiko Arase, MIT license, bundled as assets/qrcode.js.)
+- Watch now opens the replay's own address when the replay is up, and their Viewing page tab otherwise.
+- Safety: while you are in a Stagecrowd session, a page on any other site (a bank's card-security check) gets no certificate leniency and none of the Stardom World scripts, and the top bar shows its padlock and address. The session ends when a Stardom World page opens.
+- Forgot-password link on their login page shows one line of text instead of two overlapping.
+
+## 2.10.11
+
+- Stagecrowd: after signing in, their "Login is complete" page presses "Return to the original page" by itself, so you land back on the show page. That page also gets the dark look and no test report.
+
+## 2.10.10
+
+- The tag line on schedule cards and the details page (the purple PPV tag and its state, and the "NEXT LIVE" tag) was hidden by the site-wide rule that hides anything with "tag" in its class name. Renamed so it shows.
+- PPV cards no longer show Remind me once the show is live, on replay or ended.
+
+## 2.10.9
+
+- Stagecrowd registration: their "Back to top" button after the email is sent now says "Back to the show" and returns to the show instead of their home page.
+
+## 2.10.8
+
+- Stagecrowd sign-in and registration: styled with their real page classes (buttons, titles, labels, links), a gold Log in / Send button, and the two "register" links on the login page now count as one stop in the D-pad order.
+
+## 2.10.7
+
+- Stagecrowd sign-in, registration and password pages: dark look to match the app, a gold main button, and a D-pad order that follows the form (fields, tick boxes, then the button) instead of jumping to the cookie banner and language chip. Up and Down step through the form, OK ticks a box, and focus starts on the first field. Their cookie banner is answered once with Reject All and then stays hidden; their language chip is hidden on these pages.
+
+## 2.10.6
+
+- Stagecrowd pages: the gold focus ring is now drawn on the visible button, link or checkbox label that holds the focus, also where their own styling hid it.
+
+## 2.10.5
+
+- Stagecrowd sign-in and registration pages: the on-screen test report is hidden there so it no longer covers the form and cookie banner.
+
+## 2.10.4
+
+- PPV steps go to the right place on Stagecrowd: Sign in opens their login page (which links to registration, and returns to the show page); Buy opens the show page on its "Purchase tickets" tab; Watch opens it on the "Viewing page" tab.
+
+## 2.10.3
+
+- PPV details page: one button per step (Run the test, Sign up / sign in, Buy, Watch); the "I've bought it" switch is gone. The buttons on this page now have a single gold focus outline instead of two.
+
+## 2.10.2
+
+- PPV: the Crimson Nightmare show was not appearing because the downloaded schedule (which has no PPV shows) replaced the bundled one. PPV shows from the bundled file are now added to the downloaded schedule.
+
+## 2.10.1
+
+- PPV, step 2: pay-per-view shows (sold and streamed by Stagecrowd) appear in the schedule with a PPV tag and a state taken from the dates alone: not on sale yet, on sale, live, replay, replay ended. The Shows menu shows a PPV card (with Watch replay while the replay is up) as the first box of Past shows, and the show details page gets a four step row: test playback, sign up or sign in, buy, watch. "I've bought it" is a switch you set yourself.
+- The first PPV show (Crimson Nightmare, Oct 29) is in the bundled schedule. Its poster ships inside the app (private builds only).
+- Stagecrowd pages: Back always returns to the show; a Full screen button and an Exit theatre button appear once a video is on the page; the test report shrinks to the corner.
+
+## 2.10.0
+
+- PPV, step 1 (private builds): Shows menu, Past shows column, "PPV TEST (TEMPORARY)": opens Stagecrowd's free playback test page inside the app. Stagecrowd pages run without any of the Stardom World scripts, with a thin bar on top (what Back does, and the padlock and address of the page), a visible D-pad focus ring, and a test report that stays on screen (page, video state, Widevine and codec support, errors).
+- Stagecrowd pages never get past certificate errors, and only get protected-media (DRM) permission, not camera or microphone.
+
 ## 2.9.13
 
 - Captions: the CC button always looks for captions first, also on a show that was live and is now on demand (it still uses the live-style player address, which 2.9.9 wrongly treated as "still live"). If the video has none, it says "Closed captions not available for this video".
