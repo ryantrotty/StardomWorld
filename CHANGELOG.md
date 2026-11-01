@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.11.1
+
+- Stagecrowd video page: their page can come up in Japanese (英語実況 / 日本語実況 for the commentary, シアターモード for theater mode). The language button, the theater toggle and the dark/light switch are now found in either language, and the info column is found from its tab bar, so it hides either way.
+
 ## 2.11.0
 
 - Stagecrowd video page now uses the same control bar as the app's other video pages, under the picture: time, progress, play, skip back / forward (Up / Down on them picks the skip size), mute, speed, language and full screen. Their own control bar is hidden and nothing else on the page can take focus, so the D-pad cannot wander into their controls. Full screen has focus first, the 8 second auto full screen is kept, and leaving full screen puts focus back on it. The three buttons above the player are gone.

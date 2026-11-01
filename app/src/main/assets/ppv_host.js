@@ -170,9 +170,9 @@ window.__tvPpvAll = 1;
     }
     return false;
   }
-  function langOf(h) { var s = txt(h); return /japanese/i.test(s) ? 'ja' : /english/i.test(s) ? 'en' : ''; }
+  function langOf(h) { var s = txt(h); return /japanese|\u65e5\u672c\u8a9e/i.test(s) ? 'ja' : /english|\u82f1\u8a9e/i.test(s) ? 'en' : ''; }
   function commSrc(l) {
-    var hs = finds(/commentary/i, 40);
+    var hs = finds(/commentary|\u5b9f\u6cc1/i, 40);
     for (var i = 0; i < hs.length; i++) if (langOf(hs[i]) === l) return hs[i];
     return null;
   }
@@ -251,18 +251,18 @@ window.__tvPpvAll = 1;
 
   // ---- Hide their extras; make everything else on the page unreachable by the D-pad
   function hideBits() {
-    var v = document.querySelector('video'), si = finds(/^(streaming|distribution) information$/i, 40)[0];
+    var v = document.querySelector('video'), si = finds(/^(streaming|distribution) information$/i, 40)[0] || document.querySelector('.MuiAppBar-root');
     if (v && si) {
       var p = si;
       while (p.parentElement && p.parentElement !== document.body && !p.parentElement.contains(v)) p = p.parentElement;
       if (p && !p.contains(v) && p !== document.body) p.classList.add('tv-ppv-gone');
     }
-    finds(/^theat(er|re)\s*mode$/i, 30).forEach(hideUp);
+    finds(/^(theat(er|re)\s*mode|\u30b7\u30a2\u30bf\u30fc\u30e2\u30fc\u30c9)$/i, 30).forEach(hideUp);
     var sw = document.querySelectorAll('.MuiFormControlLabel-root,.MuiSwitch-root,input.MuiSwitch-input');
     for (var q = 0; q < sw.length; q++) sw[q].classList.add('tv-ppv-gone');
     var tg = document.querySelectorAll('[class*="theme" i],[class*="darkmode" i],[class*="dark-mode" i],[aria-label*="dark" i],[aria-label*="light" i],[aria-label*="theme" i],[id*="theme" i]');
     for (var i = 0; i < tg.length; i++) if (!inBar(tg[i]) && !tg[i].contains(v)) tg[i].classList.add('tv-ppv-gone');
-    finds(/^(dark|light)(\s*mode)?$/i, 20).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
+    finds(/^(dark|light)(\s*mode)?$|^(\u30c0\u30fc\u30af|\u30e9\u30a4\u30c8)\u30e2\u30fc\u30c9$/i, 20).forEach(function (e) { e.classList.add('tv-ppv-gone'); });
     var all = document.querySelectorAll('a,button,input,select,textarea,[tabindex]');
     for (var j = 0; j < all.length; j++) {
       var e = all[j];
