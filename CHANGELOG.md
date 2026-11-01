@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.4
+
+- PPV steps go to the right place on Stagecrowd: Sign in opens their login page (which links to registration, and returns to the show page); Buy opens the show page on its "Purchase tickets" tab; Watch opens it on the "Viewing page" tab.
+
 ## 2.10.3
 
 - PPV details page: one button per step (Run the test, Sign up / sign in, Buy, Watch); the "I've bought it" switch is gone. The buttons on this page now have a single gold focus outline instead of two.

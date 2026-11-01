@@ -3943,6 +3943,7 @@ class MainActivity : Activity() {
           // in the schedule file: sale start, show start, replay end. Whether you bought is a switch you set yourself.
           var PPV_TEST_URL = 'https://intl.stagecrowd.live/s/scint/page/live_player_test';
           var PPV_SIGNUP_URL = 'https://intl.stagecrowd.live/s/scint/member/add';
+          var PPV_LOGIN_URL = 'https://intl.stagecrowd.live/s/scint/login';
           function ppvMs(s) { var t = Date.parse(s || ''); return isNaN(t) ? 0 : t; }
           function fmtMD(ms) { try { return new Date(ms).toLocaleDateString(schedLoc(), { month: 'short', day: 'numeric' }); } catch (x) { return ''; } }
           function ppvReplayEnd(e) { return ppvMs(e.ppv && e.ppv.replay_end) || (e._t + 14 * 86400000); }
@@ -3992,7 +3993,10 @@ class MainActivity : Activity() {
             if (act === 'test') { ppvGo(PPV_TEST_URL); return; }
             if (act === 'signup') { ppvGo(PPV_SIGNUP_URL); return; }
             if (act === 'bought') { ppvSetBought(id, !ppvBought(id)); evOpen(id); return; }
+            if (act === 'signin') { ppvGo(PPV_LOGIN_URL); return; }   // their login page (it links to registration too); it returns to the show page
             if (!url) return;
+            if (act === 'buy') url += '#tv=buy';       // their page opens on the "Purchase tickets" tab
+            else if (act === 'watch') url += '#tv=watch';   // ... or on the "Viewing page" tab
                         ppvGo(url);
           }
           function ppvStepsHtml(e) {
@@ -4004,7 +4008,7 @@ class MainActivity : Activity() {
             return '<div class="tv-ev-k" style="margin-top:14px;">' + esc(T('FOUR STEPS \u00b7 EACH OPENS STAGECROWD INSIDE THE APP, BACK RETURNS HERE', '4つのステップ \u00b7 Stagecrowdがアプリ内で開きます。戻るでここに戻ります')) + '</div>' +
               '<div class="tv-ppv-steps">' +
               box(1, T('Test playback', '再生テスト'), T('Free check that it plays on this TV.', 'このテレビで再生できるか無料で確認します。'), b('test', T('Run the test', 'テストする'))) +
-              box(2, T('Sign up or sign in', '登録・ログイン'), T('One account, kept on this TV.', 'アカウントはこのテレビに保存されます。'), b('signin', T('Sign up / sign in', '登録・ログイン'))) +
+              box(2, T('Sign up or sign in', '登録・ログイン'), T('New here? Their sign-in page has Register.', '初めての方は、ログイン画面から新規登録できます。'), b('signin', T('Sign in', 'ログイン'))) +
               box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Card payment on their page.', 'お支払いは先方のページで。'), buyOk ? b('buy', T('Buy', '購入') + (price ? ' ' + price : '')) : '') +
               box(4, T('Watch', '視聴'), T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。'), b('watch', watchLbl), false) +
               '</div>';

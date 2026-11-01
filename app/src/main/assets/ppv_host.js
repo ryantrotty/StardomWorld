@@ -159,3 +159,23 @@
   b.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); } });
   setInterval(function () { b.style.display = document.querySelector('video') ? 'block' : 'none'; }, 1000);
 })();
+
+// Our buttons open their show page with #tv=buy or #tv=watch: press their "Purchase tickets" or "Viewing page" tab
+// for the person, once, so the TV lands on the right part of the page.
+(function () {
+  var m = /[#&]tv=(buy|watch)/.exec(location.hash || '');
+  if (!m) return;
+  var want = m[1] === 'buy' ? /^purchase tickets$/i : /^viewing page$/i, tries = 0;
+  var iv = setInterval(function () {
+    tries++;
+    var bs = document.querySelectorAll('button,a,[role=tab]');
+    for (var i = 0; i < bs.length; i++) {
+      if (want.test((bs[i].textContent || '').trim().replace(/\s+/g, ' '))) {
+        try { bs[i].click(); bs[i].focus(); bs[i].scrollIntoView({ block: 'center' }); } catch (e) {}
+        clearInterval(iv);
+        return;
+      }
+    }
+    if (tries > 20) clearInterval(iv);
+  }, 500);
+})();
