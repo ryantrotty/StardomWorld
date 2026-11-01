@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.11
+
+- Stagecrowd: after signing in, their "Login is complete" page presses "Return to the original page" by itself, so you land back on the show page. That page also gets the dark look and no test report.
+
 ## 2.10.10
 
 - The tag line on schedule cards and the details page (the purple PPV tag and its state, and the "NEXT LIVE" tag) was hidden by the site-wide rule that hides anything with "tag" in its class name. Renamed so it shows.

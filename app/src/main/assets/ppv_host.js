@@ -187,7 +187,7 @@
   function sync() {
     var d = document.getElementById('tv-ppv-dbg');
     if (!d) return;
-    var forms = /\/(login|member|password|form)\b/.test(location.pathname);
+    var forms = /\/(login|member|password|form)/.test(location.pathname);
     d.style.display = forms ? 'none' : '';
   }
   setInterval(sync, 700);
@@ -219,7 +219,7 @@
 // ---- Sign-in, registration and password pages: a cleaner, dark look and a D-pad order that follows the form.
 // Their markup can change, so everything here is light: CSS on top, and an explicit list of controls to step through.
 (function () {
-  if (!/^\/s\/[^/]+\/(login|member|password)\b/.test(location.pathname)) return;
+  if (!/^\/s\/[^/]+\/(login|member|password)/.test(location.pathname)) return;
 
   var st = document.createElement('style');
   st.textContent =
@@ -327,4 +327,21 @@
       }, true);
     }
   }, 700);
+})();
+
+// After signing in they show "Login is complete" with a "Return to the original page" button. Press it for the
+// person, so signing in lands straight back on the show page.
+(function () {
+  if (!/\/login_fin\b/.test(location.pathname)) return;
+  var n = 0, iv = setInterval(function () {
+    var l = document.querySelectorAll('a,button');
+    for (var i = 0; i < l.length; i++) {
+      if (/return to the original page/i.test((l[i].textContent || '').trim().replace(/\s+/g, ' '))) {
+        clearInterval(iv);
+        try { l[i].click(); } catch (e) {}
+        return;
+      }
+    }
+    if (++n > 16) clearInterval(iv);
+  }, 400);
 })();
