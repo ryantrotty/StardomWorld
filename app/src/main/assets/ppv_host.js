@@ -188,7 +188,7 @@
   function sync() {
     var d = document.getElementById('tv-ppv-dbg');
     if (!d) return;
-    var forms = !/\/(live_player_test|plan_player|live_player)/.test(location.pathname) || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
+    var forms = !/\/(live_player_test|plan_player|live_player)/.test(location.pathname) || !!document.querySelector('.CpSimpleLayout__main') || !/(^|\.)stagecrowd\.live$/.test(location.hostname);
     d.style.display = forms ? 'none' : '';
   }
   setInterval(sync, 700);
@@ -220,7 +220,7 @@
 // ---- Sign-in, registration and password pages: a cleaner, dark look and a D-pad order that follows the form.
 // Their markup can change, so everything here is light: CSS on top, and an explicit list of controls to step through.
 (function () {
-  if (!/^\/s\/[^/]+\/(login|member|password|cart|order)/.test(location.pathname)) return;
+  if (!/^\/s\/[^/]+\/(login|member|password|cart|order)/.test(location.pathname) && !document.querySelector('.CpSimpleLayout__main')) return;
 
   var st = document.createElement('style');
   st.textContent =

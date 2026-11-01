@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.10.14
+
+- Stagecrowd "Login is required" page (when Watch is pressed while signed out): dark look, gold Log in button, form-order focus and no test report, like the sign-in pages. Any Stagecrowd page using the same simple layout gets the same treatment.
+
 ## 2.10.13
 
 - Stagecrowd player: the app's own full screen controls (play, skip, mute, speed, captions) now drive their video, and show its time and state. Before, only Exit full screen worked.
