@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.14.4
+
+- Kawaii of Kawaii page: Maki Itoh, one defence on record (vs Aya Sakura, Jul 2, 2026). A reign with no known title win shows its first recorded match instead, and the LINEAGE line reads "1 reign" with no years until a full year has passed.
+
 ## 2.14.3
 
 - Lineage page searches now use the same words as the filter bar: High Speed searches "High-Speed Championship", and a title with other names in championships.json (alts) searches each of them too.

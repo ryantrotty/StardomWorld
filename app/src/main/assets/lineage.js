@@ -90,7 +90,7 @@
   }
 
   function eventsOf(r) {
-    var ev = [{ kind: 'win', d: r.won, opp: plain(r.vs), venue: r.venue, note: '', n: 0 }];
+    var ev = r.noWin ? [] : [{ kind: 'win', d: r.won, opp: plain(r.vs), venue: r.venue, note: '', n: 0 }];
     r.defences.forEach(function(x, k) { ev.push({ kind: 'def', d: x.d, opp: plain(x.opp), venue: x.venue || '', note: x.note || '', n: k + 1 }); });
     return ev;
   }
@@ -367,7 +367,7 @@
   function curBox(i) {
     var r = R[i], nx = R[i + 1], lines;
     var k = r.cur ? T('Current champion', '現王者') : T('Champion', '王者');
-    var s1 = T(r.days + ' days · ' + dn(r) + (dn(r) === 1 ? ' defence' : ' defences') + ' · won ' + fmtD(r.won) + ' vs ' + plain(r.vs), r.days + '日 · 防衛' + dn(r) + '回 · ' + fmtD(r.won) + ' 獲得');
+    var s1 = T(r.days + ' days · ' + dn(r) + (dn(r) === 1 ? ' defence' : ' defences') + (r.noWin ? ' · first match on record ' + fmtD(r.won) : ' · won ' + fmtD(r.won) + ' vs ' + plain(r.vs)), r.days + '日 · 防衛' + dn(r) + '回 · ' + fmtD(r.won) + (r.noWin ? ' 初試合' : ' 獲得'));
     var s2 = '';
     if (!r.cur && r.end) s2 = r.endType === 'vacated' ? T('Vacated ' + fmtD(r.end), fmtD(r.end) + ' 返上') : T('Lost to ' + (nx ? nm(nx) : '') + ' on ' + fmtD(r.end), fmtD(r.end) + ' 陥落');
     return '<div class="ln-cur"><div class="k">' + esc(k + ' · ' + T(ord(r.n) + ' reign', '第' + r.n + '代')) + '</div><div class="n">' + esc(r.team ? r.team + ' \u00b7 ' + plain(r.champ) : r.champ) + '</div><div class="s">' + esc(s1) + '</div>' + (s2 ? '<div class="s">' + esc(s2) + '</div>' : '') + '</div>';
@@ -376,8 +376,8 @@
     var longest = R[0];
     R.forEach(function(r) { if (r.days > longest.days) longest = r; });
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
-    return T('Stardom · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + ' reigns · ' + years + ' years · longest reign ' + longest.days + ' days (' + nm(longest) + ')',
-      'スターダム · ' + fmtD(D.since) + '〜 · ' + R.length + '代 · ' + years + '年 · 最長 ' + longest.days + '日 (' + nm(longest) + ')');
+    return T('Stardom · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + (R.length === 1 ? ' reign' : ' reigns') + (years >= 1 ? ' · ' + years + ' years' : '') + ' · longest reign ' + longest.days + ' days (' + nm(longest) + ')',
+      'スターダム · ' + fmtD(D.since) + '〜 · ' + R.length + '代' + (years >= 1 ? ' · ' + years + '年' : '') + ' · 最長 ' + longest.days + '日 (' + nm(longest) + ')');
   }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';
