@@ -1,9 +1,15 @@
 {
-  "_note": "Edit this file to change the Factions menu. 'name' is what is shown; 'search' is what is typed into the site's search (use the spelling the video site uses). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
+  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name), 'match' = words a video title must contain to count as a faction match, 'captain' and 'founded' are shown on the faction home page and menu, 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
   "factions": [
     {
       "id": "stars",
       "name": "STARS",
+      "founded": "2018",
+      "captain": "Hanan",
+      "search": "STARS",
+      "match": [
+        "STARS"
+      ],
       "members": [
         {
           "name": "Hanan",
@@ -46,6 +52,12 @@
     {
       "id": "cosmic-angels",
       "name": "COSMIC ANGELS",
+      "founded": "2020",
+      "captain": "Natsupoi & Saori Anou",
+      "search": "COSMIC ANGELS",
+      "match": [
+        "COSMIC ANGELS"
+      ],
       "members": [
         {
           "name": "Sakura Aya",
@@ -76,6 +88,12 @@
     {
       "id": "gods-eye",
       "name": "God's Eye",
+      "founded": "2022",
+      "captain": "Syuri",
+      "search": "God's Eye",
+      "match": [
+        "God's Eye"
+      ],
       "members": [
         {
           "name": "Syuri",
@@ -110,6 +128,12 @@
     {
       "id": "neo-genesis",
       "name": "NEO GENESIS",
+      "founded": "2024",
+      "captain": "Starlight Kid",
+      "search": "NEO GENESIS",
+      "match": [
+        "NEO GENESIS"
+      ],
       "members": [
         {
           "name": "Starlight Kid",
@@ -136,6 +160,13 @@
     {
       "id": "hate",
       "name": "HATE",
+      "founded": "2024",
+      "captain": "Natsuko Tora",
+      "search": "H.A.T.E.",
+      "match": [
+        "H.A.T.E",
+        "HATE"
+      ],
       "members": [
         {
           "name": "Natsuko Tora",
@@ -178,6 +209,12 @@
     {
       "id": "mi-vida-loca",
       "name": "Mi Vida Loca",
+      "founded": "2025",
+      "captain": "Suzu Suzuki",
+      "search": "Mi Vida Loca",
+      "match": [
+        "Mi Vida Loca"
+      ],
       "members": [
         {
           "name": "Suzu Suzuki",
@@ -204,6 +241,11 @@
     {
       "id": "itoh-respect-gundan",
       "name": "Itoh Respect Gundan",
+      "captain": "Maki Itoh",
+      "search": "Itoh Respect Gundan",
+      "match": [
+        "Itoh Respect"
+      ],
       "members": [
         {
           "name": "Maki Itoh",
@@ -222,6 +264,7 @@
     {
       "id": "unaffiliated",
       "name": "Unaffiliated",
+      "home": false,
       "members": [
         {
           "name": "Hazuki",

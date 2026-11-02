@@ -101,3 +101,5 @@ Tag and trios titles (2.14.2): the champion box shows the team name, a middle do
 Championships submenu (2.15.0): two columns, width 1000. Column 1 is Stardom lineage cards (110 x 60 belt, 17/700 title, 14/600 champion, 12/700 gold day count); column 2 is New Japan then Other Promotions as plain items. Cards use the shelf A Border focus look; no new colours.
 
 Championships submenu (2.15.1): Stardom cards in a 2 x 4 grid; New Japan (1 column) and Other Promotions (2 columns) in a row below. Replaces the two-column layout from 2.15.0.
+
+Faction home (2.16.0): a Faction home row heads the member list. The home screen has the logo (max 300 x 190), name 46/800, FOUNDED / CAPTAIN / MEMBERS labels (13/700 grey over 22/700 white), TITLES HELD cards (belt 120 x 66, 19/700, 15/600, 13/700 gold; two columns) and a three-column FACTION MATCHES grid. Factions submenu: cards in the Championships card style (17/700 name, 13/600 captain line, 13/700 gold titles line). Single gold focus look throughout.

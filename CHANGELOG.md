@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.0
+
+- Faction pages have a home screen. A new "Faction home" row tops the member list (also where the page opens). It shows a larger logo, founded year, captain, member count, the titles the faction holds now (belt, holder, reign, day count and defences; each opens that title's lineage page) and a grid of faction matches: videos with the faction name in the title. Choosing a member shows their videos as before; "Faction home" returns.
+- The Factions menu entry now opens the faction's own search instead of its first member's, so the home grid uses the page that has just loaded: no extra request. A later page loads only when you scroll down.
+- Unaffiliated has no home page, only its member list.
+- The Factions submenu shows each faction as a card: name, captain, member count and titles held.
+- `factions.json` gains `founded`, `captain`, `search`, `match` and `home` per faction. Titles held come from the lineage files, not the site.
+
 ## 2.15.2
 
 - Championships submenu: Down from "All championship matches" goes to the first card (World of Stardom) instead of jumping to AEW; Right does nothing there and Left closes the shelf.
