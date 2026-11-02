@@ -2518,6 +2518,35 @@ class MainActivity : Activity() {
         } catch (_: Exception) { return text }
     }
 
+    // The daily file (assets-independent copy in filesDir) published by the daily job: schedule, lineage.titles, status.
+    // Read once per change of the file; null when there is none or it cannot be read.
+    private var dailyCache: org.json.JSONObject? = null
+    private var dailyStamp = -1L
+    @Synchronized
+    private fun dailyData(): org.json.JSONObject? {
+        return try {
+            val f = java.io.File(filesDir, "daily.json")
+            if (!f.exists() || f.length() == 0L) return null
+            if (f.lastModified() != dailyStamp || dailyCache == null) {
+                dailyCache = org.json.JSONObject(f.readText())
+                dailyStamp = f.lastModified()
+            }
+            dailyCache
+        } catch (_: Exception) { null }
+    }
+
+    // A lineage from the daily file, only when it is complete and has at least as many reigns as the bundled one
+    // (so an app update with newer bundled data is never undone by an older daily file).
+    private fun dailyLineage(id: String, bundled: String): String? {
+        return try {
+            val t = dailyData()?.optJSONObject("lineage")?.optJSONObject("titles")?.optJSONObject(id) ?: return null
+            val reigns = t.optJSONArray("reigns") ?: return null
+            if (reigns.length() == 0 || t.optString("title").isEmpty()) return null
+            val have = if (bundled.isEmpty()) 0 else (org.json.JSONObject(bundled).optJSONArray("reigns")?.length() ?: 0)
+            if (reigns.length() >= have) t.toString() else null
+        } catch (_: Exception) { null }
+    }
+
     private fun scheduleTextRaw(): String {
         var downloaded = ""
         try {
@@ -2525,6 +2554,14 @@ class MainActivity : Activity() {
             if (f.exists() && f.length() > 0) downloaded = f.readText()
         } catch (_: Exception) {}
         val bundled = try { assets.open("schedule.json").bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+        // The daily file's schedule is a third candidate; the newest "updated" of the downloaded copies wins.
+        try {
+            val ds = dailyData()?.optJSONObject("schedule")
+            if (ds != null && ds.optJSONArray("events") != null) {
+                val dtext = ds.toString()
+                if (downloaded.isEmpty() || ds.optString("updated", "") > org.json.JSONObject(downloaded).optString("updated", "")) downloaded = dtext
+            }
+        } catch (_: Exception) {}
         if (downloaded.isEmpty()) return bundled
         if (bundled.isEmpty()) return downloaded
         return try {
@@ -2564,7 +2601,26 @@ class MainActivity : Activity() {
         val due = now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
         Thread {
             try {
+                var gotDaily = false
                 if (due) {
+                    // The daily file first: it carries the schedule and the lineages. The schedule-only file is the fallback.
+                    try {
+                        val dc = java.net.URL(BuildConfig.DAILY_URL).openConnection() as java.net.HttpURLConnection
+                        dc.connectTimeout = 8000
+                        dc.readTimeout = 15000
+                        val dbody = dc.inputStream.bufferedReader().use { it.readText() }
+                        dc.disconnect()
+                        val dj = org.json.JSONObject(dbody)
+                        val okSched = (dj.optJSONObject("schedule")?.optJSONArray("events")?.length() ?: 0) > 0
+                        val okLin = dj.optJSONObject("lineage")?.optJSONObject("titles") != null
+                        if (okSched && okLin) {
+                            java.io.File(filesDir, "daily.json").writeText(dbody)
+                            prefs.edit().putLong("last", now).apply()
+                            gotDaily = true
+                        }
+                    } catch (_: Exception) {}
+                }
+                if (due && !gotDaily) {
                     val conn = java.net.URL(BuildConfig.SCHEDULE_URL).openConnection() as java.net.HttpURLConnection
                     conn.connectTimeout = 8000
                     conn.readTimeout = 8000
@@ -2755,9 +2811,13 @@ class MainActivity : Activity() {
 
         // Championship lineages (assets/lineage/<id>.json) and the belt picture, which only builds with the private branding folder have.
         @android.webkit.JavascriptInterface
-        fun lineageJson(id: String): String = try {
-            this@MainActivity.assets.open("lineage/" + id.filter { it.isLetterOrDigit() || it == '_' } + ".json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun lineageJson(id: String): String {
+            val clean = id.filter { it.isLetterOrDigit() || it == '_' }
+            val bundled = try {
+                this@MainActivity.assets.open("lineage/" + clean + ".json").bufferedReader().use { it.readText() }
+            } catch (_: Exception) { "" }
+            return this@MainActivity.dailyLineage(clean, bundled) ?: bundled
+        }
 
         private val beltCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 

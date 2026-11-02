@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 318
-        versionName = "2.17.3"
+        versionCode = 319
+        versionName = "2.18.0"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -26,6 +26,10 @@ android {
         val scheduleUrl = (project.findProperty("tvhub.scheduleUrl") as String?)
             ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/schedule-data/schedule.json"
         buildConfigField("String", "SCHEDULE_URL", "\"$scheduleUrl\"")
+        // The daily file (schedule, championship lineages and a status report) that the Muse job publishes to the daily-data branch.
+        val dailyUrl = (project.findProperty("tvhub.dailyUrl") as String?)
+            ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/daily-data/daily.json"
+        buildConfigField("String", "DAILY_URL", "\"$dailyUrl\"")
     }
 
     buildFeatures {
