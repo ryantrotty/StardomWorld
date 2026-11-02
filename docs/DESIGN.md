@@ -97,3 +97,5 @@ Reign detail (2.13.4): the title win and defences are fact rows (#161F2A, radius
 Strip order (2.13.5): newest reign on the left, current champion focused on open. Right moves to an older reign. Videos for a reign other than the current one load on OK.
 
 Tag and trios titles (2.14.2): the champion box shows the team name, a middle dot and the members; the strip chips show the team name (when it fits). No new colours or focus looks.
+
+Championships submenu (2.15.0): two columns, width 1000. Column 1 is Stardom lineage cards (110 x 60 belt, 17/700 title, 14/600 champion, 12/700 gold day count); column 2 is New Japan then Other Promotions as plain items. Cards use the shelf A Border focus look; no new colours.
