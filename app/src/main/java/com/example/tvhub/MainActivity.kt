@@ -6091,7 +6091,7 @@ class MainActivity : Activity() {
     '#tv-fac.tv-empty #tv-fac-home{display:block;}',
     '#tv-fac .tv-hm-top{display:flex;align-items:center;gap:30px;margin:0 0 26px 0;}',
     '#tv-fac .tv-hm-logo{flex:0 0 auto;max-width:300px;max-height:190px;object-fit:contain;}',
-    '#tv-fac .tv-hm-name{font-size:46px;font-weight:800;line-height:1.1;}',
+    '#tv-fac .tv-hm-name{font-size:44px;font-weight:800;line-height:1.1;}',
     '#tv-fac .tv-hm-meta{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:14px;}',
     '#tv-fac .tv-hm-k{font-size:13px;font-weight:700;letter-spacing:1px;color:#9aa6b4;}',
     '#tv-fac .tv-hm-v{font-size:22px;font-weight:700;color:#fff;margin-top:2px;}',
