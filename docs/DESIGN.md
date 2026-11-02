@@ -95,3 +95,5 @@ Run `python3 scripts/audit_design.py` for the report (add `--all` for every occu
 Reign detail (2.13.4): the title win and defences are fact rows (#161F2A, radius 8, 15px, not focusable). The videos are one horizontal row like the home and related rows: heading 22/700 with the 8 x 26 gold bar, gap 24, four cards across (25% minus 18 px), sideways scroll, video card #1a1a1a radius 8, title 15/700 (4-line clamp), gold date badge top-right, orange THIS REIGN tag top-left, focus look C.
 
 Strip order (2.13.5): newest reign on the left, current champion focused on open. Right moves to an older reign. Videos for a reign other than the current one load on OK.
+
+Tag and trios titles (2.14.2): the champion box shows the team name, a middle dot and the members; the strip chips show the team name (when it fits). No new colours or focus looks.

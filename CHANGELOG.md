@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.14.2
+
+- Lineage pages for the tag and trios titles: Goddess of Stardom (37 reigns), Artist of Stardom (37 reigns) and NEW BLOOD Tag Team (5 reigns, defence counts only). A team shows its team name with its members, the strip is labelled with team names, and the video search tries every member of the team first and then the first member alone.
+
 ## 2.14.1
 
 - Lineage pages for Future of Stardom (14 reigns) and High Speed (28 reigns, from the 2009 NEO era), with every title win and defence. The Championships menu opens them.

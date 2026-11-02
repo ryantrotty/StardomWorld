@@ -1,0 +1,93 @@
+{
+ "_note": "NEW BLOOD Tag Team Championship lineage. Source: Stardom.com (wwr-stardom.com) title history, win dates checked against Wikipedia and Cagematch. endType: lost, vacated (a gap follows) or empty for the current reign. alias: other spellings searched for the same wrestler.",
+ "id": "newblood",
+ "title": "NEW BLOOD Tag Team Championship",
+ "ja": "NEW BLOOD タッグ選手権",
+ "since": "2023-03-25",
+ "kind": "Tag",
+ "search": "NEW BLOOD",
+ "titlePatterns": [
+  "NEW BLOOD Tag",
+  "NEW BLOOD タッグ",
+  "New Blood Tag"
+ ],
+ "alias": {
+  "Thekla": [
+   "Tekla"
+  ],
+  "Sayaka Kurara": [
+   "Sayaka Kurei"
+  ],
+  "Hanako": [
+   "HANAKO"
+  ],
+  "Saya Iida": [
+   "Iida Saya"
+  ],
+  "Wakana Tsukiyama": [
+   "Waka Tsukiyama"
+  ]
+ },
+ "reigns": [
+  {
+   "n": 1,
+   "champ": "Karma & Starlight Kid",
+   "won": "2023-03-25",
+   "end": "2023-09-29",
+   "endType": "lost",
+   "vs": "Mirai & Tomoka Inaba",
+   "venue": "New Blood Premium, Yokohama",
+   "defences": [],
+   "team": "Bloody Fate",
+   "defCount": 2
+  },
+  {
+   "n": 2,
+   "champ": "Hanan & Saya Iida",
+   "won": "2023-09-29",
+   "end": "2024-07-23",
+   "endType": "lost",
+   "vs": "Karma & Starlight Kid",
+   "venue": "New Blood 11, Tokyo",
+   "defences": [],
+   "team": "wing★gori",
+   "defCount": 4
+  },
+  {
+   "n": 3,
+   "champ": "Rina & Azusa Inaba",
+   "won": "2024-07-23",
+   "end": "2024-12-26",
+   "endType": "lost",
+   "vs": "Hanan & Saya Iida",
+   "venue": "Stardom Nighter in Korakuen II, Tokyo",
+   "defences": [],
+   "team": "Devil Princess",
+   "defCount": 2
+  },
+  {
+   "n": 4,
+   "champ": "Hanako & Wakana Tsukiyama",
+   "won": "2024-12-26",
+   "end": "2025-10-30",
+   "endType": "lost",
+   "vs": "Rina & Azusa Inaba",
+   "venue": "New Blood 17, Tokyo",
+   "defences": [],
+   "team": "Rice or Bread",
+   "defCount": 4
+  },
+  {
+   "n": 5,
+   "champ": "Sakura Aya & Sayaka Kurara",
+   "won": "2025-10-30",
+   "end": null,
+   "endType": "",
+   "vs": "Hanako & Wakana Tsukiyama",
+   "venue": "New Blood 26, Tokyo",
+   "defences": [],
+   "team": "Sakurara",
+   "defCount": 2
+  }
+ ]
+}

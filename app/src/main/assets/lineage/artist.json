@@ -1,0 +1,912 @@
+{
+ "_note": "Artist of Stardom Championship lineage. Source: Stardom.com (wwr-stardom.com) title history, win dates checked against Wikipedia and Cagematch. endType: lost, vacated (a gap follows) or empty for the current reign. alias: other spellings searched for the same wrestler.",
+ "id": "artist",
+ "title": "Artist of Stardom Championship",
+ "ja": "アーティスト・オブ・スターダム",
+ "since": "2013-01-14",
+ "kind": "Trios",
+ "search": "Artist of Stardom",
+ "titlePatterns": [
+  "Artist of Stardom",
+  "アーティスト・オブ・スターダム"
+ ],
+ "alias": {
+  "Act Yasukawa": [
+   "Akito Yasukawa"
+  ],
+  "Yoko Bito": [
+   "Yoko Mito"
+  ],
+  "Syuri": [
+   "Shuri",
+   "Akari"
+  ],
+  "Giulia": [
+   "Julia"
+  ],
+  "Thekla": [
+   "Tekla"
+  ],
+  "Saori Anou": [
+   "Saori Anno"
+  ],
+  "Ami Sohrei": [
+   "Sorei Ami",
+   "Ami Sourei"
+  ],
+  "Natsuko Tora": [
+   "Tora Natsuko"
+  ],
+  "Miyu Amasaki": [
+   "Mitsuyoshi Amasaki",
+   "Amasaki Mitsuyoshi"
+  ],
+  "Ruaka": [
+   "Ryuka"
+  ],
+  "Fukigen Death": [
+   "Fukigen Desu"
+  ],
+  "Kellie Skater": [
+   "Kelly Skater"
+  ],
+  "Hiragi Kurumi": [
+   "Kurumi Hiiragi"
+  ],
+  "Hana Kimura": [
+   "Hana Kimura"
+  ],
+  "Kaori Yoneyama": [
+   "Kaori Yoneyama"
+  ],
+  "Hatsuhinode Kamen": [
+   "First Sunrise Mask"
+  ],
+  "Momo Kohgo": [
+   "Momo Kogo"
+  ],
+  "Sayaka Kurara": [
+   "Sayaka Kurei"
+  ],
+  "Kairi": [
+   "Kairi Hojo"
+  ],
+  "Julia Hart": [
+   "Julia Hart"
+  ],
+  "Skye Blue": [
+   "Sky Blue"
+  ]
+ },
+ "reigns": [
+  {
+   "n": 1,
+   "champ": "Natsuki Taiyo, Saki Kashima & Act Yasukawa",
+   "won": "2013-01-14",
+   "end": "2013-05-09",
+   "endType": "vacated",
+   "vs": "Tomoka Nakagawa, Portia Perez & Kellie Skater",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": []
+  },
+  {
+   "n": 2,
+   "champ": "Kairi Hojo, Kaori Yoneyama & Yuhi",
+   "won": "2013-06-23",
+   "end": "2013-11-04",
+   "endType": "lost",
+   "vs": "Kyoko Kimura, Hailey Hatred & Christina Von Eerie",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2013-08-17",
+     "opp": "Natsuki Taiyo, Io Shirai & Act Yasukawa",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2013-10-14",
+     "opp": "Hiroyo Matsumoto, Miho Wakizawa & Mayu Iwatani",
+     "venue": "Osaka Dotonbori Arena",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "champ": "Kyoko Kimura, Alpha Female & Female Predator Amazon",
+   "won": "2013-11-04",
+   "end": "2013-12-29",
+   "endType": "lost",
+   "vs": "Kaori Yoneyama, Kairi Hojo & Yuhi",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [],
+   "team": "Kimura Monster-gun"
+  },
+  {
+   "n": 4,
+   "champ": "Hiroyo Matsumoto, Miho Wakizawa & Mayu Iwatani",
+   "won": "2013-12-29",
+   "end": "2014-08-10",
+   "endType": "lost",
+   "vs": "Kyoko Kimura, Alpha Female & Female Predator Amazon",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2014-02-09",
+     "opp": "Kaori Yoneyama, Kairi Hojo & partner",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2014-03-16",
+     "opp": "Kaori Yoneyama, Hatsuhinode Kamen & Kellie Skater",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2014-04-29",
+     "opp": "Nanae Takahashi, Kairi Hojo & Koguma",
+     "venue": "Osaka IMP Hall",
+     "note": ""
+    },
+    {
+     "d": "2014-06-01",
+     "opp": "Kaori Yoneyama, Hatsuhinode Kamen & Sayaka Obihiro",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "champ": "Hatsuhinode Kamen, Kaori Yoneyama & Tsubasa Kuragaki",
+   "won": "2014-08-10",
+   "end": "2014-12-07",
+   "endType": "lost",
+   "vs": "Hiroyo Matsumoto, Miho Wakizawa & Mayu Iwatani",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": []
+  },
+  {
+   "n": 6,
+   "champ": "Io Shirai, Mayu Iwatani & Takumi Iroha",
+   "won": "2014-12-07",
+   "end": "2015-04-15",
+   "endType": "vacated",
+   "vs": "Kaori Yoneyama, Tsubasa Kuragaki & Hatsuhinode Kamen",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2015-02-08",
+     "opp": "Hudson Envy, Heidi Lovelace & Dragonita",
+     "venue": "Osaka Joto Ward Community Hall",
+     "note": ""
+    }
+   ],
+   "team": "Heisei-gun"
+  },
+  {
+   "n": 7,
+   "champ": "Chelsea, Kairi Hojo & Koguma",
+   "won": "2015-05-03",
+   "end": "2015-11-28",
+   "endType": "vacated",
+   "vs": "Io Shirai, Mayu Iwatani & Hazuki Renou",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": []
+  },
+  {
+   "n": 8,
+   "champ": "Evie, Hiroyo Matsumoto & Kellie Skater",
+   "won": "2015-12-06",
+   "end": "2016-02-28",
+   "endType": "lost",
+   "vs": "Io Shirai, Mayu Iwatani & Momo Watanabe",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2015-12-23",
+     "opp": "Momo Watanabe, Jungle Kyona & Hiromi Mimura",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2016-01-24",
+     "opp": "Kyoko Kimura, Viper & Kaitlyn Diamond",
+     "venue": "Osaka Higashinari Ward Community Center",
+     "note": ""
+    }
+   ],
+   "team": "Hyper Destroyers"
+  },
+  {
+   "n": 9,
+   "champ": "Io Shirai, Kairi Hojo & Mayu Iwatani",
+   "won": "2016-02-28",
+   "end": "2016-10-02",
+   "endType": "lost",
+   "vs": "Hiroyo Matsumoto, Kellie Skater & Evie",
+   "venue": "Osaka Ikuno Ward Community Center",
+   "defences": [
+    {
+     "d": "2016-04-17",
+     "opp": "Momo Watanabe, Jungle Kyona & Hiromi Mimura",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2016-06-11",
+     "opp": "Kyoko Kimura, Kagetsu & Diosa Atenea",
+     "venue": "Yokohama Radiant Hall",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "champ": "Hana Kimura, Kagetsu & Kyoko Kimura",
+   "won": "2016-10-02",
+   "end": "2017-01-07",
+   "endType": "vacated",
+   "vs": "Io Shirai, Mayu Iwatani & Kairi Hojo",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2016-10-30",
+     "opp": "Momo Watanabe, Jungle Kyona & Hiromi Mimura",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2016-11-23",
+     "opp": "Jungle Kyona, Kairi Hojo & Yoko Bito",
+     "venue": "Fukuoka Hakata Star Lane",
+     "note": ""
+    }
+   ],
+   "team": "Oedo Tai"
+  },
+  {
+   "n": 11,
+   "champ": "HZK, Io Shirai & Momo Watanabe",
+   "won": "2017-01-07",
+   "end": "2017-04-09",
+   "endType": "vacated",
+   "vs": "Kyoko Kimura, Viper & Kagetsu",
+   "venue": "Osaka Minato Ward Community Center",
+   "defences": [],
+   "team": "Queen's Quest"
+  },
+  {
+   "n": 12,
+   "champ": "AZM, HZK & Io Shirai",
+   "won": "2017-04-15",
+   "end": "2017-05-06",
+   "endType": "lost",
+   "vs": "Kagetsu, Hana Kimura & Rosa Negra",
+   "venue": "Yokohama Radiant Hall",
+   "defences": [],
+   "team": "Queen's Quest"
+  },
+  {
+   "n": 13,
+   "champ": "Hiromi Mimura, Kairi Hojo & Konami",
+   "won": "2017-05-06",
+   "end": "2017-06-04",
+   "endType": "lost",
+   "vs": "Io Shirai, HZK & AZM",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2017-05-21",
+     "opp": "Mayu Iwatani, Jungle Kyona & Natsuko Tora",
+     "venue": "Hiroshima JMS Aster Plaza",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 14,
+   "champ": "AZM, HZK & Io Shirai",
+   "won": "2017-06-04",
+   "end": "2017-06-17",
+   "endType": "lost",
+   "vs": "Kairi Hojo, Konami & Hiromi Mimura",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [],
+   "team": "Queen's Quest"
+  },
+  {
+   "n": 15,
+   "champ": "Hiroyo Matsumoto, Jungle Kyona & Kaori Yoneyama",
+   "won": "2017-06-17",
+   "end": "2017-08-13",
+   "endType": "lost",
+   "vs": "Io Shirai, HZK & AZM",
+   "venue": "Yokohama Radiant Hall",
+   "defences": [],
+   "team": "Team Jungle"
+  },
+  {
+   "n": 16,
+   "champ": "HZK, Io Shirai & Viper",
+   "won": "2017-08-13",
+   "end": "2018-04-15",
+   "endType": "vacated",
+   "vs": "Hiroyo Matsumoto, Kaori Yoneyama & Jungle Kyona",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2017-09-24",
+     "opp": "Kagetsu, Tam Nakano & Kris Wolf",
+     "venue": "Nagoya",
+     "note": ""
+    },
+    {
+     "d": "2018-01-28",
+     "opp": "Kagetsu, Hana Kimura & Natsu Sumire",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2018-03-25",
+     "opp": "Toni Storm, Bea Priestley & Xia Brookside",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Queen's Quest"
+  },
+  {
+   "n": 17,
+   "champ": "Jungle Kyona, Kaori Yoneyama & Natsuko Tora",
+   "won": "2018-05-27",
+   "end": "2018-09-30",
+   "endType": "lost",
+   "vs": "Kagetsu, Hana Kimura & Hazuki",
+   "venue": "Osaka Hirano Ward Community Center",
+   "defences": [
+    {
+     "d": "2018-07-16",
+     "opp": "Kay Lee Ray, Britt Baker & Dust",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2018-08-05",
+     "opp": "Tam Nakano, Starlight Kid & Shiki Shibusawa",
+     "venue": "Sendai PIT",
+     "note": ""
+    }
+   ],
+   "team": "J.A.N."
+  },
+  {
+   "n": 18,
+   "champ": "Mayu Iwatani, Saki Kashima & Tam Nakano",
+   "won": "2018-09-30",
+   "end": "2019-05-16",
+   "endType": "lost",
+   "vs": "Jungle Kyona, Natsuko Tora & Kaori Yoneyama",
+   "venue": "Nagoya International Conference Hall, Aichi",
+   "defences": [
+    {
+     "d": "2018-10-20",
+     "opp": "Jungle Kyona, Natsuko Tora & Kaori Yoneyama",
+     "venue": "Osaka Sekaikan",
+     "note": ""
+    },
+    {
+     "d": "2018-12-15",
+     "opp": "Momo Watanabe, Utami Hayashishita & Saki",
+     "venue": "Yokohama Radiant Hall",
+     "note": ""
+    },
+    {
+     "d": "2019-03-03",
+     "opp": "Kagetsu, Hazuki & Natsu Sumire",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": ""
+    },
+    {
+     "d": "2019-03-24",
+     "opp": "Hana Kimura, Goja Kong & Rebel Kel",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Stars"
+  },
+  {
+   "n": 19,
+   "champ": "Hana Kimura, Jungle Kyona & Konami",
+   "won": "2019-05-16",
+   "end": "2019-06-23",
+   "endType": "lost",
+   "vs": "Mayu Iwatani, Saki Kashima & Tam Nakano",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2019-06-16",
+     "opp": "Kagetsu, Andras Miyagi & Natsu Sumire",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Tokyo Cyber Squad"
+  },
+  {
+   "n": 20,
+   "champ": "Mayu Iwatani, Saki Kashima & Tam Nakano",
+   "won": "2019-06-23",
+   "end": "2019-07-20",
+   "endType": "lost",
+   "vs": "Hana Kimura, Jungle Kyona & Konami",
+   "venue": "Matsue Kunibiki Messe",
+   "defences": [
+    {
+     "d": "2019-07-15",
+     "opp": "Hana Kimura, Bobbi Tyler & Zoe Lucas",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": ""
+    }
+   ],
+   "team": "Stars"
+  },
+  {
+   "n": 21,
+   "champ": "Andras Miyagi, Kagetsu & Natsu Sumire",
+   "won": "2019-07-20",
+   "end": "2019-11-23",
+   "endType": "lost",
+   "vs": "Mayu Iwatani, Saki Kashima & Tam Nakano",
+   "venue": "Edion Arena Osaka 2nd Gym",
+   "defences": [
+    {
+     "d": "2019-08-10",
+     "opp": "Hazuki, Natsuko Tora & Jamie Hayter",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Oedo Tai"
+  },
+  {
+   "n": 22,
+   "champ": "AZM, Momo Watanabe & Utami Hayashishita",
+   "won": "2019-11-23",
+   "end": "2020-02-08",
+   "endType": "lost",
+   "vs": "Andras Miyagi, Kagetsu & Natsu Sumire",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2019-12-24",
+     "opp": "Tam Nakano, Saki Kashima & Starlight Kid",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Queen's Quest"
+  },
+  {
+   "n": 23,
+   "champ": "Giulia, Maika & Syuri",
+   "won": "2020-02-08",
+   "end": "2020-11-14",
+   "endType": "lost",
+   "vs": "Momo Watanabe, Utami Hayashishita & AZM",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2020-07-23",
+     "opp": "Natsuko Tora, Saki Kashima & Natsu Sumire",
+     "venue": "Edion Arena Osaka 2nd Gym",
+     "note": ""
+    },
+    {
+     "d": "2020-09-22",
+     "opp": "Mayu Iwatani, Tam Nakano & Starlight Kid",
+     "venue": "Edion Arena Osaka 2nd Gym",
+     "note": ""
+    }
+   ],
+   "team": "Donna del Mondo"
+  },
+  {
+   "n": 24,
+   "champ": "Bea Priestley, Natsuko Tora & Saki Kashima",
+   "won": "2020-11-14",
+   "end": "2020-12-16",
+   "endType": "lost",
+   "vs": "Giulia, Syuri & Maika",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [],
+   "team": "Oedo Tai"
+  },
+  {
+   "n": 25,
+   "champ": "Mina Shirakawa, Tam Nakano & Unagi Sayaka",
+   "won": "2020-12-16",
+   "end": "2021-10-03",
+   "endType": "lost",
+   "vs": "Natsuko Tora, Bea Priestley & Saki Kashima",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2020-12-20",
+     "opp": "Mayu Iwatani, Starlight Kid & Fukigen Death",
+     "venue": "Edion Arena Osaka 1st Gym",
+     "note": "elimination match"
+    },
+    {
+     "d": "2021-03-07",
+     "opp": "Mayu Iwatani, Starlight Kid & Saya Iida",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2021-03-26",
+     "opp": "Momo Watanabe, Saya Kamitani & AZM",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2021-04-29",
+     "opp": "Natsuko Tora, Konami & Fukigen Death",
+     "venue": "Sendai PIT",
+     "note": ""
+    },
+    {
+     "d": "2021-05-16",
+     "opp": "Maika, Himeka & Natsupoi",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": "30-minute time-limit draw"
+    },
+    {
+     "d": "2021-06-26",
+     "opp": "Natsuko Tora, Saki Kashima & Ruaka",
+     "venue": "Mutsu Maeda Arena, Aomori",
+     "note": ""
+    },
+    {
+     "d": "2021-07-06",
+     "opp": "AZM, Utami Hayashishita & Saya Kamitani",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Cosmic Angels"
+  },
+  {
+   "n": 26,
+   "champ": "Himeka, Maika & Natsupoi",
+   "won": "2021-10-03",
+   "end": "2022-05-28",
+   "endType": "lost",
+   "vs": "Tam Nakano, Mina Shirakawa & Unagi Sayaka",
+   "venue": "Nagoya International Conference Hall, Aichi",
+   "defences": [
+    {
+     "d": "2021-10-09",
+     "opp": "Momo Watanabe, AZM & Saya Kamitani",
+     "venue": "Osaka-jo Hall",
+     "note": ""
+    },
+    {
+     "d": "2021-12-18",
+     "opp": "Takumi Iroha, Rin Kadokura & Maria",
+     "venue": "Edion Arena Osaka 1st Gym",
+     "note": "prize unit tournament, round 1"
+    },
+    {
+     "d": "2021-12-18",
+     "opp": "Mayu Iwatani, Koguma & Hazuki",
+     "venue": "Edion Arena Osaka 1st Gym",
+     "note": "prize unit tournament final, elimination ladder match"
+    },
+    {
+     "d": "2021-12-29",
+     "opp": "Mina Shirakawa, Unagi Sayaka & Mai Sakurai",
+     "venue": "Ryogoku Kokugikan, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-02-21",
+     "opp": "Rina, Ruaka & Starlight Kid",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-03-13",
+     "opp": "Utami Hayashishita, Saya Kamitani & Lady C",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-04-23",
+     "opp": "Tam Nakano, Mina Shirakawa & Unagi Sayaka",
+     "venue": "Kobe Sanbo Hall",
+     "note": "30-minute time-limit draw"
+    }
+   ],
+   "team": "Donna del Mondo"
+  },
+  {
+   "n": 27,
+   "champ": "Momo Watanabe, Saki Kashima & Starlight Kid",
+   "won": "2022-05-28",
+   "end": "2022-12-29",
+   "endType": "lost",
+   "vs": "Maika, Himeka & Natsupoi",
+   "venue": "Ota City General Gymnasium, Tokyo",
+   "defences": [
+    {
+     "d": "2022-06-26",
+     "opp": "Giulia, Maika & Mai Sakurai",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": "three-way elimination, also Syuri, Mirai & Ami Sohrei"
+    },
+    {
+     "d": "2022-07-24",
+     "opp": "Giulia, Maika & Himeka",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": ""
+    },
+    {
+     "d": "2022-08-21",
+     "opp": "Mina Shirakawa, Unagi Sayaka & Saki",
+     "venue": "Aichi Dolphins Arena",
+     "note": ""
+    },
+    {
+     "d": "2022-09-11",
+     "opp": "Hanan, Koguma & Hazuki",
+     "venue": "Yokohama Budokan",
+     "note": ""
+    },
+    {
+     "d": "2022-10-09",
+     "opp": "Utami Hayashishita, AZM & Saya Kamitani",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": "30-minute time-limit draw"
+    }
+   ],
+   "team": "Oedo Tai"
+  },
+  {
+   "n": 28,
+   "champ": "Hiragi Kurumi, Risa Sera & Suzu Suzuki",
+   "won": "2022-12-29",
+   "end": "2023-04-23",
+   "endType": "lost",
+   "vs": "Saki Kashima, Starlight Kid & Momo Watanabe",
+   "venue": "Ryogoku Kokugikan, Tokyo",
+   "defences": [
+    {
+     "d": "2023-03-04",
+     "opp": "Syuri, Mirai & Ami Sohrei",
+     "venue": "Yoyogi National Gymnasium No. 2",
+     "note": "Triangle Derby I final"
+    },
+    {
+     "d": "2023-04-02",
+     "opp": "Utami Hayashishita, Saya Kamitani & AZM",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Prominence"
+  },
+  {
+   "n": 29,
+   "champ": "Kairi, Natsupoi & Saori Anou",
+   "won": "2023-04-23",
+   "end": "2023-05-27",
+   "endType": "lost",
+   "vs": "Risa Sera, Suzu Suzuki & Hiragi Kurumi",
+   "venue": "Yokohama Arena",
+   "defences": [],
+   "team": "REstart"
+  },
+  {
+   "n": 30,
+   "champ": "Giulia, Mai Sakurai & Thekla",
+   "won": "2023-05-27",
+   "end": "2024-01-03",
+   "endType": "lost",
+   "vs": "Kairi, Natsupoi & Saori Anou",
+   "venue": "Ota City General Gymnasium, Tokyo",
+   "defences": [
+    {
+     "d": "2023-06-25",
+     "opp": "Mayu Iwatani, Hazuki & Koguma",
+     "venue": "Yoyogi National Gymnasium No. 2",
+     "note": "cage match"
+    },
+    {
+     "d": "2023-10-09",
+     "opp": "Maika, Suzu Suzuki & Megan Bain",
+     "venue": "Aichi Dolphins Arena",
+     "note": ""
+    },
+    {
+     "d": "2023-11-18",
+     "opp": "Hazuki, Hanan & Saya Iida",
+     "venue": "Edion Arena Osaka 1st Gym",
+     "note": "Moneyball tournament final"
+    }
+   ],
+   "team": "Donna del Mondo"
+  },
+  {
+   "n": 31,
+   "champ": "Ami Sohrei, Mirai & Syuri",
+   "won": "2024-01-03",
+   "end": "2024-03-30",
+   "endType": "lost",
+   "vs": "Giulia, Mai Sakurai & Thekla",
+   "venue": "Yokohama Budokan",
+   "defences": [
+    {
+     "d": "2024-01-20",
+     "opp": "Mayu Iwatani, Hazuki & Hanan",
+     "venue": "Belle Salle Takadanobaba",
+     "note": ""
+    }
+   ],
+   "team": "God's Eye"
+  },
+  {
+   "n": 32,
+   "champ": "Maika, Mina Shirakawa & Xena",
+   "won": "2024-03-30",
+   "end": "2024-08-04",
+   "endType": "lost",
+   "vs": "Syuri, Mirai & Ami Sohrei",
+   "venue": "Sendai PIT",
+   "defences": [
+    {
+     "d": "2024-05-05",
+     "opp": "Mayu Iwatani, Hanan & Sayaka Kurara",
+     "venue": "Acros Fukuoka Event Hall",
+     "note": ""
+    },
+    {
+     "d": "2024-06-02",
+     "opp": "Natsuko Tora, Momo Watanabe & Thekla",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Empress Nexus Venus"
+  },
+  {
+   "n": 33,
+   "champ": "Natsupoi, Saori Anou & Tam Nakano",
+   "won": "2024-08-04",
+   "end": "2025-02-02",
+   "endType": "lost",
+   "vs": "Maika, Mina Shirakawa & Xena",
+   "venue": "Hamamatsu Act City",
+   "defences": [
+    {
+     "d": "2024-09-22",
+     "opp": "Natsuko Tora, Saya Kamitani & Ruaka",
+     "venue": "Yamagata Sanyu Engineering Gymnasium",
+     "note": ""
+    },
+    {
+     "d": "2025-01-13",
+     "opp": "Yuna Mizumori, Sakura Aya & Sayaka Kurara",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "Cosmic Angels"
+  },
+  {
+   "n": 34,
+   "champ": "AZM, Miyu Amasaki & Starlight Kid",
+   "won": "2025-02-02",
+   "end": "2025-09-10",
+   "endType": "lost",
+   "vs": "Tam Nakano, Natsupoi & Saori Anou",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2025-03-03",
+     "opp": "Lady C, Tomoka Inaba & Ranna Yagami",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2025-05-24",
+     "opp": "Konami, Ruaka & Rinata",
+     "venue": "Edion Arena Osaka 2nd Gym",
+     "note": ""
+    }
+   ],
+   "team": "Neo Genesis"
+  },
+  {
+   "n": 35,
+   "champ": "Fukigen Death, Konami & Rina",
+   "won": "2025-09-10",
+   "end": "2026-05-26",
+   "endType": "lost",
+   "vs": "Starlight Kid, AZM & Miyu Amasaki",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2025-09-23",
+     "opp": "Hanan, Saya Iida & Momo Kohgo",
+     "venue": "Edion Arena Osaka 2nd Gym",
+     "note": ""
+    },
+    {
+     "d": "2025-12-08",
+     "opp": "Hanako, Wakana Tsukiyama & Rina",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-01-11",
+     "opp": "Hinami, Lady C & Tomoka Inaba",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-05-17",
+     "opp": "Hanan, Saya Iida & Momo Kohgo",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ],
+   "team": "HATE"
+  },
+  {
+   "n": 36,
+   "champ": "Ami Sohrei, Hina & Lady C",
+   "won": "2026-05-26",
+   "end": "2026-07-18",
+   "endType": "lost",
+   "vs": "Konami, Rina & Fukigen Death",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2026-06-14",
+     "opp": "Natsupoi, Yuna Mizumori & Sakura Aya",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-06-20",
+     "opp": "Maki Ito, Kian Furusawa & Rian Hinata",
+     "venue": "Yoyogi National Gymnasium No. 2",
+     "note": ""
+    }
+   ],
+   "team": "God's Eye"
+  },
+  {
+   "n": 37,
+   "champ": "Julia Hart, Skye Blue & Thekla",
+   "won": "2026-07-18",
+   "end": null,
+   "endType": "",
+   "vs": "Ami Sohrei, Hina & Lady C",
+   "venue": "Ota City General Gymnasium, Tokyo",
+   "defences": [
+    {
+     "d": "2026-09-12",
+     "opp": "Sakura Aya, Natsupoi & Yuna Mizumori",
+     "venue": "Yokohama Budokan",
+     "note": ""
+    }
+   ],
+   "team": "Triangle Of Madness"
+  }
+ ]
+}

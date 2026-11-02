@@ -145,7 +145,18 @@
   var busy = false, lastReq = 0, token = 0;
   var dbg = {};   // per reign: lines shown at the bottom of the page
 
-  function baseQuery(r) { return plain(r.champ) + ' ' + (D.search || 'World of Stardom'); }
+  // Tag and trios titles: r.champ lists the members ("A & B"), r.team is the team name shown instead.
+  // defence count: r.defCount when only the number is known, else the listed defences
+  function dn(r) { return r.defCount != null ? r.defCount : r.defences.length; }
+  function nm(r) { return r.team || plain(r.champ); }
+  function members(r) { return plain(r.champ).split(/\s*(?:&|,)\s*/).filter(Boolean); }
+  function baseQuery(r) { return members(r).join(' ') + ' ' + (D.search || 'World of Stardom'); }
+  // A team is searched by all its members first; if that finds nothing, by the first member alone.
+  function queries(r) {
+    var m = members(r), q = [baseQuery(r)];
+    if (m.length > 1) q.push(m[0] + ' ' + (D.search || 'World of Stardom'));
+    return q;
+  }
   // the site's own year filter is a keyword: "Suzu Suzuki World of Stardom 2026/" finds the cards dated 2026/..
   function yearQueries(r) {
     var y0 = new Date(r.ms).getUTCFullYear(), y1 = new Date(r.cur ? NOW : r.endMs).getUTCFullYear(), out = [];
@@ -209,10 +220,10 @@
   function loadReign(i, tk, part, done) {
     var r = R[i], d = (dbg[i] = dbg[i] || []);
     d.length = 0;
-    var merged = { items: [], seen: {} }, qs = [baseQuery(r)], k = 0, firstErr = '';
+    var merged = { items: [], seen: {} }, qs = queries(r), k = 0, firstErr = '';
     function step() {
       if (tk !== token) return;
-      if (k >= qs.length) { done(merged.items, merged.items.length ? '' : firstErr); return; }
+      if (k >= qs.length || (k > 0 && merged.items.length)) { done(merged.items, merged.items.length ? '' : firstErr); return; }
       var q = qs[k++];
       loadQuery(r, q, tk, d, merged, function() { if (part) part(merged.items); }, function(err) {
         if (err && !firstErr) firstErr = err;
@@ -358,17 +369,17 @@
   function curBox(i) {
     var r = R[i], nx = R[i + 1], lines;
     var k = r.cur ? T('Current champion', '現王者') : T('Champion', '王者');
-    var s1 = T(r.days + ' days · ' + r.defences.length + (r.defences.length === 1 ? ' defence' : ' defences') + ' · won ' + fmtD(r.won) + ' vs ' + plain(r.vs), r.days + '日 · 防衛' + r.defences.length + '回 · ' + fmtD(r.won) + ' 獲得');
+    var s1 = T(r.days + ' days · ' + dn(r) + (dn(r) === 1 ? ' defence' : ' defences') + ' · won ' + fmtD(r.won) + ' vs ' + plain(r.vs), r.days + '日 · 防衛' + dn(r) + '回 · ' + fmtD(r.won) + ' 獲得');
     var s2 = '';
-    if (!r.cur && r.end) s2 = r.endType === 'vacated' ? T('Vacated ' + fmtD(r.end), fmtD(r.end) + ' 返上') : T('Lost to ' + (nx ? plain(nx.champ) : '') + ' on ' + fmtD(r.end), fmtD(r.end) + ' 陥落');
-    return '<div class="ln-cur"><div class="k">' + esc(k + ' · ' + T(ord(r.n) + ' reign', '第' + r.n + '代')) + '</div><div class="n">' + esc(r.champ) + '</div><div class="s">' + esc(s1) + '</div>' + (s2 ? '<div class="s">' + esc(s2) + '</div>' : '') + '</div>';
+    if (!r.cur && r.end) s2 = r.endType === 'vacated' ? T('Vacated ' + fmtD(r.end), fmtD(r.end) + ' 返上') : T('Lost to ' + (nx ? nm(nx) : '') + ' on ' + fmtD(r.end), fmtD(r.end) + ' 陥落');
+    return '<div class="ln-cur"><div class="k">' + esc(k + ' · ' + T(ord(r.n) + ' reign', '第' + r.n + '代')) + '</div><div class="n">' + esc(r.team ? r.team + ' \u00b7 ' + plain(r.champ) : r.champ) + '</div><div class="s">' + esc(s1) + '</div>' + (s2 ? '<div class="s">' + esc(s2) + '</div>' : '') + '</div>';
   }
   function lineInfo() {
     var longest = R[0];
     R.forEach(function(r) { if (r.days > longest.days) longest = r; });
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
-    return T('Stardom · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + ' reigns · ' + years + ' years · longest reign ' + longest.days + ' days (' + longest.champ + ')',
-      'スターダム · ' + fmtD(D.since) + '〜 · ' + R.length + '代 · ' + years + '年 · 最長 ' + longest.days + '日 (' + longest.champ + ')');
+    return T('Stardom · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + ' reigns · ' + years + ' years · longest reign ' + longest.days + ' days (' + nm(longest) + ')',
+      'スターダム · ' + fmtD(D.since) + '〜 · ' + R.length + '代 · ' + years + '年 · 最長 ' + longest.days + '日 (' + nm(longest) + ')');
   }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';
@@ -388,7 +399,7 @@
     var avail = 1380;
     SEG.forEach(function(s) {
       if (s.gap) { h += '<div class="ln-b gap" style="flex-grow:' + s.days + '"></div>'; return; }
-      var r = R[s.i], w = s.days / TOTAL * avail, lab = w >= 46 && surname(r.champ).length * 7.5 + 12 <= w ? esc(surname(r.champ)) : '';
+      var r = R[s.i], w = s.days / TOTAL * avail, lab = r.team ? (w >= 46 && r.team.length * 8.6 + 14 <= w ? esc(r.team) : '') : (w >= 46 && surname(r.champ).length * 7.5 + 12 <= w ? esc(surname(r.champ)) : '');
       h += '<div class="ln-b' + (s.i === sel ? ' sel' : '') + (r.cur ? ' cur' : '') + '" tabindex="0" data-k="r" data-i="' + s.i + '" style="flex-grow:' + s.days + '">' + lab + '</div>';
     });
     h += '</div><div class="ln-ticks">';
@@ -415,11 +426,11 @@
   function detailHtml() {
     var r = R[sel], ev = eventsOf(r);
     var span = r.defences.length
-      ? T('the title win, then ' + r.defences.length + (r.defences.length === 1 ? ' defence' : ' defences'), '王座奪取と防衛' + r.defences.length + '回')
+      ? T('the title win, then ' + dn(r) + (dn(r) === 1 ? ' defence' : ' defences'), '王座奪取と防衛' + dn(r) + '回')
       : T('the title win, no defences', '王座奪取のみ（防衛なし）');
     var head = '<div class="ln-h">' + esc(T('REIGN ' + r.n + ' · ' + String(r.champ).toUpperCase(), '第' + r.n + '代 · ' + r.champ)) + '<span>' + esc(span) + '</span></div>';
     var facts = '<div class="ln-fx">' + ev.map(function(e) { return factHtml(e, r); }).join('') + '</div>';
-    var vh = '<div class="ln-vh"><span class="bar"></span><span>' + esc(T(D.title + ' matches · ' + plain(r.champ), plain(r.champ) + ' · ' + (D.ja || D.title))) + '</span>' +
+    var vh = '<div class="ln-vh"><span class="bar"></span><span>' + esc(T(D.title + ' matches · ' + nm(r), nm(r) + ' · ' + (D.ja || D.title))) + '</span>' +
       '<span class="n">' + esc(searching ? T('looking for videos', '動画を検索中') : (waiting ? T('not loaded yet', '未読み込み') : result ? T(result.rows.length + ' videos · ' + result.inN + ' from this reign', result.rows.length + '本 · 王者期間 ' + result.inN + '本') : '')) + '</span></div>';
     var row = '';
     if (result && result.rows.length) row = '<div class="ln-vr">' + result.rows.slice(0, 40).map(videoHtml).join('') + '</div>';
@@ -491,8 +502,9 @@
   }
 
   function cachedFor(i) {
-    var r = R[i], c = readCache()[baseQuery(r)];
-    return !!(c && c.items && c.items.length && Date.now() - c.t < (r.cur ? 3 * 3600000 : 14 * 86400000));
+    var r = R[i], cc = readCache(), ok = false;
+    queries(r).forEach(function(q) { var c = cc[q]; if (c && c.items && c.items.length && Date.now() - c.t < (r.cur ? 3 * 3600000 : 14 * 86400000)) ok = true; });
+    return ok;
   }
   // Videos load on their own for the current champion and for any reign already saved on the device; the rest wait for OK.
   function choose(i, now, force) {
