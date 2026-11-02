@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.6
+
+- NEW BLOOD lineage: new champions Meni☆Mani (Kikyo Furusawa & Rian) won on Oct 20, 2026 at Korakuen Hall, Tokyo, beating Sakurara (Sakura Aya & Sayaka Kurara) in 16:32; Sakurara's reign ended at two defences. Reign 6 starts with no defences listed.
+
 ## 2.16.5
 
 - Faction matches search the faction name in brackets, which is how the site's video descriptions list it: (STARS), (Cosmic Angels), (God's Eye), (H.A.T.E.), (NEO GENESIS). This leaves out the 5 Star Grand Prix, so the STARS exclusion list is gone. Mi Vida Loca searches "loca". Itoh Respect Gundan keeps its member searches.
