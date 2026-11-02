@@ -5220,10 +5220,11 @@ class MainActivity : Activity() {
                   if (f.former) {
                     // Former factions: no logo, no titles; the years and the notable members.
                     var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
+                    var olg = ''; try { olg = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { olg = ''; }
                     var ocp = f.captains || [];
                     var ol2 = (ocp.length ? T(ocp.length > 1 ? 'Captains: ' : 'Captain: ', '\u30ad\u30e3\u30d7\u30c6\u30f3: ') + ocp.join(', ') + ' \u00b7 ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '\u4eba');
                     var ol3 = (f.founded || '') + (f.disbanded ? '\u2013' + f.disbanded : '');
-                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '"><span class="tv-shl-fcs"></span><span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2 tv-shl-fcld">' + esc(ol2) + '</span>' +
+                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '">' + (olg ? '<img class="tv-shl-fcl" src="' + olg + '" alt="">' : '<span class="tv-shl-fcs"></span>') + '<span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2 tv-shl-fcld">' + esc(ol2) + '</span>' +
                       (ol3 ? '<span class="tv-shl-ft3">' + esc(ol3) + '</span>' : '') + '</span></a>';
                     return;
                   }
