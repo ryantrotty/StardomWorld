@@ -4747,6 +4747,8 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-fc.tv-fav-on .tv-shl-fc1::before{content:"\\2605  ";color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fcl{flex:0 0 auto;width:80px;height:58px;object-fit:contain;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fcx{min-width:0;display:block;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcs{flex:0 0 auto;width:0;height:58px;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcld{font-size:12px;font-weight:600;color:#c9d2dc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc1{display:block;font-size:17px;font-weight:700;line-height:1.15;color:#fff;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc2{display:block;font-size:13px;font-weight:600;color:#c9d2dc;margin-top:3px;}',
@@ -5219,7 +5221,8 @@ class MainActivity : Activity() {
                     // Former factions: no logo, no titles; the years and the notable members.
                     var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
                     var ol2 = (f.founded || '') + (f.disbanded ? '\u2013' + f.disbanded : '') + ' \u00b7 ' + f.members.length + T(f.members.length === 1 ? ' notable member' : ' notable members', '\u4eba');
-                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '"><span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2">' + esc(ol2) + '</span></span></a>';
+                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '"><span class="tv-shl-fcs"></span><span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2">' + esc(ol2) + '</span>' +
+                      ((f.leaders && f.leaders.length) ? '<span class="tv-shl-ft3 tv-shl-fcld notranslate" translate="no">' + esc(T('Past leaders: ', '\u6b74\u4ee3\u30ea\u30fc\u30c0\u30fc: ') + f.leaders.join(', ')) + '</span>' : '') + '</span></a>';
                     return;
                   }
                   var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }

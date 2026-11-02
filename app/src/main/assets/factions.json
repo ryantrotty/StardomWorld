@@ -262,6 +262,26 @@
       "search": "(Oedo Tai)",
       "members": [
         {
+          "name": "Kyoko Kimura",
+          "search": "Kyoko Kimura"
+        },
+        {
+          "name": "Act Yasukawa",
+          "search": "Act Yasukawa"
+        },
+        {
+          "name": "Kagetsu",
+          "search": "Kagetsu"
+        },
+        {
+          "name": "Hana Kimura",
+          "search": "Hana Kimura"
+        },
+        {
+          "name": "Natsuko Tora",
+          "search": "Natsuko Tora"
+        },
+        {
           "name": "Kris Wolf",
           "search": "Kris Wolf"
         },
@@ -326,6 +346,22 @@
       "search": "(Queen's Quest)",
       "members": [
         {
+          "name": "Io Shirai",
+          "search": "Io Shirai"
+        },
+        {
+          "name": "Momo Watanabe",
+          "search": "Momo Watanabe"
+        },
+        {
+          "name": "Utami Hayashishita",
+          "search": "Utami Hayashishita"
+        },
+        {
+          "name": "Saya Kamitani",
+          "search": "Saya Kamitani"
+        },
+        {
           "name": "AZM",
           "search": "AZM"
         },
@@ -379,6 +415,10 @@
       "search": "Tokyo Cyber Squad",
       "members": [
         {
+          "name": "Hana Kimura",
+          "search": "Hana Kimura"
+        },
+        {
           "name": "Jungle Kyona",
           "search": "Jungle Kyona"
         },
@@ -424,6 +464,10 @@
       "search": "Donna",
       "members": [
         {
+          "name": "Giulia",
+          "search": "Giulia"
+        },
+        {
           "name": "Syuri",
           "search": "Syuri"
         },
@@ -465,6 +509,10 @@
       "search": "Club",
       "members": [
         {
+          "name": "Mina Shirakawa",
+          "search": "Mina Shirakawa"
+        },
+        {
           "name": "Mariah May",
           "search": "Mariah May"
         },
@@ -498,6 +546,10 @@
       "search": "(E neXus V)",
       "members": [
         {
+          "name": "Maika",
+          "search": "Maika"
+        },
+        {
           "name": "Mina Shirakawa",
           "search": "Mina Shirakawa"
         },
@@ -528,8 +580,12 @@
       "leaders": [
         "Jungle Kyona"
       ],
-      "search": "Jungle Assault Nation",
+      "search": "Jungle",
       "members": [
+        {
+          "name": "Jungle Kyona",
+          "search": "Jungle Kyona"
+        },
         {
           "name": "Natsuko Tora",
           "search": "Natsuko Tora"
