@@ -6046,7 +6046,7 @@ class MainActivity : Activity() {
   try { logoSrc = AndroidHost.factionLogo(fac.id) || ''; } catch (e) {}
 
   var GAP_MS = 1200;                 // pause between two requests to the site
-  var CACHE_KEY = 'tvFacCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1';
+  var CACHE_KEY = 'tvFacCacheV2', BLOCK_KEY = 'tvFacBlockUntilV1';
   var CACHE_TTL = 12 * 3600 * 1000;
   var MAX_SAVED = 40;                // videos kept per member on the TV (the first pages only)
 
@@ -6248,7 +6248,7 @@ class MainActivity : Activity() {
     if (!s.loaded) {
       var c = readCache()[srcs[i].search];
       if (c && c.items && c.items.length && Date.now() - c.t < CACHE_TTL) {
-        c.items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
+        c.items.forEach(function(it) { if (titleOk(srcs[i], it.title) && !s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
         s.page = 1; s.more = !!c.more; s.loaded = true; s.err = '';
         if (done) done(s.items.slice());
         return;
@@ -6549,7 +6549,7 @@ class MainActivity : Activity() {
     if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) {
       if (HOME && seedIdx === FI) {
         // saved copy still fresh: no request at all
-        var sc = S[FI]; c0.items.forEach(function(it) { if (!sc.seen[it.href]) { sc.seen[it.href] = 1; sc.items.push(it); } });
+        var sc = S[FI]; c0.items.forEach(function(it) { if (titleOk(src, it.title) && !sc.seen[it.href]) { sc.seen[it.href] = 1; sc.items.push(it); } });
         sc.page = 1; sc.more = !!c0.more; sc.loaded = true;
         renderHomeGrid();
       }

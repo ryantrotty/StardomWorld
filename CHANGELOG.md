@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.3
+
+- Faction matches showed old results (STARS with 5 Star Grand Prix, H.A.T.E. with one video): the TV keeps each faction's first page for 12 hours, and the copy saved by the earlier version had been cut down by the old title rule. The saved copy now has a new name, so the old one is ignored, and the STARS exclusions also apply to any saved copy.
+
 ## 2.16.2
 
 - Faction matches now trust the site's own search, which also reads video descriptions (that is why God's Eye matches have generic titles). The title-must-contain-the-name rule is gone.
