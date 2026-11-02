@@ -282,7 +282,7 @@
   css.textContent = [
     '#tv-ln{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B1118;color:#fff;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;}',
     '#tv-ln, #tv-ln *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;box-sizing:border-box;}',
-    '#tv-ln-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:22px 24px 8px 30px;font-size:30px;font-weight:900;}',
+    '#tv-ln-title{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:14px 24px 4px 30px;font-size:30px;font-weight:900;}',
     '#tv-ln-title .bar{flex:0 0 auto;width:10px;height:36px;background:#F4C242;}',
     '#tv-ln-hint{margin-left:auto;font-size:16px;font-weight:600;color:#9AA6B4;text-align:right;}',
     '#tv-ln-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 24px 60px 24px;scroll-padding:24px 0 40px 0;scrollbar-width:none;}',
@@ -291,20 +291,20 @@
     '#tv-ln a, #tv-ln a:visited, #tv-ln a:hover, #tv-ln a *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;text-decoration:none !important;color:inherit;}',
     '#tv-ln a::before, #tv-ln a::after{content:none !important;display:none !important;}',
     '#tv-ln *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
-    '.ln-h{display:flex;align-items:baseline;gap:12px;margin:18px 0 8px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
+    '.ln-h{display:flex;align-items:baseline;gap:12px;margin:10px 0 6px 2px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
     '.ln-h span{font-size:15px;color:#9AA6B4;letter-spacing:0;font-weight:700;}',
-    '.ln-hero{display:flex;gap:40px;align-items:center;padding:10px 6px 6px 6px;}',
-    '.ln-belt{flex:0 0 440px;width:440px;display:flex;align-items:center;justify-content:center;}',
-    '.ln-belt img{width:440px;max-height:240px;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.7));}',
-    '.ln-plate{width:300px;height:200px;border-radius:14px;background:#0F151C;border:3px solid #2A323C;display:flex;align-items:center;justify-content:center;}',
-    '.ln-hx{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px;}',
+    '.ln-hero{display:flex;gap:40px;align-items:center;padding:0 6px 0 6px;}',
+    '.ln-belt{flex:0 0 400px;width:400px;display:flex;align-items:center;justify-content:center;}',
+    '.ln-belt img{width:400px;max-height:190px;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.7));}',
+    '.ln-plate{width:300px;height:170px;border-radius:14px;background:#0F151C;border:3px solid #2A323C;display:flex;align-items:center;justify-content:center;}',
+    '.ln-hx{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:10px;}',
     '.ln-eb{font-size:13px;font-weight:800;letter-spacing:1px;color:#9AA6B4;text-transform:uppercase;}',
-    '.ln-cur{min-height:148px;background:#121922;border:3px solid #2A323C;border-radius:14px;padding:18px 24px;display:flex;flex-direction:column;gap:6px;}',
+    '.ln-cur{min-height:132px;background:#121922;border:3px solid #2A323C;border-radius:14px;padding:12px 24px;display:flex;flex-direction:column;gap:4px;}',
     '.ln-cur .k{font-size:13px;font-weight:800;letter-spacing:1px;color:#F4C242;text-transform:uppercase;}',
     '.ln-cur .n{font-size:26px;font-weight:900;line-height:1.1;}',
     '.ln-cur .s{font-size:16px;color:#C9D2DC;}',
     '.ln-sum{font-size:15px;color:#9AA6B4;}',
-    '.ln-btn{align-self:stretch;display:block;text-align:center;padding:12px 16px;border-radius:8px;background:#161F2A;border:2px solid #2A323C;font-size:17px;font-weight:600;color:#C9D2DC;cursor:pointer;}',
+    '.ln-btn{align-self:stretch;display:block;text-align:center;padding:9px 16px;border-radius:8px;background:#161F2A;border:2px solid #2A323C;font-size:17px;font-weight:600;color:#C9D2DC;cursor:pointer;}',
     '#tv-ln .ln-btn:focus{background:#172029;border-color:#F4C242;color:#fff;font-weight:700;}',
     '.ln-strip{display:flex;height:64px;margin:0 2px;}',
     '.ln-b{flex:1 1 0;min-width:9px;box-sizing:border-box;border-right:2px solid #0B1118;background:#2A323C;color:#C9D2DC;font-size:12px;font-weight:700;display:flex;align-items:flex-end;padding:0 6px 6px 6px;overflow:hidden;white-space:nowrap;cursor:pointer;}',
@@ -320,7 +320,7 @@
     '.ln-f .d{flex:0 0 auto;font-weight:700;color:#F4C242;}',
     '.ln-f .o{flex:0 0 auto;font-weight:700;color:#fff;}',
     '.ln-f .v{min-width:0;overflow:hidden;text-overflow:ellipsis;color:#9AA6B4;}',
-    '.ln-vh{display:flex;align-items:center;margin:22px 0 10px 6px;font-size:22px;font-weight:700;color:#fff;}',
+    '.ln-vh{display:flex;align-items:center;margin:12px 0 4px 6px;font-size:22px;font-weight:700;color:#fff;}',
     '.ln-vh .bar{flex:0 0 auto;width:8px;height:26px;background:#F4C242;margin-right:12px;}',
     '.ln-vh .n{margin-left:16px;font-size:15px;font-weight:700;color:#9AA6B4;}',
     '.ln-vr{display:flex;flex-direction:row;gap:24px;overflow-x:auto;scroll-behavior:smooth;padding:12px 10px;margin:0 -4px;scrollbar-width:none;}',
@@ -363,6 +363,13 @@
     if (!r.cur && r.end) s2 = r.endType === 'vacated' ? T('Vacated ' + fmtD(r.end), fmtD(r.end) + ' 返上') : T('Lost to ' + (nx ? plain(nx.champ) : '') + ' on ' + fmtD(r.end), fmtD(r.end) + ' 陥落');
     return '<div class="ln-cur"><div class="k">' + esc(k + ' · ' + T(ord(r.n) + ' reign', '第' + r.n + '代')) + '</div><div class="n">' + esc(r.champ) + '</div><div class="s">' + esc(s1) + '</div>' + (s2 ? '<div class="s">' + esc(s2) + '</div>' : '') + '</div>';
   }
+  function lineInfo() {
+    var longest = R[0];
+    R.forEach(function(r) { if (r.days > longest.days) longest = r; });
+    var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
+    return T('Stardom · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + ' reigns · ' + years + ' years · longest reign ' + longest.days + ' days (' + longest.champ + ')',
+      'スターダム · ' + fmtD(D.since) + '〜 · ' + R.length + '代 · ' + years + '年 · 最長 ' + longest.days + '日 (' + longest.champ + ')');
+  }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';
     try { belt = H.beltDataUri ? H.beltDataUri(P) : ''; } catch (e) { belt = ''; }
@@ -371,9 +378,7 @@
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
     var pic = belt ? '<img src="' + belt + '" alt="">' : '<div class="ln-plate">' + STAR + '</div>';
     var curLine = '<div id="ln-cur">' + curBox(sel) + '</div>';
-    return '<div class="ln-hero"><div class="ln-belt">' + pic + '</div><div class="ln-hx"><div class="ln-eb">' +
-      esc(T('Stardom · ' + (D.kind || 'Singles') + ' · since ' + fmtD(D.since), 'スターダム · ' + fmtD(D.since) + '〜')) + '</div>' + curLine +
-      '<div class="ln-sum">' + esc(T(R.length + ' reigns · ' + years + ' years · longest reign ' + longest.days + ' days (' + longest.champ + ')', R.length + '代 · ' + years + '年 · 最長 ' + longest.days + '日 (' + longest.champ + ')')) + '</div>' +
+    return '<div class="ln-hero"><div class="ln-belt">' + pic + '</div><div class="ln-hx">' + curLine +
       '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(D.path || ('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(D.search || '')))) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
       '</div></div>';
   }
@@ -429,7 +434,7 @@
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
     }
     var fh = '<div class="ln-h">' + esc(T('MATCHES IN THIS REIGN', 'この王者期間の試合')) + '</div>';
-    return head + vh + row + note + fh + facts + sum;
+    return vh + row + note + fh + facts + sum;
   }
 
   function debugHtml() {
@@ -455,7 +460,7 @@
     var sc = root.querySelector('#tv-ln-scroll'), top = sc ? sc.scrollTop : 0;
     root.innerHTML = '<div id="tv-ln-title"><span class="bar"></span><span>' + esc(T(D.title, D.ja || D.title)) + '</span><span id="tv-ln-hint"></span></div>' +
       '<div id="tv-ln-scroll"><div id="tv-ln-in">' + heroHtml() +
-      '<div class="ln-h">' + esc(T('LINEAGE', '歴代王者')) + '<span>' + esc(T(R.length + ' reigns, width = days held. Left and Right move reign to reign, Down shows its videos', R.length + '代・幅は保持日数。左右で王者を切り替え')) + '</span></div>' +
+      '<div class="ln-h">' + esc(T('LINEAGE', '歴代王者')) + '<span>' + esc(lineInfo()) + '</span></div>' +
       stripHtml() + '<div id="ln-detail">' + detailHtml() + '</div><div id="ln-dbgbox">' + debugHtml() + '</div></div></div>';
     sc = root.querySelector('#tv-ln-scroll');
     if (sc) sc.scrollTop = top;
@@ -482,7 +487,7 @@
   function hint() {
     var el = document.getElementById('tv-ln-hint'), ae = document.activeElement, k = ae && ae.getAttribute ? ae.getAttribute('data-k') : '';
     if (!el) return;
-    el.textContent = k === 'r' ? T('Left / Right: reign · OK: load videos · Down: videos', '左右：王者 · OK：動画読込 · 下：動画') : (k === 'c' ? T('OK: play the match', 'OK：再生') : '');
+    el.textContent = k === 'r' ? T('Left / Right: reign · OK: load videos · Down: videos', '左右：王者 · OK：動画読込 · 下：動画') : (k === 'c' ? T('OK: play the match', 'OK：再生') : (k === 'a' ? T('OK: open all matches · Down: lineage', 'OK：すべて表示 · 下：歴代') : ''));
   }
 
   function cachedFor(i) {

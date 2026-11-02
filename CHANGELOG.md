@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.6
+
+- Lineage page made more compact so the whole video row fits on screen: the line above the champion box and the summary line below it are gone, and that information now sits on the LINEAGE header ("Stardom · Singles · Since Jul 24, 2011 · 22 reigns · 15 years · longest reign 602 days (Nanae Takahashi)"). The REIGN line above the video row is removed. The navigation hint lives in the top right and shows from the moment the page opens (also on the all-matches button). Spacing is tighter and the belt is a little smaller.
+
 ## 2.13.5
 
 - Lineage page: the champion box at the top follows the reign chosen on the strip (name, days, defences, win, and how it ended: lost to whom, or vacated).
