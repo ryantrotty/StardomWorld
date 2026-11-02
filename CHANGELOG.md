@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.14.5
+
+- NEW BLOOD Tag lineage page: videos were all skipped because the Japanese titles read "NEW BLOODタッグ選手権試合" with no space. The title words now include that spelling.
+
 ## 2.14.4
 
 - Kawaii of Kawaii page: Maki Itoh, one defence on record (vs Aya Sakura, Jul 2, 2026). A reign with no known title win shows its first recorded match instead, and the LINEAGE line reads "1 reign" with no years until a full year has passed.
