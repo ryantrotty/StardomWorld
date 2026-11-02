@@ -192,9 +192,7 @@
         take(list);
         d.push('  page ' + page + ': ' + list.length + ' cards, ' + add + ' new, more=' + (more ? 'yes' : 'no'));
         if (onPart) onPart();
-        var dts = list.map(cardDate).filter(Boolean);
         if (!more || !add) { finish(''); return; }
-        if (dts.length && dts.every(function(x) { return ms(x.d) < r.ms - 30 * DAY; })) { d.push('  page ' + page + ' is all older than this reign, stopped'); finish(''); return; }
         next();
       });
     }
@@ -214,8 +212,7 @@
     function step() {
       if (tk !== token) return;
       if (k >= qs.length) { done(merged.items, merged.items.length ? '' : firstErr); return; }
-      var q = qs[k++], isBase = k === qs.length;
-      if (isBase && matchAll(r, merged.items).left === 0) { d.push('every event has a video, plain search skipped'); step(); return; }
+      var q = qs[k++];
       loadQuery(r, q, tk, d, merged, function() { if (part) part(merged.items); }, function(err) {
         if (err && !firstErr) firstErr = err;
         if (err === 'blocked' || /^blocked|login/.test(err || '')) { done(merged.items, merged.items.length ? '' : err); return; }
@@ -254,42 +251,29 @@
   }
   var DAY = 86400000;
 
-  // Loose match: the search already names the champion, so a card belongs to reign r when it is for this
-  // championship and its date falls inside the reign. Cards on the date of the win or a defence fill those
-  // slots; every other card in the reign is listed under "more from this reign".
+  // Loosest match: the search already names the champion, so every card for the championship is a match
+  // for that champion. Cards dated inside the reign are marked and listed first.
   function matchAll(r, items) {
-    var ev = eventsOf(r), inReign = [], rej = [], seenDay = {};
-    var titleA = (D.titlePatterns || [D.search || '']).map(norm);
-    var from = r.ms - DAY, to = (r.cur ? NOW : r.endMs) + DAY, cal = calibration(items);
+    var titleA = (D.titlePatterns || [D.search || '']).map(norm), cal = calibration(items), rows = [], rej = [];
+    var from = r.ms - DAY, to = (r.cur ? NOW : r.endMs) + DAY;
     items.forEach(function(it) {
       var nt = norm(it.t);
       if (!hasAny(nt, titleA)) { rej.push([it, 'championship not in title']); return; }
-      var cd = cardDate(it), slack = 0;
-      if (!cd) {
-        var es = estimate(it, cal);
-        if (!es) { rej.push([it, 'no date in title (video ' + (cardId(it) || '?') + ', cannot place it)']); return; }
-        cd = { d: es, src: 'estimated' }; slack = 14 * DAY;
-      }
-      var t = ms(cd.d);
-      if (t < from - slack || t > to + slack) { rej.push([it, (cd.src === 'estimated' ? 'about ' : 'dated ') + cd.d + ', outside this reign']); return; }
-      it.cd = cd.d; it.cdSrc = cd.src;
-      inReign.push(it);
+      var cd = cardDate(it), src = '', d = '';
+      if (cd) { d = cd.d; src = cd.src; }
+      else { var es = estimate(it, cal); if (es) { d = es; src = 'estimated'; } }
+      it.cd = d; it.cdSrc = src; it.inReign = !!d && ms(d) >= from - (src === 'estimated' ? 14 * DAY : 0) && ms(d) <= to + (src === 'estimated' ? 14 * DAY : 0);
+      it.sortT = d ? ms(d) : -1;
+      rows.push(it);
     });
-    ev.forEach(function(e) { e.match = null; e.how = ''; });
-    var used = {};
-    ev.forEach(function(e) {
-      var best = null;
-      inReign.forEach(function(it) {
-        if (used[it.h] || it.cdSrc === 'estimated' || Math.abs(ms(it.cd) - ms(e.d)) > DAY) return;
-        // a title-dated card beats an upload-dated one; otherwise the first listed
-        if (!best || (best.cdSrc !== 'title' && it.cdSrc === 'title')) best = it;
-      });
-      if (best) { used[best.h] = 1; e.match = best; e.how = 'same date (' + best.cdSrc + ' ' + best.cd + ')'; }
+    rows.sort(function(a, b) {
+      if (a.inReign !== b.inReign) return a.inReign ? -1 : 1;
+      if (a.sortT !== b.sortT) return b.sortT - a.sortT;
+      return cardId(b) - cardId(a);
     });
-    var left = 0;
-    ev.forEach(function(e) { if (!e.match) left++; });
-    var extra = inReign.filter(function(it) { return !used[it.h]; }).sort(function(a, b) { return ms(b.cd) - ms(a.cd); });
-    return { events: ev, left: left, extra: extra, rejected: rej, cand: inReign, total: items.length, champN: inReign.length, sample: items.slice(0, 6).map(function(x) { return x.t; }) };
+    var inN = 0;
+    rows.forEach(function(it) { if (it.inReign) inN++; });
+    return { rows: rows, inN: inN, rejected: rej, total: items.length, sample: items.slice(0, 6).map(function(x) { return x.t; }) };
   }
 
   // ------------------------------------------------------------------ page
@@ -328,7 +312,19 @@
     '#tv-ln .ln-b.sel, #tv-ln .ln-b:focus{background:#FFB347;border-right-color:#FFB347;color:#1A1A1A;}',
     '.ln-ticks{position:relative;height:22px;margin:6px 2px 0 2px;}',
     '.ln-tick{position:absolute;top:0;font-size:12px;font-weight:700;color:#9AA6B4;border-left:1px solid #3B4656;padding-left:5px;height:22px;}',
-    '.ln-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;padding:6px;}',
+    '.ln-fx{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;padding:2px 6px 6px 6px;}',
+    '.ln-f{display:flex;align-items:baseline;gap:12px;min-width:0;padding:10px 14px;border-radius:8px;background:#161F2A;font-size:15px;color:#C9D2DC;white-space:nowrap;overflow:hidden;}',
+    '.ln-f .k{flex:0 0 auto;font-size:12px;font-weight:800;letter-spacing:1px;color:#9AA6B4;}',
+    '.ln-f .k.win{color:#F4C242;}',
+    '.ln-f .d{flex:0 0 auto;font-weight:700;color:#F4C242;}',
+    '.ln-f .o{flex:0 0 auto;font-weight:700;color:#fff;}',
+    '.ln-f .v{min-width:0;overflow:hidden;text-overflow:ellipsis;color:#9AA6B4;}',
+    '.ln-vh{display:flex;align-items:center;margin:22px 0 10px 6px;font-size:22px;font-weight:700;color:#fff;}',
+    '.ln-vh .bar{flex:0 0 auto;width:8px;height:26px;background:#F4C242;margin-right:12px;}',
+    '.ln-vh .n{margin-left:16px;font-size:15px;font-weight:700;color:#9AA6B4;}',
+    '.ln-vr{display:flex;flex-direction:row;gap:24px;overflow-x:auto;scroll-behavior:smooth;padding:12px 10px;margin:0 -4px;scrollbar-width:none;}',
+    '.ln-vr::-webkit-scrollbar{display:none;}',
+    '.ln-vr .ln-c{flex:0 0 calc(25% - 18px);max-width:calc(25% - 18px);}',
     '.ln-c{display:block;position:relative;min-width:0;border-radius:8px;background:#1a1a1a;overflow:hidden;border:3px solid transparent;cursor:pointer;}',
     '#tv-ln .ln-c:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03) !important;position:relative;z-index:5;}',
     '.ln-c.off{cursor:default;}',
@@ -338,7 +334,7 @@
     '.ln-bd{position:absolute;right:8px;top:8px;padding:4px 10px;border-radius:4px;background:rgba(0,0,0,.8);color:#F4C242;font-size:15px;font-weight:800;}',
     '.ln-tg{position:absolute;left:8px;top:8px;padding:4px 9px;border-radius:4px;background:#FFB347;color:#1A1A1A;font-size:12px;font-weight:800;letter-spacing:1px;}',
     '.ln-tg.ppv{background:#7B5CFF;color:#fff;}',
-    '.ln-tt{padding:10px 12px 4px 12px;font-size:15px;font-weight:700;line-height:1.3;color:#fff;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}',
+    '.ln-tt{padding:12px 14px;min-height:5.8em;font-size:15px;font-weight:700;line-height:1.3;color:#fff;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}',
     '.ln-c.off .ln-tt{color:#9AA6B4;}',
     '.ln-sub{padding:0 12px 12px 12px;font-size:13px;font-weight:700;line-height:1.35;color:#9AA6B4;}',
     '.ln-note{padding:14px 6px;font-size:16px;color:#9AA6B4;}',
@@ -393,54 +389,52 @@
     return h + '</div>';
   }
 
-  function cardHtml(e, idx, r) {
-    var m = e.match, ppv = /PPV/i.test(e.note), win = e.kind === 'win';
-    var vs = plain(r.champ) + ' vs ' + e.opp;
-    var sub = fmtD(e.d) + (win ? '' : ' · ' + T('Defence ' + e.n, '防衛' + e.n)) + (e.venue ? ' · ' + e.venue : '');
-    var tag = win ? '<span class="ln-tg">' + esc(T('TITLE WIN', '王座奪取')) + '</span>' : (ppv ? '<span class="ln-tg ppv">PPV</span>' : '');
-    var im = '<div class="ln-im' + (m ? '' : '') + (ppv ? ' ppv' : (win ? ' win' : '')) + '"' + (m && m.b ? ' style="background-image:url(' + esc(m.b) + ')"' : '') + '>' + tag +
-      '<span class="ln-bd">' + esc(fmtMD(e.d)) + '</span>' + (m ? PLAY : (searching ? esc(T('Looking for the video...', '動画を検索中...')) : esc(T('No video found', '動画が見つかりません')))) + '</div>';
-    if (m) return '<a class="ln-c" tabindex="0" data-k="c" data-e="' + idx + '" href="' + esc(m.h) + '">' + im + '<div class="ln-tt">' + esc(m.t) + '</div><div class="ln-sub">' + esc(sub) + '</div></a>';
-    return '<div class="ln-c off" data-e="' + idx + '">' + im + '<div class="ln-tt">' + esc(vs) + '</div><div class="ln-sub">' + esc(sub) + '</div></div>';
+  function factHtml(e, r) {
+    var ppv = /PPV/i.test(e.note), win = e.kind === 'win';
+    var k = win ? T('TITLE WIN', '王座奪取') : T('DEFENCE ' + e.n, '防衛' + e.n);
+    return '<div class="ln-f"><span class="k' + (win ? ' win' : '') + '">' + esc(k) + '</span><span class="d">' + esc(fmtD(e.d)) + '</span><span class="o">' + esc(T('vs ', '対 ') + e.opp) + '</span>' +
+      '<span class="v">' + esc((e.venue || '') + (ppv ? ' · PPV' : '') + (e.note && !ppv ? ' · ' + e.note : '')) + '</span></div>';
+  }
+  function videoHtml(it, idx) {
+    var tag = it.inReign ? '<span class="ln-tg">' + esc(T('THIS REIGN', 'この王者期間')) + '</span>' : '';
+    var bd = it.cd ? '<span class="ln-bd">' + esc((it.cdSrc === 'estimated' ? '~' : '') + fmtMD(it.cd) + (new Date(ms(it.cd)).getUTCFullYear() !== new Date(NOW).getUTCFullYear() ? ' ' + new Date(ms(it.cd)).getUTCFullYear() : '')) + '</span>' : '';
+    return '<a class="ln-c" tabindex="0" data-k="c" data-e="' + idx + '" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + tag + bd + PLAY + '</div><div class="ln-tt">' + esc(it.t) + '</div></a>';
   }
 
   function detailHtml() {
-    var r = R[sel], ev = result && result.events ? result.events : eventsOf(r), found = 0;
-    ev.forEach(function(e) { if (e.match) found++; });
+    var r = R[sel], ev = eventsOf(r);
     var span = r.defences.length
       ? T('the title win, then ' + r.defences.length + (r.defences.length === 1 ? ' defence' : ' defences'), '王座奪取と防衛' + r.defences.length + '回')
       : T('the title win, no defences', '王座奪取のみ（防衛なし）');
-    var vid = searching ? T('looking for videos', '動画を検索中') : (result ? found + T(' of ' + ev.length + ' have a video', '/' + ev.length + '件に動画あり') : '');
-    var head = '<div class="ln-h">' + esc(T('REIGN ' + r.n + ' · ' + String(r.champ).toUpperCase(), '第' + r.n + '代 · ' + r.champ)) + '<span>' + esc(span + (vid ? ' · ' + vid : '')) + '</span></div>';
-    var cards = '<div class="ln-grid">' + ev.map(function(e, k) { return cardHtml(e, k, r); }).join('') + '</div>';
-    var more = '';
-    if (result && result.extra && result.extra.length) {
-      more = '<div class="ln-h">' + esc(T('MORE FROM THIS REIGN', 'この王者期間のその他')) + '<span>' + esc(T('same champion and title, dated inside the reign', '')) + '</span></div><div class="ln-grid">' +
-        result.extra.slice(0, 12).map(function(it) {
-          return '<a class="ln-c" tabindex="0" data-k="c" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + PLAY + '</div><div class="ln-tt">' + esc(it.t) + '</div><div class="ln-sub">' + esc((it.cdSrc === 'estimated' ? T('About ', '約') : '') + fmtD(it.cd)) + '</div></a>';
-        }).join('') + '</div>';
-    }
+    var head = '<div class="ln-h">' + esc(T('REIGN ' + r.n + ' · ' + String(r.champ).toUpperCase(), '第' + r.n + '代 · ' + r.champ)) + '<span>' + esc(span) + '</span></div>';
+    var facts = '<div class="ln-fx">' + ev.map(function(e) { return factHtml(e, r); }).join('') + '</div>';
+    var vh = '<div class="ln-vh"><span class="bar"></span><span>' + esc(T(D.title + ' matches · ' + plain(r.champ), plain(r.champ) + ' · ' + (D.ja || D.title))) + '</span>' +
+      '<span class="n">' + esc(searching ? T('looking for videos', '動画を検索中') : (result ? T(result.rows.length + ' videos · ' + result.inN + ' from this reign', result.rows.length + '本 · 王者期間 ' + result.inN + '本') : '')) + '</span></div>';
+    var row = '';
+    if (result && result.rows.length) row = '<div class="ln-vr">' + result.rows.slice(0, 40).map(videoHtml).join('') + '</div>';
+    else if (!searching) row = '<div class="ln-note">' + esc(T('No championship videos were found for this champion.', 'この王者の王座戦動画は見つかりませんでした。')) + '</div>';
+    else row = '<div class="ln-note">' + esc(T('Looking for the video...', '動画を検索中...')) + '</div>';
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
     var sum = '';
     if (result) {
       var ql = (dbg[sel] || []).filter(function(l) { return l.indexOf('search: ') === 0; }).map(function(l) { return l.slice(8); }).join('  |  ');
-      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql) + ' \u00b7 cards read: ' + result.total + ' \u00b7 inside this reign: ' + result.champN + ' \u00b7 matched: ' + found + ' of ' + ev.length +
+      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql) + ' \u00b7 cards read: ' + result.total + ' \u00b7 championship matches: ' + result.rows.length + ' \u00b7 dated inside this reign: ' + result.inN +
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
     }
-    return head + cards + more + note + sum;
+    return head + facts + vh + row + note + sum;
   }
 
   function debugHtml() {
     var r = R[sel], lines = (dbg[sel] || []).slice();
     if (result) {
-      result.events.forEach(function(e) {
-        lines.push((e.kind === 'win' ? 'WIN      ' : 'DEF ' + (e.n < 10 ? ' ' : '') + e.n + '   ') + e.d + ' vs ' + e.opp + ' -> ' + (e.match ? 'matched (' + e.how + '): ' + e.match.t + ' [' + e.match.h.replace(/^https?:\/\/[^\/]+/, '') + (e.match.r ? ', registered ' + e.match.r : '') + ']' : 'NO VIDEO'));
+      result.rows.slice(0, 40).forEach(function(it) {
+        lines.push((it.inReign ? 'IN REIGN  ' : 'other     ') + (it.cd ? it.cd + ' (' + it.cdSrc + ')' : 'no date, video ' + (cardId(it) || '?')) + '  ' + it.t + ' [' + it.h.replace(/^https?:\/\/[^\/]+/, '') + ']');
       });
-      lines.push('cards for this championship inside the reign: ' + result.cand.length + ', not tied to a listed match: ' + result.extra.length);
+      if (result.rows.length > 40) lines.push('... and ' + (result.rows.length - 40) + ' more not shown');
       result.rejected.slice(0, 14).forEach(function(x) { lines.push('skipped: ' + x[0].t + ' (' + x[1] + ')'); });
       if (result.rejected.length > 14) lines.push('... and ' + (result.rejected.length - 14) + ' more skipped');
     }
-    return '<div class="ln-dbg"><b>MATCHING DEBUG</b> · reign ' + r.n + ' · ' + esc(r.champ) + '\n' + esc(lines.join('\n')) + '</div>';
+    return '<div class="ln-dbg"><b>MATCHING DEBUG</b> \u00b7 reign ' + r.n + ' \u00b7 ' + esc(r.champ) + '\n' + esc(lines.join('\n')) + '</div>';
   }
 
   function render(focusTarget) {

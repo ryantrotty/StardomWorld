@@ -91,3 +91,5 @@ Run `python3 scripts/audit_design.py` for the report (add `--all` for every occu
 ## Championship lineage page
 
 `/mypage?tvch=<id>` (assets/lineage.js). Page title 30/900 with a 10 x 36 gold bar. Section headers use the My Favorites header style (15/800, .14em, gold). The lineage strip is a chip row: a focused or chosen reign uses focus look B (orange fill, dark text). Video cards are the My Favorites video card (look C ring), with a gold date badge top-right and a TITLE WIN (orange) or PPV (purple) tag top-left. The matching debug block uses 13px Arial in a #0F151C panel with a 2px #2A323C border and stays on screen. The menu shelf World of Stardom card uses the shelf item focus (look A).
+
+Reign detail (2.13.4): the title win and defences are fact rows (#161F2A, radius 8, 15px, not focusable). The videos are one horizontal row like the home and related rows: heading 22/700 with the 8 x 26 gold bar, gap 24, four cards across (25% minus 18 px), sideways scroll, video card #1a1a1a radius 8, title 15/700 (4-line clamp), gold date badge top-right, orange THIS REIGN tag top-left, focus look C.

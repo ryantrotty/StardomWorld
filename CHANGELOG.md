@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.4
+
+- Lineage page redesigned around what the site actually has. The win and each defence are now plain fact rows (date, opponent, venue, PPV), not video cards. Below them is one video row, built like the app's other video rows (22/700 heading with gold bar, four cards across, scrolls sideways): every World of Stardom championship match the search finds for that champion.
+- Videos dated inside the reign come first and carry a THIS REIGN tag; the rest follow, newest first. Cards show the gold date badge (a "~" before the date means it was estimated from the video number). No more per-match pairing, so nothing depends on opponent names.
+- Debug block lists every video in the row with its date and where the date came from, plus what was skipped and why.
+
 ## 2.13.3
 
 - Lineage page: each reign is searched once per year it covers, the same way the filter bar does it ("Suzu Suzuki World of Stardom 2026/"), then once with the champion's name alone for anything still missing. Videos appear as each search comes back instead of after all of them.
