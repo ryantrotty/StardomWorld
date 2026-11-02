@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.3
+
+- Lineage page: each reign is searched once per year it covers, the same way the filter bar does it ("Suzu Suzuki World of Stardom 2026/"), then once with the champion's name alone for anything still missing. Videos appear as each search comes back instead of after all of them.
+- Videos whose title has no date (for example "【English Commentary】World of Stardom Championship Match") are placed by their video number, which grows with time, between dated videos. They only appear under "More from this reign", marked "About <date>", and never take a title-win or defence slot.
+- Debug block lists every search made and, for cards it cannot place, their video number.
+
 ## 2.13.2
 
 - Lineage page video matching rewritten after TV testing: the search results were right but every card was rejected because titles do not contain the champion's name. A video now belongs to a reign when it is for the championship (English or Japanese title) and its date falls inside the reign. The date is read from the title, e.g. "(2026/06/20)" or "2026/06/30 ...", falling back to the upload date.

@@ -144,7 +144,13 @@
   var busy = false, lastReq = 0, token = 0;
   var dbg = {};   // per reign: lines shown at the bottom of the page
 
-  function queryFor(r) { return plain(r.champ) + ' ' + (D.search || 'World of Stardom'); }
+  function baseQuery(r) { return plain(r.champ) + ' ' + (D.search || 'World of Stardom'); }
+  // the site's own year filter is a keyword: "Suzu Suzuki World of Stardom 2026/" finds the cards dated 2026/..
+  function yearQueries(r) {
+    var y0 = new Date(r.ms).getUTCFullYear(), y1 = new Date(r.cur ? NOW : r.endMs).getUTCFullYear(), out = [];
+    for (var y = y0; y <= y1; y++) out.push(baseQuery(r) + ' ' + y + '/');
+    return out;
+  }
   function fetchPage(q, page, cb) {
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
@@ -159,49 +165,65 @@
     }).catch(function(err) { cb(typeof err === 'string' ? err : 'error ' + err); });
   }
 
-  // Loads up to MAX_PAGES result pages for reign i (the saved copy first). done(items, note)
-  function loadReign(i, tk, done) {
-    var r = R[i], q = queryFor(r), d = (dbg[i] = dbg[i] || []);
-    d.length = 0;
+  // One search (all its pages, saved copy first). cb(items, err)
+  function loadQuery(r, q, tk, d, merged, onPart, cb) {
+    var c = readCache()[q], ttl = r.cur ? 3 * 3600000 : 14 * 86400000;
     d.push('search: ' + q);
-    var q2 = q, c = readCache()[q], ttl = r.cur ? 3 * 3600000 : 14 * 86400000;
+    function take(list) { var add = 0; list.forEach(function(it) { if (!merged.seen[it.h]) { merged.seen[it.h] = 1; merged.items.push(it); add++; } }); return add; }
     if (c && c.items && c.items.length && Date.now() - c.t < ttl) {
-      d.push('saved copy from ' + Math.round((Date.now() - c.t) / 60000) + ' min ago, ' + c.items.length + ' cards, ' + c.pages + ' page(s), no request');
-      done(c.items, ''); return;
+      d.push('  saved copy from ' + Math.round((Date.now() - c.t) / 60000) + ' min ago, ' + c.items.length + ' cards, ' + c.pages + ' page(s), no request');
+      take(c.items); cb(''); return;
     }
     var wait = blockedFor();
-    if (wait) { d.push('site asked for a pause: ' + wait + ' min left, no request'); done([], 'blocked'); return; }
-    var items = [], seen = {}, page = 0, tried2 = false;
+    if (wait) { d.push('  site asked for a pause: ' + wait + ' min left, no request'); cb('blocked'); return; }
+    var got = [], seen = {}, page = 0;
     function next() {
       if (tk !== token) return;
       if (page >= MAX_PAGES) { finish(''); return; }
       var gap = lastReq + GAP_MS - Date.now();
       if (gap > 0) { setTimeout(next, gap); return; }
       page++; lastReq = Date.now(); busy = true;
-      fetchPage(q2, page, function(err, got, more) {
+      fetchPage(q, page, function(err, list, more) {
         busy = false;
         if (tk !== token) return;
-        if (err) { d.push('page ' + page + ': ' + err); finish(err); return; }
-        if (!got.length && page === 1 && !tried2) {
-          tried2 = true; q2 = plain(r.champ); page = 0;
-          d.push('page 1: 0 cards, trying the champion name alone: ' + q2);
-          next(); return;
-        }
+        if (err) { d.push('  page ' + page + ': ' + err); finish(err); return; }
         var add = 0;
-        got.forEach(function(it) { if (!seen[it.h]) { seen[it.h] = 1; items.push(it); add++; } });
-        d.push('page ' + page + ': ' + got.length + ' cards, ' + add + ' new, more=' + (more ? 'yes' : 'no'));
+        list.forEach(function(it) { if (!seen[it.h]) { seen[it.h] = 1; got.push(it); add++; } });
+        take(list);
+        d.push('  page ' + page + ': ' + list.length + ' cards, ' + add + ' new, more=' + (more ? 'yes' : 'no'));
+        if (onPart) onPart();
+        var dts = list.map(cardDate).filter(Boolean);
         if (!more || !add) { finish(''); return; }
-        var dts = got.map(cardDate).filter(Boolean);
-        if (dts.length && dts.every(function(x) { return ms(x.d) < r.ms - 30 * DAY; })) { d.push('page ' + page + ' is all older than this reign, stopped'); finish(''); return; }
-        if (matchAll(r, items).left === 0) { d.push('every event has a video, stopped after page ' + page); finish(''); return; }
+        if (dts.length && dts.every(function(x) { return ms(x.d) < r.ms - 30 * DAY; })) { d.push('  page ' + page + ' is all older than this reign, stopped'); finish(''); return; }
         next();
       });
     }
     function finish(err) {
-      if (items.length && !err) writeCache(q, { t: Date.now(), pages: page, items: items.slice(0, 60) });
-      done(items, err);
+      if (got.length && !err) writeCache(q, { t: Date.now(), pages: page, items: got.slice(0, 60) });
+      cb(err);
     }
     next();
+  }
+
+  // Searches for reign i: one search per year of the reign, then the plain champion search for whatever is still missing.
+  // part() is called as cards arrive so the page can fill in while later searches run. done(items, err)
+  function loadReign(i, tk, part, done) {
+    var r = R[i], d = (dbg[i] = dbg[i] || []);
+    d.length = 0;
+    var merged = { items: [], seen: {} }, qs = yearQueries(r).concat([baseQuery(r)]), k = 0, firstErr = '';
+    function step() {
+      if (tk !== token) return;
+      if (k >= qs.length) { done(merged.items, merged.items.length ? '' : firstErr); return; }
+      var q = qs[k++], isBase = k === qs.length;
+      if (isBase && matchAll(r, merged.items).left === 0) { d.push('every event has a video, plain search skipped'); step(); return; }
+      loadQuery(r, q, tk, d, merged, function() { if (part) part(merged.items); }, function(err) {
+        if (err && !firstErr) firstErr = err;
+        if (err === 'blocked' || /^blocked|login/.test(err || '')) { done(merged.items, merged.items.length ? '' : err); return; }
+        if (part) part(merged.items);
+        step();
+      });
+    }
+    step();
   }
 
   // Date a card was fought on: written in the title ("(2026/06/20)" or "2026/06/30 ..."), otherwise the upload date.
@@ -209,6 +231,25 @@
     var m = /(\d{4})[\/.\-](\d{2})[\/.\-](\d{2})/.exec(it.t || '');
     if (m) return { d: m[1] + '-' + m[2] + '-' + m[3], src: 'title' };
     if (it.r) return { d: it.r, src: 'upload' };
+    return null;
+  }
+  function cardId(it) { var m = /\/contents\/(\d+)/.exec(it.h || ''); return m ? +m[1] : 0; }
+  // Video numbers grow with time, so a card with no date can be placed between two dated cards with numbers either side of its own.
+  function calibration(items) {
+    var pts = [];
+    items.forEach(function(it) { var d = cardDate(it), id = cardId(it); if (d && id && d.src === 'title' && !/English commentary|【ENG】|\[ENG\]/i.test(it.t)) pts.push({ id: id, t: ms(d.d) }); });
+    pts.sort(function(a, b) { return a.id - b.id; });
+    return pts;
+  }
+  function estimate(it, cal) {
+    var id = cardId(it);
+    if (!id || cal.length < 2) return null;
+    for (var i = 1; i < cal.length; i++) {
+      if (id >= cal[i - 1].id && id <= cal[i].id) {
+        var a = cal[i - 1], b = cal[i], f = b.id === a.id ? 0 : (id - a.id) / (b.id - a.id);
+        return new Date(a.t + f * (b.t - a.t)).toISOString().slice(0, 10);
+      }
+    }
     return null;
   }
   var DAY = 86400000;
@@ -219,14 +260,18 @@
   function matchAll(r, items) {
     var ev = eventsOf(r), inReign = [], rej = [], seenDay = {};
     var titleA = (D.titlePatterns || [D.search || '']).map(norm);
-    var from = r.ms - DAY, to = (r.cur ? NOW : r.endMs) + DAY;
+    var from = r.ms - DAY, to = (r.cur ? NOW : r.endMs) + DAY, cal = calibration(items);
     items.forEach(function(it) {
       var nt = norm(it.t);
       if (!hasAny(nt, titleA)) { rej.push([it, 'championship not in title']); return; }
-      var cd = cardDate(it);
-      if (!cd) { rej.push([it, 'no date in title or upload date']); return; }
+      var cd = cardDate(it), slack = 0;
+      if (!cd) {
+        var es = estimate(it, cal);
+        if (!es) { rej.push([it, 'no date in title (video ' + (cardId(it) || '?') + ', cannot place it)']); return; }
+        cd = { d: es, src: 'estimated' }; slack = 14 * DAY;
+      }
       var t = ms(cd.d);
-      if (t < from || t > to) { rej.push([it, 'dated ' + cd.d + ', outside this reign']); return; }
+      if (t < from - slack || t > to + slack) { rej.push([it, (cd.src === 'estimated' ? 'about ' : 'dated ') + cd.d + ', outside this reign']); return; }
       it.cd = cd.d; it.cdSrc = cd.src;
       inReign.push(it);
     });
@@ -235,7 +280,7 @@
     ev.forEach(function(e) {
       var best = null;
       inReign.forEach(function(it) {
-        if (used[it.h] || Math.abs(ms(it.cd) - ms(e.d)) > DAY) return;
+        if (used[it.h] || it.cdSrc === 'estimated' || Math.abs(ms(it.cd) - ms(e.d)) > DAY) return;
         // a title-dated card beats an upload-dated one; otherwise the first listed
         if (!best || (best.cdSrc !== 'title' && it.cdSrc === 'title')) best = it;
       });
@@ -372,14 +417,14 @@
     if (result && result.extra && result.extra.length) {
       more = '<div class="ln-h">' + esc(T('MORE FROM THIS REIGN', 'この王者期間のその他')) + '<span>' + esc(T('same champion and title, dated inside the reign', '')) + '</span></div><div class="ln-grid">' +
         result.extra.slice(0, 12).map(function(it) {
-          return '<a class="ln-c" tabindex="0" data-k="c" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + PLAY + '</div><div class="ln-tt">' + esc(it.t) + '</div><div class="ln-sub">' + esc(fmtD(it.cd)) + '</div></a>';
+          return '<a class="ln-c" tabindex="0" data-k="c" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + PLAY + '</div><div class="ln-tt">' + esc(it.t) + '</div><div class="ln-sub">' + esc((it.cdSrc === 'estimated' ? T('About ', '約') : '') + fmtD(it.cd)) + '</div></a>';
         }).join('') + '</div>';
     }
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
     var sum = '';
     if (result) {
-      var ql = (dbg[sel] || [])[0] || '';
-      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql.replace(/^search: /, '')) + ' \u00b7 cards read: ' + result.total + ' \u00b7 inside this reign: ' + result.champN + ' \u00b7 matched: ' + found + ' of ' + ev.length +
+      var ql = (dbg[sel] || []).filter(function(l) { return l.indexOf('search: ') === 0; }).map(function(l) { return l.slice(8); }).join('  |  ');
+      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql) + ' \u00b7 cards read: ' + result.total + ' \u00b7 inside this reign: ' + result.champN + ' \u00b7 matched: ' + found + ' of ' + ev.length +
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
     }
     return head + cards + more + note + sum;
@@ -448,7 +493,11 @@
     renderDetail();
     var tk = token;
     timer = setTimeout(function() {
-      loadReign(sel, tk, function(items, err) {
+      loadReign(sel, tk, function(items) {
+        if (tk !== token) return;
+        result = matchAll(R[sel], items);
+        renderDetail();
+      }, function(items, err) {
         if (tk !== token) return;
         searching = false;
         if (err && !items.length) errNote = err === 'blocked' ? T('The site asked for a pause. Try again in a few minutes.', 'サイトから一時停止の要請がありました。数分後にお試しください。') : T('Could not load videos (' + err + ').', '動画を読み込めませんでした。');
