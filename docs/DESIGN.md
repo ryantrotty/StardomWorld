@@ -87,3 +87,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 ## Checking the code
 
 Run `python3 scripts/audit_design.py` for the report (add `--all` for every occurrence, `--strict` to fail on findings).
+
+## Championship lineage page
+
+`/mypage?tvch=<id>` (assets/lineage.js). Page title 30/900 with a 10 x 36 gold bar. Section headers use the My Favorites header style (15/800, .14em, gold). The lineage strip is a chip row: a focused or chosen reign uses focus look B (orange fill, dark text). Video cards are the My Favorites video card (look C ring), with a gold date badge top-right and a TITLE WIN (orange) or PPV (purple) tag top-left. The matching debug block uses 13px Arial in a #0F151C panel with a 2px #2A323C border and stays on screen. The menu shelf World of Stardom card uses the shelf item focus (look A).

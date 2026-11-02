@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.0
+
+- New World of Stardom lineage page (Championships menu, World of Stardom card). Shows the current champion, a strip of all 22 reigns (width = days held) and, for the reign you pick, the title win and each defence as video cards. Left and Right move between reigns; Down opens the videos.
+- Videos are found with one keyword search per reign (champion plus title name), kept on the device, and matched to the title win and defences by the challenger's name. Matches that cannot be tied to a listed fight appear under "More from this reign". A matching debug block at the bottom of the page lists what was searched and matched.
+- The Championships menu shelf now has a World of Stardom card with the current champion and the reign day count, and each group lists its titles in two columns. The belt picture is shown only in builds with the private branding folder (res/raw/belt_world).
+- Lineage data (22 reigns, 105 defences) is bundled in assets/lineage/world.json; opening the page makes no request.
+
 ## 2.12.0
 
 - My Favorites: "My Faction" is now a row of faction bands with the logo on a white tile. One faction fills the width, two take half each, three to six take a third each (two rows). You can keep up to six favorite factions (Menu button on a faction in the Factions list adds or removes it); an existing single favorite carries over.

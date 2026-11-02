@@ -2753,6 +2753,32 @@ class MainActivity : Activity() {
             this@MainActivity.assets.open("championships.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
 
+        // Championship lineages (assets/lineage/<id>.json) and the belt picture, which only builds with the private branding folder have.
+        @android.webkit.JavascriptInterface
+        fun lineageJson(id: String): String = try {
+            this@MainActivity.assets.open("lineage/" + id.filter { it.isLetterOrDigit() || it == '_' } + ".json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        private val beltCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+        // The picture is res/raw/belt_<id> in branding-private/res (git-ignored). Public builds have none and get "".
+        @android.webkit.JavascriptInterface
+        fun beltDataUri(id: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            val safe = id.filter { it.isLetterOrDigit() }.lowercase()
+            if (safe.isEmpty()) return ""
+            return beltCache.getOrPut(safe) {
+                try {
+                    val rid = this@MainActivity.resources.getIdentifier("belt_$safe", "raw", this@MainActivity.packageName)
+                    if (rid == 0) "" else {
+                        val bytes = this@MainActivity.resources.openRawResource(rid).use { it.readBytes() }
+                        val mime = if (bytes.size > 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte()) "image/jpeg" else "image/png"
+                        "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    }
+                } catch (_: Exception) { "" }
+            }
+        }
+
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
@@ -4696,6 +4722,15 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
             '#tv-sm-shelf .tv-shl-top{margin:0 0 12px 0;}',
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
+            '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:18px;padding:10px 14px;margin:0 0 12px 0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-ft:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-fi{flex:0 0 auto;width:200px;height:108px;object-fit:contain;display:flex;align-items:center;justify-content:center;border-radius:8px;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-plate{background:#0f151c;border:2px solid #2a323c;box-sizing:border-box;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-fx{min-width:0;display:flex;flex-direction:column;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-ft1{font-size:23px;font-weight:700;line-height:1.15;color:#fff;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-ft2{font-size:17px;font-weight:600;color:#c9d2dc;margin-top:6px;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:13px;font-weight:700;color:#F4C242;margin-top:8px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
@@ -5088,20 +5123,34 @@ class MainActivity : Activity() {
                   '</div><div class="tv-sch-sep"></div><div class="tv-sch-past">' + past + '</div></div>';
               }
             } else if (key === 'champs') {
-              w = 760;
-              var cblocks = '', ctop = '';
+              w = 700;
+              var cblocks = '', ctop = '', ftCard = '';
+              var LN = null;
+              try { LN = JSON.parse(AndroidHost.lineageJson('world')); } catch (e) { LN = null; }
+              if (LN && LN.reigns && LN.reigns.length) {
+                var lr = LN.reigns[LN.reigns.length - 1], lw = lr.won.split('-');
+                var lDays = Math.max(0, Math.floor((Date.now() - Date.UTC(+lw[0], +lw[1] - 1, +lw[2])) / 86400000));
+                var lOrd = lr.n + (lr.n % 100 >= 11 && lr.n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][lr.n % 10 > 3 ? 0 : lr.n % 10]);
+                var belt = ''; try { belt = AndroidHost.beltDataUri ? AndroidHost.beltDataUri('world') : ''; } catch (e) { belt = ''; }
+                var pic = belt ? '<img class="tv-shl-fi" src="' + belt + '" alt="">'
+                  : '<span class="tv-shl-fi tv-shl-plate"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span>';
+                ftCard = '<a class="tv-sm-fi tv-shl-ft" tabindex="0" data-go="/mypage?tvch=world" href="' + esc(absUrl('/mypage?tvch=world')) + '">' + pic +
+                  '<span class="tv-shl-fx"><span class="tv-shl-ft1">' + esc(T('World of Stardom', LN.ja || 'ワールド・オブ・スターダム')) + '</span>' +
+                  '<span class="tv-shl-ft2">' + esc(lr.champ) + ' \u00b7 ' + esc(T(lOrd + ' reign', '第' + lr.n + '代')) + '</span>' +
+                  '<span class="tv-shl-ft3">' + esc(T('Day ' + lDays + ' \u00b7 ' + lr.defences.length + (lr.defences.length === 1 ? ' defence' : ' defences'), lDays + '日目 \u00b7 防衛' + lr.defences.length + '回')) + '</span></span></a>';
+              }
               champGroups().forEach(function(g) {
                 var inner = '';
                 (g.items || []).forEach(function(x) {
                   if (x.id === 'any') { ctop = fiHtml(T('All championship matches', x.ja || 'すべての王座戦'), champPath(x)); return; }
                   if (x.id === 'other') return;   // not listed in the menu (still in the filter)
+                  if (x.id === 'world' && ftCard) return;   // the featured card above opens its lineage
                   inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x));
                 });
-                if (inner) cblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>' + inner + '</div>';
+                if (inner) cblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div><div class="tv-shl-g2">' + inner + '</div></div>';
               });
               h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div>' +
-                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') +
-                '<div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + cblocks + '</div>';
+                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') + ftCard + cblocks;
             } else if (key === 'matchtypes') {
               w = 760;
               var mblocks = '';
@@ -8452,6 +8501,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
+        view.evaluateJavascript(assetText("lineage.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
