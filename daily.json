@@ -1,17 +1,135 @@
 {
- "generated": "2026-11-02T18:18:49Z",
+ "generated": "2026-11-02T19:28:24Z",
  "status": {
-  "result": "baseline",
-  "note": "Starting file built by hand; the first Muse run replaces it."
+  "result": "ok",
+  "started": "2026-11-02T19:22:04Z",
+  "finished": "2026-11-02T19:28:24Z",
+  "requests": 51,
+  "schedule": {
+   "ok": true,
+   "events": 33,
+   "changed": [
+    "20261103-numazu",
+    "20261104-gxw",
+    "20261106-senjo",
+    "20261107-event",
+    "20261108-takasaki",
+    "20261109-judo",
+    "20261111-korakuen",
+    "20261114-matsuyama",
+    "20261115-kochi",
+    "20261118-korakuen",
+    "20261120-njpw",
+    "20261121-akita",
+    "20261122-fukushima",
+    "20261123-koriyama",
+    "20261126-ppp",
+    "20261128-okazaki",
+    "20261129-hamamatsu",
+    "20261204-ryukyu",
+    "20261205-himeji",
+    "20261206-kobe",
+    "20261210-korakuen",
+    "20261213-fuji",
+    "20261214-jto",
+    "20261217-itodojyo",
+    "20261219-utsunomiya",
+    "20261220-sendai",
+    "20261221-thearts",
+    "20261224-korakuen",
+    "20270102-yokohama-event"
+   ],
+   "error": ""
+  },
+  "lineage": {
+   "ok": true,
+   "titles": {
+    "world": {
+     "read": true,
+     "changed": false,
+     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the official page (corrected URL)"
+    },
+    "wonder": {
+     "read": true,
+     "changed": false,
+     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the official page"
+    },
+    "future": {
+     "read": true,
+     "changed": false,
+     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the official page"
+    },
+    "artist": {
+     "read": true,
+     "changed": false,
+     "note": "Reign 37 (Julia Hart, Skye Blue & Thekla) and its defence confirmed against the official page"
+    },
+    "goddess": {
+     "read": true,
+     "changed": true,
+     "note": "Reign 37 (AZM & Miyu Amasaki) and all 3 defences confirmed; alias added only: Ruaka -> Ryuaku Natsumi (page spelling)"
+    },
+    "highspeed": {
+     "read": true,
+     "changed": false,
+     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the official page"
+    },
+    "newblood": {
+     "read": true,
+     "changed": true,
+     "note": "Reign 6 (Kikyo Furusawa & Rian) confirmed, no defences listed; aliases added only: Kikyo Furusawa -> Furusawa Kian, Sayaka Kurara -> Kurei Sayaka (page spellings)"
+    },
+    "kawaii": {
+     "read": false,
+     "changed": false,
+     "note": "No public source; copied unchanged from baseline per spec"
+    }
+   },
+   "changed": [],
+   "warnings": [
+    "goddess/newblood alias additions are spelling variants from today's official pages only; no champion was renamed"
+   ]
+  },
+  "blocks": [],
+  "errors": []
  },
  "schedule": {
-  "updated": "2026-11-01T02:30:00Z",
-  "note": "Times are Japan time (+09:00). Own = a Stardom show.",
+  "updated": "2026-11-02T19:27:15Z",
+  "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
    "20261103-numazu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.3%E6%B2%BC%E6%B4%A5%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
-   "20261108-takasaki": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.8G%E3%83%A1%E3%83%83%E3%82%BB%E7%BE%A4%E9%A6%AC%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg"
+   "20261108-takasaki": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.8G%E3%83%A1%E3%83%83%E3%82%BB%E7%BE%A4%E9%A6%AC%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+   "20261104-gxw": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/09a526da-7128-4e5a-91b2-15ad3b8242b5.png",
+   "20261106-senjo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261106_senjo_card_hamabe_soi.jpg",
+   "20261107-event": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/HSIo2izbYAAdYqI.jpeg",
+   "20261109-judo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261109_judo_card_cherry_hamabe.jpg",
+   "20261111-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261114-matsuyama": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/2026.11.14%E6%84%9B%E5%AA%9B%E3%83%BB%E6%9D%BE%E5%B1%B1%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.png",
+   "20261115-kochi": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/2026.11.15%E9%AB%98%E7%9F%A5%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.png",
+   "20261118-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261120-njpw": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261120_njpw_visual.jpg",
+   "20261121-akita": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261122-fukushima": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.22%E7%A6%8F%E5%B3%B6%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+   "20261123-koriyama": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.23%E9%83%A1%E5%B1%B1%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+   "20261126-ppp": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/download-1.jpg",
+   "20261128-okazaki": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261129-hamamatsu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.29%E6%B5%9C%E6%9D%BE%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+   "20261205-himeji": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "202612": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "20261206-kobe": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "20261210-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "20261213-fuji": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.12.13%E3%81%B5%E3%81%98%E3%81%95%E3%82%93%E3%82%81%E3%81%A3%E3%81%9B%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+   "20261214-jto": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/download-2.jpg",
+   "20261217-itodojyo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261217_itodojyo_card_main.jpg",
+   "20261219-utsunomiya": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "20261220-sendai": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "20261221-thearts": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261221_thearts_poster.jpg",
+   "20261224-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
+   "20270102-yokohama-event": "https://wwr-stardom.com/wp/wp-content/uploads/2026/03/%E3%82%B5%E3%82%A4%E3%83%B3%E4%BC%9A%E3%83%AB%E3%83%BC%E3%83%AB1.jpeg",
+   "202701": "https://wwr-stardom.com/wp/wp-content/uploads/2026/03/%E3%82%B5%E3%82%A4%E3%83%B3%E4%BC%9A%E3%83%AB%E3%83%BC%E3%83%AB1.jpeg"
   },
+  "ppv_seen": {},
   "events": [
    {
     "id": "20261029-otaku",
@@ -201,7 +319,7 @@
    },
    {
     "id": "20261103-numazu",
-    "title": "Tag League in Numazu",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in NUMAZU",
     "short": "Tag League in Numazu",
     "venue": "Kiramesse Numazu, Shizuoka",
     "start": "2026-11-03T13:00:00+09:00",
@@ -212,8 +330,36 @@
     "own": true
    },
    {
+    "id": "20261104-gxw",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261104-gxw/",
+    "poster": "20261104-gxw",
+    "title": "GXW DOJO ~You can't go home until you win 10 matches~",
+    "short": "GXW DOJO ~You can't go home until you win 10 matches~",
+    "start": "2026-11-04T19:00:00+09:00"
+   },
+   {
+    "id": "20261106-senjo",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261106-senjo/",
+    "poster": "20261106-senjo",
+    "title": "[Participation from another organization] Sendai Girls",
+    "short": "[Participation from another organization] Sendai Girls",
+    "start": "2026-11-06T19:00:00+09:00"
+   },
+   {
+    "id": "20261107-event",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261107-event/",
+    "poster": "20261107-event",
+    "title": "Kozuen♡Maid Cafe ~The fighting angels are maids today~",
+    "short": "Kozuen♡Maid Cafe ~The fighting angels are maids today~",
+    "start": "2026-11-07T13:00:00+09:00",
+    "fc": "2026-11-07T12:00:00+09:00"
+   },
+   {
     "id": "20261108-takasaki",
-    "title": "Tag League in Takasaki",
+    "title": "The 16th Goddesses of Stardom ~Tag League Tournament~ in Takasaki",
     "short": "Tag League in Takasaki",
     "venue": "G Messe Gunma, Takasaki",
     "start": "2026-11-08T13:00:00+09:00",
@@ -290,112 +436,283 @@
     ]
    },
    {
+    "id": "20261109-judo",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261109-judo/",
+    "poster": "20261109-judo",
+    "title": "[Participation from another organization] Pro Wrestling Judo",
+    "short": "[Participation from another organization] Pro Wrestling Judo",
+    "start": "2026-11-09T19:30:00+09:00"
+   },
+   {
     "id": "20261111-korakuen",
-    "title": "Tag League KORAKUEN vol.1",
+    "title": "The 16th Goddesses of Stardom ~Tag League Tournament~ in KORAKUEN vol.1",
     "short": "Tag League KORAKUEN vol.1",
     "venue": "Korakuen Hall, Tokyo",
     "start": "2026-11-11T18:30:00+09:00",
     "doors": "2026-11-11T17:40:00+09:00",
     "fc": "2026-11-11T17:30:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261111-korakuen/",
-    "poster": "202611",
+    "poster": "20261111-korakuen",
     "own": true
    },
    {
     "id": "20261114-matsuyama",
-    "title": "Tag League Matsuyama-Ehime",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in Matsuyama-Ehime",
     "short": "Tag League Matsuyama-Ehime",
     "venue": "Item Ehime, Matsuyama",
     "start": "2026-11-14T17:00:00+09:00",
     "doors": "2026-11-14T16:15:00+09:00",
     "fc": "2026-11-14T16:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261114-matsuyama/",
-    "poster": "202611",
+    "poster": "20261114-matsuyama",
     "own": true
    },
    {
     "id": "20261115-kochi",
-    "title": "Tag League Kochi",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in Kochi",
     "short": "Tag League Kochi",
     "venue": "CHRES Cerise Gymnasium, Kochi",
     "start": "2026-11-15T16:00:00+09:00",
     "doors": "2026-11-15T15:15:00+09:00",
     "fc": "2026-11-15T15:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261115-kochi/",
-    "poster": "202611",
+    "poster": "20261115-kochi",
     "own": true
    },
    {
     "id": "20261118-korakuen",
-    "title": "Tag League KORAKUEN vol.2",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in KORAKUEN vol.2",
     "short": "Tag League KORAKUEN vol.2",
     "venue": "Korakuen Hall, Tokyo",
     "start": "2026-11-18T18:30:00+09:00",
     "doors": "2026-11-18T17:40:00+09:00",
     "fc": "2026-11-18T17:30:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261118-korakuen/",
-    "poster": "202611",
+    "poster": "20261118-korakuen",
     "own": true
    },
    {
+    "id": "20261120-njpw",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261120-njpw/",
+    "poster": "20261120-njpw",
+    "title": "[Participation from another organization] New Japan Pro-Wrestling \"Bound for Unbound\"",
+    "short": "[Participation from another organization] New Japan Pro-Wrestling \"Bound for Unbound\"",
+    "start": "2026-11-20T18:30:00+09:00"
+   },
+   {
     "id": "20261121-akita",
-    "title": "Tag League Akita",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in Akita",
     "short": "Tag League Akita",
     "venue": "Akita Terrsa, Akita",
     "start": "2026-11-21T13:00:00+09:00",
     "doors": "2026-11-21T12:15:00+09:00",
     "fc": "2026-11-21T12:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261121-akita/",
-    "poster": "202611",
+    "poster": "20261121-akita",
     "own": true
    },
    {
     "id": "20261122-fukushima",
-    "title": "Tag League Fukushima",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in Fukushima",
     "short": "Tag League Fukushima",
     "venue": "Fukushima Toyota Crown Arena",
     "start": "2026-11-22T13:00:00+09:00",
     "doors": "2026-11-22T12:15:00+09:00",
     "fc": "2026-11-22T12:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261122-fukushima/",
-    "poster": "202611",
+    "poster": "20261122-fukushima",
     "own": true
    },
    {
     "id": "20261123-koriyama",
-    "title": "Tag League Koriyama",
+    "title": "The 16th Goddesses of Stardom Tag League Tournament in Koriyama",
     "short": "Tag League Koriyama",
     "venue": "Big Palette Fukushima, Koriyama",
     "start": "2026-11-23T13:00:00+09:00",
     "doors": "2026-11-23T12:15:00+09:00",
     "fc": "2026-11-23T12:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261123-koriyama/",
-    "poster": "202611",
+    "poster": "20261123-koriyama",
     "own": true
    },
    {
+    "id": "20261126-ppp",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261126-ppp/",
+    "poster": "20261126-ppp",
+    "title": "[Participation from another organization] PPP TOKYO",
+    "short": "[Participation from another organization] PPP TOKYO",
+    "start": "2026-11-26T18:30:00+09:00"
+   },
+   {
     "id": "20261128-okazaki",
-    "title": "Tag League Okazaki",
+    "title": "The 16th Goddess of Stardom Tag Team League Tournament in OKAZAKI, commemorating the 80th anniversary of the Okazaki City Sports Association",
     "short": "Tag League Okazaki",
     "venue": "Okazaki City Gymnasium, Aichi",
     "start": "2026-11-28T13:00:00+09:00",
     "doors": "2026-11-28T12:15:00+09:00",
     "fc": "2026-11-28T12:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261128-okazaki/",
-    "poster": "202611",
+    "poster": "20261128-okazaki",
     "own": true
    },
    {
     "id": "20261129-hamamatsu",
-    "title": "Tag League Championship Match",
+    "title": "The 16th Goddesses of Stardom - Tag Team League Championship Match",
     "short": "Tag League Championship Match",
     "venue": "Hamamatsu Industrial Exhibition Hall, Shizuoka",
     "start": "2026-11-29T13:00:00+09:00",
     "doors": "2026-11-29T12:15:00+09:00",
     "fc": "2026-11-29T12:00:00+09:00",
     "url": "https://wwr-stardom.com/en/schedule/20261129-hamamatsu/",
-    "poster": "202611",
-    "own": true
+    "poster": "20261129-hamamatsu",
+    "own": true,
+    "matches": [
+     {
+      "type": "Tournament Semifinal 1",
+      "sides": [
+       "Red Goddess #1",
+       "Red Goddess 2nd place"
+      ],
+      "type_ja": "トーナメント準決勝①",
+      "sides_ja": [
+       "レッドゴッデス1位",
+       "レッドゴッデス2位"
+      ]
+     },
+     {
+      "type": "Tournament Semifinal 2",
+      "sides": [
+       "Blue Goddess ranked #1",
+       "Blue Goddess 2nd place"
+      ],
+      "type_ja": "トーナメント準決勝②",
+      "sides_ja": [
+       "ブルーゴッデス1位",
+       "ブルーゴッデス2位"
+      ]
+     },
+     {
+      "type": "Championship Match",
+      "sides": [
+       "Red Goddess Representative",
+       "Blue Goddess Representative"
+      ],
+      "type_ja": "優勝決定戦",
+      "sides_ja": [
+       "レッドゴッデス代表",
+       "ブルーゴッデス代表"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "20261204-ryukyu",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261204-ryukyu/",
+    "poster": "202612",
+    "title": "[Other organizations participating] Ryukyu Dragon \"Ryukyu Dragon Champloo 2026\"",
+    "short": "[Other organizations participating] Ryukyu Dragon \"Ryukyu Dragon Champloo 2026\"",
+    "start": "2026-12-04T19:00:00+09:00"
+   },
+   {
+    "id": "20261205-himeji",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261205-himeji/",
+    "poster": "20261205-himeji",
+    "title": "STARDOM in HIMEJI 2026 Dec.",
+    "short": "STARDOM in HIMEJI 2026 Dec.",
+    "start": "2026-12-05T13:00:00+09:00",
+    "fc": "2026-12-05T12:00:00+09:00"
+   },
+   {
+    "id": "20261206-kobe",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261206-kobe/",
+    "poster": "20261206-kobe",
+    "title": "STARDOM in KOBE 2026 Dec.",
+    "short": "STARDOM in KOBE 2026 Dec.",
+    "start": "2026-12-06T13:00:00+09:00",
+    "fc": "2026-12-06T12:00:00+09:00"
+   },
+   {
+    "id": "20261210-korakuen",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261210-korakuen/",
+    "poster": "20261210-korakuen",
+    "title": "STARDOM NIGHTER in KORAKUEN 2026 Dec.",
+    "short": "STARDOM NIGHTER in KORAKUEN 2026 Dec.",
+    "start": "2026-12-10T18:30:00+09:00",
+    "fc": "2026-12-10T17:30:00+09:00"
+   },
+   {
+    "id": "20261213-fuji",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261213-fuji/",
+    "poster": "20261213-fuji",
+    "title": "STARDOM in FUJI 2026 Dec.",
+    "short": "STARDOM in FUJI 2026 Dec.",
+    "start": "2026-12-13T13:00:00+09:00",
+    "fc": "2026-12-13T12:00:00+09:00"
+   },
+   {
+    "id": "20261214-jto",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261214-jto/",
+    "poster": "20261214-jto",
+    "title": "[Participation from other organizations] JTO",
+    "short": "[Participation from other organizations] JTO",
+    "start": "2026-12-14T18:30:00+09:00"
+   },
+   {
+    "id": "20261217-itodojyo",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261217-itodojyo/",
+    "poster": "20261217-itodojyo",
+    "title": "[Participation from other organizations] Ito Dojo IN SHINKIBA SPECIAL 2026",
+    "short": "[Participation from other organizations] Ito Dojo IN SHINKIBA SPECIAL 2026",
+    "start": "2026-12-17T19:00:00+09:00"
+   },
+   {
+    "id": "20261219-utsunomiya",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261219-utsunomiya/",
+    "poster": "20261219-utsunomiya",
+    "title": "STARDOM in UTSUNOMIYA 2026 Dec.",
+    "short": "STARDOM in UTSUNOMIYA 2026 Dec.",
+    "start": "2026-12-19T13:00:00+09:00",
+    "fc": "2026-12-19T12:00:00+09:00"
+   },
+   {
+    "id": "20261220-sendai",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261220-sendai/",
+    "poster": "20261220-sendai",
+    "title": "STARDOM in SENDAI 2026 Dec.",
+    "short": "STARDOM in SENDAI 2026 Dec.",
+    "start": "2026-12-20T13:00:00+09:00",
+    "fc": "2026-12-20T12:00:00+09:00"
+   },
+   {
+    "id": "20261221-thearts",
+    "own": false,
+    "url": "https://wwr-stardom.com/en/schedule/20261221-thearts/",
+    "poster": "20261221-thearts",
+    "title": "[Participating in an event by another organization] T-HEARTS \"First and Last\"",
+    "short": "[Participating in an event by another organization] T-HEARTS \"First and Last\"",
+    "start": "2026-12-21T19:00:00+09:00"
+   },
+   {
+    "id": "20261224-korakuen",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20261224-korakuen/",
+    "poster": "20261224-korakuen",
+    "title": "STARDOM YEAREND X'mas NIGHT 2026",
+    "short": "STARDOM YEAREND X'mas NIGHT 2026",
+    "start": "2026-12-24T18:30:00+09:00",
+    "fc": "2026-12-24T17:30:00+09:00"
    },
    {
     "id": "20261229-ryogoku",
@@ -408,6 +725,15 @@
     "url": "https://wwr-stardom.com/en/schedule/20261229-ryogoku/",
     "poster": "20261229-ryogoku",
     "own": true
+   },
+   {
+    "id": "20270102-yokohama-event",
+    "own": true,
+    "url": "https://wwr-stardom.com/en/schedule/20270102-yokohama-event/",
+    "poster": "20270102-yokohama-event",
+    "title": "STARDOM NEW YEAR DREAM 2027 ~Autograph Session~",
+    "short": "STARDOM NEW YEAR DREAM 2027 ~Autograph Session~",
+    "start": "2027-01-02T13:00:00+09:00"
    },
    {
     "id": "20270103-yokohama",
@@ -4023,7 +4349,8 @@
       "Sei IV Tiger"
      ],
      "Ruaka": [
-      "Ryuka"
+      "Ryuka",
+      "Ryuaku Natsumi"
      ],
      "Ami Sohrei": [
       "Sorei Ami",
@@ -5990,7 +6317,8 @@
       "Tekla"
      ],
      "Sayaka Kurara": [
-      "Sayaka Kurei"
+      "Sayaka Kurei",
+      "Kurei Sayaka"
      ],
      "Hanako": [
       "HANAKO"
@@ -6000,6 +6328,9 @@
      ],
      "Wakana Tsukiyama": [
       "Waka Tsukiyama"
+     ],
+     "Kikyo Furusawa": [
+      "Furusawa Kian"
      ]
     },
     "reigns": [
