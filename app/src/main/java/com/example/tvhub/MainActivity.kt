@@ -7037,8 +7037,9 @@ class MainActivity : Activity() {
     '#tv-fbp .tv-fbh{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:0;color:#F4C242;white-space:nowrap;}',
     '#tv-fbp .tv-fbcols{display:flex;gap:6px;width:max-content;min-width:100%;}',
     '#tv-fbp .tv-fbcol{flex:1 0 auto;}',
-    '#tv-fbp .tv-fbaz{width:auto;}',
-    '#tv-fbp .tv-fbaz .tv-fbi{break-inside:avoid;}',
+    '#tv-fbp .tv-fbtabs{display:flex;gap:10px;margin:8px 0 10px 0;}',
+    '#tv-fbp .tv-fbtabs .tv-fbi{font-size:17px;font-weight:700;padding:8px 26px;border-radius:10px;}',
+    '#tv-fbp .tv-fbazb .tv-fbi{break-inside:avoid;}',
     '#tv-fbp .tv-fbcol .tv-fbi{font-size:15px;padding:7px 8px;white-space:nowrap;}',
     '#tv-fbp.tv-co{overflow-x:auto;overflow-y:auto;padding:10px;}',
     '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
@@ -7291,19 +7292,24 @@ class MainActivity : Activity() {
       });
       function byName(x, y) { return String(x.name).localeCompare(String(y.name), 'en', { sensitivity: 'base' }); }
       CUR.sort(byName); PST.sort(byName);
-      var cols = document.createElement('div');
-      cols.className = 'tv-fbcols tv-fbaz';
-      function azBlock(title, list, n, grow) {
-        var col = document.createElement('div');
-        col.className = 'tv-fbcol';
-        col.style.flex = grow + ' 1 0';
-        var h = document.createElement('div');
-        h.className = 'tv-fbh';
-        h.textContent = title;
-        col.appendChild(h);
+      // Two tabs: CURRENT (the one shown first) and PAST. Focusing a tab shows its list.
+      var tabsEl = document.createElement('div');
+      tabsEl.className = 'tv-fbtabs';
+      var tabEls = [], bodies = [];
+      function showTab(ti) {
+        bodies.forEach(function(bd, i) { bd.style.display = i === ti ? '' : 'none'; });
+        tabEls.forEach(function(t, i) { t.classList.toggle('tv-cur', i === ti); });
+      }
+      [[T('CURRENT', '現役'), CUR, 5], [T('PAST', '元所属'), PST, 4]].forEach(function(td, ti) {
+        if (!td[1].length) return;
+        var tb = item(td[0], false, function() { showTab(ti); });
+        tb.classList.add('tv-fbtab');
+        tb.addEventListener('focus', function() { showTab(ti); });
+        tabsEl.appendChild(tb); tabEls.push(tb);
         var body = document.createElement('div');
-        body.style.columnCount = String(n); body.style.columnGap = '8px';
-        list.forEach(function(m) {
+        body.className = 'tv-fbazb';
+        body.style.columnCount = String(td[2]); body.style.columnGap = '8px';
+        td[1].forEach(function(m) {
           var curM = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
           var it = item(m.name, curM, function() {
             if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
@@ -7312,11 +7318,14 @@ class MainActivity : Activity() {
           body.appendChild(it);
           if (curM) first = it;
         });
-        col.appendChild(body);
-        cols.appendChild(col);
-      }
-      azBlock(T('CURRENT', '現役'), CUR, 3, 3);
-      if (PST.length) azBlock(T('PAST', '元所属'), PST, 2, 2);
+        bodies.push(body);
+      });
+      var startTab = 0;
+      bodies.forEach(function(bd, i) { if (first && first.parentNode === bd) startTab = i; });
+      showTab(startTab);
+      panel.appendChild(tabsEl);
+      var cols = document.createElement('div');
+      bodies.forEach(function(bd) { cols.appendChild(bd); });
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);
@@ -7334,11 +7343,13 @@ class MainActivity : Activity() {
     if (first) { try { first.focus(); } catch (e) {} }
   }
 
-  function panelItems() { return Array.prototype.slice.call(panel.querySelectorAll('.tv-fbi')); }
+  function panelItems() { return Array.prototype.slice.call(panel.querySelectorAll('.tv-fbi')).filter(function(e) { return e.offsetParent !== null; }); }
   function move(dir) {
     var cur = document.activeElement;
     var items = panelItems();
     if (items.indexOf(cur) === -1) { if (items[0]) items[0].focus(); return; }
+    // The All row (the first item) goes straight down to the open tab.
+    if (dir === 'down' && cur === panel.querySelector('.tv-fbi') && panel.querySelector('.tv-fbtab.tv-cur')) { panel.querySelector('.tv-fbtab.tv-cur').focus(); return; }
     var cr = cur.getBoundingClientRect();
     var cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
     var best = null, bs = 1e9;
@@ -7354,6 +7365,10 @@ class MainActivity : Activity() {
       var sc = prim + orth * 2;
       if (sc < bs) { bs = sc; best = it; }
     });
+    // Coming from the list or the All row, land on the tab that is open, not on whichever tab sits nearest.
+    if (best && !cur.classList.contains('tv-fbtab') && (best.classList.contains('tv-fbtab') || (dir === 'up' && cur.parentNode.classList.contains('tv-fbazb') && !best.parentNode.classList.contains('tv-fbazb')))) {
+      var openTab = panel.querySelector('.tv-fbtab.tv-cur'); if (openTab) best = openTab;
+    }
     if (best) { best.focus(); try { best.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
   }
 

@@ -12,6 +12,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 - Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
 
+## 2.18.4
+
+- Filter bar Competitors / Wrestler drop-downs: CURRENT and PAST are now two tabs under the All / Any row (CURRENT opens first, or PAST when the chosen wrestler is a past one). Focusing a tab shows its list; Down from the All row lands on the open tab; Up from the top of a list returns to it. The lists run in more columns (5 and 4), so the flyout is about 590px tall instead of 730px and nothing is cut off.
+
 ## 2.18.3
 
 - Wrestlers menu: the PAST column now also lists members of former factions who are not current wrestlers (same list as the filter bar), in two columns; the shelf is wider.
