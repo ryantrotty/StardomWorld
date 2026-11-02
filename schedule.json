@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-01T07:12:07Z",
+ "updated": "2026-11-02T07:38:36Z",
  "note": "Times are Japan time (+09:00). own = a Stardom show.",
  "posters": {
   "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -28,8 +28,14 @@
   "20261224-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
   "20261229-ryogoku": "https://wwr-stardom.com/wp/wp-content/uploads/2026/07/1229ryogoku_SD_02.png",
   "20270102-yokohama-event": "https://wwr-stardom.com/wp/wp-content/uploads/2026/03/%E3%82%B5%E3%82%A4%E3%83%B3%E4%BC%9A%E3%83%AB%E3%83%BC%E3%83%AB1.jpeg",
-  "202701": "https://wwr-stardom.com/wp/wp-content/uploads/2026/03/%E3%82%B5%E3%82%A4%E3%83%B3%E4%BC%9A%E3%83%AB%E3%83%BC%E3%83%AB1.jpeg"
+  "202701": "https://wwr-stardom.com/wp/wp-content/uploads/2026/03/%E3%82%B5%E3%82%A4%E3%83%B3%E4%BC%9A%E3%83%AB%E3%83%BC%E3%83%AB1.jpeg",
+  "20261106-senjo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261106_senjo_card_hamabe_soi.jpg",
+  "20261109-judo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261109_judo_card_cherry_hamabe.jpg",
+  "20261120-njpw": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261120_njpw_visual.jpg",
+  "20261217-itodojyo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261217_itodojyo_card_main.jpg",
+  "20261221-thearts": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261221_thearts_poster.jpg"
  },
+ "ppv_seen": {},
  "events": [
   {
    "id": "20261101-korakuen",
@@ -176,7 +182,7 @@
    "id": "20261106-senjo",
    "own": false,
    "url": "https://wwr-stardom.com/en/schedule/20261106-senjo/",
-   "poster": "202611",
+   "poster": "20261106-senjo",
    "title": "[Participation from another organization] Sendai Girls",
    "short": "[Participation from another organization] Sendai Girls",
    "start": "2026-11-06T19:00:00+09:00"
@@ -202,6 +208,15 @@
    "url": "https://wwr-stardom.com/en/schedule/20261108-takasaki/",
    "poster": "20261108-takasaki",
    "own": true
+  },
+  {
+   "id": "20261109-judo",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261109-judo/",
+   "poster": "20261109-judo",
+   "title": "[Participation from another organization] Pro Wrestling Judo",
+   "short": "[Participation from another organization] Pro Wrestling Judo",
+   "start": "2026-11-09T19:30:00+09:00"
   },
   {
    "id": "20261111-korakuen",
@@ -250,6 +265,15 @@
    "url": "https://wwr-stardom.com/en/schedule/20261118-korakuen/",
    "poster": "20261118-korakuen",
    "own": true
+  },
+  {
+   "id": "20261120-njpw",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261120-njpw/",
+   "poster": "20261120-njpw",
+   "title": "[Participation from another organization] New Japan Pro-Wrestling \"Bound for Unbound\"",
+   "short": "[Participation from another organization] New Japan Pro-Wrestling \"Bound for Unbound\"",
+   "start": "2026-11-20T18:30:00+09:00"
   },
   {
    "id": "20261121-akita",
@@ -417,6 +441,15 @@
    "start": "2026-12-14T18:30:00+09:00"
   },
   {
+   "id": "20261217-itodojyo",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261217-itodojyo/",
+   "poster": "20261217-itodojyo",
+   "title": "[Participation from other organizations] Ito Dojo IN SHINKIBA SPECIAL 2026",
+   "short": "[Participation from other organizations] Ito Dojo IN SHINKIBA SPECIAL 2026",
+   "start": "2026-12-17T19:00:00+09:00"
+  },
+  {
    "id": "20261219-utsunomiya",
    "own": true,
    "url": "https://wwr-stardom.com/en/schedule/20261219-utsunomiya/",
@@ -435,6 +468,15 @@
    "short": "STARDOM in SENDAI 2026 Dec.",
    "start": "2026-12-20T13:00:00+09:00",
    "fc": "2026-12-20T12:00:00+09:00"
+  },
+  {
+   "id": "20261221-thearts",
+   "own": false,
+   "url": "https://wwr-stardom.com/en/schedule/20261221-thearts/",
+   "poster": "20261221-thearts",
+   "title": "[Participating in an event by another organization] T-HEARTS \"First and Last\"",
+   "short": "[Participating in an event by another organization] T-HEARTS \"First and Last\"",
+   "start": "2026-12-21T19:00:00+09:00"
   },
   {
    "id": "20261224-korakuen",
