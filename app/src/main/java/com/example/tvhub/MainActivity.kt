@@ -4740,7 +4740,11 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft1{font-size:17px;font-weight:700;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft2{font-size:14px;font-weight:600;color:#c9d2dc;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:12px;font-weight:700;color:#F4C242;margin-top:3px;white-space:nowrap;}',
-            '#tv-sm-shelf .tv-sm-fi.tv-shl-fc{padding:6px 12px;margin:0 0 4px 0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-fc{display:flex;align-items:center;gap:12px;padding:6px 12px;margin:0 0 4px 0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-fc.tv-fav-on::before{content:none;}',
+            '#tv-sm-shelf .tv-shl-fc.tv-fav-on .tv-shl-fc1::before{content:"\\2605  ";color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcl{flex:0 0 auto;width:64px;height:48px;object-fit:contain;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcx{min-width:0;display:block;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc1{display:block;font-size:17px;font-weight:700;line-height:1.15;color:#fff;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc2{display:block;font-size:13px;font-weight:600;color:#c9d2dc;margin-top:3px;}',
@@ -5208,17 +5212,19 @@ class MainActivity : Activity() {
                   } catch (e) {}
                 });
                 facs.forEach(function(f) {
-                  if (!f.members || !f.members.length) return;
+                  if (!f.members || !f.members.length || f.home === false) return;   // Unaffiliated is not listed
+                  var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }
                   var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
                   var nm2 = {}; f.members.forEach(function(m) { nm2[m.name.toLowerCase()] = 1; nm2[String(m.search).toLowerCase()] = 1; });
                   var held = curChamps.filter(function(c) { return c.who.some(function(n) { return nm2[n]; }); }).map(function(c) { return TSHORT[c.id]; });
                   var l2 = (f.captain ? T('Captain: ', 'キャプテン: ') + f.captain + ' · ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '人');
-                  fl += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span>' +
+                  fl += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' +
+                    (lgo ? '<img class="tv-shl-fcl" src="' + lgo + '" alt="">' : '') + '<span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span>' +
                     '<span class="tv-shl-fc2">' + esc(l2) + '</span>' +
-                    (held.length ? '<span class="tv-shl-ft3">' + esc(T('Titles: ', '王座: ') + held.join(', ')) + '</span>' : '') + '</a>';
+                    (held.length ? '<span class="tv-shl-ft3">' + esc(T('Titles held: ', '保持王座: ') + held.join(', ')) + '</span>' : '') + '</span></a>';
                 });
               } catch (e) {}
-              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div>' + fl + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 900;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
@@ -6083,7 +6089,7 @@ class MainActivity : Activity() {
     '#tv-fac .tv-fc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
     '#tv-fac .tv-fc:focus{border-color:#F4C242;box-shadow:none !important;}',
     '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#172029 center/cover no-repeat;}',
-    '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:15px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;}',
     '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}',
     '#tv-fac-empty{flex:1 1 auto;display:none;align-items:center;justify-content:center;}',
     '#tv-fac-home{flex:1 1 auto;min-height:0;display:none;overflow-y:auto;scrollbar-width:none;padding:30px 40px 40px 30px;}',
@@ -6120,17 +6126,34 @@ class MainActivity : Activity() {
   var HOME = fac.home !== false;    // a faction home page (titles held, faction matches); Unaffiliated has none
   var FI = members.length;          // index of the faction's own match list, after the members
   var srcs = members.slice();
-  if (HOME) srcs.push({ name: fac.name, search: fac.search || fac.name, match: fac.match || [fac.name] });
+  if (HOME) srcs.push({ name: fac.name, search: fac.search || fac.name, match: fac.match || [fac.name], exclude: fac.exclude || [], alts: fac.alts || [] });
   var S = [];                       // per source (members, then the faction): { items, seen, page, more, loaded, err }
   srcs.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
   var sel = -1;                     // -1 = the faction home (or the "choose a wrestler" panel without one)
   var seedIdx = HOME ? FI : 0;      // the source whose results the opened page itself holds
   function nz(t) { return String(t || '').toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' '); }
+  function isWordCh(c) { return /[a-z0-9\u2605\u2606]/.test(c || ''); }
+  // A name counts only as a whole word (STARS is not "5STARS"), and a title with an excluded word never counts.
+  function hasWord(n, p) {
+    p = nz(p);
+    if (!p) return false;
+    var at = n.indexOf(p);
+    while (at >= 0) {
+      var b = n.charAt(at - 1), a = n.charAt(at + p.length);
+      var firstWord = isWordCh(p.charAt(0)), lastWord = isWordCh(p.charAt(p.length - 1));
+      if ((!firstWord || !isWordCh(b)) && (!lastWord || !isWordCh(a))) return true;
+      at = n.indexOf(p, at + 1);
+    }
+    return false;
+  }
   function titleOk(src, t) {
     if (!src.match || !src.match.length) return true;
     var n = nz(t);
-    return src.match.some(function(p) { return n.indexOf(nz(p)) >= 0; });
+    if ((src.exclude || []).some(function(p) { return n.indexOf(nz(p)) >= 0; })) return false;
+    return src.match.some(function(p) { return hasWord(n, p); });
   }
+  function altsLeft(i) { var s = S[i]; return HOME && i === FI && s.loaded && (s.alt || 0) < ((srcs[FI].alts || []).length); }
+  function canMore(i) { var s = S[i]; return !!(s && (s.more || altsLeft(i))); }
   function curSrc() { return sel >= 0 ? sel : FI; }
   var kw = /[?&]q%5Bkeyword%5D=([^&]*)/i.exec(location.search) || /[?&]q\[keyword\]=([^&]*)/i.exec(location.search);
   if (kw) {
@@ -6212,7 +6235,9 @@ class MainActivity : Activity() {
     var s = S[i];
     if (s.loading) return;
     if (busy) { setTimeout(function() { loadNext(i, done); }, 400); return; }
+    if (!s.more && s.loaded && altsLeft(i)) { s.alt = (s.alt || 0) + 1; s.page = 0; s.more = true; }   // the main name is used up: the next spelling
     if (!s.more && s.loaded) { if (done) done([]); return; }
+    var term = (i === FI && s.alt) ? srcs[FI].alts[s.alt - 1] : srcs[i].search;
     var wait = blockedFor();
     if (wait) { s.err = 'blocked'; if (done) done([]); return; }
     // first page: the saved copy, if fresh, costs no request
@@ -6228,7 +6253,7 @@ class MainActivity : Activity() {
     s.loading = true; busy = true;
     var go = function() {
       lastReq = Date.now();
-      fetchPage(srcs[i].search, s.page + 1, function(err, items, more) {
+      fetchPage(term, s.page + 1, function(err, items, more) {
         s.loading = false; busy = false;
         if (err) { s.err = err; if (done) done([]); return; }
         s.err = '';
@@ -6237,7 +6262,7 @@ class MainActivity : Activity() {
         items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); added.push(it); } });
         s.page += 1; s.loaded = true;
         s.more = srcs[i].match ? (more && s.page < 6) : (more && added.length > 0);   // a name-filtered list can have empty pages
-        if (s.page === 1) writeCache(srcs[i].search, s);
+        if (s.page === 1 && !s.alt) writeCache(srcs[i].search, s);
         if (done) done(added);
       });
     };
@@ -6335,7 +6360,7 @@ class MainActivity : Activity() {
 
   function more(i) {
     var s = S[i];
-    if (s.loading || s.queued || !s.more || !s.loaded) return;
+    if (s.loading || s.queued || !canMore(i) || !s.loaded) return;
     s.queued = true;
     ((HOME && i === FI) ? hstatus : status).textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...');
     loadNext(i, function(added) {
@@ -6475,8 +6500,8 @@ class MainActivity : Activity() {
         if (nx) focusEl(nx, 'nearest');
         else if (k === 37) focusNav();
         else if (k === 38) { if (!(window.__tvFacFocusBar && window.__tvFacFocusBar())) homeEl.scrollTop = 0; }
-        else if (k === 40 && S[FI].more) more(FI);
-        if (k !== 37 && S[FI].more && !S[FI].loading && ae.classList.contains('tv-fc')) {
+        else if (k === 40 && canMore(FI)) more(FI);
+        if (k !== 37 && canMore(FI) && !S[FI].loading && ae.classList.contains('tv-fc')) {
           var hl = hgrid.children, hi = Array.prototype.indexOf.call(hl, document.activeElement);
           if (hi >= 0 && hl.length - hi <= 6) more(FI);
         }

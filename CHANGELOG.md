@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.1
+
+- Factions submenu: header reads "Current factions"; the private build shows each faction's logo at the left of its card; the line reads "Titles held: ..."; the favourite star now sits on the faction name's line; Unaffiliated is no longer listed (its page still works from My Favorites).
+- Faction home video cards follow the thumbnail card rule (15/700, up to 4 lines) so the third and fourth lines are no longer cut off. This also applies to a member's video grid.
+- Faction matches: a name counts only as a whole word, with an exclude list, so STARS no longer picks up 5STARS Grand Prix. Other spellings (for example the Japanese name) are searched only when you scroll to the end of the main results; nothing extra loads on page open.
+- `factions.json` gains `exclude` and `alts`.
+
 ## 2.16.0
 
 - Faction pages have a home screen. A new "Faction home" row tops the member list (also where the page opens). It shows a larger logo, founded year, captain, member count, the titles the faction holds now (belt, holder, reign, day count and defences; each opens that title's lineage page) and a grid of faction matches: videos with the faction name in the title. Choosing a member shows their videos as before; "Faction home" returns.
