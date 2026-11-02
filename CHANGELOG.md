@@ -2,6 +2,88 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.18.5
+
+- Wrestler / Competitors tabs: tighter lines (15px text, 6px padding, as the old columns had) so the lists are about 480px tall at 1280x720 and stop short of the bottom of the screen; the flyout is also capped to the space below the filter bar and scrolls if it ever needs more.
+- Side-nav Wrestlers menu matches: CURRENT and PAST tabs (47 and 34 names), tighter 15px lines, 4 and 3 columns, shelf 860px wide. Down from a tab enters the list; Up from the top of a list returns to the open tab.
+
+## 2.18.4
+
+- Filter bar Competitors / Wrestler drop-downs: CURRENT and PAST are now two tabs under the All / Any row (CURRENT opens first, or PAST when the chosen wrestler is a past one). Focusing a tab shows its list; Down from the All row lands on the open tab; Up from the top of a list returns to it. The lists run in more columns (5 and 4), so the flyout is about 590px tall instead of 730px and nothing is cut off.
+
+## 2.18.3
+
+- Wrestlers menu: the PAST column now also lists members of former factions who are not current wrestlers (same list as the filter bar), in two columns; the shelf is wider.
+
+## 2.18.2
+
+- Filter bar Competitors / Wrestler drop-downs: back to two alphabetical lists like the Wrestlers menu: CURRENT (members of current factions, 3 columns) and PAST (the past-wrestlers list plus members of former factions who are not current, 2 columns). The faction columns, which made it too wide, are gone.
+- Championship pages: when a team's search finds nothing, each member is now searched alone, then their other spellings (NEW BLOOD: "Furusawa Kian" added for Kikyo Furusawa), one search at a time.
+
+## 2.18.1
+
+- Former faction match searches: Oedo Tai "Oedo", Queen's Quest "Quest", Tokyo Cyber Squad "TCS", Donna Del Mondo "DDM" first and then "Donna" once the DDM results run out.
+
+## 2.18.0
+
+- The app now downloads the daily file (daily.json on the daily-data branch, published once a day by the Muse job) at most every six hours and uses its schedule and its championship lineages. The schedule-only download is the fallback if the daily file cannot be read, and the lists built into the app are the last fallback.
+- A lineage from the daily file is used only when it is complete and has at least as many reigns as the one built into the app, so a newer app is never set back by an older file. The newest schedule wins as before; PPV shows still come from the built-in list.
+- Faction logos (private build) show on the current and former faction menu cards and on the faction pages.
+
+## 2.17.3
+
+- Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
+
+## 2.17.2
+
+- Factions use "Captain"/"Captains" everywhere (menu and faction pages); "Past leaders" is gone. Former faction menu cards follow the current ones: name, "Captains: ... · N members", and the years as the last line in the Titles held size. All faction cards are now as tall as the tallest, so the two columns line up.
+
+## 2.17.1
+
+- Former factions: every past leader is now also in the clickable member list (Jungle Kyona was missing from J.A.N., and leaders were missing on six others). Former faction menu cards are the same height as the current ones and show a "Past leaders" line. J.A.N. matches now search "Jungle".
+
+## 2.17.0
+
+- Past factions: Oedo Tai, Queen's Quest, Tokyo Cyber Squad, Donna Del Mondo, Club Venus, Empress Nexus Venus and J.A.N. have pages. The Factions menu shows them in a Former factions list beside the current ones (years, notable members; no logos). Their pages show formed and disbanded years, Past Leaders and notable members; no titles held. Former factions' members are not added to Current Wrestlers.
+- Faction match searches for the former factions: "(Oedo Tai)", "(Queen's Quest)", "Donna", "Club", "(E neXus V)"; Tokyo Cyber Squad and J.A.N. return no results on the site and may show an empty list.
+
+## 2.16.6
+
+- NEW BLOOD lineage: new champions Meni☆Mani (Kikyo Furusawa & Rian) won on Oct 20, 2026 at Korakuen Hall, Tokyo, beating Sakurara (Sakura Aya & Sayaka Kurara) in 16:32; Sakurara's reign ended at two defences. Reign 6 starts with no defences listed.
+
+## 2.16.5
+
+- Faction matches search the faction name in brackets, which is how the site's video descriptions list it: (STARS), (Cosmic Angels), (God's Eye), (H.A.T.E.), (NEO GENESIS). This leaves out the 5 Star Grand Prix, so the STARS exclusion list is gone. Mi Vida Loca searches "loca". Itoh Respect Gundan keeps its member searches.
+
+## 2.16.4
+
+- Factions submenu: the logo area on each card is larger (80 x 58, was 64 x 48) so tall logos such as Mi Vida Loca show bigger. It fits inside the height the three text lines already need, so cards without a Titles held line grow only slightly.
+
+## 2.16.3
+
+- Faction matches showed old results (STARS with 5 Star Grand Prix, H.A.T.E. with one video): the TV keeps each faction's first page for 12 hours, and the copy saved by the earlier version had been cut down by the old title rule. The saved copy now has a new name, so the old one is ignored, and the STARS exclusions also apply to any saved copy.
+
+## 2.16.2
+
+- Faction matches now trust the site's own search, which also reads video descriptions (that is why God's Eye matches have generic titles). The title-must-contain-the-name rule is gone.
+- STARS: cards whose title has 5★STAR, RED STARS, BLUE STARS, STAR GP or Grand Prix are left out (the 5 Star Grand Prix blocks).
+- Itoh Respect Gundan: searches Maki Itoh + Kikyo Furusawa, then Maki Itoh + Rian, then Kikyo Furusawa + Rian, each only when you reach the end of the one before (the site has no OR). Mi Vida Loca adds Suzu Suzuki + Rina Yamashita the same way. The Japanese extra spellings are removed.
+
+## 2.16.1
+
+- Factions submenu: header reads "Current factions"; the private build shows each faction's logo at the left of its card; the line reads "Titles held: ..."; the favourite star now sits on the faction name's line; Unaffiliated is no longer listed (its page still works from My Favorites).
+- Faction home video cards follow the thumbnail card rule (15/700, up to 4 lines) so the third and fourth lines are no longer cut off. This also applies to a member's video grid.
+- Faction matches: a name counts only as a whole word, with an exclude list, so STARS no longer picks up 5STARS Grand Prix. Other spellings (for example the Japanese name) are searched only when you scroll to the end of the main results; nothing extra loads on page open.
+- `factions.json` gains `exclude` and `alts`.
+
+## 2.16.0
+
+- Faction pages have a home screen. A new "Faction home" row tops the member list (also where the page opens). It shows a larger logo, founded year, captain, member count, the titles the faction holds now (belt, holder, reign, day count and defences; each opens that title's lineage page) and a grid of faction matches: videos with the faction name in the title. Choosing a member shows their videos as before; "Faction home" returns.
+- The Factions menu entry now opens the faction's own search instead of its first member's, so the home grid uses the page that has just loaded: no extra request. A later page loads only when you scroll down.
+- Unaffiliated has no home page, only its member list.
+- The Factions submenu shows each faction as a card: name, captain, member count and titles held.
+- `factions.json` gains `founded`, `captain`, `search`, `match` and `home` per faction. Titles held come from the lineage files, not the site.
+
 ## 2.15.2
 
 - Championships submenu: Down from "All championship matches" goes to the first card (World of Stardom) instead of jumping to AEW; Right does nothing there and Left closes the shelf.

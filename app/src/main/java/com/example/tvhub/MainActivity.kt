@@ -2518,6 +2518,35 @@ class MainActivity : Activity() {
         } catch (_: Exception) { return text }
     }
 
+    // The daily file (assets-independent copy in filesDir) published by the daily job: schedule, lineage.titles, status.
+    // Read once per change of the file; null when there is none or it cannot be read.
+    private var dailyCache: org.json.JSONObject? = null
+    private var dailyStamp = -1L
+    @Synchronized
+    private fun dailyData(): org.json.JSONObject? {
+        return try {
+            val f = java.io.File(filesDir, "daily.json")
+            if (!f.exists() || f.length() == 0L) return null
+            if (f.lastModified() != dailyStamp || dailyCache == null) {
+                dailyCache = org.json.JSONObject(f.readText())
+                dailyStamp = f.lastModified()
+            }
+            dailyCache
+        } catch (_: Exception) { null }
+    }
+
+    // A lineage from the daily file, only when it is complete and has at least as many reigns as the bundled one
+    // (so an app update with newer bundled data is never undone by an older daily file).
+    private fun dailyLineage(id: String, bundled: String): String? {
+        return try {
+            val t = dailyData()?.optJSONObject("lineage")?.optJSONObject("titles")?.optJSONObject(id) ?: return null
+            val reigns = t.optJSONArray("reigns") ?: return null
+            if (reigns.length() == 0 || t.optString("title").isEmpty()) return null
+            val have = if (bundled.isEmpty()) 0 else (org.json.JSONObject(bundled).optJSONArray("reigns")?.length() ?: 0)
+            if (reigns.length() >= have) t.toString() else null
+        } catch (_: Exception) { null }
+    }
+
     private fun scheduleTextRaw(): String {
         var downloaded = ""
         try {
@@ -2525,6 +2554,14 @@ class MainActivity : Activity() {
             if (f.exists() && f.length() > 0) downloaded = f.readText()
         } catch (_: Exception) {}
         val bundled = try { assets.open("schedule.json").bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+        // The daily file's schedule is a third candidate; the newest "updated" of the downloaded copies wins.
+        try {
+            val ds = dailyData()?.optJSONObject("schedule")
+            if (ds != null && ds.optJSONArray("events") != null) {
+                val dtext = ds.toString()
+                if (downloaded.isEmpty() || ds.optString("updated", "") > org.json.JSONObject(downloaded).optString("updated", "")) downloaded = dtext
+            }
+        } catch (_: Exception) {}
         if (downloaded.isEmpty()) return bundled
         if (bundled.isEmpty()) return downloaded
         return try {
@@ -2564,7 +2601,26 @@ class MainActivity : Activity() {
         val due = now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
         Thread {
             try {
+                var gotDaily = false
                 if (due) {
+                    // The daily file first: it carries the schedule and the lineages. The schedule-only file is the fallback.
+                    try {
+                        val dc = java.net.URL(BuildConfig.DAILY_URL).openConnection() as java.net.HttpURLConnection
+                        dc.connectTimeout = 8000
+                        dc.readTimeout = 15000
+                        val dbody = dc.inputStream.bufferedReader().use { it.readText() }
+                        dc.disconnect()
+                        val dj = org.json.JSONObject(dbody)
+                        val okSched = (dj.optJSONObject("schedule")?.optJSONArray("events")?.length() ?: 0) > 0
+                        val okLin = dj.optJSONObject("lineage")?.optJSONObject("titles") != null
+                        if (okSched && okLin) {
+                            java.io.File(filesDir, "daily.json").writeText(dbody)
+                            prefs.edit().putLong("last", now).apply()
+                            gotDaily = true
+                        }
+                    } catch (_: Exception) {}
+                }
+                if (due && !gotDaily) {
                     val conn = java.net.URL(BuildConfig.SCHEDULE_URL).openConnection() as java.net.HttpURLConnection
                     conn.connectTimeout = 8000
                     conn.readTimeout = 8000
@@ -2755,9 +2811,13 @@ class MainActivity : Activity() {
 
         // Championship lineages (assets/lineage/<id>.json) and the belt picture, which only builds with the private branding folder have.
         @android.webkit.JavascriptInterface
-        fun lineageJson(id: String): String = try {
-            this@MainActivity.assets.open("lineage/" + id.filter { it.isLetterOrDigit() || it == '_' } + ".json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun lineageJson(id: String): String {
+            val clean = id.filter { it.isLetterOrDigit() || it == '_' }
+            val bundled = try {
+                this@MainActivity.assets.open("lineage/" + clean + ".json").bufferedReader().use { it.readText() }
+            } catch (_: Exception) { "" }
+            return this@MainActivity.dailyLineage(clean, bundled) ?: bundled
+        }
 
         private val beltCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 
@@ -4649,15 +4709,15 @@ class MainActivity : Activity() {
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
-            var out = [];
+            var out = [], old = [];
             try {
               var d = JSON.parse(AndroidHost.factionsJson());
               (d.factions || []).forEach(function(f) {
                 if (!f.members || !f.members.length) return;
-                out.push([f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
+                (f.former ? old : out).push([f.former ? f.name + ' (former)' : f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
               });
             } catch (e) {}
-            return out;
+            return out.concat(old);
           }
           // "Current Wrestlers": everyone listed in the app's factions.json, once each, in alphabetical order.
           var JA_NAMES = {};
@@ -4667,6 +4727,7 @@ class MainActivity : Activity() {
             try {
               var d = JSON.parse(AndroidHost.factionsJson());
               (d.factions || []).forEach(function(f) {
+                if (f.former) return;   // a former faction's notable members are not all current wrestlers
                 (f.members || []).forEach(function(m) {
                   if (m && m.name && !seen[m.name]) { seen[m.name] = 1; out.push([m.name, m.search || m.name, JA_NAMES[m.name] || m.name]); }
                 });
@@ -4675,6 +4736,22 @@ class MainActivity : Activity() {
             if (!out.length) return wrestlers(CURRENT_W);
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
             return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]), m[2]]; });
+          }
+          // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
+          function pastWrestlers() {
+            var have = {}, out = [];
+            currentWrestlers().forEach(function(r) { have[r[0].toLowerCase()] = 1; });
+            wrestlers(PAST_W).forEach(function(r) { have[r[0].toLowerCase()] = 1; out.push(r); });
+            try {
+              var d = JSON.parse(AndroidHost.factionsJson());
+              (d.factions || []).forEach(function(f) {
+                if (!f.former) return;
+                (f.members || []).forEach(function(m) {
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name), JA_NAMES[m.name] || m.name]); }
+                });
+              });
+            } catch (e) {}
+            return out;
           }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
           var HINT_KEY = 'tvMenuHintV1';
@@ -4731,6 +4808,11 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
             '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-shl-wtabs{display:flex;gap:10px;margin:0 0 8px 0;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{font-size:17px;font-weight:700;padding:7px 24px;border-radius:10px;}',
+            '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{color:#F4C242 !important;}',
+            '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
+            '#tv-sm-shelf .tv-shl-cf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px;align-items:start;}',
             '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft:focus{background:#172029;border-color:#F4C242;}',
@@ -4740,6 +4822,17 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft1{font-size:17px;font-weight:700;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft2{font-size:14px;font-weight:600;color:#c9d2dc;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:12px;font-weight:700;color:#F4C242;margin-top:3px;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-fc{display:flex;align-items:center;gap:12px;padding:6px 12px;margin:0 0 4px 0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-fc.tv-fav-on::before{content:none;}',
+            '#tv-sm-shelf .tv-shl-fc.tv-fav-on .tv-shl-fc1::before{content:"\\2605  ";color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcl{flex:0 0 auto;width:80px;height:58px;object-fit:contain;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcx{min-width:0;display:block;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcs{flex:0 0 auto;width:0;height:58px;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcld{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-fc:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fc1{display:block;font-size:17px;font-weight:700;line-height:1.15;color:#fff;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fc2{display:block;font-size:13px;font-weight:600;color:#c9d2dc;margin-top:3px;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-ft3{display:block;margin-top:3px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
@@ -5188,25 +5281,58 @@ class MainActivity : Activity() {
               w = 400;
               h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
             } else if (key === 'factions') {
-              w = 380;
-              var fl = '';
+              w = 440;
+              var fl = '', ol = '';
               try {
                 var d = JSON.parse(AndroidHost.factionsJson());
                 var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
+                // Titles held right now: a current champion (or a member of the champion team) from the lineage files. No request.
+                var TSHORT = { world: 'World', wonder: 'Wonder', goddess: 'Goddess', artist: 'Artist', future: 'Future', highspeed: 'High Speed', newblood: 'NEW BLOOD', kawaii: 'Kawaii' };
+                var curChamps = [];
+                Object.keys(TSHORT).forEach(function(id) {
+                  try {
+                    var LN = JSON.parse(AndroidHost.lineageJson(id)), r = LN.reigns[LN.reigns.length - 1];
+                    if (!r.end) curChamps.push({ id: id, who: String(r.champ).split(/\s*(?:&|,)\s*/).map(function(n) { return n.toLowerCase(); }) });
+                  } catch (e) {}
+                });
                 facs.forEach(function(f) {
-                  if (!f.members || !f.members.length) return;
-                  fl += fiHtml(f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id));
+                  if (!f.members || !f.members.length || f.home === false) return;   // Unaffiliated is not listed
+                  if (f.former) {
+                    // Former factions: no logo, no titles; the years and the notable members.
+                    var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
+                    var olg = ''; try { olg = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { olg = ''; }
+                    var ocp = f.captains || [];
+                    var ol2 = (ocp.length ? T(ocp.length > 1 ? 'Captains: ' : 'Captain: ', '\u30ad\u30e3\u30d7\u30c6\u30f3: ') + ocp.join(', ') + ' \u00b7 ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '\u4eba');
+                    var ol3 = (f.founded || '') + (f.disbanded ? '\u2013' + f.disbanded : '');
+                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '">' + (olg ? '<img class="tv-shl-fcl" src="' + olg + '" alt="">' : '<span class="tv-shl-fcs"></span>') + '<span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2 tv-shl-fcld">' + esc(ol2) + '</span>' +
+                      (ol3 ? '<span class="tv-shl-ft3">' + esc(ol3) + '</span>' : '') + '</span></a>';
+                    return;
+                  }
+                  var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }
+                  var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
+                  var nm2 = {}; f.members.forEach(function(m) { nm2[m.name.toLowerCase()] = 1; nm2[String(m.search).toLowerCase()] = 1; });
+                  var held = curChamps.filter(function(c) { return c.who.some(function(n) { return nm2[n]; }); }).map(function(c) { return TSHORT[c.id]; });
+                  var l2 = (f.captain ? T('Captain: ', 'キャプテン: ') + f.captain + ' · ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '人');
+                  fl += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' +
+                    (lgo ? '<img class="tv-shl-fcl" src="' + lgo + '" alt="">' : '') + '<span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span>' +
+                    '<span class="tv-shl-fc2">' + esc(l2) + '</span>' +
+                    (held.length ? '<span class="tv-shl-ft3">' + esc(T('Titles held: ', '保持王座: ') + held.join(', ')) + '</span>' : '') + '</span></a>';
                 });
               } catch (e) {}
-              h = '<div class="tv-shl-t">' + esc(T('FACTIONS', 'ユニット')) + '</div><div>' + fl + '</div>';
+              if (ol) {
+                w = 900;
+                h = '<div class="tv-shl-cf"><div><div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div></div>' +
+                  '<div><div class="tv-shl-t">' + esc(T('FORMER FACTIONS', '元ユニット')) + '</div><div>' + ol + '</div></div></div>';
+              } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
-              w = 900;
+              w = 860;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              var prow = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              // Two tabs, CURRENT (open first) and PAST, like the filter bar's wrestler lists.
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
-                '<div style="display:grid;grid-template-columns:3fr 1fr;gap:18px;">' +
-                '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
-                '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
+                '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
+                '<div class="tv-shl-wl" data-wbody="0" style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>' +
+                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
             }
             else if (key === 'community') {
               w = 980;
@@ -5252,7 +5378,7 @@ class MainActivity : Activity() {
             }
             return { html: h, width: w };
           }
-          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('.tv-sm-fi')) : []; }
+          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('.tv-sm-fi')).filter(function(e) { return e.offsetParent !== null; }) : []; }
           function closeShelf(refocus) {
             if (shelfEl && shelfEl.parentNode) shelfEl.parentNode.removeChild(shelfEl);
             shelfEl = null;
@@ -5273,6 +5399,23 @@ class MainActivity : Activity() {
             shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
             document.body.appendChild(shelfEl);
             try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
+            if (key === 'current') {
+              var wts = shelfEl.querySelectorAll('.tv-shl-wtab'), wbs = shelfEl.querySelectorAll('[data-wbody]');
+              Array.prototype.forEach.call(wts, function(t, ti) {
+                var show = function() {
+                  Array.prototype.forEach.call(wbs, function(bd, bi) { bd.style.display = bi === ti ? '' : 'none'; });
+                  Array.prototype.forEach.call(wts, function(u, ui) { u.classList.toggle('tv-wtab-on', ui === ti); });
+                };
+                t.addEventListener('focus', show);
+                t.addEventListener('click', function(ev) { ev.preventDefault(); show(); });
+              });
+            }
+            // Faction cards: every card as tall as the tallest, so the current and former columns line up row by row.
+            if (key === 'factions') {
+              var fcs = shelfEl.querySelectorAll('.tv-shl-fc'), mh = 0, q;
+              for (q = 0; q < fcs.length; q++) mh = Math.max(mh, fcs[q].getBoundingClientRect().height);
+              if (mh) for (q = 0; q < fcs.length; q++) fcs[q].style.minHeight = Math.ceil(mh) + 'px';
+            }
             var rr = row.getBoundingClientRect();
             shelfEl.style.top = Math.max(12, Math.min(rr.top, window.innerHeight - shelfEl.offsetHeight - 12)) + 'px';
             var list = fiItems(), first = list[0];
@@ -5313,6 +5456,12 @@ class MainActivity : Activity() {
               var sc = prim + orth * 2;
               if (sc < bs) { bs = sc; best = it; }
             });
+            // Coming from a list, land on the open tab rather than whichever tab sits nearest.
+            var wtOn = shelfEl.querySelector('.tv-shl-wtab.tv-wtab-on');
+            if (wtOn && cur.getAttribute('data-wtab') === null) {
+              if (best && best.getAttribute('data-wtab') !== null) best = wtOn;
+              if (rowBest && rowBest.getAttribute('data-wtab') !== null) rowBest = null;
+            }
             if (rowBest) { focusItem(rowBest); return true; }
             if (best) { focusItem(best); return true; }
             return false;
@@ -5396,6 +5545,7 @@ class MainActivity : Activity() {
                   stop(e);
                   if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
                   else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  else if (fa.getAttribute('data-wtab')) { /* the list already switched when the tab got focus */ }
                   else if (fa.getAttribute('data-ppv')) { ppvAct(fa.getAttribute('data-id'), fa.getAttribute('data-ppv')); }
                   else if (fa.getAttribute('data-ev')) { evOpen(fa.getAttribute('data-ev')); }
                   else if (fa.getAttribute('data-rem')) { schedToggleRem(fa.getAttribute('data-rem')); }
@@ -6020,7 +6170,7 @@ class MainActivity : Activity() {
   try { logoSrc = AndroidHost.factionLogo(fac.id) || ''; } catch (e) {}
 
   var GAP_MS = 1200;                 // pause between two requests to the site
-  var CACHE_KEY = 'tvFacCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1';
+  var CACHE_KEY = 'tvFacCacheV2', BLOCK_KEY = 'tvFacBlockUntilV1';
   var CACHE_TTL = 12 * 3600 * 1000;
   var MAX_SAVED = 40;                // videos kept per member on the TV (the first pages only)
 
@@ -6063,9 +6213,29 @@ class MainActivity : Activity() {
     '#tv-fac .tv-fc{display:flex;flex-direction:column;text-decoration:none !important;color:#ffffff !important;border-radius:8px;background:#172029;outline:none !important;border:3px solid transparent;overflow:hidden;box-sizing:border-box;}',
     '#tv-fac .tv-fc:focus{border-color:#F4C242;box-shadow:none !important;}',
     '#tv-fac .tv-fc-img{width:100%;aspect-ratio:16/9;background:#172029 center/cover no-repeat;}',
-    '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:17px;line-height:1.3;max-height:3.9em;overflow:hidden;}',
+    '#tv-fac .tv-fc-t{padding:10px 12px 12px 12px;font-size:15px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;}',
     '#tv-fac-status{padding:26px 6px;font-size:20px;color:#9aa6b4;text-align:center;}',
     '#tv-fac-empty{flex:1 1 auto;display:none;align-items:center;justify-content:center;}',
+    '#tv-fac-home{flex:1 1 auto;min-height:0;display:none;overflow-y:auto;scrollbar-width:none;padding:30px 40px 40px 30px;}',
+    '#tv-fac-home::-webkit-scrollbar{display:none;}',
+    '#tv-fac.tv-empty #tv-fac-home{display:block;}',
+    '#tv-fac .tv-hm-top{display:flex;align-items:center;gap:30px;margin:0 0 26px 0;}',
+    '#tv-fac .tv-hm-logo{flex:0 0 auto;max-width:300px;max-height:190px;object-fit:contain;}',
+    '#tv-fac .tv-hm-name{font-size:44px;font-weight:800;line-height:1.1;}',
+    '#tv-fac .tv-hm-meta{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:14px;}',
+    '#tv-fac .tv-hm-k{font-size:13px;font-weight:700;letter-spacing:1px;color:#9aa6b4;}',
+    '#tv-fac .tv-hm-v{font-size:22px;font-weight:700;color:#fff;margin-top:2px;}',
+    '#tv-fac .tv-hm-h{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;margin:6px 0 12px 2px;}',
+    '#tv-fac #tv-hm-titles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 26px 0;}',
+    '#tv-fac .tv-hb{display:flex;align-items:center;gap:14px;box-sizing:border-box;padding:8px 12px;border-radius:8px;background:#161f2a;border:3px solid #2a323c;color:#fff !important;text-decoration:none !important;outline:none !important;min-width:0;}',
+    '#tv-fac .tv-hb:focus{background:#172029;border-color:#F4C242;box-shadow:none !important;}',
+    '#tv-fac .tv-hb-img{flex:0 0 auto;width:120px;height:66px;object-fit:contain;display:flex;align-items:center;justify-content:center;border-radius:6px;}',
+    '#tv-fac .tv-hb-plate{background:#0f151c;border:2px solid #2a323c;box-sizing:border-box;}',
+    '#tv-fac .tv-hb-x{min-width:0;display:flex;flex-direction:column;}',
+    '#tv-fac .tv-hb-1{font-size:19px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '#tv-fac .tv-hb-2{font-size:15px;font-weight:600;color:#c9d2dc;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '#tv-fac .tv-hb-3{font-size:13px;font-weight:700;color:#F4C242;margin-top:4px;white-space:nowrap;}',
+    '#tv-fac #tv-hgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;}',
     '#tv-fac.tv-empty #tv-fac-empty{display:flex;}',
     '#tv-fac.tv-empty #tv-fac-title, #tv-fac.tv-empty #tv-fac-scroll{display:none;}',
     '#tv-fac .tv-em{max-width:560px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 30px;}',
@@ -6077,14 +6247,46 @@ class MainActivity : Activity() {
 
   // ------------------------------------------------------------------ data
   var members = fac.members;
-  var S = [];                       // per member: { items, seen, page, more, loaded, err }
-  members.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
-  var sel = -1;                     // no member is opened until one is chosen
-  var seedIdx = 0;                  // the member whose results the opened page itself holds
+  var HOME = fac.home !== false;    // a faction home page (titles held, faction matches); Unaffiliated has none
+  var FI = members.length;          // index of the faction's own match list, after the members
+  var srcs = members.slice();
+  if (HOME) srcs.push({ name: fac.name, search: fac.search || fac.name, match: fac.match || null, exclude: fac.exclude || [], alts: fac.alts || [] });
+  var S = [];                       // per source (members, then the faction): { items, seen, page, more, loaded, err }
+  srcs.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
+  var sel = -1;                     // -1 = the faction home (or the "choose a wrestler" panel without one)
+  var seedIdx = HOME ? FI : 0;      // the source whose results the opened page itself holds
+  function nz(t) { return String(t || '').toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' '); }
+  function isWordCh(c) { return /[a-z0-9\u2605\u2606]/.test(c || ''); }
+  // A name counts only as a whole word (STARS is not "5STARS"), and a title with an excluded word never counts.
+  function hasWord(n, p) {
+    p = nz(p);
+    if (!p) return false;
+    var at = n.indexOf(p);
+    while (at >= 0) {
+      var b = n.charAt(at - 1), a = n.charAt(at + p.length);
+      var firstWord = isWordCh(p.charAt(0)), lastWord = isWordCh(p.charAt(p.length - 1));
+      if ((!firstWord || !isWordCh(b)) && (!lastWord || !isWordCh(a))) return true;
+      at = n.indexOf(p, at + 1);
+    }
+    return false;
+  }
+  // The site's own search decides what matches (it reads descriptions we cannot see). A faction can only list words
+  // that rule a card out by its title (STARS: the 5 Star Grand Prix "RED STARS" / "BLUE STARS" blocks), and may
+  // optionally require a whole word.
+  function titleOk(src, t) {
+    var n = nz(t);
+    if ((src.exclude || []).some(function(p) { return n.indexOf(nz(p)) >= 0; })) return false;
+    if (!src.match || !src.match.length) return true;
+    return src.match.some(function(p) { return hasWord(n, p); });
+  }
+  function filtered(src) { return !!((src.match && src.match.length) || (src.exclude && src.exclude.length)); }
+  function altsLeft(i) { var s = S[i]; return HOME && i === FI && s.loaded && (s.alt || 0) < ((srcs[FI].alts || []).length); }
+  function canMore(i) { var s = S[i]; return !!(s && (s.more || altsLeft(i))); }
+  function curSrc() { return sel >= 0 ? sel : FI; }
   var kw = /[?&]q%5Bkeyword%5D=([^&]*)/i.exec(location.search) || /[?&]q\[keyword\]=([^&]*)/i.exec(location.search);
   if (kw) {
     var want = ''; try { want = decodeURIComponent(kw[1].replace(/\+/g, ' ')); } catch (e) {}
-    members.forEach(function(m, i) { if (m.search === want) seedIdx = i; });
+    srcs.forEach(function(m, i) { if (m.search === want) seedIdx = i; });
   }
 
   function readCache() { try { return JSON.parse(lsGet(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -6161,14 +6363,16 @@ class MainActivity : Activity() {
     var s = S[i];
     if (s.loading) return;
     if (busy) { setTimeout(function() { loadNext(i, done); }, 400); return; }
+    if (!s.more && s.loaded && altsLeft(i)) { s.alt = (s.alt || 0) + 1; s.page = 0; s.more = true; }   // the main name is used up: the next spelling
     if (!s.more && s.loaded) { if (done) done([]); return; }
+    var term = (i === FI && s.alt) ? srcs[FI].alts[s.alt - 1] : srcs[i].search;
     var wait = blockedFor();
     if (wait) { s.err = 'blocked'; if (done) done([]); return; }
     // first page: the saved copy, if fresh, costs no request
     if (!s.loaded) {
-      var c = readCache()[members[i].search];
+      var c = readCache()[srcs[i].search];
       if (c && c.items && c.items.length && Date.now() - c.t < CACHE_TTL) {
-        c.items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
+        c.items.forEach(function(it) { if (titleOk(srcs[i], it.title) && !s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); } });
         s.page = 1; s.more = !!c.more; s.loaded = true; s.err = '';
         if (done) done(s.items.slice());
         return;
@@ -6177,15 +6381,16 @@ class MainActivity : Activity() {
     s.loading = true; busy = true;
     var go = function() {
       lastReq = Date.now();
-      fetchPage(members[i].search, s.page + 1, function(err, items, more) {
+      fetchPage(term, s.page + 1, function(err, items, more) {
         s.loading = false; busy = false;
         if (err) { s.err = err; if (done) done([]); return; }
         s.err = '';
+        if (filtered(srcs[i])) items = items.filter(function(it) { return titleOk(srcs[i], it.title); });
         var added = [];
         items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); added.push(it); } });
         s.page += 1; s.loaded = true;
-        s.more = more && added.length > 0;
-        if (s.page === 1) writeCache(members[i].search, s);
+        s.more = filtered(srcs[i]) ? (more && s.page < 6) : (more && added.length > 0);   // a name-filtered list can have empty pages
+        if (s.page === 1 && !s.alt) writeCache(srcs[i].search, s);
         if (done) done(added);
       });
     };
@@ -6201,6 +6406,7 @@ class MainActivity : Activity() {
   if (logoSrc) head += '<div class="tv-fh-brandwrap"><img class="tv-fh-brand" src="' + esc(logoSrc) + '" alt=""></div>';
   head += '<div class="tv-fh"><span class="tv-fh-bar"></span><div class="tv-fh-name notranslate" translate="no">' + esc(fac.name) + '</div></div>';
   var mh = '';
+  if (HOME) mh += '<div class="tv-fm" tabindex="0" role="button" data-i="-1">' + esc(T('Faction home', 'ユニットホーム')) + '</div>';
   members.forEach(function(m, i) {
     mh += '<div class="tv-fm notranslate" translate="no" tabindex="0" role="button" data-i="' + i + '">' + esc(m.name) + '</div>';
   });
@@ -6208,7 +6414,8 @@ class MainActivity : Activity() {
     '<div id="tv-fac-nav">' + head + '<div id="tv-fac-members">' + mh + '</div></div>' +
     '<div id="tv-fac-main"><div id="tv-fac-title"><span class="tv-ft-bar"></span><span id="tv-fac-name" class="notranslate" translate="no"></span></div>' +
     '<div id="tv-fac-scroll"><div id="tv-fac-grid"></div><div id="tv-fac-status"></div></div>' +
-    '<div id="tv-fac-empty"><div class="tv-em"><div class="tv-em-name notranslate" translate="no">' + esc(fac.name) + '</div>' +
+    (HOME ? '<div id="tv-fac-home"></div>' : '') +
+    '<div id="tv-fac-empty"' + (HOME ? ' style="display:none !important"' : '') + '><div class="tv-em"><div class="tv-em-name notranslate" translate="no">' + esc(fac.name) + '</div>' +
     '<div class="tv-em-text">' + esc(T('Choose a wrestler on the left to see their videos.', '\u5de6\u306e\u9078\u624b\u3092\u9078\u3093\u3067\u52d5\u753b\u3092\u898b\u307e\u3057\u3087\u3046\u3002')) + '</div>' +
     '<div class="tv-em-hint">\u2190 ' + esc(T('Up / Down to browse, OK or Right to open', '\u4e0a\u4e0b\u3067\u9078\u629e\u3001OK\u304b\u53f3\u3067\u958b\u304f')) + '</div></div></div></div>';
   root.classList.add('tv-empty');
@@ -6226,6 +6433,9 @@ class MainActivity : Activity() {
   var scroller = root.querySelector('#tv-fac-scroll');
   var nameEl = root.querySelector('#tv-fac-name');
   var fmEls = Array.prototype.slice.call(root.querySelectorAll('.tv-fm'));
+  var OFF = HOME ? 1 : 0;           // member i sits at fmEls[i + OFF]; the Faction home row is fmEls[0]
+  var homeEl = root.querySelector('#tv-fac-home');
+  var hgrid = null, hstatus = null;
 
   function cardHtml(it) {
     return '<a class="tv-fc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-fc-img" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '"></div><div class="tv-fc-t">' + esc(it.title) + '</div></a>';
@@ -6234,12 +6444,14 @@ class MainActivity : Activity() {
   function setStatus(i) {
     var s = S[i];
     var t = '';
+    var stEl = (HOME && i === FI) ? hstatus : status;
+    if (!stEl) return;
     if (s.loading) t = T('Loading...', '読み込み中...');
     else if (s.err === 'blocked') t = T('The site asked us to slow down. Try again in a few minutes.', 'サイトからアクセス制限がかかりました。数分後にお試しください。');
     else if (s.err === 'login') t = T('Please log in to see these videos.', 'ログインしてください。');
     else if (s.err) t = T('Could not load. Press OK on the name to try again.', '読み込めませんでした。名前でOKを押して再試行。');
-    else if (s.loaded && !s.items.length) t = T('No videos found for this name.', '動画が見つかりませんでした。');
-    status.textContent = t;
+    else if (s.loaded && !s.items.length) t = (HOME && i === FI) ? T('No faction matches found.', 'ユニットの試合は見つかりませんでした。') : T('No videos found for this name.', '動画が見つかりませんでした。');
+    stEl.textContent = t;
   }
   function renderGrid() {
     var s = S[sel];
@@ -6250,7 +6462,7 @@ class MainActivity : Activity() {
     setStatus(sel);
   }
   function markSel() {
-    fmEls.forEach(function(el, i) { el.classList.toggle('tv-sel', i === sel); });
+    fmEls.forEach(function(el, k) { el.classList.toggle('tv-sel', k - OFF === sel); });
     root.classList.toggle('tv-empty', sel < 0);
     nameEl.textContent = sel >= 0 ? members[sel].name : '';
   }
@@ -6259,11 +6471,12 @@ class MainActivity : Activity() {
     try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
     try { el.scrollIntoView({ block: mode || 'nearest' }); } catch (e) {}
   }
-  function focusNav() { focusEl(fmEls[sel >= 0 ? sel : 0]); }
+  function focusNav() { focusEl(fmEls[sel >= 0 ? sel + OFF : 0]); }
   window.__tvFacFocusNav = function() { focusNav(); };
   window.__tvFacBase = function() { return sel >= 0 ? members[sel].search : ''; };
   function inNav(el) { return !!(el && el.classList && el.classList.contains('tv-fm')); }
-  function inGrid(el) { return !!(el && el.classList && el.classList.contains('tv-fc')); }
+  function inGrid(el) { return !!(el && el.classList && el.classList.contains('tv-fc') && el.parentNode === grid); }
+  function inHome(el) { return !!(HOME && homeEl && el && homeEl.contains(el)); }
 
   function cols() {
     var c = grid.children;
@@ -6275,18 +6488,104 @@ class MainActivity : Activity() {
 
   function more(i) {
     var s = S[i];
-    if (s.loading || s.queued || !s.more || !s.loaded) return;
+    if (s.loading || s.queued || !canMore(i) || !s.loaded) return;
     s.queued = true;
-    status.textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...');
+    ((HOME && i === FI) ? hstatus : status).textContent = T('Loading...', '\u8aad\u307f\u8fbc\u307f\u4e2d...');
     loadNext(i, function(added) {
       s.queued = false;
-      if (i !== sel) return;
+      if (i !== curSrc()) return;
       if (added.length) {
         var h = ''; added.forEach(function(it) { h += cardHtml(it); });
-        grid.insertAdjacentHTML('beforeend', h);
+        (HOME && i === FI ? hgrid : grid).insertAdjacentHTML('beforeend', h);
       }
       setStatus(i);
     });
+  }
+
+  // ------------------------------------------------------------------ faction home
+  var TITLE_IDS = ['world', 'wonder', 'goddess', 'artist', 'future', 'highspeed', 'newblood', 'kawaii'];
+  // Titles whose current champion (or any member of the current champion team) belongs to this faction.
+  // Read from the app's own lineage files: no request.
+  function heldTitles() {
+    var out = [], names = {};
+    members.forEach(function(m) { names[nz(m.name)] = 1; names[nz(m.search)] = 1; });
+    TITLE_IDS.forEach(function(id) {
+      var LN = null;
+      try { LN = JSON.parse(AndroidHost.lineageJson(id)); } catch (e) { LN = null; }
+      if (!LN || !LN.reigns || !LN.reigns.length) return;
+      var r = LN.reigns[LN.reigns.length - 1];
+      if (r.end) return;
+      var who = String(r.champ || '').split(/\s*(?:&|,)\s*/);
+      if (!who.some(function(n) { return names[nz(n)]; })) return;
+      var w = r.won.split('-');
+      var belt = ''; try { belt = AndroidHost.beltDataUri ? AndroidHost.beltDataUri(id) : ''; } catch (e) { belt = ''; }
+      out.push({ id: id, name: String(isJa() && LN.ja ? LN.ja : LN.title).replace(/ Championship$/, ''),
+        holder: r.team ? r.team : r.champ, n: r.n, belt: belt,
+        days: Math.max(0, Math.floor((Date.now() - Date.UTC(+w[0], +w[1] - 1, +w[2])) / 86400000)),
+        def: r.defCount != null ? r.defCount : (r.defences || []).length });
+    });
+    return out;
+  }
+  function ordinal(n) { return n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10 > 3 ? 0 : n % 10]); }
+  function titleCardHtml(t) {
+    var pic = t.belt ? '<img class="tv-hb-img" src="' + esc(t.belt) + '" alt="">'
+      : '<span class="tv-hb-img tv-hb-plate"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span>';
+    return '<a class="tv-hb" tabindex="0" href="' + esc(absUrl('/mypage?tvch=' + t.id)) + '">' + pic + '<span class="tv-hb-x">' +
+      '<span class="tv-hb-1 notranslate" translate="no">' + esc(t.name) + '</span>' +
+      '<span class="tv-hb-2 notranslate" translate="no">' + esc(t.holder) + ' \u00b7 ' + esc(T(ordinal(t.n) + ' reign', '\u7b2c' + t.n + '\u4ee3')) + '</span>' +
+      '<span class="tv-hb-3">' + esc(T('Day ' + t.days + ' \u00b7 ' + t.def + (t.def === 1 ? ' defence' : ' defences'), t.days + '\u65e5\u76ee \u00b7 \u9632\u885b' + t.def + '\u56de')) + '</span></span></a>';
+  }
+  function metaHtml(k, v) { return '<div><div class="tv-hm-k">' + esc(k) + '</div><div class="tv-hm-v notranslate" translate="no">' + esc(v) + '</div></div>'; }
+  function buildHome() {
+    var meta = '';
+    if (fac.founded) meta += metaHtml(T(fac.former ? 'FORMED' : 'FOUNDED', '結成'), fac.founded);
+    if (fac.former && fac.disbanded) meta += metaHtml(T('DISBANDED', '解散'), fac.disbanded);
+    var capList = fac.captain ? [fac.captain] : (fac.captains || []);
+    if (capList.length) meta += metaHtml(T(capList.length > 1 ? 'CAPTAINS' : 'CAPTAIN', 'キャプテン'), capList.join(', '));
+    meta += metaHtml(T('MEMBERS', 'メンバー'), String(members.length));
+    var held = fac.former ? [] : heldTitles();
+    homeEl.innerHTML =
+      '<div class="tv-hm-top">' + (logoSrc ? '<img class="tv-hm-logo" src="' + esc(logoSrc) + '" alt="">' : '') +
+      '<div><div class="tv-hm-name notranslate" translate="no">' + esc(fac.name) + '</div><div class="tv-hm-meta">' + meta + '</div></div></div>' +
+      (held.length ? '<div class="tv-hm-h">' + esc(T('TITLES HELD', '保持王座')) + '</div><div id="tv-hm-titles">' + held.map(titleCardHtml).join('') + '</div>' : '') +
+      '<div class="tv-hm-h">' + esc(T('FACTION MATCHES', 'ユニットの試合')) + '</div><div id="tv-hgrid"></div><div class="tv-hstatus"></div>';
+    hgrid = homeEl.querySelector('#tv-hgrid');
+    hstatus = homeEl.querySelector('.tv-hstatus');
+    var lg = homeEl.querySelector('.tv-hm-logo');
+    if (lg) lg.addEventListener('error', function() { if (lg.parentNode) lg.parentNode.removeChild(lg); });
+  }
+  function renderHomeGrid() {
+    var s = S[FI], h = '';
+    s.items.forEach(function(it) { h += cardHtml(it); });
+    hgrid.innerHTML = h;
+    setStatus(FI);
+  }
+  function homeFocusables() {
+    return Array.prototype.slice.call(homeEl.querySelectorAll('.tv-hb, #tv-hgrid .tv-fc'));
+  }
+  // Straight across the row first, then the nearest item in that direction.
+  function geoNext(cur, k, list) {
+    var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+    var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
+    list.forEach(function(it) {
+      if (it === cur) return;
+      var r = it.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim, orth;
+      if (k === 37 || k === 39) {
+        var ov = Math.min(r.bottom, cr.bottom) - Math.max(r.top, cr.top);
+        if (ov > 0.5 * Math.min(r.height, cr.height) && (k === 39 ? dx > 4 : dx < -4)) { var a = Math.abs(dx); if (a < rowBs) { rowBs = a; rowBest = it; } }
+        return;
+      }
+      if (k === 40) { if (dy <= 4) return; prim = dy; } else { if (dy >= -4) return; prim = -dy; }
+      orth = Math.abs(dx);
+      var sc = prim + orth * 2;
+      if (sc < bs) { bs = sc; best = it; }
+    });
+    return rowBest || best;
+  }
+  function openHome(enter) {
+    sel = -1;
+    markSel();
+    if (enter) { var f = homeFocusables()[0]; if (f) focusEl(f, 'center'); }
   }
 
   // Opens member i: its saved/loaded videos at once, or one request when it has never been opened.
@@ -6316,12 +6615,27 @@ class MainActivity : Activity() {
     var k = e.keyCode, ae = document.activeElement;
     var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
     if (inNav(ae)) {
-      var i = parseInt(ae.getAttribute('data-i'), 10);
-      if (k === 40) { stop(); if (i < fmEls.length - 1) focusEl(fmEls[i + 1]); }
-      else if (k === 38) { stop(); if (i > 0) focusEl(fmEls[i - 1]); }
-      else if (k === 39) { stop(); openMember(i, true); }
+      var i = parseInt(ae.getAttribute('data-i'), 10), p = fmEls.indexOf(ae);
+      if (k === 40) { stop(); if (p < fmEls.length - 1) focusEl(fmEls[p + 1]); }
+      else if (k === 38) { stop(); if (p > 0) focusEl(fmEls[p - 1]); }
+      else if (k === 39) { stop(); if (i < 0) openHome(true); else openMember(i, true); }
       else if (k === 37) { stop(); if (window.__tvOpenMenu) window.__tvOpenMenu(); }
-      else if (k === 13 || k === 23) { stop(); openMember(i, false); }
+      else if (k === 13 || k === 23) { stop(); if (i < 0) openHome(false); else openMember(i, false); }
+      return;
+    }
+    if (inHome(ae)) {
+      if (k === 37 || k === 38 || k === 39 || k === 40) {
+        stop();
+        var nx = geoNext(ae, k, homeFocusables());
+        if (nx) focusEl(nx, 'nearest');
+        else if (k === 37) focusNav();
+        else if (k === 38) { if (!(window.__tvFacFocusBar && window.__tvFacFocusBar())) homeEl.scrollTop = 0; }
+        else if (k === 40 && canMore(FI)) more(FI);
+        if (k !== 37 && canMore(FI) && !S[FI].loading && ae.classList.contains('tv-fc')) {
+          var hl = hgrid.children, hi = Array.prototype.indexOf.call(hl, document.activeElement);
+          if (hi >= 0 && hl.length - hi <= 6) more(FI);
+        }
+      }
       return;
     }
     if (inGrid(ae)) {
@@ -6351,28 +6665,48 @@ class MainActivity : Activity() {
   }, true);
 
   // ------------------------------------------------------------------ start
+  if (HOME) buildHome();
   markSel();
   // The page that was just opened holds one member's first page of results: keep it as that member's saved copy
   // (shown with no request if that member is chosen later). Nothing is drawn or loaded until a member is chosen.
   (function seedQuietly() {
-    var c0 = readCache()[members[seedIdx].search];
-    if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) return;
+    var src = srcs[seedIdx];
+    var c0 = readCache()[src.search];
+    if (c0 && c0.items && c0.items.length && Date.now() - c0.t < CACHE_TTL) {
+      if (HOME && seedIdx === FI) {
+        // saved copy still fresh: no request at all
+        var sc = S[FI]; c0.items.forEach(function(it) { if (titleOk(src, it.title) && !sc.seen[it.href]) { sc.seen[it.href] = 1; sc.items.push(it); } });
+        sc.page = 1; sc.more = !!c0.more; sc.loaded = true;
+        renderHomeGrid();
+      }
+      return;
+    }
     var n = 0;
     (function poll() {
       var items = [];
       try { items = parseCards(document); } catch (e) {}
       n++;
       if (items.length) {
-        var s = { items: items.slice(0, MAX_SAVED), more: items.length >= 12 || hasNext(document) };
-        writeCache(members[seedIdx].search, s);
+        var raw = items.length, more0 = items.length >= 12 || hasNext(document);
+        if (filtered(src)) items = items.filter(function(it) { return titleOk(src, it.title); });
+        var s = { items: items.slice(0, MAX_SAVED), more: more0 };
+        writeCache(src.search, s);
+        if (HOME && seedIdx === FI) {
+          // the page the menu opened IS the faction search: use it, no second request
+          var sf = S[FI]; items.forEach(function(it) { if (!sf.seen[it.href]) { sf.seen[it.href] = 1; sf.items.push(it); } });
+          sf.page = 1; sf.more = more0; sf.loaded = true;
+          renderHomeGrid();
+          if (!sf.items.length && sf.more) more(FI);   // nothing on page 1 carried the name: look one page further
+        }
       } else if (n <= 8) setTimeout(poll, 300);
+      else if (HOME && seedIdx === FI) { setStatus(FI); loadNext(FI, function() { renderHomeGrid(); }); }
     })();
   })();
   var tries = 0;
   var tm = setInterval(function() {
     tries++;
     var ae = document.activeElement;
-    if (menuOpen() || inNav(ae) || inGrid(ae)) { if (tries > 6) clearInterval(tm); return; }
+    if (menuOpen() || inNav(ae) || inGrid(ae) || inHome(ae)) { if (tries > 6) clearInterval(tm); return; }
     focusNav();
     if (tries > 10) clearInterval(tm);
   }, 300);
@@ -6632,7 +6966,7 @@ class MainActivity : Activity() {
   try {
     var fd = JSON.parse(AndroidHost.factionsJson());
     facs = ((fd && fd.factions) || []).map(function(f) {
-      return { id: f.id, name: f.name, members: (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); }) };
+      return { id: f.id, name: f.name, former: !!f.former, members: (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); }) };
     }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
   } catch (e) {}
 
@@ -6726,6 +7060,9 @@ class MainActivity : Activity() {
     '#tv-fbp .tv-fbh{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:0;color:#F4C242;white-space:nowrap;}',
     '#tv-fbp .tv-fbcols{display:flex;gap:6px;width:max-content;min-width:100%;}',
     '#tv-fbp .tv-fbcol{flex:1 0 auto;}',
+    '#tv-fbp .tv-fbtabs{display:flex;gap:10px;margin:8px 0 10px 0;}',
+    '#tv-fbp .tv-fbtabs .tv-fbi{font-size:17px;font-weight:700;padding:8px 26px;border-radius:10px;}',
+    '#tv-fbp .tv-fbazb .tv-fbi{break-inside:avoid;font-size:15px;padding:6px 8px;white-space:nowrap;}',
     '#tv-fbp .tv-fbcol .tv-fbi{font-size:15px;padding:7px 8px;white-space:nowrap;}',
     '#tv-fbp.tv-co{overflow-x:auto;overflow-y:auto;padding:10px;}',
     '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
@@ -6963,50 +7300,62 @@ class MainActivity : Activity() {
         : item(T('All competitors', 'すべての選手'), !S.co, function() { go({ co: '' }); });
       panel.appendChild(top);
       first = top;
-      var cols = document.createElement('div');
-      cols.className = 'tv-fbcols';
+      // Alphabetical, like the Wrestlers menu: current wrestlers (everyone in a current faction) and past wrestlers
+      // (the past list plus the members of former factions who are not current).
+      var curNames = {}, CUR = [], PST = [];
       facs.forEach(function(f) {
-        var col = document.createElement('div');
-        col.className = 'tv-fbcol';
-        var h = document.createElement('div');
-        h.className = 'tv-fbh';
-        h.textContent = String(f.name || '').toUpperCase();
-        col.appendChild(h);
-        (f.members || []).forEach(function(m) {
+        if (f.former) return;
+        (f.members || []).forEach(function(m) { var kk = String(m.name).toLowerCase(); if (!curNames[kk]) { curNames[kk] = 1; CUR.push(m); } });
+      });
+      var pastSeen = {};
+      PW.forEach(function(m) { var kk = String(m.name).toLowerCase(); if (!curNames[kk] && !pastSeen[kk]) { pastSeen[kk] = 1; PST.push(m); } });
+      facs.forEach(function(f) {
+        if (!f.former) return;
+        (f.members || []).forEach(function(m) { var kk = String(m.name).toLowerCase(); if (!curNames[kk] && !pastSeen[kk]) { pastSeen[kk] = 1; PST.push(m); } });
+      });
+      function byName(x, y) { return String(x.name).localeCompare(String(y.name), 'en', { sensitivity: 'base' }); }
+      CUR.sort(byName); PST.sort(byName);
+      // Two tabs: CURRENT (the one shown first) and PAST. Focusing a tab shows its list.
+      var tabsEl = document.createElement('div');
+      tabsEl.className = 'tv-fbtabs';
+      var tabEls = [], bodies = [];
+      function showTab(ti) {
+        bodies.forEach(function(bd, i) { bd.style.display = i === ti ? '' : 'none'; });
+        tabEls.forEach(function(t, i) { t.classList.toggle('tv-cur', i === ti); });
+      }
+      [[T('CURRENT', '現役'), CUR, 5], [T('PAST', '元所属'), PST, 4]].forEach(function(td, ti) {
+        if (!td[1].length) return;
+        var tb = item(td[0], false, function() { showTab(ti); });
+        tb.classList.add('tv-fbtab');
+        tb.addEventListener('focus', function() { showTab(ti); });
+        tabsEl.appendChild(tb); tabEls.push(tb);
+        var body = document.createElement('div');
+        body.className = 'tv-fbazb';
+        body.style.columnCount = String(td[2]); body.style.columnGap = '8px';
+        td[1].forEach(function(m) {
           var curM = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
           var it = item(m.name, curM, function() {
             if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
             else go({ co: m.search });
           });
-          col.appendChild(it);
+          body.appendChild(it);
           if (curM) first = it;
         });
-        cols.appendChild(col);
+        bodies.push(body);
       });
-      if (PW.length) {
-        var pcol = document.createElement('div');
-        pcol.className = 'tv-fbcol';
-        var ph = document.createElement('div');
-        ph.className = 'tv-fbh';
-        ph.textContent = T('PAST WRESTLERS', '元所属選手');
-        pcol.appendChild(ph);
-        PW.forEach(function(m) {
-          var curP = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
-          var pit = item(m.name, curP, function() {
-            if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
-            else go({ co: m.search });
-          });
-          pcol.appendChild(pit);
-          if (curP) first = pit;
-        });
-        cols.appendChild(pcol);
-      }
+      var startTab = 0;
+      bodies.forEach(function(bd, i) { if (first && first.parentNode === bd) startTab = i; });
+      showTab(startTab);
+      panel.appendChild(tabsEl);
+      var cols = document.createElement('div');
+      bodies.forEach(function(bd) { cols.appendChild(bd); });
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'co' || k === 'wr' || k === 'lo' || k === 'mt' || k === 'ch') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    if (k === 'co' || k === 'wr') { panel.style.maxHeight = Math.max(200, window.innerHeight - (r.bottom + 8) - 14) + 'px'; panel.style.overflowY = 'auto'; }   // never run off the bottom of the screen
     else if (k === 'sh') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 900)) + 'px'; panel.style.width = '880px'; }
     else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';
@@ -7018,11 +7367,13 @@ class MainActivity : Activity() {
     if (first) { try { first.focus(); } catch (e) {} }
   }
 
-  function panelItems() { return Array.prototype.slice.call(panel.querySelectorAll('.tv-fbi')); }
+  function panelItems() { return Array.prototype.slice.call(panel.querySelectorAll('.tv-fbi')).filter(function(e) { return e.offsetParent !== null; }); }
   function move(dir) {
     var cur = document.activeElement;
     var items = panelItems();
     if (items.indexOf(cur) === -1) { if (items[0]) items[0].focus(); return; }
+    // The All row (the first item) goes straight down to the open tab.
+    if (dir === 'down' && cur === panel.querySelector('.tv-fbi') && panel.querySelector('.tv-fbtab.tv-cur')) { panel.querySelector('.tv-fbtab.tv-cur').focus(); return; }
     var cr = cur.getBoundingClientRect();
     var cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
     var best = null, bs = 1e9;
@@ -7038,6 +7389,10 @@ class MainActivity : Activity() {
       var sc = prim + orth * 2;
       if (sc < bs) { bs = sc; best = it; }
     });
+    // Coming from the list or the All row, land on the tab that is open, not on whichever tab sits nearest.
+    if (best && !cur.classList.contains('tv-fbtab') && (best.classList.contains('tv-fbtab') || (dir === 'up' && cur.parentNode.classList.contains('tv-fbazb') && !best.parentNode.classList.contains('tv-fbazb')))) {
+      var openTab = panel.querySelector('.tv-fbtab.tv-cur'); if (openTab) best = openTab;
+    }
     if (best) { best.focus(); try { best.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
   }
 

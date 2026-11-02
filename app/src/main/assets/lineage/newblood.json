@@ -26,6 +26,9 @@
   ],
   "Wakana Tsukiyama": [
    "Waka Tsukiyama"
+  ],
+  "Kikyo Furusawa": [
+   "Furusawa Kian"
   ]
  },
  "reigns": [
@@ -81,13 +84,25 @@
    "n": 5,
    "champ": "Sakura Aya & Sayaka Kurara",
    "won": "2025-10-30",
-   "end": null,
-   "endType": "",
+   "end": "2026-10-20",
+   "endType": "lost",
    "vs": "Hanako & Wakana Tsukiyama",
    "venue": "New Blood 26, Tokyo",
    "defences": [],
    "team": "Sakurara",
    "defCount": 2
+  },
+  {
+   "n": 6,
+   "champ": "Kikyo Furusawa & Rian",
+   "won": "2026-10-20",
+   "end": null,
+   "endType": "",
+   "vs": "Sakura Aya & Sayaka Kurara",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [],
+   "team": "Meni☆Mani",
+   "defCount": 0
   }
  ]
 }
