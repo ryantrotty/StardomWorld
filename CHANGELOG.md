@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.15.2
+
+- Championships submenu: Down from "All championship matches" goes to the first card (World of Stardom) instead of jumping to AEW; Right does nothing there and Left closes the shelf.
+- Submenu items no longer dim when the pointer rests over them. The leading suspect for the long-standing dimmed row is a stale pointer position hovering one item while the site's own hover styling dims it. The menu and shelf now ignore hover dimming and tap highlights.
+
 ## 2.15.1
 
 - Championships submenu fits the screen without scrolling. The eight Stardom cards are now two columns of four. Below them, New Japan sits on the left and Other Promotions on the right in two columns.

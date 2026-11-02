@@ -4743,6 +4743,8 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
+            '#tv-sm, #tv-sm *, #tv-sm-shelf, #tv-sm-shelf *{-webkit-tap-highlight-color:transparent !important;}',
+            '#tv-sm-shelf .tv-sm-fi:hover, #tv-sm .tv-sm-item:hover, #tv-sm .tv-sm-item:hover *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
             '#tv-sm-shelf, #tv-sm-shelf *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
@@ -5281,6 +5283,15 @@ class MainActivity : Activity() {
             var list = fiItems(), cur = document.activeElement;
             if (list.indexOf(cur) === -1) { if (list[0]) focusItem(list[0]); return true; }
             var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+            // A bar that spans most of the shelf (All championship matches) has its centre between the columns, so
+            // Down used to jump to whatever sat nearest that point (AEW) and Right/Left to a card. Aim from its left
+            // end instead, let Right stay put and Left close the shelf.
+            var shW = shelfEl.getBoundingClientRect().width;
+            if (cr.width > shW * 0.6) {
+              if (dir === 'right') return true;
+              if (dir === 'left') return false;
+              if (dir === 'down' || dir === 'up') cx = cr.left + 120;
+            }
             var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
             list.forEach(function(it) {
               if (it === cur) return;
