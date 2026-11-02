@@ -252,7 +252,7 @@
       "former": true,
       "founded": "2015",
       "disbanded": "2024",
-      "search": "(Oedo Tai)",
+      "search": "Oedo",
       "members": [
         {
           "name": "Kyoko Kimura",
@@ -337,7 +337,7 @@
       "former": true,
       "founded": "2016",
       "disbanded": "2024",
-      "search": "(Queen's Quest)",
+      "search": "Quest",
       "members": [
         {
           "name": "Io Shirai",
@@ -409,7 +409,7 @@
       "former": true,
       "founded": "2019",
       "disbanded": "2020",
-      "search": "Tokyo Cyber Squad",
+      "search": "TCS",
       "members": [
         {
           "name": "Hana Kimura",
@@ -458,7 +458,7 @@
       "former": true,
       "founded": "2020",
       "disbanded": "2024",
-      "search": "Donna",
+      "search": "DDM",
       "members": [
         {
           "name": "Giulia",
@@ -495,6 +495,9 @@
       ],
       "captains": [
         "Giulia"
+      ],
+      "alts": [
+        "Donna"
       ]
     },
     {

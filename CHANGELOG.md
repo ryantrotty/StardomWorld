@@ -12,6 +12,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 - Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
 
+## 2.18.1
+
+- Former faction match searches: Oedo Tai "Oedo", Queen's Quest "Quest", Tokyo Cyber Squad "TCS", Donna Del Mondo "DDM" first and then "Donna" once the DDM results run out.
+
 ## 2.17.2
 
 - Factions use "Captain"/"Captains" everywhere (menu and faction pages); "Past leaders" is gone. Former faction menu cards follow the current ones: name, "Captains: ... · N members", and the years as the last line in the Titles held size. All faction cards are now as tall as the tallest, so the two columns line up.
