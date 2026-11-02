@@ -1,23 +1,12 @@
 {
-  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
+  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
   "factions": [
     {
       "id": "stars",
       "name": "STARS",
       "founded": "2018",
       "captain": "Hanan",
-      "search": "STARS",
-      "alts": [],
-      "exclude": [
-        "5★STAR",
-        "5☆STAR",
-        "5STAR",
-        "5 STAR",
-        "RED STARS",
-        "BLUE STARS",
-        "STAR GP",
-        "Grand Prix"
-      ],
+      "search": "(STARS)",
       "members": [
         {
           "name": "Hanan",
@@ -62,7 +51,7 @@
       "name": "COSMIC ANGELS",
       "founded": "2020",
       "captain": "Natsupoi & Saori Anou",
-      "search": "COSMIC ANGELS",
+      "search": "(Cosmic Angels)",
       "members": [
         {
           "name": "Sakura Aya",
@@ -95,7 +84,7 @@
       "name": "God's Eye",
       "founded": "2022",
       "captain": "Syuri",
-      "search": "God's Eye",
+      "search": "(God's Eye)",
       "members": [
         {
           "name": "Syuri",
@@ -132,7 +121,7 @@
       "name": "NEO GENESIS",
       "founded": "2024",
       "captain": "Starlight Kid",
-      "search": "NEO GENESIS",
+      "search": "(NEO GENESIS)",
       "members": [
         {
           "name": "Starlight Kid",
@@ -161,7 +150,7 @@
       "name": "HATE",
       "founded": "2024",
       "captain": "Natsuko Tora",
-      "search": "H.A.T.E.",
+      "search": "(H.A.T.E.)",
       "members": [
         {
           "name": "Natsuko Tora",
@@ -206,7 +195,7 @@
       "name": "Mi Vida Loca",
       "founded": "2025",
       "captain": "Suzu Suzuki",
-      "search": "Mi Vida Loca",
+      "search": "loca",
       "alts": [
         "Suzu Suzuki Rina Yamashita"
       ],

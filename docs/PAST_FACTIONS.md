@@ -13,3 +13,5 @@ Supplied by Ryan on 2026-11-02 for a future "past factions" treatment. Not yet c
 | J.A.N. (Jungle Assault Nation) | 2018 | 2019 | Jungle Kyona | Natsuko Tora, Kaori Yoneyama, Leo Onozaki, Saya Iida |
 
 Ideas from the faction home work: a "Former" section on the Factions menu, reusing the home page layout with a final-members list and a Faction Matches grid.
+
+Search note (2026-11-02): the site's search reads the faction name in brackets from video descriptions, e.g. `(STARS)`. A former faction, `(E neXus V)`, was confirmed to work the same way, so past factions can use `(Name)` searches too.

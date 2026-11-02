@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.5
+
+- Faction matches search the faction name in brackets, which is how the site's video descriptions list it: (STARS), (Cosmic Angels), (God's Eye), (H.A.T.E.), (NEO GENESIS). This leaves out the 5 Star Grand Prix, so the STARS exclusion list is gone. Mi Vida Loca searches "loca". Itoh Respect Gundan keeps its member searches.
+
 ## 2.16.4
 
 - Factions submenu: the logo area on each card is larger (80 x 58, was 64 x 48) so tall logos such as Mi Vida Loca show bigger. It fits inside the height the three text lines already need, so cards without a Titles held line grow only slightly.

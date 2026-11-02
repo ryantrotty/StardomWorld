@@ -6326,7 +6326,7 @@ class MainActivity : Activity() {
     else if (s.err === 'blocked') t = T('The site asked us to slow down. Try again in a few minutes.', 'サイトからアクセス制限がかかりました。数分後にお試しください。');
     else if (s.err === 'login') t = T('Please log in to see these videos.', 'ログインしてください。');
     else if (s.err) t = T('Could not load. Press OK on the name to try again.', '読み込めませんでした。名前でOKを押して再試行。');
-    else if (s.loaded && !s.items.length) t = (HOME && i === FI) ? T('No videos found with the faction name in the title.', 'ユニット名の入った動画は見つかりませんでした。') : T('No videos found for this name.', '動画が見つかりませんでした。');
+    else if (s.loaded && !s.items.length) t = (HOME && i === FI) ? T('No faction matches found.', 'ユニットの試合は見つかりませんでした。') : T('No videos found for this name.', '動画が見つかりませんでした。');
     stEl.textContent = t;
   }
   function renderGrid() {
