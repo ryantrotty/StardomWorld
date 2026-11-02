@@ -47,7 +47,18 @@
     var a = [plain(name)].concat((D && D.alias && D.alias[plain(name)]) || []);
     return a.map(norm).filter(Boolean);
   }
-  function hasAny(nt, list) { for (var i = 0; i < list.length; i++) if (nt.indexOf(list[i]) >= 0) return list[i]; return ''; }
+  // a name matches when it appears as written, or when every word of it appears (so "Suzuki Suzu" finds "Suzu Suzuki")
+  function hasAll(nt, a) {
+    var w = a.split(' '), pad = ' ' + nt + ' ';
+    for (var i = 0; i < w.length; i++) if (pad.indexOf(' ' + w[i] + ' ') < 0) return false;
+    return true;
+  }
+  function hasAny(nt, list) {
+    var i;
+    for (i = 0; i < list.length; i++) if (nt.indexOf(list[i]) >= 0) return list[i];
+    for (i = 0; i < list.length; i++) if (hasAll(nt, list[i])) return list[i];
+    return '';
+  }
   function clean(t) {
     return String(t || '').replace(/月額見放題/g, '').replace(/Unlimited viewing for a monthly fee/gi, '')
       .replace(/Monthly subscription available/gi, '').replace(/Monthly subscription/gi, '')
@@ -153,24 +164,29 @@
     var r = R[i], q = queryFor(r), d = (dbg[i] = dbg[i] || []);
     d.length = 0;
     d.push('search: ' + q);
-    var c = readCache()[q], ttl = r.cur ? 3 * 3600000 : 14 * 86400000;
+    var q2 = q, c = readCache()[q], ttl = r.cur ? 3 * 3600000 : 14 * 86400000;
     if (c && c.items && c.items.length && Date.now() - c.t < ttl) {
       d.push('saved copy from ' + Math.round((Date.now() - c.t) / 60000) + ' min ago, ' + c.items.length + ' cards, ' + c.pages + ' page(s), no request');
       done(c.items, ''); return;
     }
     var wait = blockedFor();
     if (wait) { d.push('site asked for a pause: ' + wait + ' min left, no request'); done([], 'blocked'); return; }
-    var items = [], seen = {}, page = 0;
+    var items = [], seen = {}, page = 0, tried2 = false;
     function next() {
       if (tk !== token) return;
       if (page >= MAX_PAGES) { finish(''); return; }
       var gap = lastReq + GAP_MS - Date.now();
       if (gap > 0) { setTimeout(next, gap); return; }
       page++; lastReq = Date.now(); busy = true;
-      fetchPage(q, page, function(err, got, more) {
+      fetchPage(q2, page, function(err, got, more) {
         busy = false;
         if (tk !== token) return;
         if (err) { d.push('page ' + page + ': ' + err); finish(err); return; }
+        if (!got.length && page === 1 && !tried2) {
+          tried2 = true; q2 = plain(r.champ); page = 0;
+          d.push('page 1: 0 cards, trying the champion name alone: ' + q2);
+          next(); return;
+        }
         var add = 0;
         got.forEach(function(it) { if (!seen[it.h]) { seen[it.h] = 1; items.push(it); add++; } });
         d.push('page ' + page + ': ' + got.length + ' cards, ' + add + ' new, more=' + (more ? 'yes' : 'no'));
@@ -188,12 +204,13 @@
 
   // Match the cards to the title win and the defences of reign r.
   function matchAll(r, items) {
-    var ev = eventsOf(r), cand = [], rej = [];
+    var ev = eventsOf(r), cand = [], rej = [], loose = [], champN = 0;
     var champA = aliases(r.champ), titleA = (D.titlePatterns || [D.search || '']).map(norm);
     items.forEach(function(it) {
       var nt = norm(it.t);
       if (!hasAny(nt, champA)) { rej.push([it, 'champion not in title']); return; }
-      if (!hasAny(nt, titleA)) { rej.push([it, 'title name not in title']); return; }
+      champN++;
+      if (!hasAny(nt, titleA)) { loose.push(it); return; }
       cand.push(it);
     });
     var byOpp = {};
@@ -203,6 +220,14 @@
       var nt = norm(it.t), hit = null;
       Object.keys(byOpp).forEach(function(k) { if (!hit && hasAny(nt, byOpp[k].a)) hit = byOpp[k]; });
       if (hit) { it.pos = pos; hit.vids.push(it); used[it.h] = 1; } else rej.push([it, 'no challenger from this reign in title']);
+    });
+    // titles that name the champion and the challenger but not the championship count only when the upload date sits just after the match
+    loose.forEach(function(it) {
+      var nt = norm(it.t), hit = null, ok = false;
+      Object.keys(byOpp).forEach(function(k) { if (!hit && hasAny(nt, byOpp[k].a)) hit = byOpp[k]; });
+      if (hit && it.r) hit.events.forEach(function(e) { var dd = ms(it.r) - ms(e.d); if (dd >= -86400000 && dd <= 90 * 86400000) ok = true; });
+      if (ok) { it.loose = true; hit.vids.push(it); cand.push(it); used[it.h] = 1; }
+      else rej.push([it, hit ? 'championship name missing and upload date not near a match' : 'championship name missing']);
     });
     Object.keys(byOpp).forEach(function(k) {
       var g = byOpp[k], evs = g.events.slice().sort(function(a, b) { return ms(a.d) - ms(b.d); });
@@ -232,7 +257,7 @@
     var taken = {};
     ev.forEach(function(e) { if (e.match) taken[e.match.h] = 1; });
     var extra = cand.filter(function(it) { return !taken[it.h]; });
-    return { events: ev, left: left, extra: extra, rejected: rej, cand: cand };
+    return { events: ev, left: left, extra: extra, rejected: rej, cand: cand, total: items.length, champN: champN, sample: items.slice(0, 6).map(function(x) { return x.t; }) };
   }
 
   // ------------------------------------------------------------------ page
@@ -364,7 +389,13 @@
         }).join('') + '</div>';
     }
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
-    return head + cards + more + note;
+    var sum = '';
+    if (result) {
+      var ql = (dbg[sel] || [])[0] || '';
+      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql.replace(/^search: /, '')) + ' \u00b7 cards read: ' + result.total + ' \u00b7 with the champion: ' + result.champN + ' \u00b7 matched: ' + found + ' of ' + ev.length +
+        (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
+    }
+    return head + cards + more + note + sum;
   }
 
   function debugHtml() {
@@ -494,8 +525,8 @@
     }
     if (k === 37) { stop(); if (!move('left') && window.__tvOpenMenu) window.__tvOpenMenu(); }
     else if (k === 39) { stop(); move('right'); }
-    else if (k === 38) { stop(); if (!move('up')) { var sc = root.querySelector('#tv-ln-scroll'); if (sc) sc.scrollTop = 0; } }
-    else if (k === 40) { stop(); move('down'); }
+    else if (k === 38) { stop(); if (!move('up')) { var sc = root.querySelector('#tv-ln-scroll'); if (sc) sc.scrollTop = Math.max(0, sc.scrollTop - 320); } }
+    else if (k === 40) { stop(); if (!move('down')) { var sd = root.querySelector('#tv-ln-scroll'); if (sd) sd.scrollTop += 320; } }
     else if ((k === 13 || k === 23 || k === 32) && ae.getAttribute('data-k') === 'r') { stop(); choose(+ae.getAttribute('data-i'), true); var c = root.querySelector('.ln-c[tabindex]'); if (c) focusEl(c); }
   }, true);
   root.addEventListener('click', function(e) {

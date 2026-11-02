@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.1
+
+- Lineage page: Down now scrolls the page when nothing focusable is below, so the debug block can be reached. A search summary (the search used, cards read, cards with the champion, matches, and the first titles on the page) now sits right under the video cards.
+- Video matching is looser: a name matches when all its words appear in any order; a search with no results is retried with the champion's name alone; a video that names the champion and challenger but not the championship counts if it was uploaded within 90 days after the match.
+
 ## 2.13.0
 
 - New World of Stardom lineage page (Championships menu, World of Stardom card). Shows the current champion, a strip of all 22 reigns (width = days held) and, for the reign you pick, the title win and each defence as video cards. Left and Right move between reigns; Down opens the videos.
