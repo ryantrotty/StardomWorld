@@ -2,6 +2,89 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.15.2
+
+- Championships submenu: Down from "All championship matches" goes to the first card (World of Stardom) instead of jumping to AEW; Right does nothing there and Left closes the shelf.
+- Submenu items no longer dim when the pointer rests over them. The leading suspect for the long-standing dimmed row is a stale pointer position hovering one item while the site's own hover styling dims it. The menu and shelf now ignore hover dimming and tap highlights.
+
+## 2.15.1
+
+- Championships submenu fits the screen without scrolling. The eight Stardom cards are now two columns of four. Below them, New Japan sits on the left and Other Promotions on the right in two columns.
+
+## 2.15.0
+
+- Championships submenu is now two columns. Column 1 lists the eight Stardom titles with lineage pages (World, Wonder, Goddess, Artist, Future, High Speed, NEW BLOOD, Kawaii) as compact cards: belt, title, current champion or team, reign number, day count and defences. A vacant title shows "Vacant" and the last champion. Column 2 lists New Japan above Other Promotions as plain items (no lineage treatment yet). "All championship matches" stays on top.
+
+## 2.14.5
+
+- NEW BLOOD Tag lineage page: videos were all skipped because the Japanese titles read "NEW BLOODタッグ選手権試合" with no space. The title words now include that spelling.
+
+## 2.14.4
+
+- Kawaii of Kawaii page: Maki Itoh, one defence on record (vs Aya Sakura, Jul 2, 2026). A reign with no known title win shows its first recorded match instead, and the LINEAGE line reads "1 reign" with no years until a full year has passed.
+
+## 2.14.3
+
+- Lineage page searches now use the same words as the filter bar: High Speed searches "High-Speed Championship", and a title with other names in championships.json (alts) searches each of them too.
+
+## 2.14.2
+
+- Lineage pages for the tag and trios titles: Goddess of Stardom (37 reigns), Artist of Stardom (37 reigns) and NEW BLOOD Tag Team (5 reigns, defence counts only). A team shows its team name with its members, the strip is labelled with team names, and the video search tries every member of the team first and then the first member alone.
+
+## 2.14.1
+
+- Lineage pages for Future of Stardom (14 reigns) and High Speed (28 reigns, from the 2009 NEO era), with every title win and defence. The Championships menu opens them.
+
+## 2.14.0
+
+- Wonder of Stardom lineage page: all 26 reigns with every title win and defence, same layout as World of Stardom. Championships menu entries open a lineage page for any title that has a lineage file.
+
+## 2.13.7
+
+- Lineage page: about 20% more space above and below the lineage strip, its year labels and the video row heading.
+
+## 2.13.6
+
+- Lineage page made more compact so the whole video row fits on screen: the line above the champion box and the summary line below it are gone, and that information now sits on the LINEAGE header ("Stardom · Singles · Since Jul 24, 2011 · 22 reigns · 15 years · longest reign 602 days (Nanae Takahashi)"). The REIGN line above the video row is removed. The navigation hint lives in the top right and shows from the moment the page opens (also on the all-matches button). Spacing is tighter and the belt is a little smaller.
+
+## 2.13.5
+
+- Lineage page: the champion box at the top follows the reign chosen on the strip (name, days, defences, win, and how it ended: lost to whom, or vacated).
+- The strip now runs newest to oldest, current champion first and focused; Right goes back in time, Left goes forward (Left on the current reign still opens the menu). Year ticks are reversed to match.
+- The reign's match facts (win and defences) moved below the video row, under "Matches in this reign".
+- The all-videos button reads "All World of Stardom Championship matches" and is as wide as the champion box.
+- Fewer site requests: the per-year searches are gone (they found nothing the plain search missed), so a reign costs one search of up to three pages. Videos load by themselves only for the current champion and for reigns already saved on the device; for any other reign press OK to load them. Moving along the strip makes no requests.
+
+## 2.13.4
+
+- Lineage page redesigned around what the site actually has. The win and each defence are now plain fact rows (date, opponent, venue, PPV), not video cards. Below them is one video row, built like the app's other video rows (22/700 heading with gold bar, four cards across, scrolls sideways): every World of Stardom championship match the search finds for that champion.
+- Videos dated inside the reign come first and carry a THIS REIGN tag; the rest follow, newest first. Cards show the gold date badge (a "~" before the date means it was estimated from the video number). No more per-match pairing, so nothing depends on opponent names.
+- Debug block lists every video in the row with its date and where the date came from, plus what was skipped and why.
+
+## 2.13.3
+
+- Lineage page: each reign is searched once per year it covers, the same way the filter bar does it ("Suzu Suzuki World of Stardom 2026/"), then once with the champion's name alone for anything still missing. Videos appear as each search comes back instead of after all of them.
+- Videos whose title has no date (for example "【English Commentary】World of Stardom Championship Match") are placed by their video number, which grows with time, between dated videos. They only appear under "More from this reign", marked "About <date>", and never take a title-win or defence slot.
+- Debug block lists every search made and, for cards it cannot place, their video number.
+
+## 2.13.2
+
+- Lineage page video matching rewritten after TV testing: the search results were right but every card was rejected because titles do not contain the champion's name. A video now belongs to a reign when it is for the championship (English or Japanese title) and its date falls inside the reign. The date is read from the title, e.g. "(2026/06/20)" or "2026/06/30 ...", falling back to the upload date.
+- A video dated the same day as the title win or a defence fills that card; every other video inside the reign is listed under "More from this reign" with its date.
+- Search stops paging once a whole page is older than the reign. The search summary and debug block now say why each card was skipped (wrong championship, outside the reign, no date).
+
+## 2.13.1
+
+- Lineage page: Down now scrolls the page when nothing focusable is below, so the debug block can be reached. A search summary (the search used, cards read, cards with the champion, matches, and the first titles on the page) now sits right under the video cards.
+- Video matching is looser: a name matches when all its words appear in any order; a search with no results is retried with the champion's name alone; a video that names the champion and challenger but not the championship counts if it was uploaded within 90 days after the match.
+
+## 2.13.0
+
+- New World of Stardom lineage page (Championships menu, World of Stardom card). Shows the current champion, a strip of all 22 reigns (width = days held) and, for the reign you pick, the title win and each defence as video cards. Left and Right move between reigns; Down opens the videos.
+- Videos are found with one keyword search per reign (champion plus title name), kept on the device, and matched to the title win and defences by the challenger's name. Matches that cannot be tied to a listed fight appear under "More from this reign". A matching debug block at the bottom of the page lists what was searched and matched.
+- The Championships menu shelf now has a World of Stardom card with the current champion and the reign day count, and each group lists its titles in two columns. The belt picture is shown only in builds with the private branding folder (res/raw/belt_world).
+- Lineage data (22 reigns, 105 defences) is bundled in assets/lineage/world.json; opening the page makes no request.
+
 ## 2.12.0
 
 - My Favorites: "My Faction" is now a row of faction bands with the logo on a white tile. One faction fills the width, two take half each, three to six take a third each (two rows). You can keep up to six favorite factions (Menu button on a faction in the Factions list adds or removes it); an existing single favorite carries over.

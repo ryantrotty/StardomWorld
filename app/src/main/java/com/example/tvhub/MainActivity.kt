@@ -2753,6 +2753,32 @@ class MainActivity : Activity() {
             this@MainActivity.assets.open("championships.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
 
+        // Championship lineages (assets/lineage/<id>.json) and the belt picture, which only builds with the private branding folder have.
+        @android.webkit.JavascriptInterface
+        fun lineageJson(id: String): String = try {
+            this@MainActivity.assets.open("lineage/" + id.filter { it.isLetterOrDigit() || it == '_' } + ".json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
+        private val beltCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+        // The picture is res/raw/belt_<id> in branding-private/res (git-ignored). Public builds have none and get "".
+        @android.webkit.JavascriptInterface
+        fun beltDataUri(id: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            val safe = id.filter { it.isLetterOrDigit() }.lowercase()
+            if (safe.isEmpty()) return ""
+            return beltCache.getOrPut(safe) {
+                try {
+                    val rid = this@MainActivity.resources.getIdentifier("belt_$safe", "raw", this@MainActivity.packageName)
+                    if (rid == 0) "" else {
+                        val bytes = this@MainActivity.resources.openRawResource(rid).use { it.readBytes() }
+                        val mime = if (bytes.size > 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte()) "image/jpeg" else "image/png"
+                        "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    }
+                } catch (_: Exception) { "" }
+            }
+        }
+
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
@@ -4569,7 +4595,14 @@ class MainActivity : Activity() {
           function champGroups() {
             try { var d = JSON.parse(AndroidHost.championshipsJson()); return (d && d.groups) || []; } catch (e) { return []; }
           }
+          // Titles with a lineage file (assets/lineage/<id>.json) open their lineage page.
+          var LN_HAS = {};
+          function hasLineage(id) {
+            if (!(id in LN_HAS)) { try { LN_HAS[id] = !!AndroidHost.lineageJson(id); } catch (e) { LN_HAS[id] = false; } }
+            return LN_HAS[id];
+          }
           function champPath(x) {
+            if (x.id && x.id !== 'any' && x.id !== 'other' && hasLineage(x.id)) return '/mypage?tvch=' + encodeURIComponent(x.id);
             if (x.path) return x.path;
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id);
           }
@@ -4696,9 +4729,22 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-blk{margin:0 0 12px 0;min-width:0;}',
             '#tv-sm-shelf .tv-shl-top{margin:0 0 12px 0;}',
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
+            '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
+            '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-ft:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-fi{flex:0 0 auto;width:110px;height:60px;object-fit:contain;display:flex;align-items:center;justify-content:center;border-radius:6px;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-plate{background:#0f151c;border:2px solid #2a323c;box-sizing:border-box;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-fx{min-width:0;display:flex;flex-direction:column;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-ft1{font-size:17px;font-weight:700;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-ft2{font-size:14px;font-weight:600;color:#c9d2dc;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+            '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:12px;font-weight:700;color:#F4C242;margin-top:3px;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
+            '#tv-sm, #tv-sm *, #tv-sm-shelf, #tv-sm-shelf *{-webkit-tap-highlight-color:transparent !important;}',
+            '#tv-sm-shelf .tv-sm-fi:hover, #tv-sm .tv-sm-item:hover, #tv-sm .tv-sm-item:hover *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
             '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
             '#tv-sm-shelf, #tv-sm-shelf *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
@@ -5088,20 +5134,47 @@ class MainActivity : Activity() {
                   '</div><div class="tv-sch-sep"></div><div class="tv-sch-past">' + past + '</div></div>';
               }
             } else if (key === 'champs') {
-              w = 760;
-              var cblocks = '', ctop = '';
+              w = 1000;
+              var ctop = '', col1 = '', col2 = '', cards = {}, LNO = ['world', 'wonder', 'goddess', 'artist', 'future', 'highspeed', 'newblood', 'kawaii'];
+              var plateSvg = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
+              var lnCard = function(x) {
+                var LN = null;
+                try { LN = JSON.parse(AndroidHost.lineageJson(x.id)); } catch (e) { LN = null; }
+                if (!LN || !LN.reigns || !LN.reigns.length) return '';
+                var lr = LN.reigns[LN.reigns.length - 1], lw = lr.won.split('-'), nDef = lr.defCount != null ? lr.defCount : (lr.defences || []).length;
+                var lDays = Math.max(0, Math.floor((Date.now() - Date.UTC(+lw[0], +lw[1] - 1, +lw[2])) / 86400000));
+                var belt = ''; try { belt = AndroidHost.beltDataUri ? AndroidHost.beltDataUri(x.id) : ''; } catch (e) { belt = ''; }
+                var pic = belt ? '<img class="tv-shl-fi" src="' + belt + '" alt="">' : '<span class="tv-shl-fi tv-shl-plate">' + plateSvg + '</span>';
+                var who = lr.team ? lr.team : lr.champ, l2, l3;
+                if (lr.end) { l2 = T('Vacant', '空位'); l3 = T('Last: ', '前王者: ') + who; }
+                else {
+                  l2 = who + ' · ' + T(lr.n + (lr.n % 100 >= 11 && lr.n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][lr.n % 10 > 3 ? 0 : lr.n % 10]) + ' reign', '第' + lr.n + '代');
+                  l3 = T('Day ' + lDays + ' · ' + nDef + (nDef === 1 ? ' defence' : ' defences'), lDays + '日目 · 防衛' + nDef + '回');
+                }
+                return '<a class="tv-sm-fi tv-shl-ft" tabindex="0" data-go="/mypage?tvch=' + x.id + '" href="' + esc(absUrl('/mypage?tvch=' + x.id)) + '">' + pic +
+                  '<span class="tv-shl-fx"><span class="tv-shl-ft1">' + esc(isJa() && x.ja ? x.ja : x.name) + '</span>' +
+                  '<span class="tv-shl-ft2">' + esc(l2) + '</span><span class="tv-shl-ft3">' + esc(l3) + '</span></span></a>';
+              };
               champGroups().forEach(function(g) {
-                var inner = '';
+                var stardom = /stardom/i.test(g.name), inner = '';
                 (g.items || []).forEach(function(x) {
                   if (x.id === 'any') { ctop = fiHtml(T('All championship matches', x.ja || 'すべての王座戦'), champPath(x)); return; }
                   if (x.id === 'other') return;   // not listed in the menu (still in the filter)
+                  if (stardom) { var c = lnCard(x); if (c) cards[x.id] = c; else inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x)); return; }
                   inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x));
                 });
-                if (inner) cblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>' + inner + '</div>';
+                var head = '<div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>';
+                if (stardom) {
+                  var cs = LNO.filter(function(id) { return cards[id]; }).map(function(id) { return cards[id]; }).join('');
+                  Object.keys(cards).forEach(function(id) { if (LNO.indexOf(id) < 0) cs += cards[id]; });
+                  col1 += '<div class="tv-shl-blk">' + head + '<div class="tv-shl-cg">' + cs + inner + '</div></div>';
+                } else if (inner) {   // New Japan first, then Other Promotions (file order)
+                  col2 += '<div class="tv-shl-blk">' + head + (/other/i.test(g.name) ? '<div class="tv-shl-g2">' + inner + '</div>' : inner) + '</div>';
+                }
               });
               h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div>' +
-                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') +
-                '<div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + cblocks + '</div>';
+                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') + col1 +
+                '<div class="tv-shl-cols">' + col2 + '</div>';
             } else if (key === 'matchtypes') {
               w = 760;
               var mblocks = '';
@@ -5210,6 +5283,15 @@ class MainActivity : Activity() {
             var list = fiItems(), cur = document.activeElement;
             if (list.indexOf(cur) === -1) { if (list[0]) focusItem(list[0]); return true; }
             var cr = cur.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+            // A bar that spans most of the shelf (All championship matches) has its centre between the columns, so
+            // Down used to jump to whatever sat nearest that point (AEW) and Right/Left to a card. Aim from its left
+            // end instead, let Right stay put and Left close the shelf.
+            var shW = shelfEl.getBoundingClientRect().width;
+            if (cr.width > shW * 0.6) {
+              if (dir === 'right') return true;
+              if (dir === 'left') return false;
+              if (dir === 'down' || dir === 'up') cx = cr.left + 120;
+            }
             var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
             list.forEach(function(it) {
               if (it === cur) return;
@@ -8452,6 +8534,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
+        view.evaluateJavascript(assetText("lineage.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
