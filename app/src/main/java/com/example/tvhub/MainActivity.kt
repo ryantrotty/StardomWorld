@@ -4730,8 +4730,9 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-top{margin:0 0 12px 0;}',
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
-            '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:0 18px;align-items:start;}',
-            '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0 0 4px 0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-fi{flex:0 0 auto;width:110px;height:60px;object-fit:contain;display:flex;align-items:center;justify-content:center;border-radius:6px;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-plate{background:#0f151c;border:2px solid #2a323c;box-sizing:border-box;}',
@@ -5164,12 +5165,14 @@ class MainActivity : Activity() {
                 if (stardom) {
                   var cs = LNO.filter(function(id) { return cards[id]; }).map(function(id) { return cards[id]; }).join('');
                   Object.keys(cards).forEach(function(id) { if (LNO.indexOf(id) < 0) cs += cards[id]; });
-                  col1 += '<div class="tv-shl-blk">' + head + cs + inner + '</div>';
-                } else if (inner) col2 += '<div class="tv-shl-blk">' + head + inner + '</div>';   // New Japan first, then Other Promotions (file order)
+                  col1 += '<div class="tv-shl-blk">' + head + '<div class="tv-shl-cg">' + cs + inner + '</div></div>';
+                } else if (inner) {   // New Japan first, then Other Promotions (file order)
+                  col2 += '<div class="tv-shl-blk">' + head + (/other/i.test(g.name) ? '<div class="tv-shl-g2">' + inner + '</div>' : inner) + '</div>';
+                }
               });
               h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div>' +
-                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') +
-                '<div class="tv-shl-cols"><div>' + col1 + '</div><div>' + col2 + '</div></div>';
+                (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') + col1 +
+                '<div class="tv-shl-cols">' + col2 + '</div>';
             } else if (key === 'matchtypes') {
               w = 760;
               var mblocks = '';

@@ -99,3 +99,5 @@ Strip order (2.13.5): newest reign on the left, current champion focused on open
 Tag and trios titles (2.14.2): the champion box shows the team name, a middle dot and the members; the strip chips show the team name (when it fits). No new colours or focus looks.
 
 Championships submenu (2.15.0): two columns, width 1000. Column 1 is Stardom lineage cards (110 x 60 belt, 17/700 title, 14/600 champion, 12/700 gold day count); column 2 is New Japan then Other Promotions as plain items. Cards use the shelf A Border focus look; no new colours.
+
+Championships submenu (2.15.1): Stardom cards in a 2 x 4 grid; New Japan (1 column) and Other Promotions (2 columns) in a row below. Replaces the two-column layout from 2.15.0.

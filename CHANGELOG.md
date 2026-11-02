@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.15.1
+
+- Championships submenu fits the screen without scrolling. The eight Stardom cards are now two columns of four. Below them, New Japan sits on the left and Other Promotions on the right in two columns.
+
 ## 2.15.0
 
 - Championships submenu is now two columns. Column 1 lists the eight Stardom titles with lineage pages (World, Wonder, Goddess, Artist, Future, High Speed, NEW BLOOD, Kawaii) as compact cards: belt, title, current champion or team, reign number, day count and defences. A vacant title shows "Vacant" and the last champion. Column 2 lists New Japan above Other Promotions as plain items (no lineage treatment yet). "All championship matches" stays on top.
