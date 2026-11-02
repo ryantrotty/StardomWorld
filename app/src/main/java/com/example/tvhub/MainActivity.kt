@@ -4748,7 +4748,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fcl{flex:0 0 auto;width:80px;height:58px;object-fit:contain;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fcx{min-width:0;display:block;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fcs{flex:0 0 auto;width:0;height:58px;}',
-            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcld{font-size:12px;font-weight:600;color:#c9d2dc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcld{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc1{display:block;font-size:17px;font-weight:700;line-height:1.15;color:#fff;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc2{display:block;font-size:13px;font-weight:600;color:#c9d2dc;margin-top:3px;}',
@@ -5220,9 +5220,11 @@ class MainActivity : Activity() {
                   if (f.former) {
                     // Former factions: no logo, no titles; the years and the notable members.
                     var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
-                    var ol2 = (f.founded || '') + (f.disbanded ? '\u2013' + f.disbanded : '') + ' \u00b7 ' + f.members.length + T(f.members.length === 1 ? ' notable member' : ' notable members', '\u4eba');
-                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '"><span class="tv-shl-fcs"></span><span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2">' + esc(ol2) + '</span>' +
-                      ((f.leaders && f.leaders.length) ? '<span class="tv-shl-ft3 tv-shl-fcld notranslate" translate="no">' + esc(T('Past leaders: ', '\u6b74\u4ee3\u30ea\u30fc\u30c0\u30fc: ') + f.leaders.join(', ')) + '</span>' : '') + '</span></a>';
+                    var ocp = f.captains || [];
+                    var ol2 = (ocp.length ? T(ocp.length > 1 ? 'Captains: ' : 'Captain: ', '\u30ad\u30e3\u30d7\u30c6\u30f3: ') + ocp.join(', ') + ' \u00b7 ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '\u4eba');
+                    var ol3 = (f.founded || '') + (f.disbanded ? '\u2013' + f.disbanded : '');
+                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '"><span class="tv-shl-fcs"></span><span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2 tv-shl-fcld">' + esc(ol2) + '</span>' +
+                      (ol3 ? '<span class="tv-shl-ft3">' + esc(ol3) + '</span>' : '') + '</span></a>';
                     return;
                   }
                   var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }
@@ -5315,6 +5317,12 @@ class MainActivity : Activity() {
             shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
             document.body.appendChild(shelfEl);
             try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
+            // Faction cards: every card as tall as the tallest, so the current and former columns line up row by row.
+            if (key === 'factions') {
+              var fcs = shelfEl.querySelectorAll('.tv-shl-fc'), mh = 0, q;
+              for (q = 0; q < fcs.length; q++) mh = Math.max(mh, fcs[q].getBoundingClientRect().height);
+              if (mh) for (q = 0; q < fcs.length; q++) fcs[q].style.minHeight = Math.ceil(mh) + 'px';
+            }
             var rr = row.getBoundingClientRect();
             shelfEl.style.top = Math.max(12, Math.min(rr.top, window.innerHeight - shelfEl.offsetHeight - 12)) + 'px';
             var list = fiItems(), first = list[0];
@@ -6432,9 +6440,9 @@ class MainActivity : Activity() {
     var meta = '';
     if (fac.founded) meta += metaHtml(T(fac.former ? 'FORMED' : 'FOUNDED', '結成'), fac.founded);
     if (fac.former && fac.disbanded) meta += metaHtml(T('DISBANDED', '解散'), fac.disbanded);
-    if (fac.captain) meta += metaHtml(T('CAPTAIN', 'キャプテン'), fac.captain);
-    if (fac.former && fac.leaders && fac.leaders.length) meta += metaHtml(T('PAST LEADERS', '歴代リーダー'), fac.leaders.join(', '));
-    meta += metaHtml(T(fac.former ? 'NOTABLE MEMBERS' : 'MEMBERS', fac.former ? '主なメンバー' : 'メンバー'), String(members.length));
+    var capList = fac.captain ? [fac.captain] : (fac.captains || []);
+    if (capList.length) meta += metaHtml(T(capList.length > 1 ? 'CAPTAINS' : 'CAPTAIN', 'キャプテン'), capList.join(', '));
+    meta += metaHtml(T('MEMBERS', 'メンバー'), String(members.length));
     var held = fac.former ? [] : heldTitles();
     homeEl.innerHTML =
       '<div class="tv-hm-top">' + (logoSrc ? '<img class="tv-hm-logo" src="' + esc(logoSrc) + '" alt="">' : '') +

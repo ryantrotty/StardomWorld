@@ -1,5 +1,5 @@
 {
-  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder. Former factions: 'former': true, with 'disbanded', 'leaders' (shown as Past Leaders) and 'members' = notable members during its existence. They appear in the menu's Former list, not in Current Wrestlers.",
+  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder. Former factions: 'former': true, with 'disbanded', 'captains' (all of them, shown as Captains) and 'members' = notable members during its existence. They appear in the menu's Former list, not in Current Wrestlers.",
   "factions": [
     {
       "id": "stars",
@@ -252,13 +252,6 @@
       "former": true,
       "founded": "2015",
       "disbanded": "2024",
-      "leaders": [
-        "Kyoko Kimura",
-        "Act Yasukawa",
-        "Kagetsu",
-        "Hana Kimura",
-        "Natsuko Tora"
-      ],
       "search": "(Oedo Tai)",
       "members": [
         {
@@ -329,6 +322,13 @@
           "name": "Fukigen Death",
           "search": "Fukigen Death"
         }
+      ],
+      "captains": [
+        "Kyoko Kimura",
+        "Act Yasukawa",
+        "Kagetsu",
+        "Hana Kimura",
+        "Natsuko Tora"
       ]
     },
     {
@@ -337,12 +337,6 @@
       "former": true,
       "founded": "2016",
       "disbanded": "2024",
-      "leaders": [
-        "Io Shirai",
-        "Momo Watanabe",
-        "Utami Hayashishita",
-        "Saya Kamitani"
-      ],
       "search": "(Queen's Quest)",
       "members": [
         {
@@ -401,6 +395,12 @@
           "name": "Miyu Amasaki",
           "search": "Miyu Amasaki"
         }
+      ],
+      "captains": [
+        "Io Shirai",
+        "Momo Watanabe",
+        "Utami Hayashishita",
+        "Saya Kamitani"
       ]
     },
     {
@@ -409,9 +409,6 @@
       "former": true,
       "founded": "2019",
       "disbanded": "2020",
-      "leaders": [
-        "Hana Kimura"
-      ],
       "search": "Tokyo Cyber Squad",
       "members": [
         {
@@ -450,6 +447,9 @@
           "name": "Zoe Lucas",
           "search": "Zoe Lucas"
         }
+      ],
+      "captains": [
+        "Hana Kimura"
       ]
     },
     {
@@ -458,9 +458,6 @@
       "former": true,
       "founded": "2020",
       "disbanded": "2024",
-      "leaders": [
-        "Giulia"
-      ],
       "search": "Donna",
       "members": [
         {
@@ -495,6 +492,9 @@
           "name": "Thekla",
           "search": "Thekla"
         }
+      ],
+      "captains": [
+        "Giulia"
       ]
     },
     {
@@ -503,9 +503,6 @@
       "former": true,
       "founded": "2022",
       "disbanded": "2024",
-      "leaders": [
-        "Mina Shirakawa"
-      ],
       "search": "Club",
       "members": [
         {
@@ -532,6 +529,9 @@
           "name": "Jessie",
           "search": "Jessie"
         }
+      ],
+      "captains": [
+        "Mina Shirakawa"
       ]
     },
     {
@@ -540,9 +540,6 @@
       "former": true,
       "founded": "2024",
       "disbanded": "2026",
-      "leaders": [
-        "Maika"
-      ],
       "search": "(E neXus V)",
       "members": [
         {
@@ -569,6 +566,9 @@
           "name": "Rian",
           "search": "Rian"
         }
+      ],
+      "captains": [
+        "Maika"
       ]
     },
     {
@@ -577,9 +577,6 @@
       "former": true,
       "founded": "2018",
       "disbanded": "2019",
-      "leaders": [
-        "Jungle Kyona"
-      ],
       "search": "Jungle",
       "members": [
         {
@@ -602,6 +599,9 @@
           "name": "Saya Iida",
           "search": "Saya Iida"
         }
+      ],
+      "captains": [
+        "Jungle Kyona"
       ]
     },
     {

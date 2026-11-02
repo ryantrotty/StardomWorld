@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.17.2
+
+- Factions use "Captain"/"Captains" everywhere (menu and faction pages); "Past leaders" is gone. Former faction menu cards follow the current ones: name, "Captains: ... · N members", and the years as the last line in the Titles held size. All faction cards are now as tall as the tallest, so the two columns line up.
+
 ## 2.17.1
 
 - Former factions: every past leader is now also in the clickable member list (Jungle Kyona was missing from J.A.N., and leaders were missing on six others). Former faction menu cards are the same height as the current ones and show a "Past leaders" line. J.A.N. matches now search "Jungle".
