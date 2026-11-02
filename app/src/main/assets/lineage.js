@@ -191,6 +191,8 @@
         got.forEach(function(it) { if (!seen[it.h]) { seen[it.h] = 1; items.push(it); add++; } });
         d.push('page ' + page + ': ' + got.length + ' cards, ' + add + ' new, more=' + (more ? 'yes' : 'no'));
         if (!more || !add) { finish(''); return; }
+        var dts = got.map(cardDate).filter(Boolean);
+        if (dts.length && dts.every(function(x) { return ms(x.d) < r.ms - 30 * DAY; })) { d.push('page ' + page + ' is all older than this reign, stopped'); finish(''); return; }
         if (matchAll(r, items).left === 0) { d.push('every event has a video, stopped after page ' + page); finish(''); return; }
         next();
       });
@@ -202,62 +204,47 @@
     next();
   }
 
-  // Match the cards to the title win and the defences of reign r.
+  // Date a card was fought on: written in the title ("(2026/06/20)" or "2026/06/30 ..."), otherwise the upload date.
+  function cardDate(it) {
+    var m = /(\d{4})[\/.\-](\d{2})[\/.\-](\d{2})/.exec(it.t || '');
+    if (m) return { d: m[1] + '-' + m[2] + '-' + m[3], src: 'title' };
+    if (it.r) return { d: it.r, src: 'upload' };
+    return null;
+  }
+  var DAY = 86400000;
+
+  // Loose match: the search already names the champion, so a card belongs to reign r when it is for this
+  // championship and its date falls inside the reign. Cards on the date of the win or a defence fill those
+  // slots; every other card in the reign is listed under "more from this reign".
   function matchAll(r, items) {
-    var ev = eventsOf(r), cand = [], rej = [], loose = [], champN = 0;
-    var champA = aliases(r.champ), titleA = (D.titlePatterns || [D.search || '']).map(norm);
+    var ev = eventsOf(r), inReign = [], rej = [], seenDay = {};
+    var titleA = (D.titlePatterns || [D.search || '']).map(norm);
+    var from = r.ms - DAY, to = (r.cur ? NOW : r.endMs) + DAY;
     items.forEach(function(it) {
       var nt = norm(it.t);
-      if (!hasAny(nt, champA)) { rej.push([it, 'champion not in title']); return; }
-      champN++;
-      if (!hasAny(nt, titleA)) { loose.push(it); return; }
-      cand.push(it);
+      if (!hasAny(nt, titleA)) { rej.push([it, 'championship not in title']); return; }
+      var cd = cardDate(it);
+      if (!cd) { rej.push([it, 'no date in title or upload date']); return; }
+      var t = ms(cd.d);
+      if (t < from || t > to) { rej.push([it, 'dated ' + cd.d + ', outside this reign']); return; }
+      it.cd = cd.d; it.cdSrc = cd.src;
+      inReign.push(it);
     });
-    var byOpp = {};
-    ev.forEach(function(e, k) { e.match = null; e.how = ''; var key = norm(plain(e.opp)); (byOpp[key] = byOpp[key] || { events: [], vids: [], a: aliases(e.opp) }).events.push(e); });
+    ev.forEach(function(e) { e.match = null; e.how = ''; });
     var used = {};
-    cand.forEach(function(it, pos) {
-      var nt = norm(it.t), hit = null;
-      Object.keys(byOpp).forEach(function(k) { if (!hit && hasAny(nt, byOpp[k].a)) hit = byOpp[k]; });
-      if (hit) { it.pos = pos; hit.vids.push(it); used[it.h] = 1; } else rej.push([it, 'no challenger from this reign in title']);
-    });
-    // titles that name the champion and the challenger but not the championship count only when the upload date sits just after the match
-    loose.forEach(function(it) {
-      var nt = norm(it.t), hit = null, ok = false;
-      Object.keys(byOpp).forEach(function(k) { if (!hit && hasAny(nt, byOpp[k].a)) hit = byOpp[k]; });
-      if (hit && it.r) hit.events.forEach(function(e) { var dd = ms(it.r) - ms(e.d); if (dd >= -86400000 && dd <= 90 * 86400000) ok = true; });
-      if (ok) { it.loose = true; hit.vids.push(it); cand.push(it); used[it.h] = 1; }
-      else rej.push([it, hit ? 'championship name missing and upload date not near a match' : 'championship name missing']);
-    });
-    Object.keys(byOpp).forEach(function(k) {
-      var g = byOpp[k], evs = g.events.slice().sort(function(a, b) { return ms(a.d) - ms(b.d); });
-      var vids = g.vids.slice();
-      if (!vids.length) return;
-      var dated = vids.every(function(v) { return !!v.r; });
-      if (evs.length === 1) {
-        // one fight against this challenger: the video closest in date wins when there are several
-        var best = vids[0];
-        if (dated) vids.forEach(function(v) { if (Math.abs(ms(v.r) - ms(evs[0].d)) < Math.abs(ms(best.r) - ms(evs[0].d))) best = v; });
-        evs[0].match = best; evs[0].how = 'challenger' + (vids.length > 1 ? ' (' + vids.length + ' videos, ' + (dated ? 'closest upload date' : 'first listed') + ')' : '');
-        vids.forEach(function(v) { if (v !== best) { v.extra = true; } });
-      } else if (dated) {
-        evs.forEach(function(e) {
-          var best = null;
-          vids.forEach(function(v) { if (!v.taken && ms(v.r) >= ms(e.d) - 86400000 && (!best || ms(v.r) < ms(best.r))) best = v; });
-          if (best) { best.taken = true; e.match = best; e.how = 'challenger + first upload on or after the match date'; }
-        });
-      } else {
-        // several fights against the same challenger and no dates: pair them up in list order (newest first)
-        var vs = vids.slice(0, evs.length), es = evs.slice().reverse();
-        vs.forEach(function(v, k) { es[k].match = v; es[k].how = 'challenger, list order (unsure which fight)'; });
-      }
+    ev.forEach(function(e) {
+      var best = null;
+      inReign.forEach(function(it) {
+        if (used[it.h] || Math.abs(ms(it.cd) - ms(e.d)) > DAY) return;
+        // a title-dated card beats an upload-dated one; otherwise the first listed
+        if (!best || (best.cdSrc !== 'title' && it.cdSrc === 'title')) best = it;
+      });
+      if (best) { used[best.h] = 1; e.match = best; e.how = 'same date (' + best.cdSrc + ' ' + best.cd + ')'; }
     });
     var left = 0;
     ev.forEach(function(e) { if (!e.match) left++; });
-    var taken = {};
-    ev.forEach(function(e) { if (e.match) taken[e.match.h] = 1; });
-    var extra = cand.filter(function(it) { return !taken[it.h]; });
-    return { events: ev, left: left, extra: extra, rejected: rej, cand: cand, total: items.length, champN: champN, sample: items.slice(0, 6).map(function(x) { return x.t; }) };
+    var extra = inReign.filter(function(it) { return !used[it.h]; }).sort(function(a, b) { return ms(b.cd) - ms(a.cd); });
+    return { events: ev, left: left, extra: extra, rejected: rej, cand: inReign, total: items.length, champN: inReign.length, sample: items.slice(0, 6).map(function(x) { return x.t; }) };
   }
 
   // ------------------------------------------------------------------ page
@@ -383,16 +370,16 @@
     var cards = '<div class="ln-grid">' + ev.map(function(e, k) { return cardHtml(e, k, r); }).join('') + '</div>';
     var more = '';
     if (result && result.extra && result.extra.length) {
-      more = '<div class="ln-h">' + esc(T('MORE FROM THIS REIGN', 'この王者期間のその他')) + '<span>' + esc(T('same champion and title, not tied to a listed match', '')) + '</span></div><div class="ln-grid">' +
-        result.extra.slice(0, 8).map(function(it) {
-          return '<a class="ln-c" tabindex="0" data-k="c" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + PLAY + '</div><div class="ln-tt">' + esc(it.t) + '</div><div class="ln-sub"></div></a>';
+      more = '<div class="ln-h">' + esc(T('MORE FROM THIS REIGN', 'この王者期間のその他')) + '<span>' + esc(T('same champion and title, dated inside the reign', '')) + '</span></div><div class="ln-grid">' +
+        result.extra.slice(0, 12).map(function(it) {
+          return '<a class="ln-c" tabindex="0" data-k="c" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + PLAY + '</div><div class="ln-tt">' + esc(it.t) + '</div><div class="ln-sub">' + esc(fmtD(it.cd)) + '</div></a>';
         }).join('') + '</div>';
     }
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
     var sum = '';
     if (result) {
       var ql = (dbg[sel] || [])[0] || '';
-      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql.replace(/^search: /, '')) + ' \u00b7 cards read: ' + result.total + ' \u00b7 with the champion: ' + result.champN + ' \u00b7 matched: ' + found + ' of ' + ev.length +
+      sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql.replace(/^search: /, '')) + ' \u00b7 cards read: ' + result.total + ' \u00b7 inside this reign: ' + result.champN + ' \u00b7 matched: ' + found + ' of ' + ev.length +
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
     }
     return head + cards + more + note + sum;
@@ -404,7 +391,7 @@
       result.events.forEach(function(e) {
         lines.push((e.kind === 'win' ? 'WIN      ' : 'DEF ' + (e.n < 10 ? ' ' : '') + e.n + '   ') + e.d + ' vs ' + e.opp + ' -> ' + (e.match ? 'matched (' + e.how + '): ' + e.match.t + ' [' + e.match.h.replace(/^https?:\/\/[^\/]+/, '') + (e.match.r ? ', registered ' + e.match.r : '') + ']' : 'NO VIDEO'));
       });
-      lines.push('cards that fit champion and title: ' + result.cand.length + ', not tied to a match: ' + result.extra.length);
+      lines.push('cards for this championship inside the reign: ' + result.cand.length + ', not tied to a listed match: ' + result.extra.length);
       result.rejected.slice(0, 14).forEach(function(x) { lines.push('skipped: ' + x[0].t + ' (' + x[1] + ')'); });
       if (result.rejected.length > 14) lines.push('... and ' + (result.rejected.length - 14) + ' more skipped');
     }

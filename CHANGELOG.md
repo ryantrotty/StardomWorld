@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.2
+
+- Lineage page video matching rewritten after TV testing: the search results were right but every card was rejected because titles do not contain the champion's name. A video now belongs to a reign when it is for the championship (English or Japanese title) and its date falls inside the reign. The date is read from the title, e.g. "(2026/06/20)" or "2026/06/30 ...", falling back to the upload date.
+- A video dated the same day as the title win or a defence fills that card; every other video inside the reign is listed under "More from this reign" with its date.
+- Search stops paging once a whole page is older than the reign. The search summary and debug block now say why each card was skipped (wrong championship, outside the reign, no date).
+
 ## 2.13.1
 
 - Lineage page: Down now scrolls the page when nothing focusable is below, so the debug block can be reached. A search summary (the search used, cards read, cards with the champion, matches, and the first titles on the page) now sits right under the video cards.
