@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.4
+
+- Factions submenu: the logo area on each card is larger (80 x 58, was 64 x 48) so tall logos such as Mi Vida Loca show bigger. It fits inside the height the three text lines already need, so cards without a Titles held line grow only slightly.
+
 ## 2.16.3
 
 - Faction matches showed old results (STARS with 5 Star Grand Prix, H.A.T.E. with one video): the TV keeps each faction's first page for 12 hours, and the copy saved by the earlier version had been cut down by the old title rule. The saved copy now has a new name, so the old one is ignored, and the STARS exclusions also apply to any saved copy.

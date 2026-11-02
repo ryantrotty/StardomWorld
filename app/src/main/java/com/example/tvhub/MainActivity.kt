@@ -4743,7 +4743,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc{display:flex;align-items:center;gap:12px;padding:6px 12px;margin:0 0 4px 0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc.tv-fav-on::before{content:none;}',
             '#tv-sm-shelf .tv-shl-fc.tv-fav-on .tv-shl-fc1::before{content:"\\2605  ";color:#F4C242;}',
-            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcl{flex:0 0 auto;width:64px;height:48px;object-fit:contain;}',
+            '#tv-sm-shelf .tv-shl-fc .tv-shl-fcl{flex:0 0 auto;width:80px;height:58px;object-fit:contain;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fcx{min-width:0;display:block;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-fc .tv-shl-fc1{display:block;font-size:17px;font-weight:700;line-height:1.15;color:#fff;}',

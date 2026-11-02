@@ -107,3 +107,5 @@ Faction home (2.16.0): a Faction home row heads the member list. The home screen
 Factions submenu (2.16.1): header CURRENT FACTIONS; card = optional logo (64 x 48) at the left, name 17/700 with the favourite star on its line, 13/600 captain line, 13/700 gold Titles held line. Faction home video cards use the thumbnail card title rule (15/700, max 4 lines).
 
 Faction matches (2.16.2): no layout change. Data rules only: faction search words are ANDed, extra searches ('alts') load on reaching the end, 'exclude' hides cards by title.
+
+Factions submenu logo (2.16.4): logo area 80 x 58 (was 64 x 48).
