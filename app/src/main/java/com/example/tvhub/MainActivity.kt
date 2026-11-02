@@ -2943,6 +2943,12 @@ class MainActivity : Activity() {
             this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, 0).versionName ?: ""
         } catch (_: Exception) { "" }
 
+        // Eras page content (assets/eras.json).
+        @android.webkit.JavascriptInterface
+        fun erasJson(): String = try {
+            this@MainActivity.assets.open("eras.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
         @android.webkit.JavascriptInterface
         fun factionsJson(): String = try {
             this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
@@ -4695,6 +4701,8 @@ class MainActivity : Activity() {
             ['Most Watched', '/contents/search?s=pc&o=d&activetab=contents&page=1', '再生数の多い動画'],
             ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1', 'お気に入り数の多い動画']
           ];
+          // Years > Era Test: the Eras page (assets/eras.json), drawn by the page script that reads "tvera".
+          var ERA_TEST = ['Era Test', '/contents/search?q%5Bkeyword%5D=Threedom&activetab=contents&page=1&tvera=2', 'Era Test'];
           function yearsList() {
             var out = [];
             for (var y = new Date().getFullYear(); y >= 2011; y--) {
@@ -5019,7 +5027,7 @@ class MainActivity : Activity() {
           }
 
           function build() {
-            var years = yearsList();
+            var years = [ERA_TEST].concat(yearsList());
             var ja = isJa();
             var logo = logoSrc();
             var h = '';
@@ -5279,7 +5287,7 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + mblocks + '</div>';
             } else if (key === 'years') {
               w = 400;
-              h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
+              h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:1fr;margin-bottom:8px;">' + rowsHtml([ERA_TEST]) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
             } else if (key === 'factions') {
               w = 440;
               var fl = '', ol = '';
@@ -6149,6 +6157,248 @@ class MainActivity : Activity() {
         })();
     """.trimIndent()
 
+    // Eras page: reached from Years > Era Test (a search page address carrying "tvera=<n>"). Everything on it comes
+    // from the app's eras.json and factions.json plus the pictures a private build has. Nothing is requested when
+    // it opens; each tile is a link that runs one search (names or show, plus the year) when it is chosen.
+    private val eraJs = """
+(function(){
+  if (window.__tvEra) return;
+  var mm = /[?&]tvera=([0-9]+)/.exec(location.search);
+  if (!mm || location.pathname.indexOf('/contents/search') !== 0) return;
+  if (!window.AndroidHost || !AndroidHost.erasJson) return;
+  var data = null;
+  try { data = JSON.parse(AndroidHost.erasJson()); } catch (e) {}
+  if (!data || !data.eras) return;
+  var facs = {};
+  try { ((JSON.parse(AndroidHost.factionsJson()).factions) || []).forEach(function(f) { facs[f.id] = f; }); } catch (e) {}
+  window.__tvEra = true;
+  window.__tvInfiniteScroll = true;
+  var cur = parseInt(mm[1], 10) || 2;
+  var notice = '';
+
+  function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
+  function T(en, ja) { return isJa() ? ja : en; }
+  function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
+  function searchUrl(words, year) {
+    var w = String(words || '') + (year ? ' ' + year + '/' : '');
+    return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(w.trim()) + '&activetab=contents&page=1';
+  }
+  function eraOf(n) { var r = null; data.eras.forEach(function(e) { if (e.n === n) r = e; }); return r; }
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#tv-era{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B1118;color:#ffffff;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;}',
+    '#tv-era, #tv-era *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;box-sizing:border-box;}',
+    '#tv-era-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:24px 24px 60px 24px;scrollbar-width:none;display:flex;flex-direction:column;gap:18px;}',
+    '#tv-era-scroll::-webkit-scrollbar{display:none;}',
+    '#tv-era a{color:inherit;text-decoration:none !important;outline:none !important;}',
+    '#tv-era .tv-eh{display:flex;align-items:center;gap:14px;}',
+    '#tv-era .tv-eh-bar{width:10px;height:36px;background:#F4C242;border-radius:4px;flex:0 0 auto;}',
+    '#tv-era .tv-eh-t{font-size:30px;font-weight:900;}',
+    '#tv-era .tv-eh-i{margin-left:auto;text-align:right;font-size:15px;font-weight:600;color:#9AA6B4;}',
+    '#tv-era .tv-ech{display:flex;gap:10px;}',
+    '#tv-era .tv-chip{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:12px;height:64px;padding:0 16px;border-radius:20px;border:3px solid #2A323C;background:#161F2A;color:#C9D2DC;}',
+    '#tv-era .tv-chip.tv-on{background:#FFB347;border-color:#FFB347;color:#1A1A1A;}',
+    '#tv-era .tv-chip:focus{border-color:#F4C242;}',
+    '#tv-era .tv-chip .k{font-size:28px;font-weight:900;line-height:1;}',
+    '#tv-era .tv-chip .n{font-size:15px;font-weight:700;line-height:1.15;}',
+    '#tv-era .tv-chip .y{font-size:13px;font-weight:600;opacity:.85;margin-top:2px;}',
+    '#tv-era .tv-tlw{position:relative;height:44px;margin:0 6px;flex:0 0 auto;}',
+    '#tv-era .tv-seg{position:absolute;top:0;height:8px;border-radius:4px;background:#3B4656;}',
+    '#tv-era .tv-seg.tv-on{background:#F4C242;}',
+    '#tv-era .tv-tk{position:absolute;top:0;width:2px;height:14px;background:#9AA6B4;}',
+    '#tv-era .tv-tl{position:absolute;top:18px;font-size:14px;font-weight:700;color:#9AA6B4;transform:translateX(-50%);white-space:nowrap;}',
+    '#tv-era .tv-desc{display:flex;gap:22px;align-items:center;background:#121922;border:2px solid #2A323C;border-radius:14px;padding:18px 22px;}',
+    '#tv-era .tv-emb{width:116px;height:116px;flex:0 0 auto;background:#0F151C;border:2px solid #2A323C;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;}',
+    '#tv-era .tv-emb-k{position:absolute;right:-8px;bottom:-8px;width:34px;height:34px;border-radius:6px;background:#F4C242;color:#1A1A1A;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;}',
+    '#tv-era .tv-lbl{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;text-transform:uppercase;}',
+    '#tv-era .tv-sech{display:flex;align-items:center;gap:10px;margin-bottom:10px;}',
+    '#tv-era .tv-sech i{width:8px;height:26px;background:#F4C242;border-radius:4px;flex:0 0 auto;}',
+    '#tv-era .tv-hint{font-size:13px;font-weight:600;color:#9AA6B4;}',
+    '#tv-era .tv-yrs{display:flex;gap:8px;margin-top:12px;}',
+    '#tv-era .tv-pill{display:inline-block;border-radius:20px;border:3px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
+    '#tv-era a.tv-pill:focus{border-color:#F4C242;background:#172029;color:#fff;}',
+    '#tv-era .tv-pillr{display:inline-block;border-radius:20px;border:2px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
+    '#tv-era .tv-rg{display:flex;gap:16px;}',
+    '#tv-era .tv-card{flex:1 1 0;min-width:0;background:#161F2A;border:3px solid #2A323C;border-radius:12px;padding:10px 12px;display:block;}',
+    '#tv-era .tv-card:focus{background:#172029;border-color:#F4C242;}',
+    '#tv-era .tv-card .row{display:flex;gap:14px;align-items:center;}',
+    '#tv-era .tv-belt{flex:0 0 auto;width:120px;height:66px;border-radius:6px;background:#0F151C;border:2px solid #2A323C;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
+    '#tv-era .tv-belt img{max-width:100%;max-height:100%;object-fit:contain;}',
+    '#tv-era .tv-1{font-size:19px;font-weight:700;line-height:1.15;}',
+    '#tv-era .tv-1 s{text-decoration:none;color:#9AA6B4;font-weight:600;font-size:15px;}',
+    '#tv-era .tv-2{font-size:15px;font-weight:600;color:#C9D2DC;margin-top:3px;}',
+    '#tv-era .tv-3{font-size:13px;font-weight:700;color:#F4C242;margin-top:3px;}',
+    '#tv-era .tv-oth{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}',
+    '#tv-era .tv-vc{flex:1 1 0;min-width:0;display:block;background:#1a1a1a;border:3px solid transparent;border-radius:8px;overflow:hidden;position:relative;}',
+    '#tv-era .tv-vc:focus{border-color:#F4C242;}',
+    '#tv-era .tv-th{height:110px;background:linear-gradient(135deg,#172029,#0F151C 70%);display:flex;align-items:center;justify-content:center;gap:12px;}',
+    '#tv-era .tv-th b{font-size:19px;font-weight:900;color:#fff;text-align:center;line-height:1.1;letter-spacing:.02em;}',
+    '#tv-era .tv-th em{font-style:normal;font-size:13px;font-weight:800;color:#F4C242;}',
+    '#tv-era .tv-tg{position:absolute;top:8px;left:8px;background:#FFB347;color:#1A1A1A;border-radius:4px;padding:2px 7px;font-size:12px;font-weight:800;letter-spacing:.06em;}',
+    '#tv-era .tv-dt{position:absolute;top:8px;right:8px;background:#F4C242;color:#1A1A1A;border-radius:4px;padding:2px 7px;font-size:12px;font-weight:800;}',
+    '#tv-era .tv-vt{padding:10px 12px 4px 12px;font-size:15px;font-weight:700;line-height:1.25;}',
+    '#tv-era .tv-vh{padding:0 12px 12px 12px;font-size:12px;font-weight:600;color:#9AA6B4;}',
+    '#tv-era .tv-cols{display:flex;gap:18px;}',
+    '#tv-era .tv-col{min-width:0;}',
+    '#tv-era .tv-g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}',
+    '#tv-era .tv-tile{display:block;background:#161F2A;border:3px solid #2A323C;border-radius:8px;padding:8px 11px;}',
+    '#tv-era .tv-tile:focus{background:#172029;border-color:#F4C242;}',
+    '#tv-era .tv-tile .a{font-size:15px;font-weight:700;color:#fff;}',
+    '#tv-era .tv-tile .b{font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px;}',
+    '#tv-era .tv-fac{display:flex;gap:12px;align-items:center;margin-bottom:8px;}',
+    '#tv-era .tv-fac .nm{font-size:17px;font-weight:700;}',
+    '#tv-era .tv-logo{width:46px;height:46px;flex:0 0 auto;border-radius:8px;border:2px dashed #3B4656;background:#0F151C;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#F4C242;overflow:hidden;}',
+    '#tv-era .tv-logo.tv-pic{border:2px solid #2A323C;background:#fff;}',
+    '#tv-era .tv-logo img{max-width:100%;max-height:100%;object-fit:contain;}',
+    '#tv-era .tv-show{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:10px 14px;}',
+    '#tv-era .tv-show .w{font-size:13px;font-weight:800;color:#F4C242;white-space:nowrap;margin-left:10px;}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(st);
+
+  var root = document.createElement('div');
+  root.id = 'tv-era';
+  root.innerHTML = '<div id="tv-era-scroll"></div>';
+  (document.body || document.documentElement).appendChild(root);
+  var scroller = root.firstChild;
+
+  var BEL = '<svg width="104" height="52" viewBox="0 0 120 60" fill="none" stroke="#F4C242" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="20" width="112" height="20" rx="5" fill="FILL"></rect><circle cx="60" cy="30" r="21" fill="#161F2A"></circle><circle cx="60" cy="30" r="12"></circle><rect x="14" y="24" width="14" height="12" rx="2"></rect><rect x="92" y="24" width="14" height="12" rx="2"></rect></svg>';
+  var EMB = {
+    2: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" aria-hidden="true"><circle cx="60" cy="40" r="26"></circle><circle cx="41" cy="74" r="26"></circle><circle cx="79" cy="74" r="26"></circle></svg>'
+  };
+  var BOUNDS = [[0, 26.2, 1], [26.6, 20.4, 2], [47.4, 7.8, 3], [55.6, 27.4, 4], [83.4, 16.6, 5]];
+
+  function sec(title, hint, body) {
+    return '<div><div class="tv-sech"><i></i><div class="tv-lbl">' + esc(title) + '</div>' + (hint ? '<div class="tv-hint">' + esc(hint) + '</div>' : '') + '</div>' + body + '</div>';
+  }
+  function tile(name, note, url) {
+    return '<a class="tv-tile" tabindex="0" href="' + esc(url) + '"><div class="a">' + esc(name) + '</div><div class="b">' + esc(note || '') + '</div></a>';
+  }
+  function wr(list) {
+    return '<div class="tv-g4">' + list.map(function(w) { return tile(w.name, w.note, searchUrl(w.search || w.name, '')); }).join('') + '</div>';
+  }
+
+  function render() {
+    var e = eraOf(cur) || eraOf(2);
+    var h = '';
+    h += '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('Eras', '時代')) + '</div><div class="tv-eh-i">' + esc(notice || T('Left and Right choose an era. OK opens a tile and runs one search.', '左右で時代を選択。OKでタイルを開くと検索します。')) + '</div></div>';
+    h += '<div class="tv-ech">' + data.eras.map(function(x) {
+      return '<a class="tv-chip' + (x.n === cur ? ' tv-on' : '') + '" tabindex="0" data-era="' + x.n + '"><b class="k">' + esc(x.kanji) + '</b><div><div class="n">' + esc(x.name) + '</div><div class="y">' + esc(x.years) + '</div></div></a>';
+    }).join('') + '</div>';
+    h += '<div class="tv-tlw">' + BOUNDS.map(function(b) { return '<div class="tv-seg' + (b[2] === e.n ? ' tv-on' : '') + '" style="left:' + b[0] + '%;width:' + b[1] + '%"></div>'; }).join('') +
+      [[0, '2011', 0], [26.4, '2015', 1], [47.2, '2018', 1], [55.4, '2019', 0], [83.2, '2024', 0]].map(function(t) {
+        return '<div class="tv-tk" style="left:' + t[0] + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div><div class="tv-tl" style="left:' + t[0] + '%;' + (t[0] === 0 ? 'transform:none;' : '') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>';
+      }).join('') + '<div class="tv-tl" style="right:0;transform:none">' + esc(T('now', '現在')) + '</div></div>';
+    if (!e.reigns) {
+      h += '<div class="tv-desc"><div><div class="tv-lbl" style="font-size:13px">' + esc(T('Era ' + e.n + ' of 5', '時代 ' + e.n + ' / 5')) + '</div><div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.name) + '</div><div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.ja || '') + ' · ' + esc(e.years) + '</div><div style="font-size:15px;color:#9AA6B4;margin-top:8px">' + esc(T('This era is not built yet.', 'この時代はまだ準備中です。')) + '</div></div></div>';
+      if (e.rising) h += sec(T('Rising stars', '新星'), '', wr(e.rising));
+      scroller.innerHTML = h;
+      return;
+    }
+    h += '<div class="tv-desc"><div class="tv-emb">' + (EMB[e.n] || '') + '<div class="tv-emb-k">' + esc(e.kanji) + '</div></div><div style="flex:1 1 0;min-width:0">' +
+      '<div class="tv-lbl" style="font-size:13px">' + esc(e.eyebrow || '') + '</div>' +
+      '<div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.title || e.name) + '</div>' +
+      '<div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.tagline || '') + '</div>' +
+      '<div style="font-size:15px;font-weight:500;color:#C9D2DC;margin-top:6px;max-width:760px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
+      '<div class="tv-yrs">' + (e.yearChips || []).map(function(y) { return '<a class="tv-pill" tabindex="0" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') + '</div></div></div>';
+    // title reigns
+    var rg = '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
+      var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
+      var belt = pic ? '<img src="' + esc(pic) + '" alt="">' : BEL.replace('FILL', r.beltId === 'world' ? '#2A1C10' : '#2A323C');
+      return '<a class="tv-card" tabindex="0" href="/mypage?tvch=' + esc(r.beltId) + '"><div class="row"><div class="tv-belt">' + belt + '</div><div><div class="tv-1">' + esc(r.title) + ' <s>· ' + esc(r.belt) + '</s></div><div class="tv-2">' + esc(r.holder) + '</div><div class="tv-3">' + esc(r.stat) + '</div></div></div>' +
+        '<div class="tv-oth">' + (r.others || []).map(function(o) { return '<span class="tv-pillr">' + esc(o) + '</span>'; }).join('') + '</div></a>';
+    }).join('') + '</div>';
+    h += sec(T('Dominant title reigns', '王座の長期政権'), '', rg);
+    // rivalries
+    var rv = '<div class="tv-rg">' + (e.rivalries || []).map(function(r) {
+      var names = r.b ? '<b>' + esc(r.a).replace(' ', '<br>') + '</b><em>VS</em><b>' + esc(r.b).replace(' ', '<br>') + '</b>' : '<b>' + esc(r.a).toUpperCase() + '</b>';
+      return '<a class="tv-vc" tabindex="0" href="' + esc(searchUrl(r.words, r.year)) + '"><div class="tv-th">' + names + '</div><span class="tv-tg">' + esc(r.tag) + '</span><span class="tv-dt">' + esc(r.when) + '</span><div class="tv-vt">' + esc(r.title) + '</div><div class="tv-vh">' + esc(T('Search', '検索')) + ' · ' + esc(r.words) + (r.year ? ' · ' + esc(r.year) : '') + '</div></a>';
+    }).join('') + '</div>';
+    h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
+    // wrestlers / factions / shows
+    var left = sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
+    var fc = (e.factions || []).map(function(x) {
+      var f = facs[x.id]; if (!f) return '';
+      var pic = ''; try { pic = AndroidHost.factionLogo(f.id) || ''; } catch (q) {}
+      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
+      var nm = String(f.name).replace(/ \(.*\)$/, '');
+      return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-logo' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
+    }).join('');
+    var sh = (e.shows || []).map(function(s) {
+      return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(searchUrl(s.search, s.year)) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
+    }).join('');
+    h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
+    scroller.innerHTML = h;
+  }
+
+  function items() { return Array.prototype.slice.call(root.querySelectorAll('a[tabindex]')); }
+  function focusEl(el) {
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    var r = el.getBoundingClientRect(), vh = window.innerHeight;
+    if (r.top < 40) scroller.scrollTop += r.top - 40;
+    else if (r.bottom > vh - 40) scroller.scrollTop += r.bottom - vh + 40;
+  }
+  function geoNext(cur0, k, list) {
+    var cr = cur0.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+    var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
+    list.forEach(function(it) {
+      if (it === cur0) return;
+      var r = it.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim;
+      if (k === 37 || k === 39) {
+        var ov = Math.min(r.bottom, cr.bottom) - Math.max(r.top, cr.top);
+        if (ov > 0.5 * Math.min(r.height, cr.height) && (k === 39 ? dx > 4 : dx < -4)) { var a = Math.abs(dx); if (a < rowBs) { rowBs = a; rowBest = it; } }
+        return;
+      }
+      if (k === 40) { if (dy <= 4) return; prim = dy; } else { if (dy >= -4) return; prim = -dy; }
+      var sc = prim + Math.abs(dx) * 2;
+      if (sc < bs) { bs = sc; best = it; }
+    });
+    return rowBest || best;
+  }
+  function chooseEra(n) {
+    var e = eraOf(n);
+    if (!e) return;
+    cur = n;
+    notice = e.reigns ? '' : T('Era ' + n + ' is not built yet.', '時代' + n + 'はまだ準備中です。');
+    render();
+    var c = root.querySelector('.tv-chip[data-era="' + n + '"]');
+    if (c) focusEl(c);
+    scroller.scrollTop = 0;
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (!document.getElementById('tv-era') || menuOpen()) return;
+    var k = e.keyCode, ae = document.activeElement;
+    var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
+    if (!ae || !root.contains(ae) || ae === document.body) return;
+    var isChip = ae.classList.contains('tv-chip');
+    if (isChip && (k === 13 || k === 23)) { stop(); chooseEra(parseInt(ae.getAttribute('data-era'), 10)); return; }
+    if (k === 13 || k === 23) return;   // a link: the browser opens it
+    if (k === 37 || k === 38 || k === 39 || k === 40) {
+      stop();
+      var nx = geoNext(ae, k, items());
+      if (isChip && (k === 37 || k === 39) && nx && nx.classList.contains('tv-chip')) { chooseEra(parseInt(nx.getAttribute('data-era'), 10)); return; }
+      if (nx) focusEl(nx);
+      else if (k === 37 && window.__tvOpenMenu) window.__tvOpenMenu();
+      else if (k === 38) scroller.scrollTop = 0;
+    }
+  }, true);
+
+  render();
+  var tries = 0;
+  var tm = setInterval(function() {
+    tries++;
+    var ae = document.activeElement;
+    if (menuOpen() || (ae && root.contains(ae) && ae !== document.body)) { if (tries > 6) clearInterval(tm); return; }
+    var c = root.querySelector('.tv-chip[data-era="' + cur + '"]');
+    if (c) focusEl(c);
+    if (tries > 10) clearInterval(tm);
+  }, 300);
+})();
+    """.trimIndent()
+
     // Factions page: reached from the menu's Factions entry (a search page address carrying "tvfaction=<id>").
     // The faction's members are listed on the left (they stay put); OK or Right on one loads that member's videos
     // into a grid on the right, one page at a time as the remote reaches the bottom. The names come from the
@@ -6907,7 +7157,7 @@ class MainActivity : Activity() {
   var yearCat = YM ? (YM[1] === '_2020' ? '2020' : YM[1]) : '';
   var FAC_MODE = /[?&]tvfaction=/.test(location.search);
   if (location.pathname.indexOf('/contents/search') !== 0 && !champCat && !yearCat) return;
-  if (/[?&](tvrecent|tvev|tvcomm)=/.test(location.search)) return;
+  if (/[?&](tvrecent|tvev|tvcomm|tvera)=/.test(location.search)) return;
   window.__tvFilterBar = true;
 
   // Every choice just adds words to the site's own keyword search and opens that page: one request per
@@ -8878,6 +9128,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(cookieBannerJs(), null)
         view.evaluateJavascript(factionJs, null)
+        view.evaluateJavascript(eraJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)
         view.evaluateJavascript(eventBarJs, null)

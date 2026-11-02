@@ -109,3 +109,5 @@ Factions submenu (2.16.1): header CURRENT FACTIONS; card = optional logo (64 x 4
 Faction matches (2.16.2): no layout change. Data rules only: faction search words are ANDed, extra searches ('alts') load on reaching the end, 'exclude' hides cards by title.
 
 Factions submenu logo (2.16.4): logo area 80 x 58 (was 64 x 48).
+
+Eras page (2.19.0): `/contents/search?...&tvera=<n>` (assets/eras.json). Same page frame as the lineage page: title 30/900 with a 10 x 36 gold bar, instructional line right-aligned at the top (15/600 #9AA6B4), section headers in the My Favorites style (15/800, .14em, gold, 8 x 26 gold bar). Era chips: selected = look B fill; the focus ring on a chip is a 3 px gold border (selected chip keeps its fill). Tiles, cards and links use look A (gold border, #172029 fill). Faction and belt pictures come from the private branding folder; public builds show a dashed monogram or a drawn belt. No new colours or focus looks.

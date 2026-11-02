@@ -1,0 +1,261 @@
+{
+  "_note": "Eras page content (Years menu > Era Test). Written by hand from the era notes; not checked against the site. year = a search word added to the keyword search (the site's Year filter writes it as 2016/). Only era 2 is filled in so far; the other eras show in the chip row and say they are not built yet. beltId feeds the belt picture (private builds). faction ids are the ids in factions.json.",
+  "eras": [
+    {
+      "n": 1,
+      "kanji": "壱",
+      "name": "Genesis & the Idols",
+      "ja": "黎明",
+      "years": "2011 – early 2015",
+      "rising": [
+        {
+          "name": "Mayu Iwatani",
+          "note": "Timid undercard rookie who became the icon"
+        },
+        {
+          "name": "Kairi Hojo",
+          "note": "Debuts 2012, undersized with heart",
+          "search": "Kairi Hojo"
+        },
+        {
+          "name": "Act Yasukawa",
+          "note": "Oddball who became the White Belt champion"
+        },
+        {
+          "name": "Takumi Iroha",
+          "note": "Nanae Takahashi's protege"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "kanji": "弐",
+      "name": "Threedom & the Rebuild",
+      "ja": "三強",
+      "years": "2015 – mid 2018",
+      "eyebrow": "Era 2 of 5 · spring 2015 – mid 2018",
+      "title": "Threedom & the Golden Rebuild",
+      "tagline": "三強 · スリードム — The rise of the ace and global eyes",
+      "blurb": "Rebuilding with Io Shirai, Kairi Hojo and Mayu Iwatani at the centre, joined by elite guests from overseas.",
+      "yearChips": [
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "seed": "Threedom",
+      "reigns": [
+        {
+          "beltId": "world",
+          "title": "World of Stardom",
+          "belt": "Red Belt",
+          "holder": "Io Shirai · 2nd reign",
+          "stat": "546 days · 14 defences",
+          "others": [
+            "Kairi Hojo · 2015",
+            "Mayu Iwatani · 2017",
+            "Toni Storm"
+          ]
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Kairi Hojo",
+          "stat": "364 days",
+          "others": [
+            "Io Shirai (while Red Belt ace)"
+          ]
+        }
+      ],
+      "rivalries": [
+        {
+          "a": "Io Shirai",
+          "b": "Mayu Iwatani",
+          "tag": "RIVALRY",
+          "when": "2016–17",
+          "title": "Io Shirai vs Mayu Iwatani, the ace and the challenger",
+          "words": "Io Shirai Mayu Iwatani",
+          "year": "2016"
+        },
+        {
+          "a": "Io Shirai",
+          "b": "Kairi Hojo",
+          "tag": "RIVALRY",
+          "when": "2015–17",
+          "title": "Io Shirai vs Kairi Hojo, the centrepiece before Kairi left",
+          "words": "Io Shirai Kairi Hojo",
+          "year": "2016"
+        },
+        {
+          "a": "Threedom",
+          "b": "",
+          "tag": "RIVALRY",
+          "when": "2015–18",
+          "title": "Threedom: Io, Kairi and Mayu together",
+          "words": "Io Shirai Kairi Hojo Mayu Iwatani",
+          "year": ""
+        }
+      ],
+      "wrestlers": [
+        {
+          "name": "Io Shirai",
+          "note": "Red Belt ace"
+        },
+        {
+          "name": "Kairi Hojo",
+          "note": "White Belt, 364 days",
+          "search": "Kairi Hojo"
+        },
+        {
+          "name": "Mayu Iwatani",
+          "note": "Red Belt, 2017"
+        },
+        {
+          "name": "Toni Storm",
+          "note": "Overseas guest"
+        }
+      ],
+      "rising": [
+        {
+          "name": "Momo Watanabe",
+          "note": "Io Shirai's hand-picked heir"
+        },
+        {
+          "name": "Jungle Kyona",
+          "note": "Late-debuting powerhouse"
+        },
+        {
+          "name": "Hazuki",
+          "note": "Kagetsu's enforcer in Oedo Tai"
+        },
+        {
+          "name": "Starlight Kid",
+          "note": "Masked junior high-flyer with AZM"
+        }
+      ],
+      "factions": [
+        {
+          "id": "queens-quest",
+          "sub": "Founded late 2016 by Io Shirai",
+          "mono": "QQ"
+        },
+        {
+          "id": "oedo-tai",
+          "sub": "Reformed by Kagetsu and Hazuki",
+          "mono": "OT"
+        },
+        {
+          "id": "stars",
+          "sub": "Early form under Mayu Iwatani",
+          "mono": "ST"
+        }
+      ],
+      "shows": [
+        {
+          "name": "5★STAR GP",
+          "sub": "Summer tournament",
+          "when": "2016",
+          "search": "5★STAR",
+          "year": "2016"
+        },
+        {
+          "name": "Year-End Climax",
+          "sub": "End of the year",
+          "when": "DEC 2016",
+          "search": "Climax",
+          "year": "2016"
+        },
+        {
+          "name": "Cinderella Tournament",
+          "sub": "Spring tournament",
+          "when": "2017",
+          "search": "Cinderella",
+          "year": "2017"
+        },
+        {
+          "name": "Mid-Summer Champions",
+          "sub": "Summer show",
+          "when": "2017",
+          "search": "Mid-Summer",
+          "year": "2017"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "kanji": "参",
+      "name": "The Draft Years",
+      "ja": "群雄",
+      "years": "mid 2018 – 2019",
+      "rising": [
+        {
+          "name": "Utami Hayashishita",
+          "note": "Debuts Aug 2018 as the Big Rookie"
+        },
+        {
+          "name": "Tam Nakano",
+          "note": "Oedo Tai castoff turned Stars sidekick"
+        },
+        {
+          "name": "Saya Kamitani",
+          "note": "Debuts Aug 2019, ex-idol rookie"
+        },
+        {
+          "name": "AZM",
+          "note": "From junior undercard to workhorse"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "kanji": "四",
+      "name": "Arena Boom",
+      "ja": "隆盛",
+      "years": "2019 – early 2024",
+      "rising": [
+        {
+          "name": "Maika",
+          "note": "Judo rookie in Donna Del Mondo"
+        },
+        {
+          "name": "Hanan",
+          "note": "Future of Stardom titleholder"
+        },
+        {
+          "name": "Suzu Suzuki",
+          "note": "Explosive outsider, hardcore prodigy"
+        },
+        {
+          "name": "Rina",
+          "note": "Junior pest turned record-setting champion"
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "kanji": "五",
+      "name": "New Horizons",
+      "ja": "新章",
+      "years": "2024 – now",
+      "rising": [
+        {
+          "name": "Sayaka Kurara",
+          "note": "Theatre background, New Blood showcases"
+        },
+        {
+          "name": "Rian",
+          "note": "Gritty, undersized rookie"
+        },
+        {
+          "name": "HANAKO",
+          "note": "Tallest homegrown rookie, 181 cm"
+        },
+        {
+          "name": "Ranna Yagami",
+          "note": "God's Eye kick specialist"
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.19.0
+
+- New Eras page, first cut: Years menu > Era Test (a full-width row above the year list). It shows the five eras as a chip row with a timeline underneath, and Era 2 (Threedom & the Golden Rebuild) is filled in. Left and Right on the chips change era; the other four say "not built yet".
+- Era 2 sections, top to bottom: era box (with the year chips for 2015 to 2018 inside it), Dominant title reigns (World and Wonder cards, open the lineage page), Defining rivalries (3 tiles, one search each: two names plus a year), Top wrestlers (4) and Rising stars (4), Impactful factions (open the faction pages, logos in private builds), Must-see shows (4, one search each: show plus year).
+- Content is in the new assets/eras.json and is hand-written from the era notes, not checked against the site. Nothing loads when the page opens.
+
 ## 2.18.5
 
 - Wrestler / Competitors tabs: tighter lines (15px text, 6px padding, as the old columns had) so the lists are about 480px tall at 1280x720 and stop short of the bottom of the screen; the flyout is also capped to the space below the filter bar and scrolls if it ever needs more.
