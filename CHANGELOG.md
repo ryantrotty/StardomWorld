@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.14.1
+
+- Lineage pages for Future of Stardom (14 reigns) and High Speed (28 reigns, from the 2009 NEO era), with every title win and defence. The Championships menu opens them.
+
 ## 2.14.0
 
 - Wonder of Stardom lineage page: all 26 reigns with every title win and defence, same layout as World of Stardom. Championships menu entries open a lineage page for any title that has a lineage file.

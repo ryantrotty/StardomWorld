@@ -1,0 +1,622 @@
+{
+ "_note": "Future of Stardom Championship lineage. Source: Stardom.com (wwr-stardom.com) title history, win dates checked against Wikipedia and Cagematch. endType: lost, vacated (a gap follows) or empty for the current reign. alias: other spellings searched for the same wrestler.",
+ "id": "future",
+ "title": "Future of Stardom Championship",
+ "ja": "フューチャー・オブ・スターダム",
+ "since": "2018-03-28",
+ "kind": "Singles",
+ "search": "Future of Stardom",
+ "titlePatterns": [
+  "Future of Stardom",
+  "フューチャー・オブ・スターダム"
+ ],
+ "alias": {
+  "Ruaka": [
+   "Ryuka",
+   "Ryukika"
+  ],
+  "Ami Sohrei": [
+   "Sorei Ami",
+   "Ami Sourei",
+   "Ami Souri",
+   "Magnificent Ami"
+  ],
+  "Rina": [
+   "Rinnan",
+   "Rinami"
+  ],
+  "Miyu Amasaki": [
+   "Mitsuyoshi Amasaki"
+  ],
+  "Hanako": [
+   "HANAKO"
+  ],
+  "Sayaka Kurara": [
+   "Sayaka Kurei"
+  ],
+  "Momo Kohgo": [
+   "Momo Kogo"
+  ]
+ },
+ "reigns": [
+  {
+   "n": 1,
+   "champ": "Starlight Kid",
+   "won": "2018-03-28",
+   "end": "2019-01-03",
+   "endType": "lost",
+   "vs": "Shiki Shibusawa",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2018-04-01",
+     "opp": "AZM",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": ""
+    },
+    {
+     "d": "2018-05-06",
+     "opp": "Ruaka",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2018-06-03",
+     "opp": "AZM",
+     "venue": "Sapporo Mars Gym",
+     "note": "15-minute time-limit draw"
+    },
+    {
+     "d": "2018-09-30",
+     "opp": "Hanan",
+     "venue": "Nagoya International Conference Hall, Aichi",
+     "note": ""
+    },
+    {
+     "d": "2018-11-23",
+     "opp": "Natsumi",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "champ": "Utami Hayashishita",
+   "won": "2019-01-03",
+   "end": "2020-02-16",
+   "endType": "vacated",
+   "vs": "Starlight Kid",
+   "venue": "Shin-Kiba 1st Ring, Tokyo",
+   "defences": [
+    {
+     "d": "2019-01-19",
+     "opp": "Hanan",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2019-02-02",
+     "opp": "Alex Gracia",
+     "venue": "Kyoto KBS Hall",
+     "note": ""
+    },
+    {
+     "d": "2019-03-10",
+     "opp": "Saya Iida",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2019-08-03",
+     "opp": "Reo Onozaki",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2020-01-14",
+     "opp": "Maika",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2020-02-16",
+     "opp": "Saya Kamitani",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "champ": "Maika",
+   "won": "2020-07-17",
+   "end": "2020-12-20",
+   "endType": "lost",
+   "vs": "Saya Iida",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2020-10-29",
+     "opp": "Saya Kamitani",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2020-11-15",
+     "opp": "Saya Iida",
+     "venue": "Sendai Sunplaza",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "champ": "Saya Iida",
+   "won": "2020-12-20",
+   "end": "2021-05-10",
+   "endType": "vacated",
+   "vs": "Saya Kamitani",
+   "venue": "Edion Arena Osaka 1st Gym",
+   "defences": [
+    {
+     "d": "2021-01-17",
+     "opp": "Unagi Sayaka",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2021-02-20",
+     "opp": "Hanaho Nori",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2021-03-26",
+     "opp": "Ryuka",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "champ": "Mina Shirakawa",
+   "won": "2021-07-04",
+   "end": "2021-07-17",
+   "endType": "lost",
+   "vs": "Unagi Sayaka",
+   "venue": "Yokohama Budokan",
+   "defences": []
+  },
+  {
+   "n": 6,
+   "champ": "Unagi Sayaka",
+   "won": "2021-07-17",
+   "end": "2021-10-09",
+   "endType": "lost",
+   "vs": "Mina Shirakawa",
+   "venue": "Belle Salle Takadanobaba",
+   "defences": [
+    {
+     "d": "2021-08-13",
+     "opp": "Mai Sakurai",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2021-08-29",
+     "opp": "Rina",
+     "venue": "Belle Salle Shiodome",
+     "note": ""
+    },
+    {
+     "d": "2021-09-06",
+     "opp": "Wakana Tsukiyama",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "champ": "Ruaka",
+   "won": "2021-10-09",
+   "end": "2021-12-29",
+   "endType": "lost",
+   "vs": "Unagi Sayaka",
+   "venue": "Osaka-jo Hall",
+   "defences": [
+    {
+     "d": "2021-11-03",
+     "opp": "Lady C",
+     "venue": "Todoroki Arena, Kawasaki",
+     "note": ""
+    },
+    {
+     "d": "2021-11-27",
+     "opp": "Mai Sakurai",
+     "venue": "Yoyogi National Gymnasium No. 2",
+     "note": "three-way, Wakana Tsukiyama also in the match"
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "champ": "Hanan",
+   "won": "2021-12-29",
+   "end": "2022-10-19",
+   "endType": "lost",
+   "vs": "Ruaka",
+   "venue": "Ryogoku Kokugikan, Tokyo",
+   "defences": [
+    {
+     "d": "2022-01-29",
+     "opp": "Lady C",
+     "venue": "Aichi Dolphins Arena",
+     "note": ""
+    },
+    {
+     "d": "2022-02-23",
+     "opp": "Momo Kohgo",
+     "venue": "Aore Nagaoka, Niigata",
+     "note": ""
+    },
+    {
+     "d": "2022-03-26",
+     "opp": "Rina",
+     "venue": "Ryogoku Kokugikan, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-03-27",
+     "opp": "Mai Sakurai",
+     "venue": "Ryogoku Kokugikan, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-04-29",
+     "opp": "Hinami",
+     "venue": "Ota City General Gymnasium, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-05-28",
+     "opp": "Ruaka",
+     "venue": "Ota City General Gymnasium, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-06-28",
+     "opp": "Tomoka Inaba",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": "15-minute time-limit draw"
+    },
+    {
+     "d": "2022-07-09",
+     "opp": "Wakana Tsukiyama",
+     "venue": "Tachikawa Stage Garden, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2022-08-21",
+     "opp": "Miyu Amasaki",
+     "venue": "Aichi Dolphins Arena",
+     "note": ""
+    },
+    {
+     "d": "2022-08-26",
+     "opp": "Aoi",
+     "venue": "Shinagawa Intercity Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 9,
+   "champ": "Ami Sohrei",
+   "won": "2022-10-19",
+   "end": "2023-05-12",
+   "endType": "lost",
+   "vs": "Hanan",
+   "venue": "Shinjuku Sumitomo Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2022-12-16",
+     "opp": "Ruaka",
+     "venue": "Shinjuku Sumitomo Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2023-01-21",
+     "opp": "Mai Sakurai",
+     "venue": "Belle Salle Takadanobaba",
+     "note": ""
+    },
+    {
+     "d": "2023-03-10",
+     "opp": "Lady C",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "champ": "Rina",
+   "won": "2023-05-12",
+   "end": "2024-10-05",
+   "endType": "lost",
+   "vs": "Ami Sohrei",
+   "venue": "Shinagawa Intercity Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2023-06-02",
+     "opp": "Lady C",
+     "venue": "Shinagawa Intercity Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2023-08-19",
+     "opp": "Wakana Tsukiyama",
+     "venue": "The Grand Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2023-09-29",
+     "opp": "Azusa Inaba",
+     "venue": "Shinagawa Intercity Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2023-11-17",
+     "opp": "Hanako",
+     "venue": "Azalea Taisho Hall, Osaka",
+     "note": ""
+    },
+    {
+     "d": "2024-02-04",
+     "opp": "Yumizuki",
+     "venue": "Edion Arena Osaka 1st Gym",
+     "note": ""
+    },
+    {
+     "d": "2024-02-25",
+     "opp": "Miyu Amasaki",
+     "venue": "Utsunomiya Light Cube",
+     "note": ""
+    },
+    {
+     "d": "2024-03-09",
+     "opp": "Miran",
+     "venue": "Yokohama Budokan",
+     "note": ""
+    },
+    {
+     "d": "2024-04-27",
+     "opp": "Sayaka Kurara",
+     "venue": "Yokohama Buntai",
+     "note": ""
+    },
+    {
+     "d": "2024-06-29",
+     "opp": "Nanami",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": "15-minute time-limit draw"
+    },
+    {
+     "d": "2024-07-27",
+     "opp": "Ranna Yagami",
+     "venue": "Sapporo, Hokkaido",
+     "note": ""
+    },
+    {
+     "d": "2024-08-31",
+     "opp": "Hinami",
+     "venue": "Musashino Forest Sport Plaza, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2024-09-29",
+     "opp": "Sakura Aya",
+     "venue": "Tokorozawa Japan Pavilion Hall A",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "champ": "Miyu Amasaki",
+   "won": "2024-10-05",
+   "end": "2025-02-24",
+   "endType": "lost",
+   "vs": "Rina",
+   "venue": "Aichi Dolphins Arena",
+   "defences": [
+    {
+     "d": "2024-12-24",
+     "opp": "Sayaka Kurara",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2025-01-25",
+     "opp": "Azusa Inaba",
+     "venue": "Belle Salle Takadanobaba",
+     "note": ""
+    },
+    {
+     "d": "2025-02-12",
+     "opp": "Hanako",
+     "venue": "Edion Arena Osaka 2nd Gym",
+     "note": "15-minute time-limit draw"
+    }
+   ]
+  },
+  {
+   "n": 12,
+   "champ": "Hina",
+   "won": "2025-02-24",
+   "end": "2025-09-27",
+   "endType": "lost",
+   "vs": "Miyu Amasaki",
+   "venue": "Utsunomiya Light Cube",
+   "defences": [
+    {
+     "d": "2025-04-02",
+     "opp": "Tabata",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2025-04-27",
+     "opp": "Ranna Yagami",
+     "venue": "Yokohama Arena",
+     "note": ""
+    },
+    {
+     "d": "2025-06-21",
+     "opp": "Rian",
+     "venue": "Yoyogi National Gymnasium No. 2",
+     "note": ""
+    },
+    {
+     "d": "2025-07-06",
+     "opp": "Tetsu Akira",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2025-07-21",
+     "opp": "Sayaka Kurara",
+     "venue": "Sapporo, Hokkaido",
+     "note": ""
+    },
+    {
+     "d": "2025-08-23",
+     "opp": "Ranna Yagami",
+     "venue": "Ota City General Gymnasium, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2025-09-10",
+     "opp": "Hime Yuria",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 13,
+   "champ": "Hanako",
+   "won": "2025-09-27",
+   "end": "2026-03-15",
+   "endType": "lost",
+   "vs": "Hina",
+   "venue": "Korakuen Hall, Tokyo",
+   "defences": [
+    {
+     "d": "2025-10-05",
+     "opp": "Sakura Aya",
+     "venue": "Guangzhou, China",
+     "note": ""
+    },
+    {
+     "d": "2025-12-25",
+     "opp": "Rian",
+     "venue": "Belle Salle Shibuya First, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-02-28",
+     "opp": "Tetsu Akira",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-03-12",
+     "opp": "Hime Yuria",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "n": 14,
+   "champ": "Ranna Yagami",
+   "won": "2026-03-15",
+   "end": null,
+   "endType": "",
+   "vs": "Hanako",
+   "venue": "Yokohama Budokan",
+   "defences": [
+    {
+     "d": "2026-03-25",
+     "opp": "Sakura Aya",
+     "venue": "Shin-Kiba 1st Ring, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-03-31",
+     "opp": "Enka",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": "15-minute time-limit draw"
+    },
+    {
+     "d": "2026-04-26",
+     "opp": "Ema Hashijima",
+     "venue": "Yokohama Arena",
+     "note": ""
+    },
+    {
+     "d": "2026-05-23",
+     "opp": "Kian Furusawa",
+     "venue": "Toyota Gosei Memorial Gymnasium",
+     "note": ""
+    },
+    {
+     "d": "2026-06-14",
+     "opp": "Miku Kano",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-06-30",
+     "opp": "Matoi Hamabe",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": ""
+    },
+    {
+     "d": "2026-07-30",
+     "opp": "Calientita",
+     "venue": "Pinballz Lake Creek, USA",
+     "note": ""
+    },
+    {
+     "d": "2026-08-14",
+     "opp": "Izzy Moreno",
+     "venue": "Sun On The Beach, USA",
+     "note": ""
+    },
+    {
+     "d": "2026-08-15",
+     "opp": "Remi Reed",
+     "venue": "Tripping Animals Brewing, Florida",
+     "note": ""
+    },
+    {
+     "d": "2026-09-12",
+     "opp": "Tetsu Akira",
+     "venue": "Yokohama Budokan",
+     "note": ""
+    },
+    {
+     "d": "2026-10-27",
+     "opp": "Azusa Inaba",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": "15-minute time-limit draw"
+    }
+   ]
+  }
+ ]
+}
