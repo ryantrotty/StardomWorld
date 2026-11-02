@@ -6927,7 +6927,7 @@ class MainActivity : Activity() {
   try {
     var fd = JSON.parse(AndroidHost.factionsJson());
     facs = ((fd && fd.factions) || []).map(function(f) {
-      return { id: f.id, name: f.name, members: (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); }) };
+      return { id: f.id, name: f.name, former: !!f.former, members: (f.members || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); }) };
     }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
   } catch (e) {}
 
@@ -7021,6 +7021,8 @@ class MainActivity : Activity() {
     '#tv-fbp .tv-fbh{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;letter-spacing:0;color:#F4C242;white-space:nowrap;}',
     '#tv-fbp .tv-fbcols{display:flex;gap:6px;width:max-content;min-width:100%;}',
     '#tv-fbp .tv-fbcol{flex:1 0 auto;}',
+    '#tv-fbp .tv-fbaz{width:auto;}',
+    '#tv-fbp .tv-fbaz .tv-fbi{break-inside:avoid;}',
     '#tv-fbp .tv-fbcol .tv-fbi{font-size:15px;padding:7px 8px;white-space:nowrap;}',
     '#tv-fbp.tv-co{overflow-x:auto;overflow-y:auto;padding:10px;}',
     '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
@@ -7258,44 +7260,47 @@ class MainActivity : Activity() {
         : item(T('All competitors', 'すべての選手'), !S.co, function() { go({ co: '' }); });
       panel.appendChild(top);
       first = top;
-      var cols = document.createElement('div');
-      cols.className = 'tv-fbcols';
+      // Alphabetical, like the Wrestlers menu: current wrestlers (everyone in a current faction) and past wrestlers
+      // (the past list plus the members of former factions who are not current).
+      var curNames = {}, CUR = [], PST = [];
       facs.forEach(function(f) {
+        if (f.former) return;
+        (f.members || []).forEach(function(m) { var kk = String(m.name).toLowerCase(); if (!curNames[kk]) { curNames[kk] = 1; CUR.push(m); } });
+      });
+      var pastSeen = {};
+      PW.forEach(function(m) { var kk = String(m.name).toLowerCase(); if (!curNames[kk] && !pastSeen[kk]) { pastSeen[kk] = 1; PST.push(m); } });
+      facs.forEach(function(f) {
+        if (!f.former) return;
+        (f.members || []).forEach(function(m) { var kk = String(m.name).toLowerCase(); if (!curNames[kk] && !pastSeen[kk]) { pastSeen[kk] = 1; PST.push(m); } });
+      });
+      function byName(x, y) { return String(x.name).localeCompare(String(y.name), 'en', { sensitivity: 'base' }); }
+      CUR.sort(byName); PST.sort(byName);
+      var cols = document.createElement('div');
+      cols.className = 'tv-fbcols tv-fbaz';
+      function azBlock(title, list, n, grow) {
         var col = document.createElement('div');
         col.className = 'tv-fbcol';
+        col.style.flex = grow + ' 1 0';
         var h = document.createElement('div');
         h.className = 'tv-fbh';
-        h.textContent = String(f.name || '').toUpperCase();
+        h.textContent = title;
         col.appendChild(h);
-        (f.members || []).forEach(function(m) {
+        var body = document.createElement('div');
+        body.style.columnCount = String(n); body.style.columnGap = '8px';
+        list.forEach(function(m) {
           var curM = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
           var it = item(m.name, curM, function() {
             if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
             else go({ co: m.search });
           });
-          col.appendChild(it);
+          body.appendChild(it);
           if (curM) first = it;
         });
+        col.appendChild(body);
         cols.appendChild(col);
-      });
-      if (PW.length) {
-        var pcol = document.createElement('div');
-        pcol.className = 'tv-fbcol';
-        var ph = document.createElement('div');
-        ph.className = 'tv-fbh';
-        ph.textContent = T('PAST WRESTLERS', '元所属選手');
-        pcol.appendChild(ph);
-        PW.forEach(function(m) {
-          var curP = isWr ? String(S.base).toLowerCase() === String(m.search).toLowerCase() : S.co === m.search;
-          var pit = item(m.name, curP, function() {
-            if (isWr) go({ base: m.search, co: S.co === m.search ? '' : S.co });
-            else go({ co: m.search });
-          });
-          pcol.appendChild(pit);
-          if (curP) first = pit;
-        });
-        cols.appendChild(pcol);
       }
+      azBlock(T('CURRENT', '現役'), CUR, 3, 3);
+      if (PST.length) azBlock(T('PAST', '元所属'), PST, 2, 2);
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);

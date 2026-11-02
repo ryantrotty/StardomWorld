@@ -160,6 +160,15 @@
     return q;
   }
   function fallbackQuery(r) { var m = members(r); return m.length > 1 ? m[0] + ' ' + (D.search || 'World of Stardom') : ''; }
+  // When the team search finds nothing: each member alone, then each member's other spellings (D.alias), one search each.
+  function fallbackQueries(r) {
+    var m = members(r), out = [], w = ' ' + (D.search || 'World of Stardom');
+    if (m.length < 2) return out;
+    function add(q) { if (out.indexOf(q) < 0) out.push(q); }
+    m.forEach(function(n) { add(n + w); });
+    m.forEach(function(n) { ((D.alias && D.alias[n]) || []).forEach(function(a) { add(a + w); }); });
+    return out;
+  }
   function fetchPage(q, page, cb) {
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
@@ -217,10 +226,10 @@
   function loadReign(i, tk, part, done) {
     var r = R[i], d = (dbg[i] = dbg[i] || []);
     d.length = 0;
-    var merged = { items: [], seen: {} }, qs = queries(r), k = 0, firstErr = '', fb = fallbackQuery(r);
+    var merged = { items: [], seen: {} }, qs = queries(r), k = 0, firstErr = '', fbs = fallbackQueries(r);
     function step() {
       if (tk !== token) return;
-      if (k >= qs.length && !merged.items.length && fb) { qs.push(fb); fb = ''; }
+      if (k >= qs.length && !merged.items.length && fbs.length) { qs.push(fbs.shift()); }
       if (k >= qs.length) { done(merged.items, merged.items.length ? '' : firstErr); return; }
       var q = qs[k++];
       loadQuery(r, q, tk, d, merged, function() { if (part) part(merged.items); }, function(err) {

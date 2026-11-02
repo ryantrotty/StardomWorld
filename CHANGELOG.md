@@ -12,6 +12,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 - Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
 
+## 2.18.2
+
+- Filter bar Competitors / Wrestler drop-downs: back to two alphabetical lists like the Wrestlers menu: CURRENT (members of current factions, 3 columns) and PAST (the past-wrestlers list plus members of former factions who are not current, 2 columns). The faction columns, which made it too wide, are gone.
+- Championship pages: when a team's search finds nothing, each member is now searched alone, then their other spellings (NEW BLOOD: "Furusawa Kian" added for Kikyo Furusawa), one search at a time.
+
 ## 2.18.1
 
 - Former faction match searches: Oedo Tai "Oedo", Queen's Quest "Quest", Tokyo Cyber Squad "TCS", Donna Del Mondo "DDM" first and then "Donna" once the DDM results run out.
