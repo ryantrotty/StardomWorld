@@ -25,6 +25,58 @@
           "name": "Takumi Iroha",
           "note": "Nanae Takahashi's protege"
         }
+      ],
+      "shows": [
+        {
+          "name": "Ryogoku Cinderella",
+          "sub": "Io Shirai's coronation as Ace",
+          "when": "APR 2013",
+          "search": "Cinderella",
+          "year": "2013"
+        },
+        {
+          "name": "Year-End Climax 2014",
+          "sub": "Korakuen Hall",
+          "when": "DEC 2014",
+          "search": "Climax",
+          "year": "2014"
+        },
+        {
+          "name": "First Korakuen Hall show",
+          "sub": "Nanae Takahashi, first champion",
+          "when": "JUL 2011",
+          "search": "Stardom",
+          "year": "2011"
+        }
+      ],
+      "rivalries": [
+        {
+          "a": "Nanae Takahashi",
+          "b": "Yuzuki Aikawa",
+          "tag": "RIVALRY",
+          "when": "2011–12",
+          "title": "Nanae Takahashi vs Yuzuki Aikawa, veteran and idol",
+          "words": "Nanae Takahashi Yuzuki Aikawa",
+          "year": "2012"
+        },
+        {
+          "a": "Io Shirai",
+          "b": "Natsuki☆Taiyo",
+          "tag": "RIVALRY",
+          "when": "2013",
+          "title": "Io Shirai vs Natsuki☆Taiyo, speed against speed",
+          "words": "Io Shirai Natsuki Taiyo",
+          "year": "2013"
+        },
+        {
+          "a": "Yoshiko",
+          "b": "Act Yasukawa",
+          "tag": "RIVALRY",
+          "when": "2014–15",
+          "title": "Yoshiko vs Act Yasukawa, the delinquent and the rebel",
+          "words": "Yoshiko Act Yasukawa",
+          "year": "2015"
+        }
       ]
     },
     {
@@ -74,7 +126,7 @@
           "b": "Mayu Iwatani",
           "tag": "RIVALRY",
           "when": "2016–17",
-          "title": "Io Shirai vs Mayu Iwatani, the ace and the challenger",
+          "title": "Io Shirai vs Mayu Iwatani, best friends turned rivals",
           "words": "Io Shirai Mayu Iwatani",
           "year": "2016"
         },
@@ -83,18 +135,18 @@
           "b": "Kairi Hojo",
           "tag": "RIVALRY",
           "when": "2015–17",
-          "title": "Io Shirai vs Kairi Hojo, the centrepiece before Kairi left",
+          "title": "Io Shirai vs Kairi Hojo, the Ace vs the Heart",
           "words": "Io Shirai Kairi Hojo",
           "year": "2016"
         },
         {
-          "a": "Threedom",
-          "b": "",
+          "a": "Io Shirai",
+          "b": "Toni Storm",
           "tag": "RIVALRY",
-          "when": "2015–18",
-          "title": "Threedom: Io, Kairi and Mayu together",
-          "words": "Io Shirai Kairi Hojo Mayu Iwatani",
-          "year": ""
+          "when": "2017",
+          "title": "Io Shirai vs Toni Storm, the international showcase",
+          "words": "Io Shirai Toni Storm",
+          "year": "2017"
         }
       ],
       "wrestlers": [
@@ -153,32 +205,25 @@
       ],
       "shows": [
         {
-          "name": "5★STAR GP",
-          "sub": "Summer tournament",
-          "when": "2016",
-          "search": "5★STAR",
-          "year": "2016"
-        },
-        {
-          "name": "Year-End Climax",
-          "sub": "End of the year",
+          "name": "Year-End Climax 2016",
+          "sub": "Io Shirai vs Mayu Iwatani",
           "when": "DEC 2016",
           "search": "Climax",
           "year": "2016"
         },
         {
-          "name": "Cinderella Tournament",
-          "sub": "Spring tournament",
-          "when": "2017",
-          "search": "Cinderella",
+          "name": "Galaxy Stars 2017",
+          "sub": "Mayu Iwatani wins the Red Belt",
+          "when": "JUN 2017",
+          "search": "Galaxy Stars",
           "year": "2017"
         },
         {
-          "name": "Mid-Summer Champions",
-          "sub": "Summer show",
-          "when": "2017",
-          "search": "Mid-Summer",
-          "year": "2017"
+          "name": "5★STAR GP 2015 finals",
+          "sub": "Kairi Hojo wins the tournament",
+          "when": "SEP 2015",
+          "search": "5★STAR",
+          "year": "2015"
         }
       ]
     },
@@ -205,6 +250,58 @@
           "name": "AZM",
           "note": "From junior undercard to workhorse"
         }
+      ],
+      "shows": [
+        {
+          "name": "Stardom Draft 2019",
+          "sub": "Faction warfare at its peak",
+          "when": "APR 2019",
+          "search": "Draft",
+          "year": "2019"
+        },
+        {
+          "name": "5★STAR GP 2018 finals",
+          "sub": "Utami Hayashishita, the Big Rookie",
+          "when": "SEP 2018",
+          "search": "5★STAR",
+          "year": "2018"
+        },
+        {
+          "name": "Flashing Champions 2019",
+          "sub": "Year-End Climax",
+          "when": "DEC 2019",
+          "search": "Flashing Champions",
+          "year": "2019"
+        }
+      ],
+      "rivalries": [
+        {
+          "a": "Momo Watanabe",
+          "b": "Io Shirai",
+          "tag": "RIVALRY",
+          "when": "2018",
+          "title": "Momo Watanabe vs Io Shirai, the Queen's Quest succession",
+          "words": "Momo Watanabe Io Shirai",
+          "year": "2018"
+        },
+        {
+          "a": "Arisa Hoshiki",
+          "b": "Tam Nakano",
+          "tag": "RIVALRY",
+          "when": "2018–19",
+          "title": "Arisa Hoshiki vs Tam Nakano, a grudge inside STARS",
+          "words": "Arisa Hoshiki Tam Nakano",
+          "year": "2019"
+        },
+        {
+          "a": "Kagetsu",
+          "b": "Mayu Iwatani",
+          "tag": "RIVALRY",
+          "when": "2018–19",
+          "title": "Kagetsu vs Mayu Iwatani, Oedo Tai against STARS",
+          "words": "Kagetsu Mayu Iwatani",
+          "year": "2019"
+        }
       ]
     },
     {
@@ -230,6 +327,65 @@
           "name": "Rina",
           "note": "Junior pest turned record-setting champion"
         }
+      ],
+      "shows": [
+        {
+          "name": "All Star Dream Cinderella",
+          "sub": "Budokan, 10th anniversary",
+          "when": "MAR 2021",
+          "search": "Dream Cinderella",
+          "year": "2021"
+        },
+        {
+          "name": "Tokyo Dream Cinderella",
+          "sub": "The 5.5-star draw",
+          "when": "JUN 2021",
+          "search": "Dream Cinderella",
+          "year": "2021"
+        },
+        {
+          "name": "Dream Queendom 2022",
+          "sub": "Ryogoku Kokugikan",
+          "when": "DEC 2022",
+          "search": "Dream Queendom",
+          "year": "2022"
+        },
+        {
+          "name": "All Star Grand Queendom 2023",
+          "sub": "Yokohama Arena",
+          "when": "APR 2023",
+          "search": "Grand Queendom",
+          "year": "2023"
+        }
+      ],
+      "rivalries": [
+        {
+          "a": "Giulia",
+          "b": "Tam Nakano",
+          "tag": "RIVALRY",
+          "when": "2021–23",
+          "title": "Giulia vs Tam Nakano, the blood feud of the boom",
+          "words": "Giulia Tam Nakano",
+          "year": "2021"
+        },
+        {
+          "a": "Utami Hayashishita",
+          "b": "Syuri",
+          "tag": "RIVALRY",
+          "when": "2021–22",
+          "title": "Utami Hayashishita vs Syuri, the workrate masterclass",
+          "words": "Utami Hayashishita Syuri",
+          "year": "2021"
+        },
+        {
+          "a": "AZM",
+          "b": "Starlight Kid",
+          "tag": "RIVALRY",
+          "when": "2021–23",
+          "title": "AZM vs Starlight Kid, rivals since the dojo",
+          "words": "AZM Starlight Kid",
+          "year": "2022"
+        }
       ]
     },
     {
@@ -254,6 +410,58 @@
         {
           "name": "Ranna Yagami",
           "note": "God's Eye kick specialist"
+        }
+      ],
+      "shows": [
+        {
+          "name": "The Conversion",
+          "sub": "Queen's Quest steel cage",
+          "when": "JUN 2024",
+          "search": "Conversion",
+          "year": "2024"
+        },
+        {
+          "name": "All Star Grand Queendom 2024",
+          "sub": "Post-split statement show",
+          "when": "APR 2024",
+          "search": "Grand Queendom",
+          "year": "2024"
+        },
+        {
+          "name": "5★STAR GP 2024 finals",
+          "sub": "Main-event pillars confirmed",
+          "when": "AUG 2024",
+          "search": "5★STAR",
+          "year": "2024"
+        }
+      ],
+      "rivalries": [
+        {
+          "a": "Saya Kamitani",
+          "b": "Tam Nakano",
+          "tag": "RIVALRY",
+          "when": "2024",
+          "title": "Saya Kamitani vs Tam Nakano, Queen's Quest shattered",
+          "words": "Saya Kamitani Tam Nakano",
+          "year": "2024"
+        },
+        {
+          "a": "Neo Genesis",
+          "b": "H.A.T.E.",
+          "tag": "RIVALRY",
+          "when": "2024–25",
+          "title": "Neo Genesis vs H.A.T.E., the faction war",
+          "words": "Neo Genesis H.A.T.E.",
+          "year": "2024"
+        },
+        {
+          "a": "Maika",
+          "b": "Suzu Suzuki",
+          "tag": "RIVALRY",
+          "when": "2024",
+          "title": "Maika vs Suzu Suzuki, the new generation's leader",
+          "words": "Maika Suzu Suzuki",
+          "year": "2024"
         }
       ]
     }
