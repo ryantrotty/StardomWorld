@@ -4808,6 +4808,10 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
             '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-shl-wtabs{display:flex;gap:10px;margin:0 0 8px 0;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{font-size:17px;font-weight:700;padding:7px 24px;border-radius:10px;}',
+            '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{color:#F4C242 !important;}',
+            '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
             '#tv-sm-shelf .tv-shl-cf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px;align-items:start;}',
             '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0;background:#161f2a;border-color:#2a323c;}',
@@ -5321,13 +5325,14 @@ class MainActivity : Activity() {
                   '<div><div class="tv-shl-t">' + esc(T('FORMER FACTIONS', '元ユニット')) + '</div><div>' + ol + '</div></div></div>';
               } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
-              w = 1000;
+              w = 860;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              // Two tabs, CURRENT (open first) and PAST, like the filter bar's wrestler lists.
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
-                '<div style="display:grid;grid-template-columns:3fr 2fr;gap:18px;">' +
-                '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
-                '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div style="column-count:2;column-gap:10px;">' + rowsHtml(prow) + '</div></div></div>';
+                '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
+                '<div class="tv-shl-wl" data-wbody="0" style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>' +
+                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
             }
             else if (key === 'community') {
               w = 980;
@@ -5373,7 +5378,7 @@ class MainActivity : Activity() {
             }
             return { html: h, width: w };
           }
-          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('.tv-sm-fi')) : []; }
+          function fiItems() { return shelfEl ? Array.prototype.slice.call(shelfEl.querySelectorAll('.tv-sm-fi')).filter(function(e) { return e.offsetParent !== null; }) : []; }
           function closeShelf(refocus) {
             if (shelfEl && shelfEl.parentNode) shelfEl.parentNode.removeChild(shelfEl);
             shelfEl = null;
@@ -5394,6 +5399,17 @@ class MainActivity : Activity() {
             shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
             document.body.appendChild(shelfEl);
             try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
+            if (key === 'current') {
+              var wts = shelfEl.querySelectorAll('.tv-shl-wtab'), wbs = shelfEl.querySelectorAll('[data-wbody]');
+              Array.prototype.forEach.call(wts, function(t, ti) {
+                var show = function() {
+                  Array.prototype.forEach.call(wbs, function(bd, bi) { bd.style.display = bi === ti ? '' : 'none'; });
+                  Array.prototype.forEach.call(wts, function(u, ui) { u.classList.toggle('tv-wtab-on', ui === ti); });
+                };
+                t.addEventListener('focus', show);
+                t.addEventListener('click', function(ev) { ev.preventDefault(); show(); });
+              });
+            }
             // Faction cards: every card as tall as the tallest, so the current and former columns line up row by row.
             if (key === 'factions') {
               var fcs = shelfEl.querySelectorAll('.tv-shl-fc'), mh = 0, q;
@@ -5440,6 +5456,12 @@ class MainActivity : Activity() {
               var sc = prim + orth * 2;
               if (sc < bs) { bs = sc; best = it; }
             });
+            // Coming from a list, land on the open tab rather than whichever tab sits nearest.
+            var wtOn = shelfEl.querySelector('.tv-shl-wtab.tv-wtab-on');
+            if (wtOn && cur.getAttribute('data-wtab') === null) {
+              if (best && best.getAttribute('data-wtab') !== null) best = wtOn;
+              if (rowBest && rowBest.getAttribute('data-wtab') !== null) rowBest = null;
+            }
             if (rowBest) { focusItem(rowBest); return true; }
             if (best) { focusItem(best); return true; }
             return false;
@@ -5523,6 +5545,7 @@ class MainActivity : Activity() {
                   stop(e);
                   if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
                   else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
+                  else if (fa.getAttribute('data-wtab')) { /* the list already switched when the tab got focus */ }
                   else if (fa.getAttribute('data-ppv')) { ppvAct(fa.getAttribute('data-id'), fa.getAttribute('data-ppv')); }
                   else if (fa.getAttribute('data-ev')) { evOpen(fa.getAttribute('data-ev')); }
                   else if (fa.getAttribute('data-rem')) { schedToggleRem(fa.getAttribute('data-rem')); }
@@ -7039,7 +7062,7 @@ class MainActivity : Activity() {
     '#tv-fbp .tv-fbcol{flex:1 0 auto;}',
     '#tv-fbp .tv-fbtabs{display:flex;gap:10px;margin:8px 0 10px 0;}',
     '#tv-fbp .tv-fbtabs .tv-fbi{font-size:17px;font-weight:700;padding:8px 26px;border-radius:10px;}',
-    '#tv-fbp .tv-fbazb .tv-fbi{break-inside:avoid;}',
+    '#tv-fbp .tv-fbazb .tv-fbi{break-inside:avoid;font-size:15px;padding:6px 8px;white-space:nowrap;}',
     '#tv-fbp .tv-fbcol .tv-fbi{font-size:15px;padding:7px 8px;white-space:nowrap;}',
     '#tv-fbp.tv-co{overflow-x:auto;overflow-y:auto;padding:10px;}',
     '#tv-fbc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:-6px 0 18px 0;padding:0;font-family:Arial,Helvetica,sans-serif;}',
@@ -7332,6 +7355,7 @@ class MainActivity : Activity() {
     var r = btn.getBoundingClientRect();
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'co' || k === 'wr' || k === 'lo' || k === 'mt' || k === 'ch') { panel.style.left = '30px'; panel.style.right = '30px'; }
+    if (k === 'co' || k === 'wr') { panel.style.maxHeight = Math.max(200, window.innerHeight - (r.bottom + 8) - 14) + 'px'; panel.style.overflowY = 'auto'; }   // never run off the bottom of the screen
     else if (k === 'sh') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 900)) + 'px'; panel.style.width = '880px'; }
     else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';

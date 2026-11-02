@@ -2,15 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
-## 2.18.0
+## 2.18.5
 
-- The app now downloads the daily file (daily.json on the daily-data branch, published once a day by the Muse job) at most every six hours and uses its schedule and its championship lineages. The schedule-only download is the fallback if the daily file cannot be read, and the lists built into the app are the last fallback.
-- A lineage from the daily file is used only when it is complete and has at least as many reigns as the one built into the app, so a newer app is never set back by an older file. The newest schedule wins as before; PPV shows still come from the built-in list.
-- Faction logos (private build) show on the current and former faction menu cards and on the faction pages.
-
-## 2.17.3
-
-- Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
+- Wrestler / Competitors tabs: tighter lines (15px text, 6px padding, as the old columns had) so the lists are about 480px tall at 1280x720 and stop short of the bottom of the screen; the flyout is also capped to the space below the filter bar and scrolls if it ever needs more.
+- Side-nav Wrestlers menu matches: CURRENT and PAST tabs (47 and 34 names), tighter 15px lines, 4 and 3 columns, shelf 860px wide. Down from a tab enters the list; Up from the top of a list returns to the open tab.
 
 ## 2.18.4
 
@@ -28,6 +23,16 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 ## 2.18.1
 
 - Former faction match searches: Oedo Tai "Oedo", Queen's Quest "Quest", Tokyo Cyber Squad "TCS", Donna Del Mondo "DDM" first and then "Donna" once the DDM results run out.
+
+## 2.18.0
+
+- The app now downloads the daily file (daily.json on the daily-data branch, published once a day by the Muse job) at most every six hours and uses its schedule and its championship lineages. The schedule-only download is the fallback if the daily file cannot be read, and the lists built into the app are the last fallback.
+- A lineage from the daily file is used only when it is complete and has at least as many reigns as the one built into the app, so a newer app is never set back by an older file. The newest schedule wins as before; PPV shows still come from the built-in list.
+- Faction logos (private build) show on the current and former faction menu cards and on the faction pages.
+
+## 2.17.3
+
+- Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
 
 ## 2.17.2
 
