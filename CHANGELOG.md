@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.16.2
+
+- Faction matches now trust the site's own search, which also reads video descriptions (that is why God's Eye matches have generic titles). The title-must-contain-the-name rule is gone.
+- STARS: cards whose title has 5★STAR, RED STARS, BLUE STARS, STAR GP or Grand Prix are left out (the 5 Star Grand Prix blocks).
+- Itoh Respect Gundan: searches Maki Itoh + Kikyo Furusawa, then Maki Itoh + Rian, then Kikyo Furusawa + Rian, each only when you reach the end of the one before (the site has no OR). Mi Vida Loca adds Suzu Suzuki + Rina Yamashita the same way. The Japanese extra spellings are removed.
+
 ## 2.16.1
 
 - Factions submenu: header reads "Current factions"; the private build shows each faction's logo at the left of its card; the line reads "Titles held: ..."; the favourite star now sits on the faction name's line; Unaffiliated is no longer listed (its page still works from My Favorites).

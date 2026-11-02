@@ -1,5 +1,5 @@
 {
-  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name), 'match' = whole words a video title must contain to count as a faction match, 'exclude' = words that rule a title out, 'alts' = other spellings searched only when the main name's results are used up (you scrolled to the end), 'captain' and 'founded' are shown on the faction home page and menu, 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
+  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
   "factions": [
     {
       "id": "stars",
@@ -7,19 +7,15 @@
       "founded": "2018",
       "captain": "Hanan",
       "search": "STARS",
-      "alts": [
-        "スターズ"
-      ],
-      "match": [
-        "STARS",
-        "スターズ"
-      ],
+      "alts": [],
       "exclude": [
+        "5★STAR",
+        "5☆STAR",
         "5STAR",
-        "5★",
-        "5☆",
         "5 STAR",
-        "STAR GRAND PRIX",
+        "RED STARS",
+        "BLUE STARS",
+        "STAR GP",
         "Grand Prix"
       ],
       "members": [
@@ -67,13 +63,6 @@
       "founded": "2020",
       "captain": "Natsupoi & Saori Anou",
       "search": "COSMIC ANGELS",
-      "alts": [
-        "コズミック・エンジェルズ"
-      ],
-      "match": [
-        "COSMIC ANGELS",
-        "コズミック・エンジェルズ"
-      ],
       "members": [
         {
           "name": "Sakura Aya",
@@ -107,15 +96,6 @@
       "founded": "2022",
       "captain": "Syuri",
       "search": "God's Eye",
-      "alts": [
-        "Gods Eye",
-        "ゴッズ・アイ"
-      ],
-      "match": [
-        "God's Eye",
-        "Gods Eye",
-        "ゴッズ・アイ"
-      ],
       "members": [
         {
           "name": "Syuri",
@@ -153,13 +133,6 @@
       "founded": "2024",
       "captain": "Starlight Kid",
       "search": "NEO GENESIS",
-      "alts": [
-        "ネオ・ジェネシス"
-      ],
-      "match": [
-        "NEO GENESIS",
-        "ネオ・ジェネシス"
-      ],
       "members": [
         {
           "name": "Starlight Kid",
@@ -189,13 +162,6 @@
       "founded": "2024",
       "captain": "Natsuko Tora",
       "search": "H.A.T.E.",
-      "alts": [
-        "HATE"
-      ],
-      "match": [
-        "H.A.T.E",
-        "HATE"
-      ],
       "members": [
         {
           "name": "Natsuko Tora",
@@ -242,10 +208,7 @@
       "captain": "Suzu Suzuki",
       "search": "Mi Vida Loca",
       "alts": [
-        "Mi Vida Loca Stardom"
-      ],
-      "match": [
-        "Mi Vida Loca"
+        "Suzu Suzuki Rina Yamashita"
       ],
       "members": [
         {
@@ -274,13 +237,10 @@
       "id": "itoh-respect-gundan",
       "name": "Itoh Respect Gundan",
       "captain": "Maki Itoh",
-      "search": "Itoh Respect Gundan",
+      "search": "Maki Itoh Kikyo Furusawa",
       "alts": [
-        "Itoh Respect"
-      ],
-      "match": [
-        "Itoh Respect Gundan",
-        "Itoh Respect"
+        "Maki Itoh Rian",
+        "Kikyo Furusawa Rian"
       ],
       "members": [
         {

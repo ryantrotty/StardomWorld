@@ -6126,7 +6126,7 @@ class MainActivity : Activity() {
   var HOME = fac.home !== false;    // a faction home page (titles held, faction matches); Unaffiliated has none
   var FI = members.length;          // index of the faction's own match list, after the members
   var srcs = members.slice();
-  if (HOME) srcs.push({ name: fac.name, search: fac.search || fac.name, match: fac.match || [fac.name], exclude: fac.exclude || [], alts: fac.alts || [] });
+  if (HOME) srcs.push({ name: fac.name, search: fac.search || fac.name, match: fac.match || null, exclude: fac.exclude || [], alts: fac.alts || [] });
   var S = [];                       // per source (members, then the faction): { items, seen, page, more, loaded, err }
   srcs.forEach(function() { S.push({ items: [], seen: {}, page: 0, more: true, loaded: false, err: '' }); });
   var sel = -1;                     // -1 = the faction home (or the "choose a wrestler" panel without one)
@@ -6146,12 +6146,16 @@ class MainActivity : Activity() {
     }
     return false;
   }
+  // The site's own search decides what matches (it reads descriptions we cannot see). A faction can only list words
+  // that rule a card out by its title (STARS: the 5 Star Grand Prix "RED STARS" / "BLUE STARS" blocks), and may
+  // optionally require a whole word.
   function titleOk(src, t) {
-    if (!src.match || !src.match.length) return true;
     var n = nz(t);
     if ((src.exclude || []).some(function(p) { return n.indexOf(nz(p)) >= 0; })) return false;
+    if (!src.match || !src.match.length) return true;
     return src.match.some(function(p) { return hasWord(n, p); });
   }
+  function filtered(src) { return !!((src.match && src.match.length) || (src.exclude && src.exclude.length)); }
   function altsLeft(i) { var s = S[i]; return HOME && i === FI && s.loaded && (s.alt || 0) < ((srcs[FI].alts || []).length); }
   function canMore(i) { var s = S[i]; return !!(s && (s.more || altsLeft(i))); }
   function curSrc() { return sel >= 0 ? sel : FI; }
@@ -6257,11 +6261,11 @@ class MainActivity : Activity() {
         s.loading = false; busy = false;
         if (err) { s.err = err; if (done) done([]); return; }
         s.err = '';
-        if (srcs[i].match) items = items.filter(function(it) { return titleOk(srcs[i], it.title); });
+        if (filtered(srcs[i])) items = items.filter(function(it) { return titleOk(srcs[i], it.title); });
         var added = [];
         items.forEach(function(it) { if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); added.push(it); } });
         s.page += 1; s.loaded = true;
-        s.more = srcs[i].match ? (more && s.page < 6) : (more && added.length > 0);   // a name-filtered list can have empty pages
+        s.more = filtered(srcs[i]) ? (more && s.page < 6) : (more && added.length > 0);   // a name-filtered list can have empty pages
         if (s.page === 1 && !s.alt) writeCache(srcs[i].search, s);
         if (done) done(added);
       });
@@ -6558,7 +6562,7 @@ class MainActivity : Activity() {
       n++;
       if (items.length) {
         var raw = items.length, more0 = items.length >= 12 || hasNext(document);
-        if (src.match) items = items.filter(function(it) { return titleOk(src, it.title); });
+        if (filtered(src)) items = items.filter(function(it) { return titleOk(src, it.title); });
         var s = { items: items.slice(0, MAX_SAVED), more: more0 };
         writeCache(src.search, s);
         if (HOME && seedIdx === FI) {
