@@ -1,6 +1,6 @@
 # Past factions (notes for later)
 
-Supplied by Ryan on 2026-11-02 for a future "past factions" treatment. Not yet checked against a source, and not used by the app yet. Dates and member lists should be verified before they go into `factions.json`.
+Supplied by Ryan on 2026-11-02 for a future "past factions" treatment. Built into the app in 2.17.0 (factions.json, `former: true`); still not checked against a source. Dates and member lists should be verified before they go into `factions.json`.
 
 | Faction | Formed | Disbanded | Leaders | Notable members during existence |
 |---|---|---|---|---|

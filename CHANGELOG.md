@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.17.0
+
+- Past factions: Oedo Tai, Queen's Quest, Tokyo Cyber Squad, Donna Del Mondo, Club Venus, Empress Nexus Venus and J.A.N. have pages. The Factions menu shows them in a Former factions list beside the current ones (years, notable members; no logos). Their pages show formed and disbanded years, Past Leaders and notable members; no titles held. Former factions' members are not added to Current Wrestlers.
+- Faction match searches for the former factions: "(Oedo Tai)", "(Queen's Quest)", "Donna", "Club", "(E neXus V)"; Tokyo Cyber Squad and J.A.N. return no results on the site and may show an empty list.
+
 ## 2.16.6
 
 - NEW BLOOD lineage: new champions Meni☆Mani (Kikyo Furusawa & Rian) won on Oct 20, 2026 at Korakuen Hall, Tokyo, beating Sakurara (Sakura Aya & Sayaka Kurara) in 16:32; Sakurara's reign ended at two defences. Reign 6 starts with no defences listed.

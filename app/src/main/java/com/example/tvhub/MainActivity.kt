@@ -4649,15 +4649,15 @@ class MainActivity : Activity() {
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
-            var out = [];
+            var out = [], old = [];
             try {
               var d = JSON.parse(AndroidHost.factionsJson());
               (d.factions || []).forEach(function(f) {
                 if (!f.members || !f.members.length) return;
-                out.push([f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
+                (f.former ? old : out).push([f.former ? f.name + ' (former)' : f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
               });
             } catch (e) {}
-            return out;
+            return out.concat(old);
           }
           // "Current Wrestlers": everyone listed in the app's factions.json, once each, in alphabetical order.
           var JA_NAMES = {};
@@ -4667,6 +4667,7 @@ class MainActivity : Activity() {
             try {
               var d = JSON.parse(AndroidHost.factionsJson());
               (d.factions || []).forEach(function(f) {
+                if (f.former) return;   // a former faction's notable members are not all current wrestlers
                 (f.members || []).forEach(function(m) {
                   if (m && m.name && !seen[m.name]) { seen[m.name] = 1; out.push([m.name, m.search || m.name, JA_NAMES[m.name] || m.name]); }
                 });
@@ -4731,6 +4732,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
             '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-shl-cf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px;align-items:start;}',
             '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft:focus{background:#172029;border-color:#F4C242;}',
@@ -5198,7 +5200,7 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
             } else if (key === 'factions') {
               w = 440;
-              var fl = '';
+              var fl = '', ol = '';
               try {
                 var d = JSON.parse(AndroidHost.factionsJson());
                 var facs = (d.factions || []).slice().sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }); });
@@ -5213,6 +5215,13 @@ class MainActivity : Activity() {
                 });
                 facs.forEach(function(f) {
                   if (!f.members || !f.members.length || f.home === false) return;   // Unaffiliated is not listed
+                  if (f.former) {
+                    // Former factions: no logo, no titles; the years and the notable members.
+                    var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
+                    var ol2 = (f.founded || '') + (f.disbanded ? '\u2013' + f.disbanded : '') + ' \u00b7 ' + f.members.length + T(f.members.length === 1 ? ' notable member' : ' notable members', '\u4eba');
+                    ol += '<a class="tv-sm-fi tv-shl-fc" tabindex="0" data-go="' + esc(opath) + '" href="' + esc(absUrl(opath)) + '"><span class="tv-shl-fcx"><span class="tv-shl-fc1 notranslate" translate="no">' + esc(f.name) + '</span><span class="tv-shl-fc2">' + esc(ol2) + '</span></span></a>';
+                    return;
+                  }
                   var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }
                   var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
                   var nm2 = {}; f.members.forEach(function(m) { nm2[m.name.toLowerCase()] = 1; nm2[String(m.search).toLowerCase()] = 1; });
@@ -5224,7 +5233,11 @@ class MainActivity : Activity() {
                     (held.length ? '<span class="tv-shl-ft3">' + esc(T('Titles held: ', '保持王座: ') + held.join(', ')) + '</span>' : '') + '</span></a>';
                 });
               } catch (e) {}
-              h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
+              if (ol) {
+                w = 900;
+                h = '<div class="tv-shl-cf"><div><div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div></div>' +
+                  '<div><div class="tv-shl-t">' + esc(T('FORMER FACTIONS', '元ユニット')) + '</div><div>' + ol + '</div></div></div>';
+              } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 900;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
@@ -6414,10 +6427,12 @@ class MainActivity : Activity() {
   function metaHtml(k, v) { return '<div><div class="tv-hm-k">' + esc(k) + '</div><div class="tv-hm-v notranslate" translate="no">' + esc(v) + '</div></div>'; }
   function buildHome() {
     var meta = '';
-    if (fac.founded) meta += metaHtml(T('FOUNDED', '結成'), fac.founded);
+    if (fac.founded) meta += metaHtml(T(fac.former ? 'FORMED' : 'FOUNDED', '結成'), fac.founded);
+    if (fac.former && fac.disbanded) meta += metaHtml(T('DISBANDED', '解散'), fac.disbanded);
     if (fac.captain) meta += metaHtml(T('CAPTAIN', 'キャプテン'), fac.captain);
-    meta += metaHtml(T('MEMBERS', 'メンバー'), String(members.length));
-    var held = heldTitles();
+    if (fac.former && fac.leaders && fac.leaders.length) meta += metaHtml(T('PAST LEADERS', '歴代リーダー'), fac.leaders.join(', '));
+    meta += metaHtml(T(fac.former ? 'NOTABLE MEMBERS' : 'MEMBERS', fac.former ? '主なメンバー' : 'メンバー'), String(members.length));
+    var held = fac.former ? [] : heldTitles();
     homeEl.innerHTML =
       '<div class="tv-hm-top">' + (logoSrc ? '<img class="tv-hm-logo" src="' + esc(logoSrc) + '" alt="">' : '') +
       '<div><div class="tv-hm-name notranslate" translate="no">' + esc(fac.name) + '</div><div class="tv-hm-meta">' + meta + '</div></div></div>' +

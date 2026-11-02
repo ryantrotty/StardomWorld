@@ -1,5 +1,5 @@
 {
-  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder.",
+  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder. Former factions: 'former': true, with 'disbanded', 'leaders' (shown as Past Leaders) and 'members' = notable members during its existence. They appear in the menu's Former list, not in Current Wrestlers.",
   "factions": [
     {
       "id": "stars",
@@ -243,6 +243,308 @@
         {
           "name": "Rian",
           "search": "Rian"
+        }
+      ]
+    },
+    {
+      "id": "oedo-tai",
+      "name": "Oedo Tai",
+      "former": true,
+      "founded": "2015",
+      "disbanded": "2024",
+      "leaders": [
+        "Kyoko Kimura",
+        "Act Yasukawa",
+        "Kagetsu",
+        "Hana Kimura",
+        "Natsuko Tora"
+      ],
+      "search": "(Oedo Tai)",
+      "members": [
+        {
+          "name": "Kris Wolf",
+          "search": "Kris Wolf"
+        },
+        {
+          "name": "Tam Nakano",
+          "search": "Tam Nakano"
+        },
+        {
+          "name": "Hazuki",
+          "search": "Hazuki"
+        },
+        {
+          "name": "Sumire Natsu",
+          "search": "Sumire Natsu"
+        },
+        {
+          "name": "Jamie Hayter",
+          "search": "Jamie Hayter"
+        },
+        {
+          "name": "Bea Priestley",
+          "search": "Bea Priestley"
+        },
+        {
+          "name": "Saki Kashima",
+          "search": "Saki Kashima"
+        },
+        {
+          "name": "Starlight Kid",
+          "search": "Starlight Kid"
+        },
+        {
+          "name": "Ruaka",
+          "search": "Ruaka"
+        },
+        {
+          "name": "Rina",
+          "search": "Rina"
+        },
+        {
+          "name": "Momo Watanabe",
+          "search": "Momo Watanabe"
+        },
+        {
+          "name": "Fukigen Death",
+          "search": "Fukigen Death"
+        }
+      ]
+    },
+    {
+      "id": "queens-quest",
+      "name": "Queen's Quest",
+      "former": true,
+      "founded": "2016",
+      "disbanded": "2024",
+      "leaders": [
+        "Io Shirai",
+        "Momo Watanabe",
+        "Utami Hayashishita",
+        "Saya Kamitani"
+      ],
+      "search": "(Queen's Quest)",
+      "members": [
+        {
+          "name": "AZM",
+          "search": "AZM"
+        },
+        {
+          "name": "HZK",
+          "search": "HZK"
+        },
+        {
+          "name": "Viper",
+          "search": "Viper"
+        },
+        {
+          "name": "Chardonnay",
+          "search": "Chardonnay"
+        },
+        {
+          "name": "Bea Priestley",
+          "search": "Bea Priestley"
+        },
+        {
+          "name": "Konami",
+          "search": "Konami"
+        },
+        {
+          "name": "Leo Onozaki",
+          "search": "Leo Onozaki"
+        },
+        {
+          "name": "Hina",
+          "search": "Hina"
+        },
+        {
+          "name": "Lady C",
+          "search": "Lady C"
+        },
+        {
+          "name": "Miyu Amasaki",
+          "search": "Miyu Amasaki"
+        }
+      ]
+    },
+    {
+      "id": "tokyo-cyber-squad",
+      "name": "Tokyo Cyber Squad (TCS)",
+      "former": true,
+      "founded": "2019",
+      "disbanded": "2020",
+      "leaders": [
+        "Hana Kimura"
+      ],
+      "search": "Tokyo Cyber Squad",
+      "members": [
+        {
+          "name": "Jungle Kyona",
+          "search": "Jungle Kyona"
+        },
+        {
+          "name": "Konami",
+          "search": "Konami"
+        },
+        {
+          "name": "Death Yama-san",
+          "search": "Death Yama-san"
+        },
+        {
+          "name": "Ruaka",
+          "search": "Ruaka"
+        },
+        {
+          "name": "Rina",
+          "search": "Rina"
+        },
+        {
+          "name": "Leyla Hirsch",
+          "search": "Leyla Hirsch"
+        },
+        {
+          "name": "Bobbi Tyler",
+          "search": "Bobbi Tyler"
+        },
+        {
+          "name": "Zoe Lucas",
+          "search": "Zoe Lucas"
+        }
+      ]
+    },
+    {
+      "id": "donna-del-mondo",
+      "name": "Donna Del Mondo (DDM)",
+      "former": true,
+      "founded": "2020",
+      "disbanded": "2024",
+      "leaders": [
+        "Giulia"
+      ],
+      "search": "Donna",
+      "members": [
+        {
+          "name": "Syuri",
+          "search": "Syuri"
+        },
+        {
+          "name": "Maika",
+          "search": "Maika"
+        },
+        {
+          "name": "Himeka",
+          "search": "Himeka"
+        },
+        {
+          "name": "Natsupoi",
+          "search": "Natsupoi"
+        },
+        {
+          "name": "Mai Sakurai",
+          "search": "Mai Sakurai"
+        },
+        {
+          "name": "Mirai",
+          "search": "Mirai"
+        },
+        {
+          "name": "Thekla",
+          "search": "Thekla"
+        }
+      ]
+    },
+    {
+      "id": "club-venus",
+      "name": "Club Venus",
+      "former": true,
+      "founded": "2022",
+      "disbanded": "2024",
+      "leaders": [
+        "Mina Shirakawa"
+      ],
+      "search": "Club",
+      "members": [
+        {
+          "name": "Mariah May",
+          "search": "Mariah May"
+        },
+        {
+          "name": "Xia Brookside",
+          "search": "Xia Brookside"
+        },
+        {
+          "name": "Xena",
+          "search": "Xena"
+        },
+        {
+          "name": "Waka Tsukiyama",
+          "search": "Waka Tsukiyama"
+        },
+        {
+          "name": "Jessie",
+          "search": "Jessie"
+        }
+      ]
+    },
+    {
+      "id": "empress-nexus-venus",
+      "name": "Empress Nexus Venus (EXV)",
+      "former": true,
+      "founded": "2024",
+      "disbanded": "2026",
+      "leaders": [
+        "Maika"
+      ],
+      "search": "(E neXus V)",
+      "members": [
+        {
+          "name": "Mina Shirakawa",
+          "search": "Mina Shirakawa"
+        },
+        {
+          "name": "Waka Tsukiyama",
+          "search": "Waka Tsukiyama"
+        },
+        {
+          "name": "Hanako",
+          "search": "Hanako"
+        },
+        {
+          "name": "Xena",
+          "search": "Xena"
+        },
+        {
+          "name": "Rian",
+          "search": "Rian"
+        }
+      ]
+    },
+    {
+      "id": "jan",
+      "name": "J.A.N. (Jungle Assault Nation)",
+      "former": true,
+      "founded": "2018",
+      "disbanded": "2019",
+      "leaders": [
+        "Jungle Kyona"
+      ],
+      "search": "Jungle Assault Nation",
+      "members": [
+        {
+          "name": "Natsuko Tora",
+          "search": "Natsuko Tora"
+        },
+        {
+          "name": "Kaori Yoneyama",
+          "search": "Kaori Yoneyama"
+        },
+        {
+          "name": "Leo Onozaki",
+          "search": "Leo Onozaki"
+        },
+        {
+          "name": "Saya Iida",
+          "search": "Saya Iida"
         }
       ]
     },
