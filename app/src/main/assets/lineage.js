@@ -151,18 +151,15 @@
   function nm(r) { return r.team || plain(r.champ); }
   function members(r) { return plain(r.champ).split(/\s*(?:&|,)\s*/).filter(Boolean); }
   function baseQuery(r) { return members(r).join(' ') + ' ' + (D.search || 'World of Stardom'); }
-  // A team is searched by all its members first; if that finds nothing, by the first member alone.
+  // Same words as the filter bar (assets/championships.json): the championship's search word with the wrestler's name, plus its
+  // other names (D.alts, e.g. "Cutest of Cute") searched once each. A team is searched by all its members first; the first
+  // member alone is only tried when nothing was found.
   function queries(r) {
     var m = members(r), q = [baseQuery(r)];
-    if (m.length > 1) q.push(m[0] + ' ' + (D.search || 'World of Stardom'));
+    (D.alts || []).forEach(function(a) { q.push(m.join(' ') + ' ' + a); });
     return q;
   }
-  // the site's own year filter is a keyword: "Suzu Suzuki World of Stardom 2026/" finds the cards dated 2026/..
-  function yearQueries(r) {
-    var y0 = new Date(r.ms).getUTCFullYear(), y1 = new Date(r.cur ? NOW : r.endMs).getUTCFullYear(), out = [];
-    for (var y = y0; y <= y1; y++) out.push(baseQuery(r) + ' ' + y + '/');
-    return out;
-  }
+  function fallbackQuery(r) { var m = members(r); return m.length > 1 ? m[0] + ' ' + (D.search || 'World of Stardom') : ''; }
   function fetchPage(q, page, cb) {
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
@@ -220,10 +217,11 @@
   function loadReign(i, tk, part, done) {
     var r = R[i], d = (dbg[i] = dbg[i] || []);
     d.length = 0;
-    var merged = { items: [], seen: {} }, qs = queries(r), k = 0, firstErr = '';
+    var merged = { items: [], seen: {} }, qs = queries(r), k = 0, firstErr = '', fb = fallbackQuery(r);
     function step() {
       if (tk !== token) return;
-      if (k >= qs.length || (k > 0 && merged.items.length)) { done(merged.items, merged.items.length ? '' : firstErr); return; }
+      if (k >= qs.length && !merged.items.length && fb) { qs.push(fb); fb = ''; }
+      if (k >= qs.length) { done(merged.items, merged.items.length ? '' : firstErr); return; }
       var q = qs[k++];
       loadQuery(r, q, tk, d, merged, function() { if (part) part(merged.items); }, function(err) {
         if (err && !firstErr) firstErr = err;
@@ -503,7 +501,7 @@
 
   function cachedFor(i) {
     var r = R[i], cc = readCache(), ok = false;
-    queries(r).forEach(function(q) { var c = cc[q]; if (c && c.items && c.items.length && Date.now() - c.t < (r.cur ? 3 * 3600000 : 14 * 86400000)) ok = true; });
+    queries(r).concat(fallbackQuery(r) ? [fallbackQuery(r)] : []).forEach(function(q) { var c = cc[q]; if (c && c.items && c.items.length && Date.now() - c.t < (r.cur ? 3 * 3600000 : 14 * 86400000)) ok = true; });
     return ok;
   }
   // Videos load on their own for the current champion and for any reign already saved on the device; the rest wait for OK.
