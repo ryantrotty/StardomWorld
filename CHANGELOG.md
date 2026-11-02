@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.18.0
+
+- The app now downloads the daily file (daily.json on the daily-data branch, published once a day by the Muse job) at most every six hours and uses its schedule and its championship lineages. The schedule-only download is the fallback if the daily file cannot be read, and the lists built into the app are the last fallback.
+- A lineage from the daily file is used only when it is complete and has at least as many reigns as the one built into the app, so a newer app is never set back by an older file. The newest schedule wins as before; PPV shows still come from the built-in list.
+- Faction logos (private build) show on the current and former faction menu cards and on the faction pages.
+
 ## 2.17.3
 
 - Former faction cards in the Factions menu show the faction logo (private build with the logo file) in the same place as the current ones; without a logo file the card keeps its blank space so the heights match.
