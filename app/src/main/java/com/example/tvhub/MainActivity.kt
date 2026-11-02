@@ -4737,6 +4737,22 @@ class MainActivity : Activity() {
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
             return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]), m[2]]; });
           }
+          // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
+          function pastWrestlers() {
+            var have = {}, out = [];
+            currentWrestlers().forEach(function(r) { have[r[0].toLowerCase()] = 1; });
+            wrestlers(PAST_W).forEach(function(r) { have[r[0].toLowerCase()] = 1; out.push(r); });
+            try {
+              var d = JSON.parse(AndroidHost.factionsJson());
+              (d.factions || []).forEach(function(f) {
+                if (!f.former) return;
+                (f.members || []).forEach(function(m) {
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name), JA_NAMES[m.name] || m.name]); }
+                });
+              });
+            } catch (e) {}
+            return out;
+          }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
           var HINT_KEY = 'tvMenuHintV1';
           var REOPEN_KEY = 'tvMenuReopenV1';
@@ -5305,13 +5321,13 @@ class MainActivity : Activity() {
                   '<div><div class="tv-shl-t">' + esc(T('FORMER FACTIONS', '元ユニット')) + '</div><div>' + ol + '</div></div></div>';
               } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
-              w = 900;
+              w = 1000;
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              var prow = wrestlers(PAST_W).slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
+              var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
-                '<div style="display:grid;grid-template-columns:3fr 1fr;gap:18px;">' +
+                '<div style="display:grid;grid-template-columns:3fr 2fr;gap:18px;">' +
                 '<div><div class="tv-shl-h">' + esc(T('CURRENT', '現役')) + '</div><div style="column-count:3;column-gap:10px;">' + rowsHtml(crow) + '</div></div>' +
-                '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div>' + rowsHtml(prow) + '</div></div></div>';
+                '<div><div class="tv-shl-h">' + esc(T('PAST', '元所属')) + '</div><div style="column-count:2;column-gap:10px;">' + rowsHtml(prow) + '</div></div></div>';
             }
             else if (key === 'community') {
               w = 980;
