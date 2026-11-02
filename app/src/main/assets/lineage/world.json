@@ -30,6 +30,12 @@
   ],
   "Tam Nakano": [
    "Nakano Tam"
+  ],
+  "Yoko Bito": [
+   "Yoko Mito"
+  ],
+  "Saori Anou": [
+   "Saori Anno"
   ]
  },
  "reigns": [
@@ -39,7 +45,7 @@
    "won": "2011-07-24",
    "end": "2013-03-17",
    "endType": "lost",
-   "vs": "Yoko Mito",
+   "vs": "Yoko Bito",
    "venue": "Korakuen Hall, Tokyo",
    "defences": [
     {
@@ -283,7 +289,7 @@
     },
     {
      "d": "2016-10-30",
-     "opp": "Yoko Mito",
+     "opp": "Yoko Bito",
      "venue": "Korakuen Hall, Tokyo",
      "note": ""
     },
@@ -342,7 +348,7 @@
    "defences": [
     {
      "d": "2017-07-16",
-     "opp": "Yoko Mito",
+     "opp": "Yoko Bito",
      "venue": "Korakuen Hall, Tokyo",
      "note": ""
     },
@@ -845,7 +851,7 @@
     },
     {
      "d": "2025-12-29",
-     "opp": "Saori Anno",
+     "opp": "Saori Anou",
      "venue": "Ryogoku Kokugikan",
      "note": ""
     },
