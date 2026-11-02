@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.13.5
+
+- Lineage page: the champion box at the top follows the reign chosen on the strip (name, days, defences, win, and how it ended: lost to whom, or vacated).
+- The strip now runs newest to oldest, current champion first and focused; Right goes back in time, Left goes forward (Left on the current reign still opens the menu). Year ticks are reversed to match.
+- The reign's match facts (win and defences) moved below the video row, under "Matches in this reign".
+- The all-videos button reads "All World of Stardom Championship matches" and is as wide as the champion box.
+- Fewer site requests: the per-year searches are gone (they found nothing the plain search missed), so a reign costs one search of up to three pages. Videos load by themselves only for the current champion and for reigns already saved on the device; for any other reign press OK to load them. Moving along the strip makes no requests.
+
 ## 2.13.4
 
 - Lineage page redesigned around what the site actually has. The win and each defence are now plain fact rows (date, opponent, venue, PPV), not video cards. Below them is one video row, built like the app's other video rows (22/700 heading with gold bar, four cards across, scrolls sideways): every World of Stardom championship match the search finds for that champion.

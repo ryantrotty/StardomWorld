@@ -86,6 +86,7 @@
       SEG.push({ i: i, days: r.days });
     });
     SEG.forEach(function(s) { TOTAL += s.days; });
+    SEG.reverse();   // shown newest first
   }
 
   function eventsOf(r) {
@@ -208,7 +209,7 @@
   function loadReign(i, tk, part, done) {
     var r = R[i], d = (dbg[i] = dbg[i] || []);
     d.length = 0;
-    var merged = { items: [], seen: {} }, qs = yearQueries(r).concat([baseQuery(r)]), k = 0, firstErr = '';
+    var merged = { items: [], seen: {} }, qs = [baseQuery(r)], k = 0, firstErr = '';
     function step() {
       if (tk !== token) return;
       if (k >= qs.length) { done(merged.items, merged.items.length ? '' : firstErr); return; }
@@ -298,12 +299,12 @@
     '.ln-plate{width:300px;height:200px;border-radius:14px;background:#0F151C;border:3px solid #2A323C;display:flex;align-items:center;justify-content:center;}',
     '.ln-hx{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px;}',
     '.ln-eb{font-size:13px;font-weight:800;letter-spacing:1px;color:#9AA6B4;text-transform:uppercase;}',
-    '.ln-cur{background:#121922;border:3px solid #2A323C;border-radius:14px;padding:18px 24px;display:flex;flex-direction:column;gap:6px;}',
+    '.ln-cur{min-height:148px;background:#121922;border:3px solid #2A323C;border-radius:14px;padding:18px 24px;display:flex;flex-direction:column;gap:6px;}',
     '.ln-cur .k{font-size:13px;font-weight:800;letter-spacing:1px;color:#F4C242;text-transform:uppercase;}',
     '.ln-cur .n{font-size:26px;font-weight:900;line-height:1.1;}',
     '.ln-cur .s{font-size:16px;color:#C9D2DC;}',
     '.ln-sum{font-size:15px;color:#9AA6B4;}',
-    '.ln-btn{align-self:flex-start;display:inline-block;padding:8px 16px;border-radius:8px;background:#161F2A;border:2px solid #2A323C;font-size:17px;font-weight:600;color:#C9D2DC;cursor:pointer;}',
+    '.ln-btn{align-self:stretch;display:block;text-align:center;padding:12px 16px;border-radius:8px;background:#161F2A;border:2px solid #2A323C;font-size:17px;font-weight:600;color:#C9D2DC;cursor:pointer;}',
     '#tv-ln .ln-btn:focus{background:#172029;border-color:#F4C242;color:#fff;font-weight:700;}',
     '.ln-strip{display:flex;height:64px;margin:0 2px;}',
     '.ln-b{flex:1 1 0;min-width:9px;box-sizing:border-box;border-right:2px solid #0B1118;background:#2A323C;color:#C9D2DC;font-size:12px;font-weight:700;display:flex;align-items:flex-end;padding:0 6px 6px 6px;overflow:hidden;white-space:nowrap;cursor:pointer;}',
@@ -352,8 +353,16 @@
 
   var STAR = '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
   var PLAY = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
-  var sel = R.length - 1, searching = false, errNote = '', result = null, timer = 0;
+  var sel = R.length - 1, waiting = false, searching = false, errNote = '', result = null, timer = 0;
 
+  function curBox(i) {
+    var r = R[i], nx = R[i + 1], lines;
+    var k = r.cur ? T('Current champion', '現王者') : T('Champion', '王者');
+    var s1 = T(r.days + ' days · ' + r.defences.length + (r.defences.length === 1 ? ' defence' : ' defences') + ' · won ' + fmtD(r.won) + ' vs ' + plain(r.vs), r.days + '日 · 防衛' + r.defences.length + '回 · ' + fmtD(r.won) + ' 獲得');
+    var s2 = '';
+    if (!r.cur && r.end) s2 = r.endType === 'vacated' ? T('Vacated ' + fmtD(r.end), fmtD(r.end) + ' 返上') : T('Lost to ' + (nx ? plain(nx.champ) : '') + ' on ' + fmtD(r.end), fmtD(r.end) + ' 陥落');
+    return '<div class="ln-cur"><div class="k">' + esc(k + ' · ' + T(ord(r.n) + ' reign', '第' + r.n + '代')) + '</div><div class="n">' + esc(r.champ) + '</div><div class="s">' + esc(s1) + '</div>' + (s2 ? '<div class="s">' + esc(s2) + '</div>' : '') + '</div>';
+  }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';
     try { belt = H.beltDataUri ? H.beltDataUri(P) : ''; } catch (e) { belt = ''; }
@@ -361,14 +370,11 @@
     R.forEach(function(r) { if (r.days > longest.days) longest = r; });
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
     var pic = belt ? '<img src="' + belt + '" alt="">' : '<div class="ln-plate">' + STAR + '</div>';
-    var curLine = cur.cur
-      ? '<div class="ln-cur"><div class="k">' + esc(T('Current champion', '現王者')) + ' · ' + esc(T(ord(cur.n) + ' reign', '第' + cur.n + '代')) + '</div><div class="n">' + esc(cur.champ) + '</div><div class="s">' +
-        esc(T(cur.days + ' days · ' + cur.defences.length + (cur.defences.length === 1 ? ' defence' : ' defences') + ' · won ' + fmtD(cur.won) + ' vs ' + plain(cur.vs), cur.days + '日 · 防衛' + cur.defences.length + '回 · ' + fmtD(cur.won) + ' 獲得')) + '</div></div>'
-      : '<div class="ln-cur"><div class="k">' + esc(T('Vacant', '空位')) + '</div></div>';
+    var curLine = '<div id="ln-cur">' + curBox(sel) + '</div>';
     return '<div class="ln-hero"><div class="ln-belt">' + pic + '</div><div class="ln-hx"><div class="ln-eb">' +
       esc(T('Stardom · ' + (D.kind || 'Singles') + ' · since ' + fmtD(D.since), 'スターダム · ' + fmtD(D.since) + '〜')) + '</div>' + curLine +
       '<div class="ln-sum">' + esc(T(R.length + ' reigns · ' + years + ' years · longest reign ' + longest.days + ' days (' + longest.champ + ')', R.length + '代 · ' + years + '年 · 最長 ' + longest.days + '日 (' + longest.champ + ')')) + '</div>' +
-      '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(D.path || ('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(D.search || '')))) + '">' + esc(T('All videos ›', 'すべての動画 ›')) + '</a>' +
+      '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(D.path || ('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(D.search || '')))) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
       '</div></div>';
   }
 
@@ -381,9 +387,9 @@
       h += '<div class="ln-b' + (s.i === sel ? ' sel' : '') + (r.cur ? ' cur' : '') + '" tabindex="0" data-k="r" data-i="' + s.i + '" style="flex-grow:' + s.days + '">' + lab + '</div>';
     });
     h += '</div><div class="ln-ticks">';
-    var y0 = new Date(ms(R[0].won)).getUTCFullYear(), y1 = new Date(NOW).getUTCFullYear(), t0 = ms(R[0].won);
-    for (var y = y0 + 1; y <= y1; y++) {
-      var left = (Date.UTC(y, 0, 1) - t0) / 86400000 / TOTAL * 100;
+    var y0 = new Date(ms(R[0].won)).getUTCFullYear(), y1 = new Date(NOW).getUTCFullYear(), tN = R[R.length - 1].endMs;
+    for (var y = y0; y <= y1; y++) {
+      var left = Math.max(0, (tN - Date.UTC(y + 1, 0, 1)) / 86400000 / TOTAL * 100);
       h += '<div class="ln-tick" style="left:' + left.toFixed(2) + '%">' + y + '</div>';
     }
     return h + '</div>';
@@ -409,9 +415,10 @@
     var head = '<div class="ln-h">' + esc(T('REIGN ' + r.n + ' · ' + String(r.champ).toUpperCase(), '第' + r.n + '代 · ' + r.champ)) + '<span>' + esc(span) + '</span></div>';
     var facts = '<div class="ln-fx">' + ev.map(function(e) { return factHtml(e, r); }).join('') + '</div>';
     var vh = '<div class="ln-vh"><span class="bar"></span><span>' + esc(T(D.title + ' matches · ' + plain(r.champ), plain(r.champ) + ' · ' + (D.ja || D.title))) + '</span>' +
-      '<span class="n">' + esc(searching ? T('looking for videos', '動画を検索中') : (result ? T(result.rows.length + ' videos · ' + result.inN + ' from this reign', result.rows.length + '本 · 王者期間 ' + result.inN + '本') : '')) + '</span></div>';
+      '<span class="n">' + esc(searching ? T('looking for videos', '動画を検索中') : (waiting ? T('not loaded yet', '未読み込み') : result ? T(result.rows.length + ' videos · ' + result.inN + ' from this reign', result.rows.length + '本 · 王者期間 ' + result.inN + '本') : '')) + '</span></div>';
     var row = '';
     if (result && result.rows.length) row = '<div class="ln-vr">' + result.rows.slice(0, 40).map(videoHtml).join('') + '</div>';
+    else if (waiting) row = '<div class="ln-note">' + esc(T('Press OK on this reign to load its videos.', 'OKを押すとこの王者の動画を読み込みます。')) + '</div>';
     else if (!searching) row = '<div class="ln-note">' + esc(T('No championship videos were found for this champion.', 'この王者の王座戦動画は見つかりませんでした。')) + '</div>';
     else row = '<div class="ln-note">' + esc(T('Looking for the video...', '動画を検索中...')) + '</div>';
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
@@ -421,11 +428,13 @@
       sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql) + ' \u00b7 cards read: ' + result.total + ' \u00b7 championship matches: ' + result.rows.length + ' \u00b7 dated inside this reign: ' + result.inN +
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
     }
-    return head + facts + vh + row + note + sum;
+    var fh = '<div class="ln-h">' + esc(T('MATCHES IN THIS REIGN', 'この王者期間の試合')) + '</div>';
+    return head + vh + row + note + fh + facts + sum;
   }
 
   function debugHtml() {
     var r = R[sel], lines = (dbg[sel] || []).slice();
+    if (waiting) lines.push('videos not loaded: press OK on this reign (no request made)');
     if (result) {
       result.rows.slice(0, 40).forEach(function(it) {
         lines.push((it.inReign ? 'IN REIGN  ' : 'other     ') + (it.cd ? it.cd + ' (' + it.cdSrc + ')' : 'no date, video ' + (cardId(it) || '?')) + '  ' + it.t + ' [' + it.h.replace(/^https?:\/\/[^\/]+/, '') + ']');
@@ -473,14 +482,27 @@
   function hint() {
     var el = document.getElementById('tv-ln-hint'), ae = document.activeElement, k = ae && ae.getAttribute ? ae.getAttribute('data-k') : '';
     if (!el) return;
-    el.textContent = k === 'r' ? T('Left / Right: reign · Down: videos', '左右：王者 · 下：動画') : (k === 'c' ? T('OK: play the match', 'OK：再生') : '');
+    el.textContent = k === 'r' ? T('Left / Right: reign · OK: load videos · Down: videos', '左右：王者 · OK：動画読込 · 下：動画') : (k === 'c' ? T('OK: play the match', 'OK：再生') : '');
   }
 
-  function choose(i, now) {
-    if (i === sel && result) return;
+  function cachedFor(i) {
+    var r = R[i], c = readCache()[baseQuery(r)];
+    return !!(c && c.items && c.items.length && Date.now() - c.t < (r.cur ? 3 * 3600000 : 14 * 86400000));
+  }
+  // Videos load on their own for the current champion and for any reign already saved on the device; the rest wait for OK.
+  function choose(i, now, force) {
+    if (i === sel && (result || searching) && !force) return;
     sel = i; result = null; errNote = '';
     token++;
     clearTimeout(timer);
+    var ce = document.getElementById('ln-cur'); if (ce) ce.innerHTML = curBox(sel);
+    if (!force && i !== R.length - 1 && !cachedFor(i)) {
+      searching = false; waiting = true;
+      Array.prototype.forEach.call(root.querySelectorAll('.ln-b'), function(b) { b.classList.toggle('sel', +b.getAttribute('data-i') === sel); });
+      renderDetail();
+      return;
+    }
+    waiting = false;
     searching = true;
     // restyle the strip and show the events at once; the search starts once the choice settles
     Array.prototype.forEach.call(root.querySelectorAll('.ln-b'), function(b) { b.classList.toggle('sel', +b.getAttribute('data-i') === sel); });
@@ -516,9 +538,9 @@
     var list = focusables(), cur = document.activeElement;
     if (list.indexOf(cur) < 0) { focusEl(list[0]); return true; }
     if (cur.getAttribute('data-k') === 'r' && (dir === 'left' || dir === 'right')) {
-      var i = +cur.getAttribute('data-i') + (dir === 'right' ? 1 : -1);
-      if (i < 0) return false;
-      if (i >= R.length) return true;
+      var i = +cur.getAttribute('data-i') + (dir === 'right' ? -1 : 1);
+      if (i >= R.length) return false;
+      if (i < 0) return true;
       var b = root.querySelector('.ln-b[data-i="' + i + '"]');
       if (b) { focusEl(b); choose(i, false); }
       return true;
@@ -557,11 +579,11 @@
     else if (k === 39) { stop(); move('right'); }
     else if (k === 38) { stop(); if (!move('up')) { var sc = root.querySelector('#tv-ln-scroll'); if (sc) sc.scrollTop = Math.max(0, sc.scrollTop - 320); } }
     else if (k === 40) { stop(); if (!move('down')) { var sd = root.querySelector('#tv-ln-scroll'); if (sd) sd.scrollTop += 320; } }
-    else if ((k === 13 || k === 23 || k === 32) && ae.getAttribute('data-k') === 'r') { stop(); choose(+ae.getAttribute('data-i'), true); var c = root.querySelector('.ln-c[tabindex]'); if (c) focusEl(c); }
+    else if ((k === 13 || k === 23 || k === 32) && ae.getAttribute('data-k') === 'r') { stop(); var oi = +ae.getAttribute('data-i'); if (oi === sel && result) { var c = root.querySelector('.ln-c[tabindex]'); if (c) focusEl(c); } else choose(oi, true, true); }
   }, true);
   root.addEventListener('click', function(e) {
     var b = e.target && e.target.closest ? e.target.closest('.ln-b[data-i]') : null;
-    if (b) { e.preventDefault(); focusEl(b); choose(+b.getAttribute('data-i'), true); }
+    if (b) { e.preventDefault(); focusEl(b); var bi = +b.getAttribute('data-i'); if (bi === sel && result) { var c0 = root.querySelector('.ln-c[tabindex]'); if (c0) focusEl(c0); } else choose(bi, true, true); }
   }, true);
   document.addEventListener('focusin', function() { if (document.getElementById('tv-ln')) hint(); }, true);
 
