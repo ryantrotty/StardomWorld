@@ -4595,7 +4595,14 @@ class MainActivity : Activity() {
           function champGroups() {
             try { var d = JSON.parse(AndroidHost.championshipsJson()); return (d && d.groups) || []; } catch (e) { return []; }
           }
+          // Titles with a lineage file (assets/lineage/<id>.json) open their lineage page.
+          var LN_HAS = {};
+          function hasLineage(id) {
+            if (!(id in LN_HAS)) { try { LN_HAS[id] = !!AndroidHost.lineageJson(id); } catch (e) { LN_HAS[id] = false; } }
+            return LN_HAS[id];
+          }
           function champPath(x) {
+            if (x.id && x.id !== 'any' && x.id !== 'other' && hasLineage(x.id)) return '/mypage?tvch=' + encodeURIComponent(x.id);
             if (x.path) return x.path;
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id);
           }

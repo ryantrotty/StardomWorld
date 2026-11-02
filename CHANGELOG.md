@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.14.0
+
+- Wonder of Stardom lineage page: all 26 reigns with every title win and defence, same layout as World of Stardom. Championships menu entries open a lineage page for any title that has a lineage file.
+
 ## 2.13.7
 
 - Lineage page: about 20% more space above and below the lineage strip, its year labels and the video row heading.
