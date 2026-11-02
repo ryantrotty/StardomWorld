@@ -1,44 +1,14 @@
 {
- "generated": "2026-11-02T19:28:24Z",
+ "generated": "2026-11-02T20:04:58Z",
  "status": {
   "result": "ok",
-  "started": "2026-11-02T19:22:04Z",
-  "finished": "2026-11-02T19:28:24Z",
-  "requests": 51,
+  "started": "2026-11-02T19:56:19Z",
+  "finished": "2026-11-02T20:04:58Z",
+  "requests": 36,
   "schedule": {
    "ok": true,
    "events": 33,
-   "changed": [
-    "20261103-numazu",
-    "20261104-gxw",
-    "20261106-senjo",
-    "20261107-event",
-    "20261108-takasaki",
-    "20261109-judo",
-    "20261111-korakuen",
-    "20261114-matsuyama",
-    "20261115-kochi",
-    "20261118-korakuen",
-    "20261120-njpw",
-    "20261121-akita",
-    "20261122-fukushima",
-    "20261123-koriyama",
-    "20261126-ppp",
-    "20261128-okazaki",
-    "20261129-hamamatsu",
-    "20261204-ryukyu",
-    "20261205-himeji",
-    "20261206-kobe",
-    "20261210-korakuen",
-    "20261213-fuji",
-    "20261214-jto",
-    "20261217-itodojyo",
-    "20261219-utsunomiya",
-    "20261220-sendai",
-    "20261221-thearts",
-    "20261224-korakuen",
-    "20270102-yokohama-event"
-   ],
+   "changed": [],
    "error": ""
   },
   "lineage": {
@@ -47,37 +17,37 @@
     "world": {
      "read": true,
      "changed": false,
-     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the official page (corrected URL)"
+     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the fresh official page; page text identical to the verified earlier run"
     },
     "wonder": {
      "read": true,
      "changed": false,
-     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the official page"
+     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the fresh official page"
     },
     "future": {
      "read": true,
      "changed": false,
-     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the official page"
+     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the fresh official page"
     },
     "artist": {
      "read": true,
      "changed": false,
-     "note": "Reign 37 (Julia Hart, Skye Blue & Thekla) and its defence confirmed against the official page"
+     "note": "Reign 37 (Julia Hart, Skye Blue & Thekla) and its defence confirmed against the fresh official page"
     },
     "goddess": {
      "read": true,
-     "changed": true,
-     "note": "Reign 37 (AZM & Miyu Amasaki) and all 3 defences confirmed; alias added only: Ruaka -> Ryuaku Natsumi (page spelling)"
+     "changed": false,
+     "note": "Reign 37 (AZM & Miyu Amasaki) and all 3 defences confirmed against the fresh official page"
     },
     "highspeed": {
      "read": true,
      "changed": false,
-     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the official page"
+     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the fresh official page"
     },
     "newblood": {
      "read": true,
-     "changed": true,
-     "note": "Reign 6 (Kikyo Furusawa & Rian) confirmed, no defences listed; aliases added only: Kikyo Furusawa -> Furusawa Kian, Sayaka Kurara -> Kurei Sayaka (page spellings)"
+     "changed": false,
+     "note": "Reign 6 (Kikyo Furusawa & Rian) confirmed against the fresh official page, no defences listed; Wikipedia cross-check agrees (won October 20, 2026). Cagematch cross-check unavailable: HTTP 307, empty body, on both attempts"
     },
     "kawaii": {
      "read": false,
@@ -87,7 +57,7 @@
    },
    "changed": [],
    "warnings": [
-    "goddess/newblood alias additions are spelling variants from today's official pages only; no champion was renamed"
+    "Cagematch cross-check for newblood returned HTTP 307 with an empty body on both attempts (same behaviour as the earlier run); the primary wwr-stardom page and the Wikipedia cross-check agree, so no title was kept from the baseline because of it."
    ]
   },
   "blocks": [],
