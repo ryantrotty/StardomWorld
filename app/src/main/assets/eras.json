@@ -77,6 +77,115 @@
           "words": "Yoshiko Act Yasukawa",
           "year": ""
         }
+      ],
+      "eyebrow": "Era 1 of 5 · 2011 – early 2015",
+      "title": "Genesis & the Idols",
+      "tagline": "黎明 — The birth of Stardom: idols, veterans and dojo blood",
+      "blurb": "Stardom launched as a collision of worlds: Joshi veterans, mainstream gravure idols and green home-trained rookies. Fierce, stiff rivalries forged a hard-hitting standard.",
+      "seed": "Nanae Takahashi",
+      "yearChips": [
+        "2011",
+        "2012",
+        "2013",
+        "2014",
+        "2015"
+      ],
+      "reigns": [
+        {
+          "beltId": "world",
+          "title": "World of Stardom",
+          "belt": "Red Belt",
+          "holder": "Nanae Takahashi · 1st reign",
+          "stat": "602 days · 7 defences",
+          "rn": 1,
+          "others": [
+            {
+              "t": "Io Shirai · 2013",
+              "rn": 3
+            },
+            {
+              "t": "Yoshiko · 2014",
+              "rn": 4
+            }
+          ]
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Yuzuki Aikawa · 1st reign",
+          "stat": "618 days · 8 defences",
+          "rn": 1,
+          "others": [
+            {
+              "t": "Act Yasukawa · 2013",
+              "rn": 3
+            },
+            {
+              "t": "Mayu Iwatani · 2014",
+              "rn": 4
+            }
+          ]
+        },
+        {
+          "beltId": "goddess",
+          "title": "Goddesses of Stardom",
+          "belt": "Tag Belts",
+          "holder": "Natsuki Taiyo & Yoshiko · 1st reign",
+          "stat": "112 days · 3 defences",
+          "rn": 2,
+          "others": [
+            {
+              "t": "Kairi Hojo & Nanae Takahashi · 2014",
+              "rn": 7
+            },
+            {
+              "t": "Yuzuki Aikawa & Yoko Bito · 2011",
+              "rn": 1
+            }
+          ]
+        }
+      ],
+      "wrestlers": [
+        {
+          "name": "Nanae Takahashi",
+          "note": "Inaugural Red Belt champion"
+        },
+        {
+          "name": "Yuzuki Aikawa",
+          "note": "Inaugural White Belt champion"
+        },
+        {
+          "name": "Io Shirai",
+          "note": "Rising ace"
+        },
+        {
+          "name": "Yoshiko",
+          "note": "Kawasaki Katsushika powerhouse"
+        }
+      ],
+      "factions": [
+        {
+          "id": "nanae-gundan",
+          "name": "Nanae Gundan",
+          "search": "Nanae Gundan",
+          "sub": "Veterans and the dojo backbone",
+          "mono": "NG"
+        },
+        {
+          "id": "kawasaki",
+          "name": "Kawasaki Katsushika Saikyou Densetsu",
+          "search": "Kawasaki Katsushika",
+          "sub": "Natsuki Taiyo, Yoshiko, Act Yasukawa",
+          "mono": "KK"
+        },
+        {
+          "id": "tawashis",
+          "name": "Tawashis",
+          "search": "Tawashis",
+          "sub": "Hiroyo Matsumoto, Mayu Iwatani, Miho Wakizawa",
+          "mono": "TW"
+        }
       ]
     },
     {
@@ -321,6 +430,89 @@
           "words": "Kagetsu Mayu Iwatani",
           "year": ""
         }
+      ],
+      "eyebrow": "Era 3 of 5 · mid 2018 – 2019",
+      "title": "The Draft & Re-Identity Era",
+      "tagline": "群雄 — Faction warfare: the annual Draft and Kagetsu's leadership",
+      "blurb": "With Io Shirai gone abroad, Kagetsu and Mayu Iwatani led a creative renaissance. The annual Draft reshaped the roster, unit warfare took over, and a generation of teen phenoms arrived.",
+      "seed": "Draft",
+      "yearChips": [
+        "2018",
+        "2019"
+      ],
+      "reigns": [
+        {
+          "beltId": "world",
+          "title": "World of Stardom",
+          "belt": "Red Belt",
+          "holder": "Kagetsu · 1st reign",
+          "stat": "329 days · 8 defences",
+          "rn": 10,
+          "others": [
+            {
+              "t": "Bea Priestley · 2019",
+              "rn": 11
+            }
+          ]
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Momo Watanabe · 1st reign",
+          "stat": "358 days · 13 defences",
+          "rn": 12,
+          "others": []
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Arisa Hoshiki · 1st reign",
+          "stat": "370 days · 10 defences",
+          "rn": 13,
+          "others": []
+        }
+      ],
+      "wrestlers": [
+        {
+          "name": "Kagetsu",
+          "note": "Red Belt leader"
+        },
+        {
+          "name": "Momo Watanabe",
+          "note": "White Belt, 13 defences"
+        },
+        {
+          "name": "Arisa Hoshiki",
+          "note": "White Belt striker"
+        },
+        {
+          "name": "Hana Kimura",
+          "note": "Tokyo Cyber Squad"
+        }
+      ],
+      "factions": [
+        {
+          "id": "oedo-tai",
+          "sub": "Kagetsu, Hazuki, Natsu Sumire",
+          "mono": "OT"
+        },
+        {
+          "id": "tokyo-cyber-squad",
+          "sub": "Hana Kimura, Jungle Kyona, Konami",
+          "mono": "TCS"
+        },
+        {
+          "id": "queens-quest",
+          "sub": "Momo Watanabe, Utami Hayashishita, AZM",
+          "mono": "QQ"
+        },
+        {
+          "id": "stars",
+          "sub": "Mayu Iwatani, Arisa Hoshiki, Tam Nakano",
+          "mono": "ST"
+        }
       ]
     },
     {
@@ -405,6 +597,116 @@
           "words": "AZM Starlight Kid",
           "year": ""
         }
+      ],
+      "eyebrow": "Era 4 of 5 · late 2019 – early 2024",
+      "title": "Bushiroad Boom & Arena Era",
+      "tagline": "隆盛 — The arena boom: big production, blood feuds and Donna Del Mondo",
+      "blurb": "Stardom grew into Japan's top women's promotion and filled arenas such as Nippon Budokan and Yokohama Arena. Donna Del Mondo, deeply personal feuds and heavy physical drama marked the commercial peak.",
+      "seed": "Giulia",
+      "yearChips": [
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "reigns": [
+        {
+          "beltId": "world",
+          "title": "World of Stardom",
+          "belt": "Red Belt",
+          "holder": "Utami Hayashishita · 1st reign",
+          "stat": "409 days · 9 defences",
+          "rn": 13,
+          "others": [
+            {
+              "t": "Mayu Iwatani · 2019",
+              "rn": 12
+            },
+            {
+              "t": "Giulia · 2022",
+              "rn": 15
+            }
+          ]
+        },
+        {
+          "beltId": "world",
+          "title": "World of Stardom",
+          "belt": "Red Belt",
+          "holder": "Syuri · 1st reign",
+          "stat": "365 days · 10 defences",
+          "rn": 14,
+          "others": [
+            {
+              "t": "Tam Nakano · 2023",
+              "rn": 16
+            }
+          ]
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Saya Kamitani · 1st reign",
+          "stat": "480 days · 15 defences",
+          "rn": 16,
+          "others": [
+            {
+              "t": "Tam Nakano · 2021",
+              "rn": 15
+            }
+          ]
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Giulia · 1st reign",
+          "stat": "220 days · 6 defences",
+          "rn": 14,
+          "others": []
+        }
+      ],
+      "wrestlers": [
+        {
+          "name": "Giulia",
+          "note": "DDM leader, Tam Nakano feud"
+        },
+        {
+          "name": "Utami Hayashishita",
+          "note": "Red Belt, 409 days"
+        },
+        {
+          "name": "Syuri",
+          "note": "God's Eye"
+        },
+        {
+          "name": "Tam Nakano",
+          "note": "Cosmic Angels"
+        }
+      ],
+      "factions": [
+        {
+          "id": "donna-del-mondo",
+          "sub": "Giulia, Syuri, Maika, Himeka",
+          "mono": "DDM"
+        },
+        {
+          "id": "cosmic-angels",
+          "sub": "Tam Nakano, Mina Shirakawa, Unagi Sayaka",
+          "mono": "CA"
+        },
+        {
+          "id": "gods-eye",
+          "sub": "Syuri, MIRAI, Ami Sourei",
+          "mono": "GE"
+        },
+        {
+          "id": "queens-quest",
+          "sub": "Utami Hayashishita, Saya Kamitani, AZM",
+          "mono": "QQ"
+        }
       ]
     },
     {
@@ -481,6 +783,113 @@
           "title": "Maika vs Suzu Suzuki, the new generation's leader",
           "words": "Maika Suzu Suzuki",
           "year": ""
+        }
+      ],
+      "eyebrow": "Era 5 of 5 · 2024 – now",
+      "title": "New Horizons & the Reshuffle",
+      "tagline": "新章 — Generational clashes and the rise of H.A.T.E.",
+      "blurb": "A wave of departures left the roster to its homegrown youth and hardened powerhouses. Old alliances dissolved, darker antiheroes rose, and unit warfare hit a new pace.",
+      "seed": "H.A.T.E.",
+      "yearChips": [
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "reigns": [
+        {
+          "beltId": "world",
+          "title": "World of Stardom",
+          "belt": "Red Belt",
+          "holder": "Saya Kamitani · 1st reign",
+          "stat": "483 days · 9 defences",
+          "rn": 20,
+          "others": [
+            {
+              "t": "Tam Nakano · 2024",
+              "rn": 19
+            },
+            {
+              "t": "Sayaka Kurara · 2026",
+              "rn": 21
+            }
+          ]
+        },
+        {
+          "beltId": "wonder",
+          "title": "Wonder of Stardom",
+          "belt": "White Belt",
+          "holder": "Starlight Kid · 1st reign",
+          "stat": "309 days · 6 defences",
+          "rn": 24,
+          "others": [
+            {
+              "t": "Natsupoi · 2024",
+              "rn": 23
+            }
+          ]
+        },
+        {
+          "beltId": "highspeed",
+          "title": "High Speed",
+          "belt": "High Speed Belt",
+          "holder": "Mei Seira · 2nd reign",
+          "stat": "514 days · 9 defences",
+          "rn": 27,
+          "others": [
+            {
+              "t": "Yuna Mizumori · 2025",
+              "rn": 28
+            }
+          ]
+        },
+        {
+          "beltId": "goddess",
+          "title": "Goddesses of Stardom",
+          "belt": "Tag Belts",
+          "holder": "Natsuko Tora & Ruaka · 1st reign",
+          "stat": "276 days · 5 defences",
+          "rn": 36,
+          "others": []
+        }
+      ],
+      "wrestlers": [
+        {
+          "name": "Saya Kamitani",
+          "note": "Red Belt, 483 days"
+        },
+        {
+          "name": "Maika",
+          "note": "EXV"
+        },
+        {
+          "name": "Starlight Kid",
+          "note": "Neo Genesis, White Belt"
+        },
+        {
+          "name": "Suzu Suzuki",
+          "note": "Red Belt champion"
+        }
+      ],
+      "factions": [
+        {
+          "id": "hate",
+          "sub": "Saya Kamitani, Natsuko Tora, Thekla, Konami",
+          "mono": "HT"
+        },
+        {
+          "id": "neo-genesis",
+          "sub": "Starlight Kid, Suzu Suzuki, AZM, Mei Seira",
+          "mono": "NG"
+        },
+        {
+          "id": "cosmic-angels",
+          "sub": "Tam Nakano, Saori Anou, Natsupoi",
+          "mono": "CA"
+        },
+        {
+          "id": "empress-nexus-venus",
+          "sub": "Maika, Mina Shirakawa, HANAKO",
+          "mono": "EXV"
         }
       ]
     }

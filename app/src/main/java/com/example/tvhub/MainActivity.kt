@@ -6342,9 +6342,11 @@ class MainActivity : Activity() {
     // wrestlers / factions / shows
     var left = sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
     var fc = (e.factions || []).map(function(x) {
-      var f = facs[x.id]; if (!f) return '';
+      var f = facs[x.id], own = false;
+      if (!f && x.name) { f = { id: x.id, name: x.name, search: x.search }; own = true; }
+      if (!f) return '';
       var pic = ''; try { pic = AndroidHost.factionLogo(f.id) || ''; } catch (q) {}
-      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
+      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + (own ? '&activetab=contents&page=1' : '&tvfaction=' + encodeURIComponent(f.id));
       var nm = String(f.name).replace(/ \(.*\)$/, '');
       return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
     }).join('');

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.20.0
+
+- Eras 1, 3, 4 and 5 are built (header, title reigns with deep links, rivalries, top wrestlers, rising stars, factions, shows). Reign numbers, days and defences come from the lineage files. Era 1's three factions have no faction page, so their tiles run a plain search.
+
 ## 2.19.3
 
 - Eras page: faction logos now show. The site-header logo swap matched any class containing "logo" and replaced the faction images with the STARDOM mark; the tile class is renamed.
