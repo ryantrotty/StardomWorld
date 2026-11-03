@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.0
+
+- Eras page: the whole timeline is flipped. Newest era is on the left (era chips, timeline bar, year chips), "now" is at the left end and 2011 at the right.
+- New All Years & Eras page (page A): five bands, newest era first, each with its years and an Open era page tile.
+- Years menu (sub nav B): five era columns, each headed by the era (OK opens its page) and listing its years newest first, with an All Years & Eras bar on top. Replaces the Era Test row.
+
 ## 2.20.1
 
 - Eras page: opens on Era 1 (was Era 2). Descriptor text no longer wraps early (the width cap is gone). Eras 1, 3, 4 and 5 have their own emblems. Faction logos sit on the tile with no box and are larger. The High Speed card is titled "High Speed Championship" and is excluded from page translation. Year chips under the timeline run newest first.

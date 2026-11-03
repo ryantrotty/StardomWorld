@@ -4708,7 +4708,7 @@ class MainActivity : Activity() {
             ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1', 'お気に入り数の多い動画']
           ];
           // Years > Era Test: the Eras page (assets/eras.json), drawn by the page script that reads "tvera".
-          var ERA_TEST = ['Era Test', '/contents/search?q%5Bkeyword%5D=Nanae%20Takahashi&activetab=contents&page=1&tvera=1', 'Era Test'];
+          var ERA_TEST = ['All Years & Eras', '/contents/search?q%5Bkeyword%5D=Stardom&activetab=contents&page=1&tvera=0', 'すべての年と時代'];
           function yearsList() {
             var out = [];
             for (var y = new Date().getFullYear(); y >= 2011; y--) {
@@ -4836,6 +4836,18 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft1{font-size:17px;font-weight:700;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft2{font-size:14px;font-weight:600;color:#c9d2dc;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:12px;font-weight:700;color:#F4C242;margin-top:3px;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-shl-ec{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:start;margin-top:8px;}',
+            '#tv-sm-shelf .tv-shl-ecol{display:flex;flex-direction:column;gap:4px;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-eh{display:flex;align-items:center;gap:8px;padding:8px 8px;margin:0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-eh:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-ek{flex:0 0 auto;width:30px;text-align:center;font-size:26px;font-weight:900;line-height:1;color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-ex{min-width:0;display:block;}',
+            '#tv-sm-shelf .tv-shl-e1{display:block;font-size:14px;font-weight:800;line-height:1.15;color:#fff;}',
+            '#tv-sm-shelf .tv-shl-e2{display:block;font-size:12px;font-weight:600;color:#9aa6b4;margin-top:2px;}',
+            '#tv-sm-shelf .tv-shl-ecol .tv-sm-fi:not(.tv-shl-eh){margin:0;padding:6px 12px;font-size:17px;font-weight:700;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-all{display:flex;align-items:center;gap:12px;padding:10px 16px;margin:0;font-size:19px;font-weight:800;color:#F4C242 !important;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-all:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-shl-all span{font-size:13px;font-weight:600;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc{display:flex;align-items:center;gap:12px;padding:6px 12px;margin:0 0 4px 0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-fc.tv-fav-on::before{content:none;}',
             '#tv-sm-shelf .tv-shl-fc.tv-fav-on .tv-shl-fc1::before{content:"\\2605  ";color:#F4C242;}',
@@ -5293,7 +5305,16 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + mblocks + '</div>';
             } else if (key === 'years') {
               w = 400;
-              h = '<div class="tv-shl-t">' + esc(T('YEARS', '年別')) + '</div><div class="tv-shl-grid" style="grid-template-columns:1fr;margin-bottom:8px;">' + rowsHtml([ERA_TEST]) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;">' + rowsHtml(yearsList()) + '</div>';
+              w = 1000;
+              var eraList = [];
+              try { eraList = (JSON.parse(AndroidHost.erasJson()).eras || []).slice().reverse(); } catch (e) { eraList = []; }
+              var ecols = '';
+              eraList.forEach(function(x) {
+                var epath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.seed || 'Stardom') + '&activetab=contents&page=1&tvera=' + x.n;
+                var ycl = (x.yearChips || []).slice().reverse().map(function(y) { return fiHtml(y, '/contents/category/' + (y === '2020' ? '_2020' : y)); }).join('');
+                ecols += '<div class="tv-shl-ecol"><a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + esc(epath) + '" href="' + esc(absUrl(epath)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + esc(x.years) + '</span></span></a>' + ycl + '</div>';
+              });
+              h = '<div class="tv-shl-t">' + esc(T('YEARS & ERAS', '年別・時代')) + '</div><div class="tv-shl-top">' + '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + esc(ERA_TEST[1]) + '" href="' + esc(absUrl(ERA_TEST[1])) + '">' + esc(T('All Years & Eras', 'すべての年と時代')) + '<span>' + esc(T('the overview page', '一覧ページ')) + '</span></a></div><div class="tv-shl-ec">' + ecols + '</div>';
             } else if (key === 'factions') {
               w = 440;
               var fl = '', ol = '';
@@ -6210,6 +6231,17 @@ class MainActivity : Activity() {
     '#tv-era .tv-eh-t{font-size:30px;font-weight:900;}',
     '#tv-era .tv-eh-i{margin-left:auto;text-align:right;font-size:15px;font-weight:600;color:#9AA6B4;}',
     '#tv-era .tv-ech{display:flex;gap:10px;}',
+    '#tv-era .tv-bands{display:flex;flex-direction:column;gap:10px;}',
+    '#tv-era .tv-band{display:flex;align-items:stretch;gap:18px;background:#121922;border:2px solid #2A323C;border-radius:12px;padding:12px 14px;}',
+    '#tv-era .tv-bh{flex:0 0 330px;display:flex;gap:14px;align-items:center;}',
+    '#tv-era .tv-bk{width:64px;height:64px;flex:0 0 auto;background:#0F151C;border:2px solid #2A323C;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:#F4C242;line-height:1;}',
+    '#tv-era .tv-by{flex:1 1 0;min-width:0;display:flex;gap:8px;align-items:stretch;}',
+    '#tv-era .tv-yt{flex:0 0 108px;min-width:0;display:flex;flex-direction:column;justify-content:center;background:#161F2A;border:3px solid #2A323C;border-radius:8px;padding:6px 10px;}',
+    '#tv-era .tv-yt:focus{background:#172029;border-color:#F4C242;}',
+    '#tv-era .tv-yt .y{font-size:22px;font-weight:900;}',
+    '#tv-era .tv-yt .s,#tv-era .tv-yt .a{display:block;font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '#tv-era .tv-yt.tv-yo{margin-left:auto;flex:0 0 150px;}',
+    '#tv-era .tv-yt.tv-yo .a{font-size:15px;font-weight:800;color:#F4C242;margin-top:0;}',
     '#tv-era .tv-chip{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:12px;height:52px;padding:0 14px;border-radius:20px;border:3px solid #2A323C;background:#161F2A;color:#C9D2DC;}',
     '#tv-era .tv-chip.tv-on{background:#FFB347;border-color:#FFB347;color:#1A1A1A;}',
     '#tv-era .tv-chip:focus{border-color:#F4C242;}',
@@ -6285,7 +6317,8 @@ class MainActivity : Activity() {
     4: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="60" cy="60" rx="46" ry="30"></ellipse><ellipse cx="60" cy="60" rx="26" ry="15"></ellipse><path d="M14 60h20M86 60h20M60 30v15M60 75v15"></path></svg>',
     5: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 78a30 30 0 0 1 60 0"></path><path d="M16 78h88M60 28v12M28 42l8 8M92 42l-8 8M34 92h52"></path></svg>'
   };
-  var BOUNDS = [[0, 26.2, 1], [26.6, 20.4, 2], [47.4, 7.8, 3], [55.6, 27.4, 4], [83.4, 16.6, 5]];
+  var BOUNDS = [[0, 26.2, 1], [26.6, 20.4, 2], [47.4, 7.8, 3], [55.6, 27.4, 4], [83.4, 16.6, 5]].map(function(b) { return [Math.round((100 - b[0] - b[1]) * 10) / 10, b[1], b[2]]; });   // newest on the left, like the champions lineage
+  var ALL = mm[1] === '0';
 
   function sec(title, hint, body) {
     return '<div><div class="tv-sech"><i></i><div class="tv-lbl">' + esc(title) + '</div>' + (hint ? '<div class="tv-hint">' + esc(hint) + '</div>' : '') + '</div>' + body + '</div>';
@@ -6300,11 +6333,27 @@ class MainActivity : Activity() {
     }).join('') + '</div>';
   }
 
+  function renderAll() {
+    var yearShow = {};
+    data.eras.forEach(function(x) { (x.shows || []).forEach(function(s) { if (s.year && !yearShow[s.year] && !s.dead) yearShow[s.year] = s.name; }); });
+    var h = '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('All Years & Eras', 'すべての年と時代')) + '</div><div class="tv-eh-i">' + esc(T('Up and Down change era. Left and Right move along its years. OK opens the page.', '上下で時代、左右で年を選択。OKで開きます。')) + '</div></div>';
+    h += '<div class="tv-bands">' + data.eras.slice().reverse().map(function(x) {
+      var ys = (x.yearChips || []).slice().reverse().map(function(y) {
+        return '<a class="tv-yt" tabindex="0" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '"><span class="y">' + esc(y) + '</span><span class="s">' + esc(yearShow[y] || T('Year page', '年別ページ')) + '</span></a>';
+      }).join('');
+      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.seed || 'Stardom') + '&activetab=contents&page=1&tvera=' + x.n;
+      return '<div class="tv-band"><div class="tv-bh"><div class="tv-bk notranslate" translate="no">' + esc(x.kanji) + '</div><div style="min-width:0"><div class="tv-lbl" style="font-size:12px">' + esc(T('ERA ' + x.n + ' OF 5', '時代 ' + x.n + ' / 5')) + '</div><div style="font-size:21px;font-weight:900;line-height:1.1;margin-top:2px">' + esc(x.name) + '</div><div style="font-size:13px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(x.years) + '</div></div></div>' +
+        '<div class="tv-by">' + ys + '<a class="tv-yt tv-yo" tabindex="0" href="' + esc(path) + '"><span class="a">' + esc(T('Open era page', '時代ページ')) + '</span><span class="s">' + esc(T('Reigns, rivalries, shows', '王座・因縁・大会')) + '</span></a></div></div>';
+    }).join('') + '</div>';
+    scroller.innerHTML = h;
+  }
+
   function render() {
+    if (ALL) { renderAll(); return; }
     var e = eraOf(cur) || eraOf(1);
     var h = '';
     h += '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('Eras', '時代')) + '</div><div class="tv-eh-i">' + esc(notice || T('Left and Right choose an era. OK opens a tile and runs one search.', '左右で時代を選択。OKでタイルを開くと検索します。')) + '</div></div>';
-    h += '<div class="tv-ech">' + data.eras.map(function(x) {
+    h += '<div class="tv-ech">' + data.eras.slice().reverse().map(function(x) {
       return '<a class="tv-chip' + (x.n === cur ? ' tv-on' : '') + '" tabindex="0" data-era="' + x.n + '"><b class="k notranslate" translate="no">' + esc(x.kanji) + '</b><div><div class="n">' + esc(x.name) + '</div><div class="y">' + esc(x.years) + '</div></div></a>';
     }).join('') + '</div>';
     var yc = e.yearChips || [], act = null;
@@ -6312,8 +6361,9 @@ class MainActivity : Activity() {
     h += '<div class="tv-tlw">' + BOUNDS.map(function(bb) { return '<div class="tv-seg' + (bb[2] === e.n ? ' tv-on' : '') + '" style="left:' + bb[0] + '%;width:' + bb[1] + '%"></div>'; }).join('') +
       [[0, '2011', 0], [26.4, '2015', 1], [47.2, '2018', 1], [55.4, '2019', 0], [83.2, '2024', 0]].map(function(t) {
         var hide = yc.indexOf(t[1]) >= 0;   // this era's own year chips stand in for its two end labels
-        return '<div class="tv-tk" style="left:' + t[0] + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div>' + (hide ? '' : '<div class="tv-tl" style="left:' + t[0] + '%;' + (t[0] === 0 ? 'transform:none;' : '') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>');
-      }).join('') + '<div class="tv-tl" style="right:0;transform:none">' + esc(T('now', '現在')) + '</div>' +
+        var px = Math.round((100 - t[0]) * 10) / 10;
+        return '<div class="tv-tk" style="left:' + px + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div>' + (hide ? '' : '<div class="tv-tl" style="' + (px > 99 ? 'right:0;transform:none;' : 'left:' + px + '%;') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>');
+      }).join('') + (e.n === 5 ? '' : '<div class="tv-tl" style="left:0;transform:none">' + esc(T('now', '現在')) + '</div>') +
       (act ? yc.slice().reverse().map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') : '') + '</div>';
     if (!e.reigns) {
       h += '<div class="tv-desc"><div><div class="tv-lbl" style="font-size:13px">' + esc(T('Era ' + e.n + ' of 5', '時代 ' + e.n + ' / 5')) + '</div><div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.name) + '</div><div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.ja || '') + ' · ' + esc(e.years) + '</div><div style="font-size:15px;color:#9AA6B4;margin-top:8px">' + esc(T('This era is not built yet.', 'この時代はまだ準備中です。')) + '</div></div></div>';
@@ -6426,7 +6476,7 @@ class MainActivity : Activity() {
     tries++;
     var ae = document.activeElement;
     if (menuOpen() || (ae && root.contains(ae) && ae !== document.body)) { if (tries > 6) clearInterval(tm); return; }
-    var c = root.querySelector('.tv-chip[data-era="' + cur + '"]');
+    var c = ALL ? root.querySelector('a[tabindex]') : root.querySelector('.tv-chip[data-era="' + cur + '"]');
     if (c) focusEl(c);
     if (tries > 10) clearInterval(tm);
   }, 300);
