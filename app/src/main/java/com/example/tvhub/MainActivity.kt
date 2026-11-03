@@ -4828,9 +4828,10 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
             '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
-            '#tv-sm-shelf .tv-shl-wtabs{display:flex;gap:10px;margin:0 0 8px 0;}',
-            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{font-size:17px;font-weight:700;padding:7px 24px;border-radius:10px;}',
-            '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{color:#F4C242 !important;}',
+            '#tv-sm-shelf .tv-shl-wtabs{display:inline-flex;gap:2px;margin:0 0 10px 0;padding:3px;border:2px solid #2a323c;border-radius:24px;background:#0f151c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{font-size:17px;font-weight:700;padding:6px 30px;margin:0;border-radius:20px;border:3px solid transparent;background:transparent;color:#9aa6b4 !important;}',
+            '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{background:#FFB347 !important;color:#1A1A1A !important;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab:focus{border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
             '#tv-sm-shelf .tv-shl-cf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px;align-items:start;}',
             '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
@@ -6860,6 +6861,7 @@ class MainActivity : Activity() {
         (HOME && i === FI ? hgrid : grid).insertAdjacentHTML('beforeend', h);
       }
       setStatus(i);
+      if (HOME && i === FI) setTimeout(fillHome, 200);
     });
   }
 
@@ -6920,6 +6922,15 @@ class MainActivity : Activity() {
     s.items.forEach(function(it) { h += cardHtml(it); });
     hgrid.innerHTML = h;
     setStatus(FI);
+    setTimeout(fillHome, 200);
+  }
+  // A faction that has no search of its own (Itoh Respect Gundan: "2 of 3" names, then the next pair) shows its
+  // first spelling's videos and goes on to the next spelling by itself while fewer than one screen is loaded.
+  function fillHome() {
+    if (!HOME) return;
+    var s = S[FI];
+    if (!s || !s.loaded || s.loading || s.queued || s.err) return;
+    if (s.items.length < 12 && canMore(FI)) more(FI);
   }
   function homeFocusables() {
     return Array.prototype.slice.call(homeEl.querySelectorAll('.tv-hb, #tv-hgrid .tv-fc'));

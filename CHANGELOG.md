@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.5
+
+- My Favorites: the Itoh Respect Gundan logo shows (white artwork sat on a white tile). factions.json has a new optional "plate": "dark" for a faction like this.
+- Faction home: when a faction's first search has few or no videos, it now goes on to the next spelling by itself until about a screen is filled. Itoh Respect Gundan runs two names, then the next pair, then the third pair, so FACTION MATCHES is no longer empty.
+- Wrestlers menu: Current and Past are a segmented switch (one rounded track, the chosen one filled orange, focus is the gold border).
+
 ## 2.21.4
 
 - Years menu: the five era header cards are all the same height (76px). The menu group title reads Years & Eras.
