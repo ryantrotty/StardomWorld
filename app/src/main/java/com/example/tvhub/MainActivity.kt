@@ -7039,6 +7039,18 @@ class MainActivity : Activity() {
   // ------------------------------------------------------------------ start
   if (HOME) buildHome();
   markSel();
+  // Watchdog for the faction home: if the first load never finished (a slow first visit), try it again; if it finished
+  // short, go on to the next spelling. Stops after about 20 seconds or once a screen is filled.
+  if (HOME) {
+    var wdN = 0;
+    var wdT = setInterval(function() {
+      wdN++;
+      var sw = S[FI];
+      if (sw && !sw.loaded && !sw.loading && !sw.queued && !busy && wdN >= 3 && blockedFor() === 0) { sw.err = ''; loadNext(FI, function() { renderHomeGrid(); }); }
+      else fillHome();
+      if (wdN >= 14 || (sw && sw.items.length >= 12)) clearInterval(wdT);
+    }, 1500);
+  }
   // The page that was just opened holds one member's first page of results: keep it as that member's saved copy
   // (shown with no request if that member is chosen later). Nothing is drawn or loaded until a member is chosen.
   (function seedQuietly() {
