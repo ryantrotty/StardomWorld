@@ -2949,6 +2949,12 @@ class MainActivity : Activity() {
             this@MainActivity.dailyData()?.optJSONObject("eras")?.optJSONObject("counts")?.toString() ?: ""
         } catch (_: Exception) { "" }
 
+        // What the daily job saw on page 1 of each checked search: { key: { full, newest, oldest } } (may be empty).
+        @android.webkit.JavascriptInterface
+        fun erasInfo(): String = try {
+            this@MainActivity.dailyData()?.optJSONObject("eras")?.optJSONObject("info")?.toString() ?: ""
+        } catch (_: Exception) { "" }
+
         // Eras page content (assets/eras.json).
         @android.webkit.JavascriptInterface
         fun erasJson(): String = try {
@@ -6205,6 +6211,17 @@ class MainActivity : Activity() {
   // linked: it falls back to a page that has videos, or is greyed out. Nothing here makes a request.
   var counts = {};
   try { counts = (AndroidHost.erasChecks && JSON.parse(AndroidHost.erasChecks() || '{}')) || {}; } catch (e) { counts = {}; }
+  var info = {};
+  try { info = (AndroidHost.erasInfo && JSON.parse(AndroidHost.erasInfo() || '{}')) || {}; } catch (e) { info = {}; }
+  // "12 videos · 2016–2018" for a checked search (blank when the daily file has nothing for it).
+  function seen(words, year) {
+    var k = kwOf(words, year), n = counts[k], i = info[k] || {}, out = [];
+    if (typeof n !== 'number' || n < 1) return '';
+    out.push(n + (i.full ? '+' : '') + ' ' + T('videos', '本'));
+    var a = String(i.oldest || '').slice(0, 4), b = String(i.newest || '').slice(0, 4);
+    if (a && b) out.push(a === b ? a : a + '\u2013' + b);
+    return out.join(' \u00b7 ');
+  }
   function kwOf(words, year) { return (String(words || '') + (year ? ' ' + year + '/' : '')).trim(); }
   function isEmpty(words, year, dead) { return dead === true || counts[kwOf(words, year)] === 0; }
   // A search with no videos is never dropped: it is widened. Wrestler: first word of the name. Show: the same words
@@ -6400,7 +6417,7 @@ class MainActivity : Activity() {
     var rv = '<div class="tv-rg">' + (e.rivalries || []).map(function(r) {
       var names = r.b ? '<b>' + esc(r.a).replace(' ', '<br>') + '</b><em>VS</em><b>' + esc(r.b).replace(' ', '<br>') + '</b>' : '<b>' + esc(r.a).toUpperCase() + '</b>';
       var emp = isEmpty(r.words, '', r.dead), href = emp ? searchUrl(r.a, '') : searchUrl(r.words, '');
-      return '<a class="tv-vc" tabindex="0" href="' + esc(href) + '"><div class="tv-th">' + names + '</div><span class="tv-tg">' + esc(r.tag) + '</span><span class="tv-dt">' + esc(r.when) + '</span><div class="tv-vt">' + esc(r.title) + '</div><div class="tv-vh">' + esc(T('Search', '検索')) + ' · ' + esc(emp ? r.a : r.words) + '</div></a>';
+      return '<a class="tv-vc" tabindex="0" href="' + esc(href) + '"><div class="tv-th">' + names + '</div><span class="tv-tg">' + esc(r.tag) + '</span><span class="tv-dt">' + esc(r.when) + '</span><div class="tv-vt">' + esc(r.title) + '</div><div class="tv-vh">' + esc(T('Search', '検索')) + ' · ' + esc(emp ? r.a : r.words) + (seen(emp ? r.a : r.words, '') ? ' · ' + esc(seen(emp ? r.a : r.words, '')) : '') + '</div></a>';
     }).join('') + '</div>';
     h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
     // wrestlers / factions / shows

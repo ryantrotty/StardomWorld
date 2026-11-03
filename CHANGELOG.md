@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.3
+
+- Eras page: rivalry tiles show how many videos the search found and the years they cover, from the daily file (eras.info). Nothing shows until Muse has checked the search.
+
 ## 2.21.2
 
 - era_link_keys.py: wider searches carry a `parent`. Muse checks a wider search only when the tile search came back 0 (about 60 checks plus a few, four nights at 15 a night).
