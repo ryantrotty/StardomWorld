@@ -6234,7 +6234,7 @@ class MainActivity : Activity() {
     '#tv-era .tv-bands{display:flex;flex-direction:column;gap:10px;}',
     '#tv-era .tv-band{display:flex;align-items:stretch;gap:18px;background:#121922;border:2px solid #2A323C;border-radius:12px;padding:12px 14px;}',
     '#tv-era .tv-bh{flex:0 0 330px;display:flex;gap:14px;align-items:center;}',
-    '#tv-era .tv-bk{width:64px;height:64px;flex:0 0 auto;background:#0F151C;border:2px solid #2A323C;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:#F4C242;line-height:1;}',
+    '#tv-era .tv-bk{width:64px;height:64px;flex:0 0 auto;background:#0F151C;border:2px solid #2A323C;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;color:#F4C242;line-height:1;}',
     '#tv-era .tv-by{flex:1 1 0;min-width:0;display:flex;gap:8px;align-items:stretch;}',
     '#tv-era .tv-yt{flex:0 0 108px;min-width:0;display:flex;flex-direction:column;justify-content:center;background:#161F2A;border:3px solid #2A323C;border-radius:8px;padding:6px 10px;}',
     '#tv-era .tv-yt:focus{background:#172029;border-color:#F4C242;}',
