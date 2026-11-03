@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.19.3
+
+- Eras page: faction logos now show. The site-header logo swap matched any class containing "logo" and replaced the faction images with the STARDOM mark; the tile class is renamed.
+
 ## 2.19.2
 
 - Champions (lineage) page: the MATCHING DEBUG block and the SEARCH summary line are hidden (one switch, SHOW_DEBUG in lineage.js, brings them back).

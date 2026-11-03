@@ -6262,9 +6262,9 @@ class MainActivity : Activity() {
     '#tv-era .tv-tile .b{font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px;}',
     '#tv-era .tv-fac{display:flex;gap:12px;align-items:center;margin-bottom:8px;}',
     '#tv-era .tv-fac .nm{font-size:17px;font-weight:700;}',
-    '#tv-era .tv-logo{width:46px;height:46px;flex:0 0 auto;border-radius:8px;border:2px dashed #3B4656;background:#0F151C;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#F4C242;overflow:hidden;}',
-    '#tv-era .tv-logo.tv-pic{border:2px solid #2A323C;background:#0F151C;padding:3px;}',
-    '#tv-era .tv-logo img{max-width:100%;max-height:100%;object-fit:contain;}',
+    '#tv-era .tv-fmark{width:46px;height:46px;flex:0 0 auto;border-radius:8px;border:2px dashed #3B4656;background:#0F151C;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#F4C242;overflow:hidden;}',
+    '#tv-era .tv-fmark.tv-pic{border:2px solid #2A323C;background:#0F151C;padding:3px;}',
+    '#tv-era .tv-fmark img{max-width:100%;max-height:100%;object-fit:contain;}',
     '#tv-era .tv-show{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:10px 14px;}',
     '#tv-era .tv-off{opacity:.45;}',
     '#tv-era .tv-show .w{font-size:13px;font-weight:800;color:#F4C242;white-space:nowrap;margin-left:10px;}'
@@ -6346,7 +6346,7 @@ class MainActivity : Activity() {
       var pic = ''; try { pic = AndroidHost.factionLogo(f.id) || ''; } catch (q) {}
       var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
       var nm = String(f.name).replace(/ \(.*\)$/, '');
-      return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-logo' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
+      return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
     }).join('');
     var sh = (e.shows || []).map(function(s) {
       var semp = isEmpty(s.search, s.year, s.dead), shref = semp ? '/contents/category/' + (s.year === '2020' ? '_2020' : s.year) : searchUrl(s.search, s.year);
