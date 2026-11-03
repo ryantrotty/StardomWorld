@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.19.2
+
+- Champions (lineage) page: the MATCHING DEBUG block and the SEARCH summary line are hidden (one switch, SHOW_DEBUG in lineage.js, brings them back).
+- Eras page: faction logos sit on a dark tile (several are white artwork and were invisible on white).
+
 ## 2.19.1
 
 - Eras page: compact layout so Defining rivalries fits on screen (descriptor text 20% smaller, smaller emblem and chips, shorter belt cards and rivalry thumbnails). The year chips moved out of the era box and sit under the timeline, between the era's dates.

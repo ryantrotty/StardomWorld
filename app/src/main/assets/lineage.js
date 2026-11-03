@@ -452,7 +452,7 @@
     else row = '<div class="ln-note">' + esc(T('Looking for the video...', '動画を検索中...')) + '</div>';
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
     var sum = '';
-    if (result) {
+    if (SHOW_DEBUG && result) {
       var ql = (dbg[sel] || []).filter(function(l) { return l.indexOf('search: ') === 0; }).map(function(l) { return l.slice(8); }).join('  |  ');
       sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql) + ' \u00b7 cards read: ' + result.total + ' \u00b7 championship matches: ' + result.rows.length + ' \u00b7 dated inside this reign: ' + result.inN +
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
@@ -461,7 +461,10 @@
     return vh + row + note + fh + facts + sum;
   }
 
+  // The matching debug block and the SEARCH summary line are hidden; set to true to show them again.
+  var SHOW_DEBUG = false;
   function debugHtml() {
+    if (!SHOW_DEBUG) return '';
     var r = R[sel], lines = (dbg[sel] || []).slice();
     if (waiting) lines.push('videos not loaded: press OK on this reign (no request made)');
     if (result) {

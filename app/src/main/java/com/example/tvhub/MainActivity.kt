@@ -6263,7 +6263,7 @@ class MainActivity : Activity() {
     '#tv-era .tv-fac{display:flex;gap:12px;align-items:center;margin-bottom:8px;}',
     '#tv-era .tv-fac .nm{font-size:17px;font-weight:700;}',
     '#tv-era .tv-logo{width:46px;height:46px;flex:0 0 auto;border-radius:8px;border:2px dashed #3B4656;background:#0F151C;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#F4C242;overflow:hidden;}',
-    '#tv-era .tv-logo.tv-pic{border:2px solid #2A323C;background:#fff;}',
+    '#tv-era .tv-logo.tv-pic{border:2px solid #2A323C;background:#0F151C;padding:3px;}',
     '#tv-era .tv-logo img{max-width:100%;max-height:100%;object-fit:contain;}',
     '#tv-era .tv-show{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:10px 14px;}',
     '#tv-era .tv-off{opacity:.45;}',
