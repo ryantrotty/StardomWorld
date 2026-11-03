@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.2
+
+- era_link_keys.py: wider searches carry a `parent`. Muse checks a wider search only when the tile search came back 0 (about 60 checks plus a few, four nights at 15 a night).
+
 ## 2.21.1
 
 - Eras link checks: an empty search never removes a tile any more. Wrestler tiles widen to the first name, shows widen to all years (then the year page), rivalries to the first wrestler. Greyed-out tiles are gone.

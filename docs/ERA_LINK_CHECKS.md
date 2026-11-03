@@ -6,10 +6,10 @@ The Eras page (Years > Era Test) links tiles to searches on the site. Some searc
 
 Each key is checked once, ever. Once a key has a number in `eras.counts` it is never fetched again.
 
-1. Run `python3 scripts/era_link_keys.py`. It prints every search as `{key, url, kind}` (90 keys: the tile searches plus the wider searches used when a tile comes back empty).
-2. Drop every key that already has a count in `daily.json` under `eras.counts`. Take the first 15 of what is left, in the order printed.
+1. Run `python3 scripts/era_link_keys.py`. It prints every search as `{key, url, kind}`; wider searches also carry `parent` (the tile search they widen). 90 keys: 60 tile searches plus 30 wider ones.
+2. Drop every key that already has a count in `daily.json` under `eras.counts`. Also drop every key that has a `parent` unless the parent's count is 0 (a wider search is only needed when the tile search found nothing). Take the first 15 of what is left, in the order printed (tile searches come first).
 3. For each of the 15, open the `url` and count the video cards on page 1 (0 when the page says "No search results found."). One request per key, 8 to 15 seconds apart. If a request is blocked, slow or errors, stop for the night: write the counts already gathered and leave the rest for tomorrow.
-4. Merge the new counts into the existing `eras.counts` (never rewrite or remove old ones), set `eras.checked` to today and `eras.pending` to the number of keys still without a count:
+4. Merge the new counts into the existing `eras.counts` (never rewrite or remove old ones), set `eras.checked` to today and `eras.pending` to the number of keys still needed (tile searches without a count, plus wider searches whose parent is 0 and that have no count):
 
 ```json
 "eras": { "checked": "2026-11-03", "pending": 75, "counts": { "Io Shirai Mayu Iwatani": 12, "Climax 2016/": 0, "Kairi": 40 } }
