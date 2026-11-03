@@ -4708,7 +4708,7 @@ class MainActivity : Activity() {
             ['Most Favorited', '/contents/search?s=fc&o=d&activetab=contents&page=1', 'お気に入り数の多い動画']
           ];
           // Years > Era Test: the Eras page (assets/eras.json), drawn by the page script that reads "tvera".
-          var ERA_TEST = ['Era Test', '/contents/search?q%5Bkeyword%5D=Threedom&activetab=contents&page=1&tvera=2', 'Era Test'];
+          var ERA_TEST = ['Era Test', '/contents/search?q%5Bkeyword%5D=Nanae%20Takahashi&activetab=contents&page=1&tvera=1', 'Era Test'];
           function yearsList() {
             var out = [];
             for (var y = new Date().getFullYear(); y >= 2011; y--) {
@@ -6179,7 +6179,7 @@ class MainActivity : Activity() {
   try { ((JSON.parse(AndroidHost.factionsJson()).factions) || []).forEach(function(f) { facs[f.id] = f; }); } catch (e) {}
   window.__tvEra = true;
   window.__tvInfiniteScroll = true;
-  var cur = parseInt(mm[1], 10) || 2;
+  var cur = parseInt(mm[1], 10) || 1;
   // Link checks from the daily file (Muse): how many videos each search found. A search known to be empty is not
   // linked: it falls back to a page that has videos, or is greyed out. Nothing here makes a request.
   var counts = {};
@@ -6263,7 +6263,7 @@ class MainActivity : Activity() {
     '#tv-era .tv-fac{display:flex;gap:12px;align-items:center;margin-bottom:8px;}',
     '#tv-era .tv-fac .nm{font-size:17px;font-weight:700;}',
     '#tv-era .tv-fmark{width:46px;height:46px;flex:0 0 auto;border-radius:8px;border:2px dashed #3B4656;background:#0F151C;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#F4C242;overflow:hidden;}',
-    '#tv-era .tv-fmark.tv-pic{border:2px solid #2A323C;background:#0F151C;padding:3px;}',
+    '#tv-era .tv-fmark.tv-pic{width:76px;height:54px;border:0;border-radius:0;background:none;padding:0;}',
     '#tv-era .tv-fmark img{max-width:100%;max-height:100%;object-fit:contain;}',
     '#tv-era .tv-show{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:10px 14px;}',
     '#tv-era .tv-off{opacity:.45;}',
@@ -6279,7 +6279,11 @@ class MainActivity : Activity() {
 
   var BEL = '<svg width="104" height="52" viewBox="0 0 120 60" fill="none" stroke="#F4C242" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="20" width="112" height="20" rx="5" fill="FILL"></rect><circle cx="60" cy="30" r="21" fill="#161F2A"></circle><circle cx="60" cy="30" r="12"></circle><rect x="14" y="24" width="14" height="12" rx="2"></rect><rect x="92" y="24" width="14" height="12" rx="2"></rect></svg>';
   var EMB = {
-    2: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" aria-hidden="true"><circle cx="60" cy="40" r="26"></circle><circle cx="41" cy="74" r="26"></circle><circle cx="79" cy="74" r="26"></circle></svg>'
+    2: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" aria-hidden="true"><circle cx="60" cy="40" r="26"></circle><circle cx="41" cy="74" r="26"></circle><circle cx="79" cy="74" r="26"></circle></svg>',
+    1: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="60" cy="64" r="20"></circle><path d="M60 24v10M26 64h10M84 64h10M36 40l7 7M84 40l-7 7"></path><path d="M20 98h80"></path></svg>',
+    3: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="22" y="22" width="30" height="30" rx="4"></rect><rect x="68" y="22" width="30" height="30" rx="4"></rect><rect x="22" y="68" width="30" height="30" rx="4"></rect><rect x="68" y="68" width="30" height="30" rx="4"></rect><path d="M52 37h16M52 83h16M37 52v16M83 52v16"></path></svg>',
+    4: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="60" cy="60" rx="46" ry="30"></ellipse><ellipse cx="60" cy="60" rx="26" ry="15"></ellipse><path d="M14 60h20M86 60h20M60 30v15M60 75v15"></path></svg>',
+    5: '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" stroke="#F4C242" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 78a30 30 0 0 1 60 0"></path><path d="M16 78h88M60 28v12M28 42l8 8M92 42l-8 8M34 92h52"></path></svg>'
   };
   var BOUNDS = [[0, 26.2, 1], [26.6, 20.4, 2], [47.4, 7.8, 3], [55.6, 27.4, 4], [83.4, 16.6, 5]];
 
@@ -6297,7 +6301,7 @@ class MainActivity : Activity() {
   }
 
   function render() {
-    var e = eraOf(cur) || eraOf(2);
+    var e = eraOf(cur) || eraOf(1);
     var h = '';
     h += '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('Eras', '時代')) + '</div><div class="tv-eh-i">' + esc(notice || T('Left and Right choose an era. OK opens a tile and runs one search.', '左右で時代を選択。OKでタイルを開くと検索します。')) + '</div></div>';
     h += '<div class="tv-ech">' + data.eras.map(function(x) {
@@ -6310,7 +6314,7 @@ class MainActivity : Activity() {
         var hide = yc.indexOf(t[1]) >= 0;   // this era's own year chips stand in for its two end labels
         return '<div class="tv-tk" style="left:' + t[0] + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div>' + (hide ? '' : '<div class="tv-tl" style="left:' + t[0] + '%;' + (t[0] === 0 ? 'transform:none;' : '') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>');
       }).join('') + '<div class="tv-tl" style="right:0;transform:none">' + esc(T('now', '現在')) + '</div>' +
-      (act ? yc.map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') : '') + '</div>';
+      (act ? yc.slice().reverse().map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') : '') + '</div>';
     if (!e.reigns) {
       h += '<div class="tv-desc"><div><div class="tv-lbl" style="font-size:13px">' + esc(T('Era ' + e.n + ' of 5', '時代 ' + e.n + ' / 5')) + '</div><div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.name) + '</div><div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.ja || '') + ' · ' + esc(e.years) + '</div><div style="font-size:15px;color:#9AA6B4;margin-top:8px">' + esc(T('This era is not built yet.', 'この時代はまだ準備中です。')) + '</div></div></div>';
       if (e.rising) h += sec(T('Rising stars', '新星'), '', wr(e.rising));
@@ -6321,14 +6325,14 @@ class MainActivity : Activity() {
       '<div class="tv-lbl" style="font-size:11px">' + esc(e.eyebrow || '') + '</div>' +
       '<div style="font-size:24px;font-weight:900;margin-top:2px">' + esc(e.title || e.name) + '</div>' +
       '<div style="font-size:14px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(e.tagline || '') + '</div>' +
-      '<div style="font-size:12px;font-weight:500;color:#C9D2DC;margin-top:4px;max-width:900px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
+      '<div style="font-size:12px;font-weight:500;color:#C9D2DC;margin-top:4px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
       '</div></div>';
     // title reigns
     var rg = '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
       var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
       var belt = pic ? '<img src="' + esc(pic) + '" alt="">' : BEL.replace('FILL', r.beltId === 'world' ? '#2A1C10' : '#2A323C');
       var base = '/mypage?tvch=' + esc(r.beltId) + '&tvrn=';
-      return '<div class="tv-rc"><a class="tv-card" tabindex="0" href="' + base + r.rn + '"><div class="row"><div class="tv-belt">' + belt + '</div><div><div class="tv-1">' + esc(r.title) + ' <s>· ' + esc(r.belt) + '</s></div><div class="tv-2">' + esc(r.holder) + '</div><div class="tv-3">' + esc(r.stat) + '</div></div></div></a>' +
+      return '<div class="tv-rc"><a class="tv-card" tabindex="0" href="' + base + r.rn + '"><div class="row"><div class="tv-belt">' + belt + '</div><div><div class="tv-1 notranslate" translate="no">' + esc(r.title) + (r.belt ? ' <s>· ' + esc(r.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(r.holder) + '</div><div class="tv-3">' + esc(r.stat) + '</div></div></div></a>' +
         '<div class="tv-oth">' + (r.others || []).map(function(o) { return '<a class="tv-pill" tabindex="0" href="' + base + o.rn + '">' + esc(o.t) + '</a>'; }).join('') + '</div></div>';
     }).join('') + '</div>';
     h += sec(T('Dominant title reigns', '王座の長期政権'), '', rg);

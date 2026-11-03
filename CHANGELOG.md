@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.20.1
+
+- Eras page: opens on Era 1 (was Era 2). Descriptor text no longer wraps early (the width cap is gone). Eras 1, 3, 4 and 5 have their own emblems. Faction logos sit on the tile with no box and are larger. The High Speed card is titled "High Speed Championship" and is excluded from page translation. Year chips under the timeline run newest first.
+
 ## 2.20.0
 
 - Eras 1, 3, 4 and 5 are built (header, title reigns with deep links, rivalries, top wrestlers, rising stars, factions, shows). Reign numbers, days and defences come from the lineage files. Era 1's three factions have no faction page, so their tiles run a plain search.
