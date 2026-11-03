@@ -6318,7 +6318,7 @@ class MainActivity : Activity() {
       return;
     }
     h += '<div class="tv-desc"><div class="tv-emb">' + (EMB[e.n] || '') + '<div class="tv-emb-k notranslate" translate="no">' + esc(e.kanji) + '</div></div><div style="flex:1 1 0;min-width:0">' +
-      '<div class="tv-lbl" style="font-size:10px">' + esc(e.eyebrow || '') + '</div>' +
+      '<div class="tv-lbl" style="font-size:11px">' + esc(e.eyebrow || '') + '</div>' +
       '<div style="font-size:24px;font-weight:900;margin-top:2px">' + esc(e.title || e.name) + '</div>' +
       '<div style="font-size:14px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(e.tagline || '') + '</div>' +
       '<div style="font-size:12px;font-weight:500;color:#C9D2DC;margin-top:4px;max-width:900px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
