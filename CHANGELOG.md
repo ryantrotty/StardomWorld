@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.7
+
+- Filter bar: the Location drop-down is full width again (it was squeezed to a narrow strip at the right, breaking venue names mid-word) and scrolls if it is taller than the screen.
+
 ## 2.21.6
 
 - Faction home: a watchdog retries a first load that never finished and moves on to the next spelling if the grid is still short (Itoh Respect Gundan sometimes stayed empty on the first visit). It stops after about 20 seconds or when a screen is filled.

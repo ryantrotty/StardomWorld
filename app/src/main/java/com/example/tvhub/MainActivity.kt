@@ -7742,6 +7742,7 @@ class MainActivity : Activity() {
     if (k === 'co' || k === 'wr') { panel.style.maxHeight = Math.max(200, window.innerHeight - (r.bottom + 8) - 14) + 'px'; panel.style.overflowY = 'auto'; }   // never run off the bottom of the screen
     else if (k === 'sh') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 900)) + 'px'; panel.style.width = '880px'; }
     else if (k === 'yr') { panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 480)) + 'px'; panel.style.width = '440px'; }
+    else if (k === 'lo') { panel.style.maxHeight = Math.max(200, window.innerHeight - (r.bottom + 8) - 14) + 'px'; panel.style.overflowY = 'auto'; }   // full width (set above), never off the bottom
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 400)) + 'px';
     btn.classList.add('tv-open');
     openBtn = btn;
