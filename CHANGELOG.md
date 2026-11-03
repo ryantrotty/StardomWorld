@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.1
+
+- Eras link checks: an empty search never removes a tile any more. Wrestler tiles widen to the first name, shows widen to all years (then the year page), rivalries to the first wrestler. Greyed-out tiles are gone.
+- era_link_keys.py also lists the wider searches (90 keys). The Muse job checks each key once, 15 a night, never again.
+
 ## 2.21.0
 
 - Eras page: the whole timeline is flipped. Newest era is on the left (era chips, timeline bar, year chips), "now" is at the left end and 2011 at the right.

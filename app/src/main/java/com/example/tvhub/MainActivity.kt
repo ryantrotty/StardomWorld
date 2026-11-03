@@ -6207,6 +6207,17 @@ class MainActivity : Activity() {
   try { counts = (AndroidHost.erasChecks && JSON.parse(AndroidHost.erasChecks() || '{}')) || {}; } catch (e) { counts = {}; }
   function kwOf(words, year) { return (String(words || '') + (year ? ' ' + year + '/' : '')).trim(); }
   function isEmpty(words, year, dead) { return dead === true || counts[kwOf(words, year)] === 0; }
+  // A search with no videos is never dropped: it is widened. Wrestler: first word of the name. Show: the same words
+  // without the year; if that is empty too, the year page. Each step is only taken when the daily file says 0.
+  function widen(words, year, dead, kind) {
+    if (!isEmpty(words, year, dead)) return { url: searchUrl(words, year), step: 0 };
+    if (kind === 'wrestler') { var f1 = String(words).split(' ')[0]; return { url: searchUrl(f1, ''), step: 1 }; }
+    if (kind === 'show' && year) {
+      if (!isEmpty(words, '', false)) return { url: searchUrl(words, ''), step: 1 };
+      return { url: '/contents/category/' + (year === '2020' ? '_2020' : year), step: 2 };
+    }
+    return { url: searchUrl(words, year), step: 0 };
+  }
   var notice = '';
 
   function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -6328,8 +6339,7 @@ class MainActivity : Activity() {
   }
   function wr(list) {
     return '<div class="tv-g4">' + list.map(function(w) {
-      if (isEmpty(w.search || w.name, '', w.dead)) return '<div class="tv-tile tv-off"><div class="a">' + esc(w.name) + '</div><div class="b">' + esc(w.note || '') + '</div></div>';
-      return tile(w.name, w.note, searchUrl(w.search || w.name, ''));
+      return tile(w.name, w.note, widen(w.search || w.name, '', w.dead, 'wrestler').url);
     }).join('') + '</div>';
   }
 
@@ -6405,8 +6415,8 @@ class MainActivity : Activity() {
       return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
     }).join('');
     var sh = (e.shows || []).map(function(s) {
-      var semp = isEmpty(s.search, s.year, s.dead), shref = semp ? '/contents/category/' + (s.year === '2020' ? '_2020' : s.year) : searchUrl(s.search, s.year);
-      return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : '') + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
+      var wd = widen(s.search, s.year, s.dead, 'show'), semp = wd.step === 2, shref = wd.url;
+      return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : (wd.step === 1 ? ' · ' + esc(T('all years', '全年')) : '')) + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
     h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;

@@ -20,10 +20,15 @@ def add(words, year, kind):
 
 for e in d['eras']:
     for w in (e.get('wrestlers') or []) + (e.get('rising') or []):
-        add(w.get('search') or w['name'], '', 'wrestler')
+        q = w.get('search') or w['name']
+        add(q, '', 'wrestler')
+        if ' ' in q:
+            add(q.split()[0], '', 'wrestler-fallback')   # broader search used when the full name has no videos
     for r in e.get('rivalries') or []:
         add(r['words'], '', 'rivalry')
         add(r['a'], '', 'rivalry-fallback')
     for s in e.get('shows') or []:
         add(s['search'], s.get('year', ''), 'show')
+        if s.get('year'):
+            add(s['search'], '', 'show-fallback')       # broader search (no year) used when the year search is empty
 json.dump(out, sys.stdout, ensure_ascii=False, indent=1)
