@@ -2943,6 +2943,12 @@ class MainActivity : Activity() {
             this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, 0).versionName ?: ""
         } catch (_: Exception) { "" }
 
+        // Link checks for the Eras page from the daily file ("eras.counts": search words -> videos found), or "".
+        @android.webkit.JavascriptInterface
+        fun erasChecks(): String = try {
+            this@MainActivity.dailyData()?.optJSONObject("eras")?.optJSONObject("counts")?.toString() ?: ""
+        } catch (_: Exception) { "" }
+
         // Eras page content (assets/eras.json).
         @android.webkit.JavascriptInterface
         fun erasJson(): String = try {
@@ -6174,6 +6180,12 @@ class MainActivity : Activity() {
   window.__tvEra = true;
   window.__tvInfiniteScroll = true;
   var cur = parseInt(mm[1], 10) || 2;
+  // Link checks from the daily file (Muse): how many videos each search found. A search known to be empty is not
+  // linked: it falls back to a page that has videos, or is greyed out. Nothing here makes a request.
+  var counts = {};
+  try { counts = (AndroidHost.erasChecks && JSON.parse(AndroidHost.erasChecks() || '{}')) || {}; } catch (e) { counts = {}; }
+  function kwOf(words, year) { return (String(words || '') + (year ? ' ' + year + '/' : '')).trim(); }
+  function isEmpty(words, year, dead) { return dead === true || counts[kwOf(words, year)] === 0; }
   var notice = '';
 
   function isJa() { return document.cookie.indexOf('googtrans=/ja/ja') !== -1; }
@@ -6190,7 +6202,7 @@ class MainActivity : Activity() {
   st.textContent = [
     '#tv-era{position:fixed;left:0;top:0;right:0;bottom:0;z-index:99000;background:#0B1118;color:#ffffff;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;}',
     '#tv-era, #tv-era *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;box-sizing:border-box;}',
-    '#tv-era-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:24px 24px 60px 24px;scrollbar-width:none;display:flex;flex-direction:column;gap:18px;}',
+    '#tv-era-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:20px 24px 60px 24px;scrollbar-width:none;display:flex;flex-direction:column;gap:12px;}',
     '#tv-era-scroll::-webkit-scrollbar{display:none;}',
     '#tv-era a{color:inherit;text-decoration:none !important;outline:none !important;}',
     '#tv-era .tv-eh{display:flex;align-items:center;gap:14px;}',
@@ -6198,48 +6210,49 @@ class MainActivity : Activity() {
     '#tv-era .tv-eh-t{font-size:30px;font-weight:900;}',
     '#tv-era .tv-eh-i{margin-left:auto;text-align:right;font-size:15px;font-weight:600;color:#9AA6B4;}',
     '#tv-era .tv-ech{display:flex;gap:10px;}',
-    '#tv-era .tv-chip{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:12px;height:64px;padding:0 16px;border-radius:20px;border:3px solid #2A323C;background:#161F2A;color:#C9D2DC;}',
+    '#tv-era .tv-chip{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:12px;height:52px;padding:0 14px;border-radius:20px;border:3px solid #2A323C;background:#161F2A;color:#C9D2DC;}',
     '#tv-era .tv-chip.tv-on{background:#FFB347;border-color:#FFB347;color:#1A1A1A;}',
     '#tv-era .tv-chip:focus{border-color:#F4C242;}',
-    '#tv-era .tv-chip .k{font-size:28px;font-weight:900;line-height:1;}',
-    '#tv-era .tv-chip .n{font-size:15px;font-weight:700;line-height:1.15;}',
-    '#tv-era .tv-chip .y{font-size:13px;font-weight:600;opacity:.85;margin-top:2px;}',
-    '#tv-era .tv-tlw{position:relative;height:44px;margin:0 6px;flex:0 0 auto;}',
+    '#tv-era .tv-chip .k{font-size:24px;font-weight:900;line-height:1;}',
+    '#tv-era .tv-chip .n{font-size:14px;font-weight:700;line-height:1.15;}',
+    '#tv-era .tv-chip .y{font-size:12px;font-weight:600;opacity:.85;margin-top:2px;}',
+    '#tv-era .tv-tlw{position:relative;height:58px;margin:0 6px;flex:0 0 auto;}',
+    '#tv-era .tv-yc{position:absolute;top:14px;transform:translateX(-50%);padding:2px 10px;font-size:13px;}',
     '#tv-era .tv-seg{position:absolute;top:0;height:8px;border-radius:4px;background:#3B4656;}',
     '#tv-era .tv-seg.tv-on{background:#F4C242;}',
     '#tv-era .tv-tk{position:absolute;top:0;width:2px;height:14px;background:#9AA6B4;}',
     '#tv-era .tv-tl{position:absolute;top:18px;font-size:14px;font-weight:700;color:#9AA6B4;transform:translateX(-50%);white-space:nowrap;}',
-    '#tv-era .tv-desc{display:flex;gap:22px;align-items:center;background:#121922;border:2px solid #2A323C;border-radius:14px;padding:18px 22px;}',
-    '#tv-era .tv-emb{width:116px;height:116px;flex:0 0 auto;background:#0F151C;border:2px solid #2A323C;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;}',
-    '#tv-era .tv-emb-k{position:absolute;right:-8px;bottom:-8px;width:34px;height:34px;border-radius:6px;background:#F4C242;color:#1A1A1A;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;}',
+    '#tv-era .tv-desc{display:flex;gap:18px;align-items:center;background:#121922;border:2px solid #2A323C;border-radius:14px;padding:12px 18px;}',
+    '#tv-era .tv-emb{width:84px;height:84px;flex:0 0 auto;background:#0F151C;border:2px solid #2A323C;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;}',
+    '#tv-era .tv-emb-k{position:absolute;right:-8px;bottom:-8px;width:28px;height:28px;border-radius:6px;background:#F4C242;color:#1A1A1A;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;}',
     '#tv-era .tv-lbl{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;text-transform:uppercase;}',
-    '#tv-era .tv-sech{display:flex;align-items:center;gap:10px;margin-bottom:10px;}',
+    '#tv-era .tv-sech{display:flex;align-items:center;gap:10px;margin-bottom:8px;}',
     '#tv-era .tv-sech i{width:8px;height:26px;background:#F4C242;border-radius:4px;flex:0 0 auto;}',
     '#tv-era .tv-hint{font-size:13px;font-weight:600;color:#9AA6B4;}',
-    '#tv-era .tv-yrs{display:flex;gap:8px;margin-top:12px;}',
-    '#tv-era .tv-pill{display:inline-block;border-radius:20px;border:3px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
+        '#tv-era .tv-pill{display:inline-block;border-radius:20px;border:3px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
     '#tv-era a.tv-pill:focus{border-color:#F4C242;background:#172029;color:#fff;}',
     '#tv-era .tv-pillr{display:inline-block;border-radius:20px;border:2px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
     '#tv-era .tv-rg{display:flex;gap:16px;}',
-    '#tv-era .tv-card{flex:1 1 0;min-width:0;background:#161F2A;border:3px solid #2A323C;border-radius:12px;padding:10px 12px;display:block;}',
+    '#tv-era .tv-rc{flex:1 1 0;min-width:0;background:#161F2A;border:3px solid #2A323C;border-radius:12px;padding:6px 8px 8px 8px;}',
+    '#tv-era .tv-card{display:block;border:3px solid transparent;border-radius:8px;padding:4px 6px;}',
     '#tv-era .tv-card:focus{background:#172029;border-color:#F4C242;}',
     '#tv-era .tv-card .row{display:flex;gap:14px;align-items:center;}',
-    '#tv-era .tv-belt{flex:0 0 auto;width:120px;height:66px;border-radius:6px;background:#0F151C;border:2px solid #2A323C;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
+    '#tv-era .tv-belt{flex:0 0 auto;width:96px;height:52px;border-radius:6px;background:#0F151C;border:2px solid #2A323C;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
     '#tv-era .tv-belt img{max-width:100%;max-height:100%;object-fit:contain;}',
-    '#tv-era .tv-1{font-size:19px;font-weight:700;line-height:1.15;}',
+    '#tv-era .tv-1{font-size:17px;font-weight:700;line-height:1.15;}',
     '#tv-era .tv-1 s{text-decoration:none;color:#9AA6B4;font-weight:600;font-size:15px;}',
-    '#tv-era .tv-2{font-size:15px;font-weight:600;color:#C9D2DC;margin-top:3px;}',
-    '#tv-era .tv-3{font-size:13px;font-weight:700;color:#F4C242;margin-top:3px;}',
-    '#tv-era .tv-oth{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}',
+    '#tv-era .tv-2{font-size:14px;font-weight:600;color:#C9D2DC;margin-top:2px;}',
+    '#tv-era .tv-3{font-size:13px;font-weight:700;color:#F4C242;margin-top:2px;}',
+    '#tv-era .tv-oth{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0 6px;}',
     '#tv-era .tv-vc{flex:1 1 0;min-width:0;display:block;background:#1a1a1a;border:3px solid transparent;border-radius:8px;overflow:hidden;position:relative;}',
     '#tv-era .tv-vc:focus{border-color:#F4C242;}',
-    '#tv-era .tv-th{height:110px;background:linear-gradient(135deg,#172029,#0F151C 70%);display:flex;align-items:center;justify-content:center;gap:12px;}',
-    '#tv-era .tv-th b{font-size:19px;font-weight:900;color:#fff;text-align:center;line-height:1.1;letter-spacing:.02em;}',
+    '#tv-era .tv-th{height:64px;background:linear-gradient(135deg,#172029,#0F151C 70%);display:flex;align-items:center;justify-content:center;gap:12px;}',
+    '#tv-era .tv-th b{font-size:16px;font-weight:900;color:#fff;text-align:center;line-height:1.1;letter-spacing:.02em;}',
     '#tv-era .tv-th em{font-style:normal;font-size:13px;font-weight:800;color:#F4C242;}',
     '#tv-era .tv-tg{position:absolute;top:8px;left:8px;background:#FFB347;color:#1A1A1A;border-radius:4px;padding:2px 7px;font-size:12px;font-weight:800;letter-spacing:.06em;}',
     '#tv-era .tv-dt{position:absolute;top:8px;right:8px;background:#F4C242;color:#1A1A1A;border-radius:4px;padding:2px 7px;font-size:12px;font-weight:800;}',
-    '#tv-era .tv-vt{padding:10px 12px 4px 12px;font-size:15px;font-weight:700;line-height:1.25;}',
-    '#tv-era .tv-vh{padding:0 12px 12px 12px;font-size:12px;font-weight:600;color:#9AA6B4;}',
+    '#tv-era .tv-vt{padding:8px 12px 2px 12px;font-size:14px;font-weight:700;line-height:1.25;}',
+    '#tv-era .tv-vh{padding:0 12px 10px 12px;font-size:11px;font-weight:600;color:#9AA6B4;}',
     '#tv-era .tv-cols{display:flex;gap:18px;}',
     '#tv-era .tv-col{min-width:0;}',
     '#tv-era .tv-g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}',
@@ -6253,6 +6266,7 @@ class MainActivity : Activity() {
     '#tv-era .tv-logo.tv-pic{border:2px solid #2A323C;background:#fff;}',
     '#tv-era .tv-logo img{max-width:100%;max-height:100%;object-fit:contain;}',
     '#tv-era .tv-show{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:10px 14px;}',
+    '#tv-era .tv-off{opacity:.45;}',
     '#tv-era .tv-show .w{font-size:13px;font-weight:800;color:#F4C242;white-space:nowrap;margin-left:10px;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);
@@ -6276,7 +6290,10 @@ class MainActivity : Activity() {
     return '<a class="tv-tile" tabindex="0" href="' + esc(url) + '"><div class="a">' + esc(name) + '</div><div class="b">' + esc(note || '') + '</div></a>';
   }
   function wr(list) {
-    return '<div class="tv-g4">' + list.map(function(w) { return tile(w.name, w.note, searchUrl(w.search || w.name, '')); }).join('') + '</div>';
+    return '<div class="tv-g4">' + list.map(function(w) {
+      if (isEmpty(w.search || w.name, '', w.dead)) return '<div class="tv-tile tv-off"><div class="a">' + esc(w.name) + '</div><div class="b">' + esc(w.note || '') + '</div></div>';
+      return tile(w.name, w.note, searchUrl(w.search || w.name, ''));
+    }).join('') + '</div>';
   }
 
   function render() {
@@ -6284,36 +6301,42 @@ class MainActivity : Activity() {
     var h = '';
     h += '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('Eras', '時代')) + '</div><div class="tv-eh-i">' + esc(notice || T('Left and Right choose an era. OK opens a tile and runs one search.', '左右で時代を選択。OKでタイルを開くと検索します。')) + '</div></div>';
     h += '<div class="tv-ech">' + data.eras.map(function(x) {
-      return '<a class="tv-chip' + (x.n === cur ? ' tv-on' : '') + '" tabindex="0" data-era="' + x.n + '"><b class="k">' + esc(x.kanji) + '</b><div><div class="n">' + esc(x.name) + '</div><div class="y">' + esc(x.years) + '</div></div></a>';
+      return '<a class="tv-chip' + (x.n === cur ? ' tv-on' : '') + '" tabindex="0" data-era="' + x.n + '"><b class="k notranslate" translate="no">' + esc(x.kanji) + '</b><div><div class="n">' + esc(x.name) + '</div><div class="y">' + esc(x.years) + '</div></div></a>';
     }).join('') + '</div>';
-    h += '<div class="tv-tlw">' + BOUNDS.map(function(b) { return '<div class="tv-seg' + (b[2] === e.n ? ' tv-on' : '') + '" style="left:' + b[0] + '%;width:' + b[1] + '%"></div>'; }).join('') +
+    var yc = e.yearChips || [], act = null;
+    BOUNDS.forEach(function(bb) { if (bb[2] === e.n) act = bb; });
+    h += '<div class="tv-tlw">' + BOUNDS.map(function(bb) { return '<div class="tv-seg' + (bb[2] === e.n ? ' tv-on' : '') + '" style="left:' + bb[0] + '%;width:' + bb[1] + '%"></div>'; }).join('') +
       [[0, '2011', 0], [26.4, '2015', 1], [47.2, '2018', 1], [55.4, '2019', 0], [83.2, '2024', 0]].map(function(t) {
-        return '<div class="tv-tk" style="left:' + t[0] + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div><div class="tv-tl" style="left:' + t[0] + '%;' + (t[0] === 0 ? 'transform:none;' : '') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>';
-      }).join('') + '<div class="tv-tl" style="right:0;transform:none">' + esc(T('now', '現在')) + '</div></div>';
+        var hide = yc.indexOf(t[1]) >= 0;   // this era's own year chips stand in for its two end labels
+        return '<div class="tv-tk" style="left:' + t[0] + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div>' + (hide ? '' : '<div class="tv-tl" style="left:' + t[0] + '%;' + (t[0] === 0 ? 'transform:none;' : '') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>');
+      }).join('') + '<div class="tv-tl" style="right:0;transform:none">' + esc(T('now', '現在')) + '</div>' +
+      (act ? yc.map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') : '') + '</div>';
     if (!e.reigns) {
       h += '<div class="tv-desc"><div><div class="tv-lbl" style="font-size:13px">' + esc(T('Era ' + e.n + ' of 5', '時代 ' + e.n + ' / 5')) + '</div><div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.name) + '</div><div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.ja || '') + ' · ' + esc(e.years) + '</div><div style="font-size:15px;color:#9AA6B4;margin-top:8px">' + esc(T('This era is not built yet.', 'この時代はまだ準備中です。')) + '</div></div></div>';
       if (e.rising) h += sec(T('Rising stars', '新星'), '', wr(e.rising));
       scroller.innerHTML = h;
       return;
     }
-    h += '<div class="tv-desc"><div class="tv-emb">' + (EMB[e.n] || '') + '<div class="tv-emb-k">' + esc(e.kanji) + '</div></div><div style="flex:1 1 0;min-width:0">' +
-      '<div class="tv-lbl" style="font-size:13px">' + esc(e.eyebrow || '') + '</div>' +
-      '<div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.title || e.name) + '</div>' +
-      '<div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.tagline || '') + '</div>' +
-      '<div style="font-size:15px;font-weight:500;color:#C9D2DC;margin-top:6px;max-width:760px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
-      '<div class="tv-yrs">' + (e.yearChips || []).map(function(y) { return '<a class="tv-pill" tabindex="0" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') + '</div></div></div>';
+    h += '<div class="tv-desc"><div class="tv-emb">' + (EMB[e.n] || '') + '<div class="tv-emb-k notranslate" translate="no">' + esc(e.kanji) + '</div></div><div style="flex:1 1 0;min-width:0">' +
+      '<div class="tv-lbl" style="font-size:10px">' + esc(e.eyebrow || '') + '</div>' +
+      '<div style="font-size:24px;font-weight:900;margin-top:2px">' + esc(e.title || e.name) + '</div>' +
+      '<div style="font-size:14px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(e.tagline || '') + '</div>' +
+      '<div style="font-size:12px;font-weight:500;color:#C9D2DC;margin-top:4px;max-width:900px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
+      '</div></div>';
     // title reigns
     var rg = '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
       var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
       var belt = pic ? '<img src="' + esc(pic) + '" alt="">' : BEL.replace('FILL', r.beltId === 'world' ? '#2A1C10' : '#2A323C');
-      return '<a class="tv-card" tabindex="0" href="/mypage?tvch=' + esc(r.beltId) + '"><div class="row"><div class="tv-belt">' + belt + '</div><div><div class="tv-1">' + esc(r.title) + ' <s>· ' + esc(r.belt) + '</s></div><div class="tv-2">' + esc(r.holder) + '</div><div class="tv-3">' + esc(r.stat) + '</div></div></div>' +
-        '<div class="tv-oth">' + (r.others || []).map(function(o) { return '<span class="tv-pillr">' + esc(o) + '</span>'; }).join('') + '</div></a>';
+      var base = '/mypage?tvch=' + esc(r.beltId) + '&tvrn=';
+      return '<div class="tv-rc"><a class="tv-card" tabindex="0" href="' + base + r.rn + '"><div class="row"><div class="tv-belt">' + belt + '</div><div><div class="tv-1">' + esc(r.title) + ' <s>· ' + esc(r.belt) + '</s></div><div class="tv-2">' + esc(r.holder) + '</div><div class="tv-3">' + esc(r.stat) + '</div></div></div></a>' +
+        '<div class="tv-oth">' + (r.others || []).map(function(o) { return '<a class="tv-pill" tabindex="0" href="' + base + o.rn + '">' + esc(o.t) + '</a>'; }).join('') + '</div></div>';
     }).join('') + '</div>';
     h += sec(T('Dominant title reigns', '王座の長期政権'), '', rg);
     // rivalries
     var rv = '<div class="tv-rg">' + (e.rivalries || []).map(function(r) {
       var names = r.b ? '<b>' + esc(r.a).replace(' ', '<br>') + '</b><em>VS</em><b>' + esc(r.b).replace(' ', '<br>') + '</b>' : '<b>' + esc(r.a).toUpperCase() + '</b>';
-      return '<a class="tv-vc" tabindex="0" href="' + esc(searchUrl(r.words, r.year)) + '"><div class="tv-th">' + names + '</div><span class="tv-tg">' + esc(r.tag) + '</span><span class="tv-dt">' + esc(r.when) + '</span><div class="tv-vt">' + esc(r.title) + '</div><div class="tv-vh">' + esc(T('Search', '検索')) + ' · ' + esc(r.words) + (r.year ? ' · ' + esc(r.year) : '') + '</div></a>';
+      var emp = isEmpty(r.words, '', r.dead), href = emp ? searchUrl(r.a, '') : searchUrl(r.words, '');
+      return '<a class="tv-vc" tabindex="0" href="' + esc(href) + '"><div class="tv-th">' + names + '</div><span class="tv-tg">' + esc(r.tag) + '</span><span class="tv-dt">' + esc(r.when) + '</span><div class="tv-vt">' + esc(r.title) + '</div><div class="tv-vh">' + esc(T('Search', '検索')) + ' · ' + esc(emp ? r.a : r.words) + '</div></a>';
     }).join('') + '</div>';
     h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
     // wrestlers / factions / shows
@@ -6326,7 +6349,8 @@ class MainActivity : Activity() {
       return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-logo' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
     }).join('');
     var sh = (e.shows || []).map(function(s) {
-      return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(searchUrl(s.search, s.year)) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
+      var semp = isEmpty(s.search, s.year, s.dead), shref = semp ? '/contents/category/' + (s.year === '2020' ? '_2020' : s.year) : searchUrl(s.search, s.year);
+      return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : '') + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
     h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
@@ -6340,9 +6364,11 @@ class MainActivity : Activity() {
     if (r.top < 40) scroller.scrollTop += r.top - 40;
     else if (r.bottom > vh - 40) scroller.scrollTop += r.bottom - vh + 40;
   }
+  // Left/Right: along the row first. Up/Down: the nearest item above or below that overlaps this one sideways
+  // (so Down goes straight down); only when nothing overlaps, the nearest by distance.
   function geoNext(cur0, k, list) {
     var cr = cur0.getBoundingClientRect(), cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
-    var best = null, bs = 1e9, rowBest = null, rowBs = 1e9;
+    var best = null, bs = 1e9, rowBest = null, rowBs = 1e9, ovBest = null, ovBs = 1e9;
     list.forEach(function(it) {
       if (it === cur0) return;
       var r = it.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy, prim;
@@ -6351,11 +6377,13 @@ class MainActivity : Activity() {
         if (ov > 0.5 * Math.min(r.height, cr.height) && (k === 39 ? dx > 4 : dx < -4)) { var a = Math.abs(dx); if (a < rowBs) { rowBs = a; rowBest = it; } }
         return;
       }
-      if (k === 40) { if (dy <= 4) return; prim = dy; } else { if (dy >= -4) return; prim = -dy; }
+      if (k === 40) { if (dy <= 4 || r.top < cr.bottom - 4) return; prim = dy; } else { if (dy >= -4 || r.bottom > cr.top + 4) return; prim = -dy; }
+      var hov = Math.min(r.right, cr.right) - Math.max(r.left, cr.left);
+      if (hov > 4) { var sc2 = prim * 1000 + Math.abs(dx); if (sc2 < ovBs) { ovBs = sc2; ovBest = it; } }
       var sc = prim + Math.abs(dx) * 2;
       if (sc < bs) { bs = sc; best = it; }
     });
-    return rowBest || best;
+    return rowBest || ovBest || best;
   }
   function chooseEra(n) {
     var e = eraOf(n);

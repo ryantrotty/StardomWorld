@@ -371,7 +371,13 @@
 
   var STAR = '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
   var PLAY = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
-  var sel = R.length - 1, waiting = false, searching = false, errNote = '', result = null, timer = 0;
+  // "tvrn=<reign number>" (from the Eras page) opens on that reign and loads its videos; otherwise the current champion.
+  var start = R.length - 1;
+  try {
+    var rn = parseInt(new URLSearchParams(location.search).get('tvrn'), 10);
+    if (rn) for (var si = 0; si < R.length; si++) if (R[si].n === rn) start = si;
+  } catch (e) {}
+  var sel = start, waiting = false, searching = false, errNote = '', result = null, timer = 0;
 
   function curBox(i) {
     var r = R[i], nx = R[i + 1], lines;
@@ -612,5 +618,5 @@
   document.addEventListener('focusin', function() { if (document.getElementById('tv-ln')) hint(); }, true);
 
   render('sel');
-  if (R.length) choose(R.length - 1, true) || 0;
+  if (R.length) choose(start, true, start !== R.length - 1) || 0;
 })();

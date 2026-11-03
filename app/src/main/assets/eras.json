@@ -1,5 +1,5 @@
 {
-  "_note": "Eras page content (Years menu > Era Test). Written by hand from the era notes; not checked against the site. year = a search word added to the keyword search (the site's Year filter writes it as 2016/). Only era 2 is filled in so far; the other eras show in the chip row and say they are not built yet. beltId feeds the belt picture (private builds). faction ids are the ids in factions.json.",
+  "_note": "Eras page content (Years menu > Era Test). Written by hand from the era notes; not checked against the site. year on a show = added to the search (written 2016/); rivalries search the two names only. rn = reign number in assets/lineage/<belt>.json (opens that reign). dead:true = known to have no videos (the tile falls back to the year page). The daily job can add checked counts to daily.json (eras.counts) so empty searches are unlinked: see docs/ERA_LINK_CHECKS.md. beltId feeds the belt picture (private builds). faction ids are the ids in factions.json.",
   "eras": [
     {
       "n": 1,
@@ -57,7 +57,7 @@
           "when": "2011–12",
           "title": "Nanae Takahashi vs Yuzuki Aikawa, veteran and idol",
           "words": "Nanae Takahashi Yuzuki Aikawa",
-          "year": "2012"
+          "year": ""
         },
         {
           "a": "Io Shirai",
@@ -66,7 +66,7 @@
           "when": "2013",
           "title": "Io Shirai vs Natsuki☆Taiyo, speed against speed",
           "words": "Io Shirai Natsuki Taiyo",
-          "year": "2013"
+          "year": ""
         },
         {
           "a": "Yoshiko",
@@ -75,7 +75,7 @@
           "when": "2014–15",
           "title": "Yoshiko vs Act Yasukawa, the delinquent and the rebel",
           "words": "Yoshiko Act Yasukawa",
-          "year": "2015"
+          "year": ""
         }
       ]
     },
@@ -89,12 +89,6 @@
       "title": "Threedom & the Golden Rebuild",
       "tagline": "三強 · スリードム — The rise of the ace and global eyes",
       "blurb": "Rebuilding with Io Shirai, Kairi Hojo and Mayu Iwatani at the centre, joined by elite guests from overseas.",
-      "yearChips": [
-        "2015",
-        "2016",
-        "2017",
-        "2018"
-      ],
       "seed": "Threedom",
       "reigns": [
         {
@@ -104,10 +98,20 @@
           "holder": "Io Shirai · 2nd reign",
           "stat": "546 days · 14 defences",
           "others": [
-            "Kairi Hojo · 2015",
-            "Mayu Iwatani · 2017",
-            "Toni Storm"
-          ]
+            {
+              "t": "Kairi Hojo · 2015",
+              "rn": 5
+            },
+            {
+              "t": "Mayu Iwatani · 2017",
+              "rn": 8
+            },
+            {
+              "t": "Toni Storm · 2017",
+              "rn": 9
+            }
+          ],
+          "rn": 7
         },
         {
           "beltId": "wonder",
@@ -116,8 +120,16 @@
           "holder": "Kairi Hojo",
           "stat": "364 days",
           "others": [
-            "Io Shirai (while Red Belt ace)"
-          ]
+            {
+              "t": "Io Shirai · 2015",
+              "rn": 6
+            },
+            {
+              "t": "Io Shirai · 2017",
+              "rn": 11
+            }
+          ],
+          "rn": 8
         }
       ],
       "rivalries": [
@@ -128,7 +140,7 @@
           "when": "2016–17",
           "title": "Io Shirai vs Mayu Iwatani, best friends turned rivals",
           "words": "Io Shirai Mayu Iwatani",
-          "year": "2016"
+          "year": ""
         },
         {
           "a": "Io Shirai",
@@ -137,7 +149,7 @@
           "when": "2015–17",
           "title": "Io Shirai vs Kairi Hojo, the Ace vs the Heart",
           "words": "Io Shirai Kairi",
-          "year": "2016"
+          "year": ""
         },
         {
           "a": "Io Shirai",
@@ -146,7 +158,7 @@
           "when": "2017",
           "title": "Io Shirai vs Toni Storm, the international showcase",
           "words": "Io Shirai Toni Storm",
-          "year": "2017"
+          "year": ""
         }
       ],
       "wrestlers": [
@@ -209,7 +221,8 @@
           "sub": "Io Shirai vs Mayu Iwatani",
           "when": "DEC 2016",
           "search": "Climax",
-          "year": "2016"
+          "year": "2016",
+          "dead": true
         },
         {
           "name": "Galaxy Stars 2017",
@@ -225,6 +238,12 @@
           "search": "5★STAR",
           "year": "2015"
         }
+      ],
+      "yearChips": [
+        "2015",
+        "2016",
+        "2017",
+        "2018"
       ]
     },
     {
@@ -282,7 +301,7 @@
           "when": "2018",
           "title": "Momo Watanabe vs Io Shirai, the Queen's Quest succession",
           "words": "Momo Watanabe Io Shirai",
-          "year": "2018"
+          "year": ""
         },
         {
           "a": "Arisa Hoshiki",
@@ -291,7 +310,7 @@
           "when": "2018–19",
           "title": "Arisa Hoshiki vs Tam Nakano, a grudge inside STARS",
           "words": "Arisa Hoshiki Tam Nakano",
-          "year": "2019"
+          "year": ""
         },
         {
           "a": "Kagetsu",
@@ -300,7 +319,7 @@
           "when": "2018–19",
           "title": "Kagetsu vs Mayu Iwatani, Oedo Tai against STARS",
           "words": "Kagetsu Mayu Iwatani",
-          "year": "2019"
+          "year": ""
         }
       ]
     },
@@ -366,7 +385,7 @@
           "when": "2021–23",
           "title": "Giulia vs Tam Nakano, the blood feud of the boom",
           "words": "Giulia Tam Nakano",
-          "year": "2021"
+          "year": ""
         },
         {
           "a": "Utami Hayashishita",
@@ -375,7 +394,7 @@
           "when": "2021–22",
           "title": "Utami Hayashishita vs Syuri, the workrate masterclass",
           "words": "Utami Hayashishita Syuri",
-          "year": "2021"
+          "year": ""
         },
         {
           "a": "AZM",
@@ -384,7 +403,7 @@
           "when": "2021–23",
           "title": "AZM vs Starlight Kid, rivals since the dojo",
           "words": "AZM Starlight Kid",
-          "year": "2022"
+          "year": ""
         }
       ]
     },
@@ -443,7 +462,7 @@
           "when": "2024",
           "title": "Saya Kamitani vs Tam Nakano, Queen's Quest shattered",
           "words": "Saya Kamitani Tam Nakano",
-          "year": "2024"
+          "year": ""
         },
         {
           "a": "Neo Genesis",
@@ -452,7 +471,7 @@
           "when": "2024–25",
           "title": "Neo Genesis vs H.A.T.E., the faction war",
           "words": "Neo Genesis H.A.T.E.",
-          "year": "2024"
+          "year": ""
         },
         {
           "a": "Maika",
@@ -461,7 +480,7 @@
           "when": "2024",
           "title": "Maika vs Suzu Suzuki, the new generation's leader",
           "words": "Maika Suzu Suzuki",
-          "year": "2024"
+          "year": ""
         }
       ]
     }

@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.19.1
+
+- Eras page: compact layout so Defining rivalries fits on screen (descriptor text 20% smaller, smaller emblem and chips, shorter belt cards and rivalry thumbnails). The year chips moved out of the era box and sit under the timeline, between the era's dates.
+- Era chip numerals no longer get translated to "one, two, three" (marked do-not-translate).
+- Title reign cards and the other-champion chips now open that reign (the lineage page accepts "tvrn=<reign number>" and loads its videos), not the current champion.
+- Rivalry tiles search the two names only (the year made the searches come back empty).
+- Arrow keys: Up and Down now go to the nearest tile straight above or below before looking sideways.
+- Empty searches can be unlinked: the daily file may carry eras.counts (see docs/ERA_LINK_CHECKS.md); an empty show falls back to its year page, an empty rivalry to the first wrestler's search, an empty wrestler is greyed out. Year-End Climax 2016 is marked as empty by hand.
+
 ## 2.19.0
 
 - New Eras page, first cut: Years menu > Era Test (a full-width row above the year list). It shows the five eras as a chip row with a timeline underneath, and Era 2 (Threedom & the Golden Rebuild) is filled in. Left and Right on the chips change era; the other four say "not built yet".
