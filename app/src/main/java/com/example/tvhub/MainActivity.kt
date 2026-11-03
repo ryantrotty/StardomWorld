@@ -4844,7 +4844,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:12px;font-weight:700;color:#F4C242;margin-top:3px;white-space:nowrap;}',
             '#tv-sm-shelf .tv-shl-ec{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:start;margin-top:8px;}',
             '#tv-sm-shelf .tv-shl-ecol{display:flex;flex-direction:column;gap:4px;}',
-            '#tv-sm-shelf .tv-sm-fi.tv-shl-eh{display:flex;align-items:center;gap:8px;padding:8px 8px;margin:0;background:#161f2a;border-color:#2a323c;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-eh{display:flex;align-items:center;gap:8px;padding:0 8px;height:76px;overflow:hidden;margin:0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-eh:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-ek{flex:0 0 auto;width:30px;text-align:center;font-size:26px;font-weight:900;line-height:1;color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-ex{min-width:0;display:block;}',
@@ -5067,7 +5067,7 @@ class MainActivity : Activity() {
             if (showsPill) showsRow = showsRow.replace('<span>' + esc(T('Shows', '番組')) + '</span>', '<span>' + esc(T('Shows', '番組')) + showsPill + '</span>');
             h += showsRow;
             h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
-            h += group(T('Years', '年別'), years, 'years');
+            h += group(T('Years & Eras', '年別・時代'), years, 'years');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
               var links = acctLinks();

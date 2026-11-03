@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.21.4
+
+- Years menu: the five era header cards are all the same height (76px). The menu group title reads Years & Eras.
+
 ## 2.21.3
 
 - Eras page: rivalry tiles show how many videos the search found and the years they cover, from the daily file (eras.info). Nothing shows until Muse has checked the search.
