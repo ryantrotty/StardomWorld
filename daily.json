@@ -1,10 +1,10 @@
 {
- "generated": "2026-11-02T20:04:58Z",
+ "generated": "2026-11-03T06:36:02Z",
  "status": {
-  "result": "ok",
-  "started": "2026-11-02T19:56:19Z",
-  "finished": "2026-11-02T20:04:58Z",
-  "requests": 36,
+  "result": "partial",
+  "started": "2026-11-03T06:29:50Z",
+  "finished": "2026-11-03T06:36:02Z",
+  "requests": 19,
   "schedule": {
    "ok": true,
    "events": 33,
@@ -17,7 +17,7 @@
     "world": {
      "read": true,
      "changed": false,
-     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the fresh official page; page text identical to the verified earlier run"
+     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the fresh official page"
     },
     "wonder": {
      "read": true,
@@ -57,10 +57,24 @@
    },
    "changed": [],
    "warnings": [
-    "Cagematch cross-check for newblood returned HTTP 307 with an empty body on both attempts (same behaviour as the earlier run); the primary wwr-stardom page and the Wikipedia cross-check agree, so no title was kept from the baseline because of it."
+    "Cagematch cross-check for newblood returned HTTP 307 with an empty body on both attempts (same behaviour as the previous run); the primary wwr-stardom page and the Wikipedia cross-check agree, so no title was kept from the baseline because of it."
    ]
   },
-  "blocks": [],
+  "eras": {
+   "ok": false,
+   "checked": 0,
+   "empty": [],
+   "pending": 60,
+   "error": "www.stardom-world.com blocked era search requests with HTTP 403 on both attempts; no era keys counted tonight"
+  },
+  "blocks": [
+   {
+    "site": "www.stardom-world.com",
+    "url": "https://www.stardom-world.com/contents/search?q%5Bkeyword%5D=Nanae%20Takahashi&activetab=contents&page=1",
+    "what": "HTTP 403 (CloudFront 'Request blocked') on the first era search request and again on the single retry 30 seconds later; no further requests made to that site",
+    "time": "2026-11-03T06:35:17Z"
+   }
+  ],
   "errors": []
  },
  "schedule": {
@@ -6425,5 +6439,11 @@
     ]
    }
   }
+ },
+ "eras": {
+  "checked": "2026-11-03",
+  "pending": 60,
+  "counts": {},
+  "info": {}
  }
 }
