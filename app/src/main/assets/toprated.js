@@ -192,7 +192,7 @@
       '<div class="tp-instr">' + esc(T('Select a match to play it. Matches without a video are text only.', '試合を選ぶと再生します。動画のない試合は文字のみです。')) + '</div></div>';
     h += '<div class="tp-chips">' + scopes.map(function(s, k) { return chip(esc(s), null, k === scope, false, 'data-scope="' + k + '"'); }).join('') + '</div>';
     if (scope === 1) {
-      h += '<div class="tp-pn"><div class="tp-sec"><i></i><b>' + esc(T('ERA', '時代')) + '</b></div><div class="tp-erow">' + ER.map(function(e) {
+      h += '<div class="tp-pn"><div class="tp-sec"><i></i><b>' + esc(T('ERA', '時代')) + '</b></div><div class="tp-erow">' + ER.slice().reverse().map(function(e) {
         return '<a class="tp-era' + (e.n === curEra ? ' tp-on' : '') + '" tabindex="0" data-era="' + e.n + '"><div class="k notranslate" translate="no">' + esc(e.kanji) + '</div><div><div class="n">' + esc(e.name) + '</div><div class="y">' + esc(e.years) + '</div><div class="c">' + (ecount[e.n] || 0) + ' ' + esc(T('matches', '試合')) + '</div></div></a>';
       }).join('') + '</div></div>';
     } else if (scope === 2) {

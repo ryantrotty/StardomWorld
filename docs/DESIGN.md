@@ -120,3 +120,4 @@ Matches (menu group, replaces Match Types): the shelf is 994 wide with all 18 ma
 
 Top Rated Matches page (`/mypage?tvtop=overall|era|type`, assets/toprated.js, data assets/top_matches.json): title 30/900 with a 10 x 36 gold bar, scope chips (chosen = look B). Rows are #161F2A, radius 8, 66 high, look A focus, with rank, star meter, type icon, title, optional orange tag (stipulation or team size) and score. A match with a confirmed video address (`u`) is a link, grows to 106 high and shows a 160 x 90 thumbnail with an orange WATCH NOW strip; a match without one stays text only. No new colours.
 
+Timeline direction (rule): anything laid out by time (eras, reigns, a strip of years or era tiles) runs newest on the left and older to the right, so Right goes back in time. This matches the Eras page, the championship reign strip and the Years & Eras menu. It applies to the Top Rated by era tiles and any future timeline.

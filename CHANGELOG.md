@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.1
+
+- Top Rated by era: the era tiles run newest on the left, like the Eras page and the championship strip. DESIGN.md now states the rule for any timeline.
+
 ## 2.22.0
 
 - Matches: the menu group is "Matches" (was Match Types). Its shelf shows all match types in three keylined columns (4-Way now sits before 5-Way & 6-Way) with a compact Top Rated block below: Overall, By match type and one card per era.
