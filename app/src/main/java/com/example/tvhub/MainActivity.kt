@@ -2804,6 +2804,12 @@ class MainActivity : Activity() {
             this@MainActivity.assets.open("match_types.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
 
+        // Top rated Stardom matches (assets/top_matches.json) for the Matches shelf and the Top Rated page.
+        @android.webkit.JavascriptInterface
+        fun topMatchesJson(): String = try {
+            this@MainActivity.assets.open("top_matches.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
         @android.webkit.JavascriptInterface
         fun championshipsJson(): String = try {
             this@MainActivity.assets.open("championships.json").bufferedReader().use { it.readText() }
@@ -4843,6 +4849,10 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft1{font-size:17px;font-weight:700;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft2{font-size:14px;font-weight:600;color:#c9d2dc;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-ft3{font-size:12px;font-weight:700;color:#F4C242;margin-top:3px;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-shl-mcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-mt{display:flex;align-items:center;gap:12px;padding:2px 10px 2px 6px;margin:3px 0;background:#161f2a;border-color:#2a323c;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-mt:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-all2{color:#c9d2dc !important;font-size:17px;font-weight:700;}',
             '#tv-sm-shelf .tv-shl-ec{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:start;margin-top:8px;}',
             '#tv-sm-shelf .tv-shl-ecol{display:flex;flex-direction:column;gap:4px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-eh{display:flex;align-items:center;gap:8px;padding:0 8px;height:76px;overflow:hidden;margin:0;background:#161f2a;border-color:#2a323c;}',
@@ -5062,7 +5072,7 @@ class MainActivity : Activity() {
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
-            if (matchTypeGroups().length) h += group(T('Match Types', '試合形式'), matchTypeRows(), 'matchtypes');
+            if (matchTypeGroups().length) h += group(T('Matches', '試合'), matchTypeRows(), 'matchtypes');
             var showsRow = group(T('Shows', '番組'), showsList(), 'shows');
             var showsPill = schedPillHtml();
             if (showsPill) showsRow = showsRow.replace('<span>' + esc(T('Shows', '番組')) + '</span>', '<span>' + esc(T('Shows', '番組')) + showsPill + '</span>');
@@ -5302,14 +5312,35 @@ class MainActivity : Activity() {
                 (ctop ? '<div class="tv-shl-top">' + ctop + '</div>' : '') + col1 +
                 '<div class="tv-shl-cols">' + col2 + '</div>';
             } else if (key === 'matchtypes') {
-              w = 760;
-              var mblocks = '';
-              matchTypeGroups().forEach(function(g) {
-                var inner = '';
-                (g.items || []).forEach(function(x) { inner += fiHtml(isJa() && x.ja ? x.ja : x.name, matchTypePath(x)); });
-                if (inner) mblocks += '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>' + inner + '</div>';
+              // Two jobs: every match type (always in view) and a compact Top Rated block (overall, by type, one card per era).
+              w = 994;
+              var mg = matchTypeGroups(), mcols = [mg.slice(0, 3), mg.slice(3, 5), mg.slice(5)], mhtml = '';
+              mcols.forEach(function(cg) {
+                mhtml += '<div>';
+                cg.forEach(function(g) {
+                  mhtml += '<div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>';
+                  (g.items || []).forEach(function(x) {
+                    mhtml += '<a class="tv-sm-fi tv-shl-mt" tabindex="0" data-go="' + esc(matchTypePath(x)) + '" href="' + esc(absUrl(matchTypePath(x))) + '">' + (window.__tvMatchIcon ? window.__tvMatchIcon(x.id) : '') + '<span>' + esc(isJa() && x.ja ? x.ja : x.name) + '</span></a>';
+                  });
+                });
+                mhtml += '</div>';
               });
-              h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px;">' + mblocks + '</div>';
+              var tmData = null, tmEras = [], ecnt = {};
+              try { tmData = JSON.parse(AndroidHost.topMatchesJson()); } catch (e) { tmData = null; }
+              try { tmEras = (JSON.parse(AndroidHost.erasJson()).eras || []); } catch (e) { tmEras = []; }
+              var topHtml = '';
+              if (tmData && tmData.matches && tmEras.length) {
+                tmData.matches.forEach(function(m) { ecnt[m.e] = (ecnt[m.e] || 0) + 1; });
+                var tOv = '/mypage?tvtop=overall', tTy = '/mypage?tvtop=type';
+                topHtml = '<div class="tv-shl-t" style="margin-top:14px;">' + esc(T('TOP RATED', '高評価')) + '</div>' +
+                  '<div class="tv-shl-g2" style="gap:8px;margin-bottom:8px;"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + tOv + '" href="' + esc(absUrl(tOv)) + '">' + esc(T('Overall', '総合')) + '<span>' + tmData.matches.length + esc(T(' matches, best first', '試合・評価順')) + '</span></a>' +
+                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>' +
+                  '<div class="tv-shl-ec" style="margin-top:0;">' + tmEras.slice().reverse().map(function(x) {
+                    var ep = '/mypage?tvtop=era&e=' + x.n;
+                    return '<a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + ep + '" href="' + esc(absUrl(ep)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + (ecnt[x.n] || 0) + esc(T(' matches', '試合')) + '</span></span></a>';
+                  }).join('') + '</div>';
+              }
+              h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-mcols">' + mhtml + '</div>' + topHtml;
             } else if (key === 'years') {
               w = 400;
               w = 1000;
@@ -9276,6 +9307,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(assetText("lineage.js"), null)
+        view.evaluateJavascript(assetText("toprated.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
