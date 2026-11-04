@@ -240,7 +240,7 @@
 
   // ---- remote: Up/Down move through the rows and the chip rows, Left/Right along a row of chips, Left at the edge opens the menu
   function focusables() { return Array.prototype.slice.call(scroller.querySelectorAll('[tabindex="0"]')); }
-  function rowOf(el) { return el.classList.contains('tp-row') ? 'r' : el.parentNode; }
+  function rowOf(el) { return el.classList.contains('tp-row') ? el : el.parentNode; }
   window.addEventListener('keydown', function(e) {
     if (!document.getElementById('tv-tp') || menuOpen()) return;
     var k = e.keyCode, ae = document.activeElement, list = focusables();

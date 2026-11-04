@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.2
+
+- Top Rated Matches: Up and Down move through the match rows one at a time (Left and Right were moving between rows). Left on a row opens the menu; Right on a row does nothing.
+
 ## 2.22.1
 
 - Top Rated by era: the era tiles run newest on the left, like the Eras page and the championship strip. DESIGN.md now states the rule for any timeline.
