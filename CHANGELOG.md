@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.0
+
+- Matches: the menu group is "Matches" (was Match Types). Its shelf shows all match types in three keylined columns (4-Way now sits before 5-Way & 6-Way) with a compact Top Rated block below: Overall, By match type and one card per era.
+- Top Rated Matches page (`/mypage?tvtop=overall|era|type`): 128 Stardom matches rated 8.50+ with 25+ Cagematch votes, from assets/top_matches.json. A match with a video address ("u") shows a thumbnail and a WATCH NOW strip and plays on OK; the rest stay text only. Match type icons use only the design colours.
+
 ## 2.21.7
 
 - Filter bar: the Location drop-down is full width again (it was squeezed to a narrow strip at the right, breaking venue names mid-word) and scrolls if it is taller than the screen.
