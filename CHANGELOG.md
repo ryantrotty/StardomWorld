@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.6
+
+- Schedule: only Stardom's own shows are listed. The daily schedule update now reads each show's colour box on the official calendar (purple "game", blue "other teams join", green "event") and marks only "game" shows as Stardom's; the app already hides the rest. Before, it only looked for the words "other organization" on the show's page, so shows like GXW DOJO and the Maid Cafe event got through.
+- Schedule: match cards are read again. The official card pages changed layout around 3 November (each wrestler's name became its own heading), so no card was found for any show after that. The update reads the new layout (the old one still works) and skips placeholder matches where every name is "X". Names from the fighter list no longer pick up the "VIEW DETAIL" hover text.
+- Schedule: a Stardom show within three weeks that has no card yet is checked every day until its card appears (it was only checked in the last 7 days). Other promotions' shows are not checked for a card. The log warns when a card page is read but no matches are found.
 ## 2.23.5
 
 - Eras page, Dominant title reigns: the space is now inside the black box, so the belt and text no longer touch its edge; the black box is wider (less grey around it) and has rounded corners. The site's own row style was pulling the text out to the edge; the card no longer uses it.
