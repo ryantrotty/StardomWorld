@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.5
+
+- Eras page, Dominant title reigns: the space is now inside the black box, so the belt and text no longer touch its edge; the black box is wider (less grey around it) and has rounded corners. The site's own row style was pulling the text out to the edge; the card no longer uses it.
+- Eras page, Dominant title reigns: a focused card shows only the gold border (the extra outline, glow and lift from the app-wide card style are off here).
+
 ## 2.23.4
 
 - Matches: Multi-person now also lists 10-person, 12-person and 14-person, and Special rules lists Handicap, in the menu shelf, the filter bar's Match type drop-down and the Top Rated by match type page. Each has its own dot icon. The 32-person handicap gauntlet in Top Rated is now filed under Handicap.
