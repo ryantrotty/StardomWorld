@@ -135,7 +135,9 @@
     '#tv-tp .tp-era.tp-on:focus{border-color:#F4C242;}',
     '#tv-tp .tp-rows{display:flex;flex-direction:column;gap:8px;margin-top:14px;}',
     '#tv-tp .tp-row{display:flex;align-items:center;gap:18px;height:66px;padding:0 18px;background:#161F2A;border:2px solid #2A323C;border-radius:8px;color:#fff !important;cursor:default;}',
-    '#tv-tp .tp-row.tp-lk{height:106px;cursor:pointer;}',
+    '#tv-tp .tp-row.tp-lk{cursor:pointer;}',
+    '#tv-tp .tp-watch{flex:none;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 22px;border-radius:8px;background:#FFB347;color:#1A1A1A;font-size:15px;font-weight:800;letter-spacing:1px;white-space:nowrap;}',
+    '#tv-tp .tp-watch i{width:0;height:0;border-left:11px solid #1A1A1A;border-top:7px solid transparent;border-bottom:7px solid transparent;}',
     '#tv-tp .tp-row:focus{background:#172029;border-color:#F4C242;}',
     '#tv-tp .tp-rk{flex:0 0 44px;font-size:26px;font-weight:900;color:#F4C242;text-align:center;}',
     '#tv-tp .tp-sm{display:inline-block;flex:none;position:relative;font-size:22px;letter-spacing:2px;line-height:1;color:#3B4656;white-space:nowrap;}',
@@ -145,12 +147,6 @@
     '#tv-tp .tp-mt .b{font-size:13px;font-weight:600;color:#9AA6B4;margin-top:2px;}',
     '#tv-tp .tp-bd{flex:none;height:24px;padding:0 10px;border-radius:4px;background:#FFB347;color:#1A1A1A;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;white-space:nowrap;}',
     '#tv-tp .tp-sc{flex:0 0 74px;font-size:24px;font-weight:900;color:#fff;text-align:right;}',
-    '#tv-tp .tp-th{flex:none;width:160px;height:90px;border-radius:8px;overflow:hidden;border:2px solid #2A323C;background:#1A1A1A center/cover no-repeat;position:relative;}',
-    '#tv-tp .tp-th .im{position:absolute;left:0;top:0;right:0;bottom:28px;}',
-    '#tv-tp .tp-th .im.ph{background:linear-gradient(135deg,#1A1A1A,#0F151C);}',
-    '#tv-tp .tp-th .im i{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#FFB347;}',
-    '#tv-tp .tp-th .im i::after{content:"";position:absolute;left:13px;top:9px;border-left:14px solid #1A1A1A;border-top:8px solid transparent;border-bottom:8px solid transparent;}',
-    '#tv-tp .tp-th .wn{position:absolute;left:0;right:0;bottom:0;height:28px;background:#FFB347;color:#1A1A1A;font-size:13px;font-weight:800;letter-spacing:1px;display:flex;align-items:center;justify-content:center;}',
     '#tv-tp .tp-more{font-size:13px;font-weight:700;color:#9AA6B4;text-align:right;padding:2px 6px;margin-top:10px;}',
     '#tv-tp .tp-empty{border:2px dashed #3B4656;border-radius:12px;padding:30px 24px;text-align:center;color:#9AA6B4;font-size:15px;font-weight:600;line-height:1.5;margin-top:14px;}',
     '#tv-tp .tp-empty b{display:block;color:#fff;font-size:20px;font-weight:700;margin-bottom:6px;}'
@@ -170,17 +166,17 @@
   }
   function row(i, m) {
     var lk = !!m.u, note = NOTE[m.n] || m.n || '';
-    var h = '<' + (lk ? 'a href="' + esc(absUrl(m.u)) + '"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" tabindex="0" data-id="' + esc(m.id) + '">';
+    var h = '<' + (lk ? 'a href="' + esc(absUrl(m.u)) + '" tabindex="0"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" data-id="' + esc(m.id) + '">';
     h += '<div class="tp-rk">' + i + '</div>';
     h += '<div class="tp-sm"><span>★★★★★</span><b style="width:' + (m.r * 10).toFixed(1) + '%">★★★★★</b></div>';
     h += window.__tvMatchIcon(m.t);
     h += '<div class="tp-mt"><div class="a notranslate" translate="no">' + esc(title(m)) + '</div><div class="b">' + esc(TNAME[m.t] || m.t) + ' · ' + esc(fmtD(m.d)) + ' · ' + m.v + ' ' + esc(T('votes', '票')) + '</div></div>';
     if (note) h += '<div class="tp-bd">' + esc(note) + '</div>';
-    if (lk) h += '<div class="tp-th"' + (m.th ? ' style="background-image:url(' + esc(m.th) + ')"' : '') + '><div class="im' + (m.th ? '' : ' ph') + '"><i></i></div><div class="wn">' + esc(T('WATCH NOW', '今すぐ視聴')) + '</div></div>';
+    if (lk) h += '<div class="tp-watch"><i></i>' + esc(T('WATCH', '視聴')) + '</div>';
     h += '<div class="tp-sc">' + m.r.toFixed(2) + '</div></' + (lk ? 'a' : 'div') + '>';
     return h;
   }
-  var SHOW = 25;
+  var SHOW = 1000;   // every match is listed; the page scrolls
   function render(focusSel) {
     var list, sub = '';
     if (scope === 0) list = M;
@@ -211,7 +207,7 @@
     }
     scroller.innerHTML = h;
     var f = focusSel ? scroller.querySelector(focusSel) : null;
-    if (!f) f = scroller.querySelector('.tp-row') || scroller.querySelector('.tp-chip');
+    if (!f) f = scroller.querySelector('.tp-row[tabindex]') || scroller.querySelector('.tp-chip');
     focusEl(f);
   }
   function focusEl(el) {
@@ -248,7 +244,6 @@
     if (k === 13 || k === 23) {
       if (ae && ae.getAttribute && scroller.contains(ae)) {
         if (choose(ae)) { stop(); return; }
-        if (ae.classList.contains('tp-row') && !ae.getAttribute('href')) stop();   // text-only row: nothing to play
       }
       return;
     }
@@ -264,8 +259,9 @@
     else if (k === 39) { if (si < same.length - 1) focusEl(same[si + 1]); }
     else {
       var nl = lines[li + (k === 38 ? -1 : 1)];
-      if (nl) focusEl(nl.els[Math.min(si, nl.els.length - 1)]);
+      if (nl) { var tg = nl.els[Math.min(si, nl.els.length - 1)]; focusEl(tg); if (tg.classList.contains('tp-row')) { try { tg.scrollIntoView({ block: 'center' }); } catch (e) {} } }
       else if (k === 38) scroller.scrollTop = 0;
+      else if (scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 4) scroller.scrollTop += 240;   // text-only rows below: scroll to read them
     }
   }, true);
 

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.5
+
+- Top Rated Matches: a match with a video is a link in full (the whole row is the focus target and OK plays it) and shows an orange WATCH button; no thumbnails. A match without a video has no button and cannot be focused or clicked. Up and Down skip text-only rows and scroll over them.
+- The page lists every match (it stopped at 25 before).
+
 ## 2.22.4
 
 - Top Rated Matches: 72 of the 128 matches now have a confirmed video address, so those rows are links (thumbnail area with WATCH NOW, OK plays the video). The other 56 stay text only. Thumbnails are still the dark placeholder until picture addresses are added ("th" in assets/top_matches.json).
