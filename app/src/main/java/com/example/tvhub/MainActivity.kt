@@ -6451,6 +6451,14 @@ class MainActivity : Activity() {
       var emp = isEmpty(r.words, '', r.dead), href = emp ? searchUrl(r.a, '') : searchUrl(r.words, '');
       return '<a class="tv-vc" tabindex="0" href="' + esc(href) + '"><div class="tv-th">' + names + '</div><span class="tv-tg">' + esc(r.tag) + '</span><span class="tv-dt">' + esc(r.when) + '</span><div class="tv-vt">' + esc(r.title) + '</div><div class="tv-vh">' + esc(T('Search', '検索')) + ' · ' + esc(emp ? r.a : r.words) + (seen(emp ? r.a : r.words, '') ? ' · ' + esc(seen(emp ? r.a : r.words, '')) : '') + '</div></a>';
     }).join('') + '</div>';
+    // top rated matches (shared rows from toprated.js; the last row opens the full list for this era)
+    try {
+      var tr = window.__tvTopRows ? window.__tvTopRows(e.n, 5) : null;
+      if (tr) {
+        var allRow = '<a class="tp-row tp-lk tp-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '"><div class="tp-mt"><div class="a">' + esc(T('All ' + tr.total + ' matches in this era', 'この時代の全' + tr.total + '試合')) + '</div></div><div class="tp-watch">' + esc(T('OPEN', '開く')) + '</div></a>';
+        h += sec(T('Top rated matches', '高評価の試合'), T('Fan voted ratings from Cagematch.net', 'Cagematch.netのファン投票'), tr.html.replace(/<\/div>$/, allRow + '</div>'));
+      }
+    } catch (x) {}
     h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
     // wrestlers / factions / shows
     var left = sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
@@ -9294,6 +9302,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(loginPageJs(), null)
         view.evaluateJavascript(cookieBannerJs(), null)
         view.evaluateJavascript(factionJs, null)
+        view.evaluateJavascript(assetText("toprated.js"), null)
         view.evaluateJavascript(eraJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)
@@ -9307,7 +9316,6 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(assetText("lineage.js"), null)
-        view.evaluateJavascript(assetText("toprated.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)

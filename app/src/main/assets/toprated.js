@@ -47,6 +47,66 @@
   }
 })();
 (function(){
+  // Shared match rows (Top Rated page and the Eras page's Top Rated section): window.__tvTopRows(eraNumber, count)
+  // returns { html, total } for that era's best-rated matches from assets/top_matches.json. No requests are made.
+  if (window.__tvTopRows) return;
+  var css = document.createElement('style');
+  css.textContent = [
+      '#tv-tp .tp-rows, #tv-era .tp-rows{display:flex;flex-direction:column;gap:8px;margin-top:14px;}',,
+      '#tv-tp .tp-row, #tv-era .tp-row{display:flex;align-items:center;gap:18px;height:66px;padding:0 18px;background:#161F2A;border:2px solid #2A323C;border-radius:8px;color:#fff !important;cursor:default;}',,
+      '#tv-tp .tp-row.tp-lk, #tv-era .tp-row.tp-lk{cursor:pointer;}',,
+      '#tv-tp .tp-watch, #tv-era .tp-watch{flex:none;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 22px;border-radius:8px;background:#FFB347;color:#1A1A1A;font-size:15px;font-weight:800;letter-spacing:1px;white-space:nowrap;}',,
+      '#tv-tp .tp-watch i, #tv-era .tp-watch i{width:0;height:0;border-left:11px solid #1A1A1A;border-top:7px solid transparent;border-bottom:7px solid transparent;}',,
+      '#tv-tp .tp-row:focus, #tv-era .tp-row:focus{background:#172029;border-color:#F4C242;}',,
+      '#tv-tp .tp-rk, #tv-era .tp-rk{flex:0 0 44px;font-size:26px;font-weight:900;color:#F4C242;text-align:center;}',,
+      '#tv-tp .tp-sm, #tv-era .tp-sm{display:inline-block;flex:none;position:relative;font-size:22px;letter-spacing:2px;line-height:1;color:#3B4656;white-space:nowrap;}',,
+      '#tv-tp .tp-sm b, #tv-era .tp-sm b{position:absolute;left:0;top:0;overflow:hidden;color:#F4C242;font-weight:400;}',,
+      '#tv-tp .tp-mt, #tv-era .tp-mt{flex:1 1 0;min-width:0;}',,
+      '#tv-tp .tp-mt .a, #tv-era .tp-mt .a{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',,
+      '#tv-tp .tp-mt .b, #tv-era .tp-mt .b{font-size:13px;font-weight:600;color:#9AA6B4;margin-top:2px;}',,
+      '#tv-tp .tp-bd, #tv-era .tp-bd{flex:none;height:24px;padding:0 10px;border-radius:4px;background:#FFB347;color:#1A1A1A;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;white-space:nowrap;}',,
+      '#tv-tp .tp-sc, #tv-era .tp-sc{flex:0 0 74px;font-size:24px;font-weight:900;color:#fff;text-align:right;}',
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(css);
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function T(en, ja) { return document.cookie.indexOf('googtrans=/ja/ja') !== -1 ? ja : en; }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function fmtD(iso) { var a = String(iso).split('-'); return (+a[2]) + ' ' + MONTHS[+a[1] - 1] + ' ' + a[0]; }
+  function absUrl(u) { try { return new URL(u, location.origin).href; } catch (e) { return u; } }
+  var NOTE = { twelve: '6 v 6', ten: '5 v 5', 'handicap 32v1 gauntlet': 'Handicap 32v1', 'Career Vs Career': 'Career vs Career', 'Hair Vs Hair': 'Hair vs Hair', 'Knockout Or Submission Only': 'KO or submission only', 'No Disqualification': 'No DQ', 'Loser Leaves': 'Loser leaves', 'No Time Limit': 'No time limit' };
+  var TNAME = null;
+  function names(s) {
+    if (s.length >= 5) return s.slice(0, 3).join(', ') + ' +' + (s.length - 3);
+    if (s.length === 1) return s[0];
+    return s.slice(0, -1).join(', ') + ' & ' + s[s.length - 1];
+  }
+  window.__tvTopRow = function(i, m) {
+    if (!TNAME) {
+      TNAME = { other: 'Handicap match' };
+      try { (JSON.parse(window.AndroidHost.matchTypesJson()).groups || []).forEach(function(g) { (g.items || []).forEach(function(x) { TNAME[x.id] = x.name; }); }); } catch (e) {}
+    }
+    var lk = !!m.u, note = NOTE[m.n] || m.n || '';
+    var h = '<' + (lk ? 'a href="' + esc(absUrl(m.u)) + '" tabindex="0"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" data-id="' + esc(m.id) + '">';
+    h += '<div class="tp-rk">' + i + '</div>';
+    h += '<div class="tp-sm"><span>★★★★★</span><b style="width:' + (m.r * 10).toFixed(1) + '%">★★★★★</b></div>';
+    h += window.__tvMatchIcon(m.t);
+    h += '<div class="tp-mt"><div class="a notranslate" translate="no">' + esc(m.s.map(names).join(' vs ')) + '</div><div class="b">' + esc(TNAME[m.t] || m.t) + ' · ' + esc(fmtD(m.d)) + ' · ' + m.v + ' ' + esc(T('votes', '票')) + '</div></div>';
+    if (note) h += '<div class="tp-bd">' + esc(note) + '</div>';
+    if (lk) h += '<div class="tp-watch"><i></i>' + esc(T('WATCH', '視聴')) + '</div>';
+    h += '<div class="tp-sc">' + m.r.toFixed(2) + '</div></' + (lk ? 'a' : 'div') + '>';
+    return h;
+  };
+  window.__tvTopRows = function(era, count) {
+    var D = null;
+    try { D = JSON.parse(window.AndroidHost.topMatchesJson()); } catch (e) { D = null; }
+    if (!D || !D.matches) return null;
+    var list = D.matches.filter(function(m) { return m.e === era; });
+    if (!list.length) return null;
+    var h = '<div class="tp-rows">' + list.slice(0, count).map(function(m, k) { return window.__tvTopRow(k + 1, m); }).join('') + '</div>';
+    return { html: h, total: list.length };
+  };
+})();
+(function(){
   // Top Rated Matches page: /mypage?tvtop=overall | era (&e=<1-5>) | type (&t=<match type id>).
   // Stardom matches rated 8.50+ with 25+ votes on Cagematch, from assets/top_matches.json. Opening the page makes no
   // request. A match with a confirmed video address ("u") is a link with a thumbnail and a WATCH NOW strip; one
@@ -133,20 +193,6 @@
     '#tv-tp .tp-era.tp-on .k, #tv-tp .tp-era.tp-on .n, #tv-tp .tp-era.tp-on .y, #tv-tp .tp-era.tp-on .c{color:#1A1A1A;}',
     '#tv-tp .tp-era:focus{border-color:#F4C242;}',
     '#tv-tp .tp-era.tp-on:focus{border-color:#F4C242;}',
-    '#tv-tp .tp-rows{display:flex;flex-direction:column;gap:8px;margin-top:14px;}',
-    '#tv-tp .tp-row{display:flex;align-items:center;gap:18px;height:66px;padding:0 18px;background:#161F2A;border:2px solid #2A323C;border-radius:8px;color:#fff !important;cursor:default;}',
-    '#tv-tp .tp-row.tp-lk{cursor:pointer;}',
-    '#tv-tp .tp-watch{flex:none;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 22px;border-radius:8px;background:#FFB347;color:#1A1A1A;font-size:15px;font-weight:800;letter-spacing:1px;white-space:nowrap;}',
-    '#tv-tp .tp-watch i{width:0;height:0;border-left:11px solid #1A1A1A;border-top:7px solid transparent;border-bottom:7px solid transparent;}',
-    '#tv-tp .tp-row:focus{background:#172029;border-color:#F4C242;}',
-    '#tv-tp .tp-rk{flex:0 0 44px;font-size:26px;font-weight:900;color:#F4C242;text-align:center;}',
-    '#tv-tp .tp-sm{display:inline-block;flex:none;position:relative;font-size:22px;letter-spacing:2px;line-height:1;color:#3B4656;white-space:nowrap;}',
-    '#tv-tp .tp-sm b{position:absolute;left:0;top:0;overflow:hidden;color:#F4C242;font-weight:400;}',
-    '#tv-tp .tp-mt{flex:1 1 0;min-width:0;}',
-    '#tv-tp .tp-mt .a{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-    '#tv-tp .tp-mt .b{font-size:13px;font-weight:600;color:#9AA6B4;margin-top:2px;}',
-    '#tv-tp .tp-bd{flex:none;height:24px;padding:0 10px;border-radius:4px;background:#FFB347;color:#1A1A1A;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;white-space:nowrap;}',
-    '#tv-tp .tp-sc{flex:0 0 74px;font-size:24px;font-weight:900;color:#fff;text-align:right;}',
     '#tv-tp .tp-more{font-size:13px;font-weight:700;color:#9AA6B4;text-align:right;padding:2px 6px;margin-top:10px;}',
     '#tv-tp .tp-empty{border:2px dashed #3B4656;border-radius:12px;padding:30px 24px;text-align:center;color:#9AA6B4;font-size:15px;font-weight:600;line-height:1.5;margin-top:14px;}',
     '#tv-tp .tp-empty b{display:block;color:#fff;font-size:20px;font-weight:700;margin-bottom:6px;}'
@@ -164,18 +210,7 @@
   function chip(label, count, on, dim, attrs, extra) {
     return '<a class="tp-chip' + (extra || '') + (on ? ' tp-on' : '') + (dim ? ' tp-dim' : '') + '" tabindex="0" ' + attrs + '>' + label + (count != null ? '<small>' + count + '</small>' : '') + '</a>';
   }
-  function row(i, m) {
-    var lk = !!m.u, note = NOTE[m.n] || m.n || '';
-    var h = '<' + (lk ? 'a href="' + esc(absUrl(m.u)) + '" tabindex="0"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" data-id="' + esc(m.id) + '">';
-    h += '<div class="tp-rk">' + i + '</div>';
-    h += '<div class="tp-sm"><span>★★★★★</span><b style="width:' + (m.r * 10).toFixed(1) + '%">★★★★★</b></div>';
-    h += window.__tvMatchIcon(m.t);
-    h += '<div class="tp-mt"><div class="a notranslate" translate="no">' + esc(title(m)) + '</div><div class="b">' + esc(TNAME[m.t] || m.t) + ' · ' + esc(fmtD(m.d)) + ' · ' + m.v + ' ' + esc(T('votes', '票')) + '</div></div>';
-    if (note) h += '<div class="tp-bd">' + esc(note) + '</div>';
-    if (lk) h += '<div class="tp-watch"><i></i>' + esc(T('WATCH', '視聴')) + '</div>';
-    h += '<div class="tp-sc">' + m.r.toFixed(2) + '</div></' + (lk ? 'a' : 'div') + '>';
-    return h;
-  }
+  function row(i, m) { return window.__tvTopRow(i, m); }
   var SHOW = 1000;   // every match is listed; the page scrolls
   function render(focusSel) {
     var list, sub = '';

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.0
+
+- Eras page: new "Top rated matches" section between Dominant title reigns and Defining rivalries. It shows that era's five best-rated matches (same rows as the Top Rated page: WATCH button and whole-row link when a video exists, text only when not) and a final "All N matches in this era" row that opens the Top Rated page for that era. All five eras; local data, no requests.
+- toprated.js now loads before the Eras page script and exposes shared row code and styles (`__tvTopRows`, `__tvTopRow`) used by both pages.
+
 ## 2.22.6
 
 - Menu: the group title is "Years" (was "Years & Eras"). The shelf heading and the All Years & Eras page keep their names.
