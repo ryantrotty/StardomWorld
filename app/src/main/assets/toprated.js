@@ -188,7 +188,7 @@
     else list = M.filter(function(m) { return m.t === curType; });
     var scopes = [T('Overall', '総合'), T('By era', '時代別'), T('By match type', '試合形式別')];
     var h = '<div class="tp-head"><div class="tp-bar"></div><div><div class="tp-h1">' + esc(T('Top Rated Matches', '高評価の試合')) + '</div>' +
-      '<div class="tp-note">' + esc(T('Stardom only. Ranked by Cagematch rating, ties go to more votes. Rated 8.50 or higher with 25+ votes: ', 'スターダムのみ。Cagematchの評価順。8.50以上・25票以上: ')) + M.length + '</div></div>' +
+      '<div class="tp-note">' + esc(T('Fan voted ratings from Cagematch.net, as of November 2026', 'Cagematch.netのファン投票による評価（2026年11月時点）')) + '</div></div>' +
       '<div class="tp-instr">' + esc(T('Select a match to play it. Matches without a video are text only.', '試合を選ぶと再生します。動画のない試合は文字のみです。')) + '</div></div>';
     h += '<div class="tp-chips">' + scopes.map(function(s, k) { return chip(esc(s), null, k === scope, false, 'data-scope="' + k + '"'); }).join('') + '</div>';
     if (scope === 1) {

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.3
+
+- Top Rated Matches: the fine print under the title reads "Fan voted ratings from Cagematch.net, as of November 2026".
+
 ## 2.22.2
 
 - Top Rated Matches: Up and Down move through the match rows one at a time (Left and Right were moving between rows). Left on a row opens the menu; Right on a row does nothing.
