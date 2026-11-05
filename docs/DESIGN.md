@@ -125,3 +125,7 @@ Eras page, Top rated matches section (between Dominant title reigns and Defining
 Timeline direction (rule): anything laid out by time (eras, reigns, a strip of years or era tiles) runs newest on the left and older to the right, so Right goes back in time. This matches the Eras page, the championship reign strip and the Years & Eras menu. It applies to the Top Rated by era tiles and any future timeline.
 
 Menu group title (2.22.6): the global menu row is "Years" (年別). The shelf heading and the All Years & Eras page keep the longer name.
+
+Match types (2.23.4): Multi-person adds 10-person, 12-person and 14-person; Special rules adds Handicap. Their icons follow the dot rule (one dot per wrestler, gold side and white side; Handicap is three small gold dots against one large white dot). On the Top Rated by-type page the Special rules chips now run to a second line.
+
+Eras page spacing (2.23.4): each section (Dominant title reigns, Top rated matches, Defining rivalries and the rest) has 16 px above its header on top of the page's 12 px gap. Dominant title reigns cards: 12/14 px inner padding (was 6/8), the belt picture has no box or background and is 106 x 57 (10% larger); the public build's drawn belt sits in the same space.

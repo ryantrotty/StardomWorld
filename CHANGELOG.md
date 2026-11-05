@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.4
+
+- Matches: Multi-person now also lists 10-person, 12-person and 14-person, and Special rules lists Handicap, in the menu shelf, the filter bar's Match type drop-down and the Top Rated by match type page. Each has its own dot icon. The 32-person handicap gauntlet in Top Rated is now filed under Handicap.
+- Top Rated Matches: rank numbers and scores are kept out of the page translation, so ranks such as 21 to 25 and 123 show as numbers instead of words. The same fix applies to the Eras page's Top rated rows.
+- Eras page: more space between sections.
+- Eras page, Dominant title reigns: more space inside each card so the text no longer runs to the edge; the belt picture has no box behind it and is 10% larger.
+
 ## 2.23.1
 
 - Eras page: the "All N matches in this era" row no longer has an OPEN button (the whole row is the link).

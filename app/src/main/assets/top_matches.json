@@ -1,5 +1,5 @@
 {
-"_note":"Top rated Stardom matches (Cagematch rating 8.50+ with 25+ votes), best first. s = sides (lists of names), t = match type id (match_types.json; 'other' shows the gauntlet icon), n = optional tag (stipulation or team size), e = era number (see eras), r = rating, v = votes, c = Cagematch match number. u = the site video address once confirmed (null until then: the row stays text only). th = optional thumbnail address for that video.",
+"_note":"Top rated Stardom matches (Cagematch rating 8.50+ with 25+ votes), best first. s = sides (lists of names), t = match type id (match_types.json; 'other' is shown as a handicap match), n = optional tag (stipulation or team size), e = era number (see eras), r = rating, v = votes, c = Cagematch match number. u = the site video address once confirmed (null until then: the row stays text only). th = optional thumbnail address for that video.",
 "eras":[
 {
 "n":1,
@@ -2050,7 +2050,7 @@
 "Himeka"
 ]
 ],
-"t":"other",
+"t":"handicap",
 "e":4,
 "r":8.59,
 "v":58,

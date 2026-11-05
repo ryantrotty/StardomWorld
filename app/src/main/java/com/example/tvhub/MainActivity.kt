@@ -6319,23 +6319,24 @@ class MainActivity : Activity() {
     '#tv-era .tv-emb-k{position:absolute;right:-8px;bottom:-8px;width:28px;height:28px;border-radius:6px;background:#F4C242;color:#1A1A1A;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;}',
     '#tv-era .tv-lbl{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;text-transform:uppercase;}',
     '#tv-era .tv-sech{display:flex;align-items:center;gap:10px;margin-bottom:8px;}',
+    '#tv-era .tv-sec{margin-top:16px;}',
     '#tv-era .tv-sech i{width:8px;height:26px;background:#F4C242;border-radius:4px;flex:0 0 auto;}',
     '#tv-era .tv-hint{font-size:13px;font-weight:600;color:#9AA6B4;}',
         '#tv-era .tv-pill{display:inline-block;border-radius:20px;border:3px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
     '#tv-era a.tv-pill:focus{border-color:#F4C242;background:#172029;color:#fff;}',
     '#tv-era .tv-pillr{display:inline-block;border-radius:20px;border:2px solid #2A323C;background:#0F151C;padding:4px 12px;font-size:13px;font-weight:700;color:#C9D2DC;}',
     '#tv-era .tv-rg{display:flex;gap:16px;}',
-    '#tv-era .tv-rc{flex:1 1 0;min-width:0;background:#161F2A;border:3px solid #2A323C;border-radius:12px;padding:6px 8px 8px 8px;}',
-    '#tv-era .tv-card{display:block;border:3px solid transparent;border-radius:8px;padding:4px 6px;}',
+    '#tv-era .tv-rc{flex:1 1 0;min-width:0;background:#161F2A;border:3px solid #2A323C;border-radius:12px;padding:12px 14px 14px 14px;}',
+    '#tv-era .tv-card{display:block;border:3px solid transparent;border-radius:8px;padding:6px 10px 6px 8px;}',
     '#tv-era .tv-card:focus{background:#172029;border-color:#F4C242;}',
     '#tv-era .tv-card .row{display:flex;gap:14px;align-items:center;}',
-    '#tv-era .tv-belt{flex:0 0 auto;width:96px;height:52px;border-radius:6px;background:#0F151C;border:2px solid #2A323C;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
+    '#tv-era .tv-belt{flex:0 0 auto;width:106px;height:57px;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
     '#tv-era .tv-belt img{max-width:100%;max-height:100%;object-fit:contain;}',
     '#tv-era .tv-1{font-size:17px;font-weight:700;line-height:1.15;}',
     '#tv-era .tv-1 s{text-decoration:none;color:#9AA6B4;font-weight:600;font-size:15px;}',
     '#tv-era .tv-2{font-size:14px;font-weight:600;color:#C9D2DC;margin-top:2px;}',
     '#tv-era .tv-3{font-size:13px;font-weight:700;color:#F4C242;margin-top:2px;}',
-    '#tv-era .tv-oth{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0 6px;}',
+    '#tv-era .tv-oth{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 8px;}',
     '#tv-era .tv-vc{flex:1 1 0;min-width:0;display:block;background:#1a1a1a;border:3px solid transparent;border-radius:8px;overflow:hidden;position:relative;}',
     '#tv-era .tv-vc:focus{border-color:#F4C242;}',
     '#tv-era .tv-th{height:64px;background:linear-gradient(135deg,#172029,#0F151C 70%);display:flex;align-items:center;justify-content:center;gap:12px;}',
@@ -6381,7 +6382,7 @@ class MainActivity : Activity() {
   var ALL = mm[1] === '0';
 
   function sec(title, hint, body) {
-    return '<div><div class="tv-sech"><i></i><div class="tv-lbl">' + esc(title) + '</div>' + (hint ? '<div class="tv-hint">' + esc(hint) + '</div>' : '') + '</div>' + body + '</div>';
+    return '<div class="tv-sec"><div class="tv-sech"><i></i><div class="tv-lbl">' + esc(title) + '</div>' + (hint ? '<div class="tv-hint">' + esc(hint) + '</div>' : '') + '</div>' + body + '</div>';
   }
   function tile(name, note, url) {
     return '<a class="tv-tile" tabindex="0" href="' + esc(url) + '"><div class="a">' + esc(name) + '</div><div class="b">' + esc(note || '') + '</div></a>';
