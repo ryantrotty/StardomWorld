@@ -4860,6 +4860,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
             '#tv-sm-shelf .tv-shl-cf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px;align-items:start;}',
             '#tv-sm-shelf .tv-shl-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;}',
+            '#tv-sm-shelf .tv-shl-nc{display:flex;flex-direction:column;gap:4px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft{display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0;background:#161f2a;border-color:#2a323c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-ft:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-ft .tv-shl-fi{flex:0 0 auto;width:110px;height:60px;object-fit:contain;display:flex;align-items:center;justify-content:center;border-radius:6px;}',
@@ -5311,11 +5312,12 @@ class MainActivity : Activity() {
                   '<span class="tv-shl-ft2">' + esc(l2) + '</span><span class="tv-shl-ft3">' + esc(l3) + '</span></span></a>';
               };
               champGroups().forEach(function(g) {
-                var stardom = /stardom/i.test(g.name), inner = '';
+                var stardom = /stardom/i.test(g.name), njpw = /new japan/i.test(g.name), inner = '', njc = '';
                 (g.items || []).forEach(function(x) {
                   if (x.id === 'any') { ctop = fiHtml(T('All championship matches', x.ja || 'すべての王座戦'), champPath(x)); return; }
                   if (x.id === 'other') return;   // not listed in the menu (still in the filter)
                   if (stardom) { var c = lnCard(x); if (c) cards[x.id] = c; else inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x)); return; }
+                  if (njpw) { var c2 = lnCard(x); if (c2) { njc += c2; return; } }   // New Japan titles with a lineage file get the same card
                   inner += fiHtml(isJa() && x.ja ? x.ja : x.name, champPath(x));
                 });
                 var head = '<div class="tv-shl-h">' + esc(String(isJa() && g.ja ? g.ja : g.name).toUpperCase()) + '</div>';
@@ -5323,8 +5325,8 @@ class MainActivity : Activity() {
                   var cs = LNO.filter(function(id) { return cards[id]; }).map(function(id) { return cards[id]; }).join('');
                   Object.keys(cards).forEach(function(id) { if (LNO.indexOf(id) < 0) cs += cards[id]; });
                   col1 += '<div class="tv-shl-blk">' + head + '<div class="tv-shl-cg">' + cs + inner + '</div></div>';
-                } else if (inner) {   // New Japan first, then Other Promotions (file order)
-                  col2 += '<div class="tv-shl-blk">' + head + (/other/i.test(g.name) ? '<div class="tv-shl-g2">' + inner + '</div>' : inner) + '</div>';
+                } else if (inner || njc) {   // New Japan first, then Other Promotions (file order)
+                  col2 += '<div class="tv-shl-blk">' + head + (njc ? '<div class="tv-shl-nc">' + njc + '</div>' : '') + (/other/i.test(g.name) ? '<div class="tv-shl-g2">' + inner + '</div>' : inner) + '</div>';
                 }
               });
               h = '<div class="tv-shl-t">' + esc(T('CHAMPIONSHIPS', '王座')) + '</div>' +
