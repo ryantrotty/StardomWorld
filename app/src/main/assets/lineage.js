@@ -371,7 +371,13 @@
 
   var STAR = '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
   var PLAY = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
-  var sel = R.length - 1, waiting = false, searching = false, errNote = '', result = null, timer = 0;
+  // "tvrn=<reign number>" (from the Eras page) opens on that reign and loads its videos; otherwise the current champion.
+  var start = R.length - 1;
+  try {
+    var rn = parseInt(new URLSearchParams(location.search).get('tvrn'), 10);
+    if (rn) for (var si = 0; si < R.length; si++) if (R[si].n === rn) start = si;
+  } catch (e) {}
+  var sel = start, waiting = false, searching = false, errNote = '', result = null, timer = 0;
 
   function curBox(i) {
     var r = R[i], nx = R[i + 1], lines;
@@ -446,7 +452,7 @@
     else row = '<div class="ln-note">' + esc(T('Looking for the video...', '動画を検索中...')) + '</div>';
     var note = errNote ? '<div class="ln-note">' + esc(errNote) + '</div>' : '';
     var sum = '';
-    if (result) {
+    if (SHOW_DEBUG && result) {
       var ql = (dbg[sel] || []).filter(function(l) { return l.indexOf('search: ') === 0; }).map(function(l) { return l.slice(8); }).join('  |  ');
       sum = '<div class="ln-dbg" style="margin-top:14px"><b>SEARCH</b> \u00b7 ' + esc(ql) + ' \u00b7 cards read: ' + result.total + ' \u00b7 championship matches: ' + result.rows.length + ' \u00b7 dated inside this reign: ' + result.inN +
         (result.sample.length ? '\nfirst titles on the page:\n' + esc(result.sample.join('\n')) : '') + '</div>';
@@ -455,7 +461,10 @@
     return vh + row + note + fh + facts + sum;
   }
 
+  // The matching debug block and the SEARCH summary line are hidden; set to true to show them again.
+  var SHOW_DEBUG = false;
   function debugHtml() {
+    if (!SHOW_DEBUG) return '';
     var r = R[sel], lines = (dbg[sel] || []).slice();
     if (waiting) lines.push('videos not loaded: press OK on this reign (no request made)');
     if (result) {
@@ -612,5 +621,5 @@
   document.addEventListener('focusin', function() { if (document.getElementById('tv-ln')) hint(); }, true);
 
   render('sel');
-  if (R.length) choose(R.length - 1, true) || 0;
+  if (R.length) choose(start, true, start !== R.length - 1) || 0;
 })();

@@ -1,5 +1,5 @@
 {
-  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder. Former factions: 'former': true, with 'disbanded', 'captains' (all of them, shown as Captains) and 'members' = notable members during its existence. They appear in the menu's Former list, not in Current Wrestlers.",
+  "_note": "Edit this file to change the Factions menu and pages. 'name' is shown; 'search' on a member is typed into the site's search (use the spelling the video site uses). Faction level: 'search' = what the faction's own match list searches (default: name; the site's search reads video descriptions, so a faction name finds its matches; the faction name in brackets, like (STARS), finds only videos whose description lists it as a faction and leaves out look-alikes such as the 5 Star Grand Prix); words in one search are ANDed (the site has no OR); 'alts' = further searches run one after another only when you reach the end of the main results (used where one search cannot cover a faction); 'exclude' = words in a card's title that rule it out; 'match' (optional) = whole words a title must contain; 'captain' and 'founded' show on the faction home page and menu; 'home': false = no home page (just the member list). 'plate': 'dark' = show the logo on a dark tile in My Favorites (for white artwork). Logos are not listed here: a build shows one when it has res/drawable-nodpi/faction_logo_<id>.png (with - written as _) in the private branding folder. Former factions: 'former': true, with 'disbanded', 'captains' (all of them, shown as Captains) and 'members' = notable members during its existence. They appear in the menu's Former list, not in Current Wrestlers.",
   "factions": [
     {
       "id": "stars",
@@ -224,6 +224,7 @@
     },
     {
       "id": "itoh-respect-gundan",
+      "plate": "dark",
       "name": "Itoh Respect Gundan",
       "captain": "Maki Itoh",
       "search": "Maki Itoh Kikyo Furusawa",

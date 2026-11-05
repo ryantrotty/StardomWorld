@@ -1,0 +1,2428 @@
+{
+"_note":"Top rated Stardom matches (Cagematch rating 8.50+ with 25+ votes), best first. s = sides (lists of names), t = match type id (match_types.json; 'other' shows the gauntlet icon), n = optional tag (stipulation or team size), e = era number (see eras), r = rating, v = votes, c = Cagematch match number. u = the site video address once confirmed (null until then: the row stays text only). th = optional thumbnail address for that video.",
+"eras":[
+{
+"n":1,
+"from":"0000-00-00"
+},
+{
+"n":2,
+"from":"2015-03-01"
+},
+{
+"n":3,
+"from":"2018-07-01"
+},
+{
+"n":4,
+"from":"2020-01-01"
+},
+{
+"n":5,
+"from":"2024-03-01"
+}
+],
+"matches":[
+{
+"id":"m055",
+"d":"2015-12-23",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Meiko Satomura"
+]
+],
+"t":"single",
+"e":2,
+"r":9.55,
+"v":269,
+"c":"7101",
+"u":null
+},
+{
+"id":"m060",
+"d":"2025-04-27",
+"s":[
+[
+"Saya Kamitani"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":5,
+"r":9.53,
+"v":590,
+"c":"114246",
+"u":"https://www.stardom-world.com/contents/6819",
+"n":"Career Vs Career"
+},
+{
+"id":"m095",
+"d":"2016-01-17",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Kairi Hojo"
+]
+],
+"t":"single",
+"e":2,
+"r":9.47,
+"v":188,
+"c":"11827",
+"u":null
+},
+{
+"id":"m099",
+"d":"2021-06-12",
+"s":[
+[
+"Syuri"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":9.46,
+"v":481,
+"c":"35459",
+"u":"https://www.stardom-world.com/contents/2883"
+},
+{
+"id":"m100",
+"d":"2017-06-21",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":2,
+"r":9.46,
+"v":225,
+"c":"8679",
+"u":null
+},
+{
+"id":"m101",
+"d":"2016-12-22",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":2,
+"r":9.44,
+"v":292,
+"c":"8028",
+"u":null
+},
+{
+"id":"m102",
+"d":"2022-12-29",
+"s":[
+[
+"Giulia"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":9.43,
+"v":427,
+"c":"65649",
+"u":null
+},
+{
+"id":"m103",
+"d":"2021-12-29",
+"s":[
+[
+"Syuri"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":9.37,
+"v":281,
+"c":"45819",
+"u":"https://www.stardom-world.com/contents/3407",
+"n":"No Time Limit"
+},
+{
+"id":"m104",
+"d":"2015-06-14",
+"s":[
+[
+"Kairi Hojo"
+],
+[
+"Meiko Satomura"
+]
+],
+"t":"single",
+"e":2,
+"r":9.36,
+"v":198,
+"c":"6884",
+"u":"https://www.stardom-world.com/contents/3576"
+},
+{
+"id":"m105",
+"d":"2019-06-16",
+"s":[
+[
+"Arisa Hoshiki"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":3,
+"r":9.32,
+"v":167,
+"c":"11144",
+"u":"https://www.stardom-world.com/contents/461"
+},
+{
+"id":"m106",
+"d":"2016-03-21",
+"s":[
+[
+"Io Shirai",
+"Mayu Iwatani"
+],
+[
+"Kairi Hojo",
+"Meiko Satomura"
+]
+],
+"t":"tag",
+"e":2,
+"r":9.32,
+"v":135,
+"c":"7319",
+"u":null
+},
+{
+"id":"m108",
+"d":"2025-04-27",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":5,
+"r":9.29,
+"v":436,
+"c":"114245",
+"u":"https://www.stardom-world.com/contents/6828"
+},
+{
+"id":"m107",
+"d":"2025-06-21",
+"s":[
+[
+"Sareee"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":5,
+"r":9.29,
+"v":317,
+"c":"117758",
+"u":"https://www.stardom-world.com/contents/7404"
+},
+{
+"id":"m109",
+"d":"2014-07-10",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Meiko Satomura"
+]
+],
+"t":"single",
+"e":1,
+"r":9.28,
+"v":108,
+"c":"11838",
+"u":null
+},
+{
+"id":"m110",
+"d":"2014-12-23",
+"s":[
+[
+"Kairi Hojo",
+"Nanae Takahashi"
+],
+[
+"Risa Sera",
+"Takumi Iroha"
+]
+],
+"t":"tag",
+"e":1,
+"r":9.28,
+"v":46,
+"c":"11840",
+"u":null
+},
+{
+"id":"m112",
+"d":"2023-06-25",
+"s":[
+[
+"AZM",
+"Hina",
+"Lady C",
+"Miyu Amasaki",
+"Saya Kamitani",
+"Utami Hayashishita"
+],
+[
+"Momo Watanabe",
+"Natsuko Tora",
+"Rina",
+"Ruaka",
+"Saki Kashima",
+"Starlight Kid"
+]
+],
+"t":"cage",
+"e":4,
+"r":9.26,
+"v":296,
+"c":"75161",
+"u":"https://www.stardom-world.com/contents/4823",
+"n":"twelve"
+},
+{
+"id":"m111",
+"d":"2017-03-20",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Kairi Hojo"
+]
+],
+"t":"single",
+"e":2,
+"r":9.26,
+"v":139,
+"c":"8290",
+"u":"https://www.stardom-world.com/contents/3076"
+},
+{
+"id":"m115",
+"d":"2021-09-25",
+"s":[
+[
+"Momo Watanabe"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":9.24,
+"v":185,
+"c":"40965",
+"u":"https://www.stardom-world.com/contents/3220"
+},
+{
+"id":"m114",
+"d":"2018-08-12",
+"s":[
+[
+"Kagetsu"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":3,
+"r":9.24,
+"v":83,
+"c":"11971",
+"u":null
+},
+{
+"id":"m113",
+"d":"2017-03-05",
+"s":[
+[
+"Hiroyo Matsumoto",
+"Jungle Kyona"
+],
+[
+"Kairi Hojo",
+"Yoko Bito"
+]
+],
+"t":"tag",
+"e":2,
+"r":9.24,
+"v":61,
+"c":"13840",
+"u":"https://www.stardom-world.com/contents/2851"
+},
+{
+"id":"m117",
+"d":"2024-04-27",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Sareee"
+]
+],
+"t":"single",
+"e":5,
+"r":9.21,
+"v":406,
+"c":"91620",
+"u":"https://www.stardom-world.com/contents/5681"
+},
+{
+"id":"m118",
+"d":"2020-02-08",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Takumi Iroha"
+]
+],
+"t":"single",
+"e":4,
+"r":9.21,
+"v":187,
+"c":"12091",
+"u":null
+},
+{
+"id":"m116",
+"d":"2016-05-15",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":2,
+"r":9.21,
+"v":147,
+"c":"7449",
+"u":"https://www.stardom-world.com/contents/1271"
+},
+{
+"id":"m119",
+"d":"2024-12-29",
+"s":[
+[
+"Natsupoi"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":5,
+"r":9.2,
+"v":293,
+"c":"106798",
+"u":"https://www.stardom-world.com/contents/6423"
+},
+{
+"id":"m120",
+"d":"2023-04-23",
+"s":[
+[
+"Giulia"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":4,
+"r":9.19,
+"v":391,
+"c":"71786",
+"u":"https://www.stardom-world.com/contents/9159"
+},
+{
+"id":"m121",
+"d":"2026-07-18",
+"s":[
+[
+"Natsupoi"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":5,
+"r":9.18,
+"v":228,
+"c":"143384",
+"u":"https://www.stardom-world.com/contents/9093"
+},
+{
+"id":"m122",
+"d":"2022-11-19",
+"s":[
+[
+"Syuri"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":9.17,
+"v":171,
+"c":"63655",
+"u":"https://www.stardom-world.com/contents/4258"
+},
+{
+"id":"m123",
+"d":"2020-01-26",
+"s":[
+[
+"Jungle Kyona",
+"Momo Watanabe"
+],
+[
+"Kagetsu",
+"Mayu Iwatani"
+]
+],
+"t":"tag",
+"e":4,
+"r":9.16,
+"v":100,
+"c":"12066",
+"u":null
+},
+{
+"id":"m124",
+"d":"2023-03-04",
+"s":[
+[
+"Hazuki"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":4,
+"r":9.15,
+"v":266,
+"c":"69051",
+"u":"https://www.stardom-world.com/contents/4480"
+},
+{
+"id":"m126",
+"d":"2022-11-20",
+"s":[
+[
+"KAIRI"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":4,
+"r":9.11,
+"v":342,
+"c":"63688",
+"u":null
+},
+{
+"id":"m127",
+"d":"2024-01-04",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":9.11,
+"v":342,
+"c":"84752",
+"u":null
+},
+{
+"id":"m128",
+"d":"2021-03-03",
+"s":[
+[
+"Giulia"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":4,
+"r":9.11,
+"v":290,
+"c":"29725",
+"u":"https://www.stardom-world.com/contents/2631",
+"n":"Hair Vs Hair"
+},
+{
+"id":"m125",
+"d":"2019-08-10",
+"s":[
+[
+"Arisa Hoshiki"
+],
+[
+"Jungle Kyona"
+]
+],
+"t":"single",
+"e":3,
+"r":9.11,
+"v":114,
+"c":"11358",
+"u":null
+},
+{
+"id":"m129",
+"d":"2017-03-09",
+"s":[
+[
+"Chihiro Hashimoto",
+"Mayu Iwatani"
+],
+[
+"Io Shirai",
+"Meiko Satomura"
+]
+],
+"t":"tag",
+"e":2,
+"r":9.1,
+"v":96,
+"c":"8288",
+"u":null
+},
+{
+"id":"m130",
+"d":"2019-03-03",
+"s":[
+[
+"Jungle Kyona"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":3,
+"r":9.09,
+"v":133,
+"c":"10382",
+"u":null
+},
+{
+"id":"m131",
+"d":"2015-09-23",
+"s":[
+[
+"DASH Chisako",
+"Sendai Sachiko"
+],
+[
+"Io Shirai",
+"Mayu Iwatani"
+]
+],
+"t":"tag",
+"e":2,
+"r":9.09,
+"v":57,
+"c":"5534",
+"u":null
+},
+{
+"id":"m132",
+"d":"2022-01-29",
+"s":[
+[
+"Giulia"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":4,
+"r":9.08,
+"v":283,
+"c":"47542",
+"u":null
+},
+{
+"id":"m133",
+"d":"2019-12-24",
+"s":[
+[
+"Kagetsu"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":3,
+"r":9.08,
+"v":144,
+"c":"11973",
+"u":null
+},
+{
+"id":"m134",
+"d":"2015-08-23",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":2,
+"r":9.08,
+"v":119,
+"c":"11757",
+"u":null
+},
+{
+"id":"m135",
+"d":"2022-02-23",
+"s":[
+[
+"AZM"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":4,
+"r":9.07,
+"v":272,
+"c":"48787",
+"u":"https://www.stardom-world.com/contents/3532"
+},
+{
+"id":"m136",
+"d":"2018-01-21",
+"s":[
+[
+"AZM",
+"HZK",
+"Io Shirai",
+"Momo Watanabe",
+"Viper"
+],
+[
+"Hana Kimura",
+"Kagetsu",
+"Kris Wolf",
+"Natsu Sumire",
+"Tam Nakano"
+]
+],
+"t":"gauntlet",
+"e":2,
+"r":9.07,
+"v":91,
+"c":"11592",
+"u":null,
+"n":"ten"
+},
+{
+"id":"m137",
+"d":"2019-07-15",
+"s":[
+[
+"Jungle Kyona",
+"Konami"
+],
+[
+"Momo Watanabe",
+"Utami Hayashishita"
+]
+],
+"t":"tag",
+"e":3,
+"r":9.06,
+"v":65,
+"c":"11539",
+"u":null
+},
+{
+"id":"m138",
+"d":"2020-10-18",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Takumi Iroha"
+]
+],
+"t":"single",
+"e":4,
+"r":9.03,
+"v":135,
+"c":"22634",
+"u":null
+},
+{
+"id":"m139",
+"d":"2020-07-24",
+"s":[
+[
+"Jungle Kyona"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":4,
+"r":9.0,
+"v":120,
+"c":"14797",
+"u":null
+},
+{
+"id":"m140",
+"d":"2021-09-25",
+"s":[
+[
+"Syuri"
+],
+[
+"Takumi Iroha"
+]
+],
+"t":"single",
+"e":4,
+"r":8.99,
+"v":156,
+"c":"40966",
+"u":"https://www.stardom-world.com/contents/3218"
+},
+{
+"id":"m141",
+"d":"2021-07-31",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":4,
+"r":8.99,
+"v":152,
+"c":"38161",
+"u":"https://www.stardom-world.com/contents/3018"
+},
+{
+"id":"m142",
+"d":"2013-12-29",
+"s":[
+[
+"Arisa Nakajima"
+],
+[
+"Io Shirai"
+]
+],
+"t":"single",
+"e":1,
+"r":8.99,
+"v":96,
+"c":"8489",
+"u":null
+},
+{
+"id":"m143",
+"d":"2022-03-26",
+"s":[
+[
+"Giulia"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":8.98,
+"v":228,
+"c":"50384",
+"u":"https://www.stardom-world.com/contents/3613"
+},
+{
+"id":"m145",
+"d":"2022-10-01",
+"s":[
+[
+"Giulia"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":4,
+"r":8.97,
+"v":200,
+"c":"60817",
+"u":null
+},
+{
+"id":"m144",
+"d":"2018-07-22",
+"s":[
+[
+"Kagetsu"
+],
+[
+"Viper"
+]
+],
+"t":"single",
+"e":3,
+"r":8.97,
+"v":29,
+"c":"16864",
+"u":"https://www.stardom-world.com/contents/1883"
+},
+{
+"id":"m146",
+"d":"2015-07-26",
+"s":[
+[
+"Kairi Hojo"
+],
+[
+"Meiko Satomura"
+]
+],
+"t":"single",
+"e":2,
+"r":8.96,
+"v":74,
+"c":"7098",
+"u":null
+},
+{
+"id":"m149",
+"d":"2025-02-24",
+"s":[
+[
+"Rina"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":5,
+"r":8.94,
+"v":248,
+"c":"110188",
+"u":"https://www.stardom-world.com/contents/6608"
+},
+{
+"id":"m147",
+"d":"2019-07-24",
+"s":[
+[
+"Arisa Hoshiki"
+],
+[
+"Hazuki"
+]
+],
+"t":"single",
+"e":3,
+"r":8.94,
+"v":101,
+"c":"11254",
+"u":"https://www.stardom-world.com/contents/533"
+},
+{
+"id":"m148",
+"d":"2018-06-17",
+"s":[
+[
+"Hazuki",
+"Kagetsu"
+],
+[
+"Io Shirai",
+"Mayu Iwatani"
+]
+],
+"t":"tag",
+"e":2,
+"r":8.94,
+"v":83,
+"c":"9639",
+"u":null
+},
+{
+"id":"m150",
+"d":"2017-03-26",
+"s":[
+[
+"Kairi Hojo"
+],
+[
+"Konami"
+]
+],
+"t":"single",
+"e":2,
+"r":8.93,
+"v":60,
+"c":"11644",
+"u":"https://www.stardom-world.com/contents/3088"
+},
+{
+"id":"m151",
+"d":"2018-05-23",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":2,
+"r":8.9,
+"v":107,
+"c":"9637",
+"u":"https://www.stardom-world.com/contents/1783"
+},
+{
+"id":"m152",
+"d":"2023-07-23",
+"s":[
+[
+"Suzu Suzuki"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":8.89,
+"v":209,
+"c":"76672",
+"u":"https://www.stardom-world.com/contents/4939"
+},
+{
+"id":"m153",
+"d":"2025-02-02",
+"s":[
+[
+"AZM",
+"Miyu Amasaki",
+"Starlight Kid"
+],
+[
+"Natsupoi",
+"Saori Anou",
+"Tam Nakano"
+]
+],
+"t":"six",
+"e":5,
+"r":8.87,
+"v":282,
+"c":"108869",
+"u":"https://www.stardom-world.com/contents/6534"
+},
+{
+"id":"m155",
+"d":"2025-03-03",
+"s":[
+[
+"Saya Kamitani"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":5,
+"r":8.85,
+"v":284,
+"c":"110639",
+"u":"https://www.stardom-world.com/contents/6635",
+"n":"Loser Leaves"
+},
+{
+"id":"m156",
+"d":"2026-01-11",
+"s":[
+[
+"Hazuki"
+],
+[
+"Mei Seira"
+]
+],
+"t":"single",
+"e":5,
+"r":8.85,
+"v":225,
+"c":"130711",
+"u":"https://www.stardom-world.com/contents/8217"
+},
+{
+"id":"m154",
+"d":"2016-09-03",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Kairi Hojo"
+]
+],
+"t":"single",
+"e":2,
+"r":8.85,
+"v":102,
+"c":"7834",
+"u":null
+},
+{
+"id":"m157",
+"d":"2025-08-23",
+"s":[
+[
+"AZM"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":5,
+"r":8.84,
+"v":221,
+"c":"121785",
+"u":"https://www.stardom-world.com/contents/7661"
+},
+{
+"id":"m158",
+"d":"2021-12-29",
+"s":[
+[
+"Saya Kamitani"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":4,
+"r":8.83,
+"v":207,
+"c":"45822",
+"u":"https://www.stardom-world.com/contents/3406"
+},
+{
+"id":"m159",
+"d":"2017-09-18",
+"s":[
+[
+"Kagetsu"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":2,
+"r":8.83,
+"v":34,
+"c":"16645",
+"u":null
+},
+{
+"id":"m160",
+"d":"2026-08-18",
+"s":[
+[
+"Konami"
+],
+[
+"Rina"
+]
+],
+"t":"single",
+"e":5,
+"r":8.82,
+"v":134,
+"c":"145488",
+"u":"https://www.stardom-world.com/contents/9252"
+},
+{
+"id":"m161",
+"d":"2018-08-18",
+"s":[
+[
+"Kagetsu"
+],
+[
+"Konami"
+]
+],
+"t":"single",
+"e":3,
+"r":8.82,
+"v":32,
+"c":"16866",
+"u":null
+},
+{
+"id":"m162",
+"d":"2022-03-27",
+"s":[
+[
+"Saya Kamitani"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":4,
+"r":8.81,
+"v":191,
+"c":"50446",
+"u":null
+},
+{
+"id":"m163",
+"d":"2016-11-11",
+"s":[
+[
+"Io Shirai",
+"Mayu Iwatani"
+],
+[
+"Kairi Hojo",
+"Yoko Bito"
+]
+],
+"t":"tag",
+"e":2,
+"r":8.78,
+"v":36,
+"c":"13380",
+"u":null
+},
+{
+"id":"m166",
+"d":"2025-08-20",
+"s":[
+[
+"AZM"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":5,
+"r":8.77,
+"v":209,
+"c":"121625",
+"u":"https://www.stardom-world.com/contents/7647"
+},
+{
+"id":"m164",
+"d":"2017-10-17",
+"s":[
+[
+"Takumi Iroha"
+],
+[
+"Yoko Bito"
+]
+],
+"t":"single",
+"e":2,
+"r":8.77,
+"v":38,
+"c":"8982",
+"u":null
+},
+{
+"id":"m165",
+"d":"2025-09-27",
+"s":[
+[
+"AZM"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":5,
+"r":8.76,
+"v":239,
+"c":"123768",
+"u":"https://www.stardom-world.com/contents/7763"
+},
+{
+"id":"m167",
+"d":"2012-03-20",
+"s":[
+[
+"Meiko Satomura"
+],
+[
+"Nanae Takahashi"
+]
+],
+"t":"single",
+"e":1,
+"r":8.76,
+"v":57,
+"c":"5160",
+"u":null
+},
+{
+"id":"m169",
+"d":"2023-04-23",
+"s":[
+[
+"Mina Shirakawa"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":4,
+"r":8.75,
+"v":333,
+"c":"71784",
+"u":"https://www.stardom-world.com/contents/9156"
+},
+{
+"id":"m168",
+"d":"2025-12-29",
+"s":[
+[
+"Natsupoi"
+],
+[
+"Sareee"
+]
+],
+"t":"single",
+"e":5,
+"r":8.75,
+"v":206,
+"c":"129775",
+"u":"https://www.stardom-world.com/contents/8152"
+},
+{
+"id":"m170",
+"d":"2023-07-23",
+"s":[
+[
+"Giulia"
+],
+[
+"Saori Anou"
+]
+],
+"t":"single",
+"e":4,
+"r":8.75,
+"v":204,
+"c":"76673",
+"u":"https://www.stardom-world.com/contents/4941"
+},
+{
+"id":"m172",
+"d":"2023-05-04",
+"s":[
+[
+"Mina Shirakawa"
+],
+[
+"Natsupoi"
+]
+],
+"t":"single",
+"e":4,
+"r":8.74,
+"v":143,
+"c":"72417",
+"u":"https://www.stardom-world.com/contents/4674"
+},
+{
+"id":"m171",
+"d":"2018-05-05",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Kagetsu"
+]
+],
+"t":"single",
+"e":2,
+"r":8.74,
+"v":41,
+"c":"16804",
+"u":null
+},
+{
+"id":"m173",
+"d":"2023-03-04",
+"s":[
+[
+"AZM"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":4,
+"r":8.72,
+"v":216,
+"c":"69052",
+"u":"https://www.stardom-world.com/contents/4481"
+},
+{
+"id":"m174",
+"d":"2018-02-18",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":2,
+"r":8.72,
+"v":102,
+"c":"9253",
+"u":"https://www.stardom-world.com/contents/1619"
+},
+{
+"id":"m176",
+"d":"2022-10-23",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":8.71,
+"v":119,
+"c":"62158",
+"u":"https://www.stardom-world.com/contents/4201"
+},
+{
+"id":"m175",
+"d":"2015-02-22",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Koguma"
+]
+],
+"t":"single",
+"e":1,
+"r":8.71,
+"v":30,
+"c":"11845",
+"u":null
+},
+{
+"id":"m177",
+"d":"2026-06-20",
+"s":[
+[
+"Sayaka Kurara"
+],
+[
+"Suzu Suzuki"
+]
+],
+"t":"single",
+"e":5,
+"r":8.7,
+"v":158,
+"c":"141778",
+"u":"https://www.stardom-world.com/contents/8754"
+},
+{
+"id":"m178",
+"d":"2019-09-22",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":3,
+"r":8.7,
+"v":86,
+"c":"11476",
+"u":null
+},
+{
+"id":"m179",
+"d":"2026-03-15",
+"s":[
+[
+"Hanan"
+],
+[
+"Rina"
+]
+],
+"t":"single",
+"e":5,
+"r":8.69,
+"v":161,
+"c":"134901",
+"u":"https://www.stardom-world.com/contents/8468"
+},
+{
+"id":"m180",
+"d":"2021-10-09",
+"s":[
+[
+"Takumi Iroha"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":8.67,
+"v":106,
+"c":"41622",
+"u":"https://www.stardom-world.com/contents/3259"
+},
+{
+"id":"m182",
+"d":"2017-05-14",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Toni Storm"
+]
+],
+"t":"single",
+"e":2,
+"r":8.67,
+"v":65,
+"c":"11846",
+"u":"https://www.stardom-world.com/contents/1170"
+},
+{
+"id":"m181",
+"d":"2018-10-23",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":3,
+"r":8.67,
+"v":50,
+"c":"9901",
+"u":null
+},
+{
+"id":"m183",
+"d":"2026-08-23",
+"s":[
+[
+"Rina"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":5,
+"r":8.66,
+"v":187,
+"c":"145750",
+"u":"https://www.stardom-world.com/contents/9275"
+},
+{
+"id":"m184",
+"d":"2022-10-01",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":4,
+"r":8.65,
+"v":167,
+"c":"60820",
+"u":"https://www.stardom-world.com/contents/4137"
+},
+{
+"id":"m185",
+"d":"2022-04-29",
+"s":[
+[
+"AZM"
+],
+[
+"Mei Suruga"
+]
+],
+"t":"single",
+"e":4,
+"r":8.65,
+"v":163,
+"c":"51995",
+"u":"https://www.stardom-world.com/contents/3709"
+},
+{
+"id":"m186",
+"d":"2014-08-17",
+"s":[
+[
+"Io Shirai",
+"Mayu Iwatani",
+"Yoshiko"
+],
+[
+"Kairi Hojo",
+"Koguma",
+"Nanae Takahashi"
+]
+],
+"t":"six",
+"e":1,
+"r":8.65,
+"v":36,
+"c":"36485",
+"u":null
+},
+{
+"id":"m187",
+"d":"2022-08-27",
+"s":[
+[
+"Giulia"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":4,
+"r":8.64,
+"v":173,
+"c":"58905",
+"u":"https://www.stardom-world.com/contents/4011"
+},
+{
+"id":"m188",
+"d":"2025-09-06",
+"s":[
+[
+"Starlight Kid"
+],
+[
+"Tomoka Inaba"
+]
+],
+"t":"single",
+"e":5,
+"r":8.63,
+"v":143,
+"c":"122570",
+"u":"https://www.stardom-world.com/contents/7697"
+},
+{
+"id":"m189",
+"d":"2020-12-20",
+"s":[
+[
+"Momo Watanabe"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":8.63,
+"v":101,
+"c":"26148",
+"u":null
+},
+{
+"id":"m190",
+"d":"2020-11-15",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":8.63,
+"v":98,
+"c":"24187",
+"u":"https://www.stardom-world.com/contents/7169"
+},
+{
+"id":"m192",
+"d":"2019-01-27",
+"s":[
+[
+"Hazuki"
+],
+[
+"Kagetsu"
+]
+],
+"t":"single",
+"e":3,
+"r":8.62,
+"v":51,
+"c":"11120",
+"u":null
+},
+{
+"id":"m191",
+"d":"2018-04-15",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Kagetsu"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"way3",
+"e":2,
+"r":8.62,
+"v":44,
+"c":"16716",
+"u":null
+},
+{
+"id":"m193",
+"d":"2018-03-28",
+"s":[
+[
+"Toni Storm"
+],
+[
+"Viper"
+]
+],
+"t":"single",
+"e":2,
+"r":8.62,
+"v":25,
+"c":"12907",
+"u":null
+},
+{
+"id":"m194",
+"d":"2017-08-13",
+"s":[
+[
+"Kagetsu"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":2,
+"r":8.61,
+"v":40,
+"c":"11970",
+"u":null
+},
+{
+"id":"m195",
+"d":"2026-04-26",
+"s":[
+[
+"Sayaka Kurara"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":5,
+"r":8.6,
+"v":178,
+"c":"137637",
+"u":"https://www.stardom-world.com/contents/8606"
+},
+{
+"id":"m199",
+"d":"2020-10-03",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":8.6,
+"v":98,
+"c":"21955",
+"u":"https://www.stardom-world.com/contents/7274"
+},
+{
+"id":"m198",
+"d":"2019-12-24",
+"s":[
+[
+"Arisa Hoshiki"
+],
+[
+"Konami"
+]
+],
+"t":"single",
+"e":3,
+"r":8.6,
+"v":81,
+"c":"12016",
+"u":"https://www.stardom-world.com/contents/963"
+},
+{
+"id":"m196",
+"d":"2020-09-28",
+"s":[
+[
+"AZM",
+"Momo Watanabe",
+"Utami Hayashishita"
+],
+[
+"Mei Hoshizuki",
+"Rin Kadokura",
+"Takumi Iroha"
+]
+],
+"t":"six",
+"e":4,
+"r":8.6,
+"v":49,
+"c":"21433",
+"u":null
+},
+{
+"id":"m201",
+"d":"2026-02-07",
+"s":[
+[
+"Saya Kamitani"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":5,
+"r":8.59,
+"v":215,
+"c":"132326",
+"u":"https://www.stardom-world.com/contents/8324"
+},
+{
+"id":"m203",
+"d":"2024-03-09",
+"s":[
+[
+"Chihiro Hashimoto",
+"Sareee"
+],
+[
+"Natsupoi",
+"Saori Anou"
+]
+],
+"t":"tag",
+"e":5,
+"r":8.59,
+"v":158,
+"c":"88769",
+"u":null
+},
+{
+"id":"m202",
+"d":"2025-07-21",
+"s":[
+[
+"Saori Anou"
+],
+[
+"Starlight Kid"
+]
+],
+"t":"single",
+"e":5,
+"r":8.59,
+"v":146,
+"c":"119622",
+"u":"https://www.stardom-world.com/contents/7499"
+},
+{
+"id":"m197",
+"d":"2026-10-29",
+"s":[
+[
+"Starlight Kid"
+],
+[
+"Suzu Suzuki"
+]
+],
+"t":"single",
+"e":5,
+"r":8.59,
+"v":70,
+"c":"149824",
+"u":"https://www.stardom-world.com/contents/9267"
+},
+{
+"id":"m200",
+"d":"2023-05-14",
+"s":[
+[
+"Ami Sourei",
+"Aya Sakura",
+"AZM",
+"Giulia",
+"HANAKO",
+"Hanan",
+"Hazuki",
+"Hina",
+"Kakeru Sekiguchi",
+"Koguma",
+"Lady C",
+"Maika",
+"Mai Sakurai",
+"Mayu Iwatani",
+"Mina Shirakawa",
+"MIRAI",
+"Miyu Amasaki",
+"Miyuki Takase",
+"Momo Watanabe",
+"Natsuko Tora",
+"Natsupoi",
+"Rina",
+"Ruaka",
+"Saki Kashima",
+"Saya Iida",
+"Saya Kamitani",
+"Starlight Kid",
+"Syuri",
+"Tam Nakano",
+"Thekla",
+"Utami Hayashishita",
+"Waka Tsukiyama"
+],
+[
+"Himeka"
+]
+],
+"t":"other",
+"e":4,
+"r":8.59,
+"v":58,
+"c":"72995",
+"u":null,
+"n":"handicap 32v1 gauntlet"
+},
+{
+"id":"m204",
+"d":"2017-02-23",
+"s":[
+[
+"Jungle Kyona"
+],
+[
+"Kairi Hojo"
+]
+],
+"t":"single",
+"e":2,
+"r":8.59,
+"v":50,
+"c":"11597",
+"u":"https://www.stardom-world.com/contents/2656"
+},
+{
+"id":"m206",
+"d":"2023-02-04",
+"s":[
+[
+"Giulia"
+],
+[
+"Suzu Suzuki"
+]
+],
+"t":"single",
+"e":4,
+"r":8.58,
+"v":182,
+"c":"67646",
+"u":"https://www.stardom-world.com/contents/4419"
+},
+{
+"id":"m205",
+"d":"2022-02-23",
+"s":[
+[
+"Natsupoi"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":4,
+"r":8.58,
+"v":177,
+"c":"48786",
+"u":"https://www.stardom-world.com/contents/3533"
+},
+{
+"id":"m207",
+"d":"2025-08-23",
+"s":[
+[
+"AZM"
+],
+[
+"Rina"
+]
+],
+"t":"single",
+"e":5,
+"r":8.58,
+"v":177,
+"c":"121798",
+"u":"https://www.stardom-world.com/contents/7653"
+},
+{
+"id":"m208",
+"d":"2020-01-19",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":4,
+"r":8.58,
+"v":103,
+"c":"12046",
+"u":"https://www.stardom-world.com/contents/1024"
+},
+{
+"id":"m209",
+"d":"2023-04-23",
+"s":[
+[
+"Chihiro Hashimoto"
+],
+[
+"Syuri"
+]
+],
+"t":"single",
+"e":4,
+"r":8.57,
+"v":314,
+"c":"71785",
+"u":"https://www.stardom-world.com/contents/9157",
+"n":"Knockout Or Submission Only"
+},
+{
+"id":"m213",
+"d":"2024-05-05",
+"s":[
+[
+"Hazuki",
+"Koguma"
+],
+[
+"Mei Seira",
+"Suzu Suzuki"
+]
+],
+"t":"tag",
+"e":5,
+"r":8.56,
+"v":143,
+"c":"92062",
+"u":null
+},
+{
+"id":"m212",
+"d":"2017-09-10",
+"s":[
+[
+"Hana Kimura"
+],
+[
+"Kagetsu"
+]
+],
+"t":"single",
+"e":2,
+"r":8.56,
+"v":35,
+"c":"16600",
+"u":null
+},
+{
+"id":"m210",
+"d":"2025-04-27",
+"s":[
+[
+"Mei Seira"
+],
+[
+"Suzu Suzuki"
+]
+],
+"t":"single",
+"e":5,
+"r":8.55,
+"v":337,
+"c":"114249",
+"u":null,
+"n":"No Disqualification"
+},
+{
+"id":"m211",
+"d":"2025-02-02",
+"s":[
+[
+"Saya Kamitani"
+],
+[
+"Suzu Suzuki"
+]
+],
+"t":"single",
+"e":5,
+"r":8.55,
+"v":226,
+"c":"108868",
+"u":null
+},
+{
+"id":"m214",
+"d":"2018-06-17",
+"s":[
+[
+"Jungle Kyona"
+],
+[
+"Momo Watanabe"
+]
+],
+"t":"single",
+"e":2,
+"r":8.55,
+"v":50,
+"c":"9640",
+"u":null
+},
+{
+"id":"m215",
+"d":"2025-12-29",
+"s":[
+[
+"Saori Anou"
+],
+[
+"Saya Kamitani"
+]
+],
+"t":"single",
+"e":5,
+"r":8.54,
+"v":193,
+"c":"129782",
+"u":"https://www.stardom-world.com/contents/8155"
+},
+{
+"id":"m216",
+"d":"2014-01-26",
+"s":[
+[
+"Io Shirai"
+],
+[
+"Natsuki Taiyo"
+]
+],
+"t":"single",
+"e":1,
+"r":8.54,
+"v":49,
+"c":"5977",
+"u":null
+},
+{
+"id":"m217",
+"d":"2021-08-01",
+"s":[
+[
+"Giulia"
+],
+[
+"Mayu Iwatani"
+]
+],
+"t":"single",
+"e":4,
+"r":8.53,
+"v":115,
+"c":"38174",
+"u":"https://www.stardom-world.com/contents/3028"
+},
+{
+"id":"m218",
+"d":"2022-10-01",
+"s":[
+[
+"Giulia"
+],
+[
+"Suzu Suzuki"
+]
+],
+"t":"single",
+"e":4,
+"r":8.52,
+"v":149,
+"c":"60825",
+"u":"https://www.stardom-world.com/contents/4138"
+},
+{
+"id":"m219",
+"d":"2019-01-14",
+"s":[
+[
+"Jungle Kyona"
+],
+[
+"Kagetsu"
+]
+],
+"t":"single",
+"e":3,
+"r":8.52,
+"v":65,
+"c":"10144",
+"u":null
+},
+{
+"id":"m220",
+"d":"2022-07-30",
+"s":[
+[
+"Giulia"
+],
+[
+"Hazuki"
+]
+],
+"t":"single",
+"e":4,
+"r":8.51,
+"v":130,
+"c":"57284",
+"u":"https://www.stardom-world.com/contents/3931"
+},
+{
+"id":"m223",
+"d":"2023-08-13",
+"s":[
+[
+"Mayu Iwatani"
+],
+[
+"Utami Hayashishita"
+]
+],
+"t":"single",
+"e":4,
+"r":8.5,
+"v":157,
+"c":"77751",
+"u":"https://www.stardom-world.com/contents/5009"
+},
+{
+"id":"m221",
+"d":"2024-10-05",
+"s":[
+[
+"Suzu Suzuki"
+],
+[
+"Tam Nakano"
+]
+],
+"t":"single",
+"e":5,
+"r":8.5,
+"v":132,
+"c":"101446",
+"u":"https://www.stardom-world.com/contents/6066"
+},
+{
+"id":"m222",
+"d":"2016-04-02",
+"s":[
+[
+"Hiroyo Matsumoto",
+"Kagetsu"
+],
+[
+"Io Shirai",
+"Mayu Iwatani"
+]
+],
+"t":"tag",
+"e":2,
+"r":8.5,
+"v":27,
+"c":"12232",
+"u":null
+}
+]
+}

@@ -2,6 +2,114 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.1
+
+- Eras page: the "All N matches in this era" row no longer has an OPEN button (the whole row is the link).
+
+## 2.23.0
+
+- Eras page: new "Top rated matches" section between Dominant title reigns and Defining rivalries. It shows that era's five best-rated matches (same rows as the Top Rated page: WATCH button and whole-row link when a video exists, text only when not) and a final "All N matches in this era" row that opens the Top Rated page for that era. All five eras; local data, no requests.
+- toprated.js now loads before the Eras page script and exposes shared row code and styles (`__tvTopRows`, `__tvTopRow`) used by both pages.
+
+## 2.22.6
+
+- Menu: the group title is "Years" (was "Years & Eras"). The shelf heading and the All Years & Eras page keep their names.
+
+## 2.22.5
+
+- Top Rated Matches: a match with a video is a link in full (the whole row is the focus target and OK plays it) and shows an orange WATCH button; no thumbnails. A match without a video has no button and cannot be focused or clicked. Up and Down skip text-only rows and scroll over them.
+- The page lists every match (it stopped at 25 before).
+
+## 2.22.4
+
+- Top Rated Matches: 72 of the 128 matches now have a confirmed video address, so those rows are links (thumbnail area with WATCH NOW, OK plays the video). The other 56 stay text only. Thumbnails are still the dark placeholder until picture addresses are added ("th" in assets/top_matches.json).
+
+## 2.22.3
+
+- Top Rated Matches: the fine print under the title reads "Fan voted ratings from Cagematch.net, as of November 2026".
+
+## 2.22.2
+
+- Top Rated Matches: Up and Down move through the match rows one at a time (Left and Right were moving between rows). Left on a row opens the menu; Right on a row does nothing.
+
+## 2.22.1
+
+- Top Rated by era: the era tiles run newest on the left, like the Eras page and the championship strip. DESIGN.md now states the rule for any timeline.
+
+## 2.22.0
+
+- Matches: the menu group is "Matches" (was Match Types). Its shelf shows all match types in three keylined columns (4-Way now sits before 5-Way & 6-Way) with a compact Top Rated block below: Overall, By match type and one card per era.
+- Top Rated Matches page (`/mypage?tvtop=overall|era|type`): 128 Stardom matches rated 8.50+ with 25+ Cagematch votes, from assets/top_matches.json. A match with a video address ("u") shows a thumbnail and a WATCH NOW strip and plays on OK; the rest stay text only. Match type icons use only the design colours.
+
+## 2.21.7
+
+- Filter bar: the Location drop-down is full width again (it was squeezed to a narrow strip at the right, breaking venue names mid-word) and scrolls if it is taller than the screen.
+
+## 2.21.6
+
+- Faction home: a watchdog retries a first load that never finished and moves on to the next spelling if the grid is still short (Itoh Respect Gundan sometimes stayed empty on the first visit). It stops after about 20 seconds or when a screen is filled.
+
+## 2.21.5
+
+- My Favorites: the Itoh Respect Gundan logo shows (white artwork sat on a white tile). factions.json has a new optional "plate": "dark" for a faction like this.
+- Faction home: when a faction's first search has few or no videos, it now goes on to the next spelling by itself until about a screen is filled. Itoh Respect Gundan runs two names, then the next pair, then the third pair, so FACTION MATCHES is no longer empty.
+- Wrestlers menu: Current and Past are a segmented switch (one rounded track, the chosen one filled orange, focus is the gold border).
+
+## 2.21.4
+
+- Years menu: the five era header cards are all the same height (76px). The menu group title reads Years & Eras.
+
+## 2.21.3
+
+- Eras page: rivalry tiles show how many videos the search found and the years they cover, from the daily file (eras.info). Nothing shows until Muse has checked the search.
+
+## 2.21.2
+
+- era_link_keys.py: wider searches carry a `parent`. Muse checks a wider search only when the tile search came back 0 (about 60 checks plus a few, four nights at 15 a night).
+
+## 2.21.1
+
+- Eras link checks: an empty search never removes a tile any more. Wrestler tiles widen to the first name, shows widen to all years (then the year page), rivalries to the first wrestler. Greyed-out tiles are gone.
+- era_link_keys.py also lists the wider searches (90 keys). The Muse job checks each key once, 15 a night, never again.
+
+## 2.21.0
+
+- Eras page: the whole timeline is flipped. Newest era is on the left (era chips, timeline bar, year chips), "now" is at the left end and 2011 at the right.
+- New All Years & Eras page (page A): five bands, newest era first, each with its years and an Open era page tile.
+- Years menu (sub nav B): five era columns, each headed by the era (OK opens its page) and listing its years newest first, with an All Years & Eras bar on top. Replaces the Era Test row.
+
+## 2.20.1
+
+- Eras page: opens on Era 1 (was Era 2). Descriptor text no longer wraps early (the width cap is gone). Eras 1, 3, 4 and 5 have their own emblems. Faction logos sit on the tile with no box and are larger. The High Speed card is titled "High Speed Championship" and is excluded from page translation. Year chips under the timeline run newest first.
+
+## 2.20.0
+
+- Eras 1, 3, 4 and 5 are built (header, title reigns with deep links, rivalries, top wrestlers, rising stars, factions, shows). Reign numbers, days and defences come from the lineage files. Era 1's three factions have no faction page, so their tiles run a plain search.
+
+## 2.19.3
+
+- Eras page: faction logos now show. The site-header logo swap matched any class containing "logo" and replaced the faction images with the STARDOM mark; the tile class is renamed.
+
+## 2.19.2
+
+- Champions (lineage) page: the MATCHING DEBUG block and the SEARCH summary line are hidden (one switch, SHOW_DEBUG in lineage.js, brings them back).
+- Eras page: faction logos sit on a dark tile (several are white artwork and were invisible on white).
+
+## 2.19.1
+
+- Eras page: compact layout so Defining rivalries fits on screen (descriptor text 20% smaller, smaller emblem and chips, shorter belt cards and rivalry thumbnails). The year chips moved out of the era box and sit under the timeline, between the era's dates.
+- Era chip numerals no longer get translated to "one, two, three" (marked do-not-translate).
+- Title reign cards and the other-champion chips now open that reign (the lineage page accepts "tvrn=<reign number>" and loads its videos), not the current champion.
+- Rivalry tiles search the two names only (the year made the searches come back empty).
+- Arrow keys: Up and Down now go to the nearest tile straight above or below before looking sideways.
+- Empty searches can be unlinked: the daily file may carry eras.counts (see docs/ERA_LINK_CHECKS.md); an empty show falls back to its year page, an empty rivalry to the first wrestler's search, an empty wrestler is greyed out. Year-End Climax 2016 is marked as empty by hand.
+
+## 2.19.0
+
+- New Eras page, first cut: Years menu > Era Test (a full-width row above the year list). It shows the five eras as a chip row with a timeline underneath, and Era 2 (Threedom & the Golden Rebuild) is filled in. Left and Right on the chips change era; the other four say "not built yet".
+- Era 2 sections, top to bottom: era box (with the year chips for 2015 to 2018 inside it), Dominant title reigns (World and Wonder cards, open the lineage page), Defining rivalries (3 tiles, one search each: two names plus a year), Top wrestlers (4) and Rising stars (4), Impactful factions (open the faction pages, logos in private builds), Must-see shows (4, one search each: show plus year).
+- Content is in the new assets/eras.json and is hand-written from the era notes (shows and rivalries for all five eras, rising stars for all five; only Era 2 is drawn so far), not checked against the site. Era 2 has 3 shows and 3 rivalries as listed in the notes. Nothing loads when the page opens.
+
 ## 2.18.5
 
 - Wrestler / Competitors tabs: tighter lines (15px text, 6px padding, as the old columns had) so the lists are about 480px tall at 1280x720 and stop short of the bottom of the screen; the flyout is also capped to the space below the filter bar and scrolls if it ever needs more.
