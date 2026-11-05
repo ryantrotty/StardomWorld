@@ -156,6 +156,42 @@
      "alts": [
       "8-man"
      ]
+    },
+    {
+     "id": "ten",
+     "name": "10-person",
+     "ja": "10人タッグ",
+     "search": "10-person",
+     "all": [
+      "10[\\s\\-‐]*(?:person|man|men)|10人"
+     ],
+     "alts": [
+      "10-man"
+     ]
+    },
+    {
+     "id": "twelve",
+     "name": "12-person",
+     "ja": "12人タッグ",
+     "search": "12-person",
+     "all": [
+      "12[\\s\\-‐]*(?:person|man|men)|12人"
+     ],
+     "alts": [
+      "12-man"
+     ]
+    },
+    {
+     "id": "fourteen",
+     "name": "14-person",
+     "ja": "14人タッグ",
+     "search": "14-person",
+     "all": [
+      "14[\\s\\-‐]*(?:person|man|men)|14人"
+     ],
+     "alts": [
+      "14-man"
+     ]
     }
    ]
   },
@@ -201,6 +237,15 @@
      "name": "Rumble",
      "ja": "ランブル",
      "search": "Rumble"
+    },
+    {
+     "id": "handicap",
+     "name": "Handicap",
+     "ja": "ハンディキャップマッチ",
+     "search": "Handicap",
+     "all": [
+      "handicap|ハンディキャップ|ハンデ"
+     ]
     }
    ]
   }

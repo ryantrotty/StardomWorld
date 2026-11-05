@@ -33,6 +33,10 @@
     way6: [P(8, 6, 'g'), P(24, 6, 'w'), P(40, 6, 'o'), P(8, 27, 'b'), P(24, 27, 'gr'), P(40, 27, 'pk')],
     six: [S(4, 6, 'g'), S(4, 16, 'g'), S(4, 26, 'g'), S(45, 6, 'w'), S(45, 16, 'w'), S(45, 26, 'w')],
     eight: [S(4, 2, 'g'), S(4, 12, 'g'), S(4, 22, 'g'), S(4, 32, 'g'), S(45, 2, 'w'), S(45, 12, 'w'), S(45, 22, 'w'), S(45, 32, 'w')],
+    ten: [S(4, 1, 'g'), S(4, 9, 'g'), S(4, 17, 'g'), S(4, 25, 'g'), S(4, 33, 'g'), S(45, 1, 'w'), S(45, 9, 'w'), S(45, 17, 'w'), S(45, 25, 'w'), S(45, 33, 'w')],
+    twelve: [S(2, 6, 'g'), S(11, 6, 'g'), S(2, 16, 'g'), S(11, 16, 'g'), S(2, 26, 'g'), S(11, 26, 'g'), S(38, 6, 'w'), S(47, 6, 'w'), S(38, 16, 'w'), S(47, 16, 'w'), S(38, 26, 'w'), S(47, 26, 'w')],
+    fourteen: [S(2, 2, 'g'), S(2, 12, 'g'), S(2, 22, 'g'), S(2, 32, 'g'), S(11, 7, 'g'), S(11, 17, 'g'), S(11, 27, 'g'), S(47, 2, 'w'), S(47, 12, 'w'), S(47, 22, 'w'), S(47, 32, 'w'), S(38, 7, 'w'), S(38, 17, 'w'), S(38, 27, 'w')],
+    handicap: [S(4, 6, 'g'), S(4, 16, 'g'), S(4, 26, 'g'), P(40, 15, 'w')],
     royal: ring,
     cage: [R(1, 1, 54, 38, 'fr'), P(13, 15, 'g'), P(34, 15, 'w')],
     gauntlet: [S(2, 14, 'g'), S(13, 14, 'w dm'), S(24, 14, 'w dm'), S(35, 14, 'w dm'), S(46, 14, 'w dm'), R(2, 28, 52, 2, 'ln')],
@@ -41,7 +45,7 @@
     rumble: [S(2, 18, 'g'), S(12, 6, 'w'), S(22, 26, 'w dm'), S(32, 8, 'w dm'), S(42, 28, 'w dm'), S(49, 14, 'w dm')]
   };
     window.__tvMatchIcon = function(t) {
-    var d = ICONS[t === 'other' ? 'gauntlet' : t] || ICONS.single;
+    var d = ICONS[t === 'other' ? 'handicap' : t] || ICONS.single;
     return '<div class="tv-mi">' + d.map(function(x) { return '<i class="' + x.c + '" style="' + x.s + '"></i>'; }).join('') + '</div>';
     };
   }
@@ -87,13 +91,13 @@
     }
     var lk = !!m.u, note = NOTE[m.n] || m.n || '';
     var h = '<' + (lk ? 'a href="' + esc(absUrl(m.u)) + '" tabindex="0"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" data-id="' + esc(m.id) + '">';
-    h += '<div class="tp-rk">' + i + '</div>';
+    h += '<div class="tp-rk notranslate" translate="no">' + i + '</div>';
     h += '<div class="tp-sm"><span>★★★★★</span><b style="width:' + (m.r * 10).toFixed(1) + '%">★★★★★</b></div>';
     h += window.__tvMatchIcon(m.t);
     h += '<div class="tp-mt"><div class="a notranslate" translate="no">' + esc(m.s.map(names).join(' vs ')) + '</div><div class="b">' + esc(TNAME[m.t] || m.t) + ' · ' + esc(fmtD(m.d)) + ' · ' + m.v + ' ' + esc(T('votes', '票')) + '</div></div>';
     if (note) h += '<div class="tp-bd">' + esc(note) + '</div>';
     if (lk) h += '<div class="tp-watch"><i></i>' + esc(T('WATCH', '視聴')) + '</div>';
-    h += '<div class="tp-sc">' + m.r.toFixed(2) + '</div></' + (lk ? 'a' : 'div') + '>';
+    h += '<div class="tp-sc notranslate" translate="no">' + m.r.toFixed(2) + '</div></' + (lk ? 'a' : 'div') + '>';
     return h;
   };
   window.__tvTopRows = function(era, count) {

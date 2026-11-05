@@ -2,6 +2,23 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.6
+
+- Schedule: only Stardom's own shows are listed. The daily schedule update now reads each show's colour box on the official calendar (purple "game", blue "other teams join", green "event") and marks only "game" shows as Stardom's; the app already hides the rest. Before, it only looked for the words "other organization" on the show's page, so shows like GXW DOJO and the Maid Cafe event got through.
+- Schedule: match cards are read again. The official card pages changed layout around 3 November (each wrestler's name became its own heading), so no card was found for any show after that. The update reads the new layout (the old one still works) and skips placeholder matches where every name is "X". Names from the fighter list no longer pick up the "VIEW DETAIL" hover text.
+- Schedule: a Stardom show within three weeks that has no card yet is checked every day until its card appears (it was only checked in the last 7 days). Other promotions' shows are not checked for a card. The log warns when a card page is read but no matches are found.
+## 2.23.5
+
+- Eras page, Dominant title reigns: the space is now inside the black box, so the belt and text no longer touch its edge; the black box is wider (less grey around it) and has rounded corners. The site's own row style was pulling the text out to the edge; the card no longer uses it.
+- Eras page, Dominant title reigns: a focused card shows only the gold border (the extra outline, glow and lift from the app-wide card style are off here).
+
+## 2.23.4
+
+- Matches: Multi-person now also lists 10-person, 12-person and 14-person, and Special rules lists Handicap, in the menu shelf, the filter bar's Match type drop-down and the Top Rated by match type page. Each has its own dot icon. The 32-person handicap gauntlet in Top Rated is now filed under Handicap.
+- Top Rated Matches: rank numbers and scores are kept out of the page translation, so ranks such as 21 to 25 and 123 show as numbers instead of words. The same fix applies to the Eras page's Top rated rows.
+- Eras page: more space between sections.
+- Eras page, Dominant title reigns: more space inside each card so the text no longer runs to the edge; the belt picture has no box behind it and is 10% larger.
+
 ## 2.23.1
 
 - Eras page: the "All N matches in this era" row no longer has an OPEN button (the whole row is the link).

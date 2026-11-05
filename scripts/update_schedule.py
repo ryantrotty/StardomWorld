@@ -34,11 +34,18 @@ def text_of(page):
 
 
 def event_links(month_html):
+    """Month page -> [(id, kind)]. kind is the colour box the calendar puts the show in: "game" (purple, a Stardom
+    show), "other" (blue, other promotions' shows that Stardom wrestlers join) or "event" (green, fan events);
+    None when the box cannot be read."""
     seen, out = set(), []
-    for m in re.finditer(r'href="(?:https://wwr-stardom\.com)?/en/schedule/(\d{8}-[A-Za-z0-9_-]+)/?"', month_html):
+    for m in re.finditer(r'href="(?:https://wwr-stardom\.com)?/en/schedule/(\d{8}-[A-Za-z0-9_-]+)/?"[^>]*>\s*<div class="box_([a-z]+?)(?:_sp)?"', month_html):
         if m.group(1) not in seen:
             seen.add(m.group(1))
-            out.append(m.group(1))
+            out.append((m.group(1), m.group(2)))
+    for m in re.finditer(r'href="(?:https://wwr-stardom\.com)?/en/schedule/(\d{8}-[A-Za-z0-9_-]+)/?"', month_html):
+        if m.group(1) not in seen:   # a link without a colour box (layout change): kept, kind unknown
+            seen.add(m.group(1))
+            out.append((m.group(1), None))
     return out
 
 
@@ -105,7 +112,12 @@ def parse_roster(page):
     out = {}
     for m in re.finditer(r'(?is)<a[^>]+href="[^"]*/fighters/([^/"]+)/?"[^>]*>(.*?)</a>', page):
         slug = urllib.parse.unquote(m.group(1))
-        nm = _clean(m.group(2)) or _clean(" ".join(re.findall(r'(?i)alt="([^"]*)"', m.group(2))))
+        inner = m.group(2)
+        hn = re.search(r'(?is)<h3[^>]*class="name"[^>]*>(.*?)</h3>', inner)   # the name heading, when the card has one
+        if hn:
+            inner = hn.group(1)
+        inner = re.sub(r'(?is)<div class="hover_mask">.*?</div>', " ", inner)   # "VIEW DETAIL" shown on hover
+        nm = _clean(inner) or _clean(" ".join(re.findall(r'(?i)alt="([^"]*)"', m.group(2))))
         if nm and slug not in out:
             out[slug] = _tidy(nm)
     return out
@@ -128,10 +140,33 @@ def _side_names(seg, roster=None):
     return " & ".join(n for n in names if n)[:160]
 
 
+def _vs_matches(page, roster=None):
+    """Current layout (from November 2026): one <div class="match_wrap"> per match, an <h2> with the match type, then
+    the sides (each a list of wrestlers, each name in an <h3 class="name">) with <p class="match_vs">VS</p> between."""
+    out = []
+    for block in re.split(r'(?i)<div class="match_wrap"', page)[1:]:
+        block = re.split(r"(?i)<!--\s*/match_wrap\s*-->", block)[0]
+        hm_ = re.search(r"(?is)<h2[^>]*>(.*?)</h2>", block)
+        if not hm_:
+            continue
+        head = _clean(hm_.group(1))
+        segs = re.split(r'(?is)<p class="match_vs">\s*vs\.?\s*</p>', block[hm_.end():])
+        if not head or len(segs) < 2:
+            continue
+        sides = [_side_names(x, roster) for x in segs]
+        sides = [x for x in sides if x]
+        if len(sides) < 2 or all(re.fullmatch(r"(?:X(?: & X)*)", x) for x in sides):
+            continue   # not decided yet: every place is "X"
+        out.append({"type": head[:80], "sides": sides[:4]})
+    return out[:14]
+
+
 def parse_matches(page, roster=None):
     """Match card page -> [{"type": "Tag Match", "sides": ["A & B", "C & D"]}]. Text only (no photos).
     Layout on the site: a heading with the match type, then one list of names per side with a "VS" between them.
     The sides are split at the VS marker in the HTML so that team mates stay together."""
+    if 'class="match_wrap"' in page:
+        return _vs_matches(page, roster)
     out = []
     for chunk in re.split(r"(?i)<h[23][ >]", page)[1:]:
         parts = re.split(r"(?i)</h[1-6]>", chunk, maxsplit=1)
@@ -316,12 +351,14 @@ def main():
     now = datetime.datetime.now(JST)
     months = [(now.year, now.month)]
     months.append((now.year + (now.month == 12), 1 if now.month == 12 else now.month + 1))
-    ids = []
+    ids, kinds = [], {}
     for y, mo in months:
         page = get("%s/en/schedule/?ym=%04d%02d" % (BASE, y, mo))
         found = event_links(page)
-        print("month %04d%02d: %d events" % (y, mo, len(found)))
-        ids += found
+        print("month %04d%02d: %d events (%s)" % (y, mo, len(found), ", ".join("%s %s" % (k, sum(1 for f in found if f[1] == k)) for k in ("game", "other", "event", None))))
+        for eid, kind in found:
+            ids.append(eid)
+            kinds[eid] = kind
     if not ids:
         sys.exit("No events found on the month pages: the page layout may have changed.")
 
@@ -331,9 +368,14 @@ def main():
         if eid[:8] < today:
             continue
         old = events.get(eid)
-        soon = (datetime.datetime.strptime(eid[:8], "%Y%m%d").date() - now.date()).days <= 7
+        if old and kinds.get(eid):
+            old["own"] = kinds[eid] == "game"   # only purple "game" shows are Stardom's own; kept up to date every run
+        days = (datetime.datetime.strptime(eid[:8], "%Y%m%d").date() - now.date()).days
+        soon = days <= 7
         # Posters are kept per show; an event still carrying only the month's poster is read once more to pick its own up.
-        if old and old.get("start") and not a.full and not soon and old.get("poster") == eid:
+        # A Stardom show within 3 weeks that has no match card yet is read every day until its card appears.
+        want_card = old and old.get("own", True) and not old.get("matches") and days <= 21
+        if old and old.get("start") and not a.full and not soon and old.get("poster") == eid and not want_card:
             continue
         try:
             info = parse_event(eid, get("%s/en/schedule/%s/" % (BASE, eid)))
@@ -351,17 +393,21 @@ def main():
                 e[k] = info[k]
         if info["venue"]:
             e.setdefault("venue", info["venue"])
-        if info["other"]:
+        if kinds.get(eid):
+            e["own"] = kinds[eid] == "game"
+        elif info["other"]:
             e["own"] = False
         if info["poster"]:
             posters[eid] = info["poster"]       # this show's own poster (the first picture under its title)
             e["poster"] = eid
             posters.setdefault(eid[:6], info["poster"])   # month fallback for older app versions
-        if info.get("matchurl") and (soon or not e.get("matches")):
+        if info.get("matchurl") and e.get("own", True) and (soon or not e.get("matches")):
             try:
                 ms = matches_for(info["matchurl"])
                 if ms:
                     e["matches"] = ms
+                else:
+                    print("WARNING no matches read for", eid, "from", info["matchurl"], "(card not out yet, or the page layout changed)")
             except Exception as ex:
                 print("no match card for", eid, ex)
         if e.get("start") and e.get("title"):
