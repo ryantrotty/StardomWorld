@@ -6455,7 +6455,7 @@ class MainActivity : Activity() {
     try {
       var tr = window.__tvTopRows ? window.__tvTopRows(e.n, 5) : null;
       if (tr) {
-        var allRow = '<a class="tp-row tp-lk tp-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '"><div class="tp-mt"><div class="a">' + esc(T('All ' + tr.total + ' matches in this era', 'この時代の全' + tr.total + '試合')) + '</div></div><div class="tp-watch">' + esc(T('OPEN', '開く')) + '</div></a>';
+        var allRow = '<a class="tp-row tp-lk tp-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '"><div class="tp-mt"><div class="a">' + esc(T('All ' + tr.total + ' matches in this era', 'この時代の全' + tr.total + '試合')) + '</div></div></a>';
         h += sec(T('Top rated matches', '高評価の試合'), T('Fan voted ratings from Cagematch.net', 'Cagematch.netのファン投票'), tr.html.replace(/<\/div>$/, allRow + '</div>'));
       }
     } catch (x) {}

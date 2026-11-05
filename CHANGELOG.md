@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.1
+
+- Eras page: the "All N matches in this era" row no longer has an OPEN button (the whole row is the link).
+
 ## 2.23.0
 
 - Eras page: new "Top rated matches" section between Dominant title reigns and Defining rivalries. It shows that era's five best-rated matches (same rows as the Top Rated page: WATCH button and whole-row link when a video exists, text only when not) and a final "All N matches in this era" row that opens the Top Rated page for that era. All five eras; local data, no requests.
