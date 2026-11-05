@@ -1,10 +1,10 @@
 {
- "generated": "2026-11-04T06:35:00Z",
+ "generated": "2026-11-05T06:37:43Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-04T06:29:50Z",
-  "finished": "2026-11-04T06:35:00Z",
-  "requests": 20,
+  "started": "2026-11-05T06:29:02Z",
+  "finished": "2026-11-05T06:37:43Z",
+  "requests": 21,
   "schedule": {
    "ok": true,
    "events": 33,
@@ -17,37 +17,37 @@
     "world": {
      "read": true,
      "changed": false,
-     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the fresh official page; page text identical to the 2026-11-03 read"
+     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the fresh official page; history text identical to the 2026-11-04 read"
     },
     "wonder": {
      "read": true,
      "changed": false,
-     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the fresh official page"
+     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the fresh official page; history text identical to the 2026-11-04 read"
     },
     "future": {
      "read": true,
      "changed": false,
-     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the fresh official page"
+     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the fresh official page; history text identical to the 2026-11-04 read"
     },
     "artist": {
      "read": true,
      "changed": false,
-     "note": "Reign 37 (Julia Hart, Skye Blue & Thekla) and its defence confirmed against the fresh official page"
+     "note": "Reign 37 (Julia Hart, Skye Blue & Thekla) and its defence confirmed against the fresh official page; history text identical to the 2026-11-04 read"
     },
     "goddess": {
      "read": true,
      "changed": false,
-     "note": "Reign 37 (AZM & Miyu Amasaki) and all 3 defences confirmed against the fresh official page"
+     "note": "Reign 37 (AZM & Miyu Amasaki) and all 3 defences confirmed against the fresh official page; history text identical to the 2026-11-04 read"
     },
     "highspeed": {
      "read": true,
      "changed": false,
-     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the fresh official page"
+     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the fresh official page; history text identical to the 2026-11-04 read"
     },
     "newblood": {
      "read": true,
      "changed": false,
-     "note": "Reign 6 (Kikyo Furusawa & Rian) confirmed against the fresh official page, no defences listed; Wikipedia cross-check agrees (won October 20, 2026). Cagematch cross-check unavailable: HTTP 307, empty body, on both attempts"
+     "note": "Reign 6 (Kikyo Furusawa & Rian) confirmed against the fresh official page, no defences listed; Wikipedia cross-check agrees (won October 20, 2026). Cagematch cross-check unavailable: HTTP 307, empty body, on both attempts. Note: the wwr-stardom English page renders the champions as 'Furusawa Kian'; treated as the same champions per the Wikipedia cross-check, baseline spelling kept."
     },
     "kawaii": {
      "read": false,
@@ -58,10 +58,25 @@
    "changed": [],
    "warnings": [
     "Cagematch cross-check for newblood returned HTTP 307 with an empty body on both attempts (same behaviour as previous runs); the primary wwr-stardom page and the Wikipedia cross-check agree, so no title was kept from the baseline because of it.",
-    "Kawaii title has no public source and was copied unchanged from the baseline per spec."
+    "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
+    "The wwr-stardom English page renders the New Blood champions as 'Furusawa Kian' while Wikipedia and the baseline use 'Kikyo Furusawa'; treated as the same champions (won October 20, 2026, vs Sakura Aya & Sayaka Kurara), so the baseline spelling was kept and no champion was renamed.",
+    "Tag team checks stopped for the night: www.stardom-world.com returned HTTP 403 (CloudFront 'Request blocked') on the first search page on both attempts. The block affects tag teams only; schedule and lineage use wwr-stardom.com and were completed normally."
    ]
   },
-  "blocks": [],
+  "tagteams": {
+   "ok": false,
+   "checked": 0,
+   "pending": 39,
+   "error": "www.stardom-world.com returned HTTP 403 on the first tag-team search page (Kikyo Furusawa Rian), initial attempt and one retry 30s later; tag team checks stopped for the night, nothing checked"
+  },
+  "blocks": [
+   {
+    "site": "www.stardom-world.com",
+    "url": "https://www.stardom-world.com/contents/search?q%5Bkeyword%5D=Kikyo%20Furusawa%20Rian&activetab=contents&page=1",
+    "what": "HTTP 403, CloudFront error page 'ERROR: The request could not be satisfied / Request blocked', on the initial attempt and on the single retry 30 seconds later; no tag-team search page could be read",
+    "time": "2026-11-05T06:36:53Z"
+   }
+  ],
   "errors": []
  },
  "schedule": {
