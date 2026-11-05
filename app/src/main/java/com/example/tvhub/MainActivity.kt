@@ -4852,7 +4852,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-top{margin:0 0 12px 0;}',
             '#tv-sm-shelf .tv-shl-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
-            '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 18px;align-items:start;}',
+            '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px;align-items:start;}',   // same two columns as the Stardom card grid
             '#tv-sm-shelf .tv-shl-wtabs{display:inline-flex;gap:2px;margin:0 0 10px 0;padding:3px;border:2px solid #2a323c;border-radius:20px;background:#0f151c;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{font-size:17px;font-weight:700;padding:6px 30px;margin:0;border-radius:20px;border:3px solid transparent;background:transparent;color:#9aa6b4 !important;}',
             '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{background:#FFB347 !important;color:#1A1A1A !important;}',
