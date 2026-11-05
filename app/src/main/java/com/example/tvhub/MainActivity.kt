@@ -5078,7 +5078,7 @@ class MainActivity : Activity() {
             if (showsPill) showsRow = showsRow.replace('<span>' + esc(T('Shows', '番組')) + '</span>', '<span>' + esc(T('Shows', '番組')) + showsPill + '</span>');
             h += showsRow;
             h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
-            h += group(T('Years & Eras', '年別・時代'), years, 'years');
+            h += group(T('Years', '年別'), years, 'years');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
               var links = acctLinks();

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.6
+
+- Menu: the group title is "Years" (was "Years & Eras"). The shelf heading and the All Years & Eras page keep their names.
+
 ## 2.22.5
 
 - Top Rated Matches: a match with a video is a link in full (the whole row is the focus target and OK plays it) and shows an orange WATCH button; no thumbnails. A match without a video has no button and cannot be focused or clicked. Up and Down skip text-only rows and scroll over them.
