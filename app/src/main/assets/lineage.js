@@ -391,8 +391,8 @@
     var longest = R[0];
     R.forEach(function(r) { if (r.days > longest.days) longest = r; });
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
-    return T('Stardom · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + (R.length === 1 ? ' reign' : ' reigns') + (years >= 1 ? ' · ' + years + ' years' : '') + ' · longest reign ' + longest.days + ' days (' + nm(longest) + ')',
-      'スターダム · ' + fmtD(D.since) + '〜 · ' + R.length + '代' + (years >= 1 ? ' · ' + years + '年' : '') + ' · 最長 ' + longest.days + '日 (' + nm(longest) + ')');
+    return T((D.promo || 'Stardom') + ' · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + (R.length === 1 ? ' reign' : ' reigns') + (years >= 1 ? ' · ' + years + ' years' : '') + ' · longest reign ' + longest.days + ' days (' + nm(longest) + ')',
+      (D.promo_ja || 'スターダム') + ' · ' + fmtD(D.since) + '〜 · ' + R.length + '代' + (years >= 1 ? ' · ' + years + '年' : '') + ' · 最長 ' + longest.days + '日 (' + nm(longest) + ')');
   }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';

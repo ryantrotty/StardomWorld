@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.1
+
+- Championships menu: the IWGP Women's and STRONG Women's cards are now the same width as the Stardom cards (the row under the Stardom grid uses the same two columns), and the text-only Other Promotions list sits under the right column.
+- Daily job: docs/NJPW_LINEAGE_CHECKS.md says how to keep the two New Japan lineages current from Wikipedia, with Cagematch for defence details, written to daily.json like the Stardom titles.
+
+## 2.24.0
+
+- Championships: IWGP Women's and STRONG Women's now get the full Stardom treatment. Each has its own lineage page (reign strip newest on the left, current champion, every reign's title win and defences with date, opponent, venue and event, and the reign's videos), and the menu's New Japan block shows them as lineage cards with the belt, the champion, the reign number, days held and defences.
+- Lineage data: IWGP Women's (6 reigns, 20 defences, since 20 Nov 2022) and STRONG Women's (8 reigns, 22 defences, since 21 May 2023), from Wikipedia's reign lists with every defence from Cagematch; the counts agree.
+- Lineage page: the line under the strip names the promotion ("New Japan" for these two; "Stardom" for the rest).
+- Private builds: belt pictures for both titles (the STRONG picture's white background was made transparent).
+
 ## 2.23.7
 
 - Schedule refresh: the first time a new version of the app runs, it fetches the schedule straight away instead of waiting up to six hours, so a new build shows the latest schedule on its first start.

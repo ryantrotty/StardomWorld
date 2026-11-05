@@ -1,0 +1,224 @@
+{
+ "_note": "IWGP Women's Championship lineage (New Japan Pro-Wrestling, defended mostly on Stardom shows). Source: Wikipedia reign list; every defence, date, opponent and venue from Cagematch title matches (checked 5 Nov 2026), counts agree with Wikipedia. note = the event. endType: lost, vacated or empty for the current reign. alias: other spellings searched for the same wrestler.",
+ "id": "iwgp",
+ "title": "IWGP Women's Championship",
+ "ja": "IWGP女子王座",
+ "since": "2022-11-20",
+ "kind": "Singles",
+ "promo": "New Japan",
+ "promo_ja": "新日本プロレス",
+ "search": "IWGP Women's",
+ "titlePatterns": [
+  "IWGP Women",
+  "IWGP女子"
+ ],
+ "alias": {
+  "Kairi": [
+   "KAIRI",
+   "Kairi Sane",
+   "Kairi Hojo"
+  ],
+  "Mercedes Moné": [
+   "Mercedes Mone",
+   "Mone"
+  ],
+  "Sareee": [
+   "SAREEE"
+  ],
+  "Mayu Iwatani": [
+   "Iwatani Mayu"
+  ],
+  "Syuri": [
+   "Shuri"
+  ]
+ },
+ "reigns": [
+  {
+   "n": 1,
+   "champ": "Kairi",
+   "won": "2022-11-20",
+   "end": "2023-02-18",
+   "endType": "lost",
+   "vs": "Mayu Iwatani",
+   "venue": "Ariake Arena, Tokyo",
+   "note": "Tournament final, NJPW/Stardom Historic X-Over",
+   "defences": [
+    {
+     "d": "2023-01-04",
+     "opp": "Tam Nakano",
+     "venue": "Tokyo Dome, Tokyo",
+     "note": "NJPW Wrestle Kingdom 17"
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "champ": "Mercedes Moné",
+   "won": "2023-02-18",
+   "end": "2023-04-23",
+   "endType": "lost",
+   "vs": "Kairi",
+   "venue": "San Jose Civic, San Jose, California",
+   "defences": [
+    {
+     "d": "2023-04-08",
+     "opp": "AZM & Hazuki",
+     "venue": "Ryogoku Kokugikan, Tokyo",
+     "note": "Three-way, NJPW Sakura Genesis 2023"
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "champ": "Mayu Iwatani",
+   "won": "2023-04-23",
+   "end": "2025-04-27",
+   "endType": "lost",
+   "vs": "Mercedes Moné",
+   "venue": "Yokohama Arena, Kanagawa",
+   "defences": [
+    {
+     "d": "2023-08-13",
+     "opp": "Utami Hayashishita",
+     "venue": "EDION Arena Osaka",
+     "note": "Stardom X Stardom 2023"
+    },
+    {
+     "d": "2023-11-10",
+     "opp": "Stephanie Vaquer",
+     "venue": "Curtis Culwell Center, Garland, Texas",
+     "note": "NJPW STRONG Lonestar Shootout 2023"
+    },
+    {
+     "d": "2024-01-04",
+     "opp": "Syuri",
+     "venue": "Tokyo Dome City Hall, Tokyo",
+     "note": "Stardom Ittenyon Stardom Gate"
+    },
+    {
+     "d": "2024-02-23",
+     "opp": "Mina Shirakawa",
+     "venue": "Hokkaido Prefectural Sports Center, Sapporo",
+     "note": "NJPW The New Beginning in Sapporo 2024"
+    },
+    {
+     "d": "2024-04-27",
+     "opp": "Sareee",
+     "venue": "Yokohama BUNTAI, Kanagawa",
+     "note": "Stardom All Star Grand Queendom 2024"
+    },
+    {
+     "d": "2024-06-23",
+     "opp": "Tsukasa Fujimoto",
+     "venue": "Korakuen Hall, Tokyo",
+     "note": "Ice Ribbon, referee's decision"
+    },
+    {
+     "d": "2024-10-05",
+     "opp": "Toni Storm",
+     "venue": "Aichi Prefectural Gymnasium, Nagoya",
+     "note": "Stardom Nagoya Golden Fight 2024"
+    },
+    {
+     "d": "2024-11-17",
+     "opp": "Momo Watanabe",
+     "venue": "EDION Arena Osaka",
+     "note": "NJPW/Stardom Historic X-Over II"
+    },
+    {
+     "d": "2025-01-04",
+     "opp": "AZM",
+     "venue": "Tokyo Dome, Tokyo",
+     "note": "NJPW Wrestle Kingdom 19"
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "champ": "Syuri",
+   "won": "2025-04-27",
+   "end": "2025-06-21",
+   "endType": "lost",
+   "vs": "Mayu Iwatani",
+   "venue": "Yokohama Arena, Kanagawa",
+   "defences": [
+    {
+     "d": "2025-06-06",
+     "opp": "Alex Windsor",
+     "venue": "The Big Penny Social, London",
+     "note": "EVE 135"
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "champ": "Sareee",
+   "won": "2025-06-21",
+   "end": "2025-10-13",
+   "endType": "lost",
+   "vs": "Syuri",
+   "venue": "Yoyogi National Gymnasium No. 2, Tokyo",
+   "defences": [
+    {
+     "d": "2025-08-23",
+     "opp": "Konami",
+     "venue": "Ota City General Gymnasium, Tokyo",
+     "note": "Stardom 5STAR Grand Prix 2025"
+    },
+    {
+     "d": "2025-09-06",
+     "opp": "Suzu Suzuki",
+     "venue": "Yokohama Budokan, Kanagawa",
+     "note": "Stardom To The World"
+    },
+    {
+     "d": "2025-10-02",
+     "opp": "Alex Windsor",
+     "venue": "RP Funding Center, Lakeland, Florida",
+     "note": "ROH on HonorClub"
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "champ": "Syuri",
+   "won": "2025-10-13",
+   "end": null,
+   "endType": "",
+   "vs": "Sareee",
+   "venue": "Ryogoku Kokugikan, Tokyo",
+   "defences": [
+    {
+     "d": "2026-01-04",
+     "opp": "Saya Kamitani",
+     "venue": "Tokyo Dome, Tokyo",
+     "note": "NJPW Wrestle Kingdom 20; also won the STRONG Women's title"
+    },
+    {
+     "d": "2026-02-27",
+     "opp": "Athena",
+     "venue": "CURE Insurance Arena, Trenton, New Jersey",
+     "note": "NJPW The New Beginning USA 2026"
+    },
+    {
+     "d": "2026-04-26",
+     "opp": "Megan Bayne",
+     "venue": "Yokohama Arena, Kanagawa",
+     "note": "Stardom All Star Grand Queendom 2026"
+    },
+    {
+     "d": "2026-06-20",
+     "opp": "Rina Yamashita",
+     "venue": "Yoyogi National Gymnasium No. 2, Tokyo",
+     "note": "Stardom The Conversion 2026"
+    },
+    {
+     "d": "2026-07-18",
+     "opp": "Natsupoi",
+     "venue": "EBARA WAVE Arena Ota, Tokyo",
+     "note": "Stardom 5STAR Grand Prix 2026"
+    }
+   ]
+  }
+ ]
+}
