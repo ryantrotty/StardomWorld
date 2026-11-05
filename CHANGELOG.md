@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.22.4
+
+- Top Rated Matches: 72 of the 128 matches now have a confirmed video address, so those rows are links (thumbnail area with WATCH NOW, OK plays the video). The other 56 stay text only. Thumbnails are still the dark placeholder until picture addresses are added ("th" in assets/top_matches.json).
+
 ## 2.22.3
 
 - Top Rated Matches: the fine print under the title reads "Fan voted ratings from Cagematch.net, as of November 2026".
