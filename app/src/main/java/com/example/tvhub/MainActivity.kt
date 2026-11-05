@@ -1993,7 +1993,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         density = resources.displayMetrics.density
-        refreshScheduleAsync()
+        // The schedule refresh runs from onResume, which always follows onCreate.
 
         root = FrameLayout(this)
         root.setBackgroundColor(Color.BLACK)
@@ -2594,16 +2594,30 @@ class MainActivity : Activity() {
         dj.toString()
     } catch (_: Exception) { downloaded }
 
-    // At most one small download every six hours; the last good copy stays if anything fails.
+    // Checked each time the app comes to the front (onResume), at most once every six hours, and straight away the
+    // first time a new version runs. The daily file and the schedule-only file are both read; the schedule with the
+    // newest "updated" wins (scheduleTextRaw). The last good copy stays if anything fails.
+    private val scheduleRefreshing = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var postersChecked = false
+
+    override fun onResume() {
+        super.onResume()
+        refreshScheduleAsync()
+    }
+
     private fun refreshScheduleAsync() {
         val prefs = getSharedPreferences("sched", MODE_PRIVATE)
         val now = System.currentTimeMillis()
-        val due = now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
+        val newVersion = prefs.getInt("ver", -1) != BuildConfig.VERSION_CODE
+        val due = newVersion || now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
+        if (!due && postersChecked) return
+        if (!scheduleRefreshing.compareAndSet(false, true)) return
         Thread {
             try {
                 var gotDaily = false
+                var gotSchedule = false
                 if (due) {
-                    // The daily file first: it carries the schedule and the lineages. The schedule-only file is the fallback.
+                    // The daily file: it carries the schedule and the lineages.
                     try {
                         val dc = java.net.URL(BuildConfig.DAILY_URL).openConnection() as java.net.HttpURLConnection
                         dc.connectTimeout = 8000
@@ -2615,25 +2629,30 @@ class MainActivity : Activity() {
                         val okLin = dj.optJSONObject("lineage")?.optJSONObject("titles") != null
                         if (okSched && okLin) {
                             java.io.File(filesDir, "daily.json").writeText(dbody)
-                            prefs.edit().putLong("last", now).apply()
                             gotDaily = true
                         }
                     } catch (_: Exception) {}
+                    // The schedule-only file is read too, so whichever job ran last (and fixed the most) wins.
+                    try {
+                        val conn = java.net.URL(BuildConfig.SCHEDULE_URL).openConnection() as java.net.HttpURLConnection
+                        conn.connectTimeout = 8000
+                        conn.readTimeout = 8000
+                        val body = conn.inputStream.bufferedReader().use { it.readText() }
+                        conn.disconnect()
+                        val j = org.json.JSONObject(body)
+                        if (j.optJSONArray("events") != null) {
+                            java.io.File(filesDir, "schedule.json").writeText(body)
+                            gotSchedule = true
+                        }
+                    } catch (_: Exception) {}
+                    if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
                 }
-                if (due && !gotDaily) {
-                    val conn = java.net.URL(BuildConfig.SCHEDULE_URL).openConnection() as java.net.HttpURLConnection
-                    conn.connectTimeout = 8000
-                    conn.readTimeout = 8000
-                    val body = conn.inputStream.bufferedReader().use { it.readText() }
-                    conn.disconnect()
-                    val j = org.json.JSONObject(body)
-                    if (j.optJSONArray("events") != null) {
-                        java.io.File(filesDir, "schedule.json").writeText(body)
-                        prefs.edit().putLong("last", now).apply()
-                    }
-                }
-            } catch (_: Exception) {}
-            try { if (BuildConfig.SHOW_POSTERS) cacheSchedulePosters() } catch (_: Exception) {}
+                try { if (BuildConfig.SHOW_POSTERS && (due || !postersChecked)) cacheSchedulePosters() } catch (_: Exception) {}
+                postersChecked = true
+            } catch (_: Exception) {
+            } finally {
+                scheduleRefreshing.set(false)
+            }
         }.start()
     }
 

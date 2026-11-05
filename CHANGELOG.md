@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.23.7
+
+- Schedule refresh: the first time a new version of the app runs, it fetches the schedule straight away instead of waiting up to six hours, so a new build shows the latest schedule on its first start.
+- Schedule refresh: the check also runs when you come back to the app (it used to run only on a full start, which Google TV rarely does). It still downloads at most once every six hours.
+- Schedule refresh: both the daily file (Muse) and the schedule file (GitHub schedule job) are read each time, and the one updated most recently is used. Before, the GitHub schedule was only read when the daily file failed, so a fix made by the GitHub job did not reach the app until Muse had run too. PPV shows from the app's own list are still added to whichever schedule is used.
+
 ## 2.23.6
 
 - Schedule: only Stardom's own shows are listed. The daily schedule update now reads each show's colour box on the official calendar (purple "game", blue "other teams join", green "event") and marks only "game" shows as Stardom's; the app already hides the rest. Before, it only looked for the words "other organization" on the show's page, so shows like GXW DOJO and the Maid Cafe event got through.
