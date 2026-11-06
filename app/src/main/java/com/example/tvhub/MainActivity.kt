@@ -2864,6 +2864,59 @@ class MainActivity : Activity() {
             }
         }
 
+        // Video index log (private builds with branding-private/video_index.properties; see docs/VIDEO_INDEX_LOG.md).
+        // The page script hands over the record it read; the log address and key stay here, never in the page.
+        // A video is sent again only when what was read has changed (or after 30 days), at most 300 sends a day.
+        @android.webkit.JavascriptInterface
+        fun videoIndexOn(): Boolean = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+
+        @android.webkit.JavascriptInterface
+        fun videoIndexPut(json: String) {
+            if (!videoIndexOn()) return
+            val rec = try { org.json.JSONObject(json) } catch (_: Exception) { return }
+            val id = rec.optInt("id", 0)
+            if (id <= 0 || json.length > 40000) return
+            val prefs = this@MainActivity.getSharedPreferences("vix", android.content.Context.MODE_PRIVATE)
+            val same = org.json.JSONObject(json).apply { remove("read") }.toString().hashCode()
+            val now = System.currentTimeMillis()
+            val day = (now / 86400000L).toInt()
+            fun status(text: String) {
+                val js = "window.__tvVixStatus && window.__tvVixStatus(" + id + "," + org.json.JSONObject.quote(text) + ")"
+                this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+            }
+            if (prefs.getInt("h_" + id, 0) == same && now - prefs.getLong("t_" + id, 0L) < 30L * 86400000L) { status("already in the log"); return }
+            val sentToday = if (prefs.getInt("day", -1) == day) prefs.getInt("count", 0) else 0
+            if (sentToday >= 300) { status("not sent: 300 a day reached"); return }
+            Thread {
+                try {
+                    val body = org.json.JSONObject()
+                        .put("key", BuildConfig.VIDEO_INDEX_KEY).put("action", "put")
+                        .put("app", BuildConfig.VERSION_NAME).put("rec", rec).toString()
+                    val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
+                    c.requestMethod = "POST"
+                    c.doOutput = true
+                    c.instanceFollowRedirects = true
+                    c.connectTimeout = 10000
+                    c.readTimeout = 20000
+                    c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+                    c.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                    val code = c.responseCode
+                    val reply = try { (if (code < 400) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() } ?: "" } catch (_: Exception) { "" }
+                    c.disconnect()
+                    val r = try { org.json.JSONObject(reply) } catch (_: Exception) { null }
+                    if (r != null && r.optBoolean("ok")) {
+                        prefs.edit().putInt("h_" + id, same).putLong("t_" + id, now)
+                            .putInt("day", day).putInt("count", sentToday + 1).apply()
+                        status(if (r.optBoolean("added")) "sent: added to the log" else "sent: row updated")
+                    } else {
+                        status("not sent: " + (r?.optString("error") ?: ("HTTP " + code + " " + reply.take(80))))
+                    }
+                } catch (e: Exception) {
+                    status("not sent: " + (e.message ?: e.javaClass.simpleName))
+                }
+            }.start()
+        }
+
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }

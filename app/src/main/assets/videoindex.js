@@ -1,7 +1,9 @@
 (function(){
-  // Video index, step 1 (dry run, private builds only): on a video page, read the page's own facts (no extra request),
-  // keep the latest copy per video on this TV (localStorage) and show what would be sent in a panel that stays on
-  // screen. Nothing leaves the TV. Only public page facts are read: no account, cookie or viewer details.
+  // Video index (private builds only): on a video page, read the page's own facts (no extra request), keep the latest
+  // copy per video on this TV (localStorage) and show it in a panel that stays on screen. When the build has a log
+  // address (branding-private/video_index.properties) the app also sends the record to the private log (see
+  // docs/VIDEO_INDEX_LOG.md); without one nothing leaves the TV. Only public page facts are read: no account, cookie
+  // or viewer details.
   if (window.__tvVideoIndex) return;
   var M = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
   if (!M) return;
@@ -140,6 +142,7 @@
     '#tv-vix td.k{width:120px;color:#9AA6B4;font-weight:700;white-space:nowrap;}',
     '#tv-vix td.v{color:#FFFFFF;}',
     '#tv-vix .bad{color:#FF7A66;}',
+    '#tv-vix #tv-vix-st{color:#FFFFFF;font-weight:800;}',
     '#tv-vix pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.4 Menlo,Consolas,monospace;color:#9AA6B4;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);
@@ -163,7 +166,8 @@
     }
     var sh = rec.shows.map(function(s) { return (s.date || '?') + ' · ' + s.show + (s.venue ? ' · ' + s.venue : '') + ' (set ' + s.id + ')'; }).join(' | ');
     var fmt = function(s, t) { return s.map(function(x, i) { return x.join(' & ') + (t && t[i] ? ' [' + t[i] + ']' : ''); }).join('  vs  '); };
-    box.innerHTML = '<div class="h">VIDEO INDEX · DRY RUN<span>nothing is sent · saved on this TV: ' + count + ' video' + (count === 1 ? '' : 's') + '</span></div>' +
+    var logOn = false; try { logOn = !!(window.AndroidHost && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()); } catch (e) {}
+    box.innerHTML = '<div class="h">VIDEO INDEX · ' + (logOn ? 'LOG' : 'DRY RUN') + '<span>' + (logOn ? '<b id="tv-vix-st">sending…</b> · ' : 'nothing is sent · ') + 'saved on this TV: ' + count + ' video' + (count === 1 ? '' : 's') + '</span></div>' +
       '<table>' + row('Video', rec.id + (rec.set ? ' (in set ' + rec.set + ')' : '')) +
       row('Match no.', rec.no == null ? 'not found' : rec.no, rec.no == null) + row('Date', rec.date || 'not found', !rec.date) +
       row('Title (EN)', rec.title_en || 'not found', !rec.title_en) + row('Title (JA)', rec.title_ja || 'not found', !rec.title_ja) +
@@ -185,5 +189,17 @@
     clearInterval(t);
     if (!rec) rec = { id: +M[2], set: M[1] ? +M[1] : null, no: null, date: null, title_en: '', title_ja: '', sides_en: [], teams_en: [], notes_en: [], sides_ja: [], teams_ja: [], notes_ja: [], shows: [], tags: [], access: [], thumb: '', lines: [], read: new Date().toISOString(), note: 'no video information block found on this page' };
     show(rec, store(rec));
+    // Log (private builds with a log address): hand the record to the app, which sends it with its own key.
+    // A page with nothing read (no title and no description) is not sent.
+    window.__tvVixStatus = function(id, text) {
+      var el = document.getElementById('tv-vix-st');
+      if (el && id === rec.id) { el.textContent = text; el.style.color = /^not sent/.test(text) ? '#FF7A66' : '#FFFFFF'; }
+    };
+    try {
+      if (window.AndroidHost && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
+        if (rec.title_en || rec.title_ja || rec.lines.length) AndroidHost.videoIndexPut(JSON.stringify(rec));
+        else window.__tvVixStatus(rec.id, 'not sent: nothing read on this page');
+      }
+    } catch (e) {}
   }, 1000);
 })();

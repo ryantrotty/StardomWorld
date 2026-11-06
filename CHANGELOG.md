@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.26.0
+
+- Video index, step 2 (private builds only): with a log address in branding-private/video_index.properties, the app sends each video page's record to a private Google Sheet (scripts/video_index_log.gs, set up as in docs/VIDEO_INDEX_LOG.md). The app sends it, not the page, so the address and key never appear in the page or the public repo. A video is sent again only when what was read has changed (or after 30 days), at most 300 a day, and only public page facts are sent.
+- The panel heading reads VIDEO INDEX · LOG with the result ("sent: added to the log", "sent: row updated", "already in the log", or "not sent: …" in red). Without a log address it stays a dry run and nothing leaves the TV.
+- The sheet keeps one row per video (newest copy, first and last seen, times seen) and checks the key and the record's shape before writing. scripts/video_index_pull.py downloads every row for analysis.
+
 ## 2.25.1
 
 - Video index dry run (private builds): the reader now follows the page's own layout (a Japanese block, then an English block, each a title line and its line-up) instead of guessing by language, so these formats read correctly:
