@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.28.1
+
+- Tag Teams fix: the section couldn't read the eras, factions, match types or its own settings on the TV (it called those app functions with an extra argument, which Android refuses). So the menu shelf had no era columns, the All Tag Teams page had no era chips, and team pages didn't narrow their matches to 2-on-2. All three work now. As a safeguard, team pages also carry their own copy of the 2-on-2 rule.
+- All Tag Teams page matches the concept: one row of square-cornered chips (All with its count, the eras by short name, Goddess, NEW BLOOD), borderless team rows, and a team count under the list.
+
 ## 2.28.0
 
 - Tag Teams: a new menu group after Factions.

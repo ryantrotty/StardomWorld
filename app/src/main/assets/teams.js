@@ -18,7 +18,8 @@
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function parse(s) { try { return JSON.parse(s || 'null'); } catch (e) { return null; } }
-  function call(fn, a) { try { return H[fn] ? H[fn](a) : ''; } catch (e) { return ''; } }
+  // Android's bridge matches a method by its number of arguments: a no-argument method called with one fails.
+  function call(fn, a) { try { return H[fn] ? (arguments.length > 1 ? H[fn](a) : H[fn]()) : ''; } catch (e) { return ''; } }
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function ms(iso) { var a = String(iso).split('-'); return Date.UTC(+a[0], +a[1] - 1, +a[2]); }
   function fmtD(iso) { if (!iso) return ''; var a = String(iso).split('-'); return isJa() ? (+a[0]) + '年' + (+a[1]) + '月' + (+a[2]) + '日' : (+a[2]) + ' ' + MONTHS[+a[1] - 1] + ' ' + a[0]; }
@@ -146,15 +147,16 @@
     '#tv-tt .tt-h1{font-size:30px;font-weight:900;line-height:1.2;}',
     '#tv-tt .tt-note{font-size:13px;font-weight:600;color:#9AA6B4;line-height:1.5;margin-top:2px;}',
     '#tv-tt .tt-instr{margin-left:auto;font-size:15px;font-weight:600;color:#9AA6B4;padding-top:6px;text-align:right;max-width:520px;}',
-    '#tv-tt .tt-chips{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}',
-    '#tv-tt .tt-chip{display:flex;align-items:center;gap:8px;height:44px;padding:0 13px;border-radius:20px;border:3px solid #2A323C;background:#161F2A;font-size:15px;font-weight:700;color:#C9D2DC !important;white-space:nowrap;cursor:pointer;}',
-    '#tv-tt .tt-chip .k{font-size:19px;font-weight:900;color:#F4C242;}',
+    '#tv-tt .tt-chips{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center;}',
+    '#tv-tt .tt-chip{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:10px;border:2px solid #2A323C;background:#161F2A;font-size:17px;font-weight:700;color:#C9D2DC !important;white-space:nowrap;cursor:pointer;}',
+    '#tv-tt .tt-chip .k{font-size:17px;font-weight:900;color:#F4C242;}',
     '#tv-tt .tt-chip small{font-size:12px;font-weight:700;color:#9AA6B4;}',
     '#tv-tt .tt-chip.tt-on{background:#FFB347;border-color:#FFB347;color:#1A1A1A !important;}',
     '#tv-tt .tt-chip.tt-on .k, #tv-tt .tt-chip.tt-on small{color:#1A1A1A;}',
     '#tv-tt .tt-chip:focus{border-color:#F4C242;}',
-    '#tv-tt .tt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin-top:16px;}',
-    '#tv-tt .tt-team{display:flex;align-items:center;gap:10px;height:66px;padding:0 14px;background:#161F2A;border:2px solid #2A323C;border-radius:8px;min-width:0;cursor:pointer;}',
+    '#tv-tt .tt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin-top:22px;}',
+    '#tv-tt .tt-count{margin-top:14px;font-size:15px;font-weight:700;color:#9AA6B4;}',
+    '#tv-tt .tt-team{display:flex;align-items:center;gap:10px;height:66px;padding:0 14px;background:#161F2A;border:2px solid #161F2A;border-radius:8px;min-width:0;cursor:pointer;}',
     '#tv-tt .tt-team:focus{background:#172029;border-color:#F4C242;}',
     '#tv-tt .tt-team .x{flex:1 1 auto;min-width:0;}',
     '#tv-tt .tt-team .a{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
@@ -240,13 +242,15 @@
       '<div class="tt-note">' + esc(T('Every pair that has held the Goddess of Stardom or NEW BLOOD Tag Team belts. A pair known only by its faction shows the two names, with the faction underneath.', 'ゴッデス・オブ・スターダム王座、NEW BLOODタッグ王座を獲得したすべてのチーム。')) + '</div></div>' +
       '<div class="tt-instr">' + esc(T('Left and Right change the filter. Down moves into the list. OK opens a team.', '左右で絞り込み、下で一覧へ。OKでチームを開きます。')) + '</div></div>';
     var chips = [['all', esc(T('All', 'すべて')) + ' <small>' + all.length + '</small>']];
-    eraList().forEach(function(e) { chips.push(['e' + e.n, '<span class="k notranslate" translate="no">' + esc(e.kanji) + '</span>' + esc(e.name) + ' <small>' + all.filter(function(t) { return t.era === e.n; }).length + '</small>']); });
-    chips.push(['bgoddess', esc(T('Goddess', 'ゴッデス')) + ' <small>' + all.filter(function(t) { return t.count.goddess; }).length + '</small>']);
-    chips.push(['bnewblood', 'NEW BLOOD <small>' + all.filter(function(t) { return t.count.newblood; }).length + '</small>']);
+    // short era names keep the chips on one line: "Threedom & the Rebuild" -> "Threedom", "The Draft Years" -> "Draft Years"
+    eraList().forEach(function(e) { chips.push(['e' + e.n, '<span class="k notranslate" translate="no">' + esc(e.kanji) + '</span>' + esc(isJa() && e.ja ? e.ja : String(e.name).split(' & ')[0].replace(/^The /, ''))]); });
+    chips.push(['bgoddess', esc(T('Goddess', 'ゴッデス'))]);
+    chips.push(['bnewblood', 'NEW BLOOD']);
     h += '<div class="tt-chips">' + chips.map(function(c) { return '<a class="tt-chip' + (c[0] === filt ? ' tt-on' : '') + '" tabindex="0" data-f="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
     h += '<div class="tt-grid">' + list.map(function(t) {
       return '<a class="tt-team" tabindex="0" href="' + esc(absUrl(teamPath(t))) + '"><div class="x"><div class="a notranslate" translate="no">' + esc(t.display) + '</div><div class="b notranslate" translate="no">' + esc(t.sub) + '</div></div>' + tags(t) + '</a>';
     }).join('') + '</div>';
+    h += '<div class="tt-count">' + esc(T(list.length + (list.length === 1 ? ' team' : ' teams') + (filt === 'all' ? '' : ' of ' + all.length), list.length + 'チーム' + (filt === 'all' ? '' : ' / ' + all.length))) + '</div>';
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-chip.tt-on') || scroller.querySelector('.tt-chip'));
   }
@@ -256,6 +260,8 @@
   try {
     ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { (g.items || []).forEach(function(x) { if (x.id === 'tag') (x.none || []).forEach(function(p) { MT_NONE.push(new RegExp(p, 'i')); }); }); });
   } catch (e) { MT_NONE = []; }
+  // a built-in copy of the 2-on-2 rule, so the page never shows bigger matches if the match types can't be read
+  if (!MT_NONE.length) MT_NONE = ["(?:\\d+|six|eight|ten|twelve|fourteen)[\\s\\-\u2010]*(?:person|man|men|woman|women)", "\\d+\\s*\u4eba", "(?:[2-6]|two|three|four|five|six)[\\s\\-\u2010]*way", "trios?|\u30c8\u30ea\u30aa", "gauntlet|\u30ac\u30f3\u30c8\u30ec\u30c3\u30c8", "battle\\s*royal|\u30d0\u30c8\u30eb\u30ed\u30a4\u30e4\u30eb", "rumble|\u30e9\u30f3\u30d6\u30eb"].map(function(p) { return new RegExp(p, 'i'); });
   function isTagTitle(t) { for (var i = 0; i < MT_NONE.length; i++) if (MT_NONE[i].test(t)) return false; return true; }
   var SPELL = CFG.spell || {};
   function siteName(n) { return SPELL[n] || n; }
