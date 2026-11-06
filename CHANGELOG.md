@@ -4,10 +4,6 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 ## 2.27.0
 
-- Favorites sync (private builds): sync favorites, watch later, playlists and reminders across TVs via the Google Sheet log.
-
-## 2.27.0
-
 - Favorites sync (private builds with the log set up): favorites, show reminders and owned PPVs are shared between TVs through a new `favorites` tab in the same Google Sheet (docs/FAVORITES_SYNC.md). The main TV sends its set once from the Account menu ("Send this TV's favorites to sync", OK twice); other TVs take that copy on their first start, then every change is sent within a few seconds and picked up by the others when the app starts and every minute. One row per item, the newest change wins, removals are kept so they don't come back, and offline changes wait until the TV is back online.
 - My Favorites page: a small status line next to the title ("Synced 2 min ago", "Sync waiting: …", or "Not synced: …" in red).
 - The sheet's script (scripts/video_index_log.gs) has three new actions; paste it into Apps Script and deploy a new version.
