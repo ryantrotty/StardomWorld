@@ -2,6 +2,27 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.31.2
+
+- Wrestler pages: Left at the left edge of the header opens the menu, as it does from the video grid.
+- Wrestler pages: the page title is the wrestler's name on every wrestler page, as on tag team pages. Before, it read "Search: …" unless the address exactly matched a menu link (for example, after choosing filters or arriving from a faction page).
+
+## 2.31.1
+
+- Wrestler pages: the gold focus border now shows and stays on the header's buttons and belt cards. The site puts the header inside its article, where the app's card style removed the border from anything focused, so focus flashed grey and vanished.
+- Wrestler pages: the page translator no longer works on the header (it writes its own English or Japanese), so its grey highlight no longer covers TITLES HELD on load.
+
+## 2.31.0
+
+- Wrestler pages get a header like the tag team pages, above the filter bar (new assets/wrestler.js):
+  - **Picture:** a photo in private builds, initials in public ones.
+  - **Facts:** current faction, first title year, and total reigns and defences across every title history (Stardom titles plus IWGP Women's and STRONG).
+  - **Buttons:** Add to My Favorites / In My Favorites, then their current faction and any past factions, each opening that faction's page.
+  - **TITLES HELD:** two per row, newest first, with partners for tag and trios reigns; each opens that reign on its title page.
+  - **MATCHES:** the filter bar and the search results, as before.
+  - Shown for any wrestler on the roster or the past wrestlers list, including when filters are applied. The Menu button on the header adds or removes the favorite.
+- Menu: the last three entries are now Community, My Favorites, then your account name, with the divider above Community.
+
 ## 2.30.3
 
 - Tag Teams menu: Down from All Tag Teams now goes to My Tag Teams (it skipped to New Horizons), and Up from the era headers comes back through My Tag Teams. Menu shelves now treat a wide bar above or below as straight up or down when it spans the item you're on; other shelves move as before.
