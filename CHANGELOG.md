@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.4
+
+- Team pages: a member whose title history name isn't on the roster now uses the roster name of one of the history's other spellings ("alias" in the lineage files). Rice or Bread now searches "Hanako Tag Team Waka Tsukiyama" (it searched "Wakana Tsukiyama" and found no videos). Its member button opens the Waka Tsukiyama search too.
+- The video index side check also accepts those other spellings.
+
 ## 2.29.3
 
 - Team pages search the same words as the filter bar's "Wrestler: A, Match type: Tag team, Competitors: B" (for example "Natsuko Tora Tag Team Ruaka"), using the Wrestler filter's names from factions.json. Before, BMI2000 searched "Natsuko Toura Ruaka Tag Team", a spelling the site's search doesn't match well, so most of its tag matches were missed. The "Natsuko Toura" spelling is removed from tag_teams.json; other spellings there are tried second.

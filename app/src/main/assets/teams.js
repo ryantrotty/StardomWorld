@@ -47,6 +47,7 @@
     return null;
   }
   var TEAMS = null;
+  var ALIAS = {};   // the title histories' other spellings of a name ("Wakana Tsukiyama" -> "Waka Tsukiyama")
   function build() {
     if (TEAMS) return TEAMS;
     var byKey = {}, facNames = {};
@@ -54,6 +55,7 @@
     Object.keys(BELTS).forEach(function(b) {
       var L = parse(call('lineageJson', b));
       if (!L || !L.reigns) return;
+      Object.keys(L.alias || {}).forEach(function(n) { ALIAS[n.toLowerCase()] = (ALIAS[n.toLowerCase()] || []).concat(L.alias[n] || []); });
       L.reigns.forEach(function(r, i) {
         var mem = String(r.champ || '').split(/\s*&\s*/).map(function(s) { return s.trim(); }).filter(Boolean);
         if (mem.length !== 2) return;
@@ -282,7 +284,13 @@
   // exactly what the filter bar asks for "Wrestler: A, Match type: Tag team, Competitors: B".
   var ROSTER = {};
   FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (m && m.name) ROSTER[String(m.name).toLowerCase()] = m.search || m.name; }); });
-  function searchName(n) { return ROSTER[String(n).toLowerCase()] || n; }
+  // The roster's name, else the roster's name for one of the history's other spellings, else the spelling list, else as written.
+  function searchName(n) {
+    var k = String(n).toLowerCase(), al = ALIAS[k] || [];
+    if (ROSTER[k]) return ROSTER[k];
+    for (var i = 0; i < al.length; i++) if (ROSTER[String(al[i]).toLowerCase()]) return ROSTER[String(al[i]).toLowerCase()];
+    return siteName(n);
+  }
 
   // One search page at a time: the first when the Tag Matches section comes into view, the next only when More is pressed.
   // Saved copies last 7 days (a video's title doesn't change) and searches are at least 3 seconds apart.
@@ -343,7 +351,7 @@
   function sidesCheck(t, id) {
     var r = VIX[id];
     if (!r || !r.sides_en || r.sides_en.length < 2) return '';
-    var names = t.members.map(function(m) { return [m, siteName(m)]; });
+    var names = t.members.map(function(m) { return [m, siteName(m), searchName(m)].concat(ALIAS[String(m).toLowerCase()] || []); });
     var a = -1, b = -1;
     r.sides_en.forEach(function(side, i) {
       if (names[0].some(function(n) { return onSide(side, n); })) a = i;
