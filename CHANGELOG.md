@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.27.0
+
+- Favorites sync (private builds): sync favorites, watch later, playlists and reminders across TVs via the Google Sheet log.
+
 ## 2.26.1
 
 - Video index: the on-screen panel on video pages is removed. The app still reads each video page, keeps a copy on the TV and sends it to the private log in the background; the last send result is kept on the TV (localStorage tvVideoIndexLast).

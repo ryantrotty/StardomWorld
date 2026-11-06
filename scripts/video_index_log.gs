@@ -8,6 +8,13 @@
  *
  * Request body (JSON, sent as text/plain): {"key": "...", "action": "put", "rec": {...}}
  *                                       or {"key": "...", "action": "export"}
+ *
+ * Favorites sync (2.27.0, same key): a "favorites" tab with one row per saved item, so the private build on several
+ * TVs shares one set of favorites. Each row has the item's key, its value, the time the device changed it (t),
+ * whether it was removed, and a server counter (seq) so a device can ask for "changes since" without trusting clocks.
+ *   fav_replace {items: [{key, value}], device}            the base device's whole set; replaces the tab
+ *   fav_put     {changes: [{key, value, t, deleted}], device} newer change per key wins (by t)
+ *   fav_since   {since: seq}                                rows changed after seq, the current seq and the row count
  */
 var SHEET = 'videos';
 var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_en', 'title_ja',
@@ -22,6 +29,11 @@ function doPost(e) {
   var key = PropertiesService.getScriptProperties().getProperty('KEY');
   if (!key || body.key !== key) return out({ ok: false, error: 'bad key' });
   if (body.action === 'export') return out({ ok: true, cols: COLS, rows: exportRows() });
+  if (body.action === 'fav_replace' || body.action === 'fav_put' || body.action === 'fav_since') {
+    var flock = LockService.getScriptLock();
+    flock.waitLock(20000);
+    try { return out(favAction(body)); } finally { flock.releaseLock(); }
+  }
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
   var rec = body.rec, why = check(rec);
   if (why) return out({ ok: false, error: why });
@@ -100,3 +112,69 @@ function exportRows() {
 }
 
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+// ---- favorites sync -------------------------------------------------------------------------------------------
+var FAV_SHEET = 'favorites';
+var FAV_COLS = ['key', 'value', 't', 'deleted', 'seq', 'device', 'updated'];
+
+function favSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(FAV_SHEET);
+  if (!sh) sh = ss.insertSheet(FAV_SHEET);
+  if (sh.getLastRow() === 0) { sh.appendRow(FAV_COLS); sh.setFrozenRows(1); }
+  return sh;
+}
+function nextSeq() {
+  var pr = PropertiesService.getScriptProperties(), n = (Number(pr.getProperty('FAV_SEQ')) || 0) + 1;
+  pr.setProperty('FAV_SEQ', String(n));
+  return n;
+}
+function favKeyOk(k) { return typeof k === 'string' && k.length > 0 && k.length <= 300 && /^(w|fs|later|m|s|pl|pli|rem|ppv):/.test(k); }
+function favValue(v) { var j = JSON.stringify(v == null ? null : v); return j.length > 20000 ? null : j; }
+
+function favAction(b) {
+  var sh = favSheet(), device = String(b.device || '').slice(0, 40), now = new Date().toISOString();
+  if (b.action === 'fav_since') {
+    var since = Number(b.since) || 0, n = sh.getLastRow(), rows = [];
+    if (n > 1) sh.getRange(2, 1, n - 1, FAV_COLS.length).getValues().forEach(function(v) {
+      if (Number(v[4]) > since) { var val = null; try { val = JSON.parse(v[1]); } catch (e) {} rows.push({ key: v[0], value: val, t: Number(v[2]) || 0, deleted: v[3] === true || v[3] === 'TRUE' }); }
+    });
+    var pr = PropertiesService.getScriptProperties();
+    return { ok: true, seq: Number(pr.getProperty('FAV_SEQ')) || 0, replacedAt: Number(pr.getProperty('FAV_REPLACED')) || 0, rows: rows, total: Math.max(0, n - 1) };
+  }
+  if (b.action === 'fav_replace') {
+    if (!Array.isArray(b.items) || b.items.length > 5000) return { ok: false, error: 'bad items' };
+    var seq = nextSeq(), t = Date.now(), out = [];
+    for (var i = 0; i < b.items.length; i++) {
+      var it = b.items[i], j = it && favKeyOk(it.key) ? favValue(it.value) : null;
+      if (j == null) return { ok: false, error: 'bad item ' + i };
+      out.push([it.key, j, t, false, seq, device, now]);
+    }
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, FAV_COLS.length).clearContent();
+    if (out.length) sh.getRange(2, 1, out.length, FAV_COLS.length).setValues(out);
+    var extra = sh.getLastRow() - 1 - out.length;
+    if (extra > 0) sh.deleteRows(2 + out.length, extra);
+    PropertiesService.getScriptProperties().setProperty('FAV_REPLACED', String(seq));   // devices synced before this take the whole set again
+    return { ok: true, seq: seq, count: out.length };
+  }
+  // fav_put
+  if (!Array.isArray(b.changes) || b.changes.length > 1000) return { ok: false, error: 'bad changes' };
+  var n2 = sh.getLastRow(), have = {}, data = n2 > 1 ? sh.getRange(2, 1, n2 - 1, FAV_COLS.length).getValues() : [];
+  data.forEach(function(v, i) { have[v[0]] = i; });
+  var seq2 = nextSeq(), applied = 0, add = [], added = {};
+  b.changes.forEach(function(c) {
+    if (!c || !favKeyOk(c.key)) return;
+    var t = Number(c.t) || Date.now(), del = !!c.deleted, j = del ? 'null' : favValue(c.value);
+    if (j == null) return;
+    var row = [c.key, j, t, del, seq2, device, now];
+    var target = (c.key in have) ? data : (c.key in added) ? add : null;
+    if (target) {
+      var i = (c.key in have) ? have[c.key] : added[c.key];
+      if ((Number(target[i][2]) || 0) > t) return;         // the sheet has a newer change for this item
+      target[i] = row;
+    } else { added[c.key] = add.length; add.push(row); }
+    applied++;
+  });
+  if (data.length) sh.getRange(2, 1, data.length, FAV_COLS.length).setValues(data);
+  if (add.length) sh.getRange(2 + data.length, 1, add.length, FAV_COLS.length).setValues(add);
+  return { ok: true, seq: seq2, applied: applied };
+}

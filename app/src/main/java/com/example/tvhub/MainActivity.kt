@@ -2917,6 +2917,53 @@ class MainActivity : Activity() {
             }.start()
         }
 
+        // Favorites sync (private builds with the log address; see docs/FAVORITES_SYNC.md). The page script asks for one
+        // of the three favorites actions; the key is added here and the reply goes back to window.__tvFavSyncReply.
+        @android.webkit.JavascriptInterface
+        fun favSyncOn(): Boolean = videoIndexOn()
+
+        // A random name for this install, shown in the sheet's "device" column so rows can be told apart.
+        @android.webkit.JavascriptInterface
+        fun favSyncDevice(): String {
+            val prefs = this@MainActivity.getSharedPreferences("vix", android.content.Context.MODE_PRIVATE)
+            var d = prefs.getString("device", null)
+            if (d == null) { d = "tv-" + java.util.UUID.randomUUID().toString().take(8); prefs.edit().putString("device", d).apply() }
+            return d + " " + android.os.Build.MODEL.take(20)
+        }
+
+        @android.webkit.JavascriptInterface
+        fun favSync(reqId: String, payload: String) {
+            fun reply(text: String) {
+                val js = "window.__tvFavSyncReply && window.__tvFavSyncReply(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
+                this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+            }
+            if (!videoIndexOn()) { reply("{\"ok\":false,\"error\":\"sync is off in this build\"}"); return }
+            val body = try { org.json.JSONObject(payload) } catch (_: Exception) { reply("{\"ok\":false,\"error\":\"bad request\"}"); return }
+            val action = body.optString("action")
+            if (action != "fav_replace" && action != "fav_put" && action != "fav_since") { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
+            if (payload.length > 2_000_000) { reply("{\"ok\":false,\"error\":\"too big\"}"); return }
+            Thread {
+                try {
+                    body.put("key", BuildConfig.VIDEO_INDEX_KEY).put("device", favSyncDevice())
+                    val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
+                    c.requestMethod = "POST"
+                    c.doOutput = true
+                    c.instanceFollowRedirects = true
+                    c.connectTimeout = 10000
+                    c.readTimeout = 30000
+                    c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+                    c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+                    val code = c.responseCode
+                    val text = try { (if (code < 400) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() } ?: "" } catch (_: Exception) { "" }
+                    c.disconnect()
+                    if (text.trimStart().startsWith("{")) reply(text)
+                    else reply(org.json.JSONObject().put("ok", false).put("error", "HTTP " + code + " " + text.replace(Regex("(?is)<(script|style).*?</\\1>"), " ").replace(Regex("<[^>]+>"), " ").replace(Regex("\\s+"), " ").trim().take(120)).toString())
+                } catch (e: Exception) {
+                    reply(org.json.JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName).toString())
+                }
+            }.start()
+        }
+
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
@@ -9398,6 +9445,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(playerPageJs, null)
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)
