@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.6
+
+- Fire TV test: the app icon is the wide banner picture (1280 x 720), to see whether Fire TV then fills its wide tile with it. Public build only; private builds keep their own icon.
+
 ## 2.24.5
 
 - Fire TV: the manifest is back exactly as it was in 2.24.1 (the banner and icon named once, on the app only). After a fresh install, 2.24.3 and 2.24.4 did not appear in Fire TV's apps list at all; this tests whether naming them on the launch activity as well (added in 2.24.2) was the cause. The new artwork stays.
