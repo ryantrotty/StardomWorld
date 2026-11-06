@@ -8094,7 +8094,7 @@ class MainActivity : Activity() {
     return true;
   }
   function itemTitle(el) {
-    var t = el.querySelector('h3, .ttl-xs, .content-info-box');
+    var t = el.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
     return (t ? t.textContent : el.textContent) || '';
   }
   function idOf(el) {
@@ -8104,11 +8104,20 @@ class MainActivity : Activity() {
   }
   function narrowList() {
     if (!MTR) return;
-    var list = document.querySelectorAll('.content-list-item');
+    // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
+    var list = document.querySelectorAll('.content-list-item, [class*="content-list"] article, #result article');
     Array.prototype.forEach.call(list, function(el) {
       if (el.__tvMt || el.closest('#tv-fac')) return;
+      if (el.tagName === 'ARTICLE' && el.parentNode && el.parentNode.closest('.content-list-item')) return;   // judged with its card
+      // The site's pager adds a card first and fills its title a moment later: judge it only once the title is there.
+      var tt = itemTitle(el);
+      if (!tt.replace(/\s+/g, '')) return;
       el.__tvMt = 1;
-      if (!mtFits(itemTitle(el)) && el.parentNode) el.parentNode.removeChild(el);
+      if (mtFits(tt) || !el.parentNode) return;
+      var box = el.parentNode;
+      box.removeChild(el);
+      // A bare card's empty column wrapper goes too, so the grid doesn't keep a gap.
+      if (el.tagName === 'ARTICLE' && !box.children.length && !/content-list(?!-)/.test(box.className || '') && box.id !== 'result' && box.parentNode) box.parentNode.removeChild(box);
     });
   }
   function loadAlts() {

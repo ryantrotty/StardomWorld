@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.6
+
+- Filter bar, Match type: cards that slipped past the match-type filter are now filtered too. On "Momo Watanabe, Tag team, With Utami Hayashishita" this left 6-person tag matches and whole shows on screen.
+  - A card whose title hadn't been filled in yet was kept and never checked again. It is now checked once its title is there.
+  - Cards that progressive loading adds as bare `<article>` cards (as the team pages already read them) are checked as well. Their empty column is removed too.
+
 ## 2.29.5
 
 - Sheet script: reads (tm_get, tm_export, fav_since) no longer wait for the sheet's lock, so a team page can read its list while something else is writing. Writes wait up to 25 s and then answer "busy", instead of failing with Apps Script's "Lock timeout" error. Paste scripts/video_index_log.gs into Apps Script and deploy a new version.
