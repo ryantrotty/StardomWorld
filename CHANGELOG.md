@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.3
+
+- Team pages search the same words as the filter bar's "Wrestler: A, Match type: Tag team, Competitors: B" (for example "Natsuko Tora Tag Team Ruaka"), using the Wrestler filter's names from factions.json. Before, BMI2000 searched "Natsuko Toura Ruaka Tag Team", a spelling the site's search doesn't match well, so most of its tag matches were missed. The "Natsuko Toura" spelling is removed from tag_teams.json; other spellings there are tried second.
+- The member buttons on a team page open the same search as the Wrestler filter.
+- Team match lists: the sheet now returns each row's search words (tm_get). A team saved with other words keeps its saved matches and searches page 1 of the new words once. Paste scripts/video_index_log.gs into Apps Script and deploy a new version; with the old script, saved places are used as before.
+
 ## 2.29.2
 
 - Team pages: with no tag matches to show yet, the Tag Matches section works like a championship reign. A plain grey line says what to do ("Press OK on More tag matches to search the next page"), "Looking for tag matches..." while the first search runs, or "No 2-on-2 tag matches were found" once every page is searched. The dashed box is gone. The header reads "looking for videos" or "none found yet" in place of "0 tag matches".

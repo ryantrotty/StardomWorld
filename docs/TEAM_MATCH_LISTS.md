@@ -9,8 +9,9 @@ Private builds that have the video index log set up (docs/VIDEO_INDEX_LOG.md) ke
 3. **No saved list yet:** the page searches the site's first results page as usual, and what it keeps is saved to the sheet.
 4. **Every search page** (first view or More) adds its 2-on-2 matches to the team's row. Nothing already there is removed.
 5. **A list older than 14 days** gets its newest results page searched once more when the page opens; new matches go to the front.
-6. Saved matches go through the same rules as fresh ones: the 2-on-2 title rule, and the video index side check (where they were opponents, the match is left out).
-7. The lines under the grid say where each match came from ("saved list from your sheet", "saved to your sheet: 7 new").
+6. Searches use the filter bar's words ("A Tag Team B"). When a row was saved with other search words, its matches stay and the new words are searched from page 1 once.
+7. Saved matches go through the same rules as fresh ones: the 2-on-2 title rule, and the video index side check (where they were opponents, the match is left out).
+8. The lines under the grid say where each match came from ("saved list from your sheet", "saved to your sheet: 7 new").
 
 If the sheet can't be reached, the page searches as the public build does.
 

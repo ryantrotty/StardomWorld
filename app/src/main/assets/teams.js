@@ -278,6 +278,11 @@
   }
   var SPELL = CFG.spell || {};
   function siteName(n) { return SPELL[n] || n; }
+  // The name the Wrestler and Competitors filters search for (factions.json "search"), so a team page asks the site
+  // exactly what the filter bar asks for "Wrestler: A, Match type: Tag team, Competitors: B".
+  var ROSTER = {};
+  FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (m && m.name) ROSTER[String(m.name).toLowerCase()] = m.search || m.name; }); });
+  function searchName(n) { return ROSTER[String(n).toLowerCase()] || n; }
 
   // One search page at a time: the first when the Tag Matches section comes into view, the next only when More is pressed.
   // Saved copies last 7 days (a video's title doesn't change) and searches are at least 3 seconds apart.
@@ -350,8 +355,10 @@
 
   var V = { kept: [], seen: {}, dropMulti: 0, dropOpp: 0, verified: 0, queries: [], qi: 0, page: 1, more: true, busy: false, log: [], done: false };
   function queriesFor(t) {
-    var site = t.members.map(siteName).join(' '), hist = t.members.join(' '), q = [site + ' Tag Team'];
-    if (hist !== site) q.push(hist + ' Tag Team');
+    // Same words and order as the filter bar: wrestler, then "Tag Team", then the competitor.
+    function pair(f) { return f(t.members[0]) + ' Tag Team ' + f(t.members[1]); }
+    var q = [pair(searchName)], alt = pair(siteName);
+    if (q.indexOf(alt) < 0) q.push(alt);   // another spelling, tried only when the first search finds no videos
     if (t.name) q.push(t.name);
     return q;
   }
@@ -404,9 +411,14 @@
       var add = keepItems(r.items);
       V.kept = V.kept.concat(add);
       V.ran = true;
-      if (r.next) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
+      // The saved place belongs to the search words it was made with: when this version searches with other words
+      // (r.queries doesn't include the first one), the saved matches stay and the new search starts at page 1.
+      var sameWords = !r.queries || !r.queries.length || r.queries.indexOf(V.queries[0]) >= 0;
+      if (r.next && sameWords) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
       V.log.push(T('saved list from your sheet: ' + add.length + ' matches (searched ' + String(r.searched || '').slice(0, 10) + ')', 'シートの保存: ' + add.length + '試合（' + String(r.searched || '').slice(0, 10) + '）'));
+      if (!sameWords) V.log.push(T('saved with other search words: searching page 1 of ', '検索語が変わったため1ページ目から: ') + V.queries[0]);
       paintVids();
+      if (!sameWords) { loadMore(); return; }   // one search, as on a first visit
       var age = Date.now() - (Date.parse(r.refreshed || '') || 0);
       if (age > REFRESH_MS) refreshNewest();
     });
@@ -501,7 +513,7 @@
         '<div><div class="k">' + esc(T('REIGNS', '戴冠')) + '</div><div class="v">' + reignsN + '</div></div>' +
         '<div><div class="k">' + esc(T('DEFENCES', '防衛')) + '</div><div class="v">' + t.defTotal + '</div></div>' +
       '</div><div class="tt-btns">' +
-        t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(siteName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
+        t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
         (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
       '</div></div></div>';
     if (t.reigns.length) {

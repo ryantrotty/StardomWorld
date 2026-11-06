@@ -225,7 +225,7 @@ function tmAction(b) {
   if (b.action === 'tm_get') {
     if (!r) return { ok: true, found: false };
     var v = sh.getRange(r, 1, 1, TM_COLS.length).getValues()[0];
-    return { ok: true, found: true, items: tmParse(v[2], []), next: tmParse(v[3], null), searched: v[4] instanceof Date ? v[4].toISOString() : v[4], refreshed: v[5] instanceof Date ? v[5].toISOString() : v[5] };
+    return { ok: true, found: true, items: tmParse(v[2], []), next: tmParse(v[3], null), searched: v[4] instanceof Date ? v[4].toISOString() : v[4], refreshed: v[5] instanceof Date ? v[5].toISOString() : v[5], queries: tmParse(v[7], []) };
   }
   // tm_put
   if (!Array.isArray(b.items) || b.items.length > 100) return { ok: false, error: 'bad items' };

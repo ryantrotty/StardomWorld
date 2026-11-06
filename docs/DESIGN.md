@@ -152,4 +152,4 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
 
-Team page searches (2.28.4): one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.
+Team page searches (2.28.4, words from 2.29.3): the words are the filter bar's "A Tag Team B" with the Wrestler filter's names; one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.
