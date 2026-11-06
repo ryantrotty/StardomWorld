@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.3
+
+- Fire TV: the banner is also set as the app's logo (on the app and on the launch activity). Fire TV uses the logo for sideloaded apps, so the home row should show the wide banner instead of the square icon squeezed into the tile. Fire TV may keep its old picture until it restarts.
+
 ## 2.24.2
 
 - Public artwork refreshed (same name and star): the TV home banner (now 1280 x 720) has a large glowing gold star over a bigger "TV VIEWER" on a dark ground, without the "Unofficial fan-made app" line; the app icon has a larger glowing star on a dark tile; the header and splash logos match. Builds with the private branding folder still use their own artwork.
