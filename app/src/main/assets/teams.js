@@ -397,10 +397,34 @@
     });
     return add;
   }
+  // Matches the sheet couldn't take (busy or unreachable) wait on this TV, per team, and go with the next sheet read.
+  var PEND_KEY = 'tvTeamPendV1';
+  function pendAll() { return parse(lsGet(PEND_KEY)) || {}; }
+  function pendGet() { return pendAll()[TEAM.id] || null; }
+  function pendSet(p) { var a = pendAll(); if (p) a[TEAM.id] = p; else delete a[TEAM.id]; lsSet(PEND_KEY, JSON.stringify(a)); }
+  function pendAdd(items, next, q, fresh) {
+    var p = pendGet() || { items: [], next: null, query: '', fresh: true }, have = {};
+    p.items.forEach(function(x) { have[x.id] = 1; });
+    p.items = items.filter(function(x) { return !have[x.id]; }).concat(p.items).slice(0, 100);
+    if (!fresh || !p.next) p.next = next;   // a refresh doesn't move where the deeper search got to
+    p.query = q || p.query; p.fresh = p.fresh && !!fresh;
+    pendSet(p);
+  }
+  function flushPending() {
+    var p = pendGet();
+    if (!p) return;
+    sheet('tm_put', { items: p.items, next: p.next, query: p.query, fresh: p.fresh }, function(r) {
+      if (r && r.ok) { pendSet(null); V.log.push(T('sent ' + p.items.length + ' matches kept on this TV: ' + r.added + ' new, ' + r.count + ' in all', 'このテレビに保存していた ' + p.items.length + ' 試合を送信: 新規' + r.added + '、計' + r.count)); }
+      else V.log.push(T('still kept on this TV (', 'このテレビに保存中（') + p.items.length + T(' matches): ', ' 試合）: ') + ((r && r.error) || ''));
+      paintVids();
+    });
+  }
   function save(items, fresh, q) {
     if (!SHEET_ON) return;
-    sheet('tm_put', { items: items.map(function(x) { return { id: x.id, t: x.t, b: x.b }; }), next: { qi: V.qi, page: V.page, done: V.done }, query: q, fresh: !!fresh }, function(r) {
-      V.log.push(r && r.ok ? T('saved to your sheet: ' + r.added + ' new, ' + r.count + ' in all', 'シートに保存: 新規' + r.added + '、計' + r.count) : T('not saved to your sheet: ', 'シートに保存できません: ') + ((r && r.error) || ''));
+    var list = items.map(function(x) { return { id: x.id, t: x.t, b: x.b }; }), next = { qi: V.qi, page: V.page, done: V.done };
+    sheet('tm_put', { items: list, next: next, query: q, fresh: !!fresh }, function(r) {
+      if (r && r.ok) V.log.push(T('saved to your sheet: ' + r.added + ' new, ' + r.count + ' in all', 'シートに保存: 新規' + r.added + '、計' + r.count));
+      else { pendAdd(list, next, q, fresh); V.log.push(T('sheet busy, kept on this TV to send later: ', 'シートが混雑、このテレビに保存して後で送信: ') + ((r && r.error) || '')); }
       paintVids();
     });
   }
@@ -410,6 +434,9 @@
     V.busy = true; paintVids();
     sheet('tm_get', {}, function(r) {
       V.busy = false;
+      if (r && r.ok) flushPending();
+      var pend = pendGet();
+      if (pend && r && r.ok) r.items = (r.items || []).concat(pend.items);   // shown now, sent by flushPending
       // A row with no matches yet still counts when its search has moved past page 1 (More carries on from there).
       var nx = (r && r.next) || {};
       if (!r || !r.ok || !r.found || !((r.items || []).length || nx.page > 1 || nx.qi > 0 || nx.done)) {

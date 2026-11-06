@@ -35,22 +35,22 @@ function doPost(e) {
   var key = PropertiesService.getScriptProperties().getProperty('KEY');
   if (!key || body.key !== key) return out({ ok: false, error: 'bad key' });
   if (body.action === 'export') return out({ ok: true, cols: COLS, rows: exportRows() });
-  if (body.action === 'tm_get' || body.action === 'tm_put' || body.action === 'tm_export') {
-    var tlock = LockService.getScriptLock();
-    tlock.waitLock(20000);
-    try { return out(tmAction(body)); } finally { tlock.releaseLock(); }
-  }
-  if (body.action === 'fav_replace' || body.action === 'fav_put' || body.action === 'fav_since') {
-    var flock = LockService.getScriptLock();
-    flock.waitLock(20000);
-    try { return out(favAction(body)); } finally { flock.releaseLock(); }
-  }
+  // Reads don't wait for the lock. Writes wait up to 25 s, then answer "busy" (the app keeps the change and sends it later)
+  // rather than failing with Apps Script's lock timeout error.
+  if (body.action === 'tm_get' || body.action === 'tm_export') return out(tmAction(body));
+  if (body.action === 'tm_put') return out(withLock(function() { return tmAction(body); }));
+  if (body.action === 'fav_since') return out(favAction(body));
+  if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
   var rec = body.rec, why = check(rec);
   if (why) return out({ ok: false, error: why });
+  return out(withLock(function() { return put(rec, String(body.app || '')); }));
+}
+
+function withLock(fn) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try { return out(put(rec, String(body.app || ''))); } finally { lock.releaseLock(); }
+  if (!lock.tryLock(25000)) return { ok: false, error: 'busy', busy: true };
+  try { return fn(); } finally { lock.releaseLock(); }
 }
 
 function doGet() { return out({ ok: false, error: 'POST only' }); }

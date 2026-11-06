@@ -13,7 +13,7 @@ Private builds that have the video index log set up (docs/VIDEO_INDEX_LOG.md) ke
 7. Saved matches go through the same rules as fresh ones: the 2-on-2 title rule, and the video index side check (where they were opponents, the match is left out).
 8. The lines under the grid say where each match came from ("saved list from your sheet", "saved to your sheet: 7 new").
 
-If the sheet can't be reached, the page searches as the public build does.
+If the sheet can't be reached, the page searches as the public build does. Reading never waits for the sheet's lock. If a save finds the sheet busy (another write held its lock for 25 s), the matches are kept on that TV (`tvTeamPendV1`), shown on the next visit and sent with the next read.
 
 ## The sheet
 

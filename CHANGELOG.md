@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.5
+
+- Sheet script: reads (tm_get, tm_export, fav_since) no longer wait for the sheet's lock, so a team page can read its list while something else is writing. Writes wait up to 25 s and then answer "busy", instead of failing with Apps Script's "Lock timeout" error. Paste scripts/video_index_log.gs into Apps Script and deploy a new version.
+- Team pages: matches the sheet couldn't take are kept on the TV for that team, shown on the next visit, and sent with the next sheet read. The lines under the grid say "sheet busy, kept on this TV" and later "sent N matches kept on this TV".
+
 ## 2.29.4
 
 - Team pages: a member whose title history name isn't on the roster now uses the roster name of one of the history's other spellings ("alias" in the lineage files). Rice or Bread now searches "Hanako Tag Team Waka Tsukiyama" (it searched "Wakana Tsukiyama" and found no videos). Its member button opens the Waka Tsukiyama search too.
