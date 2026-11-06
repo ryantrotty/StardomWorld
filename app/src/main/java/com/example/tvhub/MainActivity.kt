@@ -5244,9 +5244,10 @@ class MainActivity : Activity() {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               var an = acctName();
-              h += '<div class="tv-sm-grp tv-sm-acctgrp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
+              // Community, My Favorites, then the account (2.31.0); the divider sits above Community.
+              h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community').replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
               h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
-              h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community');
+              h += '<div class="tv-sm-grp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
             } else {
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
             }
@@ -9498,6 +9499,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(assetText("lineage.js"), null)
         view.evaluateJavascript(assetText("teams.js"), null)
+        view.evaluateJavascript(assetText("wrestler.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)

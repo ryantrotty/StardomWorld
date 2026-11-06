@@ -419,6 +419,8 @@
       if (t && t.closest('#tv-sm-shelf')) { toggleWrestler(t.getAttribute('data-favw')); mark(); return true; }
       t = el.closest('[data-favf]');
       if (t && t.closest('#tv-sm-shelf')) { setFaction(t.getAttribute('data-favf')); mark(); return true; }
+      // a wrestler's page: the header at the top (assets/wrestler.js)
+      if (el.closest('#tv-wr') && window.__tvWrestlerFav) { window.__tvWrestlerFav(); return true; }
       // a tag team: its menu row, its tile on All Tag Teams, or the top of its own page
       t = el.closest('[data-favt]');
       if (t && (t.closest('#tv-sm-shelf') || t.closest('#tv-tt'))) { toggleTeam(t.getAttribute('data-favt')); mark(); return true; }

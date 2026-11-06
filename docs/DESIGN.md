@@ -162,3 +162,12 @@ Tag team favorites (2.30.0, kept in tvFavV1 as `t`, newest first, no limit):
 - My Favorites menu: a "Tag Teams" row under Wrestlers in COLLECTIONS, with the newest team's two mini avatars and the count.
 
 Team page searches (2.28.4, words from 2.29.3): the words are the filter bar's "A Tag Team B" with the Wrestler filter's names (a title history name not on the roster goes through the history's "alias" spellings); one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.
+
+Wrestler pages (2.31.0, assets/wrestler.js): a wrestler's search page (the Wrestlers menu link, or a filtered search whose Wrestler filter is that wrestler; any roster or past wrestler) gets a header above the filter bar in the tag team page style.
+- Header: one 140 px circle (the private build's photo, else initials on a dashed circle, notranslate), FACTION (current) / FIRST TITLE / REIGNS / DEFENCES facts (13/700 grey over 22/700) counted over every title history (World, Wonder, Goddess, Artist, High Speed, Future, NEW BLOOD, IWGP Women's, STRONG, Kawaii), and buttons (look A): "☆ Add to My Favorites" / "★ In My Favorites" (gold text on #2A2410 once added), then one button per faction that lists them, current first, past ones with a grey 13/600 "past".
+- TITLES HELD: two per row, newest first, the team page's belt card (120 x 66 belt, 19/700 title and reign, 15/600 dates plus "with" partners, 13/700 gold days and defences), opening that reign on its title page.
+- MATCHES: a section header, then the filter bar, chips and the site's results as before.
+- Remote: arrows move to the nearest header item; Down past the header goes to the filter bar and Up from the filter bar comes back. The Menu button anywhere in the header adds or removes the favorite. The page starts on the favorites button.
+
+Menu order (2.31.0, signed in): … Years, then a divider, Community, My Favorites and the account name last.
+

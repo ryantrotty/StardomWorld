@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.31.0
+
+- Wrestler pages get a header like the tag team pages, above the filter bar (new assets/wrestler.js):
+  - **Picture:** a photo in private builds, initials in public ones.
+  - **Facts:** current faction, first title year, and total reigns and defences across every title history (Stardom titles plus IWGP Women's and STRONG).
+  - **Buttons:** Add to My Favorites / In My Favorites, then their current faction and any past factions, each opening that faction's page.
+  - **TITLES HELD:** two per row, newest first, with partners for tag and trios reigns; each opens that reign on its title page.
+  - **MATCHES:** the filter bar and the search results, as before.
+  - Shown for any wrestler on the roster or the past wrestlers list, including when filters are applied. The Menu button on the header adds or removes the favorite.
+- Menu: the last three entries are now Community, My Favorites, then your account name, with the divider above Community.
+
 ## 2.30.3
 
 - Tag Teams menu: Down from All Tag Teams now goes to My Tag Teams (it skipped to New Horizons), and Up from the era headers comes back through My Tag Teams. Menu shelves now treat a wide bar above or below as straight up or down when it spans the item you're on; other shelves move as before.
