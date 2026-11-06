@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.4
+
+- Fire TV: the logo setting from 2.24.3 is removed again. With it, Fire TV stopped listing the app on the home screen and in its apps list (it could only be found in Settings > Applications). The manifest is back to 2.24.2: the banner and icon are named on the app and on the launch activity.
+
 ## 2.24.3
 
 - Fire TV: the banner is also set as the app's logo (on the app and on the launch activity). Fire TV uses the logo for sideloaded apps, so the home row should show the wide banner instead of the square icon squeezed into the tile. Fire TV may keep its old picture until it restarts.
