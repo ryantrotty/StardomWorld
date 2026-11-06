@@ -2,12 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.30.1
+
+- My Favorites: the Goddess / NEW BLOOD tag is removed from the tag team cards.
+- Menu: every entry, down to Community and the language toggle, now fits on screen without scrolling (checked at 1280 x 720 when signed in). Items are 44 high (were 54) with less space between them; the text size is unchanged. The logo is 18% smaller (36 high, was 44), the language toggle is 17% shorter (40 high, was 48) with 17px labels (were 20px), and the divider and panel padding are trimmed.
+
 ## 2.30.0
 
 - Tag teams can be added to My Favorites, the same way as wrestlers.
   - The Menu button adds or removes a team on its Tag Teams menu row, its All Tag Teams tile, or the top of its team page. Team pages also have an "Add to My Favorites" button, which reads "In My Favorites" once the team is added.
   - Favorite teams get a gold ★ in the Tag Teams menu and on All Tag Teams. The Tag Teams menu has a new "My Tag Teams" bar.
-  - My Favorites has a new FAVORITE TAG TEAMS row under Favorite Wrestlers, with pair cards: both members' photos (initials in public builds), the team name, members and belts held. Past 8 teams a View All tile opens the full list (`/mypage?tvfav=teams`). Menu on a card removes it.
+  - My Favorites has a new FAVORITE TAG TEAMS row under Favorite Wrestlers, with pair cards: both members' photos (initials in public builds), the team name and members. Past 8 teams a View All tile opens the full list (`/mypage?tvfav=teams`). Menu on a card removes it.
   - The My Favorites menu has a Tag Teams row under Wrestlers.
 - Favorites sync (private builds) carries tag teams too. Paste scripts/video_index_log.gs into Apps Script and deploy a new version; until then, the sheet skips team favorites and everything else syncs as before.
 

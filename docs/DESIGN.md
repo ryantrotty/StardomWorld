@@ -83,6 +83,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.
 - Native overlay and guide use Android sp and the system font.
 - Scrollbars are hidden on the menu, shelf and drop-downs.
+- Menu spacing (2.30.1), so every entry fits a 720-high screen without scrolling: items 44 high with 1 px between them (sub-items 42), text sizes unchanged (25/600, sub-items 23/500); logo row 48 high with the logo at most 36 high; account divider 4 px above and below; language toggle 40 high with 17/700 labels; panel padding 18 px top and bottom.
 
 ## Checking the code
 
@@ -156,7 +157,7 @@ Tag team favorites (2.30.0, kept in tvFavV1 as `t`, newest first, no limit):
 - The Menu button adds or removes a team on its Tag Teams shelf row, its All Tag Teams tile, or the top of its team page (the video cards keep their own Menu pop-up). A toast confirms, as for wrestlers.
 - Team page: a "☆ Add to My Favorites" button after the member and faction buttons (look A). Once added it reads "★ In My Favorites" with gold text on a dark gold tint (#2A2410); focus is still only the gold border.
 - Favorites are marked with a gold ★ before the name: Tag Teams shelf rows and All Tag Teams tiles. The shelf's top row adds a "★ My Tag Teams" bar (tv-shl-all) with the count; it opens `/mypage?tvfav=teams`. The shelf hint reads "Menu button on a team adds or removes a favorite."
-- My Favorites page: FAVORITE TAG TEAMS row under Favorite Wrestlers, up to 8 then a View All tile. Pair card (look E, gold frame): 324 wide, a 3:2 picture split into two member halves (photos in private builds, else 54px initials on the wrestler cards' colour wash), the belt tag top right (GODDESS / NEW BLOOD, the video badge style), team name 20/900 and members 13/600 over the dark fade. `/mypage?tvfav=teams` shows them three across. Menu on a card removes it.
+- My Favorites page: FAVORITE TAG TEAMS row under Favorite Wrestlers, up to 8 then a View All tile. Pair card (look E, gold frame): 324 wide, a 3:2 picture split into two member halves (photos in private builds, else 54px initials on the wrestler cards' colour wash), no belt tag (removed in 2.30.1), team name 20/900 and members 13/600 over the dark fade. `/mypage?tvfav=teams` shows them three across. Menu on a card removes it.
 - My Favorites menu: a "Tag Teams" row under Wrestlers in COLLECTIONS, with the newest team's two mini avatars and the count.
 
 Team page searches (2.28.4, words from 2.29.3): the words are the filter bar's "A Tag Team B" with the Wrestler filter's names (a title history name not on the roster goes through the history's "alias" spellings); one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.

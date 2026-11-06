@@ -626,7 +626,6 @@
     '.tv-fp-pc .tv-fp-pr{position:relative;display:flex;width:100%;aspect-ratio:3/2;border-radius:8px;overflow:hidden;background:#172029;}',
     '.tv-fp-pc .tv-fp-half{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;background:#fff center top/cover no-repeat;font-size:54px;font-weight:800;color:#fff;}',
     '.tv-fp-pc .tv-fp-half + .tv-fp-half{border-left:3px solid #161F2A;}',
-    '.tv-fp-pc .tv-fp-bt{position:absolute;right:8px;top:8px;padding:4px 9px;border-radius:6px;background:rgba(0,0,0,.8);color:#F4C242;font-size:13px;font-weight:800;letter-spacing:.06em;}',
     '.tv-fp-pc .tv-fp-cn{padding:26px 12px 9px 12px;}',
     '.tv-fp-pc .tv-fp-cn .a{font-size:20px;font-weight:900;line-height:1.1;}',
     '.tv-fp-pc .tv-fp-cn .b{font-size:13px;font-weight:600;color:#C9D2DC;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
@@ -704,17 +703,14 @@
       : '<div class="tv-fp-ph" style="background:linear-gradient(160deg,hsl(' + hueFor(n) + ',70%,45%),hsl(' + ((hueFor(n) + 40) % 360) + ',60%,25%));"><div class="tv-fp-mono">' + esc(initials(n)) + '</div><div class="tv-fp-cn">' + esc(n) + '</div></div>';
     return '<a class="tv-fp-card" tabindex="0" data-fk="w" data-fv="' + esc(w.k) + '" href="' + esc(absUrl(wrestlerPath(w.k))) + '">' + inner + '</a>';
   }
-  var BELT_TAG = { goddess: 'GODDESS', newblood: 'NEW BLOOD' };
   function teamCardHtml(t) {
     var halves = (t.m || []).slice(0, 2).map(function(m, j) {
       var u = memberPhoto(t, j);
       return u ? '<div class="tv-fp-half" style="background-image:url(' + u + ');"></div>'
         : '<div class="tv-fp-half" style="background:linear-gradient(160deg,hsl(' + hueFor(m) + ',70%,45%),hsl(' + ((hueFor(m) + 40) % 360) + ',60%,25%));">' + esc(teamInitials(m)) + '</div>';
     }).join('');
-    var bt = (t.b || []).map(function(b) { return BELT_TAG[b] || ''; }).filter(Boolean).join(' · ');
     var sub = (t.m || []).join(' & ');
     return '<a class="tv-fp-card tv-fp-pc" tabindex="0" data-fk="t" data-fv="' + esc(t.id) + '" href="' + esc(absUrl('/mypage?tvteam=' + encodeURIComponent(t.id))) + '"><div class="tv-fp-pr">' + halves +
-      (bt ? '<span class="tv-fp-bt">' + esc(bt) + '</span>' : '') +
       '<div class="tv-fp-cn"><div class="a">' + esc(t.n) + '</div>' + (sub && sub !== t.n ? '<div class="b">' + esc(sub) + '</div>' : '') + '</div></div></a>';
   }
   function allTile(href, n) {
