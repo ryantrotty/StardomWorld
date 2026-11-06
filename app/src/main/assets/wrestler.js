@@ -76,7 +76,11 @@
     '#tv-wr{box-sizing:border-box;color:#fff;font-family:Arial,Helvetica,sans-serif;margin:4px 0 6px 0;padding-right:20px;}',
     '#tv-wr, #tv-wr *{box-sizing:border-box;word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
     '#tv-wr a, #tv-wr a *{opacity:1 !important;filter:none !important;text-decoration:none !important;color:inherit;}',
-    '#tv-wr *:focus{outline:none !important;box-shadow:none !important;}',
+    '#tv-wr *:focus{outline:none !important;box-shadow:none !important;transform:none !important;}',
+    // The search page puts this header inside the site's article, where the app's card rule removes borders from
+    // anything focused (article *:focus { border: none !important }). These rules name the header, so they win.
+    '#tv-wr .wr-btn, #tv-wr .wr-belt{border:2px solid #2A323C !important;}',
+    '#tv-wr .wr-btn:focus, #tv-wr .wr-belt:focus{border:2px solid #F4C242 !important;background:#172029 !important;}',
     '#tv-wr .wr-hero{display:flex;gap:32px;align-items:center;}',
     '#tv-wr .wr-av{flex:none;width:140px;height:140px;border-radius:50%;border:3px dashed #3B4656;background:#161F2A center top/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#C9D2DC;overflow:hidden;white-space:nowrap;}',
     '#tv-wr .wr-av.ph{border-style:solid;border-color:#2A323C;}',
@@ -141,6 +145,10 @@
     if (!bar || !bar.parentNode) return false;
     root = document.createElement('div');
     root.id = 'tv-wr';
+    // The header writes its own English or Japanese, so the page translator leaves it alone (its highlight box
+    // was showing over TITLES HELD).
+    root.className = 'notranslate';
+    root.setAttribute('translate', 'no');
     root.innerHTML = html();
     bar.parentNode.insertBefore(root, bar);
     align();

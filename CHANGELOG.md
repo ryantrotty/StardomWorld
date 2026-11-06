@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.31.1
+
+- Wrestler pages: the gold focus border now shows and stays on the header's buttons and belt cards. The site puts the header inside its article, where the app's card style removed the border from anything focused, so focus flashed grey and vanished.
+- Wrestler pages: the page translator no longer works on the header (it writes its own English or Japanese), so its grey highlight no longer covers TITLES HELD on load.
+
 ## 2.31.0
 
 - Wrestler pages get a header like the tag team pages, above the filter bar (new assets/wrestler.js):
