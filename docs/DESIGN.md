@@ -137,3 +137,5 @@ Video index dry run (2.25.0, private builds only): on a video page a debug panel
 Video index log (2.26.0): with a log address the panel heading reads VIDEO INDEX · LOG and the status after it is white 800 (red #FF7A66 when not sent); without one it reads DRY RUN. Same panel otherwise.
 
 Video index panel removed (2.26.1): video pages no longer show the dry-run / log panel; the index still reads and sends in the background.
+
+Favorites sync status (2.27.0, private builds): on the My Favorites page a 13/700 line sits after the title, grey #9AA6B4 ("Synced 2 min ago"), error red #FF7A66 when not synced. The Account menu gains "Send this TV's favorites to sync" in the standard shelf item style; the first OK changes its text to a confirmation, the second sends.

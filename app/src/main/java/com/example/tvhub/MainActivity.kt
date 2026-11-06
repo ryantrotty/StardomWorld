@@ -5565,6 +5565,8 @@ class MainActivity : Activity() {
                   var al = window.__tvMenuAcct || [];
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
                   if (window.AndroidHost && AndroidHost.showGuide) body += '<a class="tv-sm-fi" tabindex="0" data-guide="1">' + esc(T('Instructions', '使い方')) + '</a>';
+                  // Favorites sync (private builds): the main TV sends its whole set once; OK twice to confirm.
+                  if (window.__tvFavSync && window.__tvFavSync.on) body += '<a class="tv-sm-fi" tabindex="0" data-favsend="1">' + esc(T('Send this TV’s favorites to sync', 'このテレビのお気に入りを同期に送信')) + '</a>';
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
                 h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
@@ -5738,6 +5740,7 @@ class MainActivity : Activity() {
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
                   if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
+                  else if (fa.getAttribute('data-favsend')) { try { window.__tvFavSync.sendAll(fa); } catch (x) {} }
                   else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
                   else if (fa.getAttribute('data-wtab')) { /* the list already switched when the tab got focus */ }
                   else if (fa.getAttribute('data-ppv')) { ppvAct(fa.getAttribute('data-id'), fa.getAttribute('data-ppv')); }
