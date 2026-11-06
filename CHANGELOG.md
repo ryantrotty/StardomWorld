@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.1
+
+- Team pages: member initials are no longer translated by the page translator ("NT" became "Windows NT" on the BMI2000 page). The circles also clip any text that is too long.
+- Team pages: when a search page keeps no 2-on-2 matches, the More tag matches tile now shows, instead of a "Searching…" box that never finished. The tile stays in place, and keeps focus, while the next page loads.
+- Team match lists: a saved row with no matches yet, whose search has moved past page 1, is read from the sheet instead of searching page 1 again.
+
 ## 2.29.0
 
 - Team match lists (private builds with the log set up): each tag team's 2-on-2 matches are saved to a new `teammatches` tab in the private Google Sheet (docs/TEAM_MATCH_LISTS.md).

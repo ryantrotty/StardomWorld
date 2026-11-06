@@ -174,7 +174,7 @@
     '#tv-tt .tt-sec span{font-size:13px;font-weight:600;color:#9AA6B4;}',
     '#tv-tt .tt-hero{display:flex;gap:32px;align-items:center;margin-top:18px;}',
     '#tv-tt .tt-av{display:flex;flex:none;}',
-    '#tv-tt .tt-av div{width:140px;height:140px;border-radius:50%;border:3px dashed #3B4656;background:#161F2A center top/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#C9D2DC;}',
+    '#tv-tt .tt-av div{width:140px;height:140px;overflow:hidden;white-space:nowrap;border-radius:50%;border:3px dashed #3B4656;background:#161F2A center top/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#C9D2DC;}',
     '#tv-tt .tt-av div.ph{border-style:solid;border-color:#2A323C;}',
     '#tv-tt .tt-av div + div{margin-left:-26px;}',
     '#tv-tt .tt-facts{display:flex;gap:36px;flex-wrap:wrap;}',
@@ -394,12 +394,15 @@
     V.busy = true; paintVids();
     sheet('tm_get', {}, function(r) {
       V.busy = false;
-      if (!r || !r.ok || !r.found || !(r.items || []).length) {
+      // A row with no matches yet still counts when its search has moved past page 1 (More carries on from there).
+      var nx = (r && r.next) || {};
+      if (!r || !r.ok || !r.found || !((r.items || []).length || nx.page > 1 || nx.qi > 0 || nx.done)) {
         V.log.push(r && r.ok ? T('no saved list in your sheet yet', 'シートに保存なし') : T('sheet not read: ', 'シートを読めません: ') + ((r && r.error) || ''));
         fallback(); return;
       }
       var add = keepItems(r.items);
       V.kept = V.kept.concat(add);
+      V.ran = true;
       if (r.next) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
       V.log.push(T('saved list from your sheet: ' + add.length + ' matches (searched ' + String(r.searched || '').slice(0, 10) + ')', 'シートの保存: ' + add.length + '試合（' + String(r.searched || '').slice(0, 10) + '）'));
       paintVids();
@@ -427,7 +430,7 @@
     V.busy = true; paintVids();
     var q = V.queries[V.qi];
     fetchPage(q, V.page, function(err, items, more, cached) {
-      V.busy = false;
+      V.busy = false; V.ran = true;
       if (err) { V.log.push(q + ' · page ' + V.page + ': ' + err); V.done = true; paintVids(); return; }
       var kept = keepItems(items), add = kept.length;
       V.kept = V.kept.concat(kept);
@@ -448,7 +451,8 @@
     if (!box) return;
     var had = document.activeElement && box.contains(document.activeElement) ? document.activeElement.getAttribute('data-vid') || 'more' : '';
     var h = '';
-    if (!V.kept.length && (V.done || !V.busy)) {
+    // With nothing kept yet: an empty box during the first search or when every page is done; otherwise just the More tile (it stays put, and keeps focus, while More searches).
+    if (!V.kept.length && (V.done || (V.busy && !V.ran))) {
       box.className = '';
       h = '<div class="tt-empty">' + (V.done ? esc(T('No 2-on-2 tag matches found for this team on Stardom World.', 'このチームのタッグマッチの動画は見つかりませんでした。')) : esc(T('Searching…', '検索中…'))) + '</div>';
     } else {
@@ -478,7 +482,7 @@
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
     var av = t.members.map(function(m) {
       var p = call('wrestlerPhoto', m) || call('wrestlerPhoto', siteName(m));
-      return p ? '<div class="ph" style="background-image:url(\'' + esc(p) + '\')"></div>' : '<div>' + esc(initials(m)) + '</div>';
+      return p ? '<div class="ph" style="background-image:url(\'' + esc(p) + '\')"></div>' : '<div class="notranslate" translate="no">' + esc(initials(m)) + '</div>';
     }).join('');
     var reignsN = t.reigns.length;
     h += '<div class="tt-hero"><div class="tt-av">' + av + '</div><div style="min-width:0">' +
