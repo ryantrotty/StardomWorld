@@ -146,7 +146,7 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 - Team page (`/mypage?tvteam=<id>`): the Faction home layout.
   - Header: two 140 px member circles (the private build's wrestler photos, else initials on a dashed circle, marked notranslate so the page translator leaves them alone), MEMBERS / FACTION / FIRST TITLE / REIGNS / DEFENCES facts (13/700 grey over 22/700), and member and faction buttons (look A).
   - TITLES HELD: two-column belt cards (120 x 66 belt, 19/700, 15/600, 13/700 gold), opening that reign on the lineage page.
-  - TAG MATCHES: four-across video cards (look C ring). A gold date badge sits top right, and an orange TEAMMATES tag top left when the video index confirms the two were on the same side. A "More tag matches" tile loads further pages; it shows on its own when a page kept nothing, and stays in place (with focus) while the next page loads.
+  - TAG MATCHES: four-across video cards (look C ring). A gold date badge sits top right, and an orange TEAMMATES tag top left when the video index confirms the two were on the same side. A "More tag matches" tile loads further pages; it stays in place (with focus) while the next page loads. With nothing to show yet, a plain grey line (16 px #9AA6B4, the same as the championship pages' "Press OK on this reign" note) sits above the More tile, and the header reads "looking for videos" or "none found yet".
   - The search lines stay on screen at the bottom (debug panel style).
 - Arrow keys move to the nearest item in that direction; Left at the left edge opens the menu.
 

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.2
+
+- Team pages: with no tag matches to show yet, the Tag Matches section works like a championship reign. A plain grey line says what to do ("Press OK on More tag matches to search the next page"), "Looking for tag matches..." while the first search runs, or "No 2-on-2 tag matches were found" once every page is searched. The dashed box is gone. The header reads "looking for videos" or "none found yet" in place of "0 tag matches".
+
 ## 2.29.1
 
 - Team pages: member initials are no longer translated by the page translator ("NT" became "Windows NT" on the BMI2000 page). The circles also clip any text that is too long.

@@ -201,6 +201,7 @@
     '#tv-tt .tt-card .tt{padding:12px 14px;font-size:15px;font-weight:700;color:#fff;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}',
     '#tv-tt .tt-more{display:flex;align-items:center;justify-content:center;min-height:200px;border:2px solid #2A323C;background:#11171E;border-radius:8px;font-size:20px;font-weight:800;color:#F4C242 !important;cursor:pointer;}',
     '#tv-tt .tt-more:focus{border-color:#F4C242;background:#172029;}',
+    '#tv-tt .tt-msg{padding:14px 6px;font-size:16px;color:#9AA6B4;}',
     '#tv-tt .tt-empty{border:2px dashed #3B4656;border-radius:12px;padding:26px 24px;text-align:center;color:#9AA6B4;font-size:15px;font-weight:600;line-height:1.5;}',
     '#tv-tt .tt-dbg{margin-top:22px;padding:12px 16px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;}'
   ].join('\n');
@@ -451,20 +452,27 @@
     if (!box) return;
     var had = document.activeElement && box.contains(document.activeElement) ? document.activeElement.getAttribute('data-vid') || 'more' : '';
     var h = '';
-    // With nothing kept yet: an empty box during the first search or when every page is done; otherwise just the More tile (it stays put, and keeps focus, while More searches).
-    if (!V.kept.length && (V.done || (V.busy && !V.ran))) {
+    // With nothing kept yet, a plain grey line like the championship pages' "Press OK on this reign" note:
+    // "Looking…" during the first search, "none found" once every page is done, otherwise "Press OK on More" above the More tile.
+    var more = '<a class="tt-more" tabindex="0" data-more="1">' + esc(V.busy ? T('Searching…', '検索中…') : T('More tag matches', 'さらに表示')) + '</a>';
+    if (!V.kept.length) {
+      var msg = V.done ? T('No 2-on-2 tag matches were found for this team.', 'このチームのタッグマッチの動画は見つかりませんでした。') :
+        (V.busy && !V.ran) ? T('Looking for tag matches...', 'タッグマッチを検索中...') :
+        T('No 2-on-2 tag matches on the pages searched so far. Press OK on More tag matches to search the next page.', 'これまでのページにタッグマッチはありません。「さらに表示」でOKを押すと次のページを検索します。');
+      h = '<div class="tt-msg">' + esc(msg) + '</div>';
+      if (!V.done && V.ran) h += '<div class="tt-vids">' + more + '</div>';
       box.className = '';
-      h = '<div class="tt-empty">' + (V.done ? esc(T('No 2-on-2 tag matches found for this team on Stardom World.', 'このチームのタッグマッチの動画は見つかりませんでした。')) : esc(T('Searching…', '検索中…'))) + '</div>';
     } else {
       box.className = 'tt-vids';
       h = V.kept.map(function(it) {
         var d = dateOfTitle(it.t);
         return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(it.h) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
       }).join('');
-      if (!V.done) h += '<a class="tt-more" tabindex="0" data-more="1">' + esc(V.busy ? T('Searching…', '検索中…') : T('More tag matches', 'さらに表示')) + '</a>';
+      if (!V.done) h += more;
     }
     box.innerHTML = h;
-    if (st) st.textContent = V.kept.length + ' ' + T(V.kept.length === 1 ? 'tag match' : 'tag matches', '試合') + (V.busy ? T(' · searching…', ' · 検索中…') : '');
+    if (st) st.textContent = V.busy ? (V.kept.length ? V.kept.length + ' ' + T(V.kept.length === 1 ? 'tag match' : 'tag matches', '試合') + T(' · ', ' · ') : '') + T('looking for videos', '動画を検索中') :
+      (!V.kept.length && !V.done ? T('none found yet', 'まだありません') : V.kept.length + ' ' + T(V.kept.length === 1 ? 'tag match' : 'tag matches', '試合'));
     if (dbg) dbg.textContent = T('Search: ', '検索: ') + V.queries.join(' | ') + '\n' + V.log.join('\n') + '\n' +
       T('Kept ' + V.kept.length + ' (' + V.verified + ' checked as teammates in the video index) · left out ' + V.dropMulti + ' bigger or multi-way matches, ' + V.dropOpp + ' where they were opponents',
         '表示 ' + V.kept.length + '（動画インデックスで同じチーム確認 ' + V.verified + '）· 除外 ' + V.dropMulti + '（多人数）、' + V.dropOpp + '（対戦）');
