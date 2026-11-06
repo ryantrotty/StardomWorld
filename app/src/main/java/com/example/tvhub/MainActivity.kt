@@ -9344,6 +9344,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(sideMenuJs, null)
         view.evaluateJavascript(playerPageJs, null)
         view.evaluateJavascript(relatedRowJs, null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)

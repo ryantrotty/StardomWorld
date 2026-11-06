@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 353
-        versionName = "2.24.1"
+        versionCode = 361
+        versionName = "2.25.0"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -22,6 +22,8 @@ android {
         buildConfigField("Boolean", "ENABLE_CC_TRANSLATE", hasPrivateBranding.toString())
         // Event poster artwork is only fetched and shown in builds that have the private branding folder.
         buildConfigField("Boolean", "SHOW_POSTERS", hasPrivateBranding.toString())
+        // Video index dry run (assets/videoindex.js): private builds only. Reads video pages and shows what it found; sends nothing.
+        buildConfigField("Boolean", "VIDEO_INDEX_DRYRUN", hasPrivateBranding.toString())
         // The schedule list kept up to date by a scheduled GitHub job (see .github/workflows/schedule.yml).
         val scheduleUrl = (project.findProperty("tvhub.scheduleUrl") as String?)
             ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/schedule-data/schedule.json"

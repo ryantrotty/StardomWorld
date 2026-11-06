@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.25.0
+
+- Video index, step 1 (private builds only, nothing is sent): on every video page the app reads the page's own facts (no extra request) and shows them in a debug panel under the match description: video and set number, match number or the date in older titles, English and Japanese titles, both line-ups split into sides, the show and its date (from the set the video belongs to), tags, access and the thumbnail address. Missing values show in red. The latest copy per video is kept on the TV (up to 3,000 videos) for a later step; no account, cookie or viewer details are read.
+
 ## 2.24.1
 
 - Championships menu: the IWGP Women's and STRONG Women's cards are now the same width as the Stardom cards (the row under the Stardom grid uses the same two columns), and the text-only Other Promotions list sits under the right column.
