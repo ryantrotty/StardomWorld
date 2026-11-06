@@ -2864,6 +2864,106 @@ class MainActivity : Activity() {
             }
         }
 
+        // Video index log (private builds with branding-private/video_index.properties; see docs/VIDEO_INDEX_LOG.md).
+        // The page script hands over the record it read; the log address and key stay here, never in the page.
+        // A video is sent again only when what was read has changed (or after 30 days), at most 300 sends a day.
+        @android.webkit.JavascriptInterface
+        fun videoIndexOn(): Boolean = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+
+        @android.webkit.JavascriptInterface
+        fun videoIndexPut(json: String) {
+            if (!videoIndexOn()) return
+            val rec = try { org.json.JSONObject(json) } catch (_: Exception) { return }
+            val id = rec.optInt("id", 0)
+            if (id <= 0 || json.length > 40000) return
+            val prefs = this@MainActivity.getSharedPreferences("vix", android.content.Context.MODE_PRIVATE)
+            val same = org.json.JSONObject(json).apply { remove("read") }.toString().hashCode()
+            val now = System.currentTimeMillis()
+            val day = (now / 86400000L).toInt()
+            fun status(text: String) {
+                val js = "window.__tvVixStatus && window.__tvVixStatus(" + id + "," + org.json.JSONObject.quote(text) + ")"
+                this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+            }
+            if (prefs.getInt("h_" + id, 0) == same && now - prefs.getLong("t_" + id, 0L) < 30L * 86400000L) { status("already in the log"); return }
+            val sentToday = if (prefs.getInt("day", -1) == day) prefs.getInt("count", 0) else 0
+            if (sentToday >= 300) { status("not sent: 300 a day reached"); return }
+            Thread {
+                try {
+                    val body = org.json.JSONObject()
+                        .put("key", BuildConfig.VIDEO_INDEX_KEY).put("action", "put")
+                        .put("app", BuildConfig.VERSION_NAME).put("rec", rec).toString()
+                    val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
+                    c.requestMethod = "POST"
+                    c.doOutput = true
+                    c.instanceFollowRedirects = true
+                    c.connectTimeout = 10000
+                    c.readTimeout = 20000
+                    c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+                    c.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                    val code = c.responseCode
+                    val reply = try { (if (code < 400) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() } ?: "" } catch (_: Exception) { "" }
+                    c.disconnect()
+                    val r = try { org.json.JSONObject(reply) } catch (_: Exception) { null }
+                    if (r != null && r.optBoolean("ok")) {
+                        prefs.edit().putInt("h_" + id, same).putLong("t_" + id, now)
+                            .putInt("day", day).putInt("count", sentToday + 1).apply()
+                        status(if (r.optBoolean("added")) "sent: added to the log" else "sent: row updated")
+                    } else {
+                        status("not sent: " + (r?.optString("error") ?: ("HTTP " + code + " " + reply.replace(Regex("(?is)<(script|style).*?</\\1>"), " ").replace(Regex("<[^>]+>"), " ").replace(Regex("\\s+"), " ").trim().take(120))))
+                    }
+                } catch (e: Exception) {
+                    status("not sent: " + (e.message ?: e.javaClass.simpleName))
+                }
+            }.start()
+        }
+
+        // Favorites sync (private builds with the log address; see docs/FAVORITES_SYNC.md). The page script asks for one
+        // of the three favorites actions; the key is added here and the reply goes back to window.__tvFavSyncReply.
+        @android.webkit.JavascriptInterface
+        fun favSyncOn(): Boolean = videoIndexOn()
+
+        // A random name for this install, shown in the sheet's "device" column so rows can be told apart.
+        @android.webkit.JavascriptInterface
+        fun favSyncDevice(): String {
+            val prefs = this@MainActivity.getSharedPreferences("vix", android.content.Context.MODE_PRIVATE)
+            var d = prefs.getString("device", null)
+            if (d == null) { d = "tv-" + java.util.UUID.randomUUID().toString().take(8); prefs.edit().putString("device", d).apply() }
+            return d + " " + android.os.Build.MODEL.take(20)
+        }
+
+        @android.webkit.JavascriptInterface
+        fun favSync(reqId: String, payload: String) {
+            fun reply(text: String) {
+                val js = "window.__tvFavSyncReply && window.__tvFavSyncReply(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
+                this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+            }
+            if (!videoIndexOn()) { reply("{\"ok\":false,\"error\":\"sync is off in this build\"}"); return }
+            val body = try { org.json.JSONObject(payload) } catch (_: Exception) { reply("{\"ok\":false,\"error\":\"bad request\"}"); return }
+            val action = body.optString("action")
+            if (action != "fav_replace" && action != "fav_put" && action != "fav_since") { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
+            if (payload.length > 2_000_000) { reply("{\"ok\":false,\"error\":\"too big\"}"); return }
+            Thread {
+                try {
+                    body.put("key", BuildConfig.VIDEO_INDEX_KEY).put("device", favSyncDevice())
+                    val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
+                    c.requestMethod = "POST"
+                    c.doOutput = true
+                    c.instanceFollowRedirects = true
+                    c.connectTimeout = 10000
+                    c.readTimeout = 30000
+                    c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+                    c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+                    val code = c.responseCode
+                    val text = try { (if (code < 400) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() } ?: "" } catch (_: Exception) { "" }
+                    c.disconnect()
+                    if (text.trimStart().startsWith("{")) reply(text)
+                    else reply(org.json.JSONObject().put("ok", false).put("error", "HTTP " + code + " " + text.replace(Regex("(?is)<(script|style).*?</\\1>"), " ").replace(Regex("<[^>]+>"), " ").replace(Regex("\\s+"), " ").trim().take(120)).toString())
+                } catch (e: Exception) {
+                    reply(org.json.JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName).toString())
+                }
+            }.start()
+        }
+
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
@@ -2943,6 +3043,26 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun ppvOwnedJson(): String =
             this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).getString("ppvOwned", "{}") ?: "{}"
+
+        // Favorites sync (private builds): the owned PPVs from the other TVs. Replaces the list with the synced one;
+        // each entry must be { eventId: { t, url } } with a Stagecrowd player address.
+        @android.webkit.JavascriptInterface
+        fun ppvOwnedSet(json: String) {
+            if (!videoIndexOn()) return
+            try {
+                val o = org.json.JSONObject(json)
+                val clean = org.json.JSONObject()
+                val ks = o.keys()
+                while (ks.hasNext()) {
+                    val k = ks.next()
+                    val v = o.optJSONObject(k) ?: continue
+                    val url = v.optString("url")
+                    if (k.length > 80 || !Regex("/(plan_player|live_player)/\\d+").containsMatchIn(url)) continue
+                    clean.put(k, org.json.JSONObject().put("t", v.optLong("t")).put("url", url))
+                }
+                this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).edit().putString("ppvOwned", clean.toString()).apply()
+            } catch (_: Exception) {}
+        }
 
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
         @android.webkit.JavascriptInterface
@@ -5465,6 +5585,8 @@ class MainActivity : Activity() {
                   var al = window.__tvMenuAcct || [];
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
                   if (window.AndroidHost && AndroidHost.showGuide) body += '<a class="tv-sm-fi" tabindex="0" data-guide="1">' + esc(T('Instructions', '使い方')) + '</a>';
+                  // Favorites sync (private builds): the main TV sends its whole set once; OK twice to confirm.
+                  if (window.__tvFavSync && window.__tvFavSync.on) body += '<a class="tv-sm-fi" tabindex="0" data-favsend="1">' + esc(T('Send this TV’s favorites to sync', 'このテレビのお気に入りを同期に送信')) + '</a>';
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
                 } else body = rowsHtml(L[1]);
                 h = '<div class="tv-shl-t">' + esc(L[0]) + '</div><div>' + body + '</div>';
@@ -5638,6 +5760,7 @@ class MainActivity : Activity() {
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
                   if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
+                  else if (fa.getAttribute('data-favsend')) { try { window.__tvFavSync.sendAll(fa); } catch (x) {} }
                   else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
                   else if (fa.getAttribute('data-wtab')) { /* the list already switched when the tab got focus */ }
                   else if (fa.getAttribute('data-ppv')) { ppvAct(fa.getAttribute('data-id'), fa.getAttribute('data-ppv')); }
@@ -9344,6 +9467,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript(sideMenuJs, null)
         view.evaluateJavascript(playerPageJs, null)
         view.evaluateJavascript(relatedRowJs, null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(autoFullScreenJs, null)

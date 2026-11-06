@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,8 +13,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 353
-        versionName = "2.24.1"
+        versionCode = 371
+        versionName = "2.27.1"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -22,6 +24,16 @@ android {
         buildConfigField("Boolean", "ENABLE_CC_TRANSLATE", hasPrivateBranding.toString())
         // Event poster artwork is only fetched and shown in builds that have the private branding folder.
         buildConfigField("Boolean", "SHOW_POSTERS", hasPrivateBranding.toString())
+        // Video index dry run (assets/videoindex.js): private builds only. Reads video pages and shows what it found; sends nothing.
+        buildConfigField("Boolean", "VIDEO_INDEX_DRYRUN", hasPrivateBranding.toString())
+        // Video index log: address and key from branding-private/video_index.properties (git-ignored). Empty = dry run only.
+        val vixProps = Properties().apply {
+            val f = rootProject.file("branding-private/video_index.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        fun vixValue(k: String) = (vixProps.getProperty(k) ?: "").trim().replace("\\", "").replace("\"", "")
+        buildConfigField("String", "VIDEO_INDEX_URL", "\"" + vixValue("url") + "\"")
+        buildConfigField("String", "VIDEO_INDEX_KEY", "\"" + vixValue("key") + "\"")
         // The schedule list kept up to date by a scheduled GitHub job (see .github/workflows/schedule.yml).
         val scheduleUrl = (project.findProperty("tvhub.scheduleUrl") as String?)
             ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/schedule-data/schedule.json"
