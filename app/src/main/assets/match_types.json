@@ -15,7 +15,16 @@
      "id": "tag",
      "name": "Tag team",
      "ja": "タッグマッチ",
-     "search": "Tag Team"
+     "search": "Tag Team",
+     "none": [
+      "(?:\\d+|six|eight|ten|twelve|fourteen)[\\s\\-‐]*(?:person|man|men|woman|women)",
+      "\\d+\\s*人",
+      "(?:[2-6]|two|three|four|five|six)[\\s\\-‐]*way",
+      "trios?|トリオ",
+      "gauntlet|ガントレット",
+      "battle\\s*royal|バトルロイヤル",
+      "rumble|ランブル"
+     ]
     }
    ]
   },

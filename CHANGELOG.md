@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.27.2
+
+- Match type "Tag team" now means 2-on-2 only. The site's search for "Tag Team" also returns 6-, 8-, 10-, 12- and 14-person tag matches, 3-Way tag battles and trios, because their titles contain the same words; those are now taken out of the results by their titles (English and Japanese), including pages loaded later by scrolling. Plain "Tag Team Match" titles and tag title matches (for example NEW BLOOD Tag Team Championship Match) stay. The bigger matches are still under their own match types (6-person, 8-person and so on).
+
 ## 2.27.1
 
 - Favorites sync: PPVs the app has seen play (its own "owned" setting) are now shared too, alongside the ones marked bought by hand. Each PPV counts only until its replay window ends, as on My Favorites: an expired PPV isn't sent, and once one expires it's marked removed in the sheet and cleared from every TV.
