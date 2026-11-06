@@ -49,6 +49,7 @@
     function put(k, v) { if (k.length <= 300) out[k] = JSON.stringify(v); }
     (d.w || []).forEach(function(x, i) { if (x && x.k) put('w:' + String(x.k).toLowerCase(), { k: x.k, n: x.n, i: i }); });
     (d.fs || []).forEach(function(id, i) { if (id) put('fs:' + id, { id: id, i: i }); });
+    (d.t || []).forEach(function(x, i) { if (x && x.id) put('tt:' + x.id, { id: x.id, n: x.n, m: x.m, ms: x.ms, b: x.b, i: i }); });
     ['later', 'm', 's'].forEach(function(kind) { (d[kind] || []).forEach(function(x, i) { if (itemKey(x)) put(kind + ':' + itemKey(x), copy(x, { i: i })); }); });
     (d.pl || []).forEach(function(p, i) {
       if (!p) return;
@@ -69,11 +70,11 @@
     return out;
   }
   function apply(map) {   // map: {key: value (object)}; writes all three stores, keeping any other favorites fields
-    var d = jget(FAV, {}) || {}, ws = [], fs = [], L = { later: [], m: [], s: [] }, pls = {}, plis = {}, rem = {}, ppv = {}, own = {};
+    var d = jget(FAV, {}) || {}, ws = [], fs = [], ts = [], L = { later: [], m: [], s: [] }, pls = {}, plis = {}, rem = {}, ppv = {}, own = {};
     Object.keys(map).forEach(function(k) {
       var v = map[k], kind = k.slice(0, k.indexOf(':')), rest = k.slice(k.indexOf(':') + 1);
       if (v == null) return;
-      if (kind === 'w') ws.push(v); else if (kind === 'fs') fs.push(v);
+      if (kind === 'w') ws.push(v); else if (kind === 'fs') fs.push(v); else if (kind === 'tt') ts.push(v);
       else if (L[kind]) L[kind].push(v);
       else if (kind === 'pl') pls[v.id] = v;
       else if (kind === 'pli') { var pid = rest.slice(0, rest.indexOf(':')); (plis[pid] = plis[pid] || []).push(v); }
@@ -81,6 +82,7 @@
     });
     d.w = ws.sort(byI).map(function(x) { return { k: x.k, n: x.n }; });
     d.fs = fs.sort(byI).map(function(x) { return x.id; });
+    d.t = ts.sort(byI).map(function(x) { return { id: x.id, n: x.n, m: x.m || [], ms: x.ms || [], b: x.b || [] }; });
     d.f = d.fs[0] || '';
     Object.keys(L).forEach(function(kind) { d[kind] = L[kind].sort(byI).map(function(x) { return copy(x, {}); }); });
     d.pl = Object.keys(pls).map(function(id) { return pls[id]; }).sort(byI).map(function(p) {

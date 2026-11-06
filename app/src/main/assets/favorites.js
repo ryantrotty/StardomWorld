@@ -18,11 +18,12 @@
   function toast(m) { try { if (H.logDebug) H.logDebug(m); } catch (e) {} }
   function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
 
-  // ---- store: { w: [{k, n}], fs: ['faction id', ...] (f = the first), later: [{id, href, title, bg}] }
+  // ---- store: { w: [{k, n}], t: [{id, n, m, ms, b}] (tag teams), fs: ['faction id', ...] (f = the first), later: [{id, href, title, bg}] }
   function load() {
     var d = {};
     try { d = JSON.parse(lsGet(KEY) || '{}') || {}; } catch (e) { d = {}; }
     if (!Array.isArray(d.w)) d.w = [];
+    if (!Array.isArray(d.t)) d.t = [];
     if (!Array.isArray(d.later)) d.later = [];
     if (!Array.isArray(d.m)) d.m = [];
     if (!Array.isArray(d.s)) d.s = [];
@@ -58,6 +59,20 @@
     try { return new URL(href, location.href).searchParams.get('tvfaction') || ''; } catch (e) { return ''; }
   }
   function hasW(d, k) { for (var i = 0; i < d.w.length; i++) if (String(d.w[i].k).toLowerCase() === String(k).toLowerCase()) return i; return -1; }
+
+  // ---- tag teams: {id: the team page id, n: name, m: member names, ms: their search names, b: belts held}
+  function hasT(d, id) { for (var i = 0; i < d.t.length; i++) if (d.t[i].id === id) return i; return -1; }
+  function teamInfo(id) { try { return window.__tvTeams && window.__tvTeams.info ? window.__tvTeams.info(id) : null; } catch (e) { return null; } }
+  function toggleTeam(id) {
+    var d = load(), i = hasT(d, id), info = teamInfo(id), name = (info && info.n) || (i >= 0 ? d.t[i].n : id);
+    if (i >= 0) { d.t.splice(i, 1); save(d); toast(T('Removed ' + name + ' from My Favorites', name + ' をお気に入りから削除しました')); }
+    else if (info) { d.t.unshift({ id: id, n: info.n, m: info.m, ms: info.ms, b: info.b }); save(d); toast(T('\u2605 ' + name + ' added to My Favorites', '\u2605 ' + name + ' をお気に入りに追加しました')); }
+    try { if (window.__tvTeams && window.__tvTeams.favChanged) window.__tvTeams.favChanged(); } catch (e) {}
+    return hasT(load(), id) >= 0;
+  }
+  function memberPhoto(t, j) { var m = (t.m || [])[j] || '', s2 = (t.ms || [])[j] || ''; return (m && photo(m)) || (s2 && s2 !== m && photo(s2)) || ''; }
+  function teamInitials(n) { var p = String(n).trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
+  function teamOf(href) { try { return new URL(href, location.href).searchParams.get('tvteam') || ''; } catch (e) { return ''; } }
 
   // ---- changes (each one shows a toast)
   function toggleWrestler(k) {
@@ -137,6 +152,8 @@
     '#tv-sm-shelf .tv-fv-l{flex:1 1 auto;min-width:0;}',
     '#tv-sm-shelf .tv-fv-n{color:#F4C242;font-weight:800;font-size:18px;}',
     '#tv-sm-shelf .tv-fv-av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#2a323c center top/cover no-repeat;border:2px solid #121922;margin-left:-8px;}',
+    '#tv-sm-shelf .tv-fv-pr{display:flex;align-items:center;margin-left:4px;}',
+    '#tv-sm-shelf .tv-fv-av.tv-fv-ini{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#3B4656;}',
     '#tv-sm-shelf .tv-fv-lg{flex:0 0 auto;height:30px;max-width:130px;padding:3px 10px;border-radius:7px;background:#fff;display:flex;align-items:center;font-size:13px;font-weight:800;color:#111;}',
     '#tv-sm-shelf .tv-fv-lg.dk{background:#0f151c;}',
     '#tv-sm-shelf .tv-fv-lg img{height:100%;width:auto;max-width:110px;object-fit:contain;}',
@@ -164,6 +181,15 @@
 
   function decorate(shelf, key) {
     if (!shelf) return;
+    if (key === 'tagteams') {
+      Array.prototype.forEach.call(shelf.querySelectorAll('.tv-sm-fi[data-go]'), function(a) { var id = teamOf(a.getAttribute('data-go') || ''); if (id) a.setAttribute('data-favt', id); });
+      if (!shelf.querySelector('.tv-shl-hint')) {
+        var th = document.createElement('div');
+        th.className = 'tv-shl-hint';
+        th.textContent = T('Menu button on a team adds or removes a favorite.', 'メニューボタン：お気に入りチームの追加・削除');
+        shelf.appendChild(th);
+      }
+    }
     if (key === 'current' || key === 'factions') {
       Array.prototype.forEach.call(shelf.querySelectorAll('.tv-sm-fi[data-go]'), function(a) {
         var g = a.getAttribute('data-go') || '';
@@ -187,8 +213,8 @@
     shelf = shelf || document.getElementById('tv-sm-shelf');
     if (!shelf) return;
     var d = load();
-    Array.prototype.forEach.call(shelf.querySelectorAll('[data-favw],[data-favf]'), function(a) {
-      var on = a.hasAttribute('data-favw') ? hasW(d, a.getAttribute('data-favw')) >= 0 : d.fs.indexOf(a.getAttribute('data-favf')) >= 0;
+    Array.prototype.forEach.call(shelf.querySelectorAll('[data-favw],[data-favf],[data-favt]'), function(a) {
+      var on = a.hasAttribute('data-favw') ? hasW(d, a.getAttribute('data-favw')) >= 0 : a.hasAttribute('data-favt') ? hasT(d, a.getAttribute('data-favt')) >= 0 : d.fs.indexOf(a.getAttribute('data-favf')) >= 0;
       a.classList.toggle('tv-fav-on', !!on);
     });
   }
@@ -393,11 +419,15 @@
       if (t && t.closest('#tv-sm-shelf')) { toggleWrestler(t.getAttribute('data-favw')); mark(); return true; }
       t = el.closest('[data-favf]');
       if (t && t.closest('#tv-sm-shelf')) { setFaction(t.getAttribute('data-favf')); mark(); return true; }
+      // a tag team: its menu row, its tile on All Tag Teams, or the top of its own page
+      t = el.closest('[data-favt]');
+      if (t && (t.closest('#tv-sm-shelf') || t.closest('#tv-tt'))) { toggleTeam(t.getAttribute('data-favt')); mark(); return true; }
       // on the My Favorites page
       t = el.closest('#tv-fp [data-fk]');
       if (t) {
         var fk = t.getAttribute('data-fk'), fv = t.getAttribute('data-fv') || '', d = load(), ix;
-        if (fk === 'w') { ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
+        if (fk === 't') { ix = hasT(d, fv); if (ix >= 0) { var tn = d.t[ix].n; d.t.splice(ix, 1); save(d); toast(T('Removed ' + tn + ' from My Favorites', tn + ' をお気に入りから削除しました')); } }
+        else if (fk === 'w') { ix = hasW(d, fv); if (ix >= 0) { d.w.splice(ix, 1); save(d); toast(T('Removed ' + nameFor(fv) + ' from My Favorites', nameFor(fv) + ' をお気に入りから削除しました')); } }
         else if (fk === 'f') { ix = d.fs.indexOf(fv); if (ix >= 0) { var fo = facById(fv); d.fs.splice(ix, 1); save(d); toast(T((fo ? fo.name : 'Faction') + ' removed from My Favorites', (fo ? fo.name : 'ユニット') + ' をお気に入りから削除しました')); } }
         else if (ARR[fk] || fk === 'pi') { var vi = cardInfo([t]); if (vi) { if (fk === 'pi') vi.fromPl = PLI; popShow(vi); } return true; }
         else if (fk === 'p') { var pi = parseInt(fv, 10); if (d.pl[pi]) popShow({ title: d.pl[pi].name, href: '', id: '', bg: '', card: null }, 'plopts', { kind: 'opts', idx: pi }); return true; }
@@ -422,11 +452,20 @@
     function n(v) { return '<span class="tv-fv-n">' + v + '</span>'; }
     var av = '';
     d.w.slice(0, 4).forEach(function(w) { var u = photo(w.k); if (u) av += '<span class="tv-fv-av" style="background-image:url(' + u + ')"></span>'; });
+    // tag teams: the newest team's members, as a paired photo (initials without photos)
+    var tav = '';
+    d.t.slice(0, 1).forEach(function(t) {
+      tav += '<span class="tv-fv-pr">' + (t.m || []).slice(0, 2).map(function(m, j) {
+        var u = memberPhoto(t, j);
+        return u ? '<span class="tv-fv-av" style="background-image:url(' + u + ')"></span>' : '<span class="tv-fv-av tv-fv-ini">' + esc(teamInitials(m)) + '</span>';
+      }).join('') + '</span>';
+    });
     var facPage = fac && fac.members && fac.members.length ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) : '/mypage?tvfav=1';
     var lg = fac ? logo(fac.id) : '';
     var facRight = fac ? '<span class="tv-fv-lg' + (fac.plate === 'dark' ? ' dk' : '') + '">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</span>' + (d.fs.length > 1 ? n(d.fs.length) : '') : '<span style="color:#9aa6b4;font-size:15px">' + esc(T('none yet', 'なし')) + '</span>';
     var colA = '<div class="tv-fv-k">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' +
       row('/mypage?tvfav=wrestlers', T('Wrestlers', 'お気に入り選手'), av + n(d.w.length)) +
+      row('/mypage?tvfav=teams', T('Tag Teams', 'タッグチーム'), tav + n(d.t.length)) +
       row(facPage, d.fs.length > 1 ? T('My Factions', 'お気に入りユニット') : T('My Faction', 'お気に入りユニット'), facRight) +
       row('/mypage?tvfav=m', T('Matches', '試合'), n(d.m.length)) +
       row('/mypage?tvfav=s', T('Shows', '大会'), n(d.s.length));
@@ -451,7 +490,7 @@
       '<div style="display:grid;grid-template-columns:1.15fr 1fr 1.05fr;gap:22px;"><div>' + colA + '</div><div>' + colB + '</div><div>' + colC + '</div></div>';
   }
 
-  window.__tvFav = { popShow: popShow, shelfHtml: shelfHtml, decorate: decorate, mark: mark, load: load, toggleWrestler: toggleWrestler, setFaction: setFaction };
+  window.__tvFav = { popShow: popShow, shelfHtml: shelfHtml, decorate: decorate, mark: mark, load: load, toggleWrestler: toggleWrestler, setFaction: setFaction, toggleTeam: toggleTeam, hasTeam: function(id) { return hasT(load(), id) >= 0; } };
   window.__tvMenuKey = menuKey;
 
   // =============================================================== the My Favorites page
@@ -459,7 +498,7 @@
   var PARAMS = null;
   try { if (location.pathname === '/mypage') { PARAMS = new URLSearchParams(location.search); P = PARAMS.get('tvfav'); } } catch (e) { P = null; }
   if (!P) return;
-  MODE = ({ later: 'later', wrestlers: 'wrestlers', m: 'm', s: 's', pl: 'pl', plall: 'plall' })[P] || 'home';
+  MODE = ({ later: 'later', wrestlers: 'wrestlers', teams: 'teams', m: 'm', s: 's', pl: 'pl', plall: 'plall' })[P] || 'home';
   PLI = parseInt(PARAMS.get('pi') || '0', 10) || 0;
   
 
@@ -582,6 +621,14 @@
     '.tv-fp-ph{position:relative;width:100%;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:#fff center top/cover no-repeat;}',
     '.tv-fp-mono{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:54px;font-weight:800;color:#fff;}',
     '.tv-fp-cn{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 7px 8px;background:linear-gradient(0deg,rgba(0,0,0,.88),rgba(0,0,0,0));font-size:16px;font-weight:700;line-height:1.15;}',
+    // tag team pair card: two halves of the wrestler card, the team name over the photos, members underneath
+    '.tv-fp-card.tv-fp-pc{flex:0 0 324px;}',
+    '.tv-fp-pc .tv-fp-pr{position:relative;display:flex;width:100%;aspect-ratio:3/2;border-radius:8px;overflow:hidden;background:#172029;}',
+    '.tv-fp-pc .tv-fp-half{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;background:#fff center top/cover no-repeat;font-size:54px;font-weight:800;color:#fff;}',
+    '.tv-fp-pc .tv-fp-half + .tv-fp-half{border-left:3px solid #161F2A;}',
+    '.tv-fp-pc .tv-fp-cn{padding:26px 12px 9px 12px;}',
+    '.tv-fp-pc .tv-fp-cn .a{font-size:20px;font-weight:900;line-height:1.1;}',
+    '.tv-fp-pc .tv-fp-cn .b{font-size:13px;font-weight:600;color:#C9D2DC;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '.tv-fp-more{flex:0 0 auto;font-size:18px;font-weight:800;color:#F4C242;white-space:nowrap;}',
     '.tv-fp-sec{padding:6px 10px 12px 10px;}',
     '.tv-fp-bands{display:grid;gap:16px 20px;}',
@@ -655,6 +702,16 @@
     var inner = u ? '<div class="tv-fp-ph" style="background-image:url(' + u + ');"><div class="tv-fp-cn">' + esc(n) + '</div></div>'
       : '<div class="tv-fp-ph" style="background:linear-gradient(160deg,hsl(' + hueFor(n) + ',70%,45%),hsl(' + ((hueFor(n) + 40) % 360) + ',60%,25%));"><div class="tv-fp-mono">' + esc(initials(n)) + '</div><div class="tv-fp-cn">' + esc(n) + '</div></div>';
     return '<a class="tv-fp-card" tabindex="0" data-fk="w" data-fv="' + esc(w.k) + '" href="' + esc(absUrl(wrestlerPath(w.k))) + '">' + inner + '</a>';
+  }
+  function teamCardHtml(t) {
+    var halves = (t.m || []).slice(0, 2).map(function(m, j) {
+      var u = memberPhoto(t, j);
+      return u ? '<div class="tv-fp-half" style="background-image:url(' + u + ');"></div>'
+        : '<div class="tv-fp-half" style="background:linear-gradient(160deg,hsl(' + hueFor(m) + ',70%,45%),hsl(' + ((hueFor(m) + 40) % 360) + ',60%,25%));">' + esc(teamInitials(m)) + '</div>';
+    }).join('');
+    var sub = (t.m || []).join(' & ');
+    return '<a class="tv-fp-card tv-fp-pc" tabindex="0" data-fk="t" data-fv="' + esc(t.id) + '" href="' + esc(absUrl('/mypage?tvteam=' + encodeURIComponent(t.id))) + '"><div class="tv-fp-pr">' + halves +
+      '<div class="tv-fp-cn"><div class="a">' + esc(t.n) + '</div>' + (sub && sub !== t.n ? '<div class="b">' + esc(sub) + '</div>' : '') + '</div></div></a>';
   }
   function allTile(href, n) {
     return '<a class="tv-fp-t tv-fp-all" tabindex="0" data-fk="a" href="' + esc(href) + '"><span style="text-align:center">' + esc(T('View All', 'すべて見る')) + '<b>' + n + ' &rsaquo;</b></span></a>';
@@ -763,6 +820,8 @@
       body += topRow(d);
       body += head(T('FAVORITE WRESTLERS', 'お気に入り選手'), d.w.length);
       body += '<div class="tv-fp-track" data-row="w">' + (d.w.length ? d.w.slice(0, 14).map(cardHtml).join('') + (d.w.length > 14 ? allTile(absUrl('/mypage?tvfav=wrestlers'), d.w.length) : '') : emptyHtml(T('No favorite wrestlers yet. Open Wrestlers in the menu, highlight a name and press the Menu button.', '選手はまだありません。メニューの選手から選び、メニューボタンを押してください。'))) + '</div>';
+      body += head(T('FAVORITE TAG TEAMS', 'お気に入りタッグチーム'), d.t.length);
+      body += '<div class="tv-fp-track" data-row="t">' + (d.t.length ? d.t.slice(0, 8).map(teamCardHtml).join('') + (d.t.length > 8 ? allTile(absUrl('/mypage?tvfav=teams'), d.t.length) : '') : emptyHtml(T('No favorite tag teams yet. Open Tag Teams in the menu, highlight a team and press the Menu button.', 'タッグチームはまだありません。メニューのタッグチームから選び、メニューボタンを押してください。'))) + '</div>';
       body += head(T('WATCH LATER', 'あとで見る'), d.later.length);
       body += row('l', vtiles(d.later, 'l', 11), d.later.length > 11 ? allTile(absUrl('/mypage?tvfav=later'), d.later.length) : '', d.later.length, EMPTY_L);
       body += head(T('RECENTLY WATCHED', '最近視聴した動画'), hist.length ? hist.length : '');
@@ -773,6 +832,9 @@
       body += row('m', vtiles(d.m, 'm', 11), d.m.length > 11 ? allTile(absUrl('/mypage?tvfav=m'), d.m.length) : '', d.m.length, T('No favorite matches yet. Press the Menu button on a video or while watching.', '試合はまだありません。'));
       body += head(T('FAVORITE SHOWS', 'お気に入りの大会'), d.s.length);
       body += row('s', vtiles(d.s, 's', 11), d.s.length > 11 ? allTile(absUrl('/mypage?tvfav=s'), d.s.length) : '', d.s.length, T('No favorite shows yet. Press the Menu button on a show (video set).', '大会はまだありません。'));
+    } else if (MODE === 'teams') {
+      title = T('Favorite Tag Teams', 'お気に入りタッグチーム');
+      body += d.t.length ? '<div class="tv-fp-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">' + d.t.map(teamCardHtml).join('') + '</div>' : emptyHtml(T('No favorite tag teams yet.', 'まだありません'));
     } else if (MODE === 'later') {
       title = T('Watch Later', 'あとで見る'); body += gridOf(d.later, 'l');
     } else if (MODE === 'm') {
@@ -805,14 +867,14 @@
     hint();
   }
   function firstRealTarget(all) {
-    for (var i = 0; i < all.length; i++) if (/^(w|l|f|m|s|p|pi)$/.test(all[i].getAttribute('data-fk'))) return all[i];
+    for (var i = 0; i < all.length; i++) if (/^(w|t|l|f|m|s|p|pi)$/.test(all[i].getAttribute('data-fk'))) return all[i];
     return all[0] || null;
   }
   function focusables() { return Array.prototype.slice.call(root.querySelectorAll('[data-fk]')); }
   function hint() {
     var el = document.getElementById('tv-fp-hint'), ae = document.activeElement, fk = ae && ae.getAttribute ? ae.getAttribute('data-fk') : '';
     if (!el) return;
-    el.textContent = (fk === 'w' || fk === 'f' || fk === 'r') ? T('Menu button: remove', 'メニューボタン：削除')
+    el.textContent = (fk === 'w' || fk === 't' || fk === 'f' || fk === 'r') ? T('Menu button: remove', 'メニューボタン：削除')
       : (fk === 'p' ? T('Menu button: rename or remove', 'メニューボタン：名前変更／削除')
       : (fk === 'l' || fk === 'm' || fk === 's' || fk === 'pi') ? T('Menu button: options', 'メニューボタン：オプション')
       : (fk === 'h' ? T('Menu button: add to Favorites or Watch Later', 'メニューボタン：お気に入り／あとで見る') : ''));

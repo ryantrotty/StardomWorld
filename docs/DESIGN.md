@@ -83,6 +83,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.
 - Native overlay and guide use Android sp and the system font.
 - Scrollbars are hidden on the menu, shelf and drop-downs.
+- Menu spacing (2.30.1), so every entry fits a 720-high screen without scrolling: items 44 high with 1 px between them (sub-items 42), text sizes unchanged (25/600, sub-items 23/500); logo row 48 high with the logo at most 36 high; account divider 4 px above and below; language toggle 40 high with 17/700 labels; panel padding 18 px top and bottom. From 2.30.2 any spare height is shared evenly above, between and below the entries (logo row included), so a tall screen gets even gaps rather than space around the logo; a short screen scrolls from the top as before.
 
 ## Checking the code
 
@@ -139,3 +140,25 @@ Video index log (2.26.0): with a log address the panel heading reads VIDEO INDEX
 Video index panel removed (2.26.1): video pages no longer show the dry-run / log panel; the index still reads and sends in the background.
 
 Favorites sync status (2.27.0, private builds): on the My Favorites page a 13/700 line sits after the title, grey #9AA6B4 ("Synced 2 min ago"), error red #FF7A66 when not synced. The Account menu gains "Send this TV's favorites to sync" in the standard shelf item style; the first OK changes its text to a confirmation, the second sends.
+
+Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu group after Factions.
+- Shelf (concept A): the "All Tag Teams" bar (tv-shl-all) on top, then five era columns newest on the left. Each column has an era header card (as in the Years shelf, with the team count), up to five team items (16/700 name, 12/600 grey members or faction line, look A focus) and a gold "+N more" item that opens All Tag Teams for that era.
+- All Tag Teams page (`/mypage?tvteams=1[&era=n|&belt=goddess|newblood]`): the Top Rated page frame. Filter chips (2.28.1: 44 high, radius 10, 2 px border, 17/700; chosen = look B, focus = gold border) run All (with the count), then the eras newest first with short names (kanji plus "New Horizons", "Draft Years", "Threedom", "Genesis") so they fit on one line, then Goddess and NEW BLOOD, which carry a small drawn belt (30 x 16, gold line, ink on the chosen chip) and sit 14 px further along so they read apart from the eras. A grey count line sits under the grid. Team rows sit in three columns: #161F2A with no visible border at rest, radius 8, 66 high, look A focus, 17/700 name, 13/600 grey line, and tags (CHAMPIONS gold fill with ink text; GODDESS gold outline with ×n; NEW BLOOD grey outline).
+- Team page (`/mypage?tvteam=<id>`): the Faction home layout.
+  - Header: two 140 px member circles (the private build's wrestler photos, else initials on a dashed circle, marked notranslate so the page translator leaves them alone), MEMBERS / FACTION / FIRST TITLE / REIGNS / DEFENCES facts (13/700 grey over 22/700), and member and faction buttons (look A).
+  - TITLES HELD: two-column belt cards (120 x 66 belt, 19/700, 15/600, 13/700 gold), opening that reign on the lineage page.
+  - TAG MATCHES: four-across video cards (look C ring). A gold date badge sits top right, and an orange TEAMMATES tag top left when the video index confirms the two were on the same side. A "More tag matches" tile loads further pages; it stays in place (with focus) while the next page loads. With nothing to show yet, a plain grey line (16 px #9AA6B4, the same as the championship pages' "Press OK on this reign" note) sits above the More tile, and the header reads "looking for videos" or "none found yet".
+  - The search lines stay on screen at the bottom (debug panel style).
+- Arrow keys move to the nearest item in that direction; Left at the left edge opens the menu.
+- Menu shelves (2.30.3): Up and Down treat a bar wider than 60% of the shelf as straight above or below when it spans the starting point, so All Tag Teams goes Down to My Tag Teams, not the first era.
+
+Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
+
+Tag team favorites (2.30.0, kept in tvFavV1 as `t`, newest first, no limit):
+- The Menu button adds or removes a team on its Tag Teams shelf row, its All Tag Teams tile, or the top of its team page (the video cards keep their own Menu pop-up). A toast confirms, as for wrestlers.
+- Team page: a "☆ Add to My Favorites" button after the member and faction buttons (look A). Once added it reads "★ In My Favorites" with gold text on a dark gold tint (#2A2410); focus is still only the gold border.
+- Favorites are marked with a gold ★ before the name: Tag Teams shelf rows and All Tag Teams tiles. The shelf's top row adds a "★ My Tag Teams" bar (tv-shl-all) with the count, 10 px under All Tag Teams (2.30.3); it opens `/mypage?tvfav=teams`. The shelf hint reads "Menu button on a team adds or removes a favorite."
+- My Favorites page: FAVORITE TAG TEAMS row under Favorite Wrestlers, up to 8 then a View All tile. Pair card (look E, gold frame): 324 wide, a 3:2 picture split into two member halves (photos in private builds, else 54px initials on the wrestler cards' colour wash), no belt tag (removed in 2.30.1), team name 20/900 and members 13/600 over the dark fade. `/mypage?tvfav=teams` shows them three across. Menu on a card removes it.
+- My Favorites menu: a "Tag Teams" row under Wrestlers in COLLECTIONS, with the newest team's two mini avatars and the count.
+
+Team page searches (2.28.4, words from 2.29.3): the words are the filter bar's "A Tag Team B" with the Wrestler filter's names (a title history name not on the roster goes through the history's "alias" spellings); one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.

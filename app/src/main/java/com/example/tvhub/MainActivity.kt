@@ -2932,15 +2932,25 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
-        fun favSync(reqId: String, payload: String) {
+        fun favSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("fav_replace", "fav_put", "fav_since"), "__tvFavSyncReply")
+
+        // Tag team match lists (private builds): a team page reads and saves its 2-on-2 matches in the sheet's
+        // "teammatches" tab, so TVs reuse them instead of searching the site again. Replies go to __tvTeamSyncReply.
+        @android.webkit.JavascriptInterface
+        fun teamSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("tm_get", "tm_put"), "__tvTeamSyncReply")
+
+        // One request to the private sheet: only the listed actions, the key added here, the reply handed to `callback`.
+        private fun sheetCall(reqId: String, payload: String, allowed: Set<String>, callback: String) {
             fun reply(text: String) {
-                val js = "window.__tvFavSyncReply && window.__tvFavSyncReply(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
+                val js = "window." + callback + " && window." + callback + "(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
                 this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
             }
             if (!videoIndexOn()) { reply("{\"ok\":false,\"error\":\"sync is off in this build\"}"); return }
             val body = try { org.json.JSONObject(payload) } catch (_: Exception) { reply("{\"ok\":false,\"error\":\"bad request\"}"); return }
             val action = body.optString("action")
-            if (action != "fav_replace" && action != "fav_put" && action != "fav_since") { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
+            if (action !in allowed) { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
             if (payload.length > 2_000_000) { reply("{\"ok\":false,\"error\":\"too big\"}"); return }
             Thread {
                 try {
@@ -2963,6 +2973,12 @@ class MainActivity : Activity() {
                 }
             }.start()
         }
+
+        // Tag Teams settings (assets/tag_teams.json): eras, faction-only pair names, site spellings, extra teams.
+        @android.webkit.JavascriptInterface
+        fun tagTeamsJson(): String = try {
+            this@MainActivity.assets.open("tag_teams.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
 
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
@@ -4935,17 +4951,20 @@ class MainActivity : Activity() {
           st.textContent = [
             '#tv-sm-scrim{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,8,12,.66);z-index:99998;opacity:0;pointer-events:none;transition:opacity .18s;}',
             'html.tv-sm-open #tv-sm-scrim{opacity:1;}',
-            '#tv-sm{position:fixed;left:0;top:0;bottom:0;width:430px;box-sizing:border-box;background:#0F151C !important;border-right:1px solid #222b36;z-index:99999;transform:translateX(-104%);transition:transform .18s;padding:26px 24px 22px 24px;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#fff;}',
+            '#tv-sm{position:fixed;left:0;top:0;bottom:0;width:430px;box-sizing:border-box;background:#0F151C !important;border-right:1px solid #222b36;z-index:99999;transform:translateX(-104%);transition:transform .18s;padding:18px 24px 18px 24px;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#fff;}',
             'html.tv-sm-open #tv-sm{transform:none;}',
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
-            '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:6px 0 10px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
-            '#tv-sm .tv-sm-logorow{margin:auto 0;padding:4px 0;}',
+            '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:4px 0 8px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
+            // Spare height is shared evenly above, between and below the entries (auto margins are 0 when the list is full, so it still scrolls from the top).
+            '#tv-sm .tv-sm-list > *{margin-top:auto !important;}',
+            '#tv-sm .tv-sm-list > *:last-child{margin-bottom:auto !important;}',
+            '#tv-sm .tv-sm-logorow{margin:0;padding:4px 0;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
-            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:54px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:2px 0;width:100%;}',
+            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:1px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
             '#tv-sm *:focus, #tv-sm-shelf *:focus{box-shadow:none !important;outline:none !important;}',
-            '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:48px;}',
+            '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:42px;}',
             '#tv-sm .tv-sm-subs{margin-left:24px;padding-left:10px;border-left:2px solid #2a323c;display:none;}',
             '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-subs{display:block;}',
             '#tv-sm .tv-sm-grp.tv-sm-expanded > .tv-sm-item{color:#F4C242 !important;}',
@@ -4959,8 +4978,8 @@ class MainActivity : Activity() {
             '#tv-sm .tv-sm-formhost form, #tv-sm .tv-sm-formhost .input-group{display:block !important;width:100% !important;max-width:none !important;min-width:0 !important;flex:1 1 auto !important;height:46px !important;margin:0 !important;padding:0 !important;background:transparent !important;border:0 !important;}',
             '#tv-sm .tv-sm-formhost input[type="text"], #tv-sm .tv-sm-formhost input.form-control, #tv-sm .tv-sm-formhost input[name="q[keyword]"]{display:block !important;width:100% !important;height:46px !important;padding:0 !important;margin:0 !important;background:transparent !important;border:0 !important;border-radius:0 !important;outline:none !important;box-shadow:none !important;color:#ffffff !important;font-size:22px !important;font-family:inherit !important;}',
             '#tv-sm .tv-sm-formhost input[type="submit"], #tv-sm .tv-sm-formhost button, #tv-sm .tv-sm-formhost .input-group-btn, #tv-sm .tv-sm-formhost .input-group-append{display:none !important;}',
-            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:58px;}',
-            '#tv-sm .tv-sm-home img{max-height:44px;width:auto;object-fit:contain;}',
+            '#tv-sm .tv-sm-home{justify-content:flex-start;gap:18px;margin:0;min-height:48px;}',
+            '#tv-sm .tv-sm-home img{max-height:36px;width:auto;object-fit:contain;}',
             '#tv-sm .tv-sm-home .tv-sm-chev{margin-left:auto;}',
             '#tv-sm-shelf{position:fixed;z-index:100000;box-sizing:border-box;left:430px;padding:16px 18px;border-radius:0 14px 14px 0;background:#121922;border:2px solid #2a323c;border-left:4px solid #F4C242;color:#ffffff;font-family:Arial,Helvetica,sans-serif;overflow-y:auto;scrollbar-width:none;}',
             '#tv-sm-shelf::-webkit-scrollbar{display:none;}',
@@ -5107,15 +5126,15 @@ class MainActivity : Activity() {
             '#tv-rem-toast .tv-rt-s{font-size:13px;color:#c9d2dc;}',
             '#tv-sm-toast{position:absolute;left:24px;right:24px;bottom:86px;padding:9px 12px;border-radius:10px;background:#172029;border:2px solid #2a323c;color:#F4C242;font-size:15px;font-weight:700;text-align:center;pointer-events:none;transition:opacity .3s;}',
             '#tv-sm .tv-sm-homegrp.tv-sm-expanded > .tv-sm-home svg:first-child{stroke:#F4C242;}',
-            '#tv-sm .tv-sm-acctgrp{border-top:1px solid #222b36;margin-top:8px;padding-top:8px;}',
+            '#tv-sm .tv-sm-acctgrp{border-top:1px solid #222b36;margin-top:4px;padding-top:4px;}',
             '#tv-sm .tv-sm-acct{color:#F4C242 !important;}',
             '#tv-sm .tv-sm-acl{display:flex;align-items:center;gap:12px;}',
             '#tv-sm .tv-sm-acct .tv-sm-person{flex:0 0 auto;}',
-            '#tv-sm .tv-sm-foot{position:relative;border-top:1px solid #222b36;padding-top:14px;display:flex;align-items:center;gap:10px;}',
+            '#tv-sm .tv-sm-foot{position:relative;border-top:1px solid #222b36;padding-top:10px;display:flex;align-items:center;gap:10px;}',
             '#tv-sm .tv-sm-ver{position:absolute;left:0;right:0;bottom:-19px;height:14px;line-height:14px;text-align:center;font-size:12px;color:#7d8794;pointer-events:none;}',
-            '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:48px;border:3px solid #2a323c !important;border-radius:26px;overflow:hidden;justify-content:stretch;}',
+            '#tv-sm .tv-sm-lang{flex:1 1 auto;display:flex !important;width:100%;padding:0;gap:0;min-height:40px;border:3px solid #2a323c !important;border-radius:22px;overflow:hidden;justify-content:stretch;}',
             '#tv-sm .tv-sm-lang:focus{border-color:#F4C242 !important;}',
-            '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:10px 16px;font-size:20px;font-weight:700;color:#c9d2dc;}',
+            '#tv-sm .tv-sm-lang span{flex:1 1 50%;text-align:center;padding:7px 16px;font-size:17px;font-weight:700;color:#c9d2dc;}',
             '#tv-sm .tv-sm-lang span.tv-sm-on{background:#F4C242;color:#0B1118;}',
             '#tv-sm-tab{position:fixed;left:0;top:42%;width:26px;height:110px;border-radius:0 12px 12px 0;background:rgba(17,23,30,.92);border:1px solid #2a323c;border-left:0;z-index:99990;display:flex;align-items:center;justify-content:center;pointer-events:none;}',
             'html.tv-sm-open #tv-sm-tab{display:none;}',
@@ -5212,6 +5231,7 @@ class MainActivity : Activity() {
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
+            h += group(T('Tag Teams', 'タッグチーム'), [['All Tag Teams', '/mypage?tvteams=1', 'すべてのタッグチーム']], 'tagteams');
             if (matchTypeGroups().length) h += group(T('Matches', '試合'), matchTypeRows(), 'matchtypes');
             var showsRow = group(T('Shows', '番組'), showsList(), 'shows');
             var showsPill = schedPillHtml();
@@ -5571,6 +5591,10 @@ class MainActivity : Activity() {
                   '</div></div>';
               }
             }
+            else if (key === 'tagteams') {
+              w = 1000;
+              try { h = window.__tvTeams ? window.__tvTeams.shelfHtml() : ''; } catch (e) { h = ''; }
+            }
             else if (key === 'favs') {
               w = 1000;
               try { h = window.__tvFav ? window.__tvFav.shelfHtml() : ''; } catch (e) { h = ''; }
@@ -5665,8 +5689,11 @@ class MainActivity : Activity() {
                   if (adx < rowBs) { rowBs = adx; rowBest = it; }
                 }
               }
-              if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
-              else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
+              // A wide bar above or below (All Tag Teams over My Tag Teams) counts as straight down when it spans
+              // this point, not by its far-off centre.
+              var spanDx = r.width > shW * 0.6 ? Math.max(0, r.left - cx, cx - r.right) : Math.abs(dx);
+              if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = spanDx; }
+              else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = spanDx; }
               else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
               else { if (dx >= -4) return; prim = -dx; orth = Math.abs(dy); }
               var sc = prim + orth * 2;
@@ -8066,14 +8093,14 @@ class MainActivity : Activity() {
   })();
   function mtFits(title) {
     if (!MTR) return true;
-    var t = String(title || '');
+    var t = String(title || '').replace(/[\uff01-\uff5e]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); });   // ４ＷＡＹ reads as 4WAY
     if (!t.replace(/\s+/g, '')) return true;   // no title to judge by: keep it
     for (var i = 0; i < MTR.all.length; i++) if (!MTR.all[i].test(t)) return false;
     for (var j = 0; j < MTR.none.length; j++) if (MTR.none[j].test(t)) return false;
     return true;
   }
   function itemTitle(el) {
-    var t = el.querySelector('h3, .ttl-xs, .content-info-box');
+    var t = el.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box');
     return (t ? t.textContent : el.textContent) || '';
   }
   function idOf(el) {
@@ -8083,11 +8110,20 @@ class MainActivity : Activity() {
   }
   function narrowList() {
     if (!MTR) return;
-    var list = document.querySelectorAll('.content-list-item');
+    // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
+    var list = document.querySelectorAll('.content-list-item, [class*="content-list"] article, #result article');
     Array.prototype.forEach.call(list, function(el) {
       if (el.__tvMt || el.closest('#tv-fac')) return;
+      if (el.tagName === 'ARTICLE' && el.parentNode && el.parentNode.closest('.content-list-item')) return;   // judged with its card
+      // The site's pager adds a card first and fills its title a moment later: judge it only once the title is there.
+      var tt = itemTitle(el);
+      if (!tt.replace(/\s+/g, '')) return;
       el.__tvMt = 1;
-      if (!mtFits(itemTitle(el)) && el.parentNode) el.parentNode.removeChild(el);
+      if (mtFits(tt) || !el.parentNode) return;
+      var box = el.parentNode;
+      box.removeChild(el);
+      // A bare card's empty column wrapper goes too, so the grid doesn't keep a gap.
+      if (el.tagName === 'ARTICLE' && !box.children.length && !/content-list(?!-)/.test(box.className || '') && box.id !== 'result' && box.parentNode) box.parentNode.removeChild(box);
     });
   }
   function loadAlts() {
@@ -9461,6 +9497,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(assetText("lineage.js"), null)
+        view.evaluateJavascript(assetText("teams.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)

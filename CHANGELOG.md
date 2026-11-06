@@ -2,6 +2,109 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.30.3
+
+- Tag Teams menu: Down from All Tag Teams now goes to My Tag Teams (it skipped to New Horizons), and Up from the era headers comes back through My Tag Teams. Menu shelves now treat a wide bar above or below as straight up or down when it spans the item you're on; other shelves move as before.
+- Tag Teams menu: a 10 px gap between the All Tag Teams and My Tag Teams bars, so their outlines no longer touch.
+
+## 2.30.2
+
+- Menu: spare height is now spread evenly between all the entries (and above the logo and below Community), instead of collecting around the logo. If the entries don't fit, the menu still scrolls from the top.
+
+## 2.30.1
+
+- My Favorites: the Goddess / NEW BLOOD tag is removed from the tag team cards.
+- Menu: every entry, down to Community and the language toggle, now fits on screen without scrolling (checked at 1280 x 720 when signed in). Items are 44 high (were 54) with less space between them; the text size is unchanged. The logo is 18% smaller (36 high, was 44), the language toggle is 17% shorter (40 high, was 48) with 17px labels (were 20px), and the divider and panel padding are trimmed.
+
+## 2.30.0
+
+- Tag teams can be added to My Favorites, the same way as wrestlers.
+  - The Menu button adds or removes a team on its Tag Teams menu row, its All Tag Teams tile, or the top of its team page. Team pages also have an "Add to My Favorites" button, which reads "In My Favorites" once the team is added.
+  - Favorite teams get a gold ★ in the Tag Teams menu and on All Tag Teams. The Tag Teams menu has a new "My Tag Teams" bar.
+  - My Favorites has a new FAVORITE TAG TEAMS row under Favorite Wrestlers, with pair cards: both members' photos (initials in public builds), the team name and members. Past 8 teams a View All tile opens the full list (`/mypage?tvfav=teams`). Menu on a card removes it.
+  - The My Favorites menu has a Tag Teams row under Wrestlers.
+- Favorites sync (private builds) carries tag teams too. Paste scripts/video_index_log.gs into Apps Script and deploy a new version; until then, the sheet skips team favorites and everything else syncs as before.
+
+## 2.29.6
+
+- Filter bar, Match type: cards that slipped past the match-type filter are now filtered too. On "Momo Watanabe, Tag team, With Utami Hayashishita" this left 6-person tag matches and whole shows on screen.
+  - A card whose title hadn't been filled in yet was kept and never checked again. It is now checked once its title is there.
+  - Cards that progressive loading adds as bare `<article>` cards (as the team pages already read them) are checked as well. Their empty column is removed too.
+
+## 2.29.5
+
+- Sheet script: reads (tm_get, tm_export, fav_since) no longer wait for the sheet's lock, so a team page can read its list while something else is writing. Writes wait up to 25 s and then answer "busy", instead of failing with Apps Script's "Lock timeout" error. Paste scripts/video_index_log.gs into Apps Script and deploy a new version.
+- Team pages: matches the sheet couldn't take are kept on the TV for that team, shown on the next visit, and sent with the next sheet read. The lines under the grid say "sheet busy, kept on this TV" and later "sent N matches kept on this TV".
+
+## 2.29.4
+
+- Team pages: a member whose title history name isn't on the roster now uses the roster name of one of the history's other spellings ("alias" in the lineage files). Rice or Bread now searches "Hanako Tag Team Waka Tsukiyama" (it searched "Wakana Tsukiyama" and found no videos). Its member button opens the Waka Tsukiyama search too.
+- The video index side check also accepts those other spellings.
+
+## 2.29.3
+
+- Team pages search the same words as the filter bar's "Wrestler: A, Match type: Tag team, Competitors: B" (for example "Natsuko Tora Tag Team Ruaka"), using the Wrestler filter's names from factions.json. Before, BMI2000 searched "Natsuko Toura Ruaka Tag Team", a spelling the site's search doesn't match well, so most of its tag matches were missed. The "Natsuko Toura" spelling is removed from tag_teams.json; other spellings there are tried second.
+- The member buttons on a team page open the same search as the Wrestler filter.
+- Team match lists: the sheet now returns each row's search words (tm_get). A team saved with other words keeps its saved matches and searches page 1 of the new words once. Paste scripts/video_index_log.gs into Apps Script and deploy a new version; with the old script, saved places are used as before.
+
+## 2.29.2
+
+- Team pages: with no tag matches to show yet, the Tag Matches section works like a championship reign. A plain grey line says what to do ("Press OK on More tag matches to search the next page"), "Looking for tag matches..." while the first search runs, or "No 2-on-2 tag matches were found" once every page is searched. The dashed box is gone. The header reads "looking for videos" or "none found yet" in place of "0 tag matches".
+
+## 2.29.1
+
+- Team pages: member initials are no longer translated by the page translator ("NT" became "Windows NT" on the BMI2000 page). The circles also clip any text that is too long.
+- Team pages: when a search page keeps no 2-on-2 matches, the More tag matches tile now shows, instead of a "Searching…" box that never finished. The tile stays in place, and keeps focus, while the next page loads.
+- Team match lists: a saved row with no matches yet, whose search has moved past page 1, is read from the sheet instead of searching page 1 again.
+
+## 2.29.0
+
+- Team match lists (private builds with the log set up): each tag team's 2-on-2 matches are saved to a new `teammatches` tab in the private Google Sheet (docs/TEAM_MATCH_LISTS.md).
+  - A team page reads its saved list first and shows it straight away, so a team already searched on any of your TVs needs no site search. "More tag matches" carries on from where the last search stopped.
+  - Every searched page adds its matches to the team's row. A list older than 14 days gets its newest page searched once more, with new matches going first.
+  - Saved matches go through the same 2-on-2 rule and video index side check as fresh ones.
+  - Public builds search as in 2.28.4.
+- The sheet's script has three new actions (tm_get, tm_put, tm_export): paste scripts/video_index_log.gs into Apps Script and deploy a new version.
+- `python3 scripts/video_index_pull.py --teams` downloads every team's list for analysis.
+- Favorites sync and team lists now share one request helper in the app (no change in behaviour).
+
+## 2.28.4
+
+- Team pages make far fewer site searches. The first search runs only when the Tag Matches section is on screen, and fetches one page; each press of "More tag matches" fetches one more. The other spelling and the team name are searched only when a search finds no videos at all. Searches are at least 3 seconds apart, and results are kept for 7 days. Opening a team page now makes 1 search, where BMI2000 made 8 before.
+- Tag match rule: a title must also say tag ("Tag Team", "タッグ"), so videos such as "English" or a show's anniversary set no longer get through. Full-width letters and digits are read as plain ones, so "４ＷＡＹタッグ" counts as a 4-Way and is left out. The same applies to the filter bar's "Tag team" match type.
+
+## 2.28.3
+
+- Team pages: the header facts (MEMBERS, FACTION, FIRST TITLE, REIGNS, DEFENCES) have their sizes and spacing back; 2.28.2 dropped their styles by mistake when removing Title Matches.
+
+## 2.28.2
+
+- All Tag Teams page: the Goddess and NEW BLOOD filter chips have a small belt icon and a little more space before them, so they read as championship filters rather than eras.
+- Team pages: the Title Matches section is removed; Titles Held is followed by the tag matches.
+
+## 2.28.1
+
+- Tag Teams fix: the section couldn't read the eras, factions, match types or its own settings on the TV (it called those app functions with an extra argument, which Android refuses). So the menu shelf had no era columns, the All Tag Teams page had no era chips, and team pages didn't narrow their matches to 2-on-2. All three work now. As a safeguard, team pages also carry their own copy of the 2-on-2 rule.
+- All Tag Teams page matches the concept: one row of square-cornered chips (All with its count, the eras by short name, Goddess, NEW BLOOD), borderless team rows, and a team count under the list.
+
+## 2.28.0
+
+- Tag Teams: a new menu group after Factions.
+  - Its shelf has "All Tag Teams" on top, then one column per era, newest on the left, each with its newest champion teams and "+N more".
+  - The teams are the 39 pairs that have held the Goddess of Stardom or NEW BLOOD Tag Team belts, built from the title histories, so a new champion team appears by itself.
+  - A pair known only by its faction shows the two names with the faction underneath.
+- All Tag Teams page: every team A to Z in three columns, with filter chips (All, each era, Goddess, NEW BLOOD) and CHAMPIONS / GODDESS ×n / NEW BLOOD tags.
+- Team page:
+  - The members, their faction, first title, reigns and defences, and member and faction buttons.
+  - Titles held: each belt, with dates, days held and defences, opening that reign's lineage page.
+  - Title matches: every title win, defence and loss.
+  - Tag matches: found by searching both members' names with "Tag Team" (the site's spelling first, then the title-history spelling and the team name if needed). Only 2-on-2 matches are kept (the 2.27.2 title rule). Where the video index has the match, only those with the two on the same side are kept, marked TEAMMATES. The searches and counts stay on screen below the grid.
+- assets/tag_teams.json holds the era dates, faction-only pair names, the site's spellings (for example "Natsuko Toura") and any extra teams.
+
+## 2.27.2
+
+- Match type "Tag team" now means 2-on-2 only. The site's search for "Tag Team" also returns 6-, 8-, 10-, 12- and 14-person tag matches, 3-Way tag battles and trios, because their titles contain the same words; those are now taken out of the results by their titles (English and Japanese), including pages loaded later by scrolling. Plain "Tag Team Match" titles and tag title matches (for example NEW BLOOD Tag Team Championship Match) stay. The bigger matches are still under their own match types (6-person, 8-person and so on).
+
 ## 2.27.1
 
 - Favorites sync: PPVs the app has seen play (its own "owned" setting) are now shared too, alongside the ones marked bought by hand. Each PPV counts only until its replay window ends, as on My Favorites: an expired PPV isn't sent, and once one expires it's marked removed in the sheet and cleared from every TV.
