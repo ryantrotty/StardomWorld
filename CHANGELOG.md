@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.28.3
+
+- Team pages: the header facts (MEMBERS, FACTION, FIRST TITLE, REIGNS, DEFENCES) have their sizes and spacing back; 2.28.2 dropped their styles by mistake when removing Title Matches.
+
 ## 2.28.2
 
 - All Tag Teams page: the Goddess and NEW BLOOD filter chips have a small belt icon and a little more space before them, so they read as championship filters rather than eras.
