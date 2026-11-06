@@ -83,7 +83,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.
 - Native overlay and guide use Android sp and the system font.
 - Scrollbars are hidden on the menu, shelf and drop-downs.
-- Menu spacing (2.30.1), so every entry fits a 720-high screen without scrolling: items 44 high with 1 px between them (sub-items 42), text sizes unchanged (25/600, sub-items 23/500); logo row 48 high with the logo at most 36 high; account divider 4 px above and below; language toggle 40 high with 17/700 labels; panel padding 18 px top and bottom.
+- Menu spacing (2.30.1), so every entry fits a 720-high screen without scrolling: items 44 high with 1 px between them (sub-items 42), text sizes unchanged (25/600, sub-items 23/500); logo row 48 high with the logo at most 36 high; account divider 4 px above and below; language toggle 40 high with 17/700 labels; panel padding 18 px top and bottom. From 2.30.2 any spare height is shared evenly above, between and below the entries (logo row included), so a tall screen gets even gaps rather than space around the logo; a short screen scrolls from the top as before.
 
 ## Checking the code
 

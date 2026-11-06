@@ -4956,7 +4956,10 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
             '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:4px 0 8px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
-            '#tv-sm .tv-sm-logorow{margin:auto 0;padding:4px 0;}',
+            // Spare height is shared evenly above, between and below the entries (auto margins are 0 when the list is full, so it still scrolls from the top).
+            '#tv-sm .tv-sm-list > *{margin-top:auto !important;}',
+            '#tv-sm .tv-sm-list > *:last-child{margin-bottom:auto !important;}',
+            '#tv-sm .tv-sm-logorow{margin:0;padding:4px 0;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
             '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:1px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',

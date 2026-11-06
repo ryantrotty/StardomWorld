@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.30.2
+
+- Menu: spare height is now spread evenly between all the entries (and above the logo and below Community), instead of collecting around the logo. If the entries don't fit, the menu still scrolls from the top.
+
 ## 2.30.1
 
 - My Favorites: the Goddess / NEW BLOOD tag is removed from the tag team cards.
