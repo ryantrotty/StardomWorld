@@ -1,0 +1,10 @@
+{
+ "_note": "Tag Teams section (assets/teams.js). The teams themselves are built in the app from the Goddess of Stardom and NEW BLOOD Tag Team title histories (assets/lineage/goddess.json and newblood.json, or the daily file's copies), so a new champion team appears without editing this file. This file only adds what the histories don't say. eraStarts = the first day of eras 2 to 5 (era 1 is everything before); a team's era is the era of its first title win. factionNames = team names in the histories that are really a faction's name: such pairs are shown as their two names with the faction underneath. spell = the spelling the site uses in its video titles and search, where it differs from the title histories; the history spelling is searched too, as a second search. extra = teams that never held these titles: {name, members: [a, b], since: 'YYYY-MM-DD', faction}.",
+ "eraStarts": { "2": "2015-04-01", "3": "2018-07-01", "4": "2020-01-01", "5": "2024-03-01" },
+ "factionNames": ["Oedo Tai", "Queen's Quest", "Stars", "STARS", "Donna Del Mondo"],
+ "spell": {
+  "Natsuko Tora": "Natsuko Toura",
+  "Sakura Aya": "Aya Sakura"
+ },
+ "extra": []
+}

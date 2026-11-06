@@ -2,6 +2,20 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.28.0
+
+- Tag Teams: a new menu group after Factions.
+  - Its shelf has "All Tag Teams" on top, then one column per era, newest on the left, each with its newest champion teams and "+N more".
+  - The teams are the 39 pairs that have held the Goddess of Stardom or NEW BLOOD Tag Team belts, built from the title histories, so a new champion team appears by itself.
+  - A pair known only by its faction shows the two names with the faction underneath.
+- All Tag Teams page: every team A to Z in three columns, with filter chips (All, each era, Goddess, NEW BLOOD) and CHAMPIONS / GODDESS ×n / NEW BLOOD tags.
+- Team page:
+  - The members, their faction, first title, reigns and defences, and member and faction buttons.
+  - Titles held: each belt, with dates, days held and defences, opening that reign's lineage page.
+  - Title matches: every title win, defence and loss.
+  - Tag matches: found by searching both members' names with "Tag Team" (the site's spelling first, then the title-history spelling and the team name if needed). Only 2-on-2 matches are kept (the 2.27.2 title rule). Where the video index has the match, only those with the two on the same side are kept, marked TEAMMATES. The searches and counts stay on screen below the grid.
+- assets/tag_teams.json holds the era dates, faction-only pair names, the site's spellings (for example "Natsuko Toura") and any extra teams.
+
 ## 2.27.2
 
 - Match type "Tag team" now means 2-on-2 only. The site's search for "Tag Team" also returns 6-, 8-, 10-, 12- and 14-person tag matches, 3-Way tag battles and trios, because their titles contain the same words; those are now taken out of the results by their titles (English and Japanese), including pages loaded later by scrolling. Plain "Tag Team Match" titles and tag title matches (for example NEW BLOOD Tag Team Championship Match) stay. The bigger matches are still under their own match types (6-person, 8-person and so on).

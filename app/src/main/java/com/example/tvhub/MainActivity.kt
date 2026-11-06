@@ -2964,6 +2964,12 @@ class MainActivity : Activity() {
             }.start()
         }
 
+        // Tag Teams settings (assets/tag_teams.json): eras, faction-only pair names, site spellings, extra teams.
+        @android.webkit.JavascriptInterface
+        fun tagTeamsJson(): String = try {
+            this@MainActivity.assets.open("tag_teams.json").bufferedReader().use { it.readText() }
+        } catch (_: Exception) { "" }
+
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {
             this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
@@ -5212,6 +5218,7 @@ class MainActivity : Activity() {
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
+            h += group(T('Tag Teams', 'タッグチーム'), [['All Tag Teams', '/mypage?tvteams=1', 'すべてのタッグチーム']], 'tagteams');
             if (matchTypeGroups().length) h += group(T('Matches', '試合'), matchTypeRows(), 'matchtypes');
             var showsRow = group(T('Shows', '番組'), showsList(), 'shows');
             var showsPill = schedPillHtml();
@@ -5570,6 +5577,10 @@ class MainActivity : Activity() {
                       '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' + fiHtml(T('Places, shows, titles', '開催地・大会・王座'), cm.collUrl) + '</div></div>' +
                   '</div></div>';
               }
+            }
+            else if (key === 'tagteams') {
+              w = 1000;
+              try { h = window.__tvTeams ? window.__tvTeams.shelfHtml() : ''; } catch (e) { h = ''; }
             }
             else if (key === 'favs') {
               w = 1000;
@@ -9461,6 +9472,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(assetText("lineage.js"), null)
+        view.evaluateJavascript(assetText("teams.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
