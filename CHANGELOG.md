@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.7
+
+- Fire TV: back to the square app icon (the 2.24.6 test is undone; artwork and manifest are the same as 2.24.5). With the 1280 x 720 banner as the icon, Fire TV stopped listing the app, as it did when the banner was the logo in 2.24.3. Fire TV seems to drop a sideloaded app whose icon or logo is that large, so the square icon stays.
+
 ## 2.24.6
 
 - Fire TV test: the app icon is the wide banner picture (1280 x 720), to see whether Fire TV then fills its wide tile with it. Public build only; private builds keep their own icon.
