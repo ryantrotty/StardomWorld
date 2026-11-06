@@ -2932,15 +2932,25 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
-        fun favSync(reqId: String, payload: String) {
+        fun favSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("fav_replace", "fav_put", "fav_since"), "__tvFavSyncReply")
+
+        // Tag team match lists (private builds): a team page reads and saves its 2-on-2 matches in the sheet's
+        // "teammatches" tab, so TVs reuse them instead of searching the site again. Replies go to __tvTeamSyncReply.
+        @android.webkit.JavascriptInterface
+        fun teamSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("tm_get", "tm_put"), "__tvTeamSyncReply")
+
+        // One request to the private sheet: only the listed actions, the key added here, the reply handed to `callback`.
+        private fun sheetCall(reqId: String, payload: String, allowed: Set<String>, callback: String) {
             fun reply(text: String) {
-                val js = "window.__tvFavSyncReply && window.__tvFavSyncReply(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
+                val js = "window." + callback + " && window." + callback + "(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
                 this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
             }
             if (!videoIndexOn()) { reply("{\"ok\":false,\"error\":\"sync is off in this build\"}"); return }
             val body = try { org.json.JSONObject(payload) } catch (_: Exception) { reply("{\"ok\":false,\"error\":\"bad request\"}"); return }
             val action = body.optString("action")
-            if (action != "fav_replace" && action != "fav_put" && action != "fav_since") { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
+            if (action !in allowed) { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
             if (payload.length > 2_000_000) { reply("{\"ok\":false,\"error\":\"too big\"}"); return }
             Thread {
                 try {

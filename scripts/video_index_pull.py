@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Pulls every row of the private video index log (docs/VIDEO_INDEX_LOG.md) and prints a short summary.
+With --teams it pulls the tag team match lists instead (docs/TEAM_MATCH_LISTS.md).
 
 Reads the log address and key from branding-private/video_index.properties and writes the rows to
 branding-private/video_index_export.json (both git-ignored). The key is never printed.
-Usage: python3 scripts/video_index_pull.py [--out FILE]
+Usage: python3 scripts/video_index_pull.py [--teams] [--out FILE]
 """
 import argparse, collections, json, pathlib, sys, urllib.request
 
@@ -27,10 +28,13 @@ def props():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=str(root / 'branding-private' / 'video_index_export.json'))
+    ap.add_argument('--teams', action='store_true', help='pull the tag team match lists')
+    ap.add_argument('--out', default=None)
     a = ap.parse_args()
+    if not a.out:
+        a.out = str(root / 'branding-private' / ('team_matches_export.json' if a.teams else 'video_index_export.json'))
     p = props()
-    body = json.dumps({'key': p['key'], 'action': 'export'}).encode()
+    body = json.dumps({'key': p['key'], 'action': 'tm_export' if a.teams else 'export'}).encode()
     req = urllib.request.Request(p['url'], data=body, headers={'Content-Type': 'text/plain; charset=utf-8'})
     with urllib.request.urlopen(req, timeout=60) as r:   # Apps Script answers with a redirect; urllib follows it with GET
         reply = json.loads(r.read().decode('utf-8'))
@@ -38,6 +42,12 @@ def main():
         sys.exit('Log refused the export: %s' % reply.get('error'))
     rows = reply.get('rows', [])
     pathlib.Path(a.out).write_text(json.dumps(rows, ensure_ascii=False, indent=1))
+    if a.teams:
+        print('%d teams -> %s' % (len(rows), a.out))
+        for r in sorted(rows, key=lambda r: -int(r.get('count') or 0)):
+            nx = r.get('next') or {}
+            print('  %-40s %3s matches  %s' % (r.get('team'), r.get('count'), 'all pages searched' if nx.get('done') else 'next: search %s page %s' % (nx.get('qi', 0), nx.get('page', 1))))
+        return
     print('%d videos -> %s' % (len(rows), a.out))
     if not rows:
         return

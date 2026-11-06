@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.29.0
+
+- Team match lists (private builds with the log set up): each tag team's 2-on-2 matches are saved to a new `teammatches` tab in the private Google Sheet (docs/TEAM_MATCH_LISTS.md).
+  - A team page reads its saved list first and shows it straight away, so a team already searched on any of your TVs needs no site search. "More tag matches" carries on from where the last search stopped.
+  - Every searched page adds its matches to the team's row. A list older than 14 days gets its newest page searched once more, with new matches going first.
+  - Saved matches go through the same 2-on-2 rule and video index side check as fresh ones.
+  - Public builds search as in 2.28.4.
+- The sheet's script has three new actions (tm_get, tm_put, tm_export): paste scripts/video_index_log.gs into Apps Script and deploy a new version.
+- `python3 scripts/video_index_pull.py --teams` downloads every team's list for analysis.
+- Favorites sync and team lists now share one request helper in the app (no change in behaviour).
+
 ## 2.28.4
 
 - Team pages make far fewer site searches. The first search runs only when the Tag Matches section is on screen, and fetches one page; each press of "More tag matches" fetches one more. The other spelling and the team name are searched only when a search finds no videos at all. Searches are at least 3 seconds apart, and results are kept for 7 days. Opening a team page now makes 1 search, where BMI2000 made 8 before.

@@ -15,6 +15,12 @@
  *   fav_replace {items: [{key, value}], device}            the base device's whole set; replaces the tab
  *   fav_put     {changes: [{key, value, t, deleted}], device} newer change per key wins (by t)
  *   fav_since   {since: seq}                                rows changed after seq, the current seq and the row count
+ *
+ * Team match lists (2.28.5, same key): a "teammatches" tab with one row per tag team, holding the 2-on-2 matches its
+ * team page has found on the site, so the private build's TVs read them instead of searching the site again.
+ *   tm_get    {team}                                         that team's row: items, where the search got to, when
+ *   tm_put    {team, items: [{id, t, b}], next: {qi, page, done}, query, fresh}  adds new items, keeps the old ones
+ *   tm_export {}                                             every team's row (for analysis)
  */
 var SHEET = 'videos';
 var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_en', 'title_ja',
@@ -29,6 +35,11 @@ function doPost(e) {
   var key = PropertiesService.getScriptProperties().getProperty('KEY');
   if (!key || body.key !== key) return out({ ok: false, error: 'bad key' });
   if (body.action === 'export') return out({ ok: true, cols: COLS, rows: exportRows() });
+  if (body.action === 'tm_get' || body.action === 'tm_put' || body.action === 'tm_export') {
+    var tlock = LockService.getScriptLock();
+    tlock.waitLock(20000);
+    try { return out(tmAction(body)); } finally { tlock.releaseLock(); }
+  }
   if (body.action === 'fav_replace' || body.action === 'fav_put' || body.action === 'fav_since') {
     var flock = LockService.getScriptLock();
     flock.waitLock(20000);
@@ -177,4 +188,59 @@ function favAction(b) {
   if (data.length) sh.getRange(2, 1, data.length, FAV_COLS.length).setValues(data);
   if (add.length) sh.getRange(2 + data.length, 1, add.length, FAV_COLS.length).setValues(add);
   return { ok: true, seq: seq2, applied: applied };
+}
+
+// ---- team match lists ----------------------------------------------------------------------------------------
+var TM_SHEET = 'teammatches';
+var TM_COLS = ['team', 'count', 'items', 'next', 'searched', 'refreshed', 'device', 'queries'];
+var TM_MAX = 150;   // newest first; keeps a team's row well inside the 50,000-character cell limit
+
+function tmSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(TM_SHEET);
+  if (!sh) sh = ss.insertSheet(TM_SHEET);
+  if (sh.getLastRow() === 0) { sh.appendRow(TM_COLS); sh.setFrozenRows(1); }
+  return sh;
+}
+function tmRow(sh, team) {
+  var n = sh.getLastRow();
+  if (n < 2) return null;
+  var f = sh.getRange(2, 1, n - 1, 1).createTextFinder(team).matchEntireCell(true).findNext();
+  return f ? f.getRow() : null;
+}
+function tmParse(v, d) { try { return JSON.parse(v); } catch (e) { return d; } }
+function tmItemOk(x) { return x && /^\d{1,9}$/.test(String(x.id)) && typeof x.t === 'string' && x.t.length <= 300 && (!x.b || (typeof x.b === 'string' && x.b.length <= 400)); }
+
+function tmAction(b) {
+  var sh = tmSheet(), now = new Date().toISOString();
+  if (b.action === 'tm_export') {
+    var n = sh.getLastRow(), rows = [];
+    if (n > 1) sh.getRange(2, 1, n - 1, TM_COLS.length).getValues().forEach(function(v) {
+      var o = {}; TM_COLS.forEach(function(c, i) { o[c] = (c === 'items' || c === 'next' || c === 'queries') ? tmParse(v[i], null) : (v[i] instanceof Date ? v[i].toISOString() : v[i]); }); rows.push(o);
+    });
+    return { ok: true, rows: rows };
+  }
+  var team = String(b.team || '');
+  if (!/^[a-z0-9-]{1,80}$/.test(team)) return { ok: false, error: 'bad team' };
+  var r = tmRow(sh, team);
+  if (b.action === 'tm_get') {
+    if (!r) return { ok: true, found: false };
+    var v = sh.getRange(r, 1, 1, TM_COLS.length).getValues()[0];
+    return { ok: true, found: true, items: tmParse(v[2], []), next: tmParse(v[3], null), searched: v[4] instanceof Date ? v[4].toISOString() : v[4], refreshed: v[5] instanceof Date ? v[5].toISOString() : v[5] };
+  }
+  // tm_put
+  if (!Array.isArray(b.items) || b.items.length > 100) return { ok: false, error: 'bad items' };
+  var add = b.items.filter(tmItemOk).map(function(x) { return { id: String(x.id), t: x.t, b: x.b || '' }; });
+  var old = r ? tmParse(sh.getRange(r, 3).getValue(), []) : [], seen = {};
+  old.forEach(function(x) { seen[x.id] = 1; });
+  var fresh = add.filter(function(x) { return !seen[x.id]; });
+  // a refresh of the newest page puts new matches first; later pages go after what is there
+  var items = (b.fresh ? fresh.concat(old) : old.concat(fresh)).slice(0, TM_MAX);
+  var prev = r ? sh.getRange(r, 1, 1, TM_COLS.length).getValues()[0] : null;
+  var queries = prev ? tmParse(prev[7], []) : [];
+  if (b.query && queries.indexOf(String(b.query).slice(0, 200)) < 0) queries.push(String(b.query).slice(0, 200));
+  var next = b.next && typeof b.next === 'object' ? { qi: Number(b.next.qi) || 0, page: Number(b.next.page) || 1, done: !!b.next.done } : (prev ? tmParse(prev[3], null) : null);
+  if (b.fresh && prev) next = tmParse(prev[3], next);   // a refresh doesn't move where the deeper search got to
+  var row = [team, items.length, JSON.stringify(items), JSON.stringify(next), b.fresh && prev ? prev[4] : now, now, String(b.device || '').slice(0, 40), JSON.stringify(queries)];
+  if (r) sh.getRange(r, 1, 1, TM_COLS.length).setValues([row]); else sh.appendRow(row);
+  return { ok: true, added: fresh.length, count: items.length };
 }

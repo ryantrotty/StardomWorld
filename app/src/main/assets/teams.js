@@ -354,6 +354,74 @@
     if (t.name) q.push(t.name);
     return q;
   }
+  // ---- the private sheet's saved list for this team (private builds with the log set up; see docs/TEAM_MATCH_LISTS.md)
+  var SHEET_ON = false;
+  try { SHEET_ON = !!(H.teamSync && H.favSyncOn && H.favSyncOn()); } catch (e) { SHEET_ON = false; }
+  var REFRESH_MS = 14 * 86400000, sheetWait = {};
+  window.__tvTeamSyncReply = function(id, text) {
+    var cb = sheetWait[id]; if (!cb) return; delete sheetWait[id];
+    var r = parse(text); cb(r || { ok: false, error: 'bad reply' });
+  };
+  function sheet(action, payload, cb) {
+    var id = Math.random().toString(36).slice(2, 10), body = { action: action, team: TEAM.id };
+    for (var k in payload) body[k] = payload[k];
+    sheetWait[id] = cb || function() {};
+    setTimeout(function() { if (sheetWait[id]) { var f = sheetWait[id]; delete sheetWait[id]; f({ ok: false, error: 'no reply' }); } }, 30000);
+    try { H.teamSync(id, JSON.stringify(body)); } catch (e) { delete sheetWait[id]; (cb || function() {})({ ok: false, error: String(e) }); }
+  }
+  function keepItems(items) {   // the 2-on-2 rule and the video index side check, for search results and saved lists alike
+    var add = [];
+    items.forEach(function(it) {
+      if (V.seen[it.id]) return; V.seen[it.id] = 1;
+      if (!isTagTitle(it.t)) { V.dropMulti++; return; }
+      var s = sidesCheck(TEAM, it.id);
+      if (s === 'opponents') { V.dropOpp++; return; }
+      if (s === 'partners') { it.ok = 1; V.verified++; }
+      add.push(it);
+    });
+    return add;
+  }
+  function save(items, fresh, q) {
+    if (!SHEET_ON) return;
+    sheet('tm_put', { items: items.map(function(x) { return { id: x.id, t: x.t, b: x.b }; }), next: { qi: V.qi, page: V.page, done: V.done }, query: q, fresh: !!fresh }, function(r) {
+      V.log.push(r && r.ok ? T('saved to your sheet: ' + r.added + ' new, ' + r.count + ' in all', 'シートに保存: 新規' + r.added + '、計' + r.count) : T('not saved to your sheet: ', 'シートに保存できません: ') + ((r && r.error) || ''));
+      paintVids();
+    });
+  }
+  // A saved list is shown straight away, with no site search. Only a list older than 14 days gets its newest page
+  // searched again (new matches go first); everything else waits for "More tag matches".
+  function fromSheet(fallback) {
+    V.busy = true; paintVids();
+    sheet('tm_get', {}, function(r) {
+      V.busy = false;
+      if (!r || !r.ok || !r.found || !(r.items || []).length) {
+        V.log.push(r && r.ok ? T('no saved list in your sheet yet', 'シートに保存なし') : T('sheet not read: ', 'シートを読めません: ') + ((r && r.error) || ''));
+        fallback(); return;
+      }
+      var add = keepItems(r.items);
+      V.kept = V.kept.concat(add);
+      if (r.next) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
+      V.log.push(T('saved list from your sheet: ' + add.length + ' matches (searched ' + String(r.searched || '').slice(0, 10) + ')', 'シートの保存: ' + add.length + '試合（' + String(r.searched || '').slice(0, 10) + '）'));
+      paintVids();
+      var age = Date.now() - (Date.parse(r.refreshed || '') || 0);
+      if (age > REFRESH_MS) refreshNewest();
+    });
+  }
+  function refreshNewest() {
+    if (V.busy) return;
+    V.busy = true; paintVids();
+    var q = V.queries[0];
+    fetchPage(q, 1, function(err, items, more, cached) {
+      V.busy = false;
+      if (err) { V.log.push(q + ' · page 1 (refresh): ' + err); paintVids(); return; }
+      var add = keepItems(items);
+      V.kept = add.concat(V.kept);
+      V.log.push(q + ' · page 1 (refresh): ' + items.length + ' videos, ' + add.length + ' new' + (cached ? ' (saved copy)' : ''));
+      paintVids();
+      save(add, true, q);
+    });
+  }
+
   function loadMore() {
     if (V.busy || V.done) return;
     V.busy = true; paintVids();
@@ -361,15 +429,8 @@
     fetchPage(q, V.page, function(err, items, more, cached) {
       V.busy = false;
       if (err) { V.log.push(q + ' · page ' + V.page + ': ' + err); V.done = true; paintVids(); return; }
-      var add = 0;
-      items.forEach(function(it) {
-        if (V.seen[it.id]) return; V.seen[it.id] = 1;
-        if (!isTagTitle(it.t)) { V.dropMulti++; return; }
-        var s = sidesCheck(TEAM, it.id);
-        if (s === 'opponents') { V.dropOpp++; return; }
-        if (s === 'partners') { it.ok = 1; V.verified++; }
-        V.kept.push(it); add++;
-      });
+      var kept = keepItems(items), add = kept.length;
+      V.kept = V.kept.concat(kept);
       V.log.push(q + ' · page ' + V.page + ': ' + items.length + ' videos, ' + add + ' kept' + (cached ? ' (saved copy)' : ''));
       // The other spelling and the team name are tried only when a search finds no videos at all.
       if (V.page === 1 && !items.length && V.qi + 1 < V.queries.length) {
@@ -378,6 +439,7 @@
       V.page++;
       if (!more) V.done = true;
       paintVids();
+      save(kept, false, q);
     });
   }
   function dateOfTitle(t) { var m = /(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(t || ''); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : ''; }
@@ -445,7 +507,7 @@
     V.queries = queriesFor(t);
     paintVids();
     var box = document.getElementById('tt-vids'), started = false;
-    function start() { if (started) return; started = true; loadMore(); }
+    function start() { if (started) return; started = true; if (SHEET_ON) fromSheet(loadMore); else loadMore(); }
     // start when the section is on screen: now if it already is, otherwise once the page scrolls to it
     function inView() { if (!box) return true; var r = box.getBoundingClientRect(), v = scroller.getBoundingClientRect(); return r.top < v.bottom - 40; }
     if (inView()) start();
