@@ -98,6 +98,15 @@
   }
   function teamById(id) { var l = build(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   function teamPath(t) { return '/mypage?tvteam=' + encodeURIComponent(t.id); }
+  // ---- My Favorites (assets/favorites.js keeps the list): what a favorite team is saved with, and whether one is a favorite
+  API.info = function(id) {
+    var t = teamById(id);
+    if (!t) return null;
+    var b = Object.keys(BELTS).filter(function(k) { return t.reigns.some(function(r) { return r.belt === k; }); });   // in BELTS order: Goddess, then NEW BLOOD
+    return { id: t.id, n: t.display, m: t.members.slice(), ms: t.members.map(searchName), b: b };
+  };
+  function isFav(id) { try { return !!(window.__tvFav && window.__tvFav.hasTeam(id)); } catch (e) { return false; } }
+  function favCount() { try { return window.__tvFav ? window.__tvFav.load().t.length : 0; } catch (e) { return 0; } }
   function eraList() { return ERAS.slice().sort(function(a, b) { return b.n - a.n; }); }   // newest first (timelines run newest on the left)
 
   // ---- menu shelf: "All Tag Teams" on top, then one column per era, newest on the left
@@ -110,6 +119,9 @@
         '#tv-sm-shelf .tv-shl-ecol .tv-sm-fi.tv-shl-tm{padding:5px 10px;margin:0;font-size:16px;}',
         '#tv-sm-shelf .tv-shl-tm .a{display:block;font-size:16px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
         '#tv-sm-shelf .tv-shl-tm .b{display:block;font-size:12px;font-weight:600;color:#9aa6b4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}',
+        '#tv-sm-shelf .tv-shl-mine{color:#F4C242;font-weight:900;}',
+        '#tv-sm-shelf .tv-shl-tm.tv-fav-on .a::before{content:"\\2605  ";color:#F4C242;}',
+        '#tv-sm-shelf .tv-sm-fi.tv-shl-tm.tv-fav-on::before{content:none;display:none;}',   // the star goes before the name, not on its own line
         '#tv-sm-shelf .tv-shl-ecol .tv-sm-fi.tv-shl-tmore{color:#F4C242 !important;font-size:15px;padding:5px 10px;}'
       ].join('\n');
       (document.head || document.documentElement).appendChild(st);
@@ -124,11 +136,27 @@
       if (list.length > per) cols += '<a class="tv-sm-fi tv-shl-tmore" tabindex="0" data-go="' + esc(ep) + '" href="' + esc(absUrl(ep)) + '">' + esc(T('+' + (list.length - per) + ' more', '他' + (list.length - per) + 'チーム')) + '</a>';
       cols += '</div>';
     });
-    var ap = '/mypage?tvteams=1';
+    var ap = '/mypage?tvteams=1', fp = '/mypage?tvfav=teams', fc = favCount();
     return '<div class="tv-shl-t">' + esc(T('TAG TEAMS', 'タッグチーム')) + '</div>' +
-      '<div class="tv-shl-top"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + ap + '" href="' + esc(absUrl(ap)) + '">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '<span>' + esc(T(all.length + ' champion teams, A to Z', '王者チーム' + all.length + '組')) + '</span></a></div>' +
+      '<div class="tv-shl-top"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + ap + '" href="' + esc(absUrl(ap)) + '">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '<span>' + esc(T(all.length + ' champion teams, A to Z', '王者チーム' + all.length + '組')) + '</span></a>' +
+        '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + fp + '" href="' + esc(absUrl(fp)) + '"><div><b class="tv-shl-mine">\u2605</b> ' + esc(T('My Tag Teams', 'お気に入りチーム')) + '</div><span>' + esc(fc ? T(fc + (fc === 1 ? ' favorite' : ' favorites'), fc + 'チーム') : T('Menu button on a team adds it', 'チームでメニューボタン')) + '</span></a></div>' +
       '<div class="tv-shl-ec">' + cols + '</div>';
   };
+
+  // ---- names the site searches for (used by the pages below and by My Favorites)
+  var SPELL = CFG.spell || {};
+  function siteName(n) { return SPELL[n] || n; }
+  // The name the Wrestler and Competitors filters search for (factions.json "search"), so a team page asks the site
+  // exactly what the filter bar asks for "Wrestler: A, Match type: Tag team, Competitors: B".
+  var ROSTER = {};
+  FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (m && m.name) ROSTER[String(m.name).toLowerCase()] = m.search || m.name; }); });
+  // The roster's name, else the roster's name for one of the history's other spellings, else the spelling list, else as written.
+  function searchName(n) {
+    var k = String(n).toLowerCase(), al = ALIAS[k] || [];
+    if (ROSTER[k]) return ROSTER[k];
+    for (var i = 0; i < al.length; i++) if (ROSTER[String(al[i]).toLowerCase()]) return ROSTER[String(al[i]).toLowerCase()];
+    return siteName(n);
+  }
 
   // ---- pages
   var Q = null;
@@ -165,6 +193,7 @@
     '#tv-tt .tt-team{display:flex;align-items:center;gap:10px;height:66px;padding:0 14px;background:#161F2A;border:2px solid #161F2A;border-radius:8px;min-width:0;cursor:pointer;}',
     '#tv-tt .tt-team:focus{background:#172029;border-color:#F4C242;}',
     '#tv-tt .tt-team .x{flex:1 1 auto;min-width:0;}',
+    '#tv-tt .tt-team.tt-fav .a::before{content:"\\2605  ";color:#F4C242;}',
     '#tv-tt .tt-team .a{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '#tv-tt .tt-team .b{font-size:13px;font-weight:600;color:#9AA6B4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}',
     '#tv-tt .tt-tag{flex:none;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 6px;border-radius:4px;border:1px solid #F4C242;color:#F4C242;white-space:nowrap;}',
@@ -185,6 +214,9 @@
     '#tv-tt .tt-btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}',
     '#tv-tt .tt-btn{height:44px;line-height:40px;padding:0 16px;border-radius:8px;border:2px solid #2A323C;background:#161F2A;font-size:17px;font-weight:700;color:#fff !important;cursor:pointer;}',
     '#tv-tt .tt-btn:focus{border-color:#F4C242;background:#172029;}',
+    '#tv-tt .tt-favb{display:flex;align-items:center;gap:8px;line-height:normal;}',
+    '#tv-tt .tt-favb .st{color:#F4C242;font-size:19px;}',
+    '#tv-tt .tt-favb.tt-on{background:#2A2410;color:#F4C242 !important;}',
     '#tv-tt .tt-belts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}',
     '#tv-tt .tt-belt{display:flex;gap:16px;align-items:center;padding:12px 16px;background:#161F2A;border:2px solid #2A323C;border-radius:12px;cursor:pointer;min-width:0;}',
     '#tv-tt .tt-belt:focus{border-color:#F4C242;background:#172029;}',
@@ -250,7 +282,7 @@
     chips.push(['bnewblood', BELT_ICON + 'NEW BLOOD']);
     h += '<div class="tt-chips">' + chips.map(function(c) { return '<a class="tt-chip' + (c[0] === filt ? ' tt-on' : '') + '" tabindex="0" data-f="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
     h += '<div class="tt-grid">' + list.map(function(t) {
-      return '<a class="tt-team" tabindex="0" href="' + esc(absUrl(teamPath(t))) + '"><div class="x"><div class="a notranslate" translate="no">' + esc(t.display) + '</div><div class="b notranslate" translate="no">' + esc(t.sub) + '</div></div>' + tags(t) + '</a>';
+      return '<a class="tt-team' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><div class="x"><div class="a notranslate" translate="no">' + esc(t.display) + '</div><div class="b notranslate" translate="no">' + esc(t.sub) + '</div></div>' + tags(t) + '</a>';
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(list.length + (list.length === 1 ? ' team' : ' teams') + (filt === 'all' ? '' : ' of ' + all.length), list.length + 'チーム' + (filt === 'all' ? '' : ' / ' + all.length))) + '</div>';
     scroller.innerHTML = h;
@@ -277,19 +309,6 @@
     for (var i = 0; i < MT_ALL.length; i++) if (!MT_ALL[i].test(t)) return false;
     for (var j = 0; j < MT_NONE.length; j++) if (MT_NONE[j].test(t)) return false;
     return true;
-  }
-  var SPELL = CFG.spell || {};
-  function siteName(n) { return SPELL[n] || n; }
-  // The name the Wrestler and Competitors filters search for (factions.json "search"), so a team page asks the site
-  // exactly what the filter bar asks for "Wrestler: A, Match type: Tag team, Competitors: B".
-  var ROSTER = {};
-  FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (m && m.name) ROSTER[String(m.name).toLowerCase()] = m.search || m.name; }); });
-  // The roster's name, else the roster's name for one of the history's other spellings, else the spelling list, else as written.
-  function searchName(n) {
-    var k = String(n).toLowerCase(), al = ALIAS[k] || [];
-    if (ROSTER[k]) return ROSTER[k];
-    for (var i = 0; i < al.length; i++) if (ROSTER[String(al[i]).toLowerCase()]) return ROSTER[String(al[i]).toLowerCase()];
-    return siteName(n);
   }
 
   // One search page at a time: the first when the Tag Matches section comes into view, the next only when More is pressed.
@@ -526,6 +545,13 @@
     if (had) { var f = had === 'more' ? box.querySelector('.tt-more') : box.querySelector('[data-vid="' + had + '"]'); if (f) focusEl(f); }
   }
 
+  function favBtnInner(id) { var on = isFav(id); return '<span class="st">' + (on ? '\u2605' : '\u2606') + '</span>' + esc(on ? T('In My Favorites', 'お気に入り登録済み') : T('Add to My Favorites', 'お気に入りに追加')); }
+  // My Favorites changed (OK on the button, or the Menu button): update the button and the list's stars
+  API.favChanged = function() {
+    var b = document.querySelector('#tv-tt .tt-favb');
+    if (b && TEAM) { b.innerHTML = favBtnInner(TEAM.id); b.classList.toggle('tt-on', isFav(TEAM.id)); }
+    Array.prototype.forEach.call(document.querySelectorAll('#tv-tt .tt-team[data-favt]'), function(a) { a.classList.toggle('tt-fav', isFav(a.getAttribute('data-favt'))); });
+  };
   function initials(n) { return String(n).split(/\s+/).map(function(w) { return w[0]; }).join('').slice(0, 2).toUpperCase(); }
   function renderTeam() {
     var t = TEAM;
@@ -540,7 +566,7 @@
       return p ? '<div class="ph" style="background-image:url(\'' + esc(p) + '\')"></div>' : '<div class="notranslate" translate="no">' + esc(initials(m)) + '</div>';
     }).join('');
     var reignsN = t.reigns.length;
-    h += '<div class="tt-hero"><div class="tt-av">' + av + '</div><div style="min-width:0">' +
+    h += '<div class="tt-hero" data-favt="' + esc(t.id) + '"><div class="tt-av">' + av + '</div><div style="min-width:0">' +
       '<div class="tt-facts">' +
         '<div><div class="k">' + esc(T('MEMBERS', 'メンバー')) + '</div><div class="v notranslate" translate="no">' + esc(t.members.join(' & ')) + '</div></div>' +
         (t.faction ? '<div><div class="k">' + esc(T('FACTION', 'ユニット')) + '</div><div class="v notranslate" translate="no">' + esc(t.faction) + '</div></div>' : '') +
@@ -550,6 +576,7 @@
       '</div><div class="tt-btns">' +
         t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
         (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
+        (window.__tvFav ? '<a class="tt-btn tt-favb' + (isFav(t.id) ? ' tt-on' : '') + '" tabindex="0" data-favb="1">' + favBtnInner(t.id) + '</a>' : '') +
       '</div></div></div>';
     if (t.reigns.length) {
       h += '<div class="tt-sec"><i></i><b>' + esc(T('TITLES HELD', '獲得王座')) + '</b></div><div class="tt-belts">' + t.reigns.slice().reverse().map(function(r) {
@@ -592,6 +619,7 @@
   function choose(el) {
     if (el.getAttribute('data-f') != null) { filt = el.getAttribute('data-f'); renderList('[data-f="' + filt + '"]'); return true; }
     if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(); return true; }
+    if (el.getAttribute('data-favb') != null) { if (window.__tvFav && TEAM) window.__tvFav.toggleTeam(TEAM.id); return true; }
     return false;
   }
   scroller.addEventListener('click', function(e) { var el = e.target.closest ? e.target.closest('[tabindex]') : null; if (el && choose(el)) e.preventDefault(); });

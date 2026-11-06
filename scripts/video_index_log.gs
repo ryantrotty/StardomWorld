@@ -139,7 +139,7 @@ function nextSeq() {
   pr.setProperty('FAV_SEQ', String(n));
   return n;
 }
-function favKeyOk(k) { return typeof k === 'string' && k.length > 0 && k.length <= 300 && /^(w|fs|later|m|s|pl|pli|rem|ppv|own):/.test(k); }
+function favKeyOk(k) { return typeof k === 'string' && k.length > 0 && k.length <= 300 && /^(w|fs|tt|later|m|s|pl|pli|rem|ppv|own):/.test(k); }
 function favValue(v) { var j = JSON.stringify(v == null ? null : v); return j.length > 20000 ? null : j; }
 
 function favAction(b) {
