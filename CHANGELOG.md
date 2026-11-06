@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.25.1
+
+- Video index dry run (private builds): the reader now follows the page's own layout (a Japanese block, then an English block, each a title line and its line-up) instead of guessing by language, so these formats read correctly:
+  - line-ups split over two lines ("Momo Watanabe & Saya Kamitani" / "vs Rina Yamashita & Akira Kurogane");
+  - dates at the start of titles (2026/10/04 and 6.14.2015) and on their own line (2026年10月4日);
+  - a mark before the title (◆);
+  - Japanese titles written only in Latin letters ("3、COSMIC ANGELS vs DDM");
+  - brackets: one after a side is its team ("[COSMIC ANGELS]"), one after a wrestler is a note ("Tam Nakano: free agent");
+  - full-width digits and letters.
+- Show names like "10・4『STARDOM in SHIZUOKA 2026 Oct.』静岡・ツインメッセ静岡" give the date (year from the name or the title), the show and the venue.
+- The panel shows a single Date row (from the title, a date line or the show) and a Notes row; title-only pages show their panel after about 3 seconds.
+
 ## 2.25.0
 
 - Video index, step 1 (private builds only, nothing is sent): on every video page the app reads the page's own facts (no extra request) and shows them in a debug panel under the match description: video and set number, match number or the date in older titles, English and Japanese titles, both line-ups split into sides, the show and its date (from the set the video belongs to), tags, access and the thumbnail address. Missing values show in red. The latest copy per video is kept on the TV (up to 3,000 videos) for a later step; no account, cookie or viewer details are read.
