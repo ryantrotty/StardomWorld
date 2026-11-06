@@ -150,6 +150,10 @@
     '#tv-tt .tt-chips{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center;}',
     '#tv-tt .tt-chip{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:10px;border:2px solid #2A323C;background:#161F2A;font-size:17px;font-weight:700;color:#C9D2DC !important;white-space:nowrap;cursor:pointer;}',
     '#tv-tt .tt-chip .k{font-size:17px;font-weight:900;color:#F4C242;}',
+    '#tv-tt .tt-chip .bi{color:#F4C242;flex:none;}',
+    '#tv-tt .tt-chip.tt-on .bi{color:#1A1A1A;}',
+    '#tv-tt .tt-chip.tt-on .bi circle[fill]{fill:#FFB347;}',
+    '#tv-tt .tt-chip[data-f="bgoddess"]{margin-left:14px;}',
     '#tv-tt .tt-chip small{font-size:12px;font-weight:700;color:#9AA6B4;}',
     '#tv-tt .tt-chip.tt-on{background:#FFB347;border-color:#FFB347;color:#1A1A1A !important;}',
     '#tv-tt .tt-chip.tt-on .k, #tv-tt .tt-chip.tt-on small{color:#1A1A1A;}',
@@ -173,9 +177,6 @@
     '#tv-tt .tt-av div{width:140px;height:140px;border-radius:50%;border:3px dashed #3B4656;background:#161F2A center top/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#C9D2DC;}',
     '#tv-tt .tt-av div.ph{border-style:solid;border-color:#2A323C;}',
     '#tv-tt .tt-av div + div{margin-left:-26px;}',
-    '#tv-tt .tt-facts{display:flex;gap:36px;flex-wrap:wrap;}',
-    '#tv-tt .tt-facts .k{font-size:13px;font-weight:700;color:#9AA6B4;letter-spacing:1px;}',
-    '#tv-tt .tt-facts .v{font-size:22px;font-weight:700;margin-top:4px;}',
     '#tv-tt .tt-btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}',
     '#tv-tt .tt-btn{height:44px;line-height:40px;padding:0 16px;border-radius:8px;border:2px solid #2A323C;background:#161F2A;font-size:17px;font-weight:700;color:#fff !important;cursor:pointer;}',
     '#tv-tt .tt-btn:focus{border-color:#F4C242;background:#172029;}',
@@ -188,13 +189,6 @@
     '#tv-tt .tt-belt .t1{font-size:19px;font-weight:700;}',
     '#tv-tt .tt-belt .t2{font-size:15px;font-weight:600;color:#C9D2DC;margin-top:3px;}',
     '#tv-tt .tt-belt .t3{font-size:13px;font-weight:700;color:#F4C242;margin-top:3px;}',
-    '#tv-tt .tt-facts2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}',
-    '#tv-tt .tt-fact{display:flex;gap:14px;align-items:center;min-height:46px;padding:6px 14px;background:#161F2A;border-radius:8px;font-size:15px;min-width:0;}',
-    '#tv-tt .tt-fact .d{flex:0 0 112px;font-weight:700;color:#F4C242;}',
-    '#tv-tt .tt-fact .g{flex:none;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 6px;border-radius:4px;background:#C9D2DC;color:#1A1A1A;}',
-    '#tv-tt .tt-fact .g.win{background:#FFB347;}',
-    '#tv-tt .tt-fact .g.lost{background:#9AA6B4;}',
-    '#tv-tt .tt-fact .s{color:#C9D2DC;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '#tv-tt .tt-vids{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;}',
     '#tv-tt .tt-card{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .12s;}',
     '#tv-tt .tt-card:focus{outline:3px solid #F4C242 !important;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03);}',
@@ -244,8 +238,10 @@
     var chips = [['all', esc(T('All', 'すべて')) + ' <small>' + all.length + '</small>']];
     // short era names keep the chips on one line: "Threedom & the Rebuild" -> "Threedom", "The Draft Years" -> "Draft Years"
     eraList().forEach(function(e) { chips.push(['e' + e.n, '<span class="k notranslate" translate="no">' + esc(e.kanji) + '</span>' + esc(isJa() && e.ja ? e.ja : String(e.name).split(' & ')[0].replace(/^The /, ''))]); });
-    chips.push(['bgoddess', esc(T('Goddess', 'ゴッデス'))]);
-    chips.push(['bnewblood', 'NEW BLOOD']);
+    // championship filters carry a small drawn belt, so they read apart from the era filters
+    var BELT_ICON = '<svg class="bi" width="30" height="16" viewBox="0 0 30 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="5" width="28" height="6" rx="2"></rect><circle cx="15" cy="8" r="5.5" fill="#161F2A"></circle><circle cx="15" cy="8" r="2.2"></circle><circle cx="7" cy="8" r="1.4"></circle><circle cx="23" cy="8" r="1.4"></circle></svg>';
+    chips.push(['bgoddess', BELT_ICON + esc(T('Goddess', 'ゴッデス'))]);
+    chips.push(['bnewblood', BELT_ICON + 'NEW BLOOD']);
     h += '<div class="tt-chips">' + chips.map(function(c) { return '<a class="tt-chip' + (c[0] === filt ? ' tt-on' : '') + '" tabindex="0" data-f="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
     h += '<div class="tt-grid">' + list.map(function(t) {
       return '<a class="tt-team" tabindex="0" href="' + esc(absUrl(teamPath(t))) + '"><div class="x"><div class="a notranslate" translate="no">' + esc(t.display) + '</div><div class="b notranslate" translate="no">' + esc(t.sub) + '</div></div>' + tags(t) + '</a>';
@@ -419,18 +415,6 @@
           '<div class="t1">' + esc(isJa() ? B.ja : B.name) + ' · ' + esc(T(ord(r.n) + ' reign', '第' + r.n + '代')) + '</div>' +
           '<div class="t2">' + esc(fmtD(r.won)) + ' – ' + esc(r.end ? fmtD(r.end) : T('now', '現在')) + '</div>' +
           '<div class="t3">' + esc(T(days + ' days · ' + r.defs + (r.defs === 1 ? ' defence' : ' defences'), days + '日 · 防衛' + r.defs + '回')) + '</div></div></a>';
-      }).join('') + '</div>';
-      var facts = [];
-      t.reigns.forEach(function(r) {
-        var B = BELTS[r.belt], bn = isJa() ? B.ja : B.name;
-        facts.push({ d: r.won, g: 'win', tag: T('TITLE WIN', '戴冠'), s: bn + (r.vs ? T(', vs ', '、vs ') + r.vs : '') + (r.venue ? ' · ' + r.venue : '') });
-        if (r.defences.length) r.defences.forEach(function(x) { facts.push({ d: x.d, g: '', tag: T('DEFENCE', '防衛'), s: T('vs ', 'vs ') + x.opp + (x.venue ? ' · ' + x.venue : '') }); });
-        else if (r.defs) facts.push({ d: r.won, nodate: true, g: '', tag: T('DEFENCES', '防衛'), s: T(r.defs + ' successful defences during this reign (details not listed)', 'この期間に防衛' + r.defs + '回（詳細なし）') });
-        if (r.end) facts.push({ d: r.end, g: 'lost', tag: r.endType === 'vacated' ? T('VACATED', '返上') : T('LOST', '陥落'), s: r.endType === 'vacated' ? bn : T(bn + ' belts to ', bn + '：') + r.lostTo });
-      });
-      facts.sort(function(a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : 0; });
-      h += '<div class="tt-sec"><i></i><b>' + esc(T('TITLE MATCHES', 'タイトルマッチ')) + '</b></div><div class="tt-facts2">' + facts.map(function(f) {
-        return '<div class="tt-fact"><span class="d">' + (f.nodate ? '' : esc(fmtD(f.d))) + '</span><span class="g ' + f.g + '">' + esc(f.tag) + '</span><span class="s notranslate" translate="no">' + esc(f.s) + '</span></div>';
       }).join('') + '</div>';
     }
     h += '<div class="tt-sec"><i></i><b>' + esc(T('TAG MATCHES', 'タッグマッチ')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div><div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>';

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.28.2
+
+- All Tag Teams page: the Goddess and NEW BLOOD filter chips have a small belt icon and a little more space before them, so they read as championship filters rather than eras.
+- Team pages: the Title Matches section is removed; Titles Held is followed by the tag matches.
+
 ## 2.28.1
 
 - Tag Teams fix: the section couldn't read the eras, factions, match types or its own settings on the TV (it called those app functions with an extra argument, which Android refuses). So the menu shelf had no era columns, the All Tag Teams page had no era chips, and team pages didn't narrow their matches to 2-on-2. All three work now. As a safeguard, team pages also carry their own copy of the 2-on-2 rule.
