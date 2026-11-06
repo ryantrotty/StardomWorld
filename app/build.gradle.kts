@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,8 +13,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 363
-        versionName = "2.26.0"
+        versionCode = 364
+        versionName = "2.26.1"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -25,7 +27,7 @@ android {
         // Video index dry run (assets/videoindex.js): private builds only. Reads video pages and shows what it found; sends nothing.
         buildConfigField("Boolean", "VIDEO_INDEX_DRYRUN", hasPrivateBranding.toString())
         // Video index log: address and key from branding-private/video_index.properties (git-ignored). Empty = dry run only.
-        val vixProps = java.util.Properties().apply {
+        val vixProps = Properties().apply {
             val f = rootProject.file("branding-private/video_index.properties")
             if (f.exists()) f.inputStream().use { load(it) }
         }

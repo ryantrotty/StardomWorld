@@ -2909,7 +2909,7 @@ class MainActivity : Activity() {
                             .putInt("day", day).putInt("count", sentToday + 1).apply()
                         status(if (r.optBoolean("added")) "sent: added to the log" else "sent: row updated")
                     } else {
-                        status("not sent: " + (r?.optString("error") ?: ("HTTP " + code + " " + reply.take(80))))
+                        status("not sent: " + (r?.optString("error") ?: ("HTTP " + code + " " + reply.replace(Regex("(?is)<(script|style).*?</\\1>"), " ").replace(Regex("<[^>]+>"), " ").replace(Regex("\\s+"), " ").trim().take(120))))
                     }
                 } catch (e: Exception) {
                     status("not sent: " + (e.message ?: e.javaClass.simpleName))

@@ -135,3 +135,5 @@ New Japan titles (2.24.0): IWGP Women's and STRONG Women's have lineage pages (`
 Video index dry run (2.25.0, private builds only): on a video page a debug panel sits right after the match description (above the footer if that spot is hidden). It uses the debug panel style: #0F151C, 2px #2A323C border, radius 12, 13px Arial, gold 13/800 label with .14em spacing, grey #9AA6B4 keys, white values, missing values in error red #FF7A66, the raw record in 12px monospace. It is not focusable, stays on screen and is excluded from page translation.
 
 Video index log (2.26.0): with a log address the panel heading reads VIDEO INDEX · LOG and the status after it is white 800 (red #FF7A66 when not sent); without one it reads DRY RUN. Same panel otherwise.
+
+Video index panel removed (2.26.1): video pages no longer show the dry-run / log panel; the index still reads and sends in the background.

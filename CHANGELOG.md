@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.26.1
+
+- Video index: the on-screen panel on video pages is removed. The app still reads each video page, keeps a copy on the TV and sends it to the private log in the background; the last send result is kept on the TV (localStorage tvVideoIndexLast).
+- Video index: when the log answers with a web page instead of its usual reply, the result keeps only the page's text (for example "Script function not found: doPost").
+
 ## 2.26.0
 
 - Video index, step 2 (private builds only): with a log address in branding-private/video_index.properties, the app sends each video page's record to a private Google Sheet (scripts/video_index_log.gs, set up as in docs/VIDEO_INDEX_LOG.md). The app sends it, not the page, so the address and key never appear in the page or the public repo. A video is sent again only when what was read has changed (or after 30 days), at most 300 a day, and only public page facts are sent.

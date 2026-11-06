@@ -1,6 +1,6 @@
 (function(){
   // Video index (private builds only): on a video page, read the page's own facts (no extra request), keep the latest
-  // copy per video on this TV (localStorage) and show it in a panel that stays on screen. When the build has a log
+  // copy per video on this TV (localStorage). (2.26.1: the on-screen panel is gone.) When the build has a log
   // address (branding-private/video_index.properties) the app also sends the record to the private log (see
   // docs/VIDEO_INDEX_LOG.md); without one nothing leaves the TV. Only public page facts are read: no account, cookie
   // or viewer details.
@@ -11,7 +11,6 @@
   var KEY = 'tvVideoIndexDry', MAX = 3000;
 
   function txt(el) { return el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
-  function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function hasJa(s) { return /[぀-ヿ一-鿿]/.test(s || ''); }
   // Full-width digits and letters (３・２２, ＶＳ) to plain ones.
   function half(s) { return String(s || '').replace(/[０-９Ａ-Ｚａ-ｚ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }); }
@@ -132,53 +131,7 @@
     return Object.keys(all).length;
   }
 
-  var st = document.createElement('style');
-  st.textContent = [
-    '#tv-vix{margin:24px 40px;padding:16px 20px;background:#0F151C;border:2px solid #2A323C;border-radius:12px;font:13px/1.45 Arial,Helvetica,sans-serif;color:#C9D2DC;}',
-    '#tv-vix .h{font-size:13px;font-weight:800;letter-spacing:.14em;color:#F4C242;margin-bottom:8px;}',
-    '#tv-vix .h span{color:#9AA6B4;letter-spacing:0;font-weight:700;margin-left:10px;}',
-    '#tv-vix table{border-collapse:collapse;width:100%;margin-bottom:10px;}',
-    '#tv-vix td{padding:3px 10px 3px 0;vertical-align:top;}',
-    '#tv-vix td.k{width:120px;color:#9AA6B4;font-weight:700;white-space:nowrap;}',
-    '#tv-vix td.v{color:#FFFFFF;}',
-    '#tv-vix .bad{color:#FF7A66;}',
-    '#tv-vix #tv-vix-st{color:#FFFFFF;font-weight:800;}',
-    '#tv-vix pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.4 Menlo,Consolas,monospace;color:#9AA6B4;}'
-  ].join('\n');
-  (document.head || document.documentElement).appendChild(st);
-
-  function row(k, v, bad) { return '<tr><td class="k">' + esc(k) + '</td><td class="v' + (bad ? ' bad' : '') + '">' + esc(v) + '</td></tr>'; }
-  function show(rec, count) {
-    var box = document.getElementById('tv-vix');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'tv-vix';
-      box.className = 'notranslate';
-      box.setAttribute('translate', 'no');
-      // Right after the match description; the app hides parts of the page, so if that spot is hidden the panel
-      // goes just above the footer instead.
-      var at = document.querySelector('.content-ttl-wrap');
-      if (at && at.parentNode) at.parentNode.insertBefore(box, at.nextSibling); else document.body.appendChild(box);
-      if (box.offsetParent === null) {
-        var f = document.querySelector('footer, .box-footer');
-        if (f && f.parentNode) f.parentNode.insertBefore(box, f); else document.body.appendChild(box);
-      }
-    }
-    var sh = rec.shows.map(function(s) { return (s.date || '?') + ' · ' + s.show + (s.venue ? ' · ' + s.venue : '') + ' (set ' + s.id + ')'; }).join(' | ');
-    var fmt = function(s, t) { return s.map(function(x, i) { return x.join(' & ') + (t && t[i] ? ' [' + t[i] + ']' : ''); }).join('  vs  '); };
-    var logOn = false; try { logOn = !!(window.AndroidHost && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()); } catch (e) {}
-    box.innerHTML = '<div class="h">VIDEO INDEX · ' + (logOn ? 'LOG' : 'DRY RUN') + '<span>' + (logOn ? '<b id="tv-vix-st">sending…</b> · ' : 'nothing is sent · ') + 'saved on this TV: ' + count + ' video' + (count === 1 ? '' : 's') + '</span></div>' +
-      '<table>' + row('Video', rec.id + (rec.set ? ' (in set ' + rec.set + ')' : '')) +
-      row('Match no.', rec.no == null ? 'not found' : rec.no, rec.no == null) + row('Date', rec.date || 'not found', !rec.date) +
-      row('Title (EN)', rec.title_en || 'not found', !rec.title_en) + row('Title (JA)', rec.title_ja || 'not found', !rec.title_ja) +
-      row('Line-up (EN)', rec.sides_en.length ? fmt(rec.sides_en, rec.teams_en) : 'not found', !rec.sides_en.length) +
-      row('Line-up (JA)', rec.sides_ja.length ? fmt(rec.sides_ja, rec.teams_ja) : 'not found', !rec.sides_ja.length) +
-      row('Notes', rec.notes_en.concat(rec.notes_ja).map(function(n) { return n[0] + ': ' + n[1]; }).join(', ') || 'none') +
-      row('Show', sh || 'not found', !sh) + row('Tags', rec.tags.join(', ') || 'none') + row('Access', rec.access.join(', ') || 'none') + '</table>' +
-      '<pre>' + esc(JSON.stringify(rec)) + '</pre>';
-  }
-
-  // The page's text can arrive a little after the script runs: try for about 20 seconds, then show what was found.
+  // The page's text can arrive a little after the script runs: try for about 20 seconds, then use what was found.
   var tries = 0;
   var t = setInterval(function() {
     tries++;
@@ -188,12 +141,12 @@
     if (!ready && tries <= 20) return;
     clearInterval(t);
     if (!rec) rec = { id: +M[2], set: M[1] ? +M[1] : null, no: null, date: null, title_en: '', title_ja: '', sides_en: [], teams_en: [], notes_en: [], sides_ja: [], teams_ja: [], notes_ja: [], shows: [], tags: [], access: [], thumb: '', lines: [], read: new Date().toISOString(), note: 'no video information block found on this page' };
-    show(rec, store(rec));
+    store(rec);
     // Log (private builds with a log address): hand the record to the app, which sends it with its own key.
-    // A page with nothing read (no title and no description) is not sent.
+    // A page with nothing read (no title and no description) is not sent. No panel is shown; the last result is
+    // kept on the TV (localStorage tvVideoIndexLast) in case a send needs looking into.
     window.__tvVixStatus = function(id, text) {
-      var el = document.getElementById('tv-vix-st');
-      if (el && id === rec.id) { el.textContent = text; el.style.color = /^not sent/.test(text) ? '#FF7A66' : '#FFFFFF'; }
+      try { localStorage.setItem('tvVideoIndexLast', JSON.stringify({ id: id, result: text, at: new Date().toISOString() })); } catch (e) {}
     };
     try {
       if (window.AndroidHost && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
