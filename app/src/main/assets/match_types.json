@@ -16,6 +16,9 @@
      "name": "Tag team",
      "ja": "タッグマッチ",
      "search": "Tag Team",
+     "all": [
+      "tag|タッグ"
+     ],
      "none": [
       "(?:\\d+|six|eight|ten|twelve|fourteen)[\\s\\-‐]*(?:person|man|men|woman|women)",
       "\\d+\\s*人",

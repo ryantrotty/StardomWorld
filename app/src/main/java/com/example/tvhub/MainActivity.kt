@@ -8077,7 +8077,7 @@ class MainActivity : Activity() {
   })();
   function mtFits(title) {
     if (!MTR) return true;
-    var t = String(title || '');
+    var t = String(title || '').replace(/[\uff01-\uff5e]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); });   // ４ＷＡＹ reads as 4WAY
     if (!t.replace(/\s+/g, '')) return true;   // no title to judge by: keep it
     for (var i = 0; i < MTR.all.length; i++) if (!MTR.all[i].test(t)) return false;
     for (var j = 0; j < MTR.none.length; j++) if (MTR.none[j].test(t)) return false;

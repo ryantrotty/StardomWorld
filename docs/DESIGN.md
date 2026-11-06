@@ -151,3 +151,5 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 - Arrow keys move to the nearest item in that direction; Left at the left edge opens the menu.
 
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
+
+Team page searches (2.28.4): one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.

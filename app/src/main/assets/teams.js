@@ -261,11 +261,26 @@
   } catch (e) { MT_NONE = []; }
   // a built-in copy of the 2-on-2 rule, so the page never shows bigger matches if the match types can't be read
   if (!MT_NONE.length) MT_NONE = ["(?:\\d+|six|eight|ten|twelve|fourteen)[\\s\\-\u2010]*(?:person|man|men|woman|women)", "\\d+\\s*\u4eba", "(?:[2-6]|two|three|four|five|six)[\\s\\-\u2010]*way", "trios?|\u30c8\u30ea\u30aa", "gauntlet|\u30ac\u30f3\u30c8\u30ec\u30c3\u30c8", "battle\\s*royal|\u30d0\u30c8\u30eb\u30ed\u30a4\u30e4\u30eb", "rumble|\u30e9\u30f3\u30d6\u30eb"].map(function(p) { return new RegExp(p, 'i'); });
-  function isTagTitle(t) { for (var i = 0; i < MT_NONE.length; i++) if (MT_NONE[i].test(t)) return false; return true; }
+  // A 2-on-2 match title says tag (Tag Team Match, タッグマッチ, a tag title match) and none of the bigger-match words.
+  // Full-width letters and digits (４ＷＡＹ) are read as plain ones first.
+  var MT_ALL = [];
+  try {
+    ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { (g.items || []).forEach(function(x) { if (x.id === 'tag') (x.all || []).forEach(function(p) { MT_ALL.push(new RegExp(p, 'i')); }); }); });
+  } catch (e) { MT_ALL = []; }
+  if (!MT_ALL.length) MT_ALL = [/tag|\u30bf\u30c3\u30b0/i];
+  function half(t) { return String(t || '').replace(/[\uff01-\uff5e]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).replace(/\u3000/g, ' '); }
+  function isTagTitle(t) {
+    t = half(t);
+    for (var i = 0; i < MT_ALL.length; i++) if (!MT_ALL[i].test(t)) return false;
+    for (var j = 0; j < MT_NONE.length; j++) if (MT_NONE[j].test(t)) return false;
+    return true;
+  }
   var SPELL = CFG.spell || {};
   function siteName(n) { return SPELL[n] || n; }
 
-  var CACHE_KEY = 'tvTeamCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1', GAP_MS = 1200, AUTO_PAGES = 4, WANT = 12;
+  // One search page at a time: the first when the Tag Matches section comes into view, the next only when More is pressed.
+  // Saved copies last 7 days (a video's title doesn't change) and searches are at least 3 seconds apart.
+  var CACHE_KEY = 'tvTeamCacheV1', BLOCK_KEY = 'tvFacBlockUntilV1', LAST_KEY = 'tvTeamLastReq', GAP_MS = 3000, KEEP_MS = 7 * 86400000;
   function readCache() { return parse(lsGet(CACHE_KEY)) || {}; }
   function writeCache(k, v) {
     var all = readCache(); all[k] = v;
@@ -294,9 +309,12 @@
   }
   function fetchPage(q, page, cb) {
     var key = q + '#' + page, c = readCache()[key];
-    if (c && Date.now() - c.t < 86400000) { cb('', c.items, c.more, true); return; }
+    if (c && Date.now() - c.t < KEEP_MS) { cb('', c.items, c.more, true); return; }
     var wait = blockedFor();
     if (wait) { cb('the site asked for a pause: ' + wait + ' min left'); return; }
+    var since = Date.now() - (parseInt(lsGet(LAST_KEY) || '0', 10) || 0);
+    if (since < GAP_MS) { setTimeout(function() { fetchPage(q, page, cb); }, GAP_MS - since); return; }
+    lsSet(LAST_KEY, String(Date.now()));
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + '&activetab=contents' + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { lsSet(BLOCK_KEY, String(Date.now() + 10 * 60000)); throw 'blocked (HTTP ' + res.status + ')'; }
@@ -336,14 +354,13 @@
     if (t.name) q.push(t.name);
     return q;
   }
-  function loadMore(target) {
+  function loadMore() {
     if (V.busy || V.done) return;
-    if (!V.more) { V.qi++; V.page = 1; V.more = true; if (V.qi >= V.queries.length) { V.done = true; paintVids(); return; } }
     V.busy = true; paintVids();
     var q = V.queries[V.qi];
     fetchPage(q, V.page, function(err, items, more, cached) {
       V.busy = false;
-      if (err) { V.log.push(q + ' p' + V.page + ': ' + err); V.done = true; paintVids(); return; }
+      if (err) { V.log.push(q + ' · page ' + V.page + ': ' + err); V.done = true; paintVids(); return; }
       var add = 0;
       items.forEach(function(it) {
         if (V.seen[it.id]) return; V.seen[it.id] = 1;
@@ -354,11 +371,13 @@
         V.kept.push(it); add++;
       });
       V.log.push(q + ' · page ' + V.page + ': ' + items.length + ' videos, ' + add + ' kept' + (cached ? ' (saved copy)' : ''));
-      V.more = more; V.page++;
-      // the first search alone, if it finds enough; the other spellings and the team name only while short
-      if (!V.more && V.qi === 0 && V.kept.length >= WANT) V.done = true;
+      // The other spelling and the team name are tried only when a search finds no videos at all.
+      if (V.page === 1 && !items.length && V.qi + 1 < V.queries.length) {
+        V.qi++; V.page = 1; paintVids(); loadMore(); return;
+      }
+      V.page++;
+      if (!more) V.done = true;
       paintVids();
-      if (!V.done && V.kept.length < target && V.page <= AUTO_PAGES + 1) setTimeout(function() { loadMore(target); }, GAP_MS);
     });
   }
   function dateOfTitle(t) { var m = /(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(t || ''); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : ''; }
@@ -425,7 +444,12 @@
     focusEl(scroller.querySelector('.tt-btn') || scroller.querySelector('[tabindex="0"]'));
     V.queries = queriesFor(t);
     paintVids();
-    loadMore(WANT);
+    var box = document.getElementById('tt-vids'), started = false;
+    function start() { if (started) return; started = true; loadMore(); }
+    // start when the section is on screen: now if it already is, otherwise once the page scrolls to it
+    function inView() { if (!box) return true; var r = box.getBoundingClientRect(), v = scroller.getBoundingClientRect(); return r.top < v.bottom - 40; }
+    if (inView()) start();
+    else scroller.addEventListener('scroll', function onScroll() { if (inView()) { scroller.removeEventListener('scroll', onScroll); start(); } });
   }
 
   // ================================================================== remote: arrows move to the nearest item in that direction
@@ -446,7 +470,7 @@
   }
   function choose(el) {
     if (el.getAttribute('data-f') != null) { filt = el.getAttribute('data-f'); renderList('[data-f="' + filt + '"]'); return true; }
-    if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(V.kept.length + WANT); return true; }
+    if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(); return true; }
     return false;
   }
   scroller.addEventListener('click', function(e) { var el = e.target.closest ? e.target.closest('[tabindex]') : null; if (el && choose(el)) e.preventDefault(); });

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.28.4
+
+- Team pages make far fewer site searches. The first search runs only when the Tag Matches section is on screen, and fetches one page; each press of "More tag matches" fetches one more. The other spelling and the team name are searched only when a search finds no videos at all. Searches are at least 3 seconds apart, and results are kept for 7 days. Opening a team page now makes 1 search, where BMI2000 made 8 before.
+- Tag match rule: a title must also say tag ("Tag Team", "タッグ"), so videos such as "English" or a show's anniversary set no longer get through. Full-width letters and digits are read as plain ones, so "４ＷＡＹタッグ" counts as a 4-Way and is left out. The same applies to the filter bar's "Tag team" match type.
+
 ## 2.28.3
 
 - Team pages: the header facts (MEMBERS, FACTION, FIRST TITLE, REIGNS, DEFENCES) have their sizes and spacing back; 2.28.2 dropped their styles by mistake when removing Title Matches.
