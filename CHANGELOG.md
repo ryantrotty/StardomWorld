@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.2
+
+- Public artwork refreshed (same name and star): the TV home banner (now 1280 x 720) has a large glowing gold star over a bigger "TV VIEWER" on a dark ground, without the "Unofficial fan-made app" line; the app icon has a larger glowing star on a dark tile; the header and splash logos match. Builds with the private branding folder still use their own artwork.
+- Fire TV: the launch screen entry now names the banner (and icon) itself as well as the app, so Fire TV launchers that ignore the app-level banner show the banner instead of the icon.
+
 ## 2.24.1
 
 - Championships menu: the IWGP Women's and STRONG Women's cards are now the same width as the Stardom cards (the row under the Stardom grid uses the same two columns), and the text-only Other Promotions list sits under the right column.
