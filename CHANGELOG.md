@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.24.8
+
+- App icon: the gold star now sits on a transparent background (no dark square). Fire TV draws its own grey behind transparent pixels (the old icon's rounded corners already showed it), so on Fire TV the star sits straight on the tile with nothing to match. The star has a darker gold edge and a soft shadow so it holds on that grey and on dark backgrounds (Google TV, Settings). Still a 512 x 512 square, so Fire TV keeps listing the app.
+
 ## 2.24.7
 
 - Fire TV: back to the square app icon (the 2.24.6 test is undone; artwork and manifest are the same as 2.24.5). With the 1280 x 720 banner as the icon, Fire TV stopped listing the app, as it did when the banner was the logo in 2.24.3. Fire TV seems to drop a sideloaded app whose icon or logo is that large, so the square icon stays.
