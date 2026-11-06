@@ -21,8 +21,6 @@
 
         <activity
             android:name=".MainActivity"
-            android:banner="@drawable/banner"
-            android:icon="@drawable/ic_launcher"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|uiMode"
             android:exported="true"
             android:launchMode="singleTask">
