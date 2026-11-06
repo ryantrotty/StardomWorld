@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.32.0
+
+Private builds only for now (builds with the `branding-private` folder); public builds keep the 2.8.5 rule and have no card.
+
+- Sets start at the opening match more reliably. Before, the app judged a set's order from its first and last titles only, so a set like 3・15 CINDERELLA TOURNAMENT (a tag match at the top, a semifinal at the bottom) started with the main event. Now every match counts: title matches, tournament finals, semifinals and earlier rounds weigh toward the main event, 【ダイゼロタイム】 / 第0試合 toward the opener, and the half of the list with the bigger matches is the end of the show. When nothing tells them apart (house shows, league nights), the lowest video number is taken as the opener. Checked against 35 sets on the site.
+- Set order card: after a set page opens its first match, a card at the bottom left of the player shows the match now playing (1 of N), the one the set ends on, and how the order was decided (match titles, video numbers as a guess, or your choice). It stays up during the countdown to full screen, which is 8 seconds instead of 5 while the card shows.
+  - **Play other way** (focused) starts the set from the other end. The choice is kept for that set on this TV.
+  - **Stay here** cancels full screen and keeps the player inline.
+  - Up goes to the player, Down to the video row; the card goes away when full screen starts.
+- New file assets/setcard.js; assets/setorder.js gains the new rule.
+
 ## 2.31.2
 
 - Wrestler pages: Left at the left edge of the header opens the menu, as it does from the video grid.
