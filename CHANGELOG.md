@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.31.2
+
+- Wrestler pages: Left at the left edge of the header opens the menu, as it does from the video grid.
+- Wrestler pages: the page title is the wrestler's name on every wrestler page, as on tag team pages. Before, it read "Search: …" unless the address exactly matched a menu link (for example, after choosing filters or arriving from a faction page).
+
 ## 2.31.1
 
 - Wrestler pages: the gold focus border now shows and stays on the header's buttons and belt cards. The site puts the header inside its article, where the app's card style removed the border from anything focused, so focus flashed grey and vanished.

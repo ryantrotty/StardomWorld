@@ -34,6 +34,7 @@
   FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name }; }); });
   PAST.forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name }; });
   if (!W) return;
+  window.__tvWrestlerName = W.name;   // the page title shows the name (the menu's title code reads this)
 
   // ---- their factions: the ones that list them, current first (factions.json "former" marks past ones)
   function facPath(f) { var m0 = (f.members || [])[0]; var kw = f.home === false && m0 ? m0.search : (f.search || f.name); return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw) + '&tvfaction=' + encodeURIComponent(f.id); }
@@ -216,7 +217,8 @@
       if (dir === 'down') { var fb = document.querySelector('#tv-fb .tv-fbb'); if (fb) { stop(); focusEl(fb); } return; }
       if (dir === 'up') { stop(); window.scrollTo(0, 0); return; }
       if (dir === 'right') { stop(); return; }
-      return;   // Left at the left edge: the page opens the menu as usual
+      if (dir === 'left') { stop(); if (window.__tvOpenMenu) window.__tvOpenMenu(); return; }   // left edge: the menu
+      return;
     }
     if (k === 38 && ae && ae.closest && ae.closest('#tv-fb') && ae.classList.contains('tv-fbb')) {
       var list = items(), best = null, bd = 1e9, ar = ae.getBoundingClientRect();

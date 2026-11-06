@@ -5924,6 +5924,9 @@ class MainActivity : Activity() {
             var h1t = h1 ? (h1.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var docT = (document.title || '').replace(/\s*[|\uFF5C\-]\s*Stardom World.*$/i, '').trim();
             var fallback = (h1t && !/^(search|検索結果?|検索)$/i.test(h1t)) ? h1t : docT;
+            // A wrestler's page (assets/wrestler.js), filtered or not, is titled with their name, as a tag team page is.
+            var wn = window.__tvWrestlerName;
+            if (wn && loc.pathname === '/contents/search') return isJa() ? (JA_NAMES[wn] || wn) : wn;
             var all = [].concat(showsList(), homeRows(), staticHomeRows(), CHAMPS, FAVS, COMMUNITY, wrestlers(CURRENT_W), wrestlers(PAST_W), yearsList());
             for (var i = 0; i < all.length; i++) {
               var u = new URL(all[i][1], BASE);

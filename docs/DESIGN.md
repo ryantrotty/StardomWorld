@@ -168,7 +168,8 @@ Wrestler pages (2.31.0, assets/wrestler.js): a wrestler's search page (the Wrest
 - TITLES HELD: two per row, newest first, the team page's belt card (120 x 66 belt, 19/700 title and reign, 15/600 dates plus "with" partners, 13/700 gold days and defences), opening that reign on its title page.
 - MATCHES: a section header, then the filter bar, chips and the site's results as before.
 - The header is marked notranslate (it writes its own English or Japanese), and its focus rules name #tv-wr with !important: the site's search page puts it inside an article, where the app's card rule removes borders from anything focused (2.31.1).
-- Remote: arrows move to the nearest header item; Down past the header goes to the filter bar and Up from the filter bar comes back. The Menu button anywhere in the header adds or removes the favorite. The page starts on the favorites button.
+- The page title is the wrestler's name on every wrestler page, filtered or not (2.31.2), as on tag team pages.
+- Remote: arrows move to the nearest header item; Left at the left edge opens the menu (2.31.2); Down past the header goes to the filter bar and Up from the filter bar comes back. The Menu button anywhere in the header adds or removes the favorite. The page starts on the favorites button.
 
 Menu order (2.31.0, signed in): … Years, then a divider, Community, My Favorites and the account name last.
 
