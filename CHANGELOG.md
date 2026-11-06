@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.30.3
+
+- Tag Teams menu: Down from All Tag Teams now goes to My Tag Teams (it skipped to New Horizons), and Up from the era headers comes back through My Tag Teams. Menu shelves now treat a wide bar above or below as straight up or down when it spans the item you're on; other shelves move as before.
+- Tag Teams menu: a 10 px gap between the All Tag Teams and My Tag Teams bars, so their outlines no longer touch.
+
 ## 2.30.2
 
 - Menu: spare height is now spread evenly between all the entries (and above the logo and below Community), instead of collecting around the logo. If the entries don't fit, the menu still scrolls from the top.

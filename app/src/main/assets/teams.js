@@ -120,6 +120,7 @@
         '#tv-sm-shelf .tv-shl-tm .a{display:block;font-size:16px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
         '#tv-sm-shelf .tv-shl-tm .b{display:block;font-size:12px;font-weight:600;color:#9aa6b4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}',
         '#tv-sm-shelf .tv-shl-mine{color:#F4C242;font-weight:900;}',
+        '#tv-sm-shelf .tv-shl-top.tt-top{display:flex;flex-direction:column;gap:10px;}',
         '#tv-sm-shelf .tv-shl-tm.tv-fav-on .a::before{content:"\\2605  ";color:#F4C242;}',
         '#tv-sm-shelf .tv-sm-fi.tv-shl-tm.tv-fav-on::before{content:none;display:none;}',   // the star goes before the name, not on its own line
         '#tv-sm-shelf .tv-shl-ecol .tv-sm-fi.tv-shl-tmore{color:#F4C242 !important;font-size:15px;padding:5px 10px;}'
@@ -138,7 +139,7 @@
     });
     var ap = '/mypage?tvteams=1', fp = '/mypage?tvfav=teams', fc = favCount();
     return '<div class="tv-shl-t">' + esc(T('TAG TEAMS', 'タッグチーム')) + '</div>' +
-      '<div class="tv-shl-top"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + ap + '" href="' + esc(absUrl(ap)) + '">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '<span>' + esc(T(all.length + ' champion teams, A to Z', '王者チーム' + all.length + '組')) + '</span></a>' +
+      '<div class="tv-shl-top tt-top"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + ap + '" href="' + esc(absUrl(ap)) + '">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '<span>' + esc(T(all.length + ' champion teams, A to Z', '王者チーム' + all.length + '組')) + '</span></a>' +
         '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + fp + '" href="' + esc(absUrl(fp)) + '"><div><b class="tv-shl-mine">\u2605</b> ' + esc(T('My Tag Teams', 'お気に入りチーム')) + '</div><span>' + esc(fc ? T(fc + (fc === 1 ? ' favorite' : ' favorites'), fc + 'チーム') : T('Menu button on a team adds it', 'チームでメニューボタン')) + '</span></a></div>' +
       '<div class="tv-shl-ec">' + cols + '</div>';
   };

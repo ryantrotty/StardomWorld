@@ -150,13 +150,14 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
   - TAG MATCHES: four-across video cards (look C ring). A gold date badge sits top right, and an orange TEAMMATES tag top left when the video index confirms the two were on the same side. A "More tag matches" tile loads further pages; it stays in place (with focus) while the next page loads. With nothing to show yet, a plain grey line (16 px #9AA6B4, the same as the championship pages' "Press OK on this reign" note) sits above the More tile, and the header reads "looking for videos" or "none found yet".
   - The search lines stay on screen at the bottom (debug panel style).
 - Arrow keys move to the nearest item in that direction; Left at the left edge opens the menu.
+- Menu shelves (2.30.3): Up and Down treat a bar wider than 60% of the shelf as straight above or below when it spans the starting point, so All Tag Teams goes Down to My Tag Teams, not the first era.
 
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
 
 Tag team favorites (2.30.0, kept in tvFavV1 as `t`, newest first, no limit):
 - The Menu button adds or removes a team on its Tag Teams shelf row, its All Tag Teams tile, or the top of its team page (the video cards keep their own Menu pop-up). A toast confirms, as for wrestlers.
 - Team page: a "☆ Add to My Favorites" button after the member and faction buttons (look A). Once added it reads "★ In My Favorites" with gold text on a dark gold tint (#2A2410); focus is still only the gold border.
-- Favorites are marked with a gold ★ before the name: Tag Teams shelf rows and All Tag Teams tiles. The shelf's top row adds a "★ My Tag Teams" bar (tv-shl-all) with the count; it opens `/mypage?tvfav=teams`. The shelf hint reads "Menu button on a team adds or removes a favorite."
+- Favorites are marked with a gold ★ before the name: Tag Teams shelf rows and All Tag Teams tiles. The shelf's top row adds a "★ My Tag Teams" bar (tv-shl-all) with the count, 10 px under All Tag Teams (2.30.3); it opens `/mypage?tvfav=teams`. The shelf hint reads "Menu button on a team adds or removes a favorite."
 - My Favorites page: FAVORITE TAG TEAMS row under Favorite Wrestlers, up to 8 then a View All tile. Pair card (look E, gold frame): 324 wide, a 3:2 picture split into two member halves (photos in private builds, else 54px initials on the wrestler cards' colour wash), no belt tag (removed in 2.30.1), team name 20/900 and members 13/600 over the dark fade. `/mypage?tvfav=teams` shows them three across. Menu on a card removes it.
 - My Favorites menu: a "Tag Teams" row under Wrestlers in COLLECTIONS, with the newest team's two mini avatars and the count.
 

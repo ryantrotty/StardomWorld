@@ -5689,8 +5689,11 @@ class MainActivity : Activity() {
                   if (adx < rowBs) { rowBs = adx; rowBest = it; }
                 }
               }
-              if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = Math.abs(dx); }
-              else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = Math.abs(dx); }
+              // A wide bar above or below (All Tag Teams over My Tag Teams) counts as straight down when it spans
+              // this point, not by its far-off centre.
+              var spanDx = r.width > shW * 0.6 ? Math.max(0, r.left - cx, cx - r.right) : Math.abs(dx);
+              if (dir === 'down') { if (dy <= 4) return; prim = dy; orth = spanDx; }
+              else if (dir === 'up') { if (dy >= -4) return; prim = -dy; orth = spanDx; }
               else if (dir === 'right') { if (dx <= 4) return; prim = dx; orth = Math.abs(dy); }
               else { if (dx >= -4) return; prim = -dx; orth = Math.abs(dy); }
               var sc = prim + orth * 2;
