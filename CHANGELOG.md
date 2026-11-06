@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.27.1
+
+- Favorites sync: PPVs the app has seen play (its own "owned" setting) are now shared too, alongside the ones marked bought by hand. Each PPV counts only until its replay window ends, as on My Favorites: an expired PPV isn't sent, and once one expires it's marked removed in the sheet and cleared from every TV.
+- The sheet's script accepts the new item kind: paste scripts/video_index_log.gs into Apps Script and deploy a new version.
+
 ## 2.27.0
 
 - Favorites sync (private builds with the log set up): favorites, show reminders and owned PPVs are shared between TVs through a new `favorites` tab in the same Google Sheet (docs/FAVORITES_SYNC.md). The main TV sends its set once from the Account menu ("Send this TV's favorites to sync", OK twice); other TVs take that copy on their first start, then every change is sent within a few seconds and picked up by the others when the app starts and every minute. One row per item, the newest change wins, removals are kept so they don't come back, and offline changes wait until the TV is back online.

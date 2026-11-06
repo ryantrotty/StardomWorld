@@ -3044,6 +3044,26 @@ class MainActivity : Activity() {
         fun ppvOwnedJson(): String =
             this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).getString("ppvOwned", "{}") ?: "{}"
 
+        // Favorites sync (private builds): the owned PPVs from the other TVs. Replaces the list with the synced one;
+        // each entry must be { eventId: { t, url } } with a Stagecrowd player address.
+        @android.webkit.JavascriptInterface
+        fun ppvOwnedSet(json: String) {
+            if (!videoIndexOn()) return
+            try {
+                val o = org.json.JSONObject(json)
+                val clean = org.json.JSONObject()
+                val ks = o.keys()
+                while (ks.hasNext()) {
+                    val k = ks.next()
+                    val v = o.optJSONObject(k) ?: continue
+                    val url = v.optString("url")
+                    if (k.length > 80 || !Regex("/(plan_player|live_player)/\\d+").containsMatchIn(url)) continue
+                    clean.put(k, org.json.JSONObject().put("t", v.optLong("t")).put("url", url))
+                }
+                this@MainActivity.getSharedPreferences("sched", MODE_PRIVATE).edit().putString("ppvOwned", clean.toString()).apply()
+            } catch (_: Exception) {}
+        }
+
         // The live show's player reported finish: the "up next" screen stops saying LIVE NOW.
         @android.webkit.JavascriptInterface
         fun liveEnded() {

@@ -1,6 +1,7 @@
 (function(){
   // Favorites sync (private builds with the log address; see docs/FAVORITES_SYNC.md). Shares one set of favorites
-  // (tvFavV1), show reminders (tvSchedRemV1) and owned PPVs (tvPpvBoughtV1) between TVs through the private sheet.
+  // (tvFavV1), show reminders (tvSchedRemV1), PPVs marked bought (tvPpvBoughtV1) and PPVs the app saw play (the app's
+  // own ppvOwned setting) between TVs through the private sheet.
   // The saved stores are flattened into one entry per item ("w:<keyword>", "fs:<faction>", "later:<video>", ...).
   // A copy of the last known state (tvFavSyncSnap) shows what changed; changes wait in tvFavSyncQueue until the sheet
   // has them. The app's native code sends the requests and adds the key, so the key never enters the page.
@@ -26,6 +27,22 @@
   function copy(x, extra) { var o = {}; for (var k in x) if (k !== 'i') o[k] = x[k]; for (var e in extra) o[e] = extra[e]; return o; }
   function byI(a, b) { return (a.i || 0) - (b.i || 0); }
 
+  // A PPV counts only until its replay window ends (the schedule's replay_end, else 14 days after the show), the same
+  // rule My Favorites uses. An expired PPV is not synced, so it drops out of the sheet and off the other TVs too.
+  var ends = null;
+  function ppvAlive(id) {
+    if (!ends) {
+      ends = {};
+      try {
+        (JSON.parse(H.scheduleJson()).events || []).forEach(function(e) {
+          if (!e || !e.ppv) return;
+          var t = Date.parse(e.ppv.replay_end || ''), st = Date.parse(e.start || '');
+          ends[e.id] = isNaN(t) ? (isNaN(st) ? 0 : st + 14 * 86400000) : t;
+        });
+      } catch (e) {}
+    }
+    return !!ends[id] && Date.now() < ends[id];
+  }
   // ---- the saved stores <-> one entry per item ({key: JSON text of its value})
   function flatten() {
     var out = {}, d = jget(FAV, {}) || {}, fixed = false;
@@ -41,11 +58,18 @@
     });
     if (fixed) jset(FAV, d);
     var r = jget(REM, {}) || {}; Object.keys(r).forEach(function(id) { put('rem:' + id, r[id]); });
-    var b = jget(PPV, {}) || {}; Object.keys(b).forEach(function(id) { put('ppv:' + id, b[id]); });
+    // PPVs marked bought, and PPVs this TV has watched (the app's own setting). Expired ones are cleared from this TV too.
+    var b = jget(PPV, {}) || {}, bKeep = {}, bGone = 0;
+    Object.keys(b).forEach(function(id) { if (ppvAlive(id)) { bKeep[id] = b[id]; put('ppv:' + id, b[id]); } else bGone++; });
+    if (bGone) jset(PPV, bKeep);
+    var own = {}, oKeep = {}, oGone = 0;
+    try { own = JSON.parse((H.ppvOwnedJson && H.ppvOwnedJson()) || '{}') || {}; } catch (e) { own = {}; }
+    Object.keys(own).forEach(function(id) { if (ppvAlive(id)) { oKeep[id] = own[id]; put('own:' + id, own[id]); } else oGone++; });
+    if (oGone) { try { if (H.ppvOwnedSet) H.ppvOwnedSet(JSON.stringify(oKeep)); } catch (e) {} }
     return out;
   }
   function apply(map) {   // map: {key: value (object)}; writes all three stores, keeping any other favorites fields
-    var d = jget(FAV, {}) || {}, ws = [], fs = [], L = { later: [], m: [], s: [] }, pls = {}, plis = {}, rem = {}, ppv = {};
+    var d = jget(FAV, {}) || {}, ws = [], fs = [], L = { later: [], m: [], s: [] }, pls = {}, plis = {}, rem = {}, ppv = {}, own = {};
     Object.keys(map).forEach(function(k) {
       var v = map[k], kind = k.slice(0, k.indexOf(':')), rest = k.slice(k.indexOf(':') + 1);
       if (v == null) return;
@@ -53,7 +77,7 @@
       else if (L[kind]) L[kind].push(v);
       else if (kind === 'pl') pls[v.id] = v;
       else if (kind === 'pli') { var pid = rest.slice(0, rest.indexOf(':')); (plis[pid] = plis[pid] || []).push(v); }
-      else if (kind === 'rem') rem[rest] = v; else if (kind === 'ppv') ppv[rest] = v;
+      else if (kind === 'rem') rem[rest] = v; else if (kind === 'ppv') { if (ppvAlive(rest)) ppv[rest] = v; } else if (kind === 'own') { if (ppvAlive(rest)) own[rest] = v; }
     });
     d.w = ws.sort(byI).map(function(x) { return { k: x.k, n: x.n }; });
     d.fs = fs.sort(byI).map(function(x) { return x.id; });
@@ -63,6 +87,7 @@
       return { id: p.id, name: p.name, items: (plis[p.id] || []).sort(byI).map(function(x) { return copy(x, {}); }) };
     });
     jset(FAV, d); jset(REM, rem); jset(PPV, ppv);
+    try { if (H.ppvOwnedSet) H.ppvOwnedSet(JSON.stringify(own)); } catch (e) {}
   }
   function parsed(flat) { var o = {}; Object.keys(flat).forEach(function(k) { try { o[k] = JSON.parse(flat[k]); } catch (e) {} }); return o; }
 
