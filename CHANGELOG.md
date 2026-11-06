@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.32.1
+
+Private builds only, as 2.32.0.
+
+- Set order card: one button, **Reverse Order** (it was Play other way and Stay here). The top match is tagged FIRST and the second LAST (it was NOW 1/N). The countdown to full screen is 12 seconds while the card shows (it was 8).
+
 ## 2.32.0
 
 Private builds only for now (builds with the `branding-private` folder); public builds keep the 2.8.5 rule and have no card.
