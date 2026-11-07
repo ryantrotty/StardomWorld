@@ -275,7 +275,8 @@
       "championship|選手権|title\\s*match|タイトルマッチ"
      ],
      "none": [
-      "挑戦者決定|next\\s*challenger|contender"
+      "挑戦者決定|next\\s*challenger|contender",
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
      ],
      "tagBelt": [
       "goddess(?:es)?\\s*of\\s*stardom|ゴッデス・オブ・スターダム|new\\s*blood\\s*tag|NEW\\s*BLOOD\\s*タッグ"
@@ -310,6 +311,10 @@
      ],
      "pages": [
       "wrestler"
+     ],
+     "none": [
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d",
+      "cinderella"
      ]
     },
     {
@@ -318,10 +323,13 @@
      "ja": "シンデレラ・トーナメント",
      "search": "Cinderella",
      "all": [
-      "cinderella|シンデレラ"
+      "cinderella\\s*tournament|シンデレラ[・\\s]*トーナメント"
      ],
      "pages": [
       "wrestler"
+     ],
+     "none": [
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
      ]
     },
     {
@@ -334,7 +342,8 @@
       "official|公式|代表|決勝|優勝|tournament|league|リーグ"
      ],
      "none": [
-      "championship|選手権|title\\s*match|タイトルマッチ"
+      "championship|選手権",
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
      ],
      "pages": [
       "wrestler",

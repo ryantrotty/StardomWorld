@@ -430,7 +430,7 @@
   // a tag title match (Goddess, NEW BLOOD tag): its title has no "tag" in it ("ゴッデス・オブ・スターダム選手権試合")
   function isTagBeltMatch(t) { var c = CAT.champ; return !!(c && catFits('champ', t) && c.tagBelt.some(function(r) { return r.test(half(t)); })); }
   function isTagTitle(t) {
-    if (CATS_ON && isTagBeltMatch(t)) return true;
+    if (CATS_ON && (isTagBeltMatch(t) || catFits('tagleague', t))) return true;
     t = half(t);
     for (var i = 0; i < MT_ALL.length; i++) if (!MT_ALL[i].test(t)) return false;
     for (var j = 0; j < MT_NONE.length; j++) if (MT_NONE[j].test(t)) return false;
@@ -520,6 +520,10 @@
       items.forEach(function(it) {
         if (V.seen[it.id]) return; V.seen[it.id] = 1;
         if (!isTagBeltMatch(it.t)) { V.dropped.push(it.t); return; }   // team pages keep tag title matches only
+        // a dated Goddess title match must be one this pair was in, by the title history (as champions or challengers);
+        // NEW BLOOD tag has no defence list to check against, so those stay
+        var dd = dateOfTitle(it.t);
+        if (dd && GODDESS_RE.test(half(it.t)) && pairDates().goddess && !pairDates().goddess[dd]) { V.dropped.push('[not this pair, by the title history] ' + it.t); return; }
         var sd = sidesCheck(TEAM, it.id);
         if (sd === 'opponents') { V.dropOpp++; V.dropped.push('[opponents] ' + it.t); return; }
         if (sd === 'partners') { it.ok = 1; V.verified++; }
@@ -543,10 +547,37 @@
       paintVids();
     });
   }
+  // Goddess of Stardom title matches this pair was in, by date: reigns won, defences, and other champions' defences
+  // against them (opp names both). null when the history can't be read.
+  var GODDESS_RE = /goddess(?:es)?\s*of\s*stardom|ゴッデス・オブ・スターダム/i, PAIR_DATES = null;
+  function pairDates() {
+    if (PAIR_DATES) return PAIR_DATES;
+    PAIR_DATES = { goddess: null };
+    try {
+      var L = parse(call('lineageJson', 'goddess'));
+      if (!L || !L.reigns) return PAIR_DATES;
+      var alias = {};
+      Object.keys(L.alias || {}).forEach(function(n) { (L.alias[n] || []).concat([n]).forEach(function(a) { alias[String(a).toLowerCase()] = String(n).toLowerCase(); }); });
+      var canon = function(n) { var k = String(n).trim().toLowerCase(); return alias[k] || k; };
+      var want = TEAM.members.map(canon);
+      var both = function(str) { var who = String(str || '').split(/\s*(?:&|,|・|＆)\s*/).map(canon); return want.every(function(n) { return who.indexOf(n) >= 0; }); };
+      var out = {};
+      L.reigns.forEach(function(r) {
+        var mine = both(r.champ);
+        if (mine && r.won) out[r.won] = 1;
+        (r.defences || []).forEach(function(df) { if (df && df.d && (mine || both(df.opp))) out[df.d] = 1; });
+        if (both(r.vs) && r.won) out[r.won] = 1;   // the match where they lost the belts
+      });
+      PAIR_DATES.goddess = out;
+    } catch (e) {}
+    return PAIR_DATES;
+  }
   // The Championship tab's check: title matches on record for this team (reigns won and defences) against what was found.
   function champRecord() {
     var rec = [];
     (TEAM.reigns || []).forEach(function(r) { if (r.won) rec.push(r.won); (r.defences || []).forEach(function(d) { if (d && d.d) rec.push(d.d); }); });
+    Object.keys(pairDates().goddess || {}).forEach(function(d) { if (rec.indexOf(d) < 0) rec.push(d); });   // incl. their challenges
+    rec.sort().reverse();
     var seen = {};
     C.kept.forEach(function(it) { var d = dateOfTitle(it.t); if (d) seen[d] = 1; });
     return { total: rec.length, found: rec.filter(function(d) { return seen[d]; }), missing: rec.filter(function(d) { return !seen[d]; }) };

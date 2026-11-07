@@ -9,6 +9,17 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.43.3
+
+From the first rows in the sheet's debug tab (Saya Kamitani, BMI2000, wing★gori). Private builds only.
+
+- Category rules (`match_types.json`; also sent to 2.43.x builds through the roster file):
+  - Whole-show videos are left out of every category: titles that start with a date and an underscore ("2021/9/20_5★STAR GP 2021", "2021/11/14_第11回 ゴッデス・オブ・スターダム～タッグリーグ戦～最終戦") or say Day-1 / Day-2.
+  - Cinderella needs "Cinderella Tournament" / シンデレラ・トーナメント: CINDERELLA SUMMER TOUR, Road to TOKYO DREAM CINDERELLA and its 前哨戦 were being kept.
+  - 5★STAR GP leaves out anything mentioning Cinderella.
+- Team pages: Tag League rounds without "tag" in the title (ブルーゴッデス代表決定… 決勝トーナメント) now count as 2-on-2; they were left out of the Tag League tab.
+- Team Championship tab: a dated Goddess of Stardom title match is kept only if the title history has this pair in it on that date: as champions, as challengers (another champion's defence against them) or in the match where they lost the belts. Matches of the right belt but other teams were being kept (search words match any video naming both wrestlers). NEW BLOOD tag has no defence list, so those stay. "Title matches on record" now counts their challenges too.
 ## 2.43.2
 
 - Flashing at the end of narrowed lists: cards that don't fit the title rule are now hidden instead of removed. The site's own list code was putting the removed cards back and the filter took them out again, over and over (no requests, just redrawing). Hidden cards stay put, so nothing is redrawn; the page loader still skips them when it checks for repeats.
