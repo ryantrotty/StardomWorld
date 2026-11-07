@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.40.2
+
+- Team pages: a match list saved to your sheet under the old 2-on-2 rule is searched again from page 1, once per team on each TV. Before, a team whose Tag League matches had been thrown away (Trouble Friends: "saved list from your sheet: 0 matches") kept showing that saved list and was not searched again for 14 days. Saved matches stay; new ones are added without repeats, and More carries on page by page as usual. One search per team, only when its page is opened.
+- The rule has a version number (`TM_RULE` in `teams.js`, now 2) to raise whenever the tag team title rule starts keeping more titles; each TV remembers per team which version it last searched with (`tvTeamRuleV1`).
+
 ## 2.40.1
 
 - Tag League matches count as tag team matches. Goddesses of Stardom Tag League official matches are titled "Red Goddess Official Match" / "Blue Goddess Official Match" (レッド/ブルーゴッデス公式戦) with no "tag" in the title, so the 2-on-2 title rule left them out: team pages showed 0 tag matches (Trouble Friends: 6 found, 0 kept) and the filter bar's Match type: Tag team hid them. The tag team rule in `match_types.json` (and the built-in copy in `teams.js`) now also accepts "Goddess Official" / ゴッデス公式. No extra searches: the same results are kept instead of thrown away.

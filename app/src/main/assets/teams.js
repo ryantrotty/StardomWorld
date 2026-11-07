@@ -458,6 +458,11 @@
   }
   // A saved list is shown straight away, with no site search. Only a list older than 14 days gets its newest page
   // searched again (new matches go first); everything else waits for "More tag matches".
+  // The 2-on-2 rule's version (raise it whenever match_types.json "tag" keeps more titles) and, per TV, the version
+  // each team was last searched with.
+  var TM_RULE = 2, RULE_KEY = 'tvTeamRuleV1';
+  function ruleSeen() { var a = parse(lsGet(RULE_KEY)) || {}; return a[TEAM.id] || 1; }
+  function ruleMark() { var a = parse(lsGet(RULE_KEY)) || {}; if (a[TEAM.id] !== TM_RULE) { a[TEAM.id] = TM_RULE; lsSet(RULE_KEY, JSON.stringify(a)); } }
   function fromSheet(fallback) {
     V.busy = true; paintVids();
     sheet('tm_get', {}, function(r) {
@@ -477,11 +482,16 @@
       // The saved place belongs to the search words it was made with: when this version searches with other words
       // (r.queries doesn't include the first one), the saved matches stay and the new search starts at page 1.
       var sameWords = !r.queries || !r.queries.length || r.queries.indexOf(V.queries[0]) >= 0;
-      if (r.next && sameWords) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
+      // A list saved under an older version of the 2-on-2 rule may be missing matches that rule threw away (before
+      // 2.40.1, Tag League "Goddess Official Match" titles). Its saved matches stay, and the search starts again from
+      // page 1 once on this TV; More then carries on page by page as usual.
+      var oldRule = ruleSeen() < TM_RULE;
+      if (r.next && sameWords && !oldRule) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
       V.log.push(T('saved list from your sheet: ' + add.length + ' matches (searched ' + String(r.searched || '').slice(0, 10) + ')', 'シートの保存: ' + add.length + '試合（' + String(r.searched || '').slice(0, 10) + '）'));
       if (!sameWords) V.log.push(T('saved with other search words: searching page 1 of ', '検索語が変わったため1ページ目から: ') + V.queries[0]);
+      else if (oldRule) V.log.push(T('saved under an older match rule: searching again from page 1 of ', '旧ルールで保存：1ページ目から再検索: ') + V.queries[0]);
       paintVids();
-      if (!sameWords) { loadMore(); return; }   // one search, as on a first visit
+      if (!sameWords || oldRule) { loadMore(); return; }   // one search, as on a first visit
       var age = Date.now() - (Date.parse(r.refreshed || '') || 0);
       if (age > REFRESH_MS) refreshNewest();
     });
@@ -508,8 +518,10 @@
     fetchPage(q, V.page, function(err, items, more, cached) {
       V.busy = false; V.ran = true;
       if (err) { V.log.push(q + ' · page ' + V.page + ': ' + err); V.done = true; paintVids(); return; }
-      var kept = keepItems(items), add = kept.length;
+      var have = {}; V.kept.forEach(function(x) { have[x.id] = 1; });
+      var kept = keepItems(items).filter(function(x) { return !have[x.id]; }), add = kept.length;
       V.kept = V.kept.concat(kept);
+      ruleMark();
       V.log.push(q + ' · page ' + V.page + ': ' + items.length + ' videos, ' + add + ' kept' + (cached ? ' (saved copy)' : ''));
       // The other spelling and the team name are tried only when a search finds no videos at all.
       if (V.page === 1 && !items.length && V.qi + 1 < V.queries.length) {
