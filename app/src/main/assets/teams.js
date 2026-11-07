@@ -750,9 +750,7 @@
         t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
         (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
         (window.__tvFav ? '<a class="tt-btn tt-favb' + (isFav(t.id) ? ' tt-on' : '') + '" tabindex="0" data-favb="1">' + favBtnInner(t.id) + '</a>' : '') +
-        (window.__tvCatProbe ? '<a class="tt-btn notranslate" translate="no" tabindex="0" data-ttprobe="1">' + esc(T('Category probe', 'カテゴリ調査')) + '</a>' : '') +
-      '</div></div></div>' +
-      '<div id="tt-probe" class="notranslate" translate="no"></div>';   // the Category probe's results (temporary), in view under the buttons
+      '</div></div></div>';
     if (t.reigns.length) {
       h += '<div class="tt-sec"><i></i><b>' + esc(T('TITLES HELD', '獲得王座')) + '</b></div><div class="tt-belts">' + t.reigns.slice().reverse().map(function(r) {
         var B = BELTS[r.belt], pic = call('beltDataUri', r.belt), days = Math.max(1, Math.round(((r.end ? ms(r.end) : Date.now()) - ms(r.won)) / 86400000));
@@ -806,15 +804,10 @@
     });
     return best;
   }
-  var PROBE = { kind: 'team' };
   function choose(el) {
     if (el.getAttribute('data-f') != null) { filt = el.getAttribute('data-f'); renderList('[data-f="' + filt + '"]'); return true; }
     if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(); return true; }
     if (el.getAttribute('data-lmore') != null) { if (!V.busy) leagueMore(); return true; }
-    if (el.getAttribute('data-ttprobe') != null) {   // temporary: Category probe
-      if (window.__tvCatProbe && TEAM && !PROBE.busy) { PROBE.el = document.getElementById('tt-probe'); PROBE.search = TEAM.members.map(searchName); PROBE.names = TEAM.members; window.__tvCatProbe.run(PROBE); }
-      return true;
-    }
     if (el.getAttribute('data-favb') != null) { if (window.__tvFav && TEAM) window.__tvFav.toggleTeam(TEAM.id); return true; }
     return false;
   }

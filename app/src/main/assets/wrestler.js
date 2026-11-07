@@ -123,8 +123,7 @@
     var btns = (window.__tvFav ? '<a class="wr-btn wr-fav' + (isFav() ? ' wr-on' : '') + '" tabindex="0" data-wrfav="1">' + favInner() + '</a>' : '') +
       myFacs.map(function(f) {
         return '<a class="wr-btn" tabindex="0" href="' + esc(absUrl(facPath(f))) + '"><span class="notranslate" translate="no">' + esc(f.name) + '</span>' + (f.former ? '<small>' + esc(T('past', '元')) + '</small>' : '') + '</a>';
-      }).join('') +
-      (window.__tvCatProbe ? '<a class="wr-btn notranslate" translate="no" tabindex="0" data-wrprobe="1">' + esc(T('Category probe', 'カテゴリ調査')) + '</a>' : '');
+      }).join('');
     var h = '<div class="wr-hero">' + av + '<div style="min-width:0"><div class="wr-facts">' + facts + '</div><div class="wr-btns">' + btns + '</div></div></div>';
     if (reigns.length) {
       h += '<div class="wr-sec"><i></i><b>' + esc(T('TITLES HELD', '獲得王座')) + '</b><span>' + reigns.length + '</span></div><div class="wr-belts">' + reigns.map(function(r) {
@@ -136,13 +135,11 @@
           '<div class="t3">' + esc(T(days + ' days · ' + r.defs + (r.defs === 1 ? ' defence' : ' defences'), days + '日 · 防衛' + r.defs + '回')) + '</div></div></a>';
       }).join('') + '</div>';
     }
-    h += '<div id="tv-wr-probe"></div>';   // the Category probe's results (temporary)
     h += '<div class="wr-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b></div>';
     return h;
   }
 
   var root = null;
-  var probe = { kind: 'wrestler', search: [W.search], names: [W.name] };
   function mount() {
     if (document.getElementById('tv-wr')) return true;
     var bar = document.getElementById('tv-fb');
@@ -211,11 +208,6 @@
       if ((k === 13 || k === 23) && ae.getAttribute('data-wrfav') != null) {
         stop();
         if (window.__tvFav) { window.__tvFav.toggleWrestler(W.search); favChanged(); }
-        return;
-      }
-      if ((k === 13 || k === 23) && ae.getAttribute('data-wrprobe') != null) {
-        stop();
-        if (window.__tvCatProbe && !probe.busy) { probe.el = document.getElementById('tv-wr-probe'); window.__tvCatProbe.run(probe); }
         return;
       }
       var dir = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' }[k];

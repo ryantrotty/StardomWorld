@@ -5,6 +5,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.42.2
+
+- Removed the temporary Category probe (button on wrestler and tag team pages, its results panel, and `assets/catprobe.js`). Match categories stay as they are for now. Keeps the 2.41.1 drop-down fix.
 ## 2.42.1
 
 - Category probe on tag team pages: its results now appear right under the team's buttons (before Titles Held) instead of at the very bottom of the page, below both match rows, where they couldn't be reached with the remote. The button is no longer run through the page translator (it showed as "Category Halve").
