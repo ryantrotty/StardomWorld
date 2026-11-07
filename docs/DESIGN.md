@@ -181,3 +181,7 @@ Set order card (2.32.1): one button, Reverse Order (17/700, at least 200 wide, s
 
 Set order controls (2.33.0): the card holds focus until a key is pressed (the player bar's focus calls wait for it); Down from the card goes to the player bar and Up from the bar returns to it while it is up. The set's video row starts with a Reverse Order tile in the View All tile style (#11171E, 2 px #2A323C border, radius 8, quarter width): a 34 px gold ⇅, 24/700 label and a 14 px #9AA6B4 "Starts with" line; video card focus (look C).
 
+## Wrestlers spotlight (2.35.0, private builds)
+
+Menu Wrestlers shelf: width 1000 (capped by the screen), names in three columns (CURRENT and PAST), and a 300 wide spotlight column 24 px to their right. Photo 300 x 450, radius 12, 2 px #2A323C border, #161F2A behind, cover from the top; no photo: initials 54/900 #C9D2DC. Below it: name 22/900 white (a gold ★ first when in My Favorites), faction 15/600 #C9D2DC ("Past wrestler" for past ones), then 13/700 gold lines for the title held now and reigns and defences. The spotlight is not focusable; focus stays on the names (shelf look). Public builds: unchanged four columns, 860 wide.
+

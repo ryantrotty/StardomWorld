@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.35.0
+
+Private builds only (public builds keep the four text columns).
+
+- Menu Wrestlers shelf: the names sit in three columns and a spotlight on the right follows focus: the wrestler's photo (300 × 450), name (★ when in My Favorites), current faction, and in gold the title they hold now and their reigns and defences across every title history. Past wrestlers (no photos) show initials and "Past wrestler". The shelf is 1000 wide and about 650 tall, so all 47 current names fit without scrolling.
+- The spotlight uses small copies of the photos (360 × 540, 2 MB for all 47 instead of 26 MB), made by the new `scripts/make_wrestler_spots.py` into the private folder (`wspot_<name>.jpg`); without a copy it falls back to the full photo. New bridge call `AndroidHost.wrestlerSpot(name)`, new asset `wrspot.js`.
+- The picture waits 120 ms after focus lands, so holding an arrow down doesn't load every photo on the way.
+
 ## 2.34.0
 
 - Set order for everyone: the whole-list order rule, the set order card (FIRST / LAST, Reverse Order, 12 s countdown) and the Reverse Order tile in a set's video row, private-only since 2.32.0, are now in public builds too. The old first-and-last-title rule from 2.8.5 is gone.

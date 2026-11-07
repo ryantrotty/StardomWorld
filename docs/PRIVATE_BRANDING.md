@@ -37,6 +37,9 @@ Place your custom PNG images into `branding-private/res/drawable-nodpi/` using t
 | **`header_logo.png`** | Site Header Logo | **1100 × 200 px** (Transparent PNG, placed top-left in web header) |
 | **`splash_logo.png`** | Launch Splash Screen Logo | **1100 × 271 px** (PNG on black background, centered on app start) |
 
+| **`wrestler_<name>.jpg`** (or .png) | Wrestler photo (wrestler pages, My Favorites, tag teams) | **800 × 1200 px** portrait; name in lower case with anything that is not a letter or digit written as `_` (e.g. `wrestler_momo_watanabe.jpg`) |
+| **`wspot_<name>.jpg`** | Small copy for the menu's Wrestlers spotlight | **360 × 540 px**, made by `python3 scripts/make_wrestler_spots.py` (run it again after adding or replacing photos; without a copy the full photo is used) |
+
 *Note: Any image file you provide in `branding-private/` overrides the generic version. Any file you omit automatically falls back to the generic build artwork.*
 
 ---
