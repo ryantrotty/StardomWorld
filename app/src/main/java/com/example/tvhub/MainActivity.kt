@@ -8487,6 +8487,15 @@ class MainActivity : Activity() {
   // Titles & tournaments categories (private builds): what was kept and left out goes on screen under the filter bar and
   // to the private sheet's debug tab (dbg_put), so the rules can be checked without photos.
   var CAT = null;
+  // Requests to the site's search made on this page (the page itself not counted), so it's visible that nothing loops.
+  var REQ = { n: 0 };
+  try {
+    if (!window.__tvFetchCounted) {
+      window.__tvFetchCounted = true;
+      var of = window.fetch;
+      window.fetch = function(u) { try { if (/\/contents\/search/.test(String(u && u.url || u))) { window.__tvSearchReqs = (window.__tvSearchReqs || 0) + 1; } } catch (e) {} return of.apply(this, arguments); };
+    }
+  } catch (e) {}
   try { var cx = find(MT, S.mt); if (cx && cx[3] && cx[3].pages && window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn()) CAT = { id: cx[0], kept: [], dropped: [], alts: [], words: mtWords(cx, S.base) }; } catch (e) { CAT = null; }
   function catLog(title, kept, from) { if (CAT) (kept ? CAT.kept : CAT.dropped).push((from ? '[' + from + '] ' : '') + String(title).replace(/\s+/g, ' ').trim().slice(0, 140)); }
   function catPaint() {
@@ -8502,7 +8511,7 @@ class MainActivity : Activity() {
     var rec = window.__tvWrRecord || [], seen = {};
     CAT.kept.forEach(function(t) { var m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t); if (m) seen[m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2)] = 1; });
     var lines = ['Category ' + CAT.id + ' · search: ' + S.base + ' ' + CAT.words.search + (CAT.words.alts.length ? ' · then: ' + CAT.words.alts.join(', ') : ''),
-      'Kept ' + CAT.kept.length + ' · left out ' + CAT.dropped.length + (CAT.alts.length ? ' · ' + CAT.alts.join(' · ') : '') + (CAT.sent ? ' · ' + CAT.sent : '')];
+      'Site searches on this page: ' + (window.__tvSearchReqs || 0) + ' · Kept ' + CAT.kept.length + ' · left out ' + CAT.dropped.length + (CAT.alts.length ? ' · ' + CAT.alts.join(' · ') : '') + (CAT.sent ? ' · ' + CAT.sent : '')];
     if (CAT.id === 'champ' && rec.length) {
       var miss = rec.filter(function(x) { return !seen[x.d]; });
       lines.push('Title matches on record: ' + rec.length + ' · on this page: ' + (rec.length - miss.length) + (miss.length ? ' · not here: ' + miss.slice(0, 10).map(function(x) { return x.d + ' ' + x.belt; }).join(', ') + (miss.length > 10 ? ' …' : '') : ''));
@@ -8541,12 +8550,15 @@ class MainActivity : Activity() {
       if (!tt.replace(/\s+/g, '')) return;
       el.__tvMt = 1;
       var fit = mtFits(tt);
-      catLog(tt, fit, '');
+      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(tt, fit, ''); }
       if (fit || !el.parentNode) return;
+      // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
+      // the end of the list flashed. A hidden card stays where it is, so nothing is redrawn.
+      el.style.setProperty('display', 'none', 'important');
+      el.setAttribute('data-tv-mt-out', '1');
       var box = el.parentNode;
-      box.removeChild(el);
-      // A bare card's empty column wrapper goes too, so the grid doesn't keep a gap.
-      if (el.tagName === 'ARTICLE' && !box.children.length && !/content-list(?!-)/.test(box.className || '') && box.id !== 'result' && box.parentNode) box.parentNode.removeChild(box);
+      // A bare card's column wrapper is hidden too, so the grid doesn't keep a gap.
+      if (el.tagName === 'ARTICLE' && !/content-list(?!-)/.test(box.className || '') && box.id !== 'result' && !Array.prototype.some.call(box.children, function(c) { return c.style.display !== 'none'; })) box.style.setProperty('display', 'none', 'important');
     });
   }
   function loadAlts() {

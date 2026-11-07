@@ -8,6 +8,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.43.2
+
+- Flashing at the end of narrowed lists: cards that don't fit the title rule are now hidden instead of removed. The site's own list code was putting the removed cards back and the filter took them out again, over and over (no requests, just redrawing). Hidden cards stay put, so nothing is redrawn; the page loader still skips them when it checks for repeats.
+- Category debug line now starts with "Site searches on this page: N", counting every search request the app makes on that page (the page's own load not counted), so a loop would show as a climbing number.
 ## 2.43.1
 
 - Videos flashing at the end of a category list: the title filter removed cards that didn't fit, which left the page short, so the page loader fetched the next page, and the next, about once a second without end. While a list is narrowed by title (category tabs and the match types with title rules), the next page now loads only after a key press, one page per press.
