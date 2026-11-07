@@ -2,6 +2,29 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.35.2
+
+Private builds only.
+
+- Wrestler photos no longer have a white backdrop: every copy shows the wrestler on a dark fade, #2A323C at the top to #0F151C at the bottom, everywhere a photo appears (wrestler pages, tag teams, My Favorites, the menu spotlight). The white was too bright on a TV next to the dark app.
+- `scripts/make_wrestler_spots.py` cuts the wrestler out with the macOS subject cut-out (new `scripts/wrestler_cutout.js`, the same one Photos uses to lift a subject; macOS 14 or later), lays her over the fade and saves the 480 × 720 JPEG. It keeps sheer and white parts of outfits that a simple remove-the-white approach cut away. A photo where it finds no subject keeps its original backdrop and the script names it. It remembers the fade it last used and remakes the copies when it changes; `--all` remakes every copy. All 47 took 12 seconds; the copies are 4.2 MB.
+
+## 2.35.1
+
+Private builds only.
+
+- Every wrestler photo in the app (wrestler pages, tag team pages and cards, My Favorites, the menu spotlight) now comes from the small copies (`wspot_<name>.jpg`), falling back to an original `wrestler_<name>` file only when there is no copy. The originals no longer need to be in the app.
+- The copies are 480 × 720 (were 360 × 540), so the 300 × 450 spotlight stays sharp on a 1080p TV; all 47 are 3.4 MB.
+- `scripts/make_wrestler_spots.py` reads originals from `branding-private/wrestler-photos/` (outside `res/`, not packed into the app) as well as `res/drawable-nodpi/`, accepts names with or without `wrestler_`, remakes a copy when its original is newer or it is the wrong size, and `--move-originals` moves the old files out of `res/` (nothing is deleted).
+
+## 2.35.0
+
+Private builds only (public builds keep the four text columns).
+
+- Menu Wrestlers shelf: the names sit in three columns and a spotlight on the right follows focus: the wrestler's photo (300 × 450), name (★ when in My Favorites), current faction, and in gold the title they hold now and their reigns and defences across every title history. Past wrestlers (no photos) show initials and "Past wrestler". The shelf is 1000 wide and about 650 tall, so all 47 current names fit without scrolling.
+- The spotlight uses small copies of the photos (360 × 540, 2 MB for all 47 instead of 26 MB), made by the new `scripts/make_wrestler_spots.py` into the private folder (`wspot_<name>.jpg`); without a copy it falls back to the full photo. New bridge call `AndroidHost.wrestlerSpot(name)`, new asset `wrspot.js`.
+- The picture waits 120 ms after focus lands, so holding an arrow down doesn't load every photo on the way.
+
 ## 2.34.0
 
 - Set order for everyone: the whole-list order rule, the set order card (FIRST / LAST, Reverse Order, 12 s countdown) and the Reverse Order tile in a set's video row, private-only since 2.32.0, are now in public builds too. The old first-and-last-title rule from 2.8.5 is gone.

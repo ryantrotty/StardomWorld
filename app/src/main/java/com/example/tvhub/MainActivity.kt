@@ -3159,21 +3159,30 @@ class MainActivity : Activity() {
             } catch (_: Exception) { "" }
         }
 
-        // A wrestler's photo from the private branding folder (res/drawable-nodpi/wrestler_<name>.jpg or .png, lower
-        // case, anything that is not a letter or digit written as "_"), as a data address. Private builds only;
-        // empty when the build doesn't have it: the page shows initials.
+        // A wrestler's photo from the private branding folder, as a data address: the copy made by
+        // scripts/make_wrestler_spots.py (res/drawable-nodpi/wspot_<name>.jpg, 480 x 720), else an original
+        // (wrestler_<name>.jpg or .png) still in that folder. <name> is lower case, anything that is not a letter or
+        // digit written as "_". Private builds only; empty when there is none: the page shows initials.
+        // Used by the wrestler page, tag teams, My Favorites and the menu's Wrestlers spotlight (2.35.1).
         @android.webkit.JavascriptInterface
         fun wrestlerPhoto(name: String): String {
             if (!BuildConfig.SHOW_POSTERS) return ""
             return try {
                 val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
-                val resId = this@MainActivity.resources.getIdentifier("wrestler_" + slug, "drawable", this@MainActivity.packageName)
+                val res = this@MainActivity.resources
+                val pkg = this@MainActivity.packageName
+                var resId = res.getIdentifier("wspot_" + slug, "drawable", pkg)
+                if (resId == 0) resId = res.getIdentifier("wrestler_" + slug, "drawable", pkg)
                 if (resId == 0) return ""
-                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
+                val bytes = res.openRawResource(resId).use { it.readBytes() }
                 val mime = if (bytes.size > 3 && bytes[0] == 0x89.toByte()) "image/png" else "image/jpeg"
                 "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             } catch (_: Exception) { "" }
         }
+
+        // The menu's Wrestlers spotlight (assets/wrspot.js): the same photo.
+        @android.webkit.JavascriptInterface
+        fun wrestlerSpot(name: String): String = wrestlerPhoto(name)
 
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
@@ -5588,13 +5597,19 @@ class MainActivity : Activity() {
               } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 860;
+              // Private builds: names in three columns with a portrait spotlight on the right (assets/wrspot.js).
+              var spot = !!(window.__tvWrSpot && window.__tvWrSpot.on());
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               // Two tabs, CURRENT (open first) and PAST, like the filter bar's wrestler lists.
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
                 '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
-                '<div class="tv-shl-wl" data-wbody="0" style="column-count:4;column-gap:10px;">' + rowsHtml(crow) + '</div>' +
+                '<div class="tv-shl-wl" data-wbody="0" style="column-count:' + (spot ? 3 : 4) + ';column-gap:10px;">' + rowsHtml(crow) + '</div>' +
                 '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
+              if (spot) {
+                w = 1000;
+                h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';
+              }
             }
             else if (key === 'community') {
               w = 980;
@@ -5667,6 +5682,7 @@ class MainActivity : Activity() {
             shelfEl.style.maxHeight = (window.innerHeight - 24) + 'px';
             document.body.appendChild(shelfEl);
             try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
+            try { if (key === 'current' && window.__tvWrSpot) window.__tvWrSpot.attach(shelfEl); } catch (e) {}
             if (key === 'current') {
               var wts = shelfEl.querySelectorAll('.tv-shl-wtab'), wbs = shelfEl.querySelectorAll('[data-wbody]');
               Array.prototype.forEach.call(wts, function(t, ti) {
@@ -9532,6 +9548,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(assetText("lineage.js"), null)
         view.evaluateJavascript(assetText("teams.js"), null)
         view.evaluateJavascript(assetText("wrestler.js"), null)
+        view.evaluateJavascript(assetText("wrspot.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
         view.evaluateJavascript(homeAnchorJs, null)
