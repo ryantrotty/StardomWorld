@@ -1,53 +1,53 @@
 {
- "generated": "2026-11-06T06:36:56Z",
+ "generated": "2026-11-07T06:39:05Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-06T06:29:06Z",
-  "finished": "2026-11-06T06:36:56Z",
-  "requests": 27,
+  "started": "2026-11-07T06:29:11Z",
+  "finished": "2026-11-07T06:39:05Z",
+  "requests": 29,
   "schedule": {
-   "ok": true,
+   "ok": false,
    "events": 33,
    "changed": [],
-   "error": ""
+   "error": "update_schedule.py failed: HTTP Error 404: Not Found fetching https://wwr-stardom.com/en/schedule/?ym=202611"
   },
   "lineage": {
-   "ok": true,
+   "ok": false,
    "titles": {
     "world": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the fresh official page; history text identical to the 2026-11-05 read"
+     "note": "Not read: wwr-stardom.com/en/title_history_cat/world_of_stardom_championship/ returned HTTP 404 on both attempts; kept exactly as in the baseline."
     },
     "wonder": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the fresh official page; history text identical to the 2026-11-05 read"
+     "note": "Not read: wwr-stardom.com/en/title-history-cat/wonder-of-stardom-championship/ returned HTTP 404 on both attempts; kept exactly as in the baseline."
     },
     "future": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the fresh official page; history text identical to the 2026-11-05 read"
+     "note": "Not read: wwr-stardom.com/en/title_history_cat/future_of_stardom_championship returned HTTP 404 on both attempts; kept exactly as in the baseline."
     },
     "artist": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 37 (Julia Hart, Skye Blue & Thekla) and its defence confirmed against the fresh official page; history text identical to the 2026-11-05 read"
+     "note": "Not read: wwr-stardom.com/en/title_history_cat/artist_of_stardom_championship returned HTTP 404 on both attempts; kept exactly as in the baseline."
     },
     "goddess": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 37 (AZM & Miyu Amasaki) and all 3 defences confirmed against the fresh official page; history text identical to the 2026-11-05 read"
+     "note": "Not read: wwr-stardom.com/en/title-history-cat/goddesses-of-stardom-championship returned HTTP 404 on both attempts; kept exactly as in the baseline."
     },
     "highspeed": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the fresh official page; history text identical to the 2026-11-05 read"
+     "note": "Not read: wwr-stardom.com/en/title_history_cat/high_speed_championship returned HTTP 404 on both attempts; kept exactly as in the baseline."
     },
     "newblood": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 6 (Kikyo Furusawa & Rian) confirmed against the fresh official page, no defences listed; Wikipedia cross-check agrees (won October 20, 2026). Cagematch cross-check unavailable: HTTP 307, empty body, on both attempts. Note: the wwr-stardom English page renders the champions as 'Furusawa Kian'; treated as the same champions per the Wikipedia cross-check, baseline spelling kept."
+     "note": "Primary page not read: wwr-stardom.com/en/title-history-cat/nb-tag/ returned HTTP 404 on both attempts; kept exactly as in the baseline. Wikipedia cross-check still agrees with the baseline (Rian & Kikyo Furusawa, won October 20, 2026). Cagematch cross-check unavailable: HTTP 307, empty body, on both attempts."
     },
     "kawaii": {
      "read": false,
@@ -56,30 +56,37 @@
     },
     "iwgp": {
      "read": true,
-     "changed": true,
-     "note": "Added to daily.json from the built-in file on main (no copy in yesterday's daily.json). Reign 6 (Syuri) and all 5 defences confirmed against Wikipedia; Cagematch 307, not used."
+     "changed": false,
+     "note": "Reign 6 (Syuri) and all 5 defences confirmed against Wikipedia; page byte-identical to the Nov 6 read; Cagematch 307, not used."
     },
     "strong": {
      "read": true,
-     "changed": true,
-     "note": "Added to daily.json from the built-in file on main (no copy in yesterday's daily.json). Reign 8 (Alex Windsor) and its 1 defence confirmed against Wikipedia; Cagematch 307, not used."
+     "changed": false,
+     "note": "Reign 8 (Alex Windsor) and its 1 defence confirmed against Wikipedia; page byte-identical to the Nov 6 read; Cagematch 307, not used."
     }
    },
-   "changed": [
-    "iwgp: added to daily.json from the built-in file on main (reign 6, Syuri, 5 defences)",
-    "strong: added to daily.json from the built-in file on main (reign 8, Alex Windsor, 1 defence)"
-   ],
+   "changed": [],
    "warnings": [
-    "IWGP Women's and STRONG Women's were not in yesterday's daily.json, so today's file starts them from the built-in files on main (app/src/main/assets/lineage/iwgp.json and strong.json) and confirms them against Wikipedia; no reign or defence was invented.",
-    "Cagematch cross-check for newblood returned HTTP 307 with an empty body on both attempts (same behaviour as previous runs); the primary wwr-stardom page and the Wikipedia cross-check agree, so no title was kept from the baseline because of it.",
+    "wwr-stardom.com stopped serving its English (/en/) section: all seven title pages and the schedule calendar page returned HTTP 404 on both attempts, and https://wwr-stardom.com/en/ itself returns the site's own 404 page ('the address may have changed'), while the Japanese root https://wwr-stardom.com/ still returns HTTP 200. No new English URL was searched for; per spec only the listed sources are used.",
+    "Schedule kept exactly as in the baseline (33 events) because the schedule script failed on the 404; no events were added, changed or removed.",
+    "All seven Stardom title lineages (world, wonder, future, artist, goddess, highspeed, newblood) kept exactly as in the baseline because their official pages could not be read; no reign or defence was invented or altered.",
+    "New Blood Wikipedia cross-check still agrees with the baseline (Rian & Kikyo Furusawa, won October 20, 2026). Cagematch cross-check for newblood returned HTTP 307 with an empty body on both attempts.",
     "Cagematch cross-checks for both New Japan titles returned HTTP 307 with an empty body on both attempts; Wikipedia alone was used per spec, and that is not a site-wide block.",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
-    "The wwr-stardom English page renders the New Blood champions as 'Furusawa Kian' while Wikipedia and the baseline use 'Kikyo Furusawa'; treated as the same champions (won October 20, 2026, vs Sakura Aya & Sayaka Kurara), so the baseline spelling was kept and no champion was renamed.",
-    "Schedule script from branch feature/schedule-fix: 33 events, no changes vs yesterday."
+    "Schedule script from branch feature/schedule-fix (still unmerged; HEAD 9814699)."
    ]
   },
-  "blocks": [],
-  "errors": []
+  "blocks": [
+   {
+    "site": "wwr-stardom.com",
+    "url": "https://wwr-stardom.com/en/title_history_cat/world_of_stardom_championship/ (and all other /en/ title and schedule pages)",
+    "what": "Every /en/ page requested returned HTTP 404 on both attempts (7 title pages + schedule calendar page + /en/ home); the site's own 404 page says the address may have changed. The Japanese root https://wwr-stardom.com/ still returns HTTP 200 with normal content. Note: HTTP 404 is not in the spec's listed block codes (403/429/503), but the site stopped serving the English section the job reads, so the affected parts were kept from the baseline and no further requests were made to that site.",
+    "time": "2026-11-07T06:39:05Z"
+   }
+  ],
+  "errors": [
+   "update_schedule.py failed: HTTP Error 404: Not Found fetching https://wwr-stardom.com/en/schedule/?ym=202611"
+  ]
  },
  "schedule": {
   "updated": "2026-11-05T23:28:41Z",
