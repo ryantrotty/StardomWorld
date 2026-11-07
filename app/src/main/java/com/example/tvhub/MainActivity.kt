@@ -7987,7 +7987,7 @@ class MainActivity : Activity() {
     Object.keys(S).forEach(function(k) { n[k] = S[k]; });
     Object.keys(patch).forEach(function(k) { n[k] = patch[k]; });
     if (FAC_MODE && window.__tvFacBase) n.base = window.__tvFacBase();
-    try { sessionStorage.setItem('tvFbAnchor', '1'); } catch (e) {}   // the new page opens at the match results, not the top
+    try { sessionStorage.setItem('tvFbAnchor', openBtn ? 'fb:' + openBtn.getAttribute('data-k') : (sessionStorage.getItem('tvFbAnchorCtl') || '1')); sessionStorage.removeItem('tvFbAnchorCtl'); } catch (e) {}   // the new page opens at the match results, with the control that was used
     location.href = buildUrl(n);
   }
   // for the wrestler page's tabs (wrestler.js): the same addresses the filter bar makes
@@ -8416,13 +8416,17 @@ class MainActivity : Activity() {
       t = document.createElement('div'); t.id = 'tv-fb-top'; t.tabIndex = 0; t.setAttribute('role', 'button');
       t.className = 'notranslate'; t.setAttribute('translate', 'no');
       t.textContent = T('Back to top', 'トップへ戻る') + ' \u2191';
-      t.style.cssText = 'display:inline-flex;align-items:center;height:44px;padding:0 18px;margin:18px 0 30px 0;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#fff;font:700 17px Arial,Helvetica,sans-serif;cursor:pointer;';
+      t.style.cssText = 'display:flex;align-items:center;justify-content:center;width:max-content;height:44px;padding:0 18px;margin:18px auto 30px auto;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#fff;font:700 17px Arial,Helvetica,sans-serif;cursor:pointer;';
       t.addEventListener('focus', function() { t.style.borderColor = '#F4C242'; });
       t.addEventListener('blur', function() { t.style.borderColor = '#2A323C'; });
       t.addEventListener('click', goTop);
     }
-    if (t.previousSibling !== list) list.parentNode.insertBefore(t, list.nextSibling);
-    return t;
+    var last = document.getElementById('tv-alt-list') || list;   // after the extra searches' grid when there is one
+    if (t.previousSibling !== last) last.parentNode.insertBefore(t, last.nextSibling);
+    var shown = 0;
+    document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]').forEach(function(x) { var q = x.getBoundingClientRect(); if (q.width > 0 && q.height > 0) shown++; });
+    t.style.display = shown > 4 ? 'flex' : 'none';   // only worth it past one row
+    return shown > 4 ? t : null;
   }
   function goTop() {
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
@@ -8634,13 +8638,20 @@ class MainActivity : Activity() {
       var url = buildUrl(n, alt.mt, alt.ch);
       fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
-        var box = document.querySelector('.content-list'), nA = 0, kA = 0;
+        var list0 = document.querySelector('.content-list'), nA = 0, kA = 0, box = null;
+        if (list0 && list0.parentNode) {
+          // Their own grid, with the list's classes for the same look, right after the site's list (after it, so the
+          // site's list stays the first .content-list for the page loader): cards added into the site's list were
+          // dropped when the site redrew it (Rina's 5★STAR GP final never showed).
+          box = document.getElementById('tv-alt-list');
+          if (!box) { box = document.createElement('div'); box.id = 'tv-alt-list'; box.className = list0.className; list0.parentNode.insertBefore(box, list0.nextSibling); }
+        }
         if (box) {
           Array.prototype.forEach.call(doc.querySelectorAll('.content-list .content-list-item'), function(el) {
             var id = idOf(el);
             nA++;
             if (!mtFits(itemTitle(el))) { catLog(itemTitle(el), false, alt.mt || alt.ch); return; }
-            if (id && box.querySelector('a[href*="/' + id + '"]')) return;
+            if (id && (box.querySelector('a[href*="/' + id + '"]') || list0.querySelector('a[href*="/' + id + '"]'))) return;
             catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;

@@ -185,13 +185,18 @@
     // start on the header, at the top of the page
     var anchorFlag = ''; try { anchorFlag = sessionStorage.getItem('tvFbAnchor'); sessionStorage.removeItem('tvFbAnchor'); } catch (e) {}
     if (anchorFlag) {   // a filter or tab was just chosen: open at MATCHES with its tab (or the filter bar) focused
+      // just above the MATCHES header, with the control that was used focused: that filter button, else that tab
+      var focused = null;
       var go2 = function() {
+        if (focused && document.activeElement !== focused) return;   // the viewer has moved on
         var secs = root.querySelectorAll('.wr-sec'), m = secs[secs.length - 1];
-        if (m) { var r = m.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + r.top - 20)); }
-        var t0 = root.querySelector('.wr-tab-on') || (fbShown() ? document.querySelector('#tv-fb .tv-fbb') : null) || root.querySelector('.wr-tab');
-        if (t0) { try { t0.focus({ preventScroll: true }); } catch (e) { t0.focus(); } }
+        if (m) { var r = m.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + r.top - 12)); }
+        var t0 = null, k0 = String(anchorFlag).indexOf('fb:') === 0 ? anchorFlag.slice(3) : '';
+        if (k0 && fbShown()) t0 = document.querySelector('#tv-fb .tv-fbb[data-k="' + k0 + '"]');
+        if (!t0) t0 = root.querySelector('.wr-tab-on') || (fbShown() ? document.querySelector('#tv-fb .tv-fbb') : null) || root.querySelector('.wr-tab');
+        if (t0) { try { t0.focus({ preventScroll: true }); } catch (e) { t0.focus(); } focused = t0; }
       };
-      go2(); setTimeout(go2, 600);
+      go2(); setTimeout(go2, 600); setTimeout(go2, 1500);
       return true;
     }
     var ae = document.activeElement;
@@ -248,6 +253,7 @@
       if ((k === 13 || k === 23) && ae.getAttribute('data-wrtab') != null) {   // a category tab: the filter bar's own address for it
         stop();
         var id = ae.getAttribute('data-wrtab'), p = { mt: id, ch: '', co: '', sh: '', lo: '', yr: '' };
+        try { sessionStorage.setItem('tvFbAnchorCtl', 'tab:' + id); } catch (e) {}
         if (window.__tvFbGo) window.__tvFbGo(p);
         return;
       }

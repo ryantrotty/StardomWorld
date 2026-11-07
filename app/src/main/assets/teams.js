@@ -430,7 +430,9 @@
   }
   // a tag title match (Goddess, NEW BLOOD tag): its title has no "tag" in it ("ゴッデス・オブ・スターダム選手権試合")
   function isTagBeltMatch(t) { var c = CAT.champ; return !!(c && catFits('champ', t) && c.tagBelt.some(function(r) { return r.test(half(t)); })); }
+  var SHOW_RE = /^\s*\d{4}\/\d{1,2}\/\d{1,2}_|day-?\s*\d/i;   // whole-show uploads ("2021/11/14_…", "…Day-2")
   function isTagTitle(t) {
+    if (CATS_ON && SHOW_RE.test(half(t))) return false;
     if (CATS_ON && (isTagBeltMatch(t) || catFits('tagleague', t))) return true;
     t = half(t);
     for (var i = 0; i < MT_ALL.length; i++) if (!MT_ALL[i].test(t)) return false;
@@ -627,7 +629,7 @@
       if (err) { V.log.push(L.q + ' · page ' + L.page + ': ' + err); L.done = true; paintVids(); if (cb) cb(true); return; }
       var d0 = V.dropped.length, kept = keepItems(items);
       place(kept, false);
-      dbgSend(L.q, L.page, items, kept, V.dropped.slice(d0), cached);
+      dbgSend(L.q, L.page, items, kept.filter(isLeague), V.dropped.slice(d0).concat(kept.filter(function(x) { return !isLeague(x); }).map(function(x) { return '[not Tag League: in All Tag Matches] ' + x.t; })), cached);
       V.log.push(L.q + ' · page ' + L.page + ': ' + items.length + ' videos, ' + kept.length + ' kept' + (cached ? ' (saved copy)' : ''));
       L.page++;
       if (!more) L.done = true;
@@ -813,7 +815,7 @@
       box.className = 'tt-vids';
       h = list.map(cardHtml).join('') + (done ? '' : more);
     }
-    if (TAB && list.length && done) h += '<a class="tt-more tt-top" tabindex="0" data-top="1">' + esc(T('Back to top', 'トップへ戻る')) + ' \u2191</a>';
+    if (TAB && list.length > 4 && done) h += '<a class="tt-more tt-top" tabindex="0" data-top="1">' + esc(T('Back to top', 'トップへ戻る')) + ' \u2191</a>';
     box.innerHTML = h;
     if (st) st.textContent = (V.busy && active) ? (list.length ? list.length + ' · ' : '') + T('looking for videos', '動画を検索中') :
       (!list.length && !done ? (ran ? T('none found yet', 'まだありません') : T('waiting', '待機中')) : list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合'));

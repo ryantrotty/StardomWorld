@@ -11,6 +11,16 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.44.1
+
+From the 2.44.0 test and the sheet's debug rows (AZM, Rina, Suzu Suzuki & Mei Seira, Momo Watanabe & Utami Hayashishita).
+
+- Extra searches' results (5★STAR for the GP tab and the like) go in their own grid right after the site's list, with the same look. Added into the site's list, they were dropped when the site redrew it: Rina's 5★STAR GP 2026 final was found (it's in the sheet) but never showed.
+- Back to top: centred, and only shown when more than four videos are showing (search pages and team page tabs).
+- After choosing a filter: the page opens just above the MATCHES header with the control that was used focused, that filter button if it came from the filter bar, else that tab. It stops adjusting once you move.
+- Rules (also in the roster file): Championship leaves out tournament matches billed as a "Championship Match" (CINDERELLA TOURNAMENT 2026 ~Championship Match~) and anything 5★STAR GP; 5★STAR GP leaves out "special single matches" on GP shows.
+- Team pages: whole-show uploads ("2021/11/14_第11回…タッグリーグ戦～最終戦") never count as a team's match (they were showing on the Tag League tab). The Tag League tab's debug row lists only what goes in that row; title matches its search finds are noted as going to All Tag Matches.
 ## 2.44.0
 
 Private builds only. Uses the site's own search filters (found by Ryan): q[type] (single video or set) and q[category_id] (one per search, together with the keywords).
