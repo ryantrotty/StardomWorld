@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 401
-        versionName = "2.38.0"
+        versionCode = 408
+        versionName = "2.41.0"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -42,6 +42,11 @@ android {
         val dailyUrl = (project.findProperty("tvhub.dailyUrl") as String?)
             ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/daily-data/daily.json"
         buildConfigField("String", "DAILY_URL", "\"$dailyUrl\"")
+        // The roster file (tag teams to add or remove, extra spellings) kept by hand on the roster-data branch, so roster
+        // changes reach every installed build without a new APK. See docs/ROSTER.md.
+        val rosterUrl = (project.findProperty("tvhub.rosterUrl") as String?)
+            ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json"
+        buildConfigField("String", "ROSTER_URL", "\"$rosterUrl\"")
         // Usage metrics (PostHog, see docs/USAGE_METRICS.md). Project key from branding-private/posthog.properties
         // (git-ignored, your builds only) or the tvhub.posthogKey Gradle property (all builds). Empty = metrics off.
         val phProps = Properties().apply {

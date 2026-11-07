@@ -2547,6 +2547,202 @@ class MainActivity : Activity() {
         } catch (_: Exception) { return text }
     }
 
+    // Tag Teams settings: assets/tag_teams.json merged with the downloaded roster file (filesDir/roster.json, from the
+    // roster-data branch, docs/ROSTER.md). roster.tagTeams.add joins "extra" (same pair = the roster's entry wins),
+    // .remove lists pairs to hide ("A & B", either order), .spell and .factionNames join the bundled ones. Adds
+    // "roster": { updated, adds, removes } (or "none") for the line under the All Tag Teams list.
+    private fun rosterTagTeams(): String {
+        val bundled = assetText("tag_teams.json")
+        return try {
+            val base = org.json.JSONObject(bundled)
+            val rj = rosterData()
+            // Tag League years (teams.js "Tag League"): the bundled ones, then the roster file's, a year replaced whole.
+            val tl = base.optJSONObject("tagLeague") ?: org.json.JSONObject()
+            rj?.optJSONObject("tagLeague")?.let { r -> val ks = r.keys(); while (ks.hasNext()) { val k = ks.next(); r.optJSONObject(k)?.let { tl.put(k, it) } } }
+            base.put("tagLeague", tl)
+            val tt = rj?.optJSONObject("tagTeams") ?: org.json.JSONObject()
+            val updated = rj?.optString("updated") ?: ""
+            if (rj == null) { base.put("roster", org.json.JSONObject().put("state", "none")); return base.toString() }
+            fun pairKey(a: org.json.JSONArray?): String {
+                if (a == null || a.length() != 2) return ""
+                return listOf(a.optString(0), a.optString(1)).map { it.trim().lowercase() }.sorted().joinToString("|")
+            }
+            val extra = base.optJSONArray("extra") ?: org.json.JSONArray()
+            val byKey = LinkedHashMap<String, org.json.JSONObject>()
+            for (i in 0 until extra.length()) extra.optJSONObject(i)?.let { o -> pairKey(o.optJSONArray("members")).takeIf { it.isNotEmpty() }?.let { byKey[it] = o } }
+            val add = tt.optJSONArray("add") ?: org.json.JSONArray()
+            var adds = 0
+            for (i in 0 until add.length()) add.optJSONObject(i)?.let { o -> pairKey(o.optJSONArray("members")).takeIf { it.isNotEmpty() }?.let { byKey[it] = o; adds++ } }
+            val merged = org.json.JSONArray(); byKey.values.forEach { merged.put(it) }
+            base.put("extra", merged)
+            val hide = org.json.JSONArray()
+            val rm = tt.optJSONArray("remove") ?: org.json.JSONArray()
+            for (i in 0 until rm.length()) {
+                val parts = rm.optString(i).split("&").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+                if (parts.size == 2) hide.put(parts.sorted().joinToString("|"))
+            }
+            base.put("hide", hide)
+            val spell = base.optJSONObject("spell") ?: org.json.JSONObject()
+            tt.optJSONObject("spell")?.let { s2 -> val ks = s2.keys(); while (ks.hasNext()) { val k = ks.next(); spell.put(k, s2.optString(k)) } }
+            base.put("spell", spell)
+            val fn = base.optJSONArray("factionNames") ?: org.json.JSONArray()
+            val have = HashSet<String>(); for (i in 0 until fn.length()) have.add(fn.optString(i))
+            tt.optJSONArray("factionNames")?.let { a -> for (i in 0 until a.length()) if (have.add(a.optString(i))) fn.put(a.optString(i)) }
+            base.put("factionNames", fn)
+            val fs = rosterFactionsStats()
+            base.put("roster", org.json.JSONObject().put("state", "ok").put("updated", updated).put("adds", adds).put("removes", hide.length())
+                .put("factions", fs[0]).put("members", fs[1]).put("pastAdds", fs[2]).put("pastRemoves", fs[3]))
+            base.toString()
+        } catch (_: Exception) { bundled }
+    }
+
+    // The downloaded roster file (filesDir/roster.json), read once per change of the file; null when there is none.
+    private var rosterCache: org.json.JSONObject? = null
+    private var rosterStamp = -1L
+    @Synchronized
+    private fun rosterData(): org.json.JSONObject? {
+        return try {
+            val f = java.io.File(filesDir, "roster.json")
+            if (!f.exists() || f.length() == 0L) return null
+            if (f.lastModified() != rosterStamp || rosterCache == null) {
+                rosterCache = org.json.JSONObject(f.readText())
+                rosterStamp = f.lastModified()
+            }
+            rosterCache
+        } catch (_: Exception) { null }
+    }
+
+    // Factions: assets/factions.json with the roster file's "factions" applied, in this order:
+    //   remove  - faction ids to take out;
+    //   set     - whole faction entries (same fields as factions.json): one with an id already there replaces it in
+    //             place, a new current faction goes before the former ones, a new former faction goes at the end;
+    //   members - { "<faction id>": { "add": [{name, search, ja}], "remove": ["Name"] } }; an added member with a
+    //             name already in that faction replaces it.
+    // Current Wrestlers is everyone in the current factions (including Unaffiliated), so moving a wrestler is a
+    // remove in one faction and an add in another.
+    private fun rosterFactions(): String {
+        val bundled = assetText("factions.json")
+        return try {
+            val base = org.json.JSONObject(bundled)
+            val fr = rosterData()?.optJSONObject("factions") ?: return bundled
+            val list = ArrayList<org.json.JSONObject>()
+            val arr = base.optJSONArray("factions") ?: org.json.JSONArray()
+            for (i in 0 until arr.length()) arr.optJSONObject(i)?.let { list.add(it) }
+            val rm = HashSet<String>()
+            fr.optJSONArray("remove")?.let { a -> for (i in 0 until a.length()) rm.add(a.optString(i)) }
+            list.removeAll { it.optString("id") in rm }
+            fr.optJSONArray("set")?.let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.optJSONObject(i) ?: continue
+                    val id = o.optString("id"); if (id.isEmpty()) continue
+                    val at = list.indexOfFirst { it.optString("id") == id }
+                    if (at >= 0) list[at] = o
+                    else if (o.optBoolean("former")) list.add(o)
+                    else { val f0 = list.indexOfFirst { it.optBoolean("former") }; if (f0 >= 0) list.add(f0, o) else list.add(o) }
+                }
+            }
+            fr.optJSONObject("members")?.let { mm ->
+                val ids = mm.keys()
+                while (ids.hasNext()) {
+                    val id = ids.next()
+                    val fac = list.firstOrNull { it.optString("id") == id } ?: continue
+                    val ch = mm.optJSONObject(id) ?: continue
+                    val mem = ArrayList<org.json.JSONObject>()
+                    val ma = fac.optJSONArray("members") ?: org.json.JSONArray()
+                    for (i in 0 until ma.length()) ma.optJSONObject(i)?.let { mem.add(it) }
+                    val gone = HashSet<String>()
+                    ch.optJSONArray("remove")?.let { a -> for (i in 0 until a.length()) gone.add(a.optString(i).trim().lowercase()) }
+                    mem.removeAll { it.optString("name").trim().lowercase() in gone }
+                    ch.optJSONArray("add")?.let { a ->
+                        for (i in 0 until a.length()) {
+                            val o = a.optJSONObject(i) ?: continue
+                            val n = o.optString("name").trim(); if (n.isEmpty()) continue
+                            if (!o.has("search")) o.put("search", n)
+                            val at = mem.indexOfFirst { it.optString("name").trim().lowercase() == n.lowercase() }
+                            if (at >= 0) mem[at] = o else mem.add(o)
+                        }
+                    }
+                    val out = org.json.JSONArray(); mem.forEach { out.put(it) }
+                    fac.put("members", out)
+                }
+            }
+            val out = org.json.JSONArray(); list.forEach { out.put(it) }
+            base.put("factions", out)
+            base.toString()
+        } catch (_: Exception) { bundled }
+    }
+
+    // Past wrestlers: assets/past_wrestlers.json with the roster file's "past" applied: "remove" (names) first, then
+    // "add" ({name, search, ja}; same name = replaced). Kept in alphabetical order.
+    private fun rosterPast(): String {
+        val bundled = assetText("past_wrestlers.json")
+        return try {
+            val base = org.json.JSONObject(bundled)
+            val pr = rosterData()?.optJSONObject("past") ?: return bundled
+            val list = ArrayList<org.json.JSONObject>()
+            val arr = base.optJSONArray("past") ?: org.json.JSONArray()
+            for (i in 0 until arr.length()) arr.optJSONObject(i)?.let { list.add(it) }
+            val gone = HashSet<String>()
+            pr.optJSONArray("remove")?.let { a -> for (i in 0 until a.length()) gone.add(a.optString(i).trim().lowercase()) }
+            list.removeAll { it.optString("name").trim().lowercase() in gone }
+            pr.optJSONArray("add")?.let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.optJSONObject(i) ?: continue
+                    val n = o.optString("name").trim(); if (n.isEmpty()) continue
+                    if (!o.has("search")) o.put("search", n)
+                    val at = list.indexOfFirst { it.optString("name").trim().lowercase() == n.lowercase() }
+                    if (at >= 0) list[at] = o else list.add(o)
+                }
+            }
+            list.sortBy { it.optString("name").lowercase() }
+            val out = org.json.JSONArray(); list.forEach { out.put(it) }
+            base.put("past", out)
+            base.toString()
+        } catch (_: Exception) { bundled }
+    }
+
+    // For the roster line: [factions set or removed, member changes, past added, past removed] in the roster file.
+    private fun rosterFactionsStats(): IntArray {
+        val r = IntArray(4)
+        try {
+            val rj = rosterData() ?: return r
+            rj.optJSONObject("factions")?.let { f ->
+                r[0] = (f.optJSONArray("set")?.length() ?: 0) + (f.optJSONArray("remove")?.length() ?: 0)
+                f.optJSONObject("members")?.let { mm ->
+                    val ks = mm.keys()
+                    while (ks.hasNext()) { val c = mm.optJSONObject(ks.next()) ?: continue; r[1] += (c.optJSONArray("add")?.length() ?: 0) + (c.optJSONArray("remove")?.length() ?: 0) }
+                }
+            }
+            rj.optJSONObject("past")?.let { p -> r[2] = p.optJSONArray("add")?.length() ?: 0; r[3] = p.optJSONArray("remove")?.length() ?: 0 }
+        } catch (_: Exception) {}
+        return r
+    }
+
+    // Downloads the roster file (one small request to GitHub, never to the Stardom sites), at most once per schedule
+    // refresh. Sends the last ETag so an unchanged file comes back empty (304). The last good copy stays on any failure.
+    private fun refreshRoster() {
+        if (BuildConfig.ROSTER_URL.isEmpty()) return
+        try {
+            val prefs = getSharedPreferences("roster", MODE_PRIVATE)
+            val have = java.io.File(filesDir, "roster.json")
+            val c = java.net.URL(BuildConfig.ROSTER_URL).openConnection() as java.net.HttpURLConnection
+            c.connectTimeout = 8000
+            c.readTimeout = 8000
+            val etag = prefs.getString("etag", "") ?: ""
+            if (etag.isNotEmpty() && have.exists()) c.setRequestProperty("If-None-Match", etag)
+            val code = c.responseCode
+            if (code == 200) {
+                val body = c.inputStream.bufferedReader().use { it.readText() }
+                val rj = org.json.JSONObject(body)
+                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null) {
+                    have.writeText(body)
+                    prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
+                }
+            }
+            c.disconnect()
+        } catch (_: Exception) {}
+    }
+
     // The daily file (assets-independent copy in filesDir) published by the daily job: schedule, lineage.titles, status.
     // Read once per change of the file; null when there is none or it cannot be read.
     private var dailyCache: org.json.JSONObject? = null
@@ -2680,6 +2876,7 @@ class MainActivity : Activity() {
                             gotSchedule = true
                         }
                     } catch (_: Exception) {}
+                    refreshRoster()
                     if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
                 }
                 try { if (BuildConfig.SHOW_POSTERS && (due || !postersChecked)) cacheSchedulePosters() } catch (_: Exception) {}
@@ -3016,15 +3213,13 @@ class MainActivity : Activity() {
         }
 
         // Tag Teams settings (assets/tag_teams.json): eras, faction-only pair names, site spellings, extra teams.
+        // The bundled file merged with the downloaded roster file (rosterTagTeams).
         @android.webkit.JavascriptInterface
-        fun tagTeamsJson(): String = try {
-            this@MainActivity.assets.open("tag_teams.json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun tagTeamsJson(): String = this@MainActivity.rosterTagTeams()
 
+        // The bundled past-wrestlers list merged with the downloaded roster file (rosterPast).
         @android.webkit.JavascriptInterface
-        fun pastWrestlersJson(): String = try {
-            this@MainActivity.assets.open("past_wrestlers.json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun pastWrestlersJson(): String = this@MainActivity.rosterPast()
 
         // Schedule list (downloaded copy if present, else the bundled one), and the private-build poster as a data address.
         @android.webkit.JavascriptInterface
@@ -3174,10 +3369,10 @@ class MainActivity : Activity() {
             this@MainActivity.assets.open("eras.json").bufferedReader().use { it.readText() }
         } catch (_: Exception) { "" }
 
+        // The bundled factions list merged with the downloaded roster file (rosterFactions). Current Wrestlers is built
+        // from it, so a member change there reaches the menu, the filter bar and the wrestler pages too.
         @android.webkit.JavascriptInterface
-        fun factionsJson(): String = try {
-            this@MainActivity.assets.open("factions.json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun factionsJson(): String = this@MainActivity.rosterFactions()
 
         // A faction's logo from the private branding folder (res/drawable-nodpi/faction_logo_<id>.png, with
         // "-" written as "_"), as a data address. Empty when the build doesn't have it: the page shows text.
@@ -4957,6 +5152,15 @@ class MainActivity : Activity() {
           var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
           var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Takumi Iroha', '彩羽匠'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
+          // The past list comes from the app's past_wrestlers.json (with the roster file's changes); the list above is
+          // only used if that can't be read.
+          try {
+            var pwj = JSON.parse(AndroidHost.pastWrestlersJson());
+            if (pwj && pwj.past && pwj.past.length) PAST_W = pwj.past.map(function(m) {
+              if (m.search && m.search !== m.name) SEARCH_AS[m.name] = m.search;
+              return [m.name, m.ja || m.name];
+            });
+          } catch (e) {}
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
@@ -4973,6 +5177,8 @@ class MainActivity : Activity() {
           // "Current Wrestlers": everyone listed in the app's factions.json, once each, in alphabetical order.
           var JA_NAMES = {};
           CURRENT_W.concat(PAST_W).forEach(function(n) { JA_NAMES[n[0]] = n[1]; });
+          // a faction member's own "ja" (from factions.json or the roster file) wins
+          try { (JSON.parse(AndroidHost.factionsJson()).factions || []).forEach(function(f) { (f.members || []).forEach(function(m) { if (m && m.name && m.ja) JA_NAMES[m.name] = m.ja; }); }); } catch (e) {}
           function currentWrestlers() {
             var seen = {}, out = [];
             try {
@@ -5302,7 +5508,7 @@ class MainActivity : Activity() {
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
-            h += group(T('Tag Teams', 'タッグチーム'), [['All Tag Teams', '/mypage?tvteams=1', 'すべてのタッグチーム']], 'tagteams');
+            h += group(T('Tag Teams', 'タッグチーム'), [['All Tag Teams', '/mypage?tvteams=1', 'すべてのタッグチーム'], ['Tag League', '/mypage?tvteams=1&league=0', 'タッグリーグ']], 'tagteams');
             if (matchTypeGroups().length) h += group(T('Matches', '試合'), matchTypeRows(), 'matchtypes');
             var showsRow = group(T('Shows', '番組'), showsList(), 'shows');
             var showsPill = schedPillHtml();

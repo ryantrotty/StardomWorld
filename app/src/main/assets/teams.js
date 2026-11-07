@@ -2,7 +2,7 @@
   // Tag Teams: the menu shelf (window.__tvTeams.shelfHtml), the All Tag Teams page (/mypage?tvteams=1[&era=n|&belt=id])
   // and a team's page (/mypage?tvteam=<id>). Teams are built from the Goddess of Stardom and NEW BLOOD Tag Team title
   // histories (lineageJson, so the daily file's newer copies count), plus assets/tag_teams.json for eras, faction-only
-  // pair names, site spellings and teams that never held these titles. A team's matches come from one keyword search
+  // pair names, site spellings and teams that never held these titles (merged with the downloaded roster file, docs/ROSTER.md). A team's matches come from one keyword search
   // (both members' names + "Tag Team"), narrowed to 2-on-2 matches by title (match_types.json "tag" exclusions), and,
   // where the video index has the match, to matches where the two were on the same side.
   if (window.__tvTeams) return;
@@ -28,6 +28,35 @@
   function norm(t) { return String(t || '').toLowerCase().replace(/[☆★]/g, ' ').replace(/[^a-z0-9぀-ヿ一-鿿 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
 
   var CFG = parse(call('tagTeamsJson')) || {};
+
+  // The Tag League mark: a pair of feathered wings, gold line (docs/DESIGN.md "Tag League"). The full drawing is for
+  // 28 px and up; the small one (two feather rows, no feather lines) for the 14 to 24 px uses. bg = the fill behind it,
+  // so the front feather rows hide the lines of the rows behind.
+  var WING_FULL = '<path d="M30 31Q19 9 2 4Q8.44 8.65 1.67 12.81Q-2.81 17.6 3.33 19.89Q1.15 25.32 7 25.25Q7.1 31.32 12.67 28.89Q15.06 35.6 20.33 30.81Q25.02 38.15 30 31Z"/>' +
+    '<path fill="none" d="M1.67 12.81L4.12 10.01M3.33 19.89L7.25 15.41M7 25.25L11.41 20.21M12.67 28.89L16.59 24.41M20.33 30.81L22.78 28.01"/>' +
+    '<path d="M30 31Q19 9 6 7Q2.42 11.29 7.28 14.04Q5.25 18.82 10.32 19.96Q9.84 25.24 15.12 24.76Q16.19 30.54 21.68 28.44Q24.3 34.71 30 31Z"/>' +
+    '<path fill="none" d="M7.28 14.04L8.62 12.14M10.32 19.96L12.34 17.1M15.12 24.76L17.14 21.9M21.68 28.44L23.02 26.54"/>' +
+    '<path d="M30 31Q19 9 11 10Q9.81 14.62 14.44 15.81Q13.88 20.69 18.75 21.25Q18.81 26.38 23.94 26.31Q24.62 31.69 30 31Z"/>';
+  var WING_SMALL = '<path d="M30 31Q19 9 2 4Q-6.67 10.46 2.25 16.56Q-1.46 24.23 7 25.25Q8.26 34.13 16.25 30.06Q22.47 40.16 30 31Z"/>' +
+    '<path d="M30 31Q19 9 8 8Q4.33 15.13 11.78 18.11Q11.23 25.98 19.11 25.78Q21.68 34.38 30 31Z"/>';
+  function wings(h, color, bg) {
+    var small = h < 28, w = Math.round(h * 68 / 36), sw = small ? (h <= 16 ? 2.6 : 2.2) : (h >= 44 ? 1.1 : 1.4), p = small ? WING_SMALL : WING_FULL;
+    return '<svg class="tt-wings" width="' + w + '" height="' + h + '" viewBox="-3 0 68 36" aria-hidden="true"><g fill="' + (bg || '#161F2A') + '" stroke="' + (color || '#F4C242') + '" stroke-width="' + sw + '" stroke-linejoin="round" stroke-linecap="round">' +
+      p + '<g transform="translate(62 0) scale(-1 1)">' + p + '</g></g></svg>';
+  }
+  API.wings = wings;
+  // Tag League years from the roster file ("tagLeague": { "2026": { name, ja, dates, winners, blocks: [{ id, name, ja,
+  // teams: [[a, b], ...] }] } }), newest first.
+  var LEAGUES = (function() {
+    var tl = CFG.tagLeague || {}, out = [];
+    Object.keys(tl).forEach(function(y) { var L = tl[y]; if (L && L.blocks && L.blocks.length) out.push({ year: +y, L: L }); });
+    return out.sort(function(a, b) { return b.year - a.year; });
+  })();
+  var LG_NOW = LEAGUES[0] || null;
+  function leaguePath(y) { return '/mypage?tvteams=1&league=' + y; }
+  function leagueCount(Y) { return Y.L.blocks.reduce(function(a, b) { return a + (b.teams || []).length; }, 0); }
+  function blockName(b, short) { var n = isJa() && b.ja ? b.ja : (b.name || ''); return short && !isJa() ? n.replace(/^(\w+)\s+Goddesses$/i, function(m, w) { return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); }) : n; }
+  function pairKey(a) { return a.slice().map(function(n) { return String(n).trim().toLowerCase(); }).sort().join('|'); }
   var ERAS = ((parse(call('erasJson')) || {}).eras) || [];
   var FACS = ((parse(call('factionsJson')) || {}).factions) || [];
   var BELTS = {
@@ -74,6 +103,17 @@
       if (x.name) t.names[x.name] = 1;
       t.since = x.since; t.facName = x.faction;
     });
+    (CFG.hide || []).forEach(function(k) { delete byKey[String(k).toLowerCase()]; });   // roster file "remove"
+    // Tag League entrants: each team gets its years and blocks; a pair with no entry yet is added as a team.
+    LEAGUES.forEach(function(Y) {
+      Y.L.blocks.forEach(function(bl) {
+        (bl.teams || []).forEach(function(m) {
+          if (!m || m.length !== 2) return;
+          var key = pairKey(m), t = byKey[key] = byKey[key] || { members: m, names: {}, reigns: [], since: Y.year + '-11-01' };
+          (t.league = t.league || []).push({ year: Y.year, block: bl.id || '', bname: bl.name || '', bja: bl.ja || '' });
+        });
+      });
+    });
     TEAMS = Object.keys(byKey).map(function(k) {
       var t = byKey[k], names = Object.keys(t.names);
       var real = names.filter(function(n) { return !facNames[n.toLowerCase()]; });
@@ -91,6 +131,7 @@
       t.count = {}; t.reigns.forEach(function(r) { t.count[r.belt] = (t.count[r.belt] || 0) + 1; });
       t.defTotal = t.reigns.reduce(function(a, r) { return a + (r.defs || 0); }, 0);
       t.id = slug(t.members.join(' '));
+      t.league = t.league || [];
       return t;
     });
     TEAMS.sort(function(a, b) { return a.last < b.last ? 1 : -1; });   // most recent title first
@@ -123,7 +164,11 @@
         '#tv-sm-shelf .tv-shl-top.tt-top{display:flex;flex-direction:column;gap:10px;}',
         '#tv-sm-shelf .tv-shl-tm.tv-fav-on .a::before{content:"\\2605  ";color:#F4C242;}',
         '#tv-sm-shelf .tv-sm-fi.tv-shl-tm.tv-fav-on::before{content:none;display:none;}',   // the star goes before the name, not on its own line
-        '#tv-sm-shelf .tv-shl-ecol .tv-sm-fi.tv-shl-tmore{color:#F4C242 !important;font-size:15px;padding:5px 10px;}'
+        '#tv-sm-shelf .tv-shl-ecol .tv-sm-fi.tv-shl-tmore{color:#F4C242 !important;font-size:15px;padding:5px 10px;}',
+        '#tv-sm-shelf .tv-shl-tm.tt-lg{position:relative;padding-right:40px !important;}',
+        '#tv-sm-shelf .tv-shl-tm.tt-lg .tt-wings{position:absolute;right:8px;top:50%;margin-top:-8px;}',
+        '#tv-sm-shelf .tv-shl-all.tt-lgbar{display:flex;align-items:center;gap:12px;}',
+        '#tv-sm-shelf .tv-shl-all.tt-lgbar .tt-wings{flex:none;}'
       ].join('\n');
       (document.head || document.documentElement).appendChild(st);
     }
@@ -132,14 +177,21 @@
       var list = all.filter(function(t) { return t.era === e.n; }), ep = '/mypage?tvteams=1&era=' + e.n;
       cols += '<div class="tv-shl-ecol"><a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + esc(ep) + '" href="' + esc(absUrl(ep)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(e.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(e.name) + '</span><span class="tv-shl-e2">' + list.length + ' ' + esc(T(list.length === 1 ? 'team' : 'teams', 'チーム')) + '</span></span></a>';
       list.slice(0, per).forEach(function(t) {
-        cols += '<a class="tv-sm-fi tv-shl-tm" tabindex="0" data-go="' + esc(teamPath(t)) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.sub) + '</span></a>';
+        var inLg = LG_NOW && t.league.some(function(x) { return x.year === LG_NOW.year; });
+        cols += '<a class="tv-sm-fi tv-shl-tm' + (inLg ? ' tt-lg' : '') + '" tabindex="0" data-go="' + esc(teamPath(t)) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.sub) + '</span>' + (inLg ? wings(16, '#F4C242', '#121922') : '') + '</a>';
       });
       if (list.length > per) cols += '<a class="tv-sm-fi tv-shl-tmore" tabindex="0" data-go="' + esc(ep) + '" href="' + esc(absUrl(ep)) + '">' + esc(T('+' + (list.length - per) + ' more', '他' + (list.length - per) + 'チーム')) + '</a>';
       cols += '</div>';
     });
     var ap = '/mypage?tvteams=1', fp = '/mypage?tvfav=teams', fc = favCount();
+    var lgBar = '';
+    if (LG_NOW) {
+      var lp = leaguePath(LG_NOW.year), ln = leagueCount(LG_NOW);
+      lgBar = '<a class="tv-sm-fi tv-shl-all tt-lgbar" tabindex="0" data-go="' + esc(lp) + '" href="' + esc(absUrl(lp)) + '">' + wings(22, '#F4C242', '#161F2A') + '<div>' + esc(T('Tag League ' + LG_NOW.year, 'タッグリーグ ' + LG_NOW.year)) +
+        '<span>' + esc(T(ln + ' teams · ' + LG_NOW.L.blocks.map(function(b) { return blockName(b, true); }).join(' and ') + (LG_NOW.L.dates ? ' · ' + LG_NOW.L.dates : ''), ln + 'チーム')) + '</span></div></a>';
+    }
     return '<div class="tv-shl-t">' + esc(T('TAG TEAMS', 'タッグチーム')) + '</div>' +
-      '<div class="tv-shl-top tt-top"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + ap + '" href="' + esc(absUrl(ap)) + '">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '<span>' + esc(T(all.length + ' champion teams, A to Z', '王者チーム' + all.length + '組')) + '</span></a>' +
+      '<div class="tv-shl-top tt-top"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + ap + '" href="' + esc(absUrl(ap)) + '">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '<span>' + esc(T(all.length + ' champion teams, A to Z', '王者チーム' + all.length + '組')) + '</span></a>' + lgBar +
         '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + fp + '" href="' + esc(absUrl(fp)) + '"><div><b class="tv-shl-mine">\u2605</b> ' + esc(T('My Tag Teams', 'お気に入りチーム')) + '</div><span>' + esc(fc ? T(fc + (fc === 1 ? ' favorite' : ' favorites'), fc + 'チーム') : T('Menu button on a team adds it', 'チームでメニューボタン')) + '</span></a></div>' +
       '<div class="tv-shl-ec">' + cols + '</div>';
   };
@@ -191,6 +243,7 @@
     '#tv-tt .tt-chip:focus{border-color:#F4C242;}',
     '#tv-tt .tt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin-top:22px;}',
     '#tv-tt .tt-count{margin-top:14px;font-size:15px;font-weight:700;color:#9AA6B4;}',
+    '#tv-tt .tt-roster{margin-top:4px;font-size:13px;font-weight:700;color:#9AA6B4;}',
     '#tv-tt .tt-team{display:flex;align-items:center;gap:10px;height:66px;padding:0 14px;background:#161F2A;border:2px solid #161F2A;border-radius:8px;min-width:0;cursor:pointer;}',
     '#tv-tt .tt-team:focus{background:#172029;border-color:#F4C242;}',
     '#tv-tt .tt-team .x{flex:1 1 auto;min-width:0;}',
@@ -200,6 +253,19 @@
     '#tv-tt .tt-tag{flex:none;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 6px;border-radius:4px;border:1px solid #F4C242;color:#F4C242;white-space:nowrap;}',
     '#tv-tt .tt-tag.nb{border-color:#9AA6B4;color:#C9D2DC;}',
     '#tv-tt .tt-tag.ch{background:#F4C242;color:#1A1A1A;}',
+    '#tv-tt .tt-tag.tt-lgt{display:flex;align-items:center;gap:5px;}',
+    '#tv-tt .tt-chip.tt-lgchip{margin-left:14px;}',
+    '#tv-tt .tt-lg-head{display:flex;align-items:center;gap:16px;}',
+    '#tv-tt .tt-lg-head .tt-chips{margin:0 0 0 auto;}',
+    '#tv-tt .tt-lg-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:8px;}',
+    '#tv-tt .tt-lg-col{display:flex;flex-direction:column;gap:8px;min-width:0;}',
+    '#tv-tt .tt-lg-row{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;background:#161F2A;border:2px solid #161F2A;border-radius:8px;min-width:0;cursor:pointer;}',
+    '#tv-tt .tt-lg-row:focus{background:#172029;border-color:#F4C242;}',
+    '#tv-tt .tt-lg-row .a{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;}',
+    '#tv-tt .tt-lg-row .b{font-size:13px;font-weight:600;color:#9AA6B4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;}',
+    '#tv-tt .tt-lg-row.tt-fav .a::before{content:"\\2605  ";color:#F4C242;}',
+    '#tv-tt .tt-sec .tt-wings{flex:none;}',
+    '#tv-tt .tt-h1 .tt-wings{margin-left:12px;vertical-align:-2px;}',
     '#tv-tt .tt-sec{display:flex;align-items:center;gap:10px;margin:26px 0 10px 0;}',
     '#tv-tt .tt-sec i{width:8px;height:26px;background:#F4C242;}',
     '#tv-tt .tt-sec b{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
@@ -254,11 +320,12 @@
     try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
     try { el.scrollIntoView({ block: center ? 'center' : 'nearest' }); } catch (e) {}
   }
-  function tags(t) {
+  function tags(t, noLeague) {
     var h = '';
     if (t.champ.length) h += '<span class="tt-tag ch">' + esc(T('CHAMPIONS', '王者')) + '</span>';
     if (t.count.goddess) h += '<span class="tt-tag">' + esc(T('GODDESS', 'ゴッデス')) + (t.count.goddess > 1 ? ' ×' + t.count.goddess : '') + '</span>';
     if (t.count.newblood) h += '<span class="tt-tag nb">NEW BLOOD' + (t.count.newblood > 1 ? ' ×' + t.count.newblood : '') + '</span>';
+    if (t.league.length && !noLeague) h += '<span class="tt-tag tt-lgt">' + wings(14, '#F4C242', '#161F2A') + esc(T('TAG LEAGUE', 'タッグリーグ')) + (t.league.length > 1 ? ' ×' + t.league.length : '') + '</span>';
     return h;
   }
 
@@ -272,7 +339,7 @@
       return !!t.count[filt.slice(1)];
     });
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '</div>' +
-      '<div class="tt-note">' + esc(T('Every pair that has held the Goddess of Stardom or NEW BLOOD Tag Team belts. A pair known only by its faction shows the two names, with the faction underneath.', 'ゴッデス・オブ・スターダム王座、NEW BLOODタッグ王座を獲得したすべてのチーム。')) + '</div></div>' +
+      '<div class="tt-note">' + esc(T('Every pair that has held the Goddess of Stardom or NEW BLOOD Tag Team belts, plus other current teams. A pair known only by its faction shows the two names, with the faction underneath.', 'ゴッデス・オブ・スターダム王座、NEW BLOODタッグ王座を獲得したすべてのチームと、その他の現役チーム。')) + '</div></div>' +
       '<div class="tt-instr">' + esc(T('Left and Right change the filter. Down moves into the list. OK opens a team.', '左右で絞り込み、下で一覧へ。OKでチームを開きます。')) + '</div></div>';
     var chips = [['all', esc(T('All', 'すべて')) + ' <small>' + all.length + '</small>']];
     // short era names keep the chips on one line: "Threedom & the Rebuild" -> "Threedom", "The Draft Years" -> "Draft Years"
@@ -281,13 +348,49 @@
     var BELT_ICON = '<svg class="bi" width="30" height="16" viewBox="0 0 30 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="5" width="28" height="6" rx="2"></rect><circle cx="15" cy="8" r="5.5" fill="#161F2A"></circle><circle cx="15" cy="8" r="2.2"></circle><circle cx="7" cy="8" r="1.4"></circle><circle cx="23" cy="8" r="1.4"></circle></svg>';
     chips.push(['bgoddess', BELT_ICON + esc(T('Goddess', 'ゴッデス'))]);
     chips.push(['bnewblood', BELT_ICON + 'NEW BLOOD']);
-    h += '<div class="tt-chips">' + chips.map(function(c) { return '<a class="tt-chip' + (c[0] === filt ? ' tt-on' : '') + '" tabindex="0" data-f="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
+    h += '<div class="tt-chips">' + chips.map(function(c) { return '<a class="tt-chip' + (c[0] === filt ? ' tt-on' : '') + '" tabindex="0" data-f="' + c[0] + '">' + c[1] + '</a>'; }).join('') +
+      (LG_NOW ? '<a class="tt-chip tt-lgchip" tabindex="0" href="' + esc(absUrl(leaguePath(LG_NOW.year))) + '">' + wings(16, '#F4C242', '#161F2A') + esc(T('Tag League', 'タッグリーグ')) + '</a>' : '') + '</div>';
     h += '<div class="tt-grid">' + list.map(function(t) {
       return '<a class="tt-team' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><div class="x"><div class="a notranslate" translate="no">' + esc(t.display) + '</div><div class="b notranslate" translate="no">' + esc(t.sub) + '</div></div>' + tags(t) + '</a>';
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(list.length + (list.length === 1 ? ' team' : ' teams') + (filt === 'all' ? '' : ' of ' + all.length), list.length + 'チーム' + (filt === 'all' ? '' : ' / ' + all.length))) + '</div>';
+    // which roster file this TV is using, so a roster change can be checked on screen (stays put, no fading)
+    var R = CFG.roster || {};
+    h += '<div class="tt-roster">' + esc(R.state === 'ok'
+      ? T('Roster file' + (R.updated ? ' of ' + fmtD(R.updated) : '') + ': tag teams ' + R.adds + ' added, ' + R.removes + ' removed · factions ' + (R.factions || 0) + ' changed · faction members ' + (R.members || 0) + ' changed · past wrestlers ' + (R.pastAdds || 0) + ' added, ' + (R.pastRemoves || 0) + ' removed',
+          '名簿ファイル' + (R.updated ? '（' + fmtD(R.updated) + '）' : '') + '：タッグ 追加 ' + R.adds + '・削除 ' + R.removes + ' · ユニット 変更 ' + (R.factions || 0) + ' · メンバー 変更 ' + (R.members || 0) + ' · 元所属 追加 ' + (R.pastAdds || 0) + '・削除 ' + (R.pastRemoves || 0))
+      : T('Roster file: not downloaded yet (built-in list)', '名簿ファイル：未取得（内蔵リスト）')) + '</div>';
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-chip.tt-on') || scroller.querySelector('.tt-chip'));
+  }
+
+  // ================================================================== Tag League page (/mypage?tvteams=1&league=<year>)
+  // The two blocks side by side (docs/DESIGN.md "Tag League"), years newest on the left. Opens no searches.
+  function renderLeague(focusSel) {
+    var y = +Q.get('league'), Y = null;
+    LEAGUES.forEach(function(x) { if (x.year === y) Y = x; });
+    Y = Y || LG_NOW;
+    if (!Y) { scroller.innerHTML = '<div class="tt-head"><div class="tt-bar"></div><div class="tt-h1">' + esc(T('Tag League', 'タッグリーグ')) + '</div></div><div class="tt-msg">' + esc(T('No Tag League in the roster file yet.', '名簿ファイルにタッグリーグがありません。')) + '</div>'; return; }
+    var L = Y.L, byKey = {};
+    build().forEach(function(t) { byKey[pairKey(t.members)] = t; });
+    var h = '<div class="tt-lg-head">' + wings(44, '#F4C242', '#0B1118') + '<div style="min-width:0"><div class="tt-h1">' + esc(isJa() && L.ja ? L.ja : (L.name || T('Tag League ' + Y.year, 'タッグリーグ ' + Y.year))) + '</div>' +
+      '<div class="tt-note">' + esc([L.dates || '', L.winners ? T(L.winners, L.winnersJa || L.winners) : ''].filter(Boolean).join(' · ')) + '</div></div>' +
+      '<div class="tt-chips">' + LEAGUES.map(function(x) { return '<a class="tt-chip' + (x === Y ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(leaguePath(x.year))) + '">' + x.year + '</a>'; }).join('') + '</div></div>';
+    h += '<div class="tt-lg-cols">' + L.blocks.map(function(bl) {
+      var rows = (bl.teams || []).map(function(m) {
+        var t = byKey[pairKey(m)];
+        if (!t) return '';
+        var win = !!(L.winnerTeam && pairKey(L.winnerTeam) === pairKey(m));
+        var prev = !win && !!(L.prevWinners && L.prevWinners.team && pairKey(L.prevWinners.team) === pairKey(m));
+        return '<a class="tt-lg-row' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.name ? t.members.join(' & ') : '') + '</span>' +
+          (win ? '<span class="tt-tag ch">' + esc(T('WINNERS', '優勝')) + '</span>' : '') +
+          (prev ? '<span class="tt-tag ch">' + esc(T(L.prevWinners.year + ' WINNERS', L.prevWinners.year + '年優勝')) + '</span>' : '') + tags(t, true) + '</a>';
+      }).join('');
+      return '<div class="tt-lg-col"><div class="tt-sec" style="margin:14px 0 4px 0"><i></i><b>' + esc(isJa() && bl.ja ? bl.ja : bl.name) + '</b><span>' + esc(T((bl.teams || []).length + ' teams', (bl.teams || []).length + 'チーム')) + '</span></div>' + rows + '</div>';
+    }).join('') + '</div>';
+    h += '<div class="tt-count">' + esc(T(leagueCount(Y) + ' teams', leagueCount(Y) + 'チーム')) + '</div>';
+    scroller.innerHTML = h;
+    focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-lg-row') || scroller.querySelector('.tt-chip'));
   }
 
   // ================================================================== a team's page
@@ -303,7 +406,7 @@
   try {
     ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { (g.items || []).forEach(function(x) { if (x.id === 'tag') (x.all || []).forEach(function(p) { MT_ALL.push(new RegExp(p, 'i')); }); }); });
   } catch (e) { MT_ALL = []; }
-  if (!MT_ALL.length) MT_ALL = [/tag|\u30bf\u30c3\u30b0/i];
+  if (!MT_ALL.length) MT_ALL = [/tag|\u30bf\u30c3\u30b0|goddess\s*official|\u30b4\u30c3\u30c7\u30b9\u516c\u5f0f/i];   // Tag League: "Red/Blue Goddess Official Match"
   function half(t) { return String(t || '').replace(/[\uff01-\uff5e]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).replace(/\u3000/g, ' '); }
   function isTagTitle(t) {
     t = half(t);
@@ -390,6 +493,50 @@
     if (t.name) q.push(t.name);
     return q;
   }
+  // Tag League official matches ("Red/Blue Goddess Official Match") don't say "Tag Team", so the "Tag Team" search can't
+  // find them and the site has no OR. They get their own search, "A Goddess B", shown in its own row above Tag Matches.
+  // It runs first; the "Tag Team" search follows MAIN_PAUSE_MS later. Where each search got to: L (here) and V.
+  var L = { q: '', page: 1, done: false, ran: false, kept: [] }, MAIN_PAUSE_MS = 5000, LG_KEY = 'tvTeamLeagueV1';
+  // Tag League titles (league row): Red/Blue Goddess Official Match, ゴッデス公式戦, 公式リーグ戦, 〜タッグリーグ戦〜.
+  // Anything else either search keeps (a Goddess of Stardom title match, say) goes in the Tag Matches row.
+  var LEAGUE_RE = /goddess(?:es)?\s*official|tag\s*league|\u30b4\u30c3\u30c7\u30b9\u516c\u5f0f|\u30bf\u30c3\u30b0\u30ea\u30fc\u30b0|\u516c\u5f0f\u30ea\u30fc\u30b0/i;
+  function isLeague(it) { return LEAGUE_RE.test(half(it.t)); }
+  function place(list, front) {   // kept matches go to the row they belong to
+    var lg = list.filter(isLeague), tg = list.filter(function(it) { return !isLeague(it); });
+    L.kept = front ? lg.concat(L.kept) : L.kept.concat(lg);
+    V.kept = front ? tg.concat(V.kept) : V.kept.concat(tg);
+  }
+  function lgState() { var a = parse(lsGet(LG_KEY)) || {}; return TEAM ? a[TEAM.id] || null : null; }
+  function lgSave() { var a = parse(lsGet(LG_KEY)) || {}; a[TEAM.id] = { page: L.page, done: L.done, at: Date.now(), rule: TM_RULE }; lsSet(LG_KEY, JSON.stringify(a)); }
+  // The Tag League search on opening the page. With the sheet, a search this TV finished under the current rule in the
+  // last 14 days isn't repeated (its matches came back with the saved list); More carries on an unfinished one. Without
+  // the sheet, page 1 is read again (the 7-day saved copy usually answers it). cb(true) when the site was asked.
+  function leagueFirst(cb) {
+    var st = lgState();
+    if (SHEET_ON && st && st.rule === TM_RULE && Date.now() - (st.at || 0) < REFRESH_MS) {
+      L.page = st.page || 2; L.done = !!st.done; L.ran = true;
+      V.log.push(T('Tag League search: ', 'タッグリーグ検索: ') + L.q + T(st.done ? ' · all pages searched ' : ' · next page from More, searched ', st.done ? ' · 全ページ検索済み ' : ' · 次のページは「さらに表示」 ') + new Date(st.at).toISOString().slice(0, 10));
+      paintVids(); cb(false); return;
+    }
+    L.page = 1; L.done = false;
+    leagueMore(cb);
+  }
+  function leagueMore(cb) {
+    if (V.busy || L.done) { if (cb) cb(false); return; }
+    V.busy = true; V.which = 'L'; paintVids();
+    fetchPage(L.q, L.page, function(err, items, more, cached) {
+      V.busy = false; L.ran = true;
+      if (err) { V.log.push(L.q + ' · page ' + L.page + ': ' + err); L.done = true; paintVids(); if (cb) cb(true); return; }
+      var kept = keepItems(items);
+      place(kept, false);
+      V.log.push(L.q + ' · page ' + L.page + ': ' + items.length + ' videos, ' + kept.length + ' kept' + (cached ? ' (saved copy)' : ''));
+      L.page++;
+      if (!more) L.done = true;
+      lgSave(); paintVids();
+      save(kept, false, L.q);
+      if (cb) cb(!cached);
+    });
+  }
   // ---- the private sheet's saved list for this team (private builds with the log set up; see docs/TEAM_MATCH_LISTS.md)
   var SHEET_ON = false;
   try { SHEET_ON = !!(H.teamSync && H.favSyncOn && H.favSyncOn()); } catch (e) { SHEET_ON = false; }
@@ -450,8 +597,13 @@
   }
   // A saved list is shown straight away, with no site search. Only a list older than 14 days gets its newest page
   // searched again (new matches go first); everything else waits for "More tag matches".
-  function fromSheet(fallback) {
-    V.busy = true; paintVids();
+  // The 2-on-2 rule's version (raise it whenever match_types.json "tag" keeps more titles) and, per TV, the version
+  // each team was last searched with.
+  var TM_RULE = 5, RULE_KEY = 'tvTeamRuleV1';
+  function ruleSeen() { var a = parse(lsGet(RULE_KEY)) || {}; return a[TEAM.id] || 1; }
+  function ruleMark() { var a = parse(lsGet(RULE_KEY)) || {}; if (a[TEAM.id] !== TM_RULE) { a[TEAM.id] = TM_RULE; lsSet(RULE_KEY, JSON.stringify(a)); } }
+  function fromSheet(done) {   // done(the "Tag Team" search step to run next: loadMore, refreshNewest or null)
+    V.busy = true; V.which = 'S'; paintVids();
     sheet('tm_get', {}, function(r) {
       V.busy = false;
       if (r && r.ok) flushPending();
@@ -461,32 +613,37 @@
       var nx = (r && r.next) || {};
       if (!r || !r.ok || !r.found || !((r.items || []).length || nx.page > 1 || nx.qi > 0 || nx.done)) {
         V.log.push(r && r.ok ? T('no saved list in your sheet yet', 'シートに保存なし') : T('sheet not read: ', 'シートを読めません: ') + ((r && r.error) || ''));
-        fallback(); return;
+        done(loadMore); return;
       }
       var add = keepItems(r.items);
-      V.kept = V.kept.concat(add);
+      place(add, false);
       V.ran = true;
       // The saved place belongs to the search words it was made with: when this version searches with other words
       // (r.queries doesn't include the first one), the saved matches stay and the new search starts at page 1.
       var sameWords = !r.queries || !r.queries.length || r.queries.indexOf(V.queries[0]) >= 0;
-      if (r.next && sameWords) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
+      // A list saved under an older version of the 2-on-2 rule may be missing matches that rule threw away (before
+      // 2.40.1, Tag League "Goddess Official Match" titles). Its saved matches stay, and the search starts again from
+      // page 1 once on this TV; More then carries on page by page as usual.
+      var oldRule = ruleSeen() < TM_RULE;
+      if (r.next && sameWords && !oldRule) { V.qi = r.next.qi || 0; V.page = r.next.page || 1; V.done = !!r.next.done; }
       V.log.push(T('saved list from your sheet: ' + add.length + ' matches (searched ' + String(r.searched || '').slice(0, 10) + ')', 'シートの保存: ' + add.length + '試合（' + String(r.searched || '').slice(0, 10) + '）'));
       if (!sameWords) V.log.push(T('saved with other search words: searching page 1 of ', '検索語が変わったため1ページ目から: ') + V.queries[0]);
+      else if (oldRule) V.log.push(T('saved under an older match rule: searching again from page 1 of ', '旧ルールで保存：1ページ目から再検索: ') + V.queries[0]);
       paintVids();
-      if (!sameWords) { loadMore(); return; }   // one search, as on a first visit
+      if (!sameWords || oldRule) { done(loadMore); return; }   // one search, as on a first visit
       var age = Date.now() - (Date.parse(r.refreshed || '') || 0);
-      if (age > REFRESH_MS) refreshNewest();
+      done(age > REFRESH_MS ? refreshNewest : null);
     });
   }
   function refreshNewest() {
     if (V.busy) return;
-    V.busy = true; paintVids();
+    V.busy = true; V.which = 'V'; paintVids();
     var q = V.queries[0];
     fetchPage(q, 1, function(err, items, more, cached) {
       V.busy = false;
       if (err) { V.log.push(q + ' · page 1 (refresh): ' + err); paintVids(); return; }
       var add = keepItems(items);
-      V.kept = add.concat(V.kept);
+      place(add, true);
       V.log.push(q + ' · page 1 (refresh): ' + items.length + ' videos, ' + add.length + ' new' + (cached ? ' (saved copy)' : ''));
       paintVids();
       save(add, true, q);
@@ -495,15 +652,17 @@
 
   function loadMore() {
     if (V.busy || V.done) return;
-    V.busy = true; paintVids();
+    V.busy = true; V.which = 'V'; paintVids();
     var q = V.queries[V.qi];
     fetchPage(q, V.page, function(err, items, more, cached) {
       V.busy = false; V.ran = true;
       if (err) { V.log.push(q + ' · page ' + V.page + ': ' + err); V.done = true; paintVids(); return; }
       var kept = keepItems(items), add = kept.length;
-      V.kept = V.kept.concat(kept);
+      place(kept, false);
+      ruleMark();
       V.log.push(q + ' · page ' + V.page + ': ' + items.length + ' videos, ' + add + ' kept' + (cached ? ' (saved copy)' : ''));
       // The other spelling and the team name are tried only when a search finds no videos at all.
+      // the other spelling and the team name are tried only when the "Tag Team" search finds no videos at all
       if (V.page === 1 && !items.length && V.qi + 1 < V.queries.length) {
         V.qi++; V.page = 1; paintVids(); loadMore(); return;
       }
@@ -514,37 +673,47 @@
     });
   }
   function dateOfTitle(t) { var m = /(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(t || ''); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : ''; }
-  function paintVids() {
-    var box = document.getElementById('tt-vids'), st = document.getElementById('tt-vst'), dbg = document.getElementById('tt-dbg');
+  function cardHtml(it) {
+    var d = dateOfTitle(it.t);
+    return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(it.h) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
+  }
+  // One row of video cards: its grid, its More tile and the count beside its heading.
+  function paintRow(box, st, list, done, ran, active, moreAttr, msgs) {
     if (!box) return;
-    var had = document.activeElement && box.contains(document.activeElement) ? document.activeElement.getAttribute('data-vid') || 'more' : '';
+    var more = '<a class="tt-more" tabindex="0" ' + moreAttr + '="1">' + esc(V.busy && active ? T('Searching…', '検索中…') : T('More', 'さらに表示')) + '</a>';
     var h = '';
-    // With nothing kept yet, a plain grey line like the championship pages' "Press OK on this reign" note:
-    // "Looking…" during the first search, "none found" once every page is done, otherwise "Press OK on More" above the More tile.
-    var more = '<a class="tt-more" tabindex="0" data-more="1">' + esc(V.busy ? T('Searching…', '検索中…') : T('More tag matches', 'さらに表示')) + '</a>';
-    if (!V.kept.length) {
-      var msg = V.done ? T('No 2-on-2 tag matches were found for this team.', 'このチームのタッグマッチの動画は見つかりませんでした。') :
-        (V.busy && !V.ran) ? T('Looking for tag matches...', 'タッグマッチを検索中...') :
-        T('No 2-on-2 tag matches on the pages searched so far. Press OK on More tag matches to search the next page.', 'これまでのページにタッグマッチはありません。「さらに表示」でOKを押すと次のページを検索します。');
-      h = '<div class="tt-msg">' + esc(msg) + '</div>';
-      if (!V.done && V.ran) h += '<div class="tt-vids">' + more + '</div>';
+    if (!list.length) {
+      h = '<div class="tt-msg">' + esc(done ? msgs[0] : (!ran ? msgs[1] : msgs[2])) + '</div>';
+      if (!done && ran) h += '<div class="tt-vids">' + more + '</div>';
       box.className = '';
     } else {
       box.className = 'tt-vids';
-      h = V.kept.map(function(it) {
-        var d = dateOfTitle(it.t);
-        return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(it.h) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
-      }).join('');
-      if (!V.done) h += more;
+      h = list.map(cardHtml).join('') + (done ? '' : more);
     }
     box.innerHTML = h;
-    if (st) st.textContent = V.busy ? (V.kept.length ? V.kept.length + ' ' + T(V.kept.length === 1 ? 'tag match' : 'tag matches', '試合') + T(' · ', ' · ') : '') + T('looking for videos', '動画を検索中') :
-      (!V.kept.length && !V.done ? T('none found yet', 'まだありません') : V.kept.length + ' ' + T(V.kept.length === 1 ? 'tag match' : 'tag matches', '試合'));
-    if (dbg) dbg.textContent = T('Search: ', '検索: ') + V.queries.join(' | ') + '\n' + V.log.join('\n') + '\n' +
-      T('Kept ' + V.kept.length + ' (' + V.verified + ' checked as teammates in the video index) · left out ' + V.dropMulti + ' bigger or multi-way matches, ' + V.dropOpp + ' where they were opponents',
-        '表示 ' + V.kept.length + '（動画インデックスで同じチーム確認 ' + V.verified + '）· 除外 ' + V.dropMulti + '（多人数）、' + V.dropOpp + '（対戦）');
-    if (had) { var f = had === 'more' ? box.querySelector('.tt-more') : box.querySelector('[data-vid="' + had + '"]'); if (f) focusEl(f); }
+    if (st) st.textContent = (V.busy && active) ? (list.length ? list.length + ' · ' : '') + T('looking for videos', '動画を検索中') :
+      (!list.length && !done ? (ran ? T('none found yet', 'まだありません') : T('waiting', '待機中')) : list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合'));
   }
+  function paintVids() {
+    var box = document.getElementById('tt-vids'), lbox = document.getElementById('tt-lvids'), lsec = document.getElementById('tt-lsec'), dbg = document.getElementById('tt-dbg');
+    if (!box) return;
+    var ae = document.activeElement, had = '';
+    if (ae && (box.contains(ae) || (lbox && lbox.contains(ae)))) had = ae.getAttribute('data-vid') || (ae.getAttribute('data-lmore') ? 'lmore' : 'more');
+    paintRow(lbox, document.getElementById('tt-lvst'), L.kept, L.done, L.ran, V.busy && V.which === 'L', 'data-lmore',
+      [T('No Tag League matches were found for this team.', 'このチームのタッグリーグ戦の動画は見つかりませんでした。'), T('Looking for Tag League matches...', 'タッグリーグ戦を検索中...'), T('No Tag League matches on the pages searched so far. Press OK on More to search the next page.', 'これまでのページにタッグリーグ戦はありません。「さらに表示」で次のページを検索します。')]);
+    // the league row shows for entrants, and for any team once a Tag League match turns up
+    if (lsec) { var showL = (TEAM && TEAM.league.length) || L.kept.length; lsec.style.display = showL ? '' : 'none'; lbox.style.display = showL ? '' : 'none'; }
+    paintRow(box, document.getElementById('tt-vst'), V.kept, V.done, V.ran, V.busy && V.which !== 'L', 'data-more',
+      [T('No 2-on-2 tag matches were found for this team.', 'このチームのタッグマッチの動画は見つかりませんでした。'), L.ran ? T('Looking for tag matches...', 'タッグマッチを検索中...') : T('Tag matches are searched after the Tag League row.', 'タッグマッチはタッグリーグ戦の後に検索します。'), T('No 2-on-2 tag matches on the pages searched so far. Press OK on More to search the next page.', 'これまでのページにタッグマッチはありません。「さらに表示」で次のページを検索します。')]);
+    if (dbg) dbg.textContent = T('Search: ', '検索: ') + L.q + ' | ' + V.queries.join(' | ') + '\n' + V.log.join('\n') + '\n' +
+      T('Kept ' + L.kept.length + ' Tag League + ' + V.kept.length + ' tag (' + V.verified + ' checked as teammates in the video index) · left out ' + V.dropMulti + ' bigger or multi-way matches, ' + V.dropOpp + ' where they were opponents',
+        '表示 タッグリーグ' + L.kept.length + '＋タッグ' + V.kept.length + '（動画インデックスで同じチーム確認 ' + V.verified + '）· 除外 ' + V.dropMulti + '（多人数）、' + V.dropOpp + '（対戦）');
+    if (had) {
+      var f = had === 'more' ? box.querySelector('.tt-more') : had === 'lmore' ? (lbox && lbox.querySelector('.tt-more')) : scroller.querySelector('[data-vid="' + had + '"]');
+      if (f) focusEl(f);
+    }
+  }
+
 
   function favBtnInner(id) { var on = isFav(id); return '<span class="st">' + (on ? '\u2605' : '\u2606') + '</span>' + esc(on ? T('In My Favorites', 'お気に入り登録済み') : T('Add to My Favorites', 'お気に入りに追加')); }
   // My Favorites changed (OK on the button, or the Menu button): update the button and the list's stars
@@ -560,7 +729,10 @@
       scroller.innerHTML = '<div class="tt-head"><div class="tt-bar"></div><div class="tt-h1">' + esc(T('Team not found', 'チームが見つかりません')) + '</div></div><div class="tt-empty" style="margin-top:16px">' + esc(T('Open Tag Teams in the menu to choose a team.', 'メニューのタッグチームから選んでください。')) + '</div>';
       return;
     }
-    var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(t.display) + '</div><div class="tt-note">' + esc(T('Tag team', 'タッグチーム')) + (t.sub ? ' · ' + esc(t.sub) : '') + '</div></div>' +
+    var lgNow = t.league.slice().sort(function(a, b) { return b.year - a.year; })[0];
+    var lgLine = lgNow ? ' · ' + esc(T((lgNow.bname ? blockName({ name: lgNow.bname }, true) + ' Goddesses, ' : '') + 'Tag League ' + lgNow.year + (t.league.length > 1 ? ' (' + t.league.length + ' entries)' : ''),
+      (lgNow.bja ? lgNow.bja + '・' : '') + 'タッグリーグ' + lgNow.year)) : '';
+    var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(t.display) + (t.league.length ? wings(24, '#F4C242', '#0B1118') : '') + '</div><div class="tt-note">' + esc(T('Tag team', 'タッグチーム')) + (t.sub ? ' · ' + esc(t.sub) : '') + lgLine + '</div></div>' +
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
     var av = t.members.map(function(m) {
       var p = call('wrestlerPhoto', m) || call('wrestlerPhoto', siteName(m));
@@ -588,13 +760,28 @@
           '<div class="t3">' + esc(T(days + ' days · ' + r.defs + (r.defs === 1 ? ' defence' : ' defences'), days + '日 · 防衛' + r.defs + '回')) + '</div></div></a>';
       }).join('') + '</div>';
     }
+    h += '<div class="tt-sec" id="tt-lsec">' + wings(24, '#F4C242', '#0B1118') + '<b>' + esc(T('TAG LEAGUE MATCHES', 'タッグリーグ戦')) + '</b><span id="tt-lvst"></span></div><div id="tt-lvids"></div>';
     h += '<div class="tt-sec"><i></i><b>' + esc(T('TAG MATCHES', 'タッグマッチ')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div><div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>';
     scroller.innerHTML = h;
     focusEl(scroller.querySelector('.tt-btn') || scroller.querySelector('[tabindex="0"]'));
     V.queries = queriesFor(t);
+    L.q = t.members.map(searchName).join(' Goddess ');
     paintVids();
-    var box = document.getElementById('tt-vids'), started = false;
-    function start() { if (started) return; started = true; if (SHEET_ON) fromSheet(loadMore); else loadMore(); }
+    var box = document.getElementById('tt-lvids'), started = false;
+    // Tag League row first, then the Tag Matches row MAIN_PAUSE_MS later (only when the league step asked the site).
+    function start() {
+      if (started) return; started = true;
+      var go = function(main) {
+        leagueFirst(function(asked) {
+          if (!main) { paintVids(); return; }
+          if (!asked) { main(); return; }
+          V.log.push(T('Tag Matches search in ' + MAIN_PAUSE_MS / 1000 + ' s', 'タッグ検索まで' + MAIN_PAUSE_MS / 1000 + '秒'));
+          paintVids();
+          setTimeout(main, MAIN_PAUSE_MS);
+        });
+      };
+      if (SHEET_ON) fromSheet(go); else go(loadMore);
+    }
     // start when the section is on screen: now if it already is, otherwise once the page scrolls to it
     function inView() { if (!box) return true; var r = box.getBoundingClientRect(), v = scroller.getBoundingClientRect(); return r.top < v.bottom - 40; }
     if (inView()) start();
@@ -620,6 +807,7 @@
   function choose(el) {
     if (el.getAttribute('data-f') != null) { filt = el.getAttribute('data-f'); renderList('[data-f="' + filt + '"]'); return true; }
     if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(); return true; }
+    if (el.getAttribute('data-lmore') != null) { if (!V.busy) leagueMore(); return true; }
     if (el.getAttribute('data-favb') != null) { if (window.__tvFav && TEAM) window.__tvFav.toggleTeam(TEAM.id); return true; }
     return false;
   }
@@ -640,5 +828,5 @@
     else if (dir === 'down') scroller.scrollTop += 240;   // fact rows below: scroll to read them
   }, true);
 
-  if (Q.get('tvteam')) renderTeam(); else renderList(null);
+  if (Q.get('tvteam')) renderTeam(); else if (Q.get('league')) renderLeague(null); else renderList(null);
 })();

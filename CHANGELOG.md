@@ -2,6 +2,53 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.41.0
+
+- Tag League (Goddesses of Stardom Tag League), marked with a new feathered wings icon (gold line, drawn in the code, so public and private builds alike):
+  - Tag Teams shelf: a "Tag League 2026" bar under All Tag Teams (team count, blocks, dates), and wings at the right edge of this year's entrants.
+  - Menu list (non-shelf menu): a Tag League entry under Tag Teams.
+  - All Tag Teams: a Tag League chip after the belt chips (opens the Tag League page), and a TAG LEAGUE tag (×n for several years) on every entrant's row.
+  - New Tag League page (`/mypage?tvteams=1&league=<year>`): the Blue and Red Goddesses blocks side by side, years newest on the left, last year's winners tagged. No searches.
+  - Team page: wings beside the team name and the block and year in the line under it; a separate TAG LEAGUE MATCHES row (wings instead of the gold bar) above Tag Matches. The Tag League search runs first; the Tag Matches search follows 5 seconds later. Each row has its own More. The league row shows for entrants, and for any other team once a Tag League match turns up. Goddess title matches go in the Tag Matches row.
+  - With your sheet, a Tag League search this TV finished in the last 14 days isn't repeated (its matches come back with the saved list); `tvTeamLeagueV1` remembers where it got to. Match rule version 5.
+- Roster file: new `tagLeague` section (per year: name, dates, winners, blocks with their teams), merged over a bundled one; see `docs/ROSTER.md`. A pair in a block that isn't a team yet is added as one.
+
+## 2.40.4
+
+- Team pages: Goddess results first. The Tag League search ("A Goddess B") now runs first, and when its pages run out the page goes straight on to page 1 of the "Tag Team" search, so a team's first view is still two searches, 3 seconds apart. More carries on from there.
+- The Tag Matches grid shows Goddess matches (Red/Blue Goddess official matches, ゴッデス公式戦 and 公式リーグ戦, ゴッデス・オブ・スターダム tag league and title matches) before the rest, including matches already saved to your sheet; each group keeps the order it was found in.
+- Match rule version raised to 4 (each team searches again from page 1 once per TV).
+
+## 2.40.3
+
+- Team pages: a second search for Tag League matches. The first search ("A Tag Team B") never returns Tag League official matches, because their videos don't say "Tag Team" (Trouble Friends: 6 videos, all 6- and 8-person tags, while the filter bar's Starlight Kid with Maki Itoh shows the 11/03 Red Goddess Official Match). After the first search's pages run out, the page searches "A Goddess B" and keeps its 2-on-2 matches the same way. It runs straight away when nothing was kept yet, otherwise More carries on into it. One page at a time, 3 seconds apart, only while the team page is open. The debug panel shows "next: Tag League search …".
+- Match rule version raised to 3, so saved team lists are searched again from page 1 once per team on each TV and pick up the Tag League search.
+
+## 2.40.2
+
+- Team pages: a match list saved to your sheet under the old 2-on-2 rule is searched again from page 1, once per team on each TV. Before, a team whose Tag League matches had been thrown away (Trouble Friends: "saved list from your sheet: 0 matches") kept showing that saved list and was not searched again for 14 days. Saved matches stay; new ones are added without repeats, and More carries on page by page as usual. One search per team, only when its page is opened.
+- The rule has a version number (`TM_RULE` in `teams.js`, now 2) to raise whenever the tag team title rule starts keeping more titles; each TV remembers per team which version it last searched with (`tvTeamRuleV1`).
+
+## 2.40.1
+
+- Tag League matches count as tag team matches. Goddesses of Stardom Tag League official matches are titled "Red Goddess Official Match" / "Blue Goddess Official Match" (レッド/ブルーゴッデス公式戦) with no "tag" in the title, so the 2-on-2 title rule left them out: team pages showed 0 tag matches (Trouble Friends: 6 found, 0 kept) and the filter bar's Match type: Tag team hid them. The tag team rule in `match_types.json` (and the built-in copy in `teams.js`) now also accepts "Goddess Official" / ゴッデス公式. No extra searches: the same results are kept instead of thrown away.
+
+## 2.40.0
+
+- Roster file now covers factions, faction members and past wrestlers as well as tag teams, so all of them can change without a new APK (same download, same `roster-data` branch). See `docs/ROSTER.md`.
+  - `factions.remove` (faction ids), `factions.set` (whole faction entries: replaces one with the same id in place; a new current faction goes before the former ones) and `factions.members` (per faction id: `add` and `remove` members).
+  - Current Wrestlers is still everyone in the current factions, Unaffiliated included, so a member change shows up in the menu, the filter bar's wrestler lists and the wrestler pages. Moving someone is a remove in one faction and an add in another.
+  - `past.add` and `past.remove` change the past wrestlers list (menu PAST tab and the filter bar).
+- The menu's PAST tab now reads `past_wrestlers.json` (with the roster changes) instead of its own copy in the code; the copy stays as a fallback. A member's `ja` name in either file is used for the Japanese menu.
+- The roster line on All Tag Teams now also counts faction, member and past wrestler changes.
+
+## 2.39.0
+
+- Roster file: tag teams can now be added or hidden without a new APK. The app downloads `roster.json` from the new `roster-data` branch at its schedule check (at most every six hours, one small GitHub request with an ETag; never the Stardom sites) and merges it with `assets/tag_teams.json`: `add` (new teams, the roster's entry wins for a pair already listed), `remove` (pairs to hide, either order), `spell` and `factionNames`. The last good copy stays if a download fails. See `docs/ROSTER.md`.
+- All Tag Teams: a grey line under the team count says which roster file the TV is using (date, how many added and removed), or that it is still on the built-in list. The page note now says the list includes other current teams.
+- Build workflow: the `roster-data` branch is skipped like `schedule-data`, so editing the roster never starts an APK build.
+- First roster file: the 2026 Goddesses of Stardom Tag League teams not already in the app (15 teams; FWC, BMI2000 and Sakurara were already there from the title histories).
+
 ## 2.38.0
 
 - Usage stats and error reports in every build: the PostHog key is now in `gradle.properties`, so the GitHub test builds and community builds report too (before, only builds with `branding-private/posthog.properties`).
