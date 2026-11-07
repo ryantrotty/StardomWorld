@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.40.1
+
+- Tag League matches count as tag team matches. Goddesses of Stardom Tag League official matches are titled "Red Goddess Official Match" / "Blue Goddess Official Match" (レッド/ブルーゴッデス公式戦) with no "tag" in the title, so the 2-on-2 title rule left them out: team pages showed 0 tag matches (Trouble Friends: 6 found, 0 kept) and the filter bar's Match type: Tag team hid them. The tag team rule in `match_types.json` (and the built-in copy in `teams.js`) now also accepts "Goddess Official" / ゴッデス公式. No extra searches: the same results are kept instead of thrown away.
+
 ## 2.40.0
 
 - Roster file now covers factions, faction members and past wrestlers as well as tag teams, so all of them can change without a new APK (same download, same `roster-data` branch). See `docs/ROSTER.md`.

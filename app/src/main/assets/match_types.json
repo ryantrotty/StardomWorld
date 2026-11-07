@@ -1,5 +1,5 @@
 {
- "_note": "Match types for the filter bar and the menu. search = the word sent to the site's keyword search; all = patterns the title must contain; none = patterns it must not contain; alts = other spellings searched once more and merged in.",
+ "_note": "Match types for the filter bar and the menu. search = the word sent to the site's keyword search; all = patterns the title must contain; none = patterns it must not contain; alts = other spellings searched once more and merged in. Tag team: Goddesses of Stardom Tag League matches are titled \"Red/Blue Goddess Official Match\" (レッド/ブルーゴッデス公式戦) with no \"tag\" in the title, so the tag rule also takes those.",
  "groups": [
   {
    "name": "Singles & tags",
@@ -17,7 +17,7 @@
      "ja": "タッグマッチ",
      "search": "Tag Team",
      "all": [
-      "tag|タッグ"
+      "tag|タッグ|goddess\\s*official|ゴッデス公式"
      ],
      "none": [
       "(?:\\d+|six|eight|ten|twelve|fourteen)[\\s\\-‐]*(?:person|man|men|woman|women)",

@@ -311,7 +311,7 @@
   try {
     ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { (g.items || []).forEach(function(x) { if (x.id === 'tag') (x.all || []).forEach(function(p) { MT_ALL.push(new RegExp(p, 'i')); }); }); });
   } catch (e) { MT_ALL = []; }
-  if (!MT_ALL.length) MT_ALL = [/tag|\u30bf\u30c3\u30b0/i];
+  if (!MT_ALL.length) MT_ALL = [/tag|\u30bf\u30c3\u30b0|goddess\s*official|\u30b4\u30c3\u30c7\u30b9\u516c\u5f0f/i];   // Tag League: "Red/Blue Goddess Official Match"
   function half(t) { return String(t || '').replace(/[\uff01-\uff5e]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).replace(/\u3000/g, ' '); }
   function isTagTitle(t) {
     t = half(t);
