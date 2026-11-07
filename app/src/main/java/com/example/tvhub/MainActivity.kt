@@ -83,6 +83,7 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
         prefs.edit().putString("user_lang", lang).apply()
         appJa = lang == "ja"
+        if (::metrics.isInitialized) metrics.appLanguage = lang
     }
 
     companion object {
@@ -584,6 +585,8 @@ class MainActivity : Activity() {
 
     private lateinit var root: FrameLayout
     private lateinit var webView: WebView
+    // Usage metrics (PostHog); does nothing unless a PostHog key is set. See Metrics.kt and docs/USAGE_METRICS.md.
+    private lateinit var metrics: Metrics
     private lateinit var cursorView: ImageView
     private lateinit var splashView: FrameLayout
     private lateinit var splashLogo: ImageView
@@ -2010,6 +2013,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        metrics = Metrics(this)
         density = resources.displayMetrics.density
         // The schedule refresh runs from onResume, which always follows onCreate.
 
@@ -2157,6 +2161,7 @@ class MainActivity : Activity() {
 
         val initLang = getSavedLanguage()
         appJa = initLang == "ja"
+        metrics.appLanguage = if (initLang == "ja") "ja" else "en"
         val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
@@ -2197,6 +2202,12 @@ class MainActivity : Activity() {
                 }
                 // Keep web pages inside the app; ignore anything else (intent://, market://, ...).
                 return !(scheme == "http" || scheme == "https" || scheme == "file")
+            }
+
+            // Every address change, full page loads and in-page ones alike: one page view each (Metrics.kt).
+            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                if (!isReload) metrics.page(url)
             }
 
             override fun onPageCommitVisible(view: WebView, url: String?) {
@@ -2621,6 +2632,12 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refreshScheduleAsync()
+        if (::webView.isInitialized) metrics.resume(webView.url)
+    }
+
+    override fun onPause() {
+        metrics.pause()
+        super.onPause()
     }
 
     private fun refreshScheduleAsync() {
@@ -10713,6 +10730,7 @@ class MainActivity : Activity() {
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
         }
+        if (event.action == KeyEvent.ACTION_DOWN) metrics.touch()
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,

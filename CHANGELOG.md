@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.36.0
+
+- Usage metrics with PostHog (free tier): unique visitors, every page viewed, time on each page, entry and exit pages and session length, shown in PostHog's Web analytics dashboard. Off until a PostHog project key is set in `branding-private/posthog.properties` (your builds only) or `tvhub.posthogKey` in `gradle.properties` (every build); see `docs/USAGE_METRICS.md`.
+- Anonymous: a random id per install, no account or sign-in data, no person profiles. Talks only to PostHog, never to stardom-world.com or Stagecrowd. Events are sent together (every 30 seconds, at 20 events, and when the app goes to the background).
+- The app's own pages get readable names (`/app/faction/<name>`, `/app/era/<era>`, `/app/my-favorites`, …); query strings are dropped, and Stagecrowd pages keep only their path.
+- New file `Metrics.kt` (no extra library); MainActivity reports each address change, key presses (to keep a session alive), and the app going to the background and coming back.
+
 ## 2.35.2
 
 Private builds only.
