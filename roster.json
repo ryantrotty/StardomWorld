@@ -279,5 +279,43 @@
     }
    ]
   }
+ },
+ "matchTypes": {
+  "stargp": {
+   "all": [
+    "5\\s*[★☆*]?\\s*star|star\\s*gp|(?:blue|red)[\\s\\-]*stars|ブルースターズ|レッドスターズ"
+   ],
+   "none": [
+    "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d",
+    "cinderella"
+   ]
+  },
+  "cinderella": {
+   "all": [
+    "cinderella\\s*tournament|シンデレラ[・\\s]*トーナメント"
+   ],
+   "none": [
+    "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
+   ]
+  },
+  "tagleague": {
+   "all": [
+    "goddess|ゴッデス",
+    "official|公式|代表|決勝|優勝|tournament|league|リーグ"
+   ],
+   "none": [
+    "championship|選手権",
+    "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
+   ]
+  },
+  "champ": {
+   "all": [
+    "championship|選手権|title\\s*match|タイトルマッチ"
+   ],
+   "none": [
+    "挑戦者決定|next\\s*challenger|contender",
+    "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
+   ]
+  }
  }
 }
