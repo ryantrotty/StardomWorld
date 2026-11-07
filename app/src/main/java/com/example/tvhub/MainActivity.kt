@@ -9874,6 +9874,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
         view.evaluateJavascript(assetText("lineage.js"), null)
+        view.evaluateJavascript(assetText("catprobe.js"), null)   // temporary: Category probe button on wrestler and tag team pages
         view.evaluateJavascript(assetText("teams.js"), null)
         view.evaluateJavascript(assetText("wrestler.js"), null)
         view.evaluateJavascript(assetText("wrspot.js"), null)

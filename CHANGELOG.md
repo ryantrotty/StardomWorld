@@ -3,6 +3,14 @@
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
 
+
+## 2.42.0
+
+- Temporary: Category probe (all builds), to settle the search words and title rules for the coming match categories (Championship, 5★STAR GP, Cinderella, Tag League) before they're built. A "Category probe" button on wrestler pages (after the faction buttons) and tag team pages (after Add to My Favorites); nothing runs until it's pressed.
+  - Wrestler pages run 8 searches: the name alone, then with Championship, 選手権, 5★STAR, STARS, Cinderella, シンデレラ and Goddess. Tag team pages run 5: both names, "A Tag Team B", with Championship, "A Goddess B", and with Tag League.
+  - Page 1 of each, one at a time, 3 seconds apart; answers kept 7 days, so pressing again costs nothing. Stops if the site asks for a pause.
+  - The panel stays on screen: per search, the videos found, whether there are more pages, counts by candidate rule (CH, 5★, CIN, TL, MULTI, TAG, SGL?) and each title with its tags; then the title matches on record from the title histories (reigns won and defences, by date) and which of them turned up in these results.
+  - New file `assets/catprobe.js`.
 ## 2.41.1
 
 - Filter bar drop-downs (Wrestler, Competitors, Match type and the rest, and the Tournament Archives filter bar): when a list would not fit below its button, the page first scrolls so the bar sits near the top of the screen, then the list opens below it. Before, on a long page such as a wrestler page with Titles Held above the matches, the bar sat near the bottom and the list was cut off after one row. Back closes the list and scrolls the page back; switching between drop-downs keeps the first position. Pages where the list already fits don't move.
