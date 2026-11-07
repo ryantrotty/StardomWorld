@@ -83,6 +83,7 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("tvhub_prefs", MODE_PRIVATE)
         prefs.edit().putString("user_lang", lang).apply()
         appJa = lang == "ja"
+        if (::metrics.isInitialized) metrics.appLanguage = lang
     }
 
     companion object {
@@ -584,6 +585,8 @@ class MainActivity : Activity() {
 
     private lateinit var root: FrameLayout
     private lateinit var webView: WebView
+    // Usage metrics (PostHog); does nothing unless a PostHog key is set. See Metrics.kt and docs/USAGE_METRICS.md.
+    private lateinit var metrics: Metrics
     private lateinit var cursorView: ImageView
     private lateinit var splashView: FrameLayout
     private lateinit var splashLogo: ImageView
@@ -2010,6 +2013,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        metrics = Metrics(this)
         density = resources.displayMetrics.density
         // The schedule refresh runs from onResume, which always follows onCreate.
 
@@ -2157,6 +2161,7 @@ class MainActivity : Activity() {
 
         val initLang = getSavedLanguage()
         appJa = initLang == "ja"
+        metrics.appLanguage = if (initLang == "ja") "ja" else "en"
         val initGoogtrans = if (initLang == "ja") "/ja/ja" else "/ja/en"
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
@@ -2197,6 +2202,12 @@ class MainActivity : Activity() {
                 }
                 // Keep web pages inside the app; ignore anything else (intent://, market://, ...).
                 return !(scheme == "http" || scheme == "https" || scheme == "file")
+            }
+
+            // Every address change, full page loads and in-page ones alike: one page view each (Metrics.kt).
+            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                if (!isReload) metrics.page(url)
             }
 
             override fun onPageCommitVisible(view: WebView, url: String?) {
@@ -2621,6 +2632,12 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refreshScheduleAsync()
+        if (::webView.isInitialized) metrics.resume(webView.url)
+    }
+
+    override fun onPause() {
+        metrics.pause()
+        super.onPause()
     }
 
     private fun refreshScheduleAsync() {
@@ -2829,6 +2846,12 @@ class MainActivity : Activity() {
     private val webAppInterface by lazy { WebAppInterface() }
 
     inner class WebAppInterface {
+        // Error tracking: a script error in a page (errorHookJs). Metrics.kt decides whether it is sent.
+        @android.webkit.JavascriptInterface
+        fun reportJsError(kind: String, message: String, source: String, line: Int, col: Int, stack: String) {
+            try { metrics.jsError(kind, message, source, line, col, stack) } catch (_: Exception) {}
+        }
+
         // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
         // Tournament Archives filter bar lists (cities, venues, shows) kept in assets/event_filters.json.
         @android.webkit.JavascriptInterface
@@ -3028,6 +3051,17 @@ class MainActivity : Activity() {
 
         // A real OK key press into the page, so the page's own "Full screen" button is allowed to go full screen
         // (browsers refuse it without a key press); only on Stagecrowd pages.
+        // Account > Anonymous usage stats (Metrics.kt): "on", "off", or "" when this build has no PostHog key (entry hidden).
+        @android.webkit.JavascriptInterface
+        fun metricsState(): String = if (!metrics.configured) "" else if (metrics.enabled) "on" else "off"
+
+        // Switches it and returns the new state.
+        @android.webkit.JavascriptInterface
+        fun setMetricsOn(on: Boolean): String {
+            metrics.setOn(on)
+            return metricsState()
+        }
+
         // The account menu's "Instructions" link: the first-run guide again, from the language step.
         @android.webkit.JavascriptInterface
         fun showGuide() {
@@ -4921,7 +4955,7 @@ class MainActivity : Activity() {
           }
           // [English name, Japanese name]
           var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
-          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Takumi Iroha', '彩羽匠'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
@@ -5197,6 +5231,7 @@ class MainActivity : Activity() {
           // Left on a top-level menu row switches between them; the choice is remembered.
           var MODE_KEY = 'tvMenuModeV1';
           function shelfMode() { return true; }
+          function metricsLabel(st) { return T('Anonymous usage stats: ', '匿名の利用統計: ') + (st === 'on' ? T('On', 'オン') : T('Off', 'オフ')); }
           function group(label, rows, shelfKey) {
             if (shelfKey && shelfMode()) {
               return '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-shelf="' + shelfKey + '"><span>' + esc(label) + '</span>' + chev() + '</div></div>';
@@ -5652,6 +5687,9 @@ class MainActivity : Activity() {
                   var al = window.__tvMenuAcct || [];
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
                   if (window.AndroidHost && AndroidHost.showGuide) body += '<a class="tv-sm-fi" tabindex="0" data-guide="1">' + esc(T('Instructions', '使い方')) + '</a>';
+                  // Anonymous usage stats (PostHog, docs/USAGE_METRICS.md): OK switches it on or off in place.
+                  var mst = ''; try { mst = AndroidHost.metricsState ? AndroidHost.metricsState() : ''; } catch (x) { mst = ''; }
+                  if (mst) body += '<a class="tv-sm-fi" tabindex="0" data-metrics="' + mst + '">' + esc(metricsLabel(mst)) + '</a>';
                   // Favorites sync (private builds): the main TV sends its whole set once; OK twice to confirm.
                   if (window.__tvFavSync && window.__tvFavSync.on) body += '<a class="tv-sm-fi" tabindex="0" data-favsend="1">' + esc(T('Send this TV’s favorites to sync', 'このテレビのお気に入りを同期に送信')) + '</a>';
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
@@ -5831,6 +5869,11 @@ class MainActivity : Activity() {
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
                   if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
+                  else if (fa.getAttribute('data-metrics')) {
+                    var nm = fa.getAttribute('data-metrics');
+                    try { nm = AndroidHost.setMetricsOn(nm !== 'on'); } catch (x) {}
+                    if (nm) { fa.setAttribute('data-metrics', nm); fa.textContent = metricsLabel(nm); }
+                  }
                   else if (fa.getAttribute('data-favsend')) { try { window.__tvFavSync.sendAll(fa); } catch (x) {} }
                   else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
                   else if (fa.getAttribute('data-wtab')) { /* the list already switched when the tab got focus */ }
@@ -9513,7 +9556,30 @@ class MainActivity : Activity() {
         root.bringChildToFront(bar)
     }
 
+    // Error tracking (Metrics.kt): reports script errors to AndroidHost.reportJsError. Metrics keeps only the
+    // app's own injected scripts' errors; at most 10 are passed on per page.
+    private val errorHookJs = """
+        (function(){
+          if (window.__tvErrHook) return; window.__tvErrHook = 1;
+          var H = window.AndroidHost; if (!H || !H.reportJsError) return;
+          var n = 0;
+          function send(kind, msg, src, line, col, stack) {
+            if (n >= 10) return; n++;
+            try { H.reportJsError(String(kind), String(msg || ''), String(src || ''), line | 0, col | 0, String(stack || '')); } catch (e) {}
+          }
+          window.addEventListener('error', function(e) {
+            if (!(e instanceof ErrorEvent)) return;   // an image or script that failed to load, not a script error
+            send('error', e.message, e.filename, e.lineno, e.colno, e.error && e.error.stack);
+          }, true);
+          window.addEventListener('unhandledrejection', function(e) {
+            var r = e && e.reason;
+            send('unhandledrejection', r && r.message ? (r.name ? r.name + ': ' : '') + r.message : String(r), '', 0, 0, r && r.stack);
+          });
+        })();
+    """
+
     private fun injectPageScripts(view: WebView) {
+        if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("ppv_host.js"), null)
             return
@@ -10713,6 +10779,7 @@ class MainActivity : Activity() {
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {
             armControlsIdleTimer()
         }
+        if (event.action == KeyEvent.ACTION_DOWN) metrics.touch()
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_PROG_YELLOW,

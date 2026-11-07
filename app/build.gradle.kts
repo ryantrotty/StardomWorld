@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 398
-        versionName = "2.35.2"
+        versionCode = 401
+        versionName = "2.38.0"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -42,6 +42,16 @@ android {
         val dailyUrl = (project.findProperty("tvhub.dailyUrl") as String?)
             ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/daily-data/daily.json"
         buildConfigField("String", "DAILY_URL", "\"$dailyUrl\"")
+        // Usage metrics (PostHog, see docs/USAGE_METRICS.md). Project key from branding-private/posthog.properties
+        // (git-ignored, your builds only) or the tvhub.posthogKey Gradle property (all builds). Empty = metrics off.
+        val phProps = Properties().apply {
+            val f = rootProject.file("branding-private/posthog.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        fun phValue(k: String, prop: String, def: String) =
+            ((phProps.getProperty(k) ?: (project.findProperty(prop) as String?) ?: def)).trim().replace("\\", "").replace("\"", "")
+        buildConfigField("String", "POSTHOG_KEY", "\"" + phValue("key", "tvhub.posthogKey", "") + "\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"" + phValue("host", "tvhub.posthogHost", "https://us.i.posthog.com") + "\"")
     }
 
     buildFeatures {

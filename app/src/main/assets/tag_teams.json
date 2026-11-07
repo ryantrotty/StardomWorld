@@ -5,5 +5,7 @@
  "spell": {
   "Sakura Aya": "Aya Sakura"
  },
- "extra": []
+ "extra": [
+  { "name": "Spark Rush", "members": ["Takumi Iroha", "Sareee"], "since": "2024-03-01", "faction": "" }
+ ]
 }

@@ -71,6 +71,17 @@ Everything is in `app/src/main/java/com/example/tvhub/MainActivity.kt`: a WebVie
 that restyle the pages, rebuild the home grid, drive the focus ring and handle the player and remote keys. The site
 can change at any time, so things may break; please open an issue when they do.
 
+## Privacy
+
+The app sends **anonymous usage stats and error reports** to [PostHog](https://posthog.com), so the developer can see which pages get used and fix what breaks:
+
+- which app pages are opened and for how long, the app version, the TV model and the app language
+- app crashes and errors in the app's own page scripts
+
+It does **not** send your Stardom World account, email, sign-in or payment details, or anything you type, other than the words of a search. Each TV gets a random id, so visits can be counted without knowing who you are. Nothing is sent to Stardom World or Stagecrowd.
+
+To switch it off, open the menu and go to **Account > Anonymous usage stats** and press OK. It stays off on that TV until you switch it back on.
+
 ## Contributing
 
 Ideas, bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the

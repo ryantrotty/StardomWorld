@@ -2,6 +2,26 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.38.0
+
+- Usage stats and error reports in every build: the PostHog key is now in `gradle.properties`, so the GitHub test builds and community builds report too (before, only builds with `branding-private/posthog.properties`).
+- Account menu: new entry **Anonymous usage stats: On / Off** (OK switches it in place; remembered on that TV). Off stops page views and error reports and drops anything still waiting to be sent. Only shown in builds with a PostHog key.
+- README: new Privacy section saying what is sent (pages and time on them, app version, TV model, language, crashes and app script errors), what isn't (account, email, sign-in, payment), and how to switch it off.
+- docs/USAGE_METRICS.md: switching it off, and leaving your own builds out of the numbers.
+
+## 2.37.0
+
+- Error tracking with PostHog (free tier): app crashes are saved the moment they happen and sent the next time the app opens, and errors in the app's own page scripts (menus, factions, eras, player controls and the rest) are sent as they happen. Each comes with its stack trace, the page it happened on, build type, TV model and app version, and shows up in PostHog's Error tracking. The site's own script errors are left out. Each distinct error is sent once per run, at most 20 a run. Only when a PostHog key is set; see `docs/USAGE_METRICS.md`.
+- New past wrestler: Takumi Iroha (彩羽匠), in the menu's past wrestlers and the filter bar's wrestler lists.
+- New tag team: Spark Rush (Takumi Iroha & Sareee), in the New Horizons era. Its matches are searched by the two names ("Takumi Iroha Tag Team Sareee"), not the team name.
+
+## 2.36.0
+
+- Usage metrics with PostHog (free tier): unique visitors, every page viewed, time on each page, entry and exit pages and session length, shown in PostHog's Web analytics dashboard. Off until a PostHog project key is set in `branding-private/posthog.properties` (your builds only) or `tvhub.posthogKey` in `gradle.properties` (every build); see `docs/USAGE_METRICS.md`.
+- Anonymous: a random id per install, no account or sign-in data, no person profiles. Talks only to PostHog, never to stardom-world.com or Stagecrowd. Events are sent together (every 30 seconds, at 20 events, and when the app goes to the background).
+- The app's own pages get readable names (`/app/faction/<name>`, `/app/era/<era>`, `/app/my-favorites`, …); query strings are dropped, and Stagecrowd pages keep only their path.
+- New file `Metrics.kt` (no extra library); MainActivity reports each address change, key presses (to keep a session alive), and the app going to the background and coming back.
+
 ## 2.35.2
 
 Private builds only.
