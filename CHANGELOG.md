@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.33.0
+
+Private builds only, as 2.32.0.
+
+- Set order card keeps focus: the player bar's Play/Pause button took focus when the bar was built and again after the autoplay retry, so the card's button could not be reached. Until you press a key, focus stays on Reverse Order. Autoplay itself is unchanged; only the focus move waits.
+- From the card, Down goes to the player bar, and Up from the player bar goes back to the card while it is on screen.
+- Reverse Order tile: on a set's video pages, the set's video row starts with a Reverse Order tile (⇅, "Starts with: <match>"), so the order can be turned around after the card has gone. It restarts the set from the other end and is remembered for that set, like the card's button.
+- The card's progress track uses the 4 px corner from the design scale (it was 2 px).
+
 ## 2.32.1
 
 Private builds only, as 2.32.0.

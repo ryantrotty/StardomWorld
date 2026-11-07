@@ -179,3 +179,5 @@ Shown over the inline player (bottom left, 16 px in) on the first video after a 
 
 Set order card (2.32.1): one button, Reverse Order (17/700, at least 200 wide, same look and focus). Tags read FIRST (orange fill) and LAST (outline), at least 52 wide. Full-screen countdown 12 s while the card is up.
 
+Set order controls (2.33.0): the card holds focus until a key is pressed (the player bar's focus calls wait for it); Down from the card goes to the player bar and Up from the bar returns to it while it is up. The set's video row starts with a Reverse Order tile in the View All tile style (#11171E, 2 px #2A323C border, radius 8, quarter width): a 34 px gold ⇅, 24/700 label and a 14 px #9AA6B4 "Starts with" line; video card focus (look C).
+

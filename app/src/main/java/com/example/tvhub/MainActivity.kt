@@ -6321,6 +6321,8 @@ class MainActivity : Activity() {
           }
 
           window.__tvFocusBar = function(id) {
+            // The set order card keeps focus until a key is pressed (assets/setcard.js).
+            if (window.__tvSetCardHold && window.__tvSetCardHold()) return true;
             var b = btns[id || lastId] || btns[ids[0]];
             if (!b) return false;
             try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
