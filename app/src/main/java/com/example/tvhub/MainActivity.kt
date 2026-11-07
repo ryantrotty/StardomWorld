@@ -1350,8 +1350,22 @@ class MainActivity : Activity() {
                   // Start with the first match on the card: the top of the list, or the bottom when
                   // this set lists its main event first (see setorder.js)
                   var so = window.__tvSetOrder;
-                  var flip = so ? so.needsFlip(contentItems.map(function(x) { return x.title; })) : true;
-                  targetLink = (flip ? contentItems[contentItems.length - 1] : contentItems[0]).href;
+                  var setId = so ? so.setKey(path) : '';
+                  var dec = so ? so.forSet(setId, contentItems.map(function(x) { return { id: x.id, t: x.title }; })) : { flip: true, sure: false };
+                  var flip = dec.flip;
+                  var startItem = flip ? contentItems[contentItems.length - 1] : contentItems[0];
+                  var endItem = flip ? contentItems[0] : contentItems[contentItems.length - 1];
+                  targetLink = startItem.href;
+                  // Private builds: the first video shows the set order card (assets/setcard.js).
+                  if (so && so.isPrivate() && contentItems.length > 1) {
+                    try {
+                      sessionStorage.setItem('tvSetStartV1', JSON.stringify({
+                        set: setId, at: Date.now(), n: contentItems.length, flip: flip, sure: dec.sure, why: dec.why,
+                        start: { id: startItem.id, href: startItem.href, t: startItem.title },
+                        end: { id: endItem.id, href: endItem.href, t: endItem.title }
+                      }));
+                    } catch (e) {}
+                  }
                   break;
                 }
               }
@@ -1402,7 +1416,11 @@ class MainActivity : Activity() {
             window.__tvReverseCarouselDone = true;
 
             var so = window.__tvSetOrder;
-            var flip = so ? so.needsFlip(items.map(function(el) { return el.textContent.replace(/\s+/g, ' ').trim(); })) : true;
+            var flip = so ? so.forSet(so.setKey(path), items.map(function(el) {
+              var a = el.querySelector('a[href*="/contents/"]');
+              var m = a ? a.getAttribute('href').match(/\/contents\/(\d+)/) : null;
+              return { id: m ? parseInt(m[1], 10) : 0, t: el.textContent.replace(/\s+/g, ' ').trim() };
+            })).flip : true;
             window.__tvSetFlip = flip;
 
             var isSlick = $ && $(firstCarousel).hasClass('slick-initialized');
@@ -3423,16 +3441,25 @@ class MainActivity : Activity() {
 
           var fsTimer = null;
 
+          // The set order card (assets/setcard.js) can ask for a longer wait (__tvFsDelay) or none at all
+          // (__tvFsHold, its Stay here button); __tvFsAt tells it when full screen is due.
           function scheduleFullScreenIn5Sec() {
-            if (fsTimer) return;
-            tvLog("Playback detected! Scheduling fullscreen in 5s...");
+            if (fsTimer || window.__tvFsHold) return;
+            var delay = window.__tvFsDelay || 5000;
+            window.__tvFsAt = Date.now() + delay;
             fsTimer = setTimeout(function() {
-              tvLog("5s passed! Triggering Fullscreen...");
+              if (window.__tvFsHold) return;
+              if (window.__tvSetCardClose) window.__tvSetCardClose();
               if (window.AndroidHost && typeof window.AndroidHost.triggerFullScreen === 'function') {
                 window.AndroidHost.triggerFullScreen();
               }
-            }, 5000);
+            }, delay);
           }
+          window.__tvFsCancel = function() {
+            window.__tvFsHold = true;
+            if (fsTimer) { clearTimeout(fsTimer); fsTimer = null; }
+            window.__tvFsAt = 0;
+          };
 
           function monitorPlayback() {
             var vList = document.querySelectorAll('video');
@@ -6294,6 +6321,8 @@ class MainActivity : Activity() {
           }
 
           window.__tvFocusBar = function(id) {
+            // The set order card keeps focus until a key is pressed (assets/setcard.js).
+            if (window.__tvSetCardHold && window.__tvSetCardHold()) return true;
             var b = btns[id || lastId] || btns[ids[0]];
             if (!b) return false;
             try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
@@ -9513,6 +9542,7 @@ class MainActivity : Activity() {
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
+        view.evaluateJavascript(assetText("setcard.js"), null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
         view.evaluateJavascript(autoNextJs, null)

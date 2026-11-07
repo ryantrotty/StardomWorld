@@ -2,6 +2,32 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.33.0
+
+Private builds only, as 2.32.0.
+
+- Set order card keeps focus: the player bar's Play/Pause button took focus when the bar was built and again after the autoplay retry, so the card's button could not be reached. Until you press a key, focus stays on Reverse Order. Autoplay itself is unchanged; only the focus move waits.
+- From the card, Down goes to the player bar, and Up from the player bar goes back to the card while it is on screen.
+- Reverse Order tile: on a set's video pages, the set's video row starts with a Reverse Order tile (⇅, "Starts with: <match>"), so the order can be turned around after the card has gone. It restarts the set from the other end and is remembered for that set, like the card's button.
+- The card's progress track uses the 4 px corner from the design scale (it was 2 px).
+
+## 2.32.1
+
+Private builds only, as 2.32.0.
+
+- Set order card: one button, **Reverse Order** (it was Play other way and Stay here). The top match is tagged FIRST and the second LAST (it was NOW 1/N). The countdown to full screen is 12 seconds while the card shows (it was 8).
+
+## 2.32.0
+
+Private builds only for now (builds with the `branding-private` folder); public builds keep the 2.8.5 rule and have no card.
+
+- Sets start at the opening match more reliably. Before, the app judged a set's order from its first and last titles only, so a set like 3・15 CINDERELLA TOURNAMENT (a tag match at the top, a semifinal at the bottom) started with the main event. Now every match counts: title matches, tournament finals, semifinals and earlier rounds weigh toward the main event, 【ダイゼロタイム】 / 第0試合 toward the opener, and the half of the list with the bigger matches is the end of the show. When nothing tells them apart (house shows, league nights), the lowest video number is taken as the opener. Checked against 35 sets on the site.
+- Set order card: after a set page opens its first match, a card at the bottom left of the player shows the match now playing (1 of N), the one the set ends on, and how the order was decided (match titles, video numbers as a guess, or your choice). It stays up during the countdown to full screen, which is 8 seconds instead of 5 while the card shows.
+  - **Play other way** (focused) starts the set from the other end. The choice is kept for that set on this TV.
+  - **Stay here** cancels full screen and keeps the player inline.
+  - Up goes to the player, Down to the video row; the card goes away when full screen starts.
+- New file assets/setcard.js; assets/setorder.js gains the new rule.
+
 ## 2.31.2
 
 - Wrestler pages: Left at the left edge of the header opens the menu, as it does from the video grid.

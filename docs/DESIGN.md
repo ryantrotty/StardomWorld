@@ -173,3 +173,11 @@ Wrestler pages (2.31.0, assets/wrestler.js): a wrestler's search page (the Wrest
 
 Menu order (2.31.0, signed in): … Years, then a divider, Community, My Favorites and the account name last.
 
+## Set order card (2.32.0, private builds)
+
+Shown over the inline player (bottom left, 16 px in) on the first video after a set page, during the countdown to full screen. Panel #0F151C, 2 px #2A323C border, radius 12, 420 wide. Header 12/800 gold with 1 px spacing. Rows: a tag (12/800, radius 4; NOW is an orange fill with #1A1A1A text, LAST a #3B4656 outline with #9AA6B4 text) and the title on one line (15/700 white; the last match 15/600 #C9D2DC). Two buttons, 17/700, radius 10, #161F2A with a 2 px #2A323C border, focus look B (orange fill, dark text) and nothing else. Progress track #3B4656 with an orange fill, countdown line 13 px #9AA6B4, and a 12 px #9AA6B4 line saying how the order was decided. Labels are notranslate and written in English or Japanese; the match titles are left to the page translator. The full-screen countdown is 8 s while the card is up (5 s otherwise).
+
+Set order card (2.32.1): one button, Reverse Order (17/700, at least 200 wide, same look and focus). Tags read FIRST (orange fill) and LAST (outline), at least 52 wide. Full-screen countdown 12 s while the card is up.
+
+Set order controls (2.33.0): the card holds focus until a key is pressed (the player bar's focus calls wait for it); Down from the card goes to the player bar and Up from the bar returns to it while it is up. The set's video row starts with a Reverse Order tile in the View All tile style (#11171E, 2 px #2A323C border, radius 8, quarter width): a 34 px gold ⇅, 24/700 label and a 14 px #9AA6B4 "Starts with" line; video card focus (look C).
+
