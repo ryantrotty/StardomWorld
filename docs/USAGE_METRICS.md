@@ -45,6 +45,19 @@ Each event carries:
   `device_kind` (Fire TV or Google TV), `app_language` (the app's EN / JA switch), app version, Android version
   and TV model.
 
+## Error tracking
+
+Errors go to PostHog's **Error tracking** as `$exception` events, with the same anonymous id, page name, build type,
+TV model and app version as the page views. Free tier: 100,000 exceptions a month.
+
+- **App crashes:** the error and its stack trace are saved on the TV the moment the app crashes and sent the next
+  time it opens (`$exception_level` fatal). Frames in the app's own code are marked as app frames.
+- **Page script errors:** a small hook in every page (`errorHookJs` in MainActivity) passes script errors and
+  unhandled promise rejections to `AndroidHost.reportJsError`. Only errors from the app's own injected scripts are
+  sent: they run without a web address (`<anonymous>` in the stack). The site's and Stagecrowd's own script errors
+  are left out. Each distinct error is sent once per app run, at most 20 a run (10 per page).
+- Errors are only collected when a PostHog key is set.
+
 ## Page names
 
 The app's own pages ride on site addresses with `tv…` markers; they get `/app/…` names:

@@ -26,6 +26,8 @@ import java.util.concurrent.Executors
  * - Anonymous: a random id per install (one "visitor" = one TV or Firestick); no account, email or sign-in data.
  * - Events wait in memory and go out together: every 30 seconds while pages change, at 20 events, and when the app
  *   goes to the background. Nothing is sent while nothing happens.
+ * - Error tracking: app crashes (sent on the next launch) and errors in the app's own page scripts go to PostHog's
+ *   Error tracking as $exception events, with the same anonymous id, page and version.
  */
 class Metrics(context: Context) {
 
@@ -56,6 +58,141 @@ class Metrics(context: Context) {
     var appLanguage = "en"
 
     private val flushTask = Runnable { flush() }
+
+    init {
+        if (enabled) {
+            sendPendingCrash()
+            installCrashHandler()
+        }
+    }
+
+    // ---- error tracking (PostHog Error tracking: $exception events) ----
+
+    private val errSeen = HashSet<String>()
+    private var errCount = 0
+
+    /**
+     * App crashes. The details are saved straight to disk (a crashing app can't wait for the network) and sent the
+     * next time the app opens, with the page, session and version it crashed on. Android's own crash handling runs
+     * afterwards as before.
+     */
+    private fun installCrashHandler() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, err ->
+            try {
+                val props = baseProps(curUrl ?: "", curHost ?: "", curPath ?: "")
+                props.put("\$exception_list", javaExceptionList(err, "UncaughtExceptionHandler"))
+                props.put("\$exception_level", "fatal")
+                props.put("crash_thread", thread.name)
+                val saved = JSONObject().put("ts", System.currentTimeMillis()).put("props", props)
+                prefs.edit().putString("crash", saved.toString()).commit()
+            } catch (_: Throwable) {}
+            previous?.uncaughtException(thread, err)
+        }
+    }
+
+    private fun sendPendingCrash() {
+        val raw = prefs.getString("crash", null) ?: return
+        prefs.edit().remove("crash").apply()
+        try {
+            val saved = JSONObject(raw)
+            val at = saved.optLong("ts", System.currentTimeMillis())
+            enqueue("\$exception", saved.getJSONObject("props"), at)
+            flush()
+        } catch (_: Exception) {}
+    }
+
+    private fun javaExceptionList(err: Throwable, mechanism: String): JSONArray {
+        val list = JSONArray()
+        var t: Throwable? = err
+        var depth = 0
+        while (t != null && depth < 5) {
+            val frames = JSONArray()
+            // PostHog lists frames oldest call first, so the frame that threw comes last.
+            t.stackTrace.take(60).reversed().forEach { e ->
+                frames.put(JSONObject().apply {
+                    put("platform", "java")
+                    put("function", e.methodName ?: "?")
+                    put("module", e.className ?: "")
+                    if (e.fileName != null) put("filename", e.fileName)
+                    if (e.lineNumber > 0) put("lineno", e.lineNumber)
+                    put("in_app", (e.className ?: "").startsWith("com.example.tvhub"))
+                })
+            }
+            list.put(JSONObject().apply {
+                put("type", t!!.javaClass.name)
+                put("value", (t!!.message ?: "").take(500))
+                put("mechanism", JSONObject().put("handled", false).put("synthetic", false).put("type", mechanism))
+                put("stacktrace", JSONObject().put("type", "raw").put("frames", frames))
+            })
+            t = t!!.cause.takeIf { it !== t }
+            depth++
+        }
+        return list
+    }
+
+    /**
+     * A script error in a page (from the error hook in MainActivity.errorHookJs). Only errors from the app's own
+     * injected scripts are sent: those run without a web address ("<anonymous>" in the stack), while the site's and
+     * Stagecrowd's own scripts have one and are left out, since there's nothing to fix in them here. At most 20 a run,
+     * and each distinct error once a run, so a broken page that keeps failing can't flood the free allowance.
+     */
+    fun jsError(kind: String, message: String, source: String, line: Int, col: Int, stack: String) {
+        if (!enabled) return
+        if (message.startsWith("Script error")) return      // another site's script, details hidden by the browser
+        val frames = parseJsStack(stack)
+        if (frames.isEmpty() && line > 0) frames.add(JsFrame("?", source, line, col))
+        val fromApp = frames.any { it.file.isEmpty() || it.file == "<anonymous>" } ||
+            (frames.isEmpty() && source.isEmpty())
+        if (!fromApp) return
+        val key = message.take(200) + "|" + (frames.firstOrNull()?.let { it.fn + ":" + it.line } ?: "")
+        synchronized(errSeen) {
+            if (errCount >= 20 || !errSeen.add(key)) return
+            errCount++
+        }
+        val type = Regex("^([A-Za-z]*Error)\\b").find(message.removePrefix("Uncaught ").trim())?.groupValues?.get(1)
+            ?: if (kind == "unhandledrejection") "UnhandledRejection" else "Error"
+        val value = message.removePrefix("Uncaught ").removePrefix("$type: ").take(500)
+        val jf = JSONArray()
+        frames.take(40).reversed().forEach { f ->
+            jf.put(JSONObject().apply {
+                put("platform", "custom")
+                put("lang", "javascript")
+                put("function", f.fn)
+                put("filename", f.file.ifEmpty { "<anonymous>" })
+                if (f.line > 0) put("lineno", f.line)
+                if (f.col > 0) put("colno", f.col)
+                put("resolved", true)
+                put("in_app", f.file.isEmpty() || f.file == "<anonymous>")
+            })
+        }
+        val ex = JSONObject().apply {
+            put("type", type)
+            put("value", value)
+            put("mechanism", JSONObject().put("handled", false).put("synthetic", false)
+                .put("type", if (kind == "unhandledrejection") "onunhandledrejection" else "onerror"))
+            put("stacktrace", JSONObject().put("type", "raw").put("frames", jf))
+        }
+        val now = System.currentTimeMillis()
+        val props = baseProps(curUrl ?: "", curHost ?: "", curPath ?: "")
+        props.put("\$exception_list", JSONArray().put(ex))
+        props.put("\$exception_level", "error")
+        props.put("error_source", "page script")
+        enqueue("\$exception", props, now)
+    }
+
+    private class JsFrame(val fn: String, val file: String, val line: Int, val col: Int)
+
+    // Chrome stack lines: "    at name (file:line:col)" or "    at file:line:col". Newest call first.
+    private fun parseJsStack(stack: String): MutableList<JsFrame> {
+        val out = ArrayList<JsFrame>()
+        val re = Regex("^\\s*at (?:(.+?) \\()?(.*?):(\\d+):(\\d+)\\)?\\s*$")
+        stack.lineSequence().forEach { l ->
+            val m = re.find(l) ?: return@forEach
+            out.add(JsFrame(m.groupValues[1].ifEmpty { "?" }, m.groupValues[2].trim(), m.groupValues[3].toInt(), m.groupValues[4].toInt()))
+        }
+        return out
+    }
 
     /** A remote key was pressed: keeps the session alive while someone is using the app on one page. */
     fun touch() {

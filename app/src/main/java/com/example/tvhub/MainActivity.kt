@@ -2846,6 +2846,12 @@ class MainActivity : Activity() {
     private val webAppInterface by lazy { WebAppInterface() }
 
     inner class WebAppInterface {
+        // Error tracking: a script error in a page (errorHookJs). Metrics.kt decides whether it is sent.
+        @android.webkit.JavascriptInterface
+        fun reportJsError(kind: String, message: String, source: String, line: Int, col: Int, stack: String) {
+            try { metrics.jsError(kind, message, source, line, col, stack) } catch (_: Exception) {}
+        }
+
         // Factions page: the list kept in assets/factions.json, and whether faction logos may be shown.
         // Tournament Archives filter bar lists (cities, venues, shows) kept in assets/event_filters.json.
         @android.webkit.JavascriptInterface
@@ -4938,7 +4944,7 @@ class MainActivity : Activity() {
           }
           // [English name, Japanese name]
           var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
-          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Takumi Iroha', '彩羽匠'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
           var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
@@ -9530,7 +9536,30 @@ class MainActivity : Activity() {
         root.bringChildToFront(bar)
     }
 
+    // Error tracking (Metrics.kt): reports script errors to AndroidHost.reportJsError. Metrics keeps only the
+    // app's own injected scripts' errors; at most 10 are passed on per page.
+    private val errorHookJs = """
+        (function(){
+          if (window.__tvErrHook) return; window.__tvErrHook = 1;
+          var H = window.AndroidHost; if (!H || !H.reportJsError) return;
+          var n = 0;
+          function send(kind, msg, src, line, col, stack) {
+            if (n >= 10) return; n++;
+            try { H.reportJsError(String(kind), String(msg || ''), String(src || ''), line | 0, col | 0, String(stack || '')); } catch (e) {}
+          }
+          window.addEventListener('error', function(e) {
+            if (!(e instanceof ErrorEvent)) return;   // an image or script that failed to load, not a script error
+            send('error', e.message, e.filename, e.lineno, e.colno, e.error && e.error.stack);
+          }, true);
+          window.addEventListener('unhandledrejection', function(e) {
+            var r = e && e.reason;
+            send('unhandledrejection', r && r.message ? (r.name ? r.name + ': ' : '') + r.message : String(r), '', 0, 0, r && r.stack);
+          });
+        })();
+    """
+
     private fun injectPageScripts(view: WebView) {
+        if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("ppv_host.js"), null)
             return
