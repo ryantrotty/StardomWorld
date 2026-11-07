@@ -6,6 +6,7 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 - Roster file: tag teams can now be added or hidden without a new APK. The app downloads `roster.json` from the new `roster-data` branch at its schedule check (at most every six hours, one small GitHub request with an ETag; never the Stardom sites) and merges it with `assets/tag_teams.json`: `add` (new teams, the roster's entry wins for a pair already listed), `remove` (pairs to hide, either order), `spell` and `factionNames`. The last good copy stays if a download fails. See `docs/ROSTER.md`.
 - All Tag Teams: a grey line under the team count says which roster file the TV is using (date, how many added and removed), or that it is still on the built-in list. The page note now says the list includes other current teams.
+- Build workflow: the `roster-data` branch is skipped like `schedule-data`, so editing the roster never starts an APK build.
 - First roster file: the 2026 Goddesses of Stardom Tag League teams not already in the app (15 teams; FWC, BMI2000 and Sakurara were already there from the title histories).
 
 ## 2.38.0
