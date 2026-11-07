@@ -750,8 +750,9 @@
         t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
         (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
         (window.__tvFav ? '<a class="tt-btn tt-favb' + (isFav(t.id) ? ' tt-on' : '') + '" tabindex="0" data-favb="1">' + favBtnInner(t.id) + '</a>' : '') +
-        (window.__tvCatProbe ? '<a class="tt-btn" tabindex="0" data-ttprobe="1">' + esc(T('Category probe', 'カテゴリ調査')) + '</a>' : '') +
-      '</div></div></div>';
+        (window.__tvCatProbe ? '<a class="tt-btn notranslate" translate="no" tabindex="0" data-ttprobe="1">' + esc(T('Category probe', 'カテゴリ調査')) + '</a>' : '') +
+      '</div></div></div>' +
+      '<div id="tt-probe" class="notranslate" translate="no"></div>';   // the Category probe's results (temporary), in view under the buttons
     if (t.reigns.length) {
       h += '<div class="tt-sec"><i></i><b>' + esc(T('TITLES HELD', '獲得王座')) + '</b></div><div class="tt-belts">' + t.reigns.slice().reverse().map(function(r) {
         var B = BELTS[r.belt], pic = call('beltDataUri', r.belt), days = Math.max(1, Math.round(((r.end ? ms(r.end) : Date.now()) - ms(r.won)) / 86400000));
@@ -762,7 +763,7 @@
       }).join('') + '</div>';
     }
     h += '<div class="tt-sec" id="tt-lsec">' + wings(24, '#F4C242', '#0B1118') + '<b>' + esc(T('TAG LEAGUE MATCHES', 'タッグリーグ戦')) + '</b><span id="tt-lvst"></span></div><div id="tt-lvids"></div>';
-    h += '<div class="tt-sec"><i></i><b>' + esc(T('TAG MATCHES', 'タッグマッチ')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div><div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div><div id="tt-probe" class="notranslate" translate="no"></div>';
+    h += '<div class="tt-sec"><i></i><b>' + esc(T('TAG MATCHES', 'タッグマッチ')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div><div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>';
     scroller.innerHTML = h;
     focusEl(scroller.querySelector('.tt-btn') || scroller.querySelector('[tabindex="0"]'));
     V.queries = queriesFor(t);

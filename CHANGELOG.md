@@ -4,6 +4,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.42.1
+
+- Category probe on tag team pages: its results now appear right under the team's buttons (before Titles Held) instead of at the very bottom of the page, below both match rows, where they couldn't be reached with the remote. The button is no longer run through the page translator (it showed as "Category Halve").
 ## 2.42.0
 
 - Temporary: Category probe (all builds), to settle the search words and title rules for the coming match categories (Championship, 5★STAR GP, Cinderella, Tag League) before they're built. A "Category probe" button on wrestler pages (after the faction buttons) and tag team pages (after Add to My Favorites); nothing runs until it's pressed.

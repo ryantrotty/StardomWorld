@@ -124,7 +124,7 @@
       myFacs.map(function(f) {
         return '<a class="wr-btn" tabindex="0" href="' + esc(absUrl(facPath(f))) + '"><span class="notranslate" translate="no">' + esc(f.name) + '</span>' + (f.former ? '<small>' + esc(T('past', '元')) + '</small>' : '') + '</a>';
       }).join('') +
-      (window.__tvCatProbe ? '<a class="wr-btn" tabindex="0" data-wrprobe="1">' + esc(T('Category probe', 'カテゴリ調査')) + '</a>' : '');
+      (window.__tvCatProbe ? '<a class="wr-btn notranslate" translate="no" tabindex="0" data-wrprobe="1">' + esc(T('Category probe', 'カテゴリ調査')) + '</a>' : '');
     var h = '<div class="wr-hero">' + av + '<div style="min-width:0"><div class="wr-facts">' + facts + '</div><div class="wr-btns">' + btns + '</div></div></div>';
     if (reigns.length) {
       h += '<div class="wr-sec"><i></i><b>' + esc(T('TITLES HELD', '獲得王座')) + '</b><span>' + reigns.length + '</span></div><div class="wr-belts">' + reigns.map(function(r) {
