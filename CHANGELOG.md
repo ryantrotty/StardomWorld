@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.40.3
+
+- Team pages: a second search for Tag League matches. The first search ("A Tag Team B") never returns Tag League official matches, because their videos don't say "Tag Team" (Trouble Friends: 6 videos, all 6- and 8-person tags, while the filter bar's Starlight Kid with Maki Itoh shows the 11/03 Red Goddess Official Match). After the first search's pages run out, the page searches "A Goddess B" and keeps its 2-on-2 matches the same way. It runs straight away when nothing was kept yet, otherwise More carries on into it. One page at a time, 3 seconds apart, only while the team page is open. The debug panel shows "next: Tag League search …".
+- Match rule version raised to 3, so saved team lists are searched again from page 1 once per team on each TV and pick up the Tag League search.
+
 ## 2.40.2
 
 - Team pages: a match list saved to your sheet under the old 2-on-2 rule is searched again from page 1, once per team on each TV. Before, a team whose Tag League matches had been thrown away (Trouble Friends: "saved list from your sheet: 0 matches") kept showing that saved list and was not searched again for 14 days. Saved matches stay; new ones are added without repeats, and More carries on page by page as usual. One search per team, only when its page is opened.
