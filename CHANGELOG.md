@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.41.0
+
+- Tag League (Goddesses of Stardom Tag League), marked with a new feathered wings icon (gold line, drawn in the code, so public and private builds alike):
+  - Tag Teams shelf: a "Tag League 2026" bar under All Tag Teams (team count, blocks, dates), and wings at the right edge of this year's entrants.
+  - Menu list (non-shelf menu): a Tag League entry under Tag Teams.
+  - All Tag Teams: a Tag League chip after the belt chips (opens the Tag League page), and a TAG LEAGUE tag (×n for several years) on every entrant's row.
+  - New Tag League page (`/mypage?tvteams=1&league=<year>`): the Blue and Red Goddesses blocks side by side, years newest on the left, last year's winners tagged. No searches.
+  - Team page: wings beside the team name and the block and year in the line under it; a separate TAG LEAGUE MATCHES row (wings instead of the gold bar) above Tag Matches. The Tag League search runs first; the Tag Matches search follows 5 seconds later. Each row has its own More. The league row shows for entrants, and for any other team once a Tag League match turns up. Goddess title matches go in the Tag Matches row.
+  - With your sheet, a Tag League search this TV finished in the last 14 days isn't repeated (its matches come back with the saved list); `tvTeamLeagueV1` remembers where it got to. Match rule version 5.
+- Roster file: new `tagLeague` section (per year: name, dates, winners, blocks with their teams), merged over a bundled one; see `docs/ROSTER.md`. A pair in a block that isn't a team yet is added as one.
+
 ## 2.40.4
 
 - Team pages: Goddess results first. The Tag League search ("A Goddess B") now runs first, and when its pages run out the page goes straight on to page 1 of the "Tag Team" search, so a team's first view is still two searches, 3 seconds apart. More carries on from there.

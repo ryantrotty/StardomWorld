@@ -38,6 +38,28 @@ Tag teams, factions, faction members (and so Current Wrestlers) and past wrestle
 
 Every section is optional; leave out what you are not changing.
 
+## Tag League
+
+```json
+"tagLeague": {
+  "2026": {
+    "name": "16th Goddesses of Stardom Tag League", "ja": "第16回 ゴッデス・オブ・スターダム〜タッグリーグ戦〜",
+    "dates": "1 to 29 Nov 2026",
+    "winners": "2025 winners: Sakurara", "winnersJa": "2025年優勝: さくらら",
+    "prevWinners": { "year": 2025, "team": ["Sakura Aya", "Sayaka Kurara"] },
+    "winnerTeam": null,
+    "blocks": [
+      { "id": "blue", "name": "BLUE GODDESSES", "ja": "ブルーゴッデス", "teams": [["Suzu Suzuki", "Rina Yamashita"], ...] },
+      { "id": "red", "name": "RED GODDESSES", "ja": "レッドゴッデス", "teams": [["Sakura Aya", "Sayaka Kurara"], ...] }
+    ]
+  }
+}
+```
+
+- One entry per year; a year in the roster file replaces that year whole. The newest year drives the shelf bar, the Tag League chip and the wings on the shelf.
+- Teams are pairs of names, matched to tag teams on the two members (use the same spellings as the team, e.g. Sakura Aya). A pair that isn't a team yet becomes one; give it a name with `tagTeams.add` if it has one.
+- `winnerTeam`: set it when the final is decided; that team gets a WINNERS tag on the Tag League page. `prevWinners` tags last year's winners.
+
 - **add**: same fields as `extra` in `assets/tag_teams.json`. `name` can be `null` for a pair with no team name (shown as the two names). `since` decides the era. `faction` is optional. `aka` is a note of other billings and is not shown. A pair already in the built-in list is replaced by the roster entry, so a pair never appears twice.
 - **remove**: pairs to hide, as "A & B" in either order. This also hides a pair that comes from the title histories.
 - **spell**, **factionNames**: added to the built-in ones.

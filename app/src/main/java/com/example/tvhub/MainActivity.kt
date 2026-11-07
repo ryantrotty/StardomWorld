@@ -2556,6 +2556,10 @@ class MainActivity : Activity() {
         return try {
             val base = org.json.JSONObject(bundled)
             val rj = rosterData()
+            // Tag League years (teams.js "Tag League"): the bundled ones, then the roster file's, a year replaced whole.
+            val tl = base.optJSONObject("tagLeague") ?: org.json.JSONObject()
+            rj?.optJSONObject("tagLeague")?.let { r -> val ks = r.keys(); while (ks.hasNext()) { val k = ks.next(); r.optJSONObject(k)?.let { tl.put(k, it) } } }
+            base.put("tagLeague", tl)
             val tt = rj?.optJSONObject("tagTeams") ?: org.json.JSONObject()
             val updated = rj?.optString("updated") ?: ""
             if (rj == null) { base.put("roster", org.json.JSONObject().put("state", "none")); return base.toString() }
@@ -2730,7 +2734,7 @@ class MainActivity : Activity() {
             if (code == 200) {
                 val body = c.inputStream.bufferedReader().use { it.readText() }
                 val rj = org.json.JSONObject(body)
-                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null) {
+                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null) {
                     have.writeText(body)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
                 }
@@ -5504,7 +5508,7 @@ class MainActivity : Activity() {
             h += group(T('Championships', '王座'), CHAMPS, 'champs');
             var facRows = factionRows();
             if (facRows.length) h += group(T('Factions', 'ユニット'), facRows, 'factions');
-            h += group(T('Tag Teams', 'タッグチーム'), [['All Tag Teams', '/mypage?tvteams=1', 'すべてのタッグチーム']], 'tagteams');
+            h += group(T('Tag Teams', 'タッグチーム'), [['All Tag Teams', '/mypage?tvteams=1', 'すべてのタッグチーム'], ['Tag League', '/mypage?tvteams=1&league=0', 'タッグリーグ']], 'tagteams');
             if (matchTypeGroups().length) h += group(T('Matches', '試合'), matchTypeRows(), 'matchtypes');
             var showsRow = group(T('Shows', '番組'), showsList(), 'shows');
             var showsPill = schedPillHtml();

@@ -153,6 +153,13 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 - Roster line (2.39.0): under the count line on All Tag Teams, a 13/700 grey #9AA6B4 line says which roster file the TV is using ("Roster file of 7 Nov 2026: tag teams 15 added, 0 removed · factions 0 changed · …", or "not downloaded yet (built-in list)"; 2.40.0 added the faction and past counts). Not focusable, stays on screen. No new colours.
 - Menu shelves (2.30.3): Up and Down treat a bar wider than 60% of the shelf as straight above or below when it spans the starting point, so All Tag Teams goes Down to My Tag Teams, not the first era.
 
+Tag League (2.41.0, assets/teams.js, data in the roster file's `tagLeague`):
+- Mark: feathered angel wings, gold #F4C242 line on the surface colour (the fill hides the feather rows behind), drawn in code (`wings(h, colour, bg)`). Full drawing (three feather rows with feather lines) from 28 px; a two-row drawing below that. Sizes in use: 14 (row tag), 16 (shelf items, chip), 22 (shelf bar), 24 (team title, row heading), 44 (Tag League page). It means "entered a Tag League"; the drawn belt still means a title. Never a focus cue.
+- Shelf: "Tag League <year>" bar under All Tag Teams (wings 22, 19/700, grey line with count, blocks, dates); entrants of the newest year get wings 16 at the right edge of their item.
+- All Tag Teams: Tag League chip after NEW BLOOD (14 px further along, wings 16, opens the Tag League page); rows get a TAG LEAGUE tag in the tag style with wings 14 (×n for several years).
+- Tag League page: wings 44 and the title (30/900), grey line with dates and last winners, year chips on the right (newest left). Two columns, one per block, each with a section header (gold bar, 15/800 name, grey count) and rows 50 high (#161F2A, radius 8, 17/700 name, 13/600 grey members, tags; look A focus). Winners: gold-filled tag.
+- Team page: wings 24 after the team name; "· Red Goddesses, Tag League 2026" on the line under it. TAG LEAGUE MATCHES row (section header with wings 24 instead of the gold bar) above TAG MATCHES, same cards and More tile; shown for entrants or once a Tag League match is found.
+
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
 
 Tag team favorites (2.30.0, kept in tvFavV1 as `t`, newest first, no limit):
