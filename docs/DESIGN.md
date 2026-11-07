@@ -185,3 +185,5 @@ Set order controls (2.33.0): the card holds focus until a key is pressed (the pl
 
 Menu Wrestlers shelf: width 1000 (capped by the screen), names in three columns (CURRENT and PAST), and a 300 wide spotlight column 24 px to their right. Photo 300 x 450, radius 12, 2 px #2A323C border, #161F2A behind, cover from the top; no photo: initials 54/900 #C9D2DC. Below it: name 22/900 white (a gold ★ first when in My Favorites), faction 15/600 #C9D2DC ("Past wrestler" for past ones), then 13/700 gold lines for the title held now and reigns and defences. The spotlight is not focusable; focus stays on the names (shelf look). Public builds: unchanged four columns, 860 wide.
 
+Wrestler photos (2.35.2, private builds): no white backdrop; the photo copies carry a top-to-bottom fade from #2A323C (border grey) to #0F151C (panel). Set in scripts/make_wrestler_spots.py, not in CSS.
+

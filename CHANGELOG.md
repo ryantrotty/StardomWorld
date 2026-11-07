@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.35.2
+
+Private builds only.
+
+- Wrestler photos no longer have a white backdrop: every copy shows the wrestler on a dark fade, #2A323C at the top to #0F151C at the bottom, everywhere a photo appears (wrestler pages, tag teams, My Favorites, the menu spotlight). The white was too bright on a TV next to the dark app.
+- `scripts/make_wrestler_spots.py` cuts the wrestler out with the macOS subject cut-out (new `scripts/wrestler_cutout.js`, the same one Photos uses to lift a subject; macOS 14 or later), lays her over the fade and saves the 480 × 720 JPEG. It keeps sheer and white parts of outfits that a simple remove-the-white approach cut away. A photo where it finds no subject keeps its original backdrop and the script names it. It remembers the fade it last used and remakes the copies when it changes; `--all` remakes every copy. All 47 took 12 seconds; the copies are 4.2 MB.
+
 ## 2.35.1
 
 Private builds only.
