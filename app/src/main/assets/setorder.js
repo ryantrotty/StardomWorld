@@ -4,22 +4,7 @@
   // while PPV-style shows put the main event first and the opener last (video IDs go either way,
   // so they are no help on their own). This says whether the list has to be turned around to get show order.
 
-  // Public builds (2.8.5 rule): look at the first and last titles only.
-  var OPENER = /ダイゼロ|ゼロタイム|zero\s*-?\s*time/i;
-  var HEAD = /選手権|優勝決定|王座|ワールド・オブ|title\s+match|championship|final/i;
-
-  function needsFlip(titles) {
-    var t = (titles || []).filter(function(x){ return x && x.trim(); });
-    if (t.length < 2) return false;
-    var first = t[0], last = t[t.length - 1];
-    if (OPENER.test(last) && !OPENER.test(first)) return true;
-    if (OPENER.test(first) && !OPENER.test(last)) return false;
-    var hf = HEAD.test(first), hl = HEAD.test(last);
-    if (hf && !hl) return true;
-    return false;
-  }
-
-  // Private builds (2.32.0): score every match on the card and compare the top half with the bottom half.
+  // Score every match (2.32.0; all builds since 2.34.0) on the card and compare the top half with the bottom half.
   // The half with the bigger matches is the end of the show. When nothing tells them apart, the lowest
   // video ID is taken as the opener.
   function score(t) {
@@ -54,10 +39,6 @@
     return { flip: down > up, sure: false, why: 'video ids' };
   }
 
-  function isPrivate() {
-    try { return !!(window.AndroidHost && AndroidHost.showPosters && AndroidHost.showPosters()); } catch (e) { return false; }
-  }
-
   // Order chosen with the swap button, per set, on this TV.
   var KEY = 'tvSetOrderV1';
   var SKEY = 'tvSetOrderSesV1';
@@ -68,9 +49,8 @@
     try { var ses = JSON.parse(sessionStorage.getItem(SKEY) || '{}') || {}; delete ses[set]; sessionStorage.setItem(SKEY, JSON.stringify(ses)); } catch (e) {}
   }
 
-  // The answer for one set: the swap button's choice, else the rule for this build.
+  // The answer for one set: the Reverse Order choice, else the rule.
   function forSet(set, items) {
-    if (!isPrivate()) return { flip: needsFlip((items || []).map(function(x){ return x.t; })), sure: true, why: 'ends' };
     var m = saved();
     if (set && Object.prototype.hasOwnProperty.call(m, set)) return { flip: m[set] === 1, sure: true, why: 'your choice' };
     // Same answer for the whole visit: the set page and the video page's row can read the titles before
@@ -92,5 +72,5 @@
     return m ? m[1] + ':' + m[2] : '';
   }
 
-  window.__tvSetOrder = { needsFlip: needsFlip, decide: decide, forSet: forSet, remember: remember, setKey: setKey, isPrivate: isPrivate, score: score };
+  window.__tvSetOrder = { decide: decide, forSet: forSet, remember: remember, setKey: setKey, score: score };
 })();

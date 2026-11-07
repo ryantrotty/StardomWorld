@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.34.0
+
+- Set order for everyone: the whole-list order rule, the set order card (FIRST / LAST, Reverse Order, 12 s countdown) and the Reverse Order tile in a set's video row, private-only since 2.32.0, are now in public builds too. The old first-and-last-title rule from 2.8.5 is gone.
+
 ## 2.33.0
 
 Private builds only, as 2.32.0.

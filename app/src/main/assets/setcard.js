@@ -1,5 +1,5 @@
 (function(){
-  // Set order controls (private builds, 2.32.x) on a set's video pages (/set/<set>/contents/<video>).
+  // Set order controls (2.32.x; all builds since 2.34.0) on a set's video pages (/set/<set>/contents/<video>).
   //  - Card: after a set page sends you to its first match, a small card at the bottom left of the player shows the
   //    FIRST and LAST match during the countdown to full screen, with a Reverse Order button. The set page writes
   //    what it chose to sessionStorage (tvSetStartV1).
@@ -9,7 +9,7 @@
   var m = location.pathname.match(/^\/set\/([0-9]+)\/contents\/([0-9]+)/);
   if (!m) return;
   var so = window.__tvSetOrder;
-  if (!so || !so.isPrivate()) return;
+  if (!so) return;
   window.__tvSetCard = true;
   var setId = m[1], videoId = m[2];
 
