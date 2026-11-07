@@ -1,5 +1,5 @@
 {
- "_note": "Match types for the filter bar and the menu. search = the word sent to the site's keyword search; all = patterns the title must contain; none = patterns it must not contain; alts = other spellings searched once more and merged in. Tag team: Goddesses of Stardom Tag League matches are titled \"Red/Blue Goddess Official Match\" (レッド/ブルーゴッデス公式戦) with no \"tag\" in the title, so the tag rule also takes those.",
+ "_note": "Match types for the filter bar and the menu. search = the word sent to the site's keyword search; all = patterns the title must contain; none = patterns it must not contain; alts = other spellings searched once more and merged in. Tag team: Goddesses of Stardom Tag League matches are titled \"Red/Blue Goddess Official Match\" (レッド/ブルーゴッデス公式戦) with no \"tag\" in the title, so the tag rule also takes those. Titles & tournaments (private builds only, \"private\": true): the categories behind the wrestler and tag team page tabs. Each can be changed without a new APK from the roster file (\"matchTypes\": {\"<id>\": {fields to replace}}). factionSearch: other search words for members of that faction (STARS members: the faction name would match every STARS video). tagBelt / triosBelt: title patterns that mark a tag or trios title match (team pages keep tag belts only).",
  "groups": [
   {
    "name": "Singles & tags",
@@ -257,6 +257,88 @@
      "search": "Handicap",
      "all": [
       "handicap|ハンディキャップ|ハンデ"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Titles & tournaments",
+   "ja": "王座戦・トーナメント",
+   "private": true,
+   "items": [
+    {
+     "id": "champ",
+     "name": "Championship",
+     "ja": "王座戦",
+     "search": "Championship",
+     "all": [
+      "championship|選手権|title\\s*match|タイトルマッチ"
+     ],
+     "none": [
+      "挑戦者決定|next\\s*challenger|contender"
+     ],
+     "tagBelt": [
+      "goddess(?:es)?\\s*of\\s*stardom|ゴッデス・オブ・スターダム|new\\s*blood\\s*tag|NEW\\s*BLOOD\\s*タッグ"
+     ],
+     "triosBelt": [
+      "artist\\s*of\\s*stardom|アーティスト・オブ・スターダム"
+     ],
+     "pages": [
+      "wrestler",
+      "team"
+     ]
+    },
+    {
+     "id": "stargp",
+     "name": "5★STAR GP",
+     "ja": "5★STAR GP",
+     "search": "STARS",
+     "alts": [
+      "5★STAR"
+     ],
+     "factionSearch": {
+      "stars": {
+       "search": "BLUE STARS",
+       "alts": [
+        "RED STARS",
+        "5★STAR"
+       ]
+      }
+     },
+     "all": [
+      "5\\s*[★☆*]?\\s*star|star\\s*gp|(?:blue|red)[\\s\\-]*stars|ブルースターズ|レッドスターズ"
+     ],
+     "pages": [
+      "wrestler"
+     ]
+    },
+    {
+     "id": "cinderella",
+     "name": "Cinderella Tournament",
+     "ja": "シンデレラ・トーナメント",
+     "search": "Cinderella",
+     "all": [
+      "cinderella|シンデレラ"
+     ],
+     "pages": [
+      "wrestler"
+     ]
+    },
+    {
+     "id": "tagleague",
+     "name": "Tag League",
+     "ja": "タッグリーグ",
+     "search": "Goddess",
+     "all": [
+      "goddess|ゴッデス",
+      "official|公式|代表|決勝|優勝|tournament|league|リーグ"
+     ],
+     "none": [
+      "championship|選手権|title\\s*match|タイトルマッチ"
+     ],
+     "pages": [
+      "wrestler",
+      "team"
      ]
     }
    ]

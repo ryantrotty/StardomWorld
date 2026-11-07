@@ -2596,6 +2596,31 @@ class MainActivity : Activity() {
         } catch (_: Exception) { bundled }
     }
 
+    // Match types: assets/match_types.json with the roster file's "matchTypes" applied: { "<id>": { fields } } replaces
+    // those fields on the match type with that id (search words, title patterns, alts), so a category rule can be fixed
+    // without a new APK.
+    private fun rosterMatchTypes(): String {
+        val bundled = assetText("match_types.json")
+        return try {
+            val base = org.json.JSONObject(bundled)
+            val all = base.optJSONArray("groups") ?: return bundled
+            // public builds leave out the private groups (Titles & tournaments)
+            val groups = org.json.JSONArray()
+            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (BuildConfig.SHOW_POSTERS || !it.optBoolean("private")) groups.put(it) }
+            base.put("groups", groups)
+            val mt = rosterData()?.optJSONObject("matchTypes") ?: return base.toString()
+            for (g in 0 until groups.length()) {
+                val items = groups.optJSONObject(g)?.optJSONArray("items") ?: continue
+                for (i in 0 until items.length()) {
+                    val it = items.optJSONObject(i) ?: continue
+                    val ch = mt.optJSONObject(it.optString("id")) ?: continue
+                    val ks = ch.keys(); while (ks.hasNext()) { val k = ks.next(); it.put(k, ch.get(k)) }
+                }
+            }
+            base.toString()
+        } catch (_: Exception) { bundled }
+    }
+
     // The downloaded roster file (filesDir/roster.json), read once per change of the file; null when there is none.
     private var rosterCache: org.json.JSONObject? = null
     private var rosterStamp = -1L
@@ -2734,7 +2759,7 @@ class MainActivity : Activity() {
             if (code == 200) {
                 val body = c.inputStream.bufferedReader().use { it.readText() }
                 val rj = org.json.JSONObject(body)
-                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null) {
+                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null) {
                     have.writeText(body)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
                 }
@@ -3057,9 +3082,11 @@ class MainActivity : Activity() {
         } catch (_: Exception) { "" }
 
         @android.webkit.JavascriptInterface
-        fun matchTypesJson(): String = try {
-            this@MainActivity.assets.open("match_types.json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun matchTypesJson(): String = this@MainActivity.rosterMatchTypes()
+
+        // Private builds: the Titles & tournaments categories (tabs on wrestler and tag team pages, Match type entries).
+        @android.webkit.JavascriptInterface
+        fun categoriesOn(): Boolean = BuildConfig.SHOW_POSTERS
 
         // Top rated Stardom matches (assets/top_matches.json) for the Matches shelf and the Top Rated page.
         @android.webkit.JavascriptInterface
@@ -3177,7 +3204,7 @@ class MainActivity : Activity() {
         // "teammatches" tab, so TVs reuse them instead of searching the site again. Replies go to __tvTeamSyncReply.
         @android.webkit.JavascriptInterface
         fun teamSync(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("tm_get", "tm_put"), "__tvTeamSyncReply")
+            sheetCall(reqId, payload, setOf("tm_get", "tm_put", "dbg_put"), "__tvTeamSyncReply")
 
         // One request to the private sheet: only the listed actions, the key added here, the reply handed to `callback`.
         private fun sheetCall(reqId: String, payload: String, allowed: Set<String>, callback: String) {
@@ -7900,9 +7927,22 @@ class MainActivity : Activity() {
     return out;
   }
   function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
+  // A match type's search words for this wrestler: "factionSearch" gives other words to members of that faction (the
+  // STARS faction's name would match every STARS video, so its members search BLUE STARS / RED STARS for 5★STAR GP).
+  function mtWords(r, base) {
+    var x = r && r[3], fsm = x && x.factionSearch, low = String(base || '').toLowerCase();
+    if (fsm && low) {
+      for (var i = 0; i < facs.length; i++) {
+        var f = facs[i], o = fsm[f.id];
+        if (!o || f.former) continue;
+        if (f.members.some(function(m) { return String(m.search || m.name).toLowerCase() === low || String(m.name).toLowerCase() === low; })) return { search: o.search || r[2], alts: o.alts || [] };
+      }
+    }
+    return { search: r ? r[2] : '', alts: (x && x.alts) || [] };
+  }
   function buildUrl(n, mtWord, chWord) {
     var words = [n.base];
-    var a = find(MT, n.mt); if (a) words.push(mtWord || a[2]);
+    var a = find(MT, n.mt); if (a) words.push(mtWord || mtWords(a, n.base).search);
     var b = find(CH, n.ch); if (b) words.push(chWord || b[2]);
     if (n.co && n.co !== n.base) words.push(n.co);
     var sh0 = find(SH, n.sh); if (sh0) words.push(sh0[2]);
@@ -7929,6 +7969,9 @@ class MainActivity : Activity() {
     if (FAC_MODE && window.__tvFacBase) n.base = window.__tvFacBase();
     location.href = buildUrl(n);
   }
+  // for the wrestler page's tabs (wrestler.js): the same addresses the filter bar makes
+  window.__tvFbGo = go;
+  window.__tvFbState = function() { var n = {}; Object.keys(S).forEach(function(k) { n[k] = S[k]; }); return n; };
 
   var st = document.createElement('style');
   st.textContent = [
@@ -8413,7 +8456,7 @@ class MainActivity : Activity() {
         (d.none || []).forEach(function(x) { none.push(new RegExp(x, 'i')); });
       });
     } catch (err) { all = []; none = []; }
-    if (e && e[3] && e[3].alts) e[3].alts.forEach(function(w) { ALTS.push({ mt: w }); });
+    if (e) mtWords(e, S.base).alts.forEach(function(w) { ALTS.push({ mt: w }); });
     if (c && c[3] && c[3].alts) c[3].alts.forEach(function(w) { ALTS.push({ ch: w }); });
     if (all.length || none.length || ALTS.length) MTR = { all: all, none: none };
   })();
@@ -8434,6 +8477,51 @@ class MainActivity : Activity() {
     var m = a && /(?:contents|set)\/(\d+)/.exec(a.getAttribute('href') || '');
     return m ? m[1] : '';
   }
+  // Titles & tournaments categories (private builds): what was kept and left out goes on screen under the filter bar and
+  // to the private sheet's debug tab (dbg_put), so the rules can be checked without photos.
+  var CAT = null;
+  try { var cx = find(MT, S.mt); if (cx && cx[3] && cx[3].pages && window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn()) CAT = { id: cx[0], kept: [], dropped: [], alts: [], words: mtWords(cx, S.base) }; } catch (e) { CAT = null; }
+  function catLog(title, kept, from) { if (CAT) (kept ? CAT.kept : CAT.dropped).push((from ? '[' + from + '] ' : '') + String(title).replace(/\s+/g, ' ').trim().slice(0, 140)); }
+  function catPaint() {
+    if (!CAT) return;
+    var box = document.getElementById('tv-catdbg');
+    if (!box) {
+      var bar = document.getElementById('tv-fbc') || document.getElementById('tv-fb');
+      if (!bar || !bar.parentNode) return;
+      box = document.createElement('div'); box.id = 'tv-catdbg'; box.className = 'notranslate'; box.setAttribute('translate', 'no');
+      box.style.cssText = 'margin:10px 0 14px 0;padding:10px 14px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;';
+      bar.parentNode.insertBefore(box, bar.nextSibling);
+    }
+    var rec = window.__tvWrRecord || [], seen = {};
+    CAT.kept.forEach(function(t) { var m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t); if (m) seen[m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2)] = 1; });
+    var lines = ['Category ' + CAT.id + ' · search: ' + S.base + ' ' + CAT.words.search + (CAT.words.alts.length ? ' · then: ' + CAT.words.alts.join(', ') : ''),
+      'Kept ' + CAT.kept.length + ' · left out ' + CAT.dropped.length + (CAT.alts.length ? ' · ' + CAT.alts.join(' · ') : '') + (CAT.sent ? ' · ' + CAT.sent : '')];
+    if (CAT.id === 'champ' && rec.length) {
+      var miss = rec.filter(function(x) { return !seen[x.d]; });
+      lines.push('Title matches on record: ' + rec.length + ' · on this page: ' + (rec.length - miss.length) + (miss.length ? ' · not here: ' + miss.slice(0, 10).map(function(x) { return x.d + ' ' + x.belt; }).join(', ') + (miss.length > 10 ? ' …' : '') : ''));
+    }
+    if (CAT.dropped.length) lines.push('Left out: ' + CAT.dropped.slice(0, 8).join(' | ') + (CAT.dropped.length > 8 ? ' …' : ''));
+    box.textContent = lines.join('\n');
+  }
+  function catSend() {
+    if (!CAT || CAT.sentOnce) return;
+    CAT.sentOnce = true;
+    try {
+      if (!(window.AndroidHost && AndroidHost.teamSync && AndroidHost.favSyncOn && AndroidHost.favSyncOn())) { CAT.sent = 'sheet: not set up in this build'; catPaint(); return; }
+      var id = 'cat' + Date.now();
+      var prev = window.__tvTeamSyncReply;
+      window.__tvTeamSyncReply = function(rid, text) {
+        if (rid !== id) { if (prev) prev(rid, text); return; }
+        window.__tvTeamSyncReply = prev;
+        var r = null; try { r = JSON.parse(text); } catch (e) {}
+        CAT.sent = r && r.ok ? 'sent to the sheet' : 'sheet: ' + ((r && r.error) || 'no reply');
+        catPaint();
+      };
+      AndroidHost.teamSync(id, JSON.stringify({ action: 'dbg_put', team: '', page: 'wrestler', subject: S.base, tab: CAT.id, url: location.pathname + location.search,
+        record: { words: CAT.words, kept: CAT.kept, dropped: CAT.dropped, alts: CAT.alts, onRecord: (window.__tvWrRecord || []).length } }));
+    } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
+  }
+  if (CAT) { setInterval(catPaint, 1500); setTimeout(catSend, 12000); }
   function narrowList() {
     if (!MTR) return;
     // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
@@ -8445,7 +8533,9 @@ class MainActivity : Activity() {
       var tt = itemTitle(el);
       if (!tt.replace(/\s+/g, '')) return;
       el.__tvMt = 1;
-      if (mtFits(tt) || !el.parentNode) return;
+      var fit = mtFits(tt);
+      catLog(tt, fit, '');
+      if (fit || !el.parentNode) return;
       var box = el.parentNode;
       box.removeChild(el);
       // A bare card's empty column wrapper goes too, so the grid doesn't keep a gap.
@@ -8462,17 +8552,20 @@ class MainActivity : Activity() {
       var url = buildUrl(n, alt.mt, alt.ch);
       fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
-        var box = document.querySelector('.content-list');
+        var box = document.querySelector('.content-list'), nA = 0, kA = 0;
         if (box) {
           Array.prototype.forEach.call(doc.querySelectorAll('.content-list .content-list-item'), function(el) {
             var id = idOf(el);
-            if (!mtFits(itemTitle(el))) return;
+            nA++;
+            if (!mtFits(itemTitle(el))) { catLog(itemTitle(el), false, alt.mt || alt.ch); return; }
             if (id && box.querySelector('a[href*="/' + id + '"]')) return;
+            catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;
             box.appendChild(c);
           });
         }
+        if (CAT) CAT.alts.push((alt.mt || alt.ch) + ': ' + nA + ' videos, ' + kA + ' added');
       }).catch(function() {}).then(function() { setTimeout(one, 1300); });
     }
     setTimeout(one, 1500);

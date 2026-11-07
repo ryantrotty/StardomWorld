@@ -38,6 +38,14 @@ Tag teams, factions, faction members (and so Current Wrestlers) and past wrestle
 
 Every section is optional; leave out what you are not changing.
 
+## Match types (private builds' categories)
+
+```json
+"matchTypes": { "stargp": { "search": "STARS", "alts": ["5★STAR"] }, "champ": { "none": ["挑戦者決定|next\\s*challenger"] } }
+```
+
+Each key is a match type id from `assets/match_types.json`; its fields replace the bundled ones (search, alts, all, none, factionSearch, tagBelt). Patterns are regular expressions, ignoring case.
+
 ## Tag League
 
 ```json

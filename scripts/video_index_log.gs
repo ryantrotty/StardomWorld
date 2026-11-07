@@ -21,6 +21,11 @@
  *   tm_get    {team}                                         that team's row: items, where the search got to, when
  *   tm_put    {team, items: [{id, t, b}], next: {qi, page, done}, query, fresh}  adds new items, keeps the old ones
  *   tm_export {}                                             every team's row (for analysis)
+ *
+ * Category debug (2.43.0, same key): a "debug" tab, one row per search a private build's category tab made (wrestler
+ * and tag team pages), so the title rules can be checked from the sheet instead of photos. Kept to the newest 500 rows.
+ *   dbg_put    {page, subject, tab, url, record, device}       adds a row
+ *   dbg_export {}                                              every row (scripts/video_index_pull.py --debug)
  */
 var SHEET = 'videos';
 var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_en', 'title_ja',
@@ -39,6 +44,8 @@ function doPost(e) {
   // rather than failing with Apps Script's lock timeout error.
   if (body.action === 'tm_get' || body.action === 'tm_export') return out(tmAction(body));
   if (body.action === 'tm_put') return out(withLock(function() { return tmAction(body); }));
+  if (body.action === 'dbg_put') return out(withLock(function() { return dbgPut(body); }));
+  if (body.action === 'dbg_export') return out(dbgExport());
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -243,4 +250,31 @@ function tmAction(b) {
   var row = [team, items.length, JSON.stringify(items), JSON.stringify(next), b.fresh && prev ? prev[4] : now, now, String(b.device || '').slice(0, 40), JSON.stringify(queries)];
   if (r) sh.getRange(r, 1, 1, TM_COLS.length).setValues([row]); else sh.appendRow(row);
   return { ok: true, added: fresh.length, count: items.length };
+}
+
+
+// ---- category debug rows (2.43.0)
+var DBG_SHEET = 'debug', DBG_COLS = ['time', 'device', 'page', 'subject', 'tab', 'url', 'record'], DBG_KEEP = 500;
+function dbgSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(DBG_SHEET);
+  if (!sh) { sh = ss.insertSheet(DBG_SHEET); sh.appendRow(DBG_COLS); sh.setFrozenRows(1); }
+  return sh;
+}
+function dbgPut(b) {
+  var sh = dbgSheet(), rec = JSON.stringify(b.record || {});
+  if (rec.length > MAX_CELL) rec = rec.slice(0, MAX_CELL);
+  sh.appendRow([new Date().toISOString(), String(b.device || '').slice(0, 40), String(b.page || '').slice(0, 20), String(b.subject || '').slice(0, 120),
+    String(b.tab || '').slice(0, 30), String(b.url || '').slice(0, 500), rec]);
+  var extra = sh.getLastRow() - 1 - DBG_KEEP;
+  if (extra > 0) sh.deleteRows(2, extra);
+  return { ok: true };
+}
+function dbgExport() {
+  var sh = dbgSheet(), n = sh.getLastRow() - 1, rows = [];
+  if (n > 0) sh.getRange(2, 1, n, DBG_COLS.length).getValues().forEach(function(v) {
+    var o = {}; DBG_COLS.forEach(function(c, i) { o[c] = v[i] instanceof Date ? v[i].toISOString() : v[i]; });
+    try { o.record = JSON.parse(o.record); } catch (e) {}
+    rows.push(o);
+  });
+  return { ok: true, rows: rows };
 }

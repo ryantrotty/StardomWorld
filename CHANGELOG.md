@@ -6,6 +6,19 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.43.0
+
+Private builds only (public builds unchanged).
+
+- Match categories: a new "Titles & tournaments" Match type group, `private: true` in `match_types.json`: Championship, 5★STAR GP, Cinderella Tournament, Tag League. Each has its search words and title rules, set from the Category probe results:
+  - Championship: "Championship"; title must say championship / 選手権 / title match; next-challenger matches (挑戦者決定) left out. Goddess and NEW BLOOD tag are marked as tag belts.
+  - 5★STAR GP: "STARS", then "5★STAR" merged in; STARS faction members search "BLUE STARS", then "RED STARS" and "5★STAR" (the faction name would match every STARS video). A title with STARS alone never counts.
+  - Cinderella: "Cinderella". Tag League: "Goddess", with an official / block / tournament / final word, and not a title match.
+  - Public builds don't see the group (left out when match types are read). The roster file can change any match type's fields without a new APK (`"matchTypes": {"<id>": {...}}`).
+- Wrestler pages: tabs under MATCHES: All Matches · Championship · 5★STAR GP · Cinderella Tournament · Tag League · More. A tab opens the filter bar's own address for that match type, so paging, Back and the extra searches work as before. The filter bar is hidden until More is pressed (or when another filter is set); Down from the tabs goes to the first video, Up from the first row of videos comes back to the tabs. Menu: the Matches list gains the group too.
+- Tag team pages: tabs All Tag Matches · Championship · Tag League · More (More opens the search page with the filter bar for the pair). One grid; only the open tab searches. The 2-on-2 rule now keeps tag title matches (Goddess and NEW BLOOD tag titles have no "tag" in them, which is why BMI2000's title matches were missing). Championship searches "A B Championship" and keeps tag title matches where the two were partners.
+- Debug: category tabs show what was kept and left out on screen, and the Championship tabs compare against the title matches on record. Every search on a category tab is also written to the private sheet's new "debug" tab (`dbg_put`); `python3 scripts/video_index_pull.py --debug` downloads it. Paste the updated `scripts/video_index_log.gs` into Apps Script and publish a new version first.
 ## 2.42.2
 
 - Removed the temporary Category probe (button on wrestler and tag team pages, its results panel, and `assets/catprobe.js`). Match categories stay as they are for now. Keeps the 2.41.1 drop-down fix.
