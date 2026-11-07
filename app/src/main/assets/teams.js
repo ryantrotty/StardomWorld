@@ -396,13 +396,16 @@
     var q = [pair(searchName)], alt = pair(siteName);
     if (q.indexOf(alt) < 0) q.push(alt);   // another spelling, tried only when the first search finds no videos
     if (t.name) q.push(t.name);
-    // Tag League official matches ("Red/Blue Goddess Official Match") don't say "Tag Team", so the first search can't
-    // find them and the site has no OR. A second search, "A Goddess B", runs after the first one's pages run out
-    // (straight away when nothing was kept, otherwise from More). It is always the last entry (LEAGUE_AT).
-    q.push(t.members.map(searchName).join(' Goddess '));
+    // Tag League official matches ("Red/Blue Goddess Official Match") don't say "Tag Team", so the "Tag Team" search
+    // can't find them and the site has no OR. They get their own search, "A Goddess B", which runs first (entry 0);
+    // when its pages run out the page goes straight on to page 1 of the "Tag Team" search.
+    q.unshift(t.members.map(searchName).join(' Goddess '));
     return q;
   }
-  function leagueAt() { return V.queries.length - 1; }
+  var LEAGUE_AT = 0;
+  // Tag League titles: "Red/Blue Goddess Official Match", ブルーゴッデス公式リーグ戦, ゴッデス・オブ・スターダム〜タッグリーグ戦〜
+  var LEAGUE_RE = /goddess(?:es)?\s*(?:official|of\s*stardom)|\u30b4\u30c3\u30c7\u30b9/i;
+  function isLeague(it) { return LEAGUE_RE.test(half(it.t)); }
   // ---- the private sheet's saved list for this team (private builds with the log set up; see docs/TEAM_MATCH_LISTS.md)
   var SHEET_ON = false;
   try { SHEET_ON = !!(H.teamSync && H.favSyncOn && H.favSyncOn()); } catch (e) { SHEET_ON = false; }
@@ -465,7 +468,7 @@
   // searched again (new matches go first); everything else waits for "More tag matches".
   // The 2-on-2 rule's version (raise it whenever match_types.json "tag" keeps more titles) and, per TV, the version
   // each team was last searched with.
-  var TM_RULE = 3, RULE_KEY = 'tvTeamRuleV1';
+  var TM_RULE = 4, RULE_KEY = 'tvTeamRuleV1';
   function ruleSeen() { var a = parse(lsGet(RULE_KEY)) || {}; return a[TEAM.id] || 1; }
   function ruleMark() { var a = parse(lsGet(RULE_KEY)) || {}; if (a[TEAM.id] !== TM_RULE) { a[TEAM.id] = TM_RULE; lsSet(RULE_KEY, JSON.stringify(a)); } }
   function fromSheet(fallback) {
@@ -529,19 +532,20 @@
       ruleMark();
       V.log.push(q + ' · page ' + V.page + ': ' + items.length + ' videos, ' + add + ' kept' + (cached ? ' (saved copy)' : ''));
       // The other spelling and the team name are tried only when a search finds no videos at all.
-      var inLeague = V.qi === leagueAt();
-      if (!inLeague && V.page === 1 && !items.length && V.qi + 1 < leagueAt()) {
+      var inLeague = V.qi === LEAGUE_AT;
+      // the other spelling and the team name are tried only when the "Tag Team" search finds no videos at all
+      if (!inLeague && V.page === 1 && !items.length && V.qi + 1 < V.queries.length) {
         V.qi++; V.page = 1; paintVids(); loadMore(); return;
       }
       V.page++;
       var next = false;
       if (!more) {
-        if (inLeague) V.done = true;
-        else { V.qi = leagueAt(); V.page = 1; next = !V.kept.length; V.log.push(T('next: Tag League search ', '次: タッグリーグ検索 ') + V.queries[V.qi]); }
+        if (!inLeague) V.done = true;
+        else { V.qi = LEAGUE_AT + 1; V.page = 1; next = true; V.log.push(T('next: Tag Team search ', '次: タッグ検索 ') + V.queries[V.qi]); }
       }
       paintVids();
       save(kept, false, q);
-      if (next) loadMore();   // nothing to show yet: go on to the Tag League search now (GAP_MS keeps the 3 s spacing)
+      if (next) loadMore();   // the Tag League search is used up: page 1 of the "Tag Team" search now (GAP_MS keeps the 3 s spacing)
     });
   }
   function dateOfTitle(t) { var m = /(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(t || ''); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : ''; }
@@ -562,7 +566,8 @@
       box.className = '';
     } else {
       box.className = 'tt-vids';
-      h = V.kept.map(function(it) {
+      var shown = V.kept.filter(isLeague).concat(V.kept.filter(function(it) { return !isLeague(it); }));   // Tag League first
+      h = shown.map(function(it) {
         var d = dateOfTitle(it.t);
         return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(it.h) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
       }).join('');

@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.40.4
+
+- Team pages: Goddess results first. The Tag League search ("A Goddess B") now runs first, and when its pages run out the page goes straight on to page 1 of the "Tag Team" search, so a team's first view is still two searches, 3 seconds apart. More carries on from there.
+- The Tag Matches grid shows Goddess matches (Red/Blue Goddess official matches, ゴッデス公式戦 and 公式リーグ戦, ゴッデス・オブ・スターダム tag league and title matches) before the rest, including matches already saved to your sheet; each group keeps the order it was found in.
+- Match rule version raised to 4 (each team searches again from page 1 once per TV).
+
 ## 2.40.3
 
 - Team pages: a second search for Tag League matches. The first search ("A Tag Team B") never returns Tag League official matches, because their videos don't say "Tag Team" (Trouble Friends: 6 videos, all 6- and 8-person tags, while the filter bar's Starlight Kid with Maki Itoh shows the 11/03 Red Goddess Official Match). After the first search's pages run out, the page searches "A Goddess B" and keeps its 2-on-2 matches the same way. It runs straight away when nothing was kept yet, otherwise More carries on into it. One page at a time, 3 seconds apart, only while the team page is open. The debug panel shows "next: Tag League search …".
