@@ -2547,6 +2547,74 @@ class MainActivity : Activity() {
         } catch (_: Exception) { return text }
     }
 
+    // Tag Teams settings: assets/tag_teams.json merged with the downloaded roster file (filesDir/roster.json, from the
+    // roster-data branch, docs/ROSTER.md). roster.tagTeams.add joins "extra" (same pair = the roster's entry wins),
+    // .remove lists pairs to hide ("A & B", either order), .spell and .factionNames join the bundled ones. Adds
+    // "roster": { updated, adds, removes } (or "none") for the line under the All Tag Teams list.
+    private fun rosterTagTeams(): String {
+        val bundled = assetText("tag_teams.json")
+        return try {
+            val base = org.json.JSONObject(bundled)
+            val f = java.io.File(filesDir, "roster.json")
+            val rj = try { if (f.exists() && f.length() > 0L) org.json.JSONObject(f.readText()) else null } catch (_: Exception) { null }
+            val tt = rj?.optJSONObject("tagTeams")
+            val updated = rj?.optString("updated") ?: ""
+            if (tt == null) { base.put("roster", org.json.JSONObject().put("state", "none")); return base.toString() }
+            fun pairKey(a: org.json.JSONArray?): String {
+                if (a == null || a.length() != 2) return ""
+                return listOf(a.optString(0), a.optString(1)).map { it.trim().lowercase() }.sorted().joinToString("|")
+            }
+            val extra = base.optJSONArray("extra") ?: org.json.JSONArray()
+            val byKey = LinkedHashMap<String, org.json.JSONObject>()
+            for (i in 0 until extra.length()) extra.optJSONObject(i)?.let { o -> pairKey(o.optJSONArray("members")).takeIf { it.isNotEmpty() }?.let { byKey[it] = o } }
+            val add = tt.optJSONArray("add") ?: org.json.JSONArray()
+            var adds = 0
+            for (i in 0 until add.length()) add.optJSONObject(i)?.let { o -> pairKey(o.optJSONArray("members")).takeIf { it.isNotEmpty() }?.let { byKey[it] = o; adds++ } }
+            val merged = org.json.JSONArray(); byKey.values.forEach { merged.put(it) }
+            base.put("extra", merged)
+            val hide = org.json.JSONArray()
+            val rm = tt.optJSONArray("remove") ?: org.json.JSONArray()
+            for (i in 0 until rm.length()) {
+                val parts = rm.optString(i).split("&").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+                if (parts.size == 2) hide.put(parts.sorted().joinToString("|"))
+            }
+            base.put("hide", hide)
+            val spell = base.optJSONObject("spell") ?: org.json.JSONObject()
+            tt.optJSONObject("spell")?.let { s2 -> val ks = s2.keys(); while (ks.hasNext()) { val k = ks.next(); spell.put(k, s2.optString(k)) } }
+            base.put("spell", spell)
+            val fn = base.optJSONArray("factionNames") ?: org.json.JSONArray()
+            val have = HashSet<String>(); for (i in 0 until fn.length()) have.add(fn.optString(i))
+            tt.optJSONArray("factionNames")?.let { a -> for (i in 0 until a.length()) if (have.add(a.optString(i))) fn.put(a.optString(i)) }
+            base.put("factionNames", fn)
+            base.put("roster", org.json.JSONObject().put("state", "ok").put("updated", updated).put("adds", adds).put("removes", hide.length()))
+            base.toString()
+        } catch (_: Exception) { bundled }
+    }
+
+    // Downloads the roster file (one small request to GitHub, never to the Stardom sites), at most once per schedule
+    // refresh. Sends the last ETag so an unchanged file comes back empty (304). The last good copy stays on any failure.
+    private fun refreshRoster() {
+        if (BuildConfig.ROSTER_URL.isEmpty()) return
+        try {
+            val prefs = getSharedPreferences("roster", MODE_PRIVATE)
+            val have = java.io.File(filesDir, "roster.json")
+            val c = java.net.URL(BuildConfig.ROSTER_URL).openConnection() as java.net.HttpURLConnection
+            c.connectTimeout = 8000
+            c.readTimeout = 8000
+            val etag = prefs.getString("etag", "") ?: ""
+            if (etag.isNotEmpty() && have.exists()) c.setRequestProperty("If-None-Match", etag)
+            val code = c.responseCode
+            if (code == 200) {
+                val body = c.inputStream.bufferedReader().use { it.readText() }
+                if (org.json.JSONObject(body).optJSONObject("tagTeams") != null) {
+                    have.writeText(body)
+                    prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
+                }
+            }
+            c.disconnect()
+        } catch (_: Exception) {}
+    }
+
     // The daily file (assets-independent copy in filesDir) published by the daily job: schedule, lineage.titles, status.
     // Read once per change of the file; null when there is none or it cannot be read.
     private var dailyCache: org.json.JSONObject? = null
@@ -2680,6 +2748,7 @@ class MainActivity : Activity() {
                             gotSchedule = true
                         }
                     } catch (_: Exception) {}
+                    refreshRoster()
                     if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
                 }
                 try { if (BuildConfig.SHOW_POSTERS && (due || !postersChecked)) cacheSchedulePosters() } catch (_: Exception) {}
@@ -3016,10 +3085,9 @@ class MainActivity : Activity() {
         }
 
         // Tag Teams settings (assets/tag_teams.json): eras, faction-only pair names, site spellings, extra teams.
+        // The bundled file merged with the downloaded roster file (rosterTagTeams).
         @android.webkit.JavascriptInterface
-        fun tagTeamsJson(): String = try {
-            this@MainActivity.assets.open("tag_teams.json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun tagTeamsJson(): String = this@MainActivity.rosterTagTeams()
 
         @android.webkit.JavascriptInterface
         fun pastWrestlersJson(): String = try {

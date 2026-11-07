@@ -2,7 +2,7 @@
   // Tag Teams: the menu shelf (window.__tvTeams.shelfHtml), the All Tag Teams page (/mypage?tvteams=1[&era=n|&belt=id])
   // and a team's page (/mypage?tvteam=<id>). Teams are built from the Goddess of Stardom and NEW BLOOD Tag Team title
   // histories (lineageJson, so the daily file's newer copies count), plus assets/tag_teams.json for eras, faction-only
-  // pair names, site spellings and teams that never held these titles. A team's matches come from one keyword search
+  // pair names, site spellings and teams that never held these titles (merged with the downloaded roster file, docs/ROSTER.md). A team's matches come from one keyword search
   // (both members' names + "Tag Team"), narrowed to 2-on-2 matches by title (match_types.json "tag" exclusions), and,
   // where the video index has the match, to matches where the two were on the same side.
   if (window.__tvTeams) return;
@@ -74,6 +74,7 @@
       if (x.name) t.names[x.name] = 1;
       t.since = x.since; t.facName = x.faction;
     });
+    (CFG.hide || []).forEach(function(k) { delete byKey[String(k).toLowerCase()]; });   // roster file "remove"
     TEAMS = Object.keys(byKey).map(function(k) {
       var t = byKey[k], names = Object.keys(t.names);
       var real = names.filter(function(n) { return !facNames[n.toLowerCase()]; });
@@ -191,6 +192,7 @@
     '#tv-tt .tt-chip:focus{border-color:#F4C242;}',
     '#tv-tt .tt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin-top:22px;}',
     '#tv-tt .tt-count{margin-top:14px;font-size:15px;font-weight:700;color:#9AA6B4;}',
+    '#tv-tt .tt-roster{margin-top:4px;font-size:13px;font-weight:700;color:#9AA6B4;}',
     '#tv-tt .tt-team{display:flex;align-items:center;gap:10px;height:66px;padding:0 14px;background:#161F2A;border:2px solid #161F2A;border-radius:8px;min-width:0;cursor:pointer;}',
     '#tv-tt .tt-team:focus{background:#172029;border-color:#F4C242;}',
     '#tv-tt .tt-team .x{flex:1 1 auto;min-width:0;}',
@@ -272,7 +274,7 @@
       return !!t.count[filt.slice(1)];
     });
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1">' + esc(T('All Tag Teams', 'すべてのタッグチーム')) + '</div>' +
-      '<div class="tt-note">' + esc(T('Every pair that has held the Goddess of Stardom or NEW BLOOD Tag Team belts. A pair known only by its faction shows the two names, with the faction underneath.', 'ゴッデス・オブ・スターダム王座、NEW BLOODタッグ王座を獲得したすべてのチーム。')) + '</div></div>' +
+      '<div class="tt-note">' + esc(T('Every pair that has held the Goddess of Stardom or NEW BLOOD Tag Team belts, plus other current teams. A pair known only by its faction shows the two names, with the faction underneath.', 'ゴッデス・オブ・スターダム王座、NEW BLOODタッグ王座を獲得したすべてのチームと、その他の現役チーム。')) + '</div></div>' +
       '<div class="tt-instr">' + esc(T('Left and Right change the filter. Down moves into the list. OK opens a team.', '左右で絞り込み、下で一覧へ。OKでチームを開きます。')) + '</div></div>';
     var chips = [['all', esc(T('All', 'すべて')) + ' <small>' + all.length + '</small>']];
     // short era names keep the chips on one line: "Threedom & the Rebuild" -> "Threedom", "The Draft Years" -> "Draft Years"
@@ -286,6 +288,11 @@
       return '<a class="tt-team' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><div class="x"><div class="a notranslate" translate="no">' + esc(t.display) + '</div><div class="b notranslate" translate="no">' + esc(t.sub) + '</div></div>' + tags(t) + '</a>';
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(list.length + (list.length === 1 ? ' team' : ' teams') + (filt === 'all' ? '' : ' of ' + all.length), list.length + 'チーム' + (filt === 'all' ? '' : ' / ' + all.length))) + '</div>';
+    // which roster file this TV is using, so a roster change can be checked on screen (stays put, no fading)
+    var R = CFG.roster || {};
+    h += '<div class="tt-roster">' + esc(R.state === 'ok'
+      ? T('Roster file' + (R.updated ? ' of ' + fmtD(R.updated) : '') + ': ' + R.adds + ' added, ' + R.removes + ' removed', '名簿ファイル' + (R.updated ? '（' + fmtD(R.updated) + '）' : '') + '：追加 ' + R.adds + '・削除 ' + R.removes)
+      : T('Roster file: not downloaded yet (built-in list)', '名簿ファイル：未取得（内蔵リスト）')) + '</div>';
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-chip.tt-on') || scroller.querySelector('.tt-chip'));
   }

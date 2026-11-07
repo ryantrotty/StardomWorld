@@ -150,6 +150,7 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
   - TAG MATCHES: four-across video cards (look C ring). A gold date badge sits top right, and an orange TEAMMATES tag top left when the video index confirms the two were on the same side. A "More tag matches" tile loads further pages; it stays in place (with focus) while the next page loads. With nothing to show yet, a plain grey line (16 px #9AA6B4, the same as the championship pages' "Press OK on this reign" note) sits above the More tile, and the header reads "looking for videos" or "none found yet".
   - The search lines stay on screen at the bottom (debug panel style).
 - Arrow keys move to the nearest item in that direction; Left at the left edge opens the menu.
+- Roster line (2.39.0): under the count line on All Tag Teams, a 13/700 grey #9AA6B4 line says which roster file the TV is using ("Roster file of 7 Nov 2026: 15 added, 0 removed", or "not downloaded yet (built-in list)"). Not focusable, stays on screen. No new colours.
 - Menu shelves (2.30.3): Up and Down treat a bar wider than 60% of the shelf as straight above or below when it spans the starting point, so All Tag Teams goes Down to My Tag Teams, not the first era.
 
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
