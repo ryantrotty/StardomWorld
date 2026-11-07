@@ -313,7 +313,7 @@
     "championship|選手権|title\\s*match|タイトルマッチ"
    ],
    "none": [
-    "挑戦者決定|next\\s*challenger|contender",
+    "次期挑戦|挑戦者決定|挑戦チーム決定|next\\s*challenger|contender",
     "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
    ]
   }
