@@ -1,0 +1,169 @@
+{
+ "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Teams match on their two members. Use the app's spellings (assets/factions.json).",
+ "updated": "2026-11-07",
+ "tagTeams": {
+  "add": [
+   {
+    "name": "Bloody School Girls",
+    "members": [
+     "Suzu Suzuki",
+     "Rina Yamashita"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": [
+     "Bloody Girls' School"
+    ]
+   },
+   {
+    "name": null,
+    "members": [
+     "Natsupoi",
+     "Rian"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Iron Beat",
+    "members": [
+     "Ranna Yagami",
+     "Akira Kurogane"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Team Classroom",
+    "members": [
+     "Hina",
+     "Lady C"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Los Infernales",
+    "members": [
+     "Dark Silueta",
+     "Valkyria"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": [
+     "Las Infernales"
+    ]
+   },
+   {
+    "name": "New Sisters",
+    "members": [
+     "Konami",
+     "Rina"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Gori & Roses",
+    "members": [
+     "Saya Iida",
+     "Utami Hayashishita"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Super Senyu Z",
+    "members": [
+     "Saori Anou",
+     "Fuwa Chan"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Tropical Haisai",
+    "members": [
+     "Yuna Mizumori",
+     "Anne Kanaya"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Hai High Mate",
+    "members": [
+     "Maika",
+     "Hanako"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": [
+     "Cup High Mate"
+    ]
+   },
+   {
+    "name": "Feather Moon",
+    "members": [
+     "Hanan",
+     "Waka Tsukiyama"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": [
+     "Feather Dream"
+    ]
+   },
+   {
+    "name": "M&E Spirix",
+    "members": [
+     "Mei Seira",
+     "Ema Maishima"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "KIYOKIKYO",
+    "members": [
+     "Kikyo Furusawa",
+     "Kiyoka Kotatsu"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Trouble Friends",
+    "members": [
+     "Starlight Kid",
+     "Maki Itoh"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   },
+   {
+    "name": "Black Swan",
+    "members": [
+     "Momo Watanabe",
+     "Saya Kamitani"
+    ],
+    "since": "2026-11-01",
+    "faction": "",
+    "aka": []
+   }
+  ],
+  "remove": [],
+  "spell": {},
+  "factionNames": []
+ }
+}
