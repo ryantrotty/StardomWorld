@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.38.0
+
+- Usage stats and error reports in every build: the PostHog key is now in `gradle.properties`, so the GitHub test builds and community builds report too (before, only builds with `branding-private/posthog.properties`).
+- Account menu: new entry **Anonymous usage stats: On / Off** (OK switches it in place; remembered on that TV). Off stops page views and error reports and drops anything still waiting to be sent. Only shown in builds with a PostHog key.
+- README: new Privacy section saying what is sent (pages and time on them, app version, TV model, language, crashes and app script errors), what isn't (account, email, sign-in, payment), and how to switch it off.
+- docs/USAGE_METRICS.md: switching it off, and leaving your own builds out of the numbers.
+
 ## 2.37.0
 
 - Error tracking with PostHog (free tier): app crashes are saved the moment they happen and sent the next time the app opens, and errors in the app's own page scripts (menus, factions, eras, player controls and the rest) are sent as they happen. Each comes with its stack trace, the page it happened on, build type, TV model and app version, and shows up in PostHog's Error tracking. The site's own script errors are left out. Each distinct error is sent once per run, at most 20 a run. Only when a PostHog key is set; see `docs/USAGE_METRICS.md`.

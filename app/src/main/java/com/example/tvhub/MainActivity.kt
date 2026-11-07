@@ -3051,6 +3051,17 @@ class MainActivity : Activity() {
 
         // A real OK key press into the page, so the page's own "Full screen" button is allowed to go full screen
         // (browsers refuse it without a key press); only on Stagecrowd pages.
+        // Account > Anonymous usage stats (Metrics.kt): "on", "off", or "" when this build has no PostHog key (entry hidden).
+        @android.webkit.JavascriptInterface
+        fun metricsState(): String = if (!metrics.configured) "" else if (metrics.enabled) "on" else "off"
+
+        // Switches it and returns the new state.
+        @android.webkit.JavascriptInterface
+        fun setMetricsOn(on: Boolean): String {
+            metrics.setOn(on)
+            return metricsState()
+        }
+
         // The account menu's "Instructions" link: the first-run guide again, from the language step.
         @android.webkit.JavascriptInterface
         fun showGuide() {
@@ -5220,6 +5231,7 @@ class MainActivity : Activity() {
           // Left on a top-level menu row switches between them; the choice is remembered.
           var MODE_KEY = 'tvMenuModeV1';
           function shelfMode() { return true; }
+          function metricsLabel(st) { return T('Anonymous usage stats: ', '匿名の利用統計: ') + (st === 'on' ? T('On', 'オン') : T('Off', 'オフ')); }
           function group(label, rows, shelfKey) {
             if (shelfKey && shelfMode()) {
               return '<div class="tv-sm-grp notranslate" translate="no"><div class="tv-sm-item" tabindex="0" role="button" data-shelf="' + shelfKey + '"><span>' + esc(label) + '</span>' + chev() + '</div></div>';
@@ -5675,6 +5687,9 @@ class MainActivity : Activity() {
                   var al = window.__tvMenuAcct || [];
                   al.forEach(function(l, i) { body += '<a class="tv-sm-fi" tabindex="0" data-acctlink="' + i + '">' + esc(xl(l.label)) + '</a>'; });
                   if (window.AndroidHost && AndroidHost.showGuide) body += '<a class="tv-sm-fi" tabindex="0" data-guide="1">' + esc(T('Instructions', '使い方')) + '</a>';
+                  // Anonymous usage stats (PostHog, docs/USAGE_METRICS.md): OK switches it on or off in place.
+                  var mst = ''; try { mst = AndroidHost.metricsState ? AndroidHost.metricsState() : ''; } catch (x) { mst = ''; }
+                  if (mst) body += '<a class="tv-sm-fi" tabindex="0" data-metrics="' + mst + '">' + esc(metricsLabel(mst)) + '</a>';
                   // Favorites sync (private builds): the main TV sends its whole set once; OK twice to confirm.
                   if (window.__tvFavSync && window.__tvFavSync.on) body += '<a class="tv-sm-fi" tabindex="0" data-favsend="1">' + esc(T('Send this TV’s favorites to sync', 'このテレビのお気に入りを同期に送信')) + '</a>';
                   if (!al.length) body += '<a class="tv-sm-fi" tabindex="0" data-go="/mypage" href="' + BASE + '/mypage">' + esc(T('My page', 'マイページ')) + '</a>';
@@ -5854,6 +5869,11 @@ class MainActivity : Activity() {
                 if (fa && fa.classList && fa.classList.contains('tv-sm-fi')) {
                   stop(e);
                   if (fa.getAttribute('data-guide')) { closeShelf(false); closeMenu(); try { AndroidHost.showGuide(); } catch (x) {} }
+                  else if (fa.getAttribute('data-metrics')) {
+                    var nm = fa.getAttribute('data-metrics');
+                    try { nm = AndroidHost.setMetricsOn(nm !== 'on'); } catch (x) {}
+                    if (nm) { fa.setAttribute('data-metrics', nm); fa.textContent = metricsLabel(nm); }
+                  }
                   else if (fa.getAttribute('data-favsend')) { try { window.__tvFavSync.sendAll(fa); } catch (x) {} }
                   else if (fa.getAttribute('data-acctlink')) { var al = fa.getAttribute('data-acctlink'); closeShelf(false); activate({ getAttribute: function(n) { return n === 'data-acctlink' ? al : null; } }); }
                   else if (fa.getAttribute('data-wtab')) { /* the list already switched when the tab got focus */ }

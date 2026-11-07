@@ -77,7 +77,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - Wrestler cards use look E (the old rainbow border hid the gold focus).
 - My Favorites top: "My Faction" shows one to six faction bands on white logo tiles (1 faction full width, 2 half, 3 to 6 a third each, two rows at most; the Open pill is shown for 1 and 2). "My Reminders" shows two paper tickets: a stub (purple PPV days left, red for the last 24 hours or live, gold for a show date) beside cream paper with the time in local time. An owned PPV comes first, then reminders; one ticket is topped up with the next show that has no reminder. A PPV counts as owned once the app has seen its replay play for 5 seconds on this TV.
 - Shelf Left/Right goes straight across a row first, then falls back to the nearest item.
-- Account menu has an Instructions link that reopens the first-run guide (buttons read Close and Done).
+- Account menu has an Instructions link that reopens the first-run guide (buttons read Close and Done), and, in builds with a PostHog key, an "Anonymous usage stats: On / Off" entry that OK switches in place (look A, like the other Account entries).
 - Details buttons change border only on focus; the selected state is a gold fill.
 - Login and guide use Roboto and thick borders.
 - PPV player bar: no Quality button, caption slot is the language button, scaled by width / 1440, auto full screen after 8 s.

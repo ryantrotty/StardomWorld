@@ -33,9 +33,14 @@ class Metrics(context: Context) {
 
     private val apiKey = BuildConfig.POSTHOG_KEY
     private val host = BuildConfig.POSTHOG_HOST.trimEnd('/')
-    val enabled = apiKey.isNotEmpty()
+    /** A PostHog key is set in this build. */
+    val configured = apiKey.isNotEmpty()
 
     private val prefs = context.getSharedPreferences("metrics", Context.MODE_PRIVATE)
+
+    /** Collecting now: configured, and not switched off in Account > Anonymous usage stats. */
+    @Volatile var enabled = configured && !prefs.getBoolean("off", false)
+        private set
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private val rnd = SecureRandom()
@@ -60,10 +65,26 @@ class Metrics(context: Context) {
     private val flushTask = Runnable { flush() }
 
     init {
-        if (enabled) {
-            sendPendingCrash()
+        if (configured) {
+            if (enabled) sendPendingCrash() else prefs.edit().remove("crash").apply()
             installCrashHandler()
         }
+    }
+
+    /**
+     * Account > Anonymous usage stats. Off: nothing more is collected or sent, events still waiting are dropped,
+     * and it stays off on this TV until switched back on. On: counting starts again from the next page.
+     */
+    fun setOn(on: Boolean) {
+        if (!configured) return
+        prefs.edit().putBoolean("off", !on).apply()
+        if (on == enabled) return
+        if (!on) {
+            main.removeCallbacks(flushTask)
+            synchronized(queue) { queue.clear() }
+        }
+        curPath = null; curUrl = null; curHost = null; paused = false
+        enabled = on
     }
 
     // ---- error tracking (PostHog Error tracking: $exception events) ----
@@ -79,7 +100,7 @@ class Metrics(context: Context) {
     private fun installCrashHandler() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, err ->
-            try {
+            if (enabled) try {
                 val props = baseProps(curUrl ?: "", curHost ?: "", curPath ?: "")
                 props.put("\$exception_list", javaExceptionList(err, "UncaughtExceptionHandler"))
                 props.put("\$exception_level", "fatal")

@@ -24,6 +24,22 @@ Metrics are **off** until a PostHog project key is set, so a build without a key
 3. Build and open a few pages. Events show up under **Activity** within a minute, and in **Web analytics**
    (pick the `stardom-world.com` domain if asked).
 
+Since 2.38.0 the key is in `gradle.properties`, so every build reports (US project). A key in
+`branding-private/posthog.properties` overrides it for your own builds.
+
+## Switching it off on a TV
+
+Menu > **Account > Anonymous usage stats: On / Off**; OK switches it. Off drops anything still waiting to be sent,
+stops page views and error reports, and is remembered on that TV. The entry is only there in builds with a key.
+
+## Leaving your own use out
+
+Your own builds are tagged `build_type = private` (they have the `branding-private` folder; nobody else's do). The
+PostHog project's **"Filter out internal and test users"** rule excludes `build_type = private`, and is on by default
+for new charts, so community numbers don't include your TVs. Untick it on a chart to see your own use. Your Firestick
+runs the public test build, so it is excluded by its device id (`distinct_id`), added to the same rule once it has
+reported.
+
 ## What is sent
 
 Only to the PostHog host. Never to stardom-world.com or Stagecrowd, and no extra page loads.
