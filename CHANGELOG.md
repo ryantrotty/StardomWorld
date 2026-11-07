@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+
+## 2.41.1
+
+- Filter bar drop-downs (Wrestler, Competitors, Match type and the rest, and the Tournament Archives filter bar): when a list would not fit below its button, the page first scrolls so the bar sits near the top of the screen, then the list opens below it. Before, on a long page such as a wrestler page with Titles Held above the matches, the bar sat near the bottom and the list was cut off after one row. Back closes the list and scrolls the page back; switching between drop-downs keeps the first position. Pages where the list already fits don't move.
 ## 2.41.0
 
 - Tag League (Goddesses of Stardom Tag League), marked with a new feathered wings icon (gold line, drawn in the code, so public and private builds alike):

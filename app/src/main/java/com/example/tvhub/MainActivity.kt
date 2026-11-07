@@ -8073,9 +8073,37 @@ class MainActivity : Activity() {
     });
   }
 
+  // Room for a drop-down: when the list would not fit below its button (the filter bar low on a long page, such as a
+  // wrestler page under Titles Held), the page scrolls so the bar sits near the top of the screen first. Closing
+  // with Back scrolls it back. Returns the button's position after any scroll.
+  var roomScroll = null;
+  function scrollParent(el) {
+    for (var e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+      var oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 2) return e;
+    }
+    return null;
+  }
+  function makeRoom(btn, pnl) {
+    var r = btn.getBoundingClientRect(), vh = window.innerHeight;
+    var need = Math.min(pnl.scrollHeight || pnl.offsetHeight || 0, Math.round(vh * 0.7)), below = vh - r.bottom - 22;
+    if (need <= below || r.top < 110) return r;
+    var top = Math.max(90, vh - need - r.height - 30), delta = r.top - top, sp = scrollParent(btn);
+    if (delta <= 0) return r;
+    if (!roomScroll) roomScroll = sp ? { el: sp, y: sp.scrollTop } : { el: null, y: window.scrollY };   // switching drop-downs keeps the first place
+    if (sp) sp.scrollTop += delta; else window.scrollTo(0, window.scrollY + delta);
+    return btn.getBoundingClientRect();
+  }
+  function giveBackRoom() {
+    var rs = roomScroll; roomScroll = null;
+    if (!rs) return;
+    try { if (rs.el) rs.el.scrollTop = rs.y; else window.scrollTo(0, rs.y); } catch (e) {}
+  }
+
   function closePanel(refocus) {
     if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
     panel = null;
+    if (refocus) giveBackRoom();
     if (openBtn) openBtn.classList.remove('tv-open');
     var b = openBtn; openBtn = null;
     if (prevClose) { window.__tvMenuClose = prevClose; prevClose = null; }
@@ -8245,7 +8273,7 @@ class MainActivity : Activity() {
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);
-    var r = btn.getBoundingClientRect();
+    var r = makeRoom(btn, panel);
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'co' || k === 'wr' || k === 'lo' || k === 'mt' || k === 'ch') { panel.style.left = '30px'; panel.style.right = '30px'; }
     if (k === 'co' || k === 'wr') { panel.style.maxHeight = Math.max(200, window.innerHeight - (r.bottom + 8) - 14) + 'px'; panel.style.overflowY = 'auto'; }   // never run off the bottom of the screen
@@ -8623,9 +8651,37 @@ class MainActivity : Activity() {
     setTimeout(alignBars, 0);
   }
 
+  // Room for a drop-down: when the list would not fit below its button (the filter bar low on a long page, such as a
+  // wrestler page under Titles Held), the page scrolls so the bar sits near the top of the screen first. Closing
+  // with Back scrolls it back. Returns the button's position after any scroll.
+  var roomScroll = null;
+  function scrollParent(el) {
+    for (var e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+      var oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 2) return e;
+    }
+    return null;
+  }
+  function makeRoom(btn, pnl) {
+    var r = btn.getBoundingClientRect(), vh = window.innerHeight;
+    var need = Math.min(pnl.scrollHeight || pnl.offsetHeight || 0, Math.round(vh * 0.7)), below = vh - r.bottom - 22;
+    if (need <= below || r.top < 110) return r;
+    var top = Math.max(90, vh - need - r.height - 30), delta = r.top - top, sp = scrollParent(btn);
+    if (delta <= 0) return r;
+    if (!roomScroll) roomScroll = sp ? { el: sp, y: sp.scrollTop } : { el: null, y: window.scrollY };   // switching drop-downs keeps the first place
+    if (sp) sp.scrollTop += delta; else window.scrollTo(0, window.scrollY + delta);
+    return btn.getBoundingClientRect();
+  }
+  function giveBackRoom() {
+    var rs = roomScroll; roomScroll = null;
+    if (!rs) return;
+    try { if (rs.el) rs.el.scrollTop = rs.y; else window.scrollTo(0, rs.y); } catch (e) {}
+  }
+
   function closePanel(refocus) {
     if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
     panel = null;
+    if (refocus) giveBackRoom();
     if (openBtn) openBtn.classList.remove('tv-open');
     var b = openBtn; openBtn = null;
     if (prevClose) { window.__tvMenuClose = prevClose; prevClose = null; }
@@ -8686,7 +8742,7 @@ class MainActivity : Activity() {
       if (k === 'sh') { panel.style.columnCount = 3; panel.style.columnGap = '10px'; }
     }
     document.body.appendChild(panel);
-    var r = btn.getBoundingClientRect();
+    var r = makeRoom(btn, panel);
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : (k === 'sh' ? 900 : 440)))) + 'px';

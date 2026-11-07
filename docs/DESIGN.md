@@ -153,6 +153,8 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 - Roster line (2.39.0): under the count line on All Tag Teams, a 13/700 grey #9AA6B4 line says which roster file the TV is using ("Roster file of 7 Nov 2026: tag teams 15 added, 0 removed · factions 0 changed · …", or "not downloaded yet (built-in list)"; 2.40.0 added the faction and past counts). Not focusable, stays on screen. No new colours.
 - Menu shelves (2.30.3): Up and Down treat a bar wider than 60% of the shelf as straight above or below when it spans the starting point, so All Tag Teams goes Down to My Tag Teams, not the first era.
 
+Filter bar drop-downs (2.41.1): a list that would not fit below its button scrolls the page first so the bar sits near the top (at least 90 px down), then opens below it; Back scrolls back.
+
 Tag League (2.41.0, assets/teams.js, data in the roster file's `tagLeague`):
 - Mark: feathered angel wings, gold #F4C242 line on the surface colour (the fill hides the feather rows behind), drawn in code (`wings(h, colour, bg)`). Full drawing (three feather rows with feather lines) from 28 px; a two-row drawing below that. Sizes in use: 14 (row tag), 16 (shelf items, chip), 22 (shelf bar), 24 (team title, row heading), 44 (Tag League page). It means "entered a Tag League"; the drawn belt still means a title. Never a focus cue.
 - Shelf: "Tag League <year>" bar under All Tag Teams (wings 22, 19/700, grey line with count, blocks, dates); entrants of the newest year get wings 16 at the right edge of their item.
