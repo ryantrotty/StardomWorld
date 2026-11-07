@@ -1,5 +1,5 @@
 {
- "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Teams match on their two members. Use the app's spellings (assets/factions.json).",
+ "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Sections: tagTeams, factions (remove, set, members), past (add, remove). Use the app's spellings (assets/factions.json).",
  "updated": "2026-11-07",
  "tagTeams": {
   "add": [
@@ -165,5 +165,14 @@
   "remove": [],
   "spell": {},
   "factionNames": []
+ },
+ "factions": {
+  "remove": [],
+  "set": [],
+  "members": {}
+ },
+ "past": {
+  "add": [],
+  "remove": []
  }
 }
