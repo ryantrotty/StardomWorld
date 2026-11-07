@@ -5118,8 +5118,10 @@ class MainActivity : Activity() {
           function matchTypeGroups() {
             try { var d = JSON.parse(AndroidHost.matchTypesJson()); return (d && d.groups) || []; } catch (e) { return []; }
           }
+          // private builds: q[type]=single leaves out sets (whole shows) from the searches the menu opens
+          function singleOnly() { try { return AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : ''; } catch (e) { return ''; } }
           function matchTypePath(x) {
-            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id);
+            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id) + singleOnly();
           }
           function matchTypeRows() {
             var out = [];
@@ -5141,7 +5143,8 @@ class MainActivity : Activity() {
           function champPath(x) {
             if (x.id && x.id !== 'any' && x.id !== 'other' && hasLineage(x.id)) return '/mypage?tvch=' + encodeURIComponent(x.id);
             if (x.path) return x.path;
-            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id);
+            if (x.category && singleOnly()) return '/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(x.category) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
+            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
           }
           var CHAMPS_OLD = [
             ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
@@ -5194,7 +5197,7 @@ class MainActivity : Activity() {
               return [m.name, m.ja || m.name];
             });
           } catch (e) {}
-          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
+          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name) + singleOnly(); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
             var out = [], old = [];
@@ -7946,17 +7949,28 @@ class MainActivity : Activity() {
     }
     return { search: r ? r[2] : '', alts: (x && x.alts) || [] };
   }
+  // Private builds: the site's own filters. q[type]=single leaves out sets (whole shows); q[category_id] (one per
+  // search) is a belt's title matches (championships.json "category") or else a year (match_types.json siteCategories).
+  var CATON = false, YRCAT = {};
+  try { CATON = !!(window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn()); } catch (e) { CATON = false; }
+  if (CATON) { try { YRCAT = ((JSON.parse(AndroidHost.matchTypesJson()) || {}).siteCategories || {}).years || {}; } catch (e) { YRCAT = {}; } }
   function buildUrl(n, mtWord, chWord) {
-    var words = [n.base];
+    var words = [n.base], cat = '';
     var a = find(MT, n.mt); if (a) words.push(mtWord || mtWords(a, n.base).search);
-    var b = find(CH, n.ch); if (b) words.push(chWord || b[2]);
+    var b = find(CH, n.ch);
+    if (b && CATON && !chWord && b[3] && b[3].category) cat = String(b[3].category);
+    else if (b) words.push(chWord || b[2]);
     if (n.co && n.co !== n.base) words.push(n.co);
     var sh0 = find(SH, n.sh); if (sh0) words.push(sh0[2]);
     var lo0 = find(LO, n.lo); if (lo0) words.push(lo0[2]);
-    var c = find(YR, n.yr); if (c) words.push(c[2]);
+    var c = find(YR, n.yr);
+    if (c && CATON && !cat && YRCAT[c[0]]) cat = String(YRCAT[c[0]]);
+    else if (c) words.push(c[2]);
     var kw = words.filter(function(w) { return w; }).join(' ');
-    if (!kw && !n.s) return '/';
+    if (!kw && !n.s && !cat) return '/';
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
+    if (cat) u += '&q%5Bcategory_id%5D=' + encodeURIComponent(cat);
+    if (CATON) u += '&q%5Btype%5D=single';
     if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
     u += '&activetab=contents&page=1';
     if (n.mt || n.ch || n.co || n.yr || n.sh || n.lo) u += '&tvb=' + encodeURIComponent(n.base || '');   // (empty = the words in the address are all filters)
@@ -7973,6 +7987,7 @@ class MainActivity : Activity() {
     Object.keys(S).forEach(function(k) { n[k] = S[k]; });
     Object.keys(patch).forEach(function(k) { n[k] = patch[k]; });
     if (FAC_MODE && window.__tvFacBase) n.base = window.__tvFacBase();
+    try { sessionStorage.setItem('tvFbAnchor', '1'); } catch (e) {}   // the new page opens at the match results, not the top
     location.href = buildUrl(n);
   }
   // for the wrestler page's tabs (wrestler.js): the same addresses the filter bar makes
@@ -8071,6 +8086,14 @@ class MainActivity : Activity() {
       return true;
     }
     buildChips();
+    // After a filter was chosen: the results, not the top of the page. A wrestler page does this itself (wrestler.js,
+    // MATCHES header and its tab); here only when no header took it.
+    setTimeout(function() {
+      var f = ''; try { f = sessionStorage.getItem('tvFbAnchor'); sessionStorage.removeItem('tvFbAnchor'); } catch (e) {}
+      if (!f || document.getElementById('tv-wr')) return;
+      try { var r = bar.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + r.top - 90)); } catch (e) {}
+      var b0 = btns[0]; if (b0) { try { b0.focus({ preventScroll: true }); } catch (e) { b0.focus(); } }
+    }, 1500);
     return true;
   }
   var chipBar = null, chips = [];
@@ -8377,6 +8400,36 @@ class MainActivity : Activity() {
     }
     return false;
   }
+  function cardBelow(a) {
+    var r = a.getBoundingClientRect();
+    var list = document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]');
+    for (var i = 0; i < list.length; i++) { var q = list[i].getBoundingClientRect(); if (q.width > 0 && q.height > 0 && q.top > r.bottom - 10) return true; }
+    return false;
+  }
+  // "Back to top" after the last video (private builds): OK goes to the top and the first tab or filter button.
+  function topTile() {
+    if (!CATON || FAC_MODE) return null;
+    var list = document.querySelector('.content-list, [class*="content-list"]');
+    if (!list || !list.parentNode) return null;
+    var t = document.getElementById('tv-fb-top');
+    if (!t) {
+      t = document.createElement('div'); t.id = 'tv-fb-top'; t.tabIndex = 0; t.setAttribute('role', 'button');
+      t.className = 'notranslate'; t.setAttribute('translate', 'no');
+      t.textContent = T('Back to top', 'トップへ戻る') + ' \u2191';
+      t.style.cssText = 'display:inline-flex;align-items:center;height:44px;padding:0 18px;margin:18px 0 30px 0;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#fff;font:700 17px Arial,Helvetica,sans-serif;cursor:pointer;';
+      t.addEventListener('focus', function() { t.style.borderColor = '#F4C242'; });
+      t.addEventListener('blur', function() { t.style.borderColor = '#2A323C'; });
+      t.addEventListener('click', goTop);
+    }
+    if (t.previousSibling !== list) list.parentNode.insertBefore(t, list.nextSibling);
+    return t;
+  }
+  function goTop() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    if (window.__tvWrTabFocus && window.__tvWrTabFocus()) return;
+    var b0 = btns[0]; if (b0) { try { b0.focus({ preventScroll: true }); } catch (e) { b0.focus(); } }
+  }
+  if (CATON && !FAC_MODE) setInterval(function() { try { topTile(); } catch (e) {} }, 1500);
   function firstCard() {
     var list = document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]');
     for (var i = 0; i < list.length; i++) {
@@ -8420,6 +8473,15 @@ class MainActivity : Activity() {
       else if (k === 40) { var fc = firstCard(); if (fc) { stop(e); fc.focus(); try { fc.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} } }
       else if (k === 13 || k === 23) { stop(e); if (ae._fn) ae._fn(); }
       return;
+    }
+    if (ae.id === 'tv-fb-top') {
+      if (k === 13 || k === 23) { stop(e); goTop(); return; }
+      if (k === 38) { stop(e); var lc = null; document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]').forEach(function(x) { var q = x.getBoundingClientRect(); if (q.width > 0 && q.height > 0) lc = x; }); if (lc) lc.focus(); return; }
+      if (k === 40) { stop(e); return; }
+    }
+    // Down from the last row when every page is in: the Back to top button
+    if (k === 40 && CATON && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardBelow(ae) && !document.querySelector('a[rel="next"], .pagination a.next, a.page-link[rel="next"]')) {
+      var tt0 = topTile(); if (tt0) { stop(e); tt0.focus(); try { tt0.scrollIntoView({ block: 'center' }); } catch (x) {} return; }
     }
     if (k === 38 && bar && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardAbove(ae)) {
       stop(e);
@@ -8551,7 +8613,8 @@ class MainActivity : Activity() {
       el.__tvMt = 1;
       var fit = mtFits(tt);
       if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(tt, fit, ''); }
-      if (fit || !el.parentNode) return;
+      if (fit) { el.setAttribute('data-tv-mt-in', '1'); return; }
+      if (!el.parentNode) return;
       // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
       // the end of the list flashed. A hidden card stays where it is, so nothing is redrawn.
       el.style.setProperty('display', 'none', 'important');
@@ -8581,6 +8644,7 @@ class MainActivity : Activity() {
             catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;
+            c.setAttribute('data-tv-mt-in', '1');
             box.appendChild(c);
           });
         }
@@ -8589,7 +8653,19 @@ class MainActivity : Activity() {
     }
     setTimeout(one, 1500);
   }
-  if (MTR && !FAC_MODE) { window.__tvNarrowing = true; narrowList(); setInterval(narrowList, 700); loadAlts(); }
+  if (MTR && !FAC_MODE) {
+    window.__tvNarrowing = true;
+    // A card is invisible (its place kept) until the title rule has judged it, so nothing appears and then vanishes.
+    var nst = document.createElement('style');
+    nst.textContent = '.content-list-item:not([data-tv-mt-in]):not([data-tv-mt-out]){visibility:hidden !important;}';
+    (document.head || document.documentElement).appendChild(nst);
+    narrowList(); setInterval(narrowList, 700); loadAlts();
+    try {
+      var nq = false;
+      new MutationObserver(function() { if (nq) return; nq = true; requestAnimationFrame(function() { nq = false; narrowList(); }); })
+        .observe(document.body, { childList: true, subtree: true });
+    } catch (e) {}
+  }
 
   var tries = 0;
   (function tick() {

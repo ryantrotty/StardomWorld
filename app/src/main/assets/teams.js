@@ -302,6 +302,7 @@
     '#tv-tt .tt-card .tt{padding:12px 14px;font-size:15px;font-weight:700;color:#fff;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}',
     '#tv-tt .tt-more{display:flex;align-items:center;justify-content:center;min-height:200px;border:2px solid #2A323C;background:#11171E;border-radius:8px;font-size:20px;font-weight:800;color:#F4C242 !important;cursor:pointer;}',
     '#tv-tt .tt-more:focus{border-color:#F4C242;background:#172029;}',
+    '#tv-tt .tt-more.tt-top{min-height:60px;font-size:17px;align-self:start;}',
     '#tv-tt .tt-msg{padding:14px 6px;font-size:16px;color:#9AA6B4;}',
     '#tv-tt .tt-empty{border:2px dashed #3B4656;border-radius:12px;padding:26px 24px;text-align:center;color:#9AA6B4;font-size:15px;font-weight:600;line-height:1.5;}',
     '#tv-tt .tt-dbg{margin-top:22px;padding:12px 16px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;}'
@@ -474,7 +475,7 @@
     var since = Date.now() - (parseInt(lsGet(LAST_KEY) || '0', 10) || 0);
     if (since < GAP_MS) { setTimeout(function() { fetchPage(q, page, cb); }, GAP_MS - since); return; }
     lsSet(LAST_KEY, String(Date.now()));
-    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + '&activetab=contents' + (page > 1 ? '&page=' + page : '');
+    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + '&activetab=contents' + (CATS_ON ? '&q%5Btype%5D=single' : '') + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { lsSet(BLOCK_KEY, String(Date.now() + 10 * 60000)); throw 'blocked (HTTP ' + res.status + ')'; }
       if (!res.ok) throw 'HTTP ' + res.status;
@@ -812,6 +813,7 @@
       box.className = 'tt-vids';
       h = list.map(cardHtml).join('') + (done ? '' : more);
     }
+    if (TAB && list.length && done) h += '<a class="tt-more tt-top" tabindex="0" data-top="1">' + esc(T('Back to top', 'トップへ戻る')) + ' \u2191</a>';
     box.innerHTML = h;
     if (st) st.textContent = (V.busy && active) ? (list.length ? list.length + ' · ' : '') + T('looking for videos', '動画を検索中') :
       (!list.length && !done ? (ran ? T('none found yet', 'まだありません') : T('waiting', '待機中')) : list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合'));
@@ -947,6 +949,7 @@
     if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(); return true; }
     if (el.getAttribute('data-lmore') != null) { if (!V.busy) leagueMore(); return true; }
     if (el.getAttribute('data-cmore') != null) { if (!V.busy) champMore(); return true; }
+    if (el.getAttribute('data-top') != null) { scroller.scrollTop = 0; focusEl(scroller.querySelector('.tt-chip.tt-on') || scroller.querySelector('[tabindex="0"]')); return true; }
     if (el.getAttribute('data-favb') != null) { if (window.__tvFav && TEAM) window.__tvFav.toggleTeam(TEAM.id); return true; }
     return false;
   }

@@ -10,6 +10,19 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.44.0
+
+Private builds only. Uses the site's own search filters (found by Ryan): q[type] (single video or set) and q[category_id] (one per search, together with the keywords).
+
+- Every search the app makes (filter bar, wrestler and category tabs, extra searches, menu searches, tag team pages) adds q[type]=single, so sets (whole shows) are left out by the site instead of after loading. The title rule for date_underscore show videos stays for older uploads posted as single videos.
+- Championship filter: World of Stardom (31), Wonder of Stardom (32), High Speed (33) and IWGP Women's (43) search the site's category for that belt (championships.json "category") instead of the belt's words, so the list is that belt's title matches exactly. Other belts keep their words and title rules.
+- Year filter: searches the site's category for that year (2026 = 51 … 2011 = 3, match_types.json siteCategories) instead of adding the year as a word. When a belt category is already in use, the year goes back to being a word (one category per search).
+- No flash at the end of narrowed lists: a card stays invisible (its place kept) until the title rule has judged it, and new cards are judged as soon as they arrive.
+- After choosing a filter or a tab, the new page opens at MATCHES with that tab (or the filter bar) focused, instead of at the top of the page.
+- Back to top: a button after the last video on search result pages (Down from the last row reaches it once every page is in) and after a finished grid on tag team page tabs.
+- Wrestler pages: Down from the tabs goes to the first video that is showing (it could pick a hidden one and get stuck, as on Starlight Kid's Championship tab).
+- Championship rule: "next challenger team" matches (次期挑戦チーム決定) are left out too.
 ## 2.43.3
 
 From the first rows in the sheet's debug tab (Saya Kamitani, BMI2000, wing★gori). Private builds only.

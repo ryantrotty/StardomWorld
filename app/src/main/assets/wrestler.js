@@ -183,6 +183,17 @@
     bar.parentNode.insertBefore(root, bar);
     align();
     // start on the header, at the top of the page
+    var anchorFlag = ''; try { anchorFlag = sessionStorage.getItem('tvFbAnchor'); sessionStorage.removeItem('tvFbAnchor'); } catch (e) {}
+    if (anchorFlag) {   // a filter or tab was just chosen: open at MATCHES with its tab (or the filter bar) focused
+      var go2 = function() {
+        var secs = root.querySelectorAll('.wr-sec'), m = secs[secs.length - 1];
+        if (m) { var r = m.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + r.top - 20)); }
+        var t0 = root.querySelector('.wr-tab-on') || (fbShown() ? document.querySelector('#tv-fb .tv-fbb') : null) || root.querySelector('.wr-tab');
+        if (t0) { try { t0.focus({ preventScroll: true }); } catch (e) { t0.focus(); } }
+      };
+      go2(); setTimeout(go2, 600);
+      return true;
+    }
     var ae = document.activeElement;
     if (!ae || ae === document.body || (ae.closest && ae.closest('.content-list, [class*="content-list"]'))) {
       var f0 = root.querySelector('[tabindex="0"]');
@@ -257,7 +268,7 @@
       if (n) { stop(); focusEl(n); return; }
       if (dir === 'down') {
         var fb = fbShown() ? document.querySelector('#tv-fb .tv-fbb') : null;
-        if (!fb) fb = document.querySelector('.content-list .content-list-item a[href], .content-list a[href*="/contents/"]');   // filter bar hidden: the first video
+        if (!fb) fb = Array.prototype.filter.call(document.querySelectorAll('.content-list .content-list-item a[href], .content-list a[href*="/contents/"]'), function(x) { var q = x.getBoundingClientRect(); return q.width > 0 && q.height > 0; })[0] || null;   // filter bar hidden: the first video showing
         if (fb) { stop(); focusEl(fb); }
         return;
       }
