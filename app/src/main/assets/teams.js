@@ -291,7 +291,8 @@
     // which roster file this TV is using, so a roster change can be checked on screen (stays put, no fading)
     var R = CFG.roster || {};
     h += '<div class="tt-roster">' + esc(R.state === 'ok'
-      ? T('Roster file' + (R.updated ? ' of ' + fmtD(R.updated) : '') + ': ' + R.adds + ' added, ' + R.removes + ' removed', '名簿ファイル' + (R.updated ? '（' + fmtD(R.updated) + '）' : '') + '：追加 ' + R.adds + '・削除 ' + R.removes)
+      ? T('Roster file' + (R.updated ? ' of ' + fmtD(R.updated) : '') + ': tag teams ' + R.adds + ' added, ' + R.removes + ' removed · factions ' + (R.factions || 0) + ' changed · faction members ' + (R.members || 0) + ' changed · past wrestlers ' + (R.pastAdds || 0) + ' added, ' + (R.pastRemoves || 0) + ' removed',
+          '名簿ファイル' + (R.updated ? '（' + fmtD(R.updated) + '）' : '') + '：タッグ 追加 ' + R.adds + '・削除 ' + R.removes + ' · ユニット 変更 ' + (R.factions || 0) + ' · メンバー 変更 ' + (R.members || 0) + ' · 元所属 追加 ' + (R.pastAdds || 0) + '・削除 ' + (R.pastRemoves || 0))
       : T('Roster file: not downloaded yet (built-in list)', '名簿ファイル：未取得（内蔵リスト）')) + '</div>';
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-chip.tt-on') || scroller.querySelector('.tt-chip'));

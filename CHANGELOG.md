@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.40.0
+
+- Roster file now covers factions, faction members and past wrestlers as well as tag teams, so all of them can change without a new APK (same download, same `roster-data` branch). See `docs/ROSTER.md`.
+  - `factions.remove` (faction ids), `factions.set` (whole faction entries: replaces one with the same id in place; a new current faction goes before the former ones) and `factions.members` (per faction id: `add` and `remove` members).
+  - Current Wrestlers is still everyone in the current factions, Unaffiliated included, so a member change shows up in the menu, the filter bar's wrestler lists and the wrestler pages. Moving someone is a remove in one faction and an add in another.
+  - `past.add` and `past.remove` change the past wrestlers list (menu PAST tab and the filter bar).
+- The menu's PAST tab now reads `past_wrestlers.json` (with the roster changes) instead of its own copy in the code; the copy stays as a fallback. A member's `ja` name in either file is used for the Japanese menu.
+- The roster line on All Tag Teams now also counts faction, member and past wrestler changes.
+
 ## 2.39.0
 
 - Roster file: tag teams can now be added or hidden without a new APK. The app downloads `roster.json` from the new `roster-data` branch at its schedule check (at most every six hours, one small GitHub request with an ETag; never the Stardom sites) and merges it with `assets/tag_teams.json`: `add` (new teams, the roster's entry wins for a pair already listed), `remove` (pairs to hide, either order), `spell` and `factionNames`. The last good copy stays if a download fails. See `docs/ROSTER.md`.
