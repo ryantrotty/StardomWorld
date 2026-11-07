@@ -7,6 +7,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.43.1
+
+- Videos flashing at the end of a category list: the title filter removed cards that didn't fit, which left the page short, so the page loader fetched the next page, and the next, about once a second without end. While a list is narrowed by title (category tabs and the match types with title rules), the next page now loads only after a key press, one page per press.
+- Wrestler pages: Up from the first row of videos goes back to the tabs when the filter bar is hidden behind More (it was trying to reach the hidden filter bar and stopped).
+- Category debug line: shows the sheet status from the start ("sending after the searches", then "sent to the sheet" or the sheet's error), and is sent once the extra searches are done rather than after 12 s. "bad action" means the Apps Script still needs the updated version published.
 ## 2.43.0
 
 Private builds only (public builds unchanged).

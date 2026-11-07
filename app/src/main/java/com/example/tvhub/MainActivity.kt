@@ -1228,7 +1228,11 @@ class MainActivity : Activity() {
           if (window.__tvInfiniteScroll) return;
           window.__tvInfiniteScroll = true;
 
-          var loading = false;
+          var loading = false, lastLoad = 0, lastKey = 0;
+          // While the filter bar narrows the list by title (window.__tvNarrowing), cards it removes leave the page short,
+          // which used to trigger the next page, and the next, without end (a request every second, cards flashing at
+          // the end). Then a page is only loaded after a key press, one page per press.
+          window.addEventListener('keydown', function() { lastKey = Date.now(); }, true);
 
           function hidePagination() {
             var pagers = document.querySelectorAll('.pagination, .p-pagination, .pager');
@@ -1244,12 +1248,14 @@ class MainActivity : Activity() {
             var pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
 
             if (pageHeight - scrollBottom > 800) return;
+            if (window.__tvNarrowing && !(lastKey > lastLoad && Date.now() - lastKey < 5000)) return;
 
             var nextLink = document.querySelector('a[rel="next"], .pagination a.next, a.page-link[rel="next"]');
             if (!nextLink || !nextLink.href) return;
 
             var nextUrl = nextLink.href;
             loading = true;
+            lastLoad = Date.now();
 
             fetch(nextUrl)
               .then(function(res) { return res.text(); })
@@ -8417,6 +8423,7 @@ class MainActivity : Activity() {
     }
     if (k === 38 && bar && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardAbove(ae)) {
       stop(e);
+      if (!bar.offsetParent && window.__tvWrTabFocus) { window.__tvWrTabFocus(); return; }   // bar hidden behind More: the tabs
       var tb = chips.length ? chips[0] : (btns[Math.min(lastBtn, btns.length - 1)] || btns[0]);
       if (tb) { tb.focus(); try { tb.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} }
     }
@@ -8514,14 +8521,14 @@ class MainActivity : Activity() {
         if (rid !== id) { if (prev) prev(rid, text); return; }
         window.__tvTeamSyncReply = prev;
         var r = null; try { r = JSON.parse(text); } catch (e) {}
-        CAT.sent = r && r.ok ? 'sent to the sheet' : 'sheet: ' + ((r && r.error) || 'no reply');
+        CAT.sent = r && r.ok ? 'sent to the sheet' : 'sheet: ' + ((r && r.error) || 'no reply') + ((r && r.error) === 'bad action' ? ' (publish the updated Apps Script)' : '');
         catPaint();
       };
       AndroidHost.teamSync(id, JSON.stringify({ action: 'dbg_put', team: '', page: 'wrestler', subject: S.base, tab: CAT.id, url: location.pathname + location.search,
         record: { words: CAT.words, kept: CAT.kept, dropped: CAT.dropped, alts: CAT.alts, onRecord: (window.__tvWrRecord || []).length } }));
     } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
   }
-  if (CAT) { setInterval(catPaint, 1500); setTimeout(catSend, 12000); }
+  if (CAT) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
   function narrowList() {
     if (!MTR) return;
     // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
@@ -8570,7 +8577,7 @@ class MainActivity : Activity() {
     }
     setTimeout(one, 1500);
   }
-  if (MTR && !FAC_MODE) { narrowList(); setInterval(narrowList, 700); loadAlts(); }
+  if (MTR && !FAC_MODE) { window.__tvNarrowing = true; narrowList(); setInterval(narrowList, 700); loadAlts(); }
 
   var tries = 0;
   (function tick() {

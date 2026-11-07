@@ -84,6 +84,7 @@
     CATS.forEach(function(x) { h += '<a class="wr-tab' + (curMt === x.id && !otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="' + esc(x.id) + '">' + esc(isJa() && x.ja ? x.ja : x.name) + '</a>'; });
     return h + '<a class="wr-tab wr-tab-more' + (otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrmore="1">' + esc(T('More', '詳細')) + ' ▾</a></div>';
   }
+  window.__tvWrTabFocus = function() { var tab = root && (root.querySelector('.wr-tab-on') || root.querySelector('.wr-tab')); if (tab) { focusEl(tab); return true; } return false; };
   function fbShown() { return !CATS.length || otherFilters || document.documentElement.classList.contains('tv-fb-show'); }
   if (CATS.length && !otherFilters) document.documentElement.classList.add('tv-cats');
   var first = reigns.length ? reigns[reigns.length - 1].won : '', defTotal = 0;
