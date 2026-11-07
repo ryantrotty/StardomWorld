@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.35.1
+
+Private builds only.
+
+- Every wrestler photo in the app (wrestler pages, tag team pages and cards, My Favorites, the menu spotlight) now comes from the small copies (`wspot_<name>.jpg`), falling back to an original `wrestler_<name>` file only when there is no copy. The originals no longer need to be in the app.
+- The copies are 480 × 720 (were 360 × 540), so the 300 × 450 spotlight stays sharp on a 1080p TV; all 47 are 3.4 MB.
+- `scripts/make_wrestler_spots.py` reads originals from `branding-private/wrestler-photos/` (outside `res/`, not packed into the app) as well as `res/drawable-nodpi/`, accepts names with or without `wrestler_`, remakes a copy when its original is newer or it is the wrong size, and `--move-originals` moves the old files out of `res/` (nothing is deleted).
+
 ## 2.35.0
 
 Private builds only (public builds keep the four text columns).

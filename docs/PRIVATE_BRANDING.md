@@ -37,8 +37,9 @@ Place your custom PNG images into `branding-private/res/drawable-nodpi/` using t
 | **`header_logo.png`** | Site Header Logo | **1100 × 200 px** (Transparent PNG, placed top-left in web header) |
 | **`splash_logo.png`** | Launch Splash Screen Logo | **1100 × 271 px** (PNG on black background, centered on app start) |
 
-| **`wrestler_<name>.jpg`** (or .png) | Wrestler photo (wrestler pages, My Favorites, tag teams) | **800 × 1200 px** portrait; name in lower case with anything that is not a letter or digit written as `_` (e.g. `wrestler_momo_watanabe.jpg`) |
-| **`wspot_<name>.jpg`** | Small copy for the menu's Wrestlers spotlight | **360 × 540 px**, made by `python3 scripts/make_wrestler_spots.py` (run it again after adding or replacing photos; without a copy the full photo is used) |
+| **`wspot_<name>.jpg`** | Wrestler photo, used everywhere the app shows one (wrestler pages, tag teams, My Favorites, the menu's Wrestlers spotlight) | **480 × 720 px**, made by `python3 scripts/make_wrestler_spots.py`; `<name>` is lower case with anything that is not a letter or digit written as `_` (e.g. `wspot_momo_watanabe.jpg`) |
+
+*Wrestler photo originals* (any size, .jpg or .png, named `momo_watanabe.jpg` or `wrestler_momo_watanabe.jpg`) go in `branding-private/wrestler-photos/`, outside `res/`, so they are not packed into the app. Run the script after adding or replacing one; it remakes only the copies that changed. `--move-originals` moves any `wrestler_*` files still in `res/drawable-nodpi/` into that folder. The app still reads a `wrestler_<name>` file left in `res/drawable-nodpi/` when there is no copy.
 
 *Note: Any image file you provide in `branding-private/` overrides the generic version. Any file you omit automatically falls back to the generic build artwork.*
 

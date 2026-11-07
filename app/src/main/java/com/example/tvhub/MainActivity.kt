@@ -3159,35 +3159,30 @@ class MainActivity : Activity() {
             } catch (_: Exception) { "" }
         }
 
-        // A wrestler's photo from the private branding folder (res/drawable-nodpi/wrestler_<name>.jpg or .png, lower
-        // case, anything that is not a letter or digit written as "_"), as a data address. Private builds only;
-        // empty when the build doesn't have it: the page shows initials.
+        // A wrestler's photo from the private branding folder, as a data address: the copy made by
+        // scripts/make_wrestler_spots.py (res/drawable-nodpi/wspot_<name>.jpg, 480 x 720), else an original
+        // (wrestler_<name>.jpg or .png) still in that folder. <name> is lower case, anything that is not a letter or
+        // digit written as "_". Private builds only; empty when there is none: the page shows initials.
+        // Used by the wrestler page, tag teams, My Favorites and the menu's Wrestlers spotlight (2.35.1).
         @android.webkit.JavascriptInterface
         fun wrestlerPhoto(name: String): String {
             if (!BuildConfig.SHOW_POSTERS) return ""
             return try {
                 val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
-                val resId = this@MainActivity.resources.getIdentifier("wrestler_" + slug, "drawable", this@MainActivity.packageName)
+                val res = this@MainActivity.resources
+                val pkg = this@MainActivity.packageName
+                var resId = res.getIdentifier("wspot_" + slug, "drawable", pkg)
+                if (resId == 0) resId = res.getIdentifier("wrestler_" + slug, "drawable", pkg)
                 if (resId == 0) return ""
-                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
+                val bytes = res.openRawResource(resId).use { it.readBytes() }
                 val mime = if (bytes.size > 3 && bytes[0] == 0x89.toByte()) "image/png" else "image/jpeg"
                 "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             } catch (_: Exception) { "" }
         }
 
-        // The menu's Wrestlers spotlight (assets/wrspot.js): the small copy made by scripts/make_wrestler_spots.py
-        // (res/drawable-nodpi/wspot_<name>.jpg, 360 x 540), else the full photo. Private builds only; empty otherwise.
+        // The menu's Wrestlers spotlight (assets/wrspot.js): the same photo.
         @android.webkit.JavascriptInterface
-        fun wrestlerSpot(name: String): String {
-            if (!BuildConfig.SHOW_POSTERS) return ""
-            return try {
-                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
-                val resId = this@MainActivity.resources.getIdentifier("wspot_" + slug, "drawable", this@MainActivity.packageName)
-                if (resId == 0) return wrestlerPhoto(name)
-                val bytes = this@MainActivity.resources.openRawResource(resId).use { it.readBytes() }
-                "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-            } catch (_: Exception) { "" }
-        }
+        fun wrestlerSpot(name: String): String = wrestlerPhoto(name)
 
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
