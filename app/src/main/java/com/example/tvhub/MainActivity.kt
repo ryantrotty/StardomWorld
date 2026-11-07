@@ -1356,8 +1356,8 @@ class MainActivity : Activity() {
                   var startItem = flip ? contentItems[contentItems.length - 1] : contentItems[0];
                   var endItem = flip ? contentItems[0] : contentItems[contentItems.length - 1];
                   targetLink = startItem.href;
-                  // Private builds: the first video shows the set order card (assets/setcard.js).
-                  if (so && so.isPrivate() && contentItems.length > 1) {
+                  // The first video shows the set order card (assets/setcard.js).
+                  if (so && contentItems.length > 1) {
                     try {
                       sessionStorage.setItem('tvSetStartV1', JSON.stringify({
                         set: setId, at: Date.now(), n: contentItems.length, flip: flip, sure: dec.sure, why: dec.why,
