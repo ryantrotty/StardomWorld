@@ -1,5 +1,5 @@
 {
- "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Sections: tagTeams, factions (remove, set, members), past (add, remove). Use the app's spellings (assets/factions.json).",
+ "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Sections: tagTeams, factions (remove, set, members), past (add, remove), tagLeague (per year: blocks of teams). Use the app's spellings (assets/factions.json).",
  "updated": "2026-11-07",
  "tagTeams": {
   "add": [
@@ -174,5 +174,110 @@
  "past": {
   "add": [],
   "remove": []
+ },
+ "tagLeague": {
+  "2026": {
+   "name": "16th Goddesses of Stardom Tag League",
+   "ja": "第16回 ゴッデス・オブ・スターダム〜タッグリーグ戦〜",
+   "dates": "1 to 29 Nov 2026",
+   "winners": "2025 winners: Sakurara",
+   "winnersJa": "2025年優勝: さくらら",
+   "prevWinners": {
+    "year": 2025,
+    "team": [
+     "Sakura Aya",
+     "Sayaka Kurara"
+    ]
+   },
+   "winnerTeam": null,
+   "blocks": [
+    {
+     "id": "blue",
+     "name": "BLUE GODDESSES",
+     "ja": "ブルーゴッデス",
+     "teams": [
+      [
+       "Suzu Suzuki",
+       "Rina Yamashita"
+      ],
+      [
+       "Natsupoi",
+       "Rian"
+      ],
+      [
+       "Ranna Yagami",
+       "Akira Kurogane"
+      ],
+      [
+       "Hina",
+       "Lady C"
+      ],
+      [
+       "Hazuki",
+       "Koguma"
+      ],
+      [
+       "Dark Silueta",
+       "Valkyria"
+      ],
+      [
+       "Konami",
+       "Rina"
+      ],
+      [
+       "Natsuko Tora",
+       "Ruaka"
+      ],
+      [
+       "Saya Iida",
+       "Utami Hayashishita"
+      ]
+     ]
+    },
+    {
+     "id": "red",
+     "name": "RED GODDESSES",
+     "ja": "レッドゴッデス",
+     "teams": [
+      [
+       "Sakura Aya",
+       "Sayaka Kurara"
+      ],
+      [
+       "Saori Anou",
+       "Fuwa Chan"
+      ],
+      [
+       "Yuna Mizumori",
+       "Anne Kanaya"
+      ],
+      [
+       "Maika",
+       "Hanako"
+      ],
+      [
+       "Hanan",
+       "Waka Tsukiyama"
+      ],
+      [
+       "Mei Seira",
+       "Ema Maishima"
+      ],
+      [
+       "Kikyo Furusawa",
+       "Kiyoka Kotatsu"
+      ],
+      [
+       "Starlight Kid",
+       "Maki Itoh"
+      ],
+      [
+       "Momo Watanabe",
+       "Saya Kamitani"
+      ]
+     ]
+    }
+   ]
+  }
  }
 }
