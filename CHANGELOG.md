@@ -13,6 +13,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.46.2
+
+- Splash logo: transparent background, so it sits on the navy splash instead of in a black box. The generic logo here; the private build's logo (branding-private, not in git) was converted the same way on the build machine. All builds.
+
 ## 2.46.1
 
 - One background colour everywhere: the app-drawn pages' navy (#0B1118) replaces black on the reskinned site pages (search results, show and video pages, sort bar, footer, page title band, player bar), the sign-in page, the loading screen between pages, the splash and behind a loading page. Black stays only behind full-screen video. All builds.
