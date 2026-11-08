@@ -423,6 +423,8 @@
   // Private builds: Titles & tournaments categories (match_types.json, private group; the roster file can change them).
   var CATS_ON = false, CAT = {};
   try { CATS_ON = !!(H.categoriesOn && H.categoriesOn()); } catch (e) { CATS_ON = false; }
+  var DEBUG_ON = false;   // debug panels: private builds only
+  try { DEBUG_ON = !!(H.debugOn && H.debugOn()); } catch (e) { DEBUG_ON = false; }
   if (CATS_ON) {
     try {
       ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) {
@@ -937,7 +939,7 @@
       h += '<div class="tt-chips" style="margin-top:26px">' + tabs.map(function(x) {
         return '<a class="tt-chip' + (x[0] === TAB ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(teamPath(t) + (x[0] === 'all' ? '' : '&tvtab=' + x[0]))) + '">' + (x[0] === 'tl' ? wings(16, x[0] === TAB ? '#1A1A1A' : '#F4C242', x[0] === TAB ? '#FFB347' : '#161F2A') : '') + esc(x[1]) + '</a>';
       }).join('') + '<a class="tt-chip" style="margin-left:14px" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
-      h += '<div class="tt-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div><div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>';
+      h += '<div class="tt-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div>' + (DEBUG_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');
     } else {
     h += '<div class="tt-sec" id="tt-lsec">' + wings(24, '#F4C242', '#0B1118') + '<b>' + esc(T('TAG LEAGUE MATCHES', 'タッグリーグ戦')) + '</b><span id="tt-lvst"></span></div><div id="tt-lvids"></div>';
     h += '<div class="tt-sec"><i></i><b>' + esc(T('TAG MATCHES', 'タッグマッチ')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div><div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>';
@@ -1096,7 +1098,7 @@
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(api.W.name) + '</div><div class="tt-note">' + esc(T('Wrestler', '選手')) + '</div></div>' +
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
     h += '<div id="tv-wr" class="notranslate" translate="no" style="margin-top:18px;padding-right:0">' + api.header(tabs) + '</div>';
-    h += '<div id="tt-vids"></div>' + (CATS_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');
+    h += '<div id="tt-vids"></div>' + (DEBUG_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');
     scroller.innerHTML = h;
     window.__tvWrAppFav = function() { var b = scroller.querySelector('[data-wrfav]'); if (b) { b.innerHTML = api.favInner(); b.classList.toggle('wr-on', api.isFav()); } };
     // a tab was just chosen: open at MATCHES with that tab focused; otherwise on the favorites button

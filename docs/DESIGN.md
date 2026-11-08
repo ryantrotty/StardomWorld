@@ -157,7 +157,7 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 
 Filter bar drop-downs (2.41.1): a list that would not fit below its button scrolls the page first so the bar sits near the top (at least 90 px down), then opens below it; Back scrolls back.
 
-Category tabs (2.43.0, private builds): wrestler pages show a tab row under MATCHES (chips: 44 high, radius 10, 2 px border, 17/700; chosen = look B fill; focus = gold border; More set 14 px apart). The filter bar is hidden until More. Tag team pages show the same chip row before MATCHES (Tag League chip carries wings 16). Category debug lines use the debug panel style under the filter bar (wrestler) or in the team page's debug panel.
+Category tabs (2.43.0, private builds; every build since 2.47.1, debug panels still private only): wrestler pages show a tab row under MATCHES (chips: 44 high, radius 10, 2 px border, 17/700; chosen = look B fill; focus = gold border; More set 14 px apart). The filter bar is hidden until More. Tag team pages show the same chip row before MATCHES (Tag League chip carries wings 16). Category debug lines use the debug panel style under the filter bar (wrestler) or in the team page's debug panel.
 
 Back to top (2.44.0, private builds): after the last video of a search results page, a 44 high button (radius 10, 2 px #2A323C border, #161F2A, 17/700, "Back to top ↑"); focus = gold border. On tag team page tabs it is a small More-style tile (60 high) after a finished grid.
 

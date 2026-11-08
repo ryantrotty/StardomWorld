@@ -2616,7 +2616,7 @@ class MainActivity : Activity() {
     // Match types: assets/match_types.json with the roster file's "matchTypes" applied: { "<id>": { fields } } replaces
     // those fields on the match type with that id (search words, title patterns, alts), so a category rule can be fixed
     // without a new APK.
-    private fun rosterMatchTypes(): String = rosterMatchTypes(BuildConfig.SHOW_POSTERS)
+    private fun rosterMatchTypes(): String = rosterMatchTypes(true)   // the Titles & tournaments group is in every build since 2.47.1
 
     // includePrivate: keep the private groups (Titles & tournaments) even in a public build; used by the app-drawn
     // wrestler page's tabs, which are in every build (2.47.0)
@@ -3116,7 +3116,12 @@ class MainActivity : Activity() {
 
         // Private builds: the Titles & tournaments categories (tabs on wrestler and tag team pages, Match type entries).
         @android.webkit.JavascriptInterface
-        fun categoriesOn(): Boolean = BuildConfig.SHOW_POSTERS
+        // The Titles & tournaments categories and single-match searches: every build since 2.47.1 (private only before).
+        fun categoriesOn(): Boolean = true
+
+        // Debug panels and sheet logging: private builds only.
+        @android.webkit.JavascriptInterface
+        fun debugOn(): Boolean = BuildConfig.SHOW_POSTERS
 
         // Top rated Stardom matches (assets/top_matches.json) for the Matches shelf and the Top Rated page.
         @android.webkit.JavascriptInterface
@@ -8635,7 +8640,9 @@ class MainActivity : Activity() {
         record: { words: CAT.words, kept: CAT.kept, dropped: CAT.dropped, alts: CAT.alts, onRecord: (window.__tvWrRecord || []).length } }));
     } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
   }
-  if (CAT) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
+  // the checks run in every build; the panel and the sheet only in private builds
+  var CAT_DBG = false; try { CAT_DBG = !!(window.AndroidHost && AndroidHost.debugOn && AndroidHost.debugOn()); } catch (e) { CAT_DBG = false; }
+  if (CAT && CAT_DBG) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
   // Private builds, wrestler category tabs: the site's search also returns videos the wrestler isn't in. A card dated
   // before their debut goes (undated: by the upload time in its picture's address), and a Championship tab card must
   // pass the wrestler page's title-record check (wrestler.js). '' keeps the card, else the reason.

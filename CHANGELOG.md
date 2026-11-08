@@ -13,6 +13,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.47.1
+
+- Titles & tournaments in every build: the Championship, 5★STAR GP, Cinderella Tournament and Tag League match types in the Matches menu, the tabs on tag team pages and on the search-page wrestler view, belt and year categories and single-match searches (no whole-show sets) are no longer private-only. The checks behind them (title rules, debut, title records) run in every build.
+- Debug panels (category tabs, team and wrestler pages) and the sheet logging stay in private builds only (new AndroidHost.debugOn()).
+
 ## 2.47.0
 
 - Wrestler pages (all builds): every wrestler link opens the app-drawn wrestler page with its tabs (All Matches, Championship, 5★STAR GP, Cinderella Tournament, Tag League, More), single matches only and the debut and title-record checks. The debug panel and the sheet logging stay in private builds.
