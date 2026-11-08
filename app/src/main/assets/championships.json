@@ -1,5 +1,5 @@
 {
- "_note": "Championships for the filter bar and the menu. search = the word sent to the site's keyword search; path = a site page that already lists it; all = patterns the title must contain; alts = other names searched once more and merged in.",
+ "_note": "Championships for the filter bar and the menu. search = the word sent to the site's keyword search; path = a site page that already lists it; all = patterns the title must contain; alts = other names searched once more and merged in. category (private builds): the site's own category id for that belt's title matches, searched with q[category_id] instead of the belt's words.",
  "groups": [
   {
    "name": "Stardom",
@@ -34,7 +34,8 @@
      "name": "High Speed",
      "ja": "ハイスピード",
      "search": "High-Speed Championship",
-     "path": "/contents/category/high_speed"
+     "path": "/contents/category/high_speed",
+     "category": 33
     },
     {
      "id": "kawaii",
@@ -56,14 +57,16 @@
      "name": "Wonder of Stardom",
      "ja": "ワンダー・オブ・スターダム",
      "search": "Wonder of Stardom",
-     "path": "/contents/category/wonder-sd"
+     "path": "/contents/category/wonder-sd",
+     "category": 32
     },
     {
      "id": "world",
      "name": "World of Stardom",
      "ja": "ワールド・オブ・スターダム",
      "search": "World of Stardom",
-     "path": "/contents/category/world-sd"
+     "path": "/contents/category/world-sd",
+     "category": 31
     },
     {
      "id": "other",
@@ -82,7 +85,8 @@
      "name": "IWGP Women's",
      "ja": "IWGP女子",
      "search": "IWGP Women's",
-     "path": "/contents/category/iwgp"
+     "path": "/contents/category/iwgp",
+     "category": 43
     },
     {
      "id": "strong",

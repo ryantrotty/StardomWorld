@@ -1228,7 +1228,11 @@ class MainActivity : Activity() {
           if (window.__tvInfiniteScroll) return;
           window.__tvInfiniteScroll = true;
 
-          var loading = false;
+          var loading = false, lastLoad = 0, lastKey = 0;
+          // While the filter bar narrows the list by title (window.__tvNarrowing), cards it removes leave the page short,
+          // which used to trigger the next page, and the next, without end (a request every second, cards flashing at
+          // the end). Then a page is only loaded after a key press, one page per press.
+          window.addEventListener('keydown', function() { lastKey = Date.now(); }, true);
 
           function hidePagination() {
             var pagers = document.querySelectorAll('.pagination, .p-pagination, .pager');
@@ -1244,12 +1248,14 @@ class MainActivity : Activity() {
             var pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
 
             if (pageHeight - scrollBottom > 800) return;
+            if (window.__tvNarrowing && !(lastKey > lastLoad && Date.now() - lastKey < 5000)) return;
 
             var nextLink = document.querySelector('a[rel="next"], .pagination a.next, a.page-link[rel="next"]');
             if (!nextLink || !nextLink.href) return;
 
             var nextUrl = nextLink.href;
             loading = true;
+            lastLoad = Date.now();
 
             fetch(nextUrl)
               .then(function(res) { return res.text(); })
@@ -2596,6 +2602,31 @@ class MainActivity : Activity() {
         } catch (_: Exception) { bundled }
     }
 
+    // Match types: assets/match_types.json with the roster file's "matchTypes" applied: { "<id>": { fields } } replaces
+    // those fields on the match type with that id (search words, title patterns, alts), so a category rule can be fixed
+    // without a new APK.
+    private fun rosterMatchTypes(): String {
+        val bundled = assetText("match_types.json")
+        return try {
+            val base = org.json.JSONObject(bundled)
+            val all = base.optJSONArray("groups") ?: return bundled
+            // public builds leave out the private groups (Titles & tournaments)
+            val groups = org.json.JSONArray()
+            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (BuildConfig.SHOW_POSTERS || !it.optBoolean("private")) groups.put(it) }
+            base.put("groups", groups)
+            val mt = rosterData()?.optJSONObject("matchTypes") ?: return base.toString()
+            for (g in 0 until groups.length()) {
+                val items = groups.optJSONObject(g)?.optJSONArray("items") ?: continue
+                for (i in 0 until items.length()) {
+                    val it = items.optJSONObject(i) ?: continue
+                    val ch = mt.optJSONObject(it.optString("id")) ?: continue
+                    val ks = ch.keys(); while (ks.hasNext()) { val k = ks.next(); it.put(k, ch.get(k)) }
+                }
+            }
+            base.toString()
+        } catch (_: Exception) { bundled }
+    }
+
     // The downloaded roster file (filesDir/roster.json), read once per change of the file; null when there is none.
     private var rosterCache: org.json.JSONObject? = null
     private var rosterStamp = -1L
@@ -2734,7 +2765,7 @@ class MainActivity : Activity() {
             if (code == 200) {
                 val body = c.inputStream.bufferedReader().use { it.readText() }
                 val rj = org.json.JSONObject(body)
-                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null) {
+                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null) {
                     have.writeText(body)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
                 }
@@ -3057,9 +3088,11 @@ class MainActivity : Activity() {
         } catch (_: Exception) { "" }
 
         @android.webkit.JavascriptInterface
-        fun matchTypesJson(): String = try {
-            this@MainActivity.assets.open("match_types.json").bufferedReader().use { it.readText() }
-        } catch (_: Exception) { "" }
+        fun matchTypesJson(): String = this@MainActivity.rosterMatchTypes()
+
+        // Private builds: the Titles & tournaments categories (tabs on wrestler and tag team pages, Match type entries).
+        @android.webkit.JavascriptInterface
+        fun categoriesOn(): Boolean = BuildConfig.SHOW_POSTERS
 
         // Top rated Stardom matches (assets/top_matches.json) for the Matches shelf and the Top Rated page.
         @android.webkit.JavascriptInterface
@@ -3177,7 +3210,7 @@ class MainActivity : Activity() {
         // "teammatches" tab, so TVs reuse them instead of searching the site again. Replies go to __tvTeamSyncReply.
         @android.webkit.JavascriptInterface
         fun teamSync(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("tm_get", "tm_put"), "__tvTeamSyncReply")
+            sheetCall(reqId, payload, setOf("tm_get", "tm_put", "dbg_put"), "__tvTeamSyncReply")
 
         // One request to the private sheet: only the listed actions, the key added here, the reply handed to `callback`.
         private fun sheetCall(reqId: String, payload: String, allowed: Set<String>, callback: String) {
@@ -5085,8 +5118,10 @@ class MainActivity : Activity() {
           function matchTypeGroups() {
             try { var d = JSON.parse(AndroidHost.matchTypesJson()); return (d && d.groups) || []; } catch (e) { return []; }
           }
+          // private builds: q[type]=single leaves out sets (whole shows) from the searches the menu opens
+          function singleOnly() { try { return AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : ''; } catch (e) { return ''; } }
           function matchTypePath(x) {
-            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id);
+            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id) + singleOnly();
           }
           function matchTypeRows() {
             var out = [];
@@ -5108,7 +5143,8 @@ class MainActivity : Activity() {
           function champPath(x) {
             if (x.id && x.id !== 'any' && x.id !== 'other' && hasLineage(x.id)) return '/mypage?tvch=' + encodeURIComponent(x.id);
             if (x.path) return x.path;
-            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id);
+            if (x.category && singleOnly()) return '/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(x.category) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
+            return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
           }
           var CHAMPS_OLD = [
             ['Any championship match', '/contents/search?q%5Bkeyword%5D=Championship&activetab=contents&page=1&tvb=&tvch=any', 'すべての王座戦'],
@@ -5161,7 +5197,7 @@ class MainActivity : Activity() {
               return [m.name, m.ja || m.name];
             });
           } catch (e) {}
-          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name); }
+          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name) + singleOnly(); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
             var out = [], old = [];
@@ -5169,7 +5205,7 @@ class MainActivity : Activity() {
               var d = JSON.parse(AndroidHost.factionsJson());
               (d.factions || []).forEach(function(f) {
                 if (!f.members || !f.members.length) return;
-                (f.former ? old : out).push([f.former ? f.name + ' (former)' : f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
+                (f.former ? old : out).push([f.former ? f.name + ' (former)' : f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id) + singleOnly(), f.name]);
               });
             } catch (e) {}
             return out.concat(old);
@@ -5192,7 +5228,7 @@ class MainActivity : Activity() {
             } catch (e) {}
             if (!out.length) return wrestlers(CURRENT_W);
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
-            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]), m[2]]; });
+            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]) + singleOnly(), m[2]]; });
           }
           // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
           function pastWrestlers() {
@@ -5204,7 +5240,7 @@ class MainActivity : Activity() {
               (d.factions || []).forEach(function(f) {
                 if (!f.former) return;
                 (f.members || []).forEach(function(m) {
-                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name), JA_NAMES[m.name] || m.name]); }
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name) + singleOnly(), JA_NAMES[m.name] || m.name]); }
                 });
               });
             } catch (e) {}
@@ -5811,7 +5847,7 @@ class MainActivity : Activity() {
                   if (!f.members || !f.members.length || f.home === false) return;   // Unaffiliated is not listed
                   if (f.former) {
                     // Former factions: no logo, no titles; the years and the notable members.
-                    var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
+                    var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id) + (window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : '');
                     var olg = ''; try { olg = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { olg = ''; }
                     var ocp = f.captains || [];
                     var ol2 = (ocp.length ? T(ocp.length > 1 ? 'Captains: ' : 'Captain: ', '\u30ad\u30e3\u30d7\u30c6\u30f3: ') + ocp.join(', ') + ' \u00b7 ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '\u4eba');
@@ -5821,7 +5857,7 @@ class MainActivity : Activity() {
                     return;
                   }
                   var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }
-                  var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
+                  var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id) + (window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : '');
                   var nm2 = {}; f.members.forEach(function(m) { nm2[m.name.toLowerCase()] = 1; nm2[String(m.search).toLowerCase()] = 1; });
                   var held = curChamps.filter(function(c) { return c.who.some(function(n) { return nm2[n]; }); }).map(function(c) { return TSHORT[c.id]; });
                   var l2 = (f.captain ? T('Captain: ', 'キャプテン: ') + f.captain + ' · ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '人');
@@ -6937,7 +6973,7 @@ class MainActivity : Activity() {
       if (!f && x.name) { f = { id: x.id, name: x.name, search: x.search }; own = true; }
       if (!f) return '';
       var pic = ''; try { pic = AndroidHost.factionLogo(f.id) || ''; } catch (q) {}
-      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + (own ? '&activetab=contents&page=1' : '&tvfaction=' + encodeURIComponent(f.id));
+      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + (own ? '&activetab=contents&page=1' : '&tvfaction=' + encodeURIComponent(f.id)) + (window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : '');
       var nm = String(f.name).replace(/ \(.*\)$/, '');
       return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
     }).join('');
@@ -7900,17 +7936,41 @@ class MainActivity : Activity() {
     return out;
   }
   function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i][0] === id) return list[i]; return null; }
+  // A match type's search words for this wrestler: "factionSearch" gives other words to members of that faction (the
+  // STARS faction's name would match every STARS video, so its members search BLUE STARS / RED STARS for 5★STAR GP).
+  function mtWords(r, base) {
+    var x = r && r[3], fsm = x && x.factionSearch, low = String(base || '').toLowerCase();
+    if (fsm && low) {
+      for (var i = 0; i < facs.length; i++) {
+        var f = facs[i], o = fsm[f.id];
+        if (!o || f.former) continue;
+        if (f.members.some(function(m) { return String(m.search || m.name).toLowerCase() === low || String(m.name).toLowerCase() === low; })) return { search: o.search || r[2], alts: o.alts || [] };
+      }
+    }
+    return { search: r ? r[2] : '', alts: (x && x.alts) || [] };
+  }
+  // Private builds: the site's own filters. q[type]=single leaves out sets (whole shows); q[category_id] (one per
+  // search) is a belt's title matches (championships.json "category") or else a year (match_types.json siteCategories).
+  var CATON = false, YRCAT = {};
+  try { CATON = !!(window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn()); } catch (e) { CATON = false; }
+  if (CATON) { try { YRCAT = ((JSON.parse(AndroidHost.matchTypesJson()) || {}).siteCategories || {}).years || {}; } catch (e) { YRCAT = {}; } }
   function buildUrl(n, mtWord, chWord) {
-    var words = [n.base];
-    var a = find(MT, n.mt); if (a) words.push(mtWord || a[2]);
-    var b = find(CH, n.ch); if (b) words.push(chWord || b[2]);
+    var words = [n.base], cat = '';
+    var a = find(MT, n.mt); if (a) words.push(mtWord || mtWords(a, n.base).search);
+    var b = find(CH, n.ch);
+    if (b && CATON && !chWord && b[3] && b[3].category) cat = String(b[3].category);
+    else if (b) words.push(chWord || b[2]);
     if (n.co && n.co !== n.base) words.push(n.co);
     var sh0 = find(SH, n.sh); if (sh0) words.push(sh0[2]);
     var lo0 = find(LO, n.lo); if (lo0) words.push(lo0[2]);
-    var c = find(YR, n.yr); if (c) words.push(c[2]);
+    var c = find(YR, n.yr);
+    if (c && CATON && !cat && YRCAT[c[0]]) cat = String(YRCAT[c[0]]);
+    else if (c) words.push(c[2]);
     var kw = words.filter(function(w) { return w; }).join(' ');
-    if (!kw && !n.s) return '/';
+    if (!kw && !n.s && !cat) return '/';
     var u = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw);
+    if (cat) u += '&q%5Bcategory_id%5D=' + encodeURIComponent(cat);
+    if (CATON) u += '&q%5Btype%5D=single';
     if (n.s) u += '&s=' + encodeURIComponent(n.s) + '&o=' + encodeURIComponent(n.o || 'd');
     u += '&activetab=contents&page=1';
     if (n.mt || n.ch || n.co || n.yr || n.sh || n.lo) u += '&tvb=' + encodeURIComponent(n.base || '');   // (empty = the words in the address are all filters)
@@ -7927,8 +7987,12 @@ class MainActivity : Activity() {
     Object.keys(S).forEach(function(k) { n[k] = S[k]; });
     Object.keys(patch).forEach(function(k) { n[k] = patch[k]; });
     if (FAC_MODE && window.__tvFacBase) n.base = window.__tvFacBase();
+    try { sessionStorage.setItem('tvFbAnchor', openBtn ? 'fb:' + openBtn.getAttribute('data-k') : (sessionStorage.getItem('tvFbAnchorCtl') || '1')); sessionStorage.removeItem('tvFbAnchorCtl'); } catch (e) {}   // the new page opens at the match results, with the control that was used
     location.href = buildUrl(n);
   }
+  // for the wrestler page's tabs (wrestler.js): the same addresses the filter bar makes
+  window.__tvFbGo = go;
+  window.__tvFbState = function() { var n = {}; Object.keys(S).forEach(function(k) { n[k] = S[k]; }); return n; };
 
   var st = document.createElement('style');
   st.textContent = [
@@ -8022,6 +8086,14 @@ class MainActivity : Activity() {
       return true;
     }
     buildChips();
+    // After a filter was chosen: the results, not the top of the page. A wrestler page does this itself (wrestler.js,
+    // MATCHES header and its tab); here only when no header took it.
+    setTimeout(function() {
+      var f = ''; try { f = sessionStorage.getItem('tvFbAnchor'); sessionStorage.removeItem('tvFbAnchor'); } catch (e) {}
+      if (!f || document.getElementById('tv-wr')) return;
+      try { var r = bar.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + r.top - 90)); } catch (e) {}
+      var b0 = btns[0]; if (b0) { try { b0.focus({ preventScroll: true }); } catch (e) { b0.focus(); } }
+    }, 1500);
     return true;
   }
   var chipBar = null, chips = [];
@@ -8073,9 +8145,37 @@ class MainActivity : Activity() {
     });
   }
 
+  // Room for a drop-down: when the list would not fit below its button (the filter bar low on a long page, such as a
+  // wrestler page under Titles Held), the page scrolls so the bar sits near the top of the screen first. Closing
+  // with Back scrolls it back. Returns the button's position after any scroll.
+  var roomScroll = null;
+  function scrollParent(el) {
+    for (var e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+      var oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 2) return e;
+    }
+    return null;
+  }
+  function makeRoom(btn, pnl) {
+    var r = btn.getBoundingClientRect(), vh = window.innerHeight;
+    var need = Math.min(pnl.scrollHeight || pnl.offsetHeight || 0, Math.round(vh * 0.7)), below = vh - r.bottom - 22;
+    if (need <= below || r.top < 110) return r;
+    var top = Math.max(90, vh - need - r.height - 30), delta = r.top - top, sp = scrollParent(btn);
+    if (delta <= 0) return r;
+    if (!roomScroll) roomScroll = sp ? { el: sp, y: sp.scrollTop } : { el: null, y: window.scrollY };   // switching drop-downs keeps the first place
+    if (sp) sp.scrollTop += delta; else window.scrollTo(0, window.scrollY + delta);
+    return btn.getBoundingClientRect();
+  }
+  function giveBackRoom() {
+    var rs = roomScroll; roomScroll = null;
+    if (!rs) return;
+    try { if (rs.el) rs.el.scrollTop = rs.y; else window.scrollTo(0, rs.y); } catch (e) {}
+  }
+
   function closePanel(refocus) {
     if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
     panel = null;
+    if (refocus) giveBackRoom();
     if (openBtn) openBtn.classList.remove('tv-open');
     var b = openBtn; openBtn = null;
     if (prevClose) { window.__tvMenuClose = prevClose; prevClose = null; }
@@ -8245,7 +8345,7 @@ class MainActivity : Activity() {
       panel.appendChild(cols);
     }
     document.body.appendChild(panel);
-    var r = btn.getBoundingClientRect();
+    var r = makeRoom(btn, panel);
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'co' || k === 'wr' || k === 'lo' || k === 'mt' || k === 'ch') { panel.style.left = '30px'; panel.style.right = '30px'; }
     if (k === 'co' || k === 'wr') { panel.style.maxHeight = Math.max(200, window.innerHeight - (r.bottom + 8) - 14) + 'px'; panel.style.overflowY = 'auto'; }   // never run off the bottom of the screen
@@ -8300,6 +8400,40 @@ class MainActivity : Activity() {
     }
     return false;
   }
+  function cardBelow(a) {
+    var r = a.getBoundingClientRect();
+    var list = document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]');
+    for (var i = 0; i < list.length; i++) { var q = list[i].getBoundingClientRect(); if (q.width > 0 && q.height > 0 && q.top > r.bottom - 10) return true; }
+    return false;
+  }
+  // "Back to top" after the last video (private builds): OK goes to the top and the first tab or filter button.
+  function topTile() {
+    if (!CATON || FAC_MODE) return null;
+    var list = document.querySelector('.content-list, [class*="content-list"]');
+    if (!list || !list.parentNode) return null;
+    var t = document.getElementById('tv-fb-top');
+    if (!t) {
+      t = document.createElement('div'); t.id = 'tv-fb-top'; t.tabIndex = 0; t.setAttribute('role', 'button');
+      t.className = 'notranslate'; t.setAttribute('translate', 'no');
+      t.textContent = T('Back to top', 'トップへ戻る') + ' \u2191';
+      t.style.cssText = 'display:flex;align-items:center;justify-content:center;width:max-content;height:44px;padding:0 18px;margin:18px auto 30px auto;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#fff;font:700 17px Arial,Helvetica,sans-serif;cursor:pointer;';
+      t.addEventListener('focus', function() { t.style.borderColor = '#F4C242'; });
+      t.addEventListener('blur', function() { t.style.borderColor = '#2A323C'; });
+      t.addEventListener('click', goTop);
+    }
+    var last = document.getElementById('tv-alt-list') || list;   // after the extra searches' grid when there is one
+    if (t.previousSibling !== last) last.parentNode.insertBefore(t, last.nextSibling);
+    var shown = 0;
+    document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]').forEach(function(x) { var q = x.getBoundingClientRect(); if (q.width > 0 && q.height > 0) shown++; });
+    t.style.display = shown > 4 ? 'flex' : 'none';   // only worth it past one row
+    return shown > 4 ? t : null;
+  }
+  function goTop() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    if (window.__tvWrTabFocus && window.__tvWrTabFocus()) return;
+    var b0 = btns[0]; if (b0) { try { b0.focus({ preventScroll: true }); } catch (e) { b0.focus(); } }
+  }
+  if (CATON && !FAC_MODE) setInterval(function() { try { topTile(); } catch (e) {} }, 1500);
   function firstCard() {
     var list = document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]');
     for (var i = 0; i < list.length; i++) {
@@ -8344,8 +8478,18 @@ class MainActivity : Activity() {
       else if (k === 13 || k === 23) { stop(e); if (ae._fn) ae._fn(); }
       return;
     }
+    if (ae.id === 'tv-fb-top') {
+      if (k === 13 || k === 23) { stop(e); goTop(); return; }
+      if (k === 38) { stop(e); var lc = null; document.querySelectorAll('a.tv-thumbnail-link, .content-list-item a[href*="/contents/"]').forEach(function(x) { var q = x.getBoundingClientRect(); if (q.width > 0 && q.height > 0) lc = x; }); if (lc) lc.focus(); return; }
+      if (k === 40) { stop(e); return; }
+    }
+    // Down from the last row when every page is in: the Back to top button
+    if (k === 40 && CATON && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardBelow(ae) && !document.querySelector('a[rel="next"], .pagination a.next, a.page-link[rel="next"]')) {
+      var tt0 = topTile(); if (tt0) { stop(e); tt0.focus(); try { tt0.scrollIntoView({ block: 'center' }); } catch (x) {} return; }
+    }
     if (k === 38 && bar && ae.tagName === 'A' && ae.closest && ae.closest('.content-list, [class*="content-list"]') && !cardAbove(ae)) {
       stop(e);
+      if (!bar.offsetParent && window.__tvWrTabFocus) { window.__tvWrTabFocus(); return; }   // bar hidden behind More: the tabs
       var tb = chips.length ? chips[0] : (btns[Math.min(lastBtn, btns.length - 1)] || btns[0]);
       if (tb) { tb.focus(); try { tb.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {} }
     }
@@ -8385,7 +8529,7 @@ class MainActivity : Activity() {
         (d.none || []).forEach(function(x) { none.push(new RegExp(x, 'i')); });
       });
     } catch (err) { all = []; none = []; }
-    if (e && e[3] && e[3].alts) e[3].alts.forEach(function(w) { ALTS.push({ mt: w }); });
+    if (e) mtWords(e, S.base).alts.forEach(function(w) { ALTS.push({ mt: w }); });
     if (c && c[3] && c[3].alts) c[3].alts.forEach(function(w) { ALTS.push({ ch: w }); });
     if (all.length || none.length || ALTS.length) MTR = { all: all, none: none };
   })();
@@ -8406,6 +8550,63 @@ class MainActivity : Activity() {
     var m = a && /(?:contents|set)\/(\d+)/.exec(a.getAttribute('href') || '');
     return m ? m[1] : '';
   }
+  // Titles & tournaments categories (private builds): what was kept and left out goes on screen under the filter bar and
+  // to the private sheet's debug tab (dbg_put), so the rules can be checked without photos.
+  var CAT = null;
+  // Requests to the site's search made on this page (the page itself not counted), so it's visible that nothing loops.
+  var REQ = { n: 0 };
+  try {
+    if (!window.__tvFetchCounted) {
+      window.__tvFetchCounted = true;
+      var of = window.fetch;
+      window.fetch = function(u) { try { if (/\/contents\/search/.test(String(u && u.url || u))) { window.__tvSearchReqs = (window.__tvSearchReqs || 0) + 1; } } catch (e) {} return of.apply(this, arguments); };
+    }
+  } catch (e) {}
+  try { var cx = find(MT, S.mt); if (cx && cx[3] && cx[3].pages && window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn()) CAT = { id: cx[0], kept: [], dropped: [], alts: [], words: mtWords(cx, S.base) }; } catch (e) { CAT = null; }
+  function catLog(title, kept, from) { if (CAT) (kept ? CAT.kept : CAT.dropped).push((from ? '[' + from + '] ' : '') + String(title).replace(/\s+/g, ' ').trim().slice(0, 140)); }
+  function catPaint() {
+    if (!CAT) return;
+    // below the video grid (after the extra searches' grid and Back to top), so it never sits between the filters and
+    // the videos; moved there again whenever the list grows
+    var box = document.getElementById('tv-catdbg');
+    var list = document.querySelector('.content-list, [class*="content-list"]');
+    if (!list || !list.parentNode) return;
+    if (!box) {
+      box = document.createElement('div'); box.id = 'tv-catdbg'; box.className = 'notranslate'; box.setAttribute('translate', 'no');
+      box.style.cssText = 'margin:14px 0 30px 0;padding:10px 14px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;';
+    }
+    var after = document.getElementById('tv-fb-top') || document.getElementById('tv-alt-list') || list;
+    if (box.previousSibling !== after) after.parentNode.insertBefore(box, after.nextSibling);
+    var rec = window.__tvWrRecord || [], seen = {};
+    CAT.kept.forEach(function(t) { var m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t); if (m) seen[m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2)] = 1; });
+    var lines = ['Category ' + CAT.id + ' · search: ' + S.base + ' ' + CAT.words.search + (CAT.words.alts.length ? ' · then: ' + CAT.words.alts.join(', ') : ''),
+      'Site searches on this page: ' + (window.__tvSearchReqs || 0) + ' · Kept ' + CAT.kept.length + ' · left out ' + CAT.dropped.length + (CAT.alts.length ? ' · ' + CAT.alts.join(' · ') : '') + (CAT.sent ? ' · ' + CAT.sent : '')];
+    if (CAT.id === 'champ' && rec.length) {
+      var miss = rec.filter(function(x) { return !seen[x.d]; });
+      lines.push('Title matches on record: ' + rec.length + ' · on this page: ' + (rec.length - miss.length) + (miss.length ? ' · not here: ' + miss.slice(0, 10).map(function(x) { return x.d + ' ' + x.belt; }).join(', ') + (miss.length > 10 ? ' …' : '') : ''));
+    }
+    if (CAT.dropped.length) lines.push('Left out: ' + CAT.dropped.slice(0, 8).join(' | ') + (CAT.dropped.length > 8 ? ' …' : ''));
+    box.textContent = lines.join('\n');
+  }
+  function catSend() {
+    if (!CAT || CAT.sentOnce) return;
+    CAT.sentOnce = true;
+    try {
+      if (!(window.AndroidHost && AndroidHost.teamSync && AndroidHost.favSyncOn && AndroidHost.favSyncOn())) { CAT.sent = 'sheet: not set up in this build'; catPaint(); return; }
+      var id = 'cat' + Date.now();
+      var prev = window.__tvTeamSyncReply;
+      window.__tvTeamSyncReply = function(rid, text) {
+        if (rid !== id) { if (prev) prev(rid, text); return; }
+        window.__tvTeamSyncReply = prev;
+        var r = null; try { r = JSON.parse(text); } catch (e) {}
+        CAT.sent = r && r.ok ? 'sent to the sheet' : 'sheet: ' + ((r && r.error) || 'no reply') + ((r && r.error) === 'bad action' ? ' (publish the updated Apps Script)' : '');
+        catPaint();
+      };
+      AndroidHost.teamSync(id, JSON.stringify({ action: 'dbg_put', team: '', page: 'wrestler', subject: S.base, tab: CAT.id, url: location.pathname + location.search,
+        record: { words: CAT.words, kept: CAT.kept, dropped: CAT.dropped, alts: CAT.alts, onRecord: (window.__tvWrRecord || []).length } }));
+    } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
+  }
+  if (CAT) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
   function narrowList() {
     if (!MTR) return;
     // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
@@ -8417,11 +8618,17 @@ class MainActivity : Activity() {
       var tt = itemTitle(el);
       if (!tt.replace(/\s+/g, '')) return;
       el.__tvMt = 1;
-      if (mtFits(tt) || !el.parentNode) return;
+      var fit = mtFits(tt);
+      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(tt, fit, ''); }
+      if (fit) { el.setAttribute('data-tv-mt-in', '1'); return; }
+      if (!el.parentNode) return;
+      // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
+      // the end of the list flashed. A hidden card stays where it is, so nothing is redrawn.
+      el.style.setProperty('display', 'none', 'important');
+      el.setAttribute('data-tv-mt-out', '1');
       var box = el.parentNode;
-      box.removeChild(el);
-      // A bare card's empty column wrapper goes too, so the grid doesn't keep a gap.
-      if (el.tagName === 'ARTICLE' && !box.children.length && !/content-list(?!-)/.test(box.className || '') && box.id !== 'result' && box.parentNode) box.parentNode.removeChild(box);
+      // A bare card's column wrapper is hidden too, so the grid doesn't keep a gap.
+      if (el.tagName === 'ARTICLE' && !/content-list(?!-)/.test(box.className || '') && box.id !== 'result' && !Array.prototype.some.call(box.children, function(c) { return c.style.display !== 'none'; })) box.style.setProperty('display', 'none', 'important');
     });
   }
   function loadAlts() {
@@ -8434,22 +8641,45 @@ class MainActivity : Activity() {
       var url = buildUrl(n, alt.mt, alt.ch);
       fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
-        var box = document.querySelector('.content-list');
+        var list0 = document.querySelector('.content-list'), nA = 0, kA = 0, box = null;
+        if (list0 && list0.parentNode) {
+          // Their own grid, with the list's classes for the same look, right after the site's list (after it, so the
+          // site's list stays the first .content-list for the page loader): cards added into the site's list were
+          // dropped when the site redrew it (Rina's 5★STAR GP final never showed).
+          box = document.getElementById('tv-alt-list');
+          if (!box) { box = document.createElement('div'); box.id = 'tv-alt-list'; box.className = list0.className; list0.parentNode.insertBefore(box, list0.nextSibling); }
+        }
         if (box) {
           Array.prototype.forEach.call(doc.querySelectorAll('.content-list .content-list-item'), function(el) {
             var id = idOf(el);
-            if (!mtFits(itemTitle(el))) return;
-            if (id && box.querySelector('a[href*="/' + id + '"]')) return;
+            nA++;
+            if (!mtFits(itemTitle(el))) { catLog(itemTitle(el), false, alt.mt || alt.ch); return; }
+            if (id && (box.querySelector('a[href*="/' + id + '"]') || list0.querySelector('a[href*="/' + id + '"]'))) return;
+            catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;
+            c.setAttribute('data-tv-mt-in', '1');
             box.appendChild(c);
           });
         }
+        if (CAT) CAT.alts.push((alt.mt || alt.ch) + ': ' + nA + ' videos, ' + kA + ' added');
       }).catch(function() {}).then(function() { setTimeout(one, 1300); });
     }
     setTimeout(one, 1500);
   }
-  if (MTR && !FAC_MODE) { narrowList(); setInterval(narrowList, 700); loadAlts(); }
+  if (MTR && !FAC_MODE) {
+    window.__tvNarrowing = true;
+    // A card is invisible (its place kept) until the title rule has judged it, so nothing appears and then vanishes.
+    var nst = document.createElement('style');
+    nst.textContent = '.content-list-item:not([data-tv-mt-in]):not([data-tv-mt-out]){visibility:hidden !important;}';
+    (document.head || document.documentElement).appendChild(nst);
+    narrowList(); setInterval(narrowList, 700); loadAlts();
+    try {
+      var nq = false;
+      new MutationObserver(function() { if (nq) return; nq = true; requestAnimationFrame(function() { nq = false; narrowList(); }); })
+        .observe(document.body, { childList: true, subtree: true });
+    } catch (e) {}
+  }
 
   var tries = 0;
   (function tick() {
@@ -8623,9 +8853,37 @@ class MainActivity : Activity() {
     setTimeout(alignBars, 0);
   }
 
+  // Room for a drop-down: when the list would not fit below its button (the filter bar low on a long page, such as a
+  // wrestler page under Titles Held), the page scrolls so the bar sits near the top of the screen first. Closing
+  // with Back scrolls it back. Returns the button's position after any scroll.
+  var roomScroll = null;
+  function scrollParent(el) {
+    for (var e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+      var oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 2) return e;
+    }
+    return null;
+  }
+  function makeRoom(btn, pnl) {
+    var r = btn.getBoundingClientRect(), vh = window.innerHeight;
+    var need = Math.min(pnl.scrollHeight || pnl.offsetHeight || 0, Math.round(vh * 0.7)), below = vh - r.bottom - 22;
+    if (need <= below || r.top < 110) return r;
+    var top = Math.max(90, vh - need - r.height - 30), delta = r.top - top, sp = scrollParent(btn);
+    if (delta <= 0) return r;
+    if (!roomScroll) roomScroll = sp ? { el: sp, y: sp.scrollTop } : { el: null, y: window.scrollY };   // switching drop-downs keeps the first place
+    if (sp) sp.scrollTop += delta; else window.scrollTo(0, window.scrollY + delta);
+    return btn.getBoundingClientRect();
+  }
+  function giveBackRoom() {
+    var rs = roomScroll; roomScroll = null;
+    if (!rs) return;
+    try { if (rs.el) rs.el.scrollTop = rs.y; else window.scrollTo(0, rs.y); } catch (e) {}
+  }
+
   function closePanel(refocus) {
     if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
     panel = null;
+    if (refocus) giveBackRoom();
     if (openBtn) openBtn.classList.remove('tv-open');
     var b = openBtn; openBtn = null;
     if (prevClose) { window.__tvMenuClose = prevClose; prevClose = null; }
@@ -8686,7 +8944,7 @@ class MainActivity : Activity() {
       if (k === 'sh') { panel.style.columnCount = 3; panel.style.columnGap = '10px'; }
     }
     document.body.appendChild(panel);
-    var r = btn.getBoundingClientRect();
+    var r = makeRoom(btn, panel);
     panel.style.top = Math.max(10, r.bottom + 8) + 'px';
     if (k === 'lo') { panel.style.left = '30px'; panel.style.right = '30px'; }
     else panel.style.left = Math.max(10, Math.min(r.left, window.innerWidth - (k === 'yr' ? 480 : (k === 'sh' ? 900 : 440)))) + 'px';

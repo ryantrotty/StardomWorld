@@ -2,6 +2,94 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+
+
+
+
+
+
+
+
+
+
+
+## 2.44.3
+
+Private builds only:
+- Championship lineage pages: "All … matches" now opens the same belt search as the Championships menu (site category for World, Wonder, High Speed and IWGP; keyword plus the title rule for the rest) with single matches only, so whole-show sets and LIVE items no longer appear.
+- Lineage reign lookups, wrestler links (menu current and past, My Favorites, team member buttons), faction home links and the team "more tag matches" link all ask the site for single matches only.
+
+## 2.44.2
+
+- Category debug panel (private builds) moved below the video grid, after Back to top, on search result pages; it was between the filters and the videos. It still shows the same lines and still writes each search to the sheet's debug tab. Tag team pages already had it below the grid.
+## 2.44.1
+
+From the 2.44.0 test and the sheet's debug rows (AZM, Rina, Suzu Suzuki & Mei Seira, Momo Watanabe & Utami Hayashishita).
+
+- Extra searches' results (5★STAR for the GP tab and the like) go in their own grid right after the site's list, with the same look. Added into the site's list, they were dropped when the site redrew it: Rina's 5★STAR GP 2026 final was found (it's in the sheet) but never showed.
+- Back to top: centred, and only shown when more than four videos are showing (search pages and team page tabs).
+- After choosing a filter: the page opens just above the MATCHES header with the control that was used focused, that filter button if it came from the filter bar, else that tab. It stops adjusting once you move.
+- Rules (also in the roster file): Championship leaves out tournament matches billed as a "Championship Match" (CINDERELLA TOURNAMENT 2026 ~Championship Match~) and anything 5★STAR GP; 5★STAR GP leaves out "special single matches" on GP shows.
+- Team pages: whole-show uploads ("2021/11/14_第11回…タッグリーグ戦～最終戦") never count as a team's match (they were showing on the Tag League tab). The Tag League tab's debug row lists only what goes in that row; title matches its search finds are noted as going to All Tag Matches.
+## 2.44.0
+
+Private builds only. Uses the site's own search filters (found by Ryan): q[type] (single video or set) and q[category_id] (one per search, together with the keywords).
+
+- Every search the app makes (filter bar, wrestler and category tabs, extra searches, menu searches, tag team pages) adds q[type]=single, so sets (whole shows) are left out by the site instead of after loading. The title rule for date_underscore show videos stays for older uploads posted as single videos.
+- Championship filter: World of Stardom (31), Wonder of Stardom (32), High Speed (33) and IWGP Women's (43) search the site's category for that belt (championships.json "category") instead of the belt's words, so the list is that belt's title matches exactly. Other belts keep their words and title rules.
+- Year filter: searches the site's category for that year (2026 = 51 … 2011 = 3, match_types.json siteCategories) instead of adding the year as a word. When a belt category is already in use, the year goes back to being a word (one category per search).
+- No flash at the end of narrowed lists: a card stays invisible (its place kept) until the title rule has judged it, and new cards are judged as soon as they arrive.
+- After choosing a filter or a tab, the new page opens at MATCHES with that tab (or the filter bar) focused, instead of at the top of the page.
+- Back to top: a button after the last video on search result pages (Down from the last row reaches it once every page is in) and after a finished grid on tag team page tabs.
+- Wrestler pages: Down from the tabs goes to the first video that is showing (it could pick a hidden one and get stuck, as on Starlight Kid's Championship tab).
+- Championship rule: "next challenger team" matches (次期挑戦チーム決定) are left out too.
+## 2.43.3
+
+From the first rows in the sheet's debug tab (Saya Kamitani, BMI2000, wing★gori). Private builds only.
+
+- Category rules (`match_types.json`; also sent to 2.43.x builds through the roster file):
+  - Whole-show videos are left out of every category: titles that start with a date and an underscore ("2021/9/20_5★STAR GP 2021", "2021/11/14_第11回 ゴッデス・オブ・スターダム～タッグリーグ戦～最終戦") or say Day-1 / Day-2.
+  - Cinderella needs "Cinderella Tournament" / シンデレラ・トーナメント: CINDERELLA SUMMER TOUR, Road to TOKYO DREAM CINDERELLA and its 前哨戦 were being kept.
+  - 5★STAR GP leaves out anything mentioning Cinderella.
+- Team pages: Tag League rounds without "tag" in the title (ブルーゴッデス代表決定… 決勝トーナメント) now count as 2-on-2; they were left out of the Tag League tab.
+- Team Championship tab: a dated Goddess of Stardom title match is kept only if the title history has this pair in it on that date: as champions, as challengers (another champion's defence against them) or in the match where they lost the belts. Matches of the right belt but other teams were being kept (search words match any video naming both wrestlers). NEW BLOOD tag has no defence list, so those stay. "Title matches on record" now counts their challenges too.
+## 2.43.2
+
+- Flashing at the end of narrowed lists: cards that don't fit the title rule are now hidden instead of removed. The site's own list code was putting the removed cards back and the filter took them out again, over and over (no requests, just redrawing). Hidden cards stay put, so nothing is redrawn; the page loader still skips them when it checks for repeats.
+- Category debug line now starts with "Site searches on this page: N", counting every search request the app makes on that page (the page's own load not counted), so a loop would show as a climbing number.
+## 2.43.1
+
+- Videos flashing at the end of a category list: the title filter removed cards that didn't fit, which left the page short, so the page loader fetched the next page, and the next, about once a second without end. While a list is narrowed by title (category tabs and the match types with title rules), the next page now loads only after a key press, one page per press.
+- Wrestler pages: Up from the first row of videos goes back to the tabs when the filter bar is hidden behind More (it was trying to reach the hidden filter bar and stopped).
+- Category debug line: shows the sheet status from the start ("sending after the searches", then "sent to the sheet" or the sheet's error), and is sent once the extra searches are done rather than after 12 s. "bad action" means the Apps Script still needs the updated version published.
+## 2.43.0
+
+Private builds only (public builds unchanged).
+
+- Match categories: a new "Titles & tournaments" Match type group, `private: true` in `match_types.json`: Championship, 5★STAR GP, Cinderella Tournament, Tag League. Each has its search words and title rules, set from the Category probe results:
+  - Championship: "Championship"; title must say championship / 選手権 / title match; next-challenger matches (挑戦者決定) left out. Goddess and NEW BLOOD tag are marked as tag belts.
+  - 5★STAR GP: "STARS", then "5★STAR" merged in; STARS faction members search "BLUE STARS", then "RED STARS" and "5★STAR" (the faction name would match every STARS video). A title with STARS alone never counts.
+  - Cinderella: "Cinderella". Tag League: "Goddess", with an official / block / tournament / final word, and not a title match.
+  - Public builds don't see the group (left out when match types are read). The roster file can change any match type's fields without a new APK (`"matchTypes": {"<id>": {...}}`).
+- Wrestler pages: tabs under MATCHES: All Matches · Championship · 5★STAR GP · Cinderella Tournament · Tag League · More. A tab opens the filter bar's own address for that match type, so paging, Back and the extra searches work as before. The filter bar is hidden until More is pressed (or when another filter is set); Down from the tabs goes to the first video, Up from the first row of videos comes back to the tabs. Menu: the Matches list gains the group too.
+- Tag team pages: tabs All Tag Matches · Championship · Tag League · More (More opens the search page with the filter bar for the pair). One grid; only the open tab searches. The 2-on-2 rule now keeps tag title matches (Goddess and NEW BLOOD tag titles have no "tag" in them, which is why BMI2000's title matches were missing). Championship searches "A B Championship" and keeps tag title matches where the two were partners.
+- Debug: category tabs show what was kept and left out on screen, and the Championship tabs compare against the title matches on record. Every search on a category tab is also written to the private sheet's new "debug" tab (`dbg_put`); `python3 scripts/video_index_pull.py --debug` downloads it. Paste the updated `scripts/video_index_log.gs` into Apps Script and publish a new version first.
+## 2.42.2
+
+- Removed the temporary Category probe (button on wrestler and tag team pages, its results panel, and `assets/catprobe.js`). Match categories stay as they are for now. Keeps the 2.41.1 drop-down fix.
+## 2.42.1
+
+- Category probe on tag team pages: its results now appear right under the team's buttons (before Titles Held) instead of at the very bottom of the page, below both match rows, where they couldn't be reached with the remote. The button is no longer run through the page translator (it showed as "Category Halve").
+## 2.42.0
+
+- Temporary: Category probe (all builds), to settle the search words and title rules for the coming match categories (Championship, 5★STAR GP, Cinderella, Tag League) before they're built. A "Category probe" button on wrestler pages (after the faction buttons) and tag team pages (after Add to My Favorites); nothing runs until it's pressed.
+  - Wrestler pages run 8 searches: the name alone, then with Championship, 選手権, 5★STAR, STARS, Cinderella, シンデレラ and Goddess. Tag team pages run 5: both names, "A Tag Team B", with Championship, "A Goddess B", and with Tag League.
+  - Page 1 of each, one at a time, 3 seconds apart; answers kept 7 days, so pressing again costs nothing. Stops if the site asks for a pause.
+  - The panel stays on screen: per search, the videos found, whether there are more pages, counts by candidate rule (CH, 5★, CIN, TL, MULTI, TAG, SGL?) and each title with its tags; then the title matches on record from the title histories (reigns won and defences, by date) and which of them turned up in these results.
+  - New file `assets/catprobe.js`.
+## 2.41.1
+
+- Filter bar drop-downs (Wrestler, Competitors, Match type and the rest, and the Tournament Archives filter bar): when a list would not fit below its button, the page first scrolls so the bar sits near the top of the screen, then the list opens below it. Before, on a long page such as a wrestler page with Titles Held above the matches, the bar sat near the bottom and the list was cut off after one row. Back closes the list and scrolls the page back; switching between drop-downs keeps the first position. Pages where the list already fits don't move.
 ## 2.41.0
 
 - Tag League (Goddesses of Stardom Tag League), marked with a new feathered wings icon (gold line, drawn in the code, so public and private builds alike):

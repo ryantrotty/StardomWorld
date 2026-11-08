@@ -37,14 +37,14 @@
   window.__tvWrestlerName = W.name;   // the page title shows the name (the menu's title code reads this)
 
   // ---- their factions: the ones that list them, current first (factions.json "former" marks past ones)
-  function facPath(f) { var m0 = (f.members || [])[0]; var kw = f.home === false && m0 ? m0.search : (f.search || f.name); return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw) + '&tvfaction=' + encodeURIComponent(f.id); }
+  function facPath(f) { var m0 = (f.members || [])[0]; var kw = f.home === false && m0 ? m0.search : (f.search || f.name); return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw) + '&tvfaction=' + encodeURIComponent(f.id) + (H.categoriesOn && H.categoriesOn() ? '&q%5Btype%5D=single' : ''); }
   var myFacs = FACS.filter(function(f) {
     return f.id !== 'unaffiliated' && (f.members || []).some(function(m) { return m && (low(m.name) === low(W.name) || low(m.search) === low(W.search)); });
   }).sort(function(a, b) { return (a.former ? 1 : 0) - (b.former ? 1 : 0); });
 
   // ---- their title reigns, from every title history (lineageJson, so the daily file's newer copies count)
   var BELT_IDS = ['world', 'wonder', 'goddess', 'artist', 'highspeed', 'future', 'newblood', 'iwgp', 'strong', 'kawaii'];
-  var reigns = [];
+  var reigns = [], RECORD = [];   // RECORD: every title match on record (reign won, defences), for the Championship tab's check
   BELT_IDS.forEach(function(b) {
     var L = parse(call('lineageJson', b));
     if (!L || !L.reigns) return;
@@ -58,12 +58,35 @@
     L.reigns.forEach(function(r) {
       var who = String(r.champ || '').split(/\s*(?:&|,)\s*/).map(function(s) { return s.trim(); }).filter(Boolean);
       if (!who.some(function(n) { return names[low(n)]; })) return;
+      if (r.won) RECORD.push({ belt: b, d: r.won, what: 'won' });
+      (r.defences || []).forEach(function(df) { if (df && df.d) RECORD.push({ belt: b, d: df.d, what: 'defence' }); });
       reigns.push({ belt: b, title: title, ja: L.ja || '', n: r.n, won: r.won, end: r.end || null,
         defs: r.defCount != null ? r.defCount : (r.defences || []).length,
         with: who.filter(function(n) { return !names[low(n)]; }), team: r.team || '' });
     });
   });
   reigns.sort(function(a, b) { return String(b.won).localeCompare(String(a.won)); });   // newest first
+  RECORD.sort(function(a, b) { return a.d < b.d ? 1 : -1; });
+  window.__tvWrRecord = RECORD;
+
+  // ---- private builds: tabs above the filter bar for the Titles & tournaments categories (match_types.json, private group)
+  var CATS = [];
+  try {
+    if (H.categoriesOn && H.categoriesOn()) {
+      ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { if (g.private) (g.items || []).forEach(function(x) { if ((x.pages || []).indexOf('wrestler') >= 0) CATS.push(x); }); });
+    }
+  } catch (e) { CATS = []; }
+  var curMt = qp('tvmt'), otherFilters = /[?&]tv(ch|co|sh|lo|yr)=[^&]/.test(location.search) || (curMt && !CATS.some(function(x) { return x.id === curMt; }));
+  function tabsHtml() {
+    if (!CATS.length) return '';
+    var allOn = !curMt && !otherFilters;
+    var h = '<div class="wr-tabs">' + '<a class="wr-tab' + (allOn ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="">' + esc(T('All Matches', 'すべての試合')) + '</a>';
+    CATS.forEach(function(x) { h += '<a class="wr-tab' + (curMt === x.id && !otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="' + esc(x.id) + '">' + esc(isJa() && x.ja ? x.ja : x.name) + '</a>'; });
+    return h + '<a class="wr-tab wr-tab-more' + (otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrmore="1">' + esc(T('More', '詳細')) + ' ▾</a></div>';
+  }
+  window.__tvWrTabFocus = function() { var tab = root && (root.querySelector('.wr-tab-on') || root.querySelector('.wr-tab')); if (tab) { focusEl(tab); return true; } return false; };
+  function fbShown() { return !CATS.length || otherFilters || document.documentElement.classList.contains('tv-fb-show'); }
+  if (CATS.length && !otherFilters) document.documentElement.classList.add('tv-cats');
   var first = reigns.length ? reigns[reigns.length - 1].won : '', defTotal = 0;
   reigns.forEach(function(r) { defTotal += r.defs || 0; });
 
@@ -95,6 +118,12 @@
     '#tv-wr .wr-btn.wr-on{background:#2A2410;color:#F4C242 !important;}',
     '#tv-wr .wr-btn small{font-size:13px;font-weight:600;color:#9AA6B4;}',
     '#tv-wr .wr-sec{display:flex;align-items:center;gap:10px;margin:26px 0 10px 0;}',
+    '#tv-wr .wr-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px 0;}',
+    '#tv-wr .wr-tab{display:flex;align-items:center;height:44px;padding:0 16px;border-radius:10px;border:2px solid #2A323C !important;background:#161F2A;font-size:17px;font-weight:700;color:#C9D2DC !important;white-space:nowrap;cursor:pointer;}',
+    '#tv-wr .wr-tab.wr-tab-on{background:#FFB347;border-color:#FFB347 !important;color:#1A1A1A !important;}',
+    '#tv-wr .wr-tab:focus{border-color:#F4C242 !important;}',
+    '#tv-wr .wr-tab-more{margin-left:14px;}',
+    'html.tv-cats:not(.tv-fb-show) #tv-fb, html.tv-cats:not(.tv-fb-show) #tv-fbc{display:none !important;}',
     '#tv-wr .wr-sec i{width:8px;height:26px;background:#F4C242;}',
     '#tv-wr .wr-sec b{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
     '#tv-wr .wr-sec span{font-size:13px;font-weight:600;color:#9AA6B4;}',
@@ -135,7 +164,7 @@
           '<div class="t3">' + esc(T(days + ' days · ' + r.defs + (r.defs === 1 ? ' defence' : ' defences'), days + '日 · 防衛' + r.defs + '回')) + '</div></div></a>';
       }).join('') + '</div>';
     }
-    h += '<div class="wr-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b></div>';
+    h += '<div class="wr-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b></div>' + tabsHtml();
     return h;
   }
 
@@ -154,6 +183,22 @@
     bar.parentNode.insertBefore(root, bar);
     align();
     // start on the header, at the top of the page
+    var anchorFlag = ''; try { anchorFlag = sessionStorage.getItem('tvFbAnchor'); sessionStorage.removeItem('tvFbAnchor'); } catch (e) {}
+    if (anchorFlag) {   // a filter or tab was just chosen: open at MATCHES with its tab (or the filter bar) focused
+      // just above the MATCHES header, with the control that was used focused: that filter button, else that tab
+      var focused = null;
+      var go2 = function() {
+        if (focused && document.activeElement !== focused) return;   // the viewer has moved on
+        var secs = root.querySelectorAll('.wr-sec'), m = secs[secs.length - 1];
+        if (m) { var r = m.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + r.top - 12)); }
+        var t0 = null, k0 = String(anchorFlag).indexOf('fb:') === 0 ? anchorFlag.slice(3) : '';
+        if (k0 && fbShown()) t0 = document.querySelector('#tv-fb .tv-fbb[data-k="' + k0 + '"]');
+        if (!t0) t0 = root.querySelector('.wr-tab-on') || (fbShown() ? document.querySelector('#tv-fb .tv-fbb') : null) || root.querySelector('.wr-tab');
+        if (t0) { try { t0.focus({ preventScroll: true }); } catch (e) { t0.focus(); } focused = t0; }
+      };
+      go2(); setTimeout(go2, 600); setTimeout(go2, 1500);
+      return true;
+    }
     var ae = document.activeElement;
     if (!ae || ae === document.body || (ae.closest && ae.closest('.content-list, [class*="content-list"]'))) {
       var f0 = root.querySelector('[tabindex="0"]');
@@ -205,6 +250,19 @@
     var k = e.keyCode, ae = document.activeElement;
     var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
     if (ae && root.contains(ae)) {
+      if ((k === 13 || k === 23) && ae.getAttribute('data-wrtab') != null) {   // a category tab: the filter bar's own address for it
+        stop();
+        var id = ae.getAttribute('data-wrtab'), p = { mt: id, ch: '', co: '', sh: '', lo: '', yr: '' };
+        try { sessionStorage.setItem('tvFbAnchorCtl', 'tab:' + id); } catch (e) {}
+        if (window.__tvFbGo) window.__tvFbGo(p);
+        return;
+      }
+      if ((k === 13 || k === 23) && ae.getAttribute('data-wrmore') != null) {   // More: show or hide the full filter bar
+        stop();
+        document.documentElement.classList.toggle('tv-fb-show');
+        if (fbShown()) { var b0 = document.querySelector('#tv-fb .tv-fbb'); if (b0) focusEl(b0); }
+        return;
+      }
       if ((k === 13 || k === 23) && ae.getAttribute('data-wrfav') != null) {
         stop();
         if (window.__tvFav) { window.__tvFav.toggleWrestler(W.search); favChanged(); }
@@ -214,10 +272,21 @@
       if (!dir) return;
       var n = nearest(ae, dir, items());
       if (n) { stop(); focusEl(n); return; }
-      if (dir === 'down') { var fb = document.querySelector('#tv-fb .tv-fbb'); if (fb) { stop(); focusEl(fb); } return; }
+      if (dir === 'down') {
+        var fb = fbShown() ? document.querySelector('#tv-fb .tv-fbb') : null;
+        if (!fb) fb = Array.prototype.filter.call(document.querySelectorAll('.content-list .content-list-item a[href], .content-list a[href*="/contents/"]'), function(x) { var q = x.getBoundingClientRect(); return q.width > 0 && q.height > 0; })[0] || null;   // filter bar hidden: the first video showing
+        if (fb) { stop(); focusEl(fb); }
+        return;
+      }
       if (dir === 'up') { stop(); window.scrollTo(0, 0); return; }
       if (dir === 'right') { stop(); return; }
       if (dir === 'left') { stop(); if (window.__tvOpenMenu) window.__tvOpenMenu(); return; }   // left edge: the menu
+      return;
+    }
+    // filter bar hidden behind More: Up from the first row of videos comes back to the tabs
+    if (k === 38 && CATS.length && !fbShown() && ae && ae.closest && ae.closest('.content-list')) {
+      var ar0 = ae.getBoundingClientRect(), above = Array.prototype.some.call(document.querySelectorAll('.content-list a[href*="/contents/"]'), function(x) { var r = x.getBoundingClientRect(); return r.height > 0 && r.bottom <= ar0.top - 4; });
+      if (!above) { var tab = root.querySelector('.wr-tab-on') || root.querySelector('.wr-tab'); if (tab) { stop(); focusEl(tab); } }
       return;
     }
     if (k === 38 && ae && ae.closest && ae.closest('#tv-fb') && ae.classList.contains('tv-fbb')) {
