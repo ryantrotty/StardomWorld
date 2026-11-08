@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.46.0
+
+Private builds only:
+- The Index button under the player is now a Star Watcher telescope on a tripod, aimed at one star.
+- Menu Wrestlers spotlight: the wrestler is shown in a realistic star field with warm light behind her. Her face and upper body stay sharp and she fades out in a circle, with no box around the picture.
+- The photo script now also makes transparent cut-outs (wcut_<name>.png). A wrestler without one keeps her dark-backdrop photo inside the same fade.
+
 ## 2.45.0
 
 Private builds only:

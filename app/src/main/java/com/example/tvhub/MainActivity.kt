@@ -3454,6 +3454,30 @@ class MainActivity : Activity() {
             } catch (_: Exception) { "" }
         }
 
+        // The transparent cut-out of a wrestler (wcut_<name>.png, 2.46.0), empty when there is none.
+        @android.webkit.JavascriptInterface
+        fun wrestlerCutout(name: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+                val res = this@MainActivity.resources
+                val resId = res.getIdentifier("wcut_" + slug, "drawable", this@MainActivity.packageName)
+                if (resId == 0) return ""
+                val bytes = res.openRawResource(resId).use { it.readBytes() }
+                "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
+        // The star field behind the spotlight (assets/spot_stars.jpg).
+        @android.webkit.JavascriptInterface
+        fun spotStars(): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val bytes = this@MainActivity.assets.open("spot_stars.jpg").use { it.readBytes() }
+                "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
         // The menu's Wrestlers spotlight (assets/wrspot.js): the same photo.
         @android.webkit.JavascriptInterface
         fun wrestlerSpot(name: String): String = wrestlerPhoto(name)
@@ -6526,6 +6550,9 @@ class MainActivity : Activity() {
             '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
             '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
             '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}' +
+            '#tv-pbar button.tv-pbtn[data-id="index"]{padding:4px 10px;line-height:0;}' +
+            '#tv-pbar .tv-tel-s{fill:#F4C242;}' +
+            '#tv-pbar button.tv-pbtn:focus .tv-tel-s{fill:' + DARK + ';}' +
             '#tv-pskip{position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc;}' +
             '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center;}' +
             '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + ';}' +
@@ -6563,6 +6590,11 @@ class MainActivity : Activity() {
             fillEl = bar.querySelector('.tv-pb-fill');
             Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
               btns[b.getAttribute('data-id')] = b;
+              if (b.getAttribute('data-id') === 'index') {
+                // Star Watcher: the telescope stands in for a word on this button.
+                b.setAttribute('aria-label', 'Index this match');
+                b.innerHTML = '<svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="currentColor" stroke-width="1.4"/></g><path class="tv-tel-s" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
+              }
               b.addEventListener('focus', function() { lastId = b.getAttribute('data-id'); });
               b.addEventListener('click', function(e) { e.preventDefault(); act(b.getAttribute('data-id')); });
             });
@@ -6599,7 +6631,7 @@ class MainActivity : Activity() {
             var json = window.__tvStatusJson || '';
             var labels = {};
             try { labels = JSON.parse(AndroidHost.barLabels(json)); } catch (e) {}
-            ids.forEach(function(id) { if (labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+            ids.forEach(function(id) { if (id !== 'index' && labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
             if (json) {
               try {
                 var j = JSON.parse(json);
