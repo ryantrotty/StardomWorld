@@ -12,6 +12,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+## 2.44.2
+
+- Category debug panel (private builds) moved below the video grid, after Back to top, on search result pages; it was between the filters and the videos. It still shows the same lines and still writes each search to the sheet's debug tab. Tag team pages already had it below the grid.
 ## 2.44.1
 
 From the 2.44.0 test and the sheet's debug rows (AZM, Rina, Suzu Suzuki & Mei Seira, Momo Watanabe & Utami Hayashishita).

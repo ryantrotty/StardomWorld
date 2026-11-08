@@ -8566,14 +8566,17 @@ class MainActivity : Activity() {
   function catLog(title, kept, from) { if (CAT) (kept ? CAT.kept : CAT.dropped).push((from ? '[' + from + '] ' : '') + String(title).replace(/\s+/g, ' ').trim().slice(0, 140)); }
   function catPaint() {
     if (!CAT) return;
+    // below the video grid (after the extra searches' grid and Back to top), so it never sits between the filters and
+    // the videos; moved there again whenever the list grows
     var box = document.getElementById('tv-catdbg');
+    var list = document.querySelector('.content-list, [class*="content-list"]');
+    if (!list || !list.parentNode) return;
     if (!box) {
-      var bar = document.getElementById('tv-fbc') || document.getElementById('tv-fb');
-      if (!bar || !bar.parentNode) return;
       box = document.createElement('div'); box.id = 'tv-catdbg'; box.className = 'notranslate'; box.setAttribute('translate', 'no');
-      box.style.cssText = 'margin:10px 0 14px 0;padding:10px 14px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;';
-      bar.parentNode.insertBefore(box, bar.nextSibling);
+      box.style.cssText = 'margin:14px 0 30px 0;padding:10px 14px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;';
     }
+    var after = document.getElementById('tv-fb-top') || document.getElementById('tv-alt-list') || list;
+    if (box.previousSibling !== after) after.parentNode.insertBefore(box, after.nextSibling);
     var rec = window.__tvWrRecord || [], seen = {};
     CAT.kept.forEach(function(t) { var m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t); if (m) seen[m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2)] = 1; });
     var lines = ['Category ' + CAT.id + ' · search: ' + S.base + ' ' + CAT.words.search + (CAT.words.alts.length ? ' · then: ' + CAT.words.alts.join(', ') : ''),
