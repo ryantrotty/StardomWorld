@@ -8513,19 +8513,25 @@ class MainActivity : Activity() {
   function alignBars() {
     if (FAC_MODE) return;
     try {
-      var t = document.querySelector('.content-list-item .tv-thumbnail-link') || document.querySelector('.content-list-item img') || document.querySelector('.content-list-item');
-      if (!t) return;
+      // the first card that is showing (a card the category filter hid has no position)
+      var card = null;
+      Array.prototype.some.call(document.querySelectorAll('.content-list-item'), function(c) { if (c.offsetParent && !c.hasAttribute('data-tv-mt-out')) { card = c; return true; } return false; });
+      if (!card) return;
+      var t = card.querySelector('.tv-thumbnail-link') || card.querySelector('img') || card;
       var target = t.getBoundingClientRect().left;
       ['tv-fb', 'tv-fbc'].forEach(function(id) {
         var el = document.getElementById(id);
-        if (!el) return;
+        // a bar hidden behind the category tabs' More has no position either: measuring it gave it (and the wrestler
+        // header, which copies its margin) the card's whole distance from the screen edge, so the header sat to the
+        // right of the videos (2.45.1)
+        if (!el || !el.offsetParent) return;
         el.style.marginLeft = '0px';
         el.style.marginLeft = (target - el.getBoundingClientRect().left) + 'px';
       });
     } catch (e) {}
   }
   window.addEventListener('resize', alignBars);
-  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+  [300, 900, 2000, 4000, 7000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
   // ---- match types that share words (4-Way Battle / Tag / Trios ...): the site's search finds the common words,
   // so the results are narrowed here by the titles. Titles that do not fit are taken out of the list, including
@@ -8632,11 +8638,17 @@ class MainActivity : Activity() {
     m = /(?:^|\D)(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\D|$)/.exec(t);
     return m ? m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2) : '';
   }
+  // The thumbnail can be an inline style, a style the site's script sets later (computed), or an <img> (lazy or not).
   function uploadDate(el) {
     var src = '';
     try {
-      var bg = el.querySelector('[style*="background-image"]'), im = el.querySelector('img');
-      src = (bg && bg.getAttribute('style')) || (im && (im.getAttribute('src') + ' ' + (im.getAttribute('data-src') || ''))) || '';
+      Array.prototype.forEach.call(el.querySelectorAll('.content-thumbnail-box-inner, .content-thumbnail-box, .content-thumbnail, [style*="background-image"]'), function(b) {
+        src += ' ' + (b.getAttribute('style') || '') + ' ' + (b.style.backgroundImage || '');
+        try { src += ' ' + (getComputedStyle(b).backgroundImage || ''); } catch (e) {}
+      });
+      Array.prototype.forEach.call(el.querySelectorAll('img'), function(im) {
+        src += ' ' + ['src', 'data-src', 'data-lazy', 'data-original', 'srcset', 'data-srcset'].map(function(a) { return im.getAttribute(a) || ''; }).join(' ') + ' ' + (im.currentSrc || '');
+      });
     } catch (e) {}
     var m = /[?&]ts=(\d{9,11})/.exec(src);
     return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) : '';
@@ -8650,6 +8662,7 @@ class MainActivity : Activity() {
       if (yr && yr[1] + '-12-31' < deb) return 'before their debut';
       var up = d ? '' : uploadDate(el);
       if (up && up < deb) return 'uploaded before their debut';
+      if (!d && !up) el.__tvNoUp = 1;   // logged as kept with "[no upload date]", so the sheet shows when this can't work
     }
     if (CAT.id === 'champ' && window.__tvWrCheck) { var r = ''; try { r = window.__tvWrCheck(t, d, d ? '' : uploadDate(el)); } catch (e) { r = ''; } if (r) return r; }
     return '';
@@ -8667,10 +8680,16 @@ class MainActivity : Activity() {
       // The site's pager adds a card first and fills its title a moment later: judge it only once the title is there.
       var tt = itemTitle(el);
       if (!tt.replace(/\s+/g, '')) return;
+      // undated card on a page with a debut date: give its thumbnail up to 2.5 s to arrive (the upload date is in its
+      // address) before judging it
+      if (CAT && window.__tvWrDebut && !cardDate(tt) && !uploadDate(el)) {
+        if (!el.__tvSeen) el.__tvSeen = Date.now();
+        if (Date.now() - el.__tvSeen < 2500) { setTimeout(narrowList, 500); return; }
+      }
       el.__tvMt = 1;
       var fit = mtFits(tt), why = fit ? whoCheck(el, tt) : '';
       if (why) fit = false;
-      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(why ? '[' + why + '] ' + tt : tt, fit, ''); }
+      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(why ? '[' + why + '] ' + tt : (el.__tvNoUp ? '[no upload date] ' : '') + tt, fit, ''); }
       if (fit) { el.setAttribute('data-tv-mt-in', '1'); return; }
       if (!el.parentNode) return;
       // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
@@ -8708,7 +8727,7 @@ class MainActivity : Activity() {
             var why = whoCheck(el, itemTitle(el));
             if (why) { catLog('[' + why + '] ' + itemTitle(el), false, alt.mt || alt.ch); return; }
             if (id && (box.querySelector('a[href*="/' + id + '"]') || list0.querySelector('a[href*="/' + id + '"]'))) return;
-            catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
+            catLog((el.__tvNoUp ? '[no upload date] ' : '') + itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;
             c.setAttribute('data-tv-mt-in', '1');
@@ -9098,7 +9117,7 @@ class MainActivity : Activity() {
     } catch (e) {}
   }
   window.addEventListener('resize', alignBars);
-  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+  [300, 900, 2000, 4000, 7000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
   var tries = 0;
   (function tick() { if (mount()) return; if (++tries < 25) setTimeout(tick, 400); })();

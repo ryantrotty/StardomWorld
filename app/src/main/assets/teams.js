@@ -396,7 +396,9 @@
           (win ? '<span class="tt-tag ch">' + esc(T('WINNERS', '優勝')) + '</span>' : '') +
           (prev ? '<span class="tt-tag ch">' + esc(T(L.prevWinners.year + ' WINNERS', L.prevWinners.year + '年優勝')) + '</span>' : '') + tags(t, true) + '</a>';
       }).join('');
-      return '<div class="tt-lg-col"><div class="tt-sec" style="margin:14px 0 4px 0"><i></i><b>' + esc(isJa() && bl.ja ? bl.ja : bl.name) + '</b><span>' + esc(T((bl.teams || []).length + ' teams', (bl.teams || []).length + 'チーム')) + '</span></div>' + rows + '</div>';
+      // the block's own colour on its bar and name: Blue Goddesses blue, Red Goddesses red (design exception, 2.45.1)
+      var bc = /blue|\u30d6\u30eb\u30fc/i.test((bl.name || '') + (bl.ja || '')) ? '#4DA6FF' : /red|\u30ec\u30c3\u30c9/i.test((bl.name || '') + (bl.ja || '')) ? '#FF5A6A' : '';
+      return '<div class="tt-lg-col"><div class="tt-sec" style="margin:14px 0 4px 0"><i' + (bc ? ' style="background:' + bc + '"' : '') + '></i><b' + (bc ? ' style="color:' + bc + '"' : '') + '>' + esc(isJa() && bl.ja ? bl.ja : bl.name) + '</b><span>' + esc(T((bl.teams || []).length + ' teams', (bl.teams || []).length + 'チーム')) + '</span></div>' + rows + '</div>';
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(leagueCount(Y) + ' teams', leagueCount(Y) + 'チーム')) + '</div>';
     scroller.innerHTML = h;

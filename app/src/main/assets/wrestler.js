@@ -262,11 +262,13 @@
   function align() {
     var bar = document.getElementById('tv-fb');
     if (!root || !bar) return;
-    root.style.marginLeft = bar.style.marginLeft || '0px';
+    // the filter bar's margin lines it up with the first video; while the bar is hidden (category tabs) it isn't
+    // measured, so the header keeps no margin and lines up with the videos and the debug panel
+    root.style.marginLeft = bar.offsetParent ? (bar.style.marginLeft || '0px') : '0px';
   }
   var tries = 0;
   (function wait() { if (mount() || ++tries > 60) return; setTimeout(wait, 250); })();
-  [400, 1000, 2100, 4100].forEach(function(t) { setTimeout(align, t); });
+  [400, 1000, 2100, 4100, 7100].forEach(function(t) { setTimeout(align, t); });
   window.addEventListener('resize', align);
 
   function favChanged() {
@@ -311,6 +313,8 @@
       if ((k === 13 || k === 23) && ae.getAttribute('data-wrmore') != null) {   // More: show or hide the full filter bar
         stop();
         document.documentElement.classList.toggle('tv-fb-show');
+        // line the bar (now shown or hidden) and the header up again
+        setTimeout(function() { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 30);
         if (fbShown()) { var b0 = document.querySelector('#tv-fb .tv-fbb'); if (b0) focusEl(b0); }
         return;
       }

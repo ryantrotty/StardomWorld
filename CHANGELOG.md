@@ -13,6 +13,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.45.1
+
+- Wrestler pages with the category tabs: the header and tabs line up with the videos again. While the filter bar was hidden behind More it was measured with no position, and it and the header got the first video's whole distance from the screen edge, so the header sat to the right of the videos. The bar is only lined up while it shows, and only to a video that is showing. All builds (the private build shows the tabs).
+- Tag League page: the Blue Goddesses and Red Goddesses headers are blue and red (bar and name). All builds.
+- Private builds, category tabs: an undated video's upload date is now read from the thumbnail however the site draws it (inline style, a style set later, or an image), and the card waits up to 2.5 s for its thumbnail before it is judged. When no upload date can be read the card is kept and logged as "[no upload date]" in the debug panel and the sheet.
+
 ## 2.45.0
 
 - Wrestler pages: a DEBUT fact (date) after FACTION, from the debuts list (the roster file now has 40 wrestlers' official debut dates). All builds.
