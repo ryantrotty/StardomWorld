@@ -126,9 +126,9 @@
   // ---- private builds: tabs above the filter bar for the Titles & tournaments categories (match_types.json, private group)
   var CATS = [];
   try {
-    if (H.categoriesOn && H.categoriesOn()) {
-      ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { if (g.private) (g.items || []).forEach(function(x) { if ((x.pages || []).indexOf('wrestler') >= 0) CATS.push(x); }); });
-    }
+    // the app-drawn page has its tabs in every build (2.47.0); the search page's tabs stay in private builds
+    var mtSrc = APP && H.wrestlerTabsJson ? call('wrestlerTabsJson') : (H.categoriesOn && H.categoriesOn() ? call('matchTypesJson') : '');
+    ((parse(mtSrc) || {}).groups || []).forEach(function(g) { if (g.private) (g.items || []).forEach(function(x) { if ((x.pages || []).indexOf('wrestler') >= 0) CATS.push(x); }); });
   } catch (e) { CATS = []; }
   var curMt = qp('tvmt'), otherFilters = /[?&]tv(ch|co|sh|lo|yr)=[^&]/.test(location.search) || (curMt && !CATS.some(function(x) { return x.id === curMt; }));
   function tabsHtml() {

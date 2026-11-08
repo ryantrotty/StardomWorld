@@ -13,6 +13,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.47.0
+
+- Wrestler pages (all builds): every wrestler link opens the app-drawn wrestler page with its tabs (All Matches, Championship, 5★STAR GP, Cinderella Tournament, Tag League, More), single matches only and the debut and title-record checks. The debug panel and the sheet logging stay in private builds.
+- Wrestlers menu spotlight (all builds): the three columns and the portrait on the right are in public builds too, with initials instead of the private photos. The debut date now shows under the faction name.
+- Matches menu: the era cards under TOP RATED are gone (they no longer fit with Titles & tournaments); Overall and By match type stay, and the Top Rated page still has By era.
+
 ## 2.46.2
 
 - Splash logo: transparent background, so it sits on the navy splash instead of in a black box. The generic logo here; the private build's logo (branding-private, not in git) was converted the same way on the build machine. All builds.

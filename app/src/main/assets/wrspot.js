@@ -2,7 +2,8 @@
   // Wrestlers spotlight (private builds, 2.35.0). In the menu's Wrestlers shelf the names sit in three columns and a
   // portrait on the right follows focus: the wrestler's photo (the small copy, AndroidHost.wrestlerSpot), name,
   // current faction, title reigns and defences, the title they hold now, and a star when they are in My Favorites.
-  // Past wrestlers (no photos) show initials. Public builds: on() is false and the shelf keeps its four text columns.
+  // Past wrestlers (no photos) show initials. Since 2.47.0 in every build: public builds have no photos (private
+  // artwork), so every portrait shows initials. Under the faction: the debut date (debuts list).
   if (window.__tvWrSpot) return;
   var H = window.AndroidHost || {};
 
@@ -13,10 +14,12 @@
   // Android's bridge matches a method by its number of arguments: a no-argument method called with one fails.
   function call(fn, a) { try { return H[fn] ? (arguments.length > 1 ? H[fn](a) : H[fn]()) : ''; } catch (e) { return ''; } }
   function low(s) { return String(s || '').toLowerCase().trim(); }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function fmtD(iso) { var a = String(iso).split('-'); return isJa() ? (+a[0]) + '年' + (+a[1]) + '月' + (+a[2]) + '日' : (+a[2]) + ' ' + MONTHS[+a[1] - 1] + ' ' + a[0]; }
   function initials(n) { var p = String(n).trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
 
   function on() {
-    try { return !!(H.showPosters && H.showPosters() && H.wrestlerSpot); } catch (e) { return false; }
+    try { return !!H.wrestlerSpot; } catch (e) { return false; }
   }
 
   // ---- data, read once
@@ -43,7 +46,9 @@
     var BELTS = ['world', 'wonder', 'goddess', 'artist', 'highspeed', 'future', 'newblood', 'iwgp', 'strong', 'kawaii'];
     var lins = [];
     BELTS.forEach(function(b) { var L = parse(call('lineageJson', b)); if (L && L.reigns) lins.push(L); });
-    DATA = { people: people, lins: lins };
+    var deb = {};
+    try { var D = (parse(call('matchTypesJson')) || {}).debuts || {}; Object.keys(D).forEach(function(k) { if (k.charAt(0) !== '_') deb[low(k)] = String(D[k] || ''); }); } catch (e) {}
+    DATA = { people: people, lins: lins, debuts: deb };
     return DATA;
   }
 
@@ -91,6 +96,7 @@
     '#tv-sm-shelf .tv-wsp-ini{font-size:54px;font-weight:900;color:#C9D2DC;}',
     '#tv-sm-shelf .tv-wsp-n{margin-top:10px;font-size:22px;font-weight:900;color:#ffffff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '#tv-sm-shelf .tv-wsp-l1{margin-top:3px;font-size:15px;font-weight:600;color:#C9D2DC;min-height:18px;}',
+    '#tv-sm-shelf .tv-wsp-l0{margin-top:2px;font-size:13px;font-weight:600;color:#9AA6B4;min-height:16px;}',
     '#tv-sm-shelf .tv-wsp-l2{margin-top:3px;font-size:13px;font-weight:700;color:#F4C242;min-height:16px;}'
   ].join('\n');
 
@@ -102,7 +108,7 @@
       (document.head || document.documentElement).appendChild(st);
     }
     return '<div class="tv-wsp notranslate" translate="no"><div class="tv-wsp-ph"><span class="tv-wsp-ini"></span></div>' +
-      '<div class="tv-wsp-n"></div><div class="tv-wsp-l1"></div><div class="tv-wsp-l2"></div></div>';
+      '<div class="tv-wsp-n"></div><div class="tv-wsp-l1"></div><div class="tv-wsp-l0"></div><div class="tv-wsp-l2"></div></div>';
   }
 
   // The row's search words, from its address (/mypage?tvwr=... or /contents/search?q[keyword]=...).
@@ -114,7 +120,7 @@
     var box = shelf.querySelector('.tv-wsp');
     if (!box) return;
     var ph = box.querySelector('.tv-wsp-ph'), ini = box.querySelector('.tv-wsp-ini');
-    var nEl = box.querySelector('.tv-wsp-n'), l1 = box.querySelector('.tv-wsp-l1'), l2 = box.querySelector('.tv-wsp-l2');
+    var nEl = box.querySelector('.tv-wsp-n'), l1 = box.querySelector('.tv-wsp-l1'), l0 = box.querySelector('.tv-wsp-l0'), l2 = box.querySelector('.tv-wsp-l2');
     var cur = null, picTimer = null;
 
     function show(a) {
@@ -124,6 +130,8 @@
       var st = stats(p), fav = isFav(p);
       nEl.innerHTML = (fav ? '<span style="color:#F4C242">&#9733; </span>' : '') + esc((a.textContent || p.name).trim());
       l1.textContent = p.fac || (p.past ? T('Past wrestler', '元所属') : '');
+      var dd = data().debuts[low(p.name)] || data().debuts[low(p.search)] || '';
+      if (l0) l0.textContent = dd ? T('Debut ', 'デビュー ') + fmtD(dd) : '';
       var bits = [];
       if (st.now.length) bits.push(T('Champion: ', '現王者：') + st.now.join(', '));
       if (st.n) bits.push(T(st.n + (st.n === 1 ? ' reign' : ' reigns') + ' · ' + st.defs + (st.defs === 1 ? ' defence' : ' defences'), '戴冠' + st.n + '回・防衛' + st.defs + '回'));

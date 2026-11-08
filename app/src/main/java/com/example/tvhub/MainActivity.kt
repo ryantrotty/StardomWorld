@@ -2616,14 +2616,18 @@ class MainActivity : Activity() {
     // Match types: assets/match_types.json with the roster file's "matchTypes" applied: { "<id>": { fields } } replaces
     // those fields on the match type with that id (search words, title patterns, alts), so a category rule can be fixed
     // without a new APK.
-    private fun rosterMatchTypes(): String {
+    private fun rosterMatchTypes(): String = rosterMatchTypes(BuildConfig.SHOW_POSTERS)
+
+    // includePrivate: keep the private groups (Titles & tournaments) even in a public build; used by the app-drawn
+    // wrestler page's tabs, which are in every build (2.47.0)
+    private fun rosterMatchTypes(includePrivate: Boolean): String {
         val bundled = assetText("match_types.json")
         return try {
             val base = org.json.JSONObject(bundled)
             val all = base.optJSONArray("groups") ?: return bundled
             // public builds leave out the private groups (Titles & tournaments)
             val groups = org.json.JSONArray()
-            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (BuildConfig.SHOW_POSTERS || !it.optBoolean("private")) groups.put(it) }
+            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (includePrivate || !it.optBoolean("private")) groups.put(it) }
             base.put("groups", groups)
             // "debuts": {name: "YYYY-MM-DD"}; the roster file's entries add to and override the bundled ones
             rosterData()?.optJSONObject("debuts")?.let { rd ->
@@ -3105,6 +3109,10 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun matchTypesJson(): String = this@MainActivity.rosterMatchTypes()
+
+        // Every build (2.47.0): the match types with the Titles & tournaments group, for the app-drawn wrestler page's tabs.
+        @android.webkit.JavascriptInterface
+        fun wrestlerTabsJson(): String = this@MainActivity.rosterMatchTypes(true)
 
         // Private builds: the Titles & tournaments categories (tabs on wrestler and tag team pages, Match type entries).
         @android.webkit.JavascriptInterface
@@ -5213,8 +5221,8 @@ class MainActivity : Activity() {
               return [m.name, m.ja || m.name];
             });
           } catch (e) {}
-          // A wrestler's page. Private builds (2.46.1): the app-drawn page (/mypage?tvwr=); otherwise the site's search for them.
-          function wrPath(key) { return singleOnly() ? '/mypage?tvwr=' + encodeURIComponent(key) : '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(key); }
+          // A wrestler's page: the app-drawn page (/mypage?tvwr=; private 2.46.1, every build 2.47.0).
+          function wrPath(key) { return '/mypage?tvwr=' + encodeURIComponent(key); }
           function searchPath(name) { return wrPath(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
@@ -5827,11 +5835,8 @@ class MainActivity : Activity() {
                 var tOv = '/mypage?tvtop=overall', tTy = '/mypage?tvtop=type';
                 topHtml = '<div class="tv-shl-t" style="margin-top:14px;">' + esc(T('TOP RATED', '高評価')) + '</div>' +
                   '<div class="tv-shl-g2" style="gap:8px;margin-bottom:8px;"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + tOv + '" href="' + esc(absUrl(tOv)) + '">' + esc(T('Overall', '総合')) + '<span>' + tmData.matches.length + esc(T(' matches, best first', '試合・評価順')) + '</span></a>' +
-                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>' +
-                  '<div class="tv-shl-ec" style="margin-top:0;">' + tmEras.slice().reverse().map(function(x) {
-                    var ep = '/mypage?tvtop=era&e=' + x.n;
-                    return '<a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + ep + '" href="' + esc(absUrl(ep)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + (ecnt[x.n] || 0) + esc(T(' matches', '試合')) + '</span></span></a>';
-                  }).join('') + '</div>';
+                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>';
+                // (2.47.0) the era tiles are gone from the shelf: they no longer fit; the Top Rated page still has By era
               }
               h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-mcols">' + mhtml + '</div>' + topHtml;
             } else if (key === 'years') {
@@ -5892,7 +5897,7 @@ class MainActivity : Activity() {
               } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 860;
-              // Private builds: names in three columns with a portrait spotlight on the right (assets/wrspot.js).
+              // Names in three columns with a portrait spotlight on the right (assets/wrspot.js; every build since 2.47.0, initials without the private photos).
               var spot = !!(window.__tvWrSpot && window.__tvWrSpot.on());
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });

@@ -480,15 +480,18 @@
     });
     return out;
   }
-  function fetchPage(q, page, cb) {
-    var key = q + '#' + page, c = readCache()[key];
+  // single: ask for single matches only (q[type]=single); private builds always do. The app-drawn wrestler page
+  // asks in every build (2.47.0).
+  function fetchPage(q, page, cb, single) {
+    var one = CATS_ON || !!single;
+    var key = q + '#' + page + (one && !CATS_ON ? '#s' : ''), c = readCache()[key];
     if (c && Date.now() - c.t < KEEP_MS) { cb('', c.items, c.more, true); return; }
     var wait = blockedFor();
     if (wait) { cb('the site asked for a pause: ' + wait + ' min left'); return; }
     var since = Date.now() - (parseInt(lsGet(LAST_KEY) || '0', 10) || 0);
-    if (since < GAP_MS) { setTimeout(function() { fetchPage(q, page, cb); }, GAP_MS - since); return; }
+    if (since < GAP_MS) { setTimeout(function() { fetchPage(q, page, cb, single); }, GAP_MS - since); return; }
     lsSet(LAST_KEY, String(Date.now()));
-    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + '&activetab=contents' + (CATS_ON ? '&q%5Btype%5D=single' : '') + (page > 1 ? '&page=' + page : '');
+    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + '&activetab=contents' + (one ? '&q%5Btype%5D=single' : '') + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { lsSet(BLOCK_KEY, String(Date.now() + 10 * 60000)); throw 'blocked (HTTP ' + res.status + ')'; }
       if (!res.ok) throw 'HTTP ' + res.status;
@@ -914,7 +917,7 @@
         '<div><div class="k">' + esc(T('REIGNS', '戴冠')) + '</div><div class="v">' + reignsN + '</div></div>' +
         '<div><div class="k">' + esc(T('DEFENCES', '防衛')) + '</div><div class="v">' + t.defTotal + '</div></div>' +
       '</div><div class="tt-btns">' +
-        t.members.map(function(m) { var p = CATS_ON ? '/mypage?tvwr=' + encodeURIComponent(searchName(m)) : '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
+        t.members.map(function(m) { var p = '/mypage?tvwr=' + encodeURIComponent(searchName(m)); return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
         (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id) + (CATS_ON ? '&q%5Btype%5D=single' : ''))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
         (window.__tvFav ? '<a class="tt-btn tt-favb' + (isFav(t.id) ? ' tt-on' : '') + '" tabindex="0" data-favb="1">' + favBtnInner(t.id) + '</a>' : '') +
       '</div></div></div>';
@@ -1026,7 +1029,7 @@
       else { WP.qi++; WP.page = 1; if (WP.qi >= WP.queries.length) WP.done = true; }
       wpPaint();
       if (cb) cb();
-    });
+    }, true);
   }
   // On opening a tab: pages until there are 8 videos to show, at most 3 pages (the gap between requests still applies).
   function wpStart() {
@@ -1086,7 +1089,7 @@
     WP.tab = tab; WP.x = x; WP.rule = wpRule(x);
     var base = api.W.search, w = x ? wpWords(x) : null;
     WP.queries = x ? [base + ' ' + w.search].concat(w.alts.map(function(a) { return base + ' ' + a; })) : [base];
-    var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(base) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(base) + (CATS_ON ? '&q%5Btype%5D=single' : '') + '&tvmore=1';
+    var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(base) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(base) + '&q%5Btype%5D=single&tvmore=1';
     var tabs = '<div class="wr-tabs"><a class="wr-tab' + (tab === 'all' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('all'))) + '">' + esc(T('All Matches', 'すべての試合')) + '</a>' +
       cats.map(function(c) { return '<a class="wr-tab' + (tab === c.id ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath(c.id))) + '">' + esc(isJa() && c.ja ? c.ja : c.name) + '</a>'; }).join('') +
       '<a class="wr-tab wr-tab-more" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
