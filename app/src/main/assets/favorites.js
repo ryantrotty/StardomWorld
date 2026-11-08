@@ -701,14 +701,16 @@
   }
   function cardHtml(w) {
     var u = photo(w.k), n = w.n || nameFor(w.k);
-    var inner = u ? '<div class="tv-fp-ph" style="background-image:url(' + u + ');"><div class="tv-fp-cn">' + esc(n) + '</div></div>'
+    var sb = window.__tvStar ? window.__tvStar([w.k], 'card') : '';
+    var inner = u ? '<div class="tv-fp-ph" style="' + (sb || 'background-image:url(' + u + ');') + '"><div class="tv-fp-cn">' + esc(n) + '</div></div>'
       : '<div class="tv-fp-ph" style="background:linear-gradient(160deg,hsl(' + hueFor(n) + ',70%,45%),hsl(' + ((hueFor(n) + 40) % 360) + ',60%,25%));"><div class="tv-fp-mono">' + esc(initials(n)) + '</div><div class="tv-fp-cn">' + esc(n) + '</div></div>';
     return '<a class="tv-fp-card" tabindex="0" data-fk="w" data-fv="' + esc(w.k) + '" href="' + esc(absUrl(wrestlerPath(w.k))) + '">' + inner + '</a>';
   }
   function teamCardHtml(t) {
     var halves = (t.m || []).slice(0, 2).map(function(m, j) {
       var u = memberPhoto(t, j);
-      return u ? '<div class="tv-fp-half" style="background-image:url(' + u + ');"></div>'
+      var sb = window.__tvStar ? window.__tvStar([m, (t.ms || [])[j]], j ? 'right' : 'left') : '';
+      return u ? '<div class="tv-fp-half" style="' + (sb || 'background-image:url(' + u + ');') + '"></div>'
         : '<div class="tv-fp-half" style="background:linear-gradient(160deg,hsl(' + hueFor(m) + ',70%,45%),hsl(' + ((hueFor(m) + 40) % 360) + ',60%,25%));">' + esc(teamInitials(m)) + '</div>';
     }).join('');
     var sub = (t.m || []).join(' & ');

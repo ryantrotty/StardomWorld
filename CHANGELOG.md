@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.47.0
+
+Includes the 2.45.0 match index, 2.46.0 and the debut and Tag League faces branch, which had also been numbered 2.45.0.
+
+Private builds only:
+- Star backdrop behind wrestler portraits on wrestler pages, tag team pages, My Favorites (wrestlers and tag teams) and Tag League rows. Portrait sizes and page layouts are unchanged. The 38 px Tag League circles use the night sky colour and glow, without individual stars.
+- A wrestler without a transparent cut-out keeps the photo shown before.
+
 ## 2.46.0
 
 Private builds only:
@@ -28,6 +36,28 @@ Private builds only:
 
 
 
+
+## 2.45.0
+
+- Wrestler pages: a DEBUT fact (date) after FACTION, from the debuts list (the roster file now has 40 wrestlers' official debut dates). All builds.
+- Tag League page: each row shows the two wrestlers' circles (photos in private builds, initials otherwise), like the team page. All builds.
+- Video cards no longer dim or lift under a resting pointer. A card could stay darkened while not in focus (the same cause as the dimmed menu row fixed in 2.15.2); focus is shown by the gold ring only. All builds.
+
+## 2.44.5
+
+Private builds only, fixes 2.44.4:
+- The checks now run on the first page of a wrestler's category tab too. In 2.44.4 the first page was judged before the wrestler page's record had loaded, so none of it was checked.
+- Championship tab: an undated title match (old numbered titles, English commentary copies) is kept only when one of the wrestler's matches for that belt is in the 45 days before the video was uploaded (upload date from the thumbnail address).
+
+## 2.44.4
+
+Private builds only (wrestler and tag team category tabs):
+- Championship tab on wrestler pages: a title match is kept only when it is on the wrestler's record in that belt's title history (won, defended, or challenged, a day either side). An undated one is kept when they have some match for that belt on record. Titles without a history in the app (CMLL, POP and so on) are kept only when the title names them. NEW BLOOD tag has no full defence list, so those stay.
+- The wrestler's record now includes their challenges (the match where they took the belt, and defences against them), and tolerates an extra word in a name in the title history ("Rian Hinata" in the daily file).
+- New `debuts` list (bundled, and the roster file can add more): category-tab videos dated before a wrestler's debut are left out. Undated ones are judged by a year in the title, then by the upload time in the thumbnail address. Team pages use the later debut of the two. Rian's debut is set (30 Mar 2024).
+- Team Championship tab: an undated Goddess of Stardom title match is left out when the pair has no Goddess title match on record.
+- Why each card was left out is shown in the debug panel and sent to the sheet.
+- Fixed name typos in the bundled Artist and Future title histories (Kikyo Furusawa, Rian).
 
 ## 2.44.3
 
