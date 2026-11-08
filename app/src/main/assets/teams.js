@@ -523,10 +523,13 @@
       items.forEach(function(it) {
         if (V.seen[it.id]) return; V.seen[it.id] = 1;
         if (!isTagBeltMatch(it.t)) { V.dropped.push(it.t); return; }   // team pages keep tag title matches only
+        if (beforeDebut(it)) { V.dropped.push('[before their debut] ' + it.t); return; }
         // a dated Goddess title match must be one this pair was in, by the title history (as champions or challengers);
         // NEW BLOOD tag has no defence list to check against, so those stay
         var dd = dateOfTitle(it.t);
         if (dd && GODDESS_RE.test(half(it.t)) && pairDates().goddess && !pairDates().goddess[dd]) { V.dropped.push('[not this pair, by the title history] ' + it.t); return; }
+        // undated: kept only when this pair has some Goddess title match on record
+        if (!dd && GODDESS_RE.test(half(it.t)) && pairDates().goddess && !Object.keys(pairDates().goddess).length) { V.dropped.push('[no Goddess title match on record for this pair] ' + it.t); return; }
         var sd = sidesCheck(TEAM, it.id);
         if (sd === 'opponents') { V.dropOpp++; V.dropped.push('[opponents] ' + it.t); return; }
         if (sd === 'partners') { it.ok = 1; V.verified++; }
@@ -653,10 +656,35 @@
     setTimeout(function() { if (sheetWait[id]) { var f = sheetWait[id]; delete sheetWait[id]; f({ ok: false, error: 'no reply' }); } }, 30000);
     try { H.teamSync(id, JSON.stringify(body)); } catch (e) { delete sheetWait[id]; (cb || function() {})({ ok: false, error: String(e) }); }
   }
+  // Private builds: the later debut of the two (match_types.json "debuts", plus the roster file's). The site's search
+  // also returns older videos neither of them is in; a video dated (or, undated, uploaded) before it is left out.
+  var PAIR_DEBUT = null;
+  function pairDebut() {
+    if (PAIR_DEBUT !== null) return PAIR_DEBUT;
+    PAIR_DEBUT = '';
+    if (!CATS_ON || !TEAM) return PAIR_DEBUT;
+    try {
+      var deb = (parse(call('matchTypesJson')) || {}).debuts || {}, low = {};
+      Object.keys(deb).forEach(function(k) { low[k.toLowerCase()] = String(deb[k] || ''); });
+      TEAM.members.forEach(function(m) { var d = low[String(m).toLowerCase()] || low[String(searchName(m)).toLowerCase()] || ''; if (d > PAIR_DEBUT) PAIR_DEBUT = d; });
+    } catch (e) { PAIR_DEBUT = ''; }
+    return PAIR_DEBUT;
+  }
+  function beforeDebut(it) {
+    var deb = pairDebut();
+    if (!deb) return false;
+    var d = dateOfTitle(it.t);
+    if (d) return d < deb;
+    var yr = /(?:^|[^\d])(20\d\d)(?:[^\d]|$)/.exec(half(it.t));   // "Goddesses of Stardom 2022": the whole year is before it
+    if (yr && yr[1] + '-12-31' < deb) return true;
+    var m = /[?&]ts=(\d{9,11})/.exec(it.b || '');
+    return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) < deb : false;
+  }
   function keepItems(items) {   // the 2-on-2 rule and the video index side check, for search results and saved lists alike
     var add = [];
     items.forEach(function(it) {
       if (V.seen[it.id]) return; V.seen[it.id] = 1;
+      if (beforeDebut(it)) { V.dropped.push('[before their debut] ' + it.t); return; }
       if (!isTagTitle(it.t)) { V.dropMulti++; V.dropped.push(it.t); return; }
       var s = sidesCheck(TEAM, it.id);
       if (s === 'opponents') { V.dropOpp++; V.dropped.push('[opponents] ' + it.t); return; }

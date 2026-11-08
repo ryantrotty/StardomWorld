@@ -355,7 +355,8 @@
    ]
   }
  ],
- "siteCategories": {
+ "debuts": { "_note": "Debut dates (YYYY-MM-DD). Private builds leave out category-tab videos dated before a wrestler's debut. The roster file's debuts add to these.", "Rian": "2024-03-30" },
+  "siteCategories": {
   "_note": "Private builds: the site's search category ids (q[category_id]); one per search. years: the Year filter uses these instead of the year as a word.",
   "years": {
    "2026": 51,

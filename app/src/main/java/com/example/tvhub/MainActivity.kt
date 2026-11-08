@@ -2614,6 +2614,11 @@ class MainActivity : Activity() {
             val groups = org.json.JSONArray()
             for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (BuildConfig.SHOW_POSTERS || !it.optBoolean("private")) groups.put(it) }
             base.put("groups", groups)
+            // "debuts": {name: "YYYY-MM-DD"}; the roster file's entries add to and override the bundled ones
+            rosterData()?.optJSONObject("debuts")?.let { rd ->
+                val deb = base.optJSONObject("debuts") ?: org.json.JSONObject().also { base.put("debuts", it) }
+                val ks = rd.keys(); while (ks.hasNext()) { val k = ks.next(); deb.put(k, rd.get(k)) }
+            }
             val mt = rosterData()?.optJSONObject("matchTypes") ?: return base.toString()
             for (g in 0 until groups.length()) {
                 val items = groups.optJSONObject(g)?.optJSONArray("items") ?: continue
@@ -8607,8 +8612,43 @@ class MainActivity : Activity() {
     } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
   }
   if (CAT) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
+  // Private builds, wrestler category tabs: the site's search also returns videos the wrestler isn't in. A card dated
+  // before their debut goes (undated: by the upload time in its picture's address), and a Championship tab card must
+  // pass the wrestler page's title-record check (wrestler.js). '' keeps the card, else the reason.
+  var WHO_T0 = Date.now();
+  function cardDate(t) {
+    t = String(t || '').replace(/[\uff10-\uff19]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); });
+    var m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t);
+    if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+    m = /(?:^|\D)(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\D|$)/.exec(t);
+    return m ? m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2) : '';
+  }
+  function uploadDate(el) {
+    var src = '';
+    try {
+      var bg = el.querySelector('[style*="background-image"]'), im = el.querySelector('img');
+      src = (bg && bg.getAttribute('style')) || (im && (im.getAttribute('src') + ' ' + (im.getAttribute('data-src') || ''))) || '';
+    } catch (e) {}
+    var m = /[?&]ts=(\d{9,11})/.exec(src);
+    return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) : '';
+  }
+  function whoCheck(el, t) {
+    if (!CAT) return '';
+    var d = cardDate(t), deb = window.__tvWrDebut || '';
+    if (deb) {
+      if (d && d < deb) return 'before their debut';
+      var yr = d ? null : /(?:^|[^\d])(20\d\d)(?:[^\d]|$)/.exec(t);   // "5★STAR GP 2022": the whole year is before it
+      if (yr && yr[1] + '-12-31' < deb) return 'before their debut';
+      var up = d ? '' : uploadDate(el);
+      if (up && up < deb) return 'uploaded before their debut';
+    }
+    if (CAT.id === 'champ' && window.__tvWrCheck) { var r = ''; try { r = window.__tvWrCheck(t, d); } catch (e) { r = ''; } if (r) return r; }
+    return '';
+  }
   function narrowList() {
     if (!MTR) return;
+    // wait (at most 3 s) for the wrestler page's record, so no card is judged without it
+    if (CAT && window.__tvWrestler && !window.__tvWrReady && Date.now() - WHO_T0 < 3000) return;
     // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
     var list = document.querySelectorAll('.content-list-item, [class*="content-list"] article, #result article');
     Array.prototype.forEach.call(list, function(el) {
@@ -8618,8 +8658,9 @@ class MainActivity : Activity() {
       var tt = itemTitle(el);
       if (!tt.replace(/\s+/g, '')) return;
       el.__tvMt = 1;
-      var fit = mtFits(tt);
-      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(tt, fit, ''); }
+      var fit = mtFits(tt), why = fit ? whoCheck(el, tt) : '';
+      if (why) fit = false;
+      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(why ? '[' + why + '] ' + tt : tt, fit, ''); }
       if (fit) { el.setAttribute('data-tv-mt-in', '1'); return; }
       if (!el.parentNode) return;
       // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
@@ -8654,6 +8695,8 @@ class MainActivity : Activity() {
             var id = idOf(el);
             nA++;
             if (!mtFits(itemTitle(el))) { catLog(itemTitle(el), false, alt.mt || alt.ch); return; }
+            var why = whoCheck(el, itemTitle(el));
+            if (why) { catLog('[' + why + '] ' + itemTitle(el), false, alt.mt || alt.ch); return; }
             if (id && (box.querySelector('a[href*="/' + id + '"]') || list0.querySelector('a[href*="/' + id + '"]'))) return;
             catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
