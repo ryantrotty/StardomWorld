@@ -215,3 +215,5 @@ Portrait G (2.46.0, menu Wrestlers spotlight): no border or panel. Layers, back 
 
 Star backdrop (2.47.0, private builds, assets/starback.js): behind the existing portrait element only, with no change to size, border or focus. Layers: transparent cut-out, warm glow, star field (zoomed in for 140 px circles and cards; the halves of a pair card share one sky). The 38 px Tag League circles use a #1B2540 to #0B1118 fade and the glow instead of stars. No blur.
 
+Index panel tabs (2.49.0): People, Match, Finish, Moments and Marks in a chip row under the facts line (44 high, chosen = look B, focus = gold border). Tag groups use the 12/800 gold label; chips are the panel's buttons. No new colours.
+

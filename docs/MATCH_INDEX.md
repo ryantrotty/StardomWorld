@@ -19,6 +19,7 @@ Paste the whole of `scripts/video_index_log.gs` into the sheet's Apps Script, th
 - Match type is worked out from the sides, never typed.
 - Ids are permanent. To retire a duplicate set `merged_into` to the id it became, or `active` to FALSE. Never delete a row.
 - `level`: 1 people and sides, 2 titles and competition, 3 finish, moments and timestamps.
+- `match_tags.source`: `auto` was pre-picked from the title and not looked at, `panel` was confirmed. `lists.match_keywords` holds the patterns used to pre-pick.
 
 ## Adding names
 

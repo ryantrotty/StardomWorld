@@ -6,15 +6,17 @@
   var U = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
   if (!U || !window.AndroidHost || !AndroidHost.indexSync) return;
   window.__tvIndexPanel = true;
-  var LIB_KEY = 'tvVixLibV1', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', LIB_AGE = 3600000;
+  var LIB_KEY = 'tvVixLibV2', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', LIB_AGE = 3600000;
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result' };
 
+  var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
+  var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
   var root = null, layer = 'main', state = null, lib = null, rec = null, nameMap = {}, byId = {}, menuFor = null, pick = null, lastFocus = 'save', statusText = '', statusBad = false, seq = 0, cbs = {}, busy = false;
 
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -58,7 +60,7 @@
     r.participants.forEach(function(p) {
       var i = Number(p.side_no) - 1;
       sides[i] = sides[i] || { role: p.role || '', team: '', people: [] };
-      sides[i].people.push({ id: p.talent_id && byId[p.talent_id] ? p.talent_id : '', billed: p.billed_name });
+      sides[i].people.push({ id: p.talent_id && byId[p.talent_id] ? p.talent_id : '', billed: p.billed_name, entry: p.entry_order || '', elim: p.elim_order || '' });
     });
     return sides.filter(Boolean);
   }
@@ -72,6 +74,10 @@
       '#tvx .h{font:800 15px Arial;letter-spacing:.14em;color:#F4C242}',
       '#tvx .t{font:700 22px Arial;margin:8px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
       '#tvx .m{font:600 14px Arial;color:#9AA6B4;margin-bottom:12px}',
+      '#tvx .tabs{display:flex;gap:8px;margin-bottom:10px}',
+      '#tvx .body{flex:1 1 auto;min-height:150px;overflow:auto;padding:3px}',
+      '#tvx .grp{font:800 12px Arial;letter-spacing:1px;color:#F4C242;margin:10px 0 6px}',
+      '#tvx .chips{display:flex;flex-wrap:wrap;gap:8px}',
       '#tvx .sides{display:flex;gap:12px;overflow:auto;flex:1 1 auto;min-height:150px;padding:3px}',
       '#tvx .c{flex:1 1 0;min-width:220px;background:#121922;border:2px solid #2A323C;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box}',
       '#tvx .l{font:800 12px Arial;letter-spacing:1px;color:#F4C242;display:flex;justify-content:space-between}',
@@ -120,8 +126,11 @@
     ensure();
     var title = rec ? (rec.title_en || rec.title_ja || rec.h1 || '') : '';
     var show = rec && rec.shows && rec.shows[0] ? rec.shows[0].show : '';
-    var h = '<div class="p"><div class="h">' + T.head + '</div><div class="t">' + esc(title) + '</div><div class="m">' + esc([rec && rec.date, show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div><div class="sides">';
-    if (state) {
+    var h = '<div class="p"><div class="h">' + T.head + '</div><div class="t">' + esc(title) + '</div><div class="m">' + esc([rec && rec.date, show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div>';
+    if (state) h += '<div class="tabs">' + TABS.map(function(t) { return chip('T' + t, T.tabs[t], state.tab === t ? 'on' : ''); }).join('') + '</div>';
+    if (state && state.tab !== 'people') h += '<div class="body">' + tabHtml() + '</div>';
+    else h += '<div class="sides">';
+    if (state && state.tab === 'people') {
       state.sides.forEach(function(s, i) {
         var tag = s.role === 'champion' ? (ja ? '王者' : 'CHAMPION') : (s.role === 'challenger' ? (ja ? '挑戦者' : 'CHALLENGER') : '');
         h += '<div class="c"><div class="l"><span>' + T.side + ' ' + (i + 1) + '</span><em>' + tag + '</em></div>';
@@ -132,17 +141,19 @@
       });
       h += '<div style="display:flex;align-items:flex-start">' + chip('ns', T.addSide, 'ghost') + '</div>';
     }
-    h += '</div>';
+    if (!state || state.tab === 'people') h += '</div>';
     if (state) {
-      h += '<div class="row">';
-      if (!state.resOpen) h += chip('res', T.resHidden, 'ghost');
+      if (state.tab === 'people') h += '<div class="row">';
+      if (state.tab !== 'people') { /* the result row is on People only */ }
+      else if (!state.resOpen) h += chip('res', T.resHidden, 'ghost');
       else {
         var r = state.result;
         h += chip('r0', T.notSet, !r.type ? 'on' : '');
         state.sides.forEach(function(s, i) { h += chip('rw' + (i + 1), T.side + ' ' + (i + 1) + T.wins, r.type === 'win' && r.side === i + 1 ? 'on' : ''); });
         h += chip('rd', T.draw, r.type === 'draw' ? 'on' : '') + chip('rn', T.nc, r.type === 'nc' ? 'on' : '');
       }
-      h += '</div><div class="row">' + chip('save', T.save);
+      if (state.tab === 'people') h += '</div>';
+      h += '<div class="row">' + chip('save', T.save);
       if (setNext()) h += chip('next', T.next);
       h += chip('close', T.close, 'ghost') + '</div>';
     } else h += '<div class="row">' + chip('close', T.close, 'ghost') + '</div>';
@@ -151,6 +162,90 @@
     if (layer === 'pick') h += pickHtml();
     root.innerHTML = h;
     focusKey(layer === 'main' ? lastFocus : (layer === 'menu' ? 'm0' : (pick.focus || 'first')));
+  }
+
+  // ---- Match, Finish, Moments and Marks tabs
+  function listOf(g) { return (lib.lists && lib.lists[g]) || []; }
+  function lab(x) { return ja && x.ja ? x.ja : (x.en || x.id); }
+  function has(g, v) { return (state.tags[g] || []).indexOf(v) >= 0; }
+  function group(g, items) {
+    if (!items.length) return '';
+    return '<div class="grp">' + T.groups[g] + '</div><div class="chips">' + items.map(function(x) { return chip('c:' + g + ':' + x.id, esc(lab(x)), has(g, x.id) ? 'on' : ''); }).join('') + '</div>';
+  }
+  function people() {
+    var out = [];
+    state.sides.forEach(function(s, i) { s.people.forEach(function(p, j) { out.push({ p: p, k: i + '_' + j }); }); });
+    return out;
+  }
+  function mmss(v) { v = Math.floor(Number(v) || 0); return Math.floor(v / 60) + ':' + ('0' + (v % 60)).slice(-2); }
+  function tabHtml() {
+    var h = '';
+    if (state.tab === 'match') {
+      var comp = (state.tags.competition || [])[0];
+      h += group('title', listOf('title')) + group('competition', listOf('competition')) + group('round', listOf('round'));
+      h += group('block', listOf('block').filter(function(b) { return !comp || !b.p || b.p === comp; })) + group('stipulation', listOf('stipulation'));
+    } else if (state.tab === 'finish') {
+      if (!state.resOpen) h += chip('rev', T.reveal, 'ghost');
+      else {
+        h += group('finish', listOf('finish'));
+        h += '<div class="grp">' + T.fall + '</div><div class="chips">' + people().filter(function(x) { return x.p.id; }).map(function(x) { return chip('f:' + x.p.id, esc(nameOf(x.p.id)), state.fall === x.p.id ? 'on' : ''); }).join('') + '</div>';
+      }
+    } else if (state.tab === 'moments') {
+      h += group('moment', listOf('moment').filter(function(x) { return state.resOpen || !SPOIL[x.id]; }));
+      if (!state.resOpen) h += '<div class="m" style="margin-top:12px">' + T.spoil + '</div>' + chip('rev', T.reveal, 'ghost');
+    } else if (state.tab === 'marks') {
+      h += '<div class="chips">' + chip('mb', T.bell + (state.marks.bell !== '' ? ' · ' + mmss(state.marks.bell) : '')) + (state.marks.bell !== '' ? chip('mbx', T.clear, 'ghost') : '');
+      h += chip('me', T.end + (state.marks.end !== '' ? ' · ' + mmss(state.marks.end) : '')) + (state.marks.end !== '' ? chip('mex', T.clear, 'ghost') : '') + '</div>';
+      if (state.sides.filter(function(s) { return s.people.length; }).length >= 3) {
+        h += '<div class="grp">' + T.entry + ' / ' + T.out + '</div>';
+        people().forEach(function(x) {
+          h += '<div class="chips" style="margin-bottom:6px;align-items:center"><span style="width:280px;font:700 17px Arial">' + esc(x.p.id ? nameOf(x.p.id) : x.p.billed) + '</span>' + chip('e:' + x.k, T.entry + ': ' + (x.p.entry || '–')) + chip('x:' + x.k, T.out + ': ' + (x.p.elim || '–')) + '</div>';
+        });
+      }
+    }
+    return h;
+  }
+  function suggestTags() {
+    var text = [rec && rec.title_en, rec && rec.title_ja, rec && rec.h1].filter(Boolean).join(' ');
+    SUGGEST.forEach(function(g) {
+      if (g === 'title' && (!/championship|選手権/i.test(text) || /挑戦者決定|next\s*challenger/i.test(text))) return;
+      listOf(g).forEach(function(x) {
+        if (!x.k) return;
+        var hit = false;
+        try { hit = new RegExp(x.k, 'i').test(text); } catch (e) {}
+        if (hit && !has(g, x.id)) { if (MULTI[g] || !(state.tags[g] || []).length) (state.tags[g] = state.tags[g] || []).push(x.id); }
+      });
+    });
+  }
+  function toggle(g, v) {
+    var L = state.tags[g] = state.tags[g] || [], i = L.indexOf(v);
+    if (MULTI[g]) { if (i >= 0) L.splice(i, 1); else L.push(v); }
+    else state.tags[g] = i >= 0 ? [] : [v];
+    if (g === 'competition') {
+      var c = state.tags.competition[0];
+      state.tags.block = (state.tags.block || []).filter(function(b) { var x = listOf('block').filter(function(y) { return y.id === b; })[0]; return c && x && (!x.p || x.p === c); });
+    }
+  }
+  function nextNo(field) { var n = 0; people().forEach(function(x) { n = Math.max(n, Number(x.p[field]) || 0); }); return n + 1; }
+  function personAt(k) { var m = /^(\d+)_(\d+)$/.exec(k); return state.sides[+m[1]].people[+m[2]]; }
+  function position() {
+    try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); var j = JSON.parse(window.__tvStatusJson || 'null'); if (j && j.t >= 0) return Math.floor(j.t); } catch (e) {}
+    return null;
+  }
+  function pressTab(k) {
+    var m, v;
+    if (k === 'rev') { state.resOpen = true; lastFocus = k; render(); return true; }
+    if ((m = /^c:([a-z]+):(.+)$/.exec(k))) { toggle(m[1], m[2]); render(); return true; }
+    if ((m = /^f:(.+)$/.exec(k))) { state.fall = state.fall === m[1] ? '' : m[1]; render(); return true; }
+    if ((m = /^e:(.+)$/.exec(k))) { v = personAt(m[1]); v.entry = v.entry ? '' : nextNo('entry'); render(); return true; }
+    if ((m = /^x:(.+)$/.exec(k))) { v = personAt(m[1]); v.elim = v.elim ? '' : nextNo('elim'); render(); return true; }
+    if (k === 'mb' || k === 'me') {
+      v = position();
+      if (v === null) { say(T.noPos, true); return true; }
+      state.marks[k === 'mb' ? 'bell' : 'end'] = v; render(); return true;
+    }
+    if (k === 'mbx' || k === 'mex') { state.marks[k === 'mbx' ? 'bell' : 'end'] = ''; lastFocus = k === 'mbx' ? 'mb' : 'me'; render(); return true; }
+    return false;
   }
 
   function menuHtml() {
@@ -215,6 +310,8 @@
     if (layer === 'pick') return pressPick(el, k);
     var m;
     lastFocus = k;
+    if (k.charAt(0) === 'T') { state.tab = k.slice(1); if (state.tab !== 'people') state.touched[state.tab] = 1; render(); return; }
+    if (pressTab(k)) return;
     if ((m = /^p(\d+)_(\d+)$/.exec(k))) { menuFor = { side: +m[1], slot: +m[2] }; layer = 'menu'; render(); return; }
     if ((m = /^a(\d+)$/.exec(k))) { pick = { tab: '*', side: +m[1], slot: -1, raw: '' }; layer = 'pick'; render(); return; }
     if (k === 'ns') { state.sides.push({ role: '', team: '', people: [] }); lastFocus = 'a' + (state.sides.length - 1); render(); return; }
@@ -278,13 +375,21 @@
     S.forEach(function(s, i) {
       if (r.type === 'win' && state.sides[r.side - 1] === s) winner = i + 1;
       var team = teamFor(s), fac = factionFor(s);
-      s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: s.role, team_id: team, faction_id: fac }); });
+      s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: s.role, team_id: team, faction_id: fac, entry: p.entry || '', elim: p.elim || '' }); });
     });
+    // Tags pre-picked from the title and never looked at are saved as "auto", so they can be told from confirmed ones.
+    var tags = [], TAB_OF = { title: 'match', competition: 'match', round: 'match', block: 'match', stipulation: 'match', finish: 'finish', moment: 'moments' };
+    Object.keys(state.tags).forEach(function(g) {
+      (state.tags[g] || []).forEach(function(v) { tags.push({ group: g, value: v, source: state.touched[TAB_OF[g]] || state.hadTags ? 'panel' : 'auto' }); });
+    });
+    if (state.fall) tags.push({ group: 'fall', value: state.fall, source: 'panel' });
+    var deep = state.fall || (state.touched.finish && (state.tags.finish || []).length) || (state.touched.moments && (state.tags.moment || []).length) || state.marks.bell !== '' || state.marks.end !== '';
+    var level = Math.max(state.savedLevel, deep ? 3 : (state.touched.match ? 2 : 1));
     var title = (rec.title_en || '') + ' ' + (rec.title_ja || '');
     var show = rec.shows && rec.shows[0];
     busy = true; say(T.saving);
-    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts,
-      match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', date: rec.date, card_no: rec.no, is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: 1 } },
+    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: state.marks,
+      match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', date: rec.date, card_no: rec.no, is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
       if (!res.ok) { say(String(res.error || 'not saved'), true); return; }
@@ -304,7 +409,14 @@
   function begin(saved) {
     var page = rec ? fromPage() : [];
     var showAny = saved && saved.found;
-    state = { sides: showAny ? fromSaved(saved) : page, result: { type: '', side: 0 }, resOpen: false, onShow: (saved && saved.onShow) || [], aliases: [] };
+    state = { sides: showAny ? fromSaved(saved) : page, result: { type: '', side: 0 }, resOpen: false, onShow: (saved && saved.onShow) || [], aliases: [], tab: 'people', tags: {}, touched: {}, fall: '', marks: { bell: '', end: '' }, hadTags: false, savedLevel: showAny ? (Number(saved.match.level) || 1) : 1 };
+    if (showAny) {
+      (saved.tags || []).forEach(function(t) { if (t.tag_group === 'fall') state.fall = t.tag_value; else (state.tags[t.tag_group] = state.tags[t.tag_group] || []).push(t.tag_value); });
+      state.hadTags = !!(saved.tags || []).length;
+      var mine = (saved.videos || []).filter(function(v) { return String(v.video_id) === U[2]; })[0];
+      if (mine) state.marks = { bell: mine.bell_sec === '' || mine.bell_sec == null ? '' : Number(mine.bell_sec), end: mine.end_sec === '' || mine.end_sec == null ? '' : Number(mine.end_sec) };
+    }
+    if (!state.hadTags) suggestTags();
     if (showAny && saved.match.result_type) state.result = { type: saved.match.result_type, side: Number(saved.match.winner_side) || 0 };
     if (!state.sides.length) state.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
     state.okText = showAny ? T.loaded : (page.length ? T.ready : T.noMatch);

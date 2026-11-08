@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.49.0
+
+Private builds only, Index panel:
+- New tabs beside People: Match (title, competition, round, block, stipulation), Finish (how it ended, who got the fall), Moments, and Marks (bell and match end from the player position, entry and elimination order for matches with three or more sides).
+- Match details are pre-picked from the video title, and those not looked at are saved as suggestions.
+- Finish, and moments that give away the result, stay hidden behind Show result.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.48.0
 
 Combines every line of work so one build has it all: the public wrestler pages and Titles & tournaments branch (its own 2.47.1), and the match index, Star Watcher telescope, portrait G, star backdrops and schedule fixes. The version code is above every earlier build so it installs as an update.
