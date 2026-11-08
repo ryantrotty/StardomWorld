@@ -13,6 +13,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.44.5
+
+Private builds only, fixes 2.44.4:
+- The checks now run on the first page of a wrestler's category tab too. In 2.44.4 the first page was judged before the wrestler page's record had loaded, so none of it was checked.
+- Championship tab: an undated title match (old numbered titles, English commentary copies) is kept only when one of the wrestler's matches for that belt is in the 45 days before the video was uploaded (upload date from the thumbnail address).
+
 ## 2.44.4
 
 Private builds only (wrestler and tag team category tabs):

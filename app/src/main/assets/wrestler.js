@@ -6,8 +6,8 @@
   // site's own, under a MATCHES header. Nothing here calls the site.
   if (window.__tvWrestler) return;
   window.__tvWrestler = true;
-  if (location.pathname !== '/contents/search') return;
-  if (/[?&](tvfaction|tvera|tvev|tvcomm|tvrecent|tvch)=/.test(location.search)) return;
+  if (location.pathname !== '/contents/search') { window.__tvWrReady = true; return; }
+  if (/[?&](tvfaction|tvera|tvev|tvcomm|tvrecent|tvch)=/.test(location.search)) { window.__tvWrReady = true; return; }
   var H = window.AndroidHost || {};
 
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -92,8 +92,8 @@
   // matches), so the filter bar asks these two before keeping a card in a Titles & tournaments tab.
   // __tvWrDebut: their debut (match_types.json "debuts", the roster file can add more); nothing before it is theirs.
   // __tvWrCheck(title, date): '' to keep a Championship tab card, else why it was left out. A belt with a full history
-  // must have the match on their record (won, defended, challenged; a day either side for time zones), or, undated, at
-  // least some match for that belt on their record. A title with no history kept here (CMLL, POP…) is kept only when
+  // must have the match on their record (won, defended, challenged; a day either side for time zones), or, undated,
+  // one of their matches for that belt in the 45 days before the upload date (in the picture's address). A title with no history kept here (CMLL, POP…) is kept only when
   // the title names them.
   try {
     var DEB = (parse(call('matchTypesJson')) || {}).debuts || {}, debut = '';
@@ -101,7 +101,7 @@
     window.__tvWrDebut = debut;
   } catch (e) { window.__tvWrDebut = ''; }
   function dayNear(a, b) { return a === b || Math.abs(ms(a) - ms(b)) <= 86400000; }
-  window.__tvWrCheck = function(title, d) {
+  window.__tvWrCheck = function(title, d, up) {
     var t = low(halfW(title)).replace(/\s+/g, ''), belt = '';
     Object.keys(BELTS).forEach(function(b) { if (!belt && BELTS[b].pats.some(function(p) { return t.indexOf(p) >= 0; })) belt = b; });
     if (!belt) {
@@ -111,7 +111,10 @@
     if (!BELTS[belt].strict) return '';
     var mine = RECORD.filter(function(x) { return x.belt === belt; });
     if (!mine.length) return 'no ' + belt + ' title match on their record';
-    if (d && !mine.some(function(x) { return dayNear(x.d, d); })) return 'not a ' + belt + ' title match on their record';
+    if (d) return mine.some(function(x) { return dayNear(x.d, d); }) ? '' : 'not a ' + belt + ' title match on their record';
+    // undated (old numbered titles, English commentary copies): by upload date, one of their matches for this belt
+    // must be in the 45 days before the video went up
+    if (up) return mine.some(function(x) { var g = ms(up) - ms(x.d); return g >= -86400000 && g <= 45 * 86400000; }) ? '' : 'undated, uploaded ' + up + ', no ' + belt + ' title match of theirs just before';
     return '';
   };
   window.__tvWrReady = true;

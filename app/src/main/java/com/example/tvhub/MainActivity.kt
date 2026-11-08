@@ -8642,13 +8642,14 @@ class MainActivity : Activity() {
       var up = d ? '' : uploadDate(el);
       if (up && up < deb) return 'uploaded before their debut';
     }
-    if (CAT.id === 'champ' && window.__tvWrCheck) { var r = ''; try { r = window.__tvWrCheck(t, d); } catch (e) { r = ''; } if (r) return r; }
+    if (CAT.id === 'champ' && window.__tvWrCheck) { var r = ''; try { r = window.__tvWrCheck(t, d, d ? '' : uploadDate(el)); } catch (e) { r = ''; } if (r) return r; }
     return '';
   }
   function narrowList() {
     if (!MTR) return;
-    // wait (at most 3 s) for the wrestler page's record, so no card is judged without it
-    if (CAT && window.__tvWrestler && !window.__tvWrReady && Date.now() - WHO_T0 < 3000) return;
+    // wait (at most 3 s) for the wrestler page's record, so no card is judged without it (wrestler.js can start after
+  // this script; 2.44.4 judged the first page before it had, so nothing on it was checked)
+    if (CAT && !window.__tvWrReady && Date.now() - WHO_T0 < 3000) return;
     // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
     var list = document.querySelectorAll('.content-list-item, [class*="content-list"] article, #result article');
     Array.prototype.forEach.call(list, function(el) {
