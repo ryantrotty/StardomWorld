@@ -51,9 +51,10 @@
   }
   function nameFor(k) { return names()[String(k).toLowerCase()] || k; }
   function facById(id) { var l = factions(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
-  function wrestlerPath(k) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(k) + (H.categoriesOn && H.categoriesOn() ? '&q%5Btype%5D=single' : ''); }
+  // the app-drawn wrestler page (private 2.46.1, every build 2.47.0)
+  function wrestlerPath(k) { return '/mypage?tvwr=' + encodeURIComponent(k); }
   function keywordOf(href) {
-    try { return new URL(href, location.href).searchParams.get('q[keyword]') || ''; } catch (e) { return ''; }
+    try { var sp = new URL(href, location.href).searchParams; return sp.get('tvwr') || sp.get('q[keyword]') || ''; } catch (e) { return ''; }   // the app page (tvwr) or a search
   }
   function facIdOf(href) {
     try { return new URL(href, location.href).searchParams.get('tvfaction') || ''; } catch (e) { return ''; }

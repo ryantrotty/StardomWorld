@@ -34,6 +34,7 @@ TOKENS = {
     "#f3e2b8", "#6b4a26",                                 # paper reminder tickets (My Favorites)
     "#ffffff", "#fff", "#c9d2dc", "#9aa6b4", "#ff7a66",
     "#d62839", "#e8374a", "#ff6b78", "#7b5cff", "#b6a4ff", "#2e9e5b",
+    "#4da6ff", "#ff5a6a",                                 # Tag League block headers (Blue / Red Goddesses)
 }
 SIZES = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 30, 40, 54}
 RADII = {4, 5, 6, 8, 10, 12, 14, 16, 20, 36, 50}

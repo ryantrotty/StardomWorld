@@ -124,8 +124,8 @@ class MainActivity : Activity() {
 
             private val TV_RAW_CSS = """
         html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             color: #ffffff !important;
             box-shadow: none !important;
             border: none !important;
@@ -198,8 +198,8 @@ class MainActivity : Activity() {
         }
         footer, .box-footer {
             display: block !important;
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             padding: 20px 0 40px 0 !important;
             margin: 0 !important;
             border: none !important;
@@ -406,8 +406,8 @@ class MainActivity : Activity() {
             border-color: #FFB347 !important;
         }
         .box-sort {
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             padding: 12px 0 !important;
             margin: 10px 0 15px 0 !important;
             text-align: center !important;
@@ -750,7 +750,7 @@ class MainActivity : Activity() {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#0B1118 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
                 'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
                 'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
                 '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
@@ -2037,7 +2037,9 @@ class MainActivity : Activity() {
         root.setBackgroundColor(Color.BLACK)
 
         webView = WebView(this)
-        webView.setBackgroundColor(Color.BLACK)
+        // the app's page colour (#0B1118, as on the app-drawn pages) shows while a page loads; the root behind it
+        // stays black for full-screen video
+        webView.setBackgroundColor(0xFF0B1118.toInt())
         // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
         if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView.addJavascriptInterface(webAppInterface, "AndroidHost")
@@ -2061,7 +2063,7 @@ class MainActivity : Activity() {
 
         // Transition overlay for page loading
         transitionOverlay = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(0xFF0B1118.toInt())
             isClickable = true
             visibility = View.GONE
             alpha = 0f
@@ -2088,9 +2090,9 @@ class MainActivity : Activity() {
             )
         )
 
-        // Black splash with the logo, drawn above everything until the page is ready.
+        // Splash with the logo (app page colour), drawn above everything until the page is ready.
         splashView = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(0xFF0B1118.toInt())
             isClickable = true
             clipChildren = false
         }
@@ -2616,14 +2618,18 @@ class MainActivity : Activity() {
     // Match types: assets/match_types.json with the roster file's "matchTypes" applied: { "<id>": { fields } } replaces
     // those fields on the match type with that id (search words, title patterns, alts), so a category rule can be fixed
     // without a new APK.
-    private fun rosterMatchTypes(): String {
+    private fun rosterMatchTypes(): String = rosterMatchTypes(true)   // the Titles & tournaments group is in every build since 2.47.1
+
+    // includePrivate: keep the private groups (Titles & tournaments) even in a public build; used by the app-drawn
+    // wrestler page's tabs, which are in every build (2.47.0)
+    private fun rosterMatchTypes(includePrivate: Boolean): String {
         val bundled = assetText("match_types.json")
         return try {
             val base = org.json.JSONObject(bundled)
             val all = base.optJSONArray("groups") ?: return bundled
             // public builds leave out the private groups (Titles & tournaments)
             val groups = org.json.JSONArray()
-            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (BuildConfig.SHOW_POSTERS || !it.optBoolean("private")) groups.put(it) }
+            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (includePrivate || !it.optBoolean("private")) groups.put(it) }
             base.put("groups", groups)
             // "debuts": {name: "YYYY-MM-DD"}; the roster file's entries add to and override the bundled ones
             rosterData()?.optJSONObject("debuts")?.let { rd ->
@@ -3106,9 +3112,18 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun matchTypesJson(): String = this@MainActivity.rosterMatchTypes()
 
+        // Every build (2.47.0): the match types with the Titles & tournaments group, for the app-drawn wrestler page's tabs.
+        @android.webkit.JavascriptInterface
+        fun wrestlerTabsJson(): String = this@MainActivity.rosterMatchTypes(true)
+
         // Private builds: the Titles & tournaments categories (tabs on wrestler and tag team pages, Match type entries).
         @android.webkit.JavascriptInterface
-        fun categoriesOn(): Boolean = BuildConfig.SHOW_POSTERS
+        // The Titles & tournaments categories and single-match searches: every build since 2.47.1 (private only before).
+        fun categoriesOn(): Boolean = true
+
+        // Debug panels and sheet logging: private builds only.
+        @android.webkit.JavascriptInterface
+        fun debugOn(): Boolean = BuildConfig.SHOW_POSTERS
 
         // Top rated Stardom matches (assets/top_matches.json) for the Matches shelf and the Top Rated page.
         @android.webkit.JavascriptInterface
@@ -5248,7 +5263,9 @@ class MainActivity : Activity() {
               return [m.name, m.ja || m.name];
             });
           } catch (e) {}
-          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name) + singleOnly(); }
+          // A wrestler's page: the app-drawn page (/mypage?tvwr=; private 2.46.1, every build 2.47.0).
+          function wrPath(key) { return '/mypage?tvwr=' + encodeURIComponent(key); }
+          function searchPath(name) { return wrPath(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
             var out = [], old = [];
@@ -5279,7 +5296,7 @@ class MainActivity : Activity() {
             } catch (e) {}
             if (!out.length) return wrestlers(CURRENT_W);
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
-            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]) + singleOnly(), m[2]]; });
+            return out.map(function(m) { return [m[0], wrPath(m[1]), m[2]]; });
           }
           // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
           function pastWrestlers() {
@@ -5291,7 +5308,7 @@ class MainActivity : Activity() {
               (d.factions || []).forEach(function(f) {
                 if (!f.former) return;
                 (f.members || []).forEach(function(m) {
-                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name) + singleOnly(), JA_NAMES[m.name] || m.name]); }
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, wrPath(m.search || m.name), JA_NAMES[m.name] || m.name]); }
                 });
               });
             } catch (e) {}
@@ -5438,7 +5455,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-pastcols .tv-sm-fi{font-size:16px;word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;}',
             '#tv-ev{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#0b1118;color:#fff;font-family:Arial,Helvetica,sans-serif;}',
             '#tv-ev .tv-ev-in{display:flex;height:100%;}',
-            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#000;display:flex;align-items:center;}',
+            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#0B1118;display:flex;align-items:center;}',
             '#tv-ev .tv-ev-pc img{height:100%;width:auto;display:block;}',
             '#tv-ev, #tv-ev *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-ev .tv-ev-top{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
@@ -5503,7 +5520,7 @@ class MainActivity : Activity() {
             'html.tv-sm-open #tv-sm-tab{display:none;}',
             '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B1118;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
             'html.tv-sm-open #tv-sm-hint{display:none;}',
-            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#000000;}',
+            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#0B1118;}',
             '#tv-page-title .tv-pt-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
             '#tv-page-title .tv-pt-txt{min-width:0;line-height:1.2;}'
           ].join('\n');
@@ -5860,11 +5877,8 @@ class MainActivity : Activity() {
                 var tOv = '/mypage?tvtop=overall', tTy = '/mypage?tvtop=type';
                 topHtml = '<div class="tv-shl-t" style="margin-top:14px;">' + esc(T('TOP RATED', '高評価')) + '</div>' +
                   '<div class="tv-shl-g2" style="gap:8px;margin-bottom:8px;"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + tOv + '" href="' + esc(absUrl(tOv)) + '">' + esc(T('Overall', '総合')) + '<span>' + tmData.matches.length + esc(T(' matches, best first', '試合・評価順')) + '</span></a>' +
-                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>' +
-                  '<div class="tv-shl-ec" style="margin-top:0;">' + tmEras.slice().reverse().map(function(x) {
-                    var ep = '/mypage?tvtop=era&e=' + x.n;
-                    return '<a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + ep + '" href="' + esc(absUrl(ep)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + (ecnt[x.n] || 0) + esc(T(' matches', '試合')) + '</span></span></a>';
-                  }).join('') + '</div>';
+                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>';
+                // (2.47.0) the era tiles are gone from the shelf: they no longer fit; the Top Rated page still has By era
               }
               h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-mcols">' + mhtml + '</div>' + topHtml;
             } else if (key === 'years') {
@@ -5925,7 +5939,7 @@ class MainActivity : Activity() {
               } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 860;
-              // Private builds: names in three columns with a portrait spotlight on the right (assets/wrspot.js).
+              // Names in three columns with a portrait spotlight on the right (assets/wrspot.js; every build since 2.47.0, initials without the private photos).
               var spot = !!(window.__tvWrSpot && window.__tvWrSpot.on());
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
@@ -6392,7 +6406,7 @@ class MainActivity : Activity() {
           var st = document.createElement('style');
           st.id = 'tv-player-style';
           st.textContent = [
-            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
+            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#0B1118;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
             '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
             '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
           ].join('\n');
@@ -8558,19 +8572,25 @@ class MainActivity : Activity() {
   function alignBars() {
     if (FAC_MODE) return;
     try {
-      var t = document.querySelector('.content-list-item .tv-thumbnail-link') || document.querySelector('.content-list-item img') || document.querySelector('.content-list-item');
-      if (!t) return;
+      // the first card that is showing (a card the category filter hid has no position)
+      var card = null;
+      Array.prototype.some.call(document.querySelectorAll('.content-list-item'), function(c) { if (c.offsetParent && !c.hasAttribute('data-tv-mt-out')) { card = c; return true; } return false; });
+      if (!card) return;
+      var t = card.querySelector('.tv-thumbnail-link') || card.querySelector('img') || card;
       var target = t.getBoundingClientRect().left;
       ['tv-fb', 'tv-fbc'].forEach(function(id) {
         var el = document.getElementById(id);
-        if (!el) return;
+        // a bar hidden behind the category tabs' More has no position either: measuring it gave it (and the wrestler
+        // header, which copies its margin) the card's whole distance from the screen edge, so the header sat to the
+        // right of the videos (2.45.1)
+        if (!el || !el.offsetParent) return;
         el.style.marginLeft = '0px';
         el.style.marginLeft = (target - el.getBoundingClientRect().left) + 'px';
       });
     } catch (e) {}
   }
   window.addEventListener('resize', alignBars);
-  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+  [300, 900, 2000, 4000, 7000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
   // ---- match types that share words (4-Way Battle / Tag / Trios ...): the site's search finds the common words,
   // so the results are narrowed here by the titles. Titles that do not fit are taken out of the list, including
@@ -8665,7 +8685,9 @@ class MainActivity : Activity() {
         record: { words: CAT.words, kept: CAT.kept, dropped: CAT.dropped, alts: CAT.alts, onRecord: (window.__tvWrRecord || []).length } }));
     } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
   }
-  if (CAT) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
+  // the checks run in every build; the panel and the sheet only in private builds
+  var CAT_DBG = false; try { CAT_DBG = !!(window.AndroidHost && AndroidHost.debugOn && AndroidHost.debugOn()); } catch (e) { CAT_DBG = false; }
+  if (CAT && CAT_DBG) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
   // Private builds, wrestler category tabs: the site's search also returns videos the wrestler isn't in. A card dated
   // before their debut goes (undated: by the upload time in its picture's address), and a Championship tab card must
   // pass the wrestler page's title-record check (wrestler.js). '' keeps the card, else the reason.
@@ -8677,11 +8699,17 @@ class MainActivity : Activity() {
     m = /(?:^|\D)(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\D|$)/.exec(t);
     return m ? m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2) : '';
   }
+  // The thumbnail can be an inline style, a style the site's script sets later (computed), or an <img> (lazy or not).
   function uploadDate(el) {
     var src = '';
     try {
-      var bg = el.querySelector('[style*="background-image"]'), im = el.querySelector('img');
-      src = (bg && bg.getAttribute('style')) || (im && (im.getAttribute('src') + ' ' + (im.getAttribute('data-src') || ''))) || '';
+      Array.prototype.forEach.call(el.querySelectorAll('.content-thumbnail-box-inner, .content-thumbnail-box, .content-thumbnail, [style*="background-image"]'), function(b) {
+        src += ' ' + (b.getAttribute('style') || '') + ' ' + (b.style.backgroundImage || '');
+        try { src += ' ' + (getComputedStyle(b).backgroundImage || ''); } catch (e) {}
+      });
+      Array.prototype.forEach.call(el.querySelectorAll('img'), function(im) {
+        src += ' ' + ['src', 'data-src', 'data-lazy', 'data-original', 'srcset', 'data-srcset'].map(function(a) { return im.getAttribute(a) || ''; }).join(' ') + ' ' + (im.currentSrc || '');
+      });
     } catch (e) {}
     var m = /[?&]ts=(\d{9,11})/.exec(src);
     return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) : '';
@@ -8695,6 +8723,7 @@ class MainActivity : Activity() {
       if (yr && yr[1] + '-12-31' < deb) return 'before their debut';
       var up = d ? '' : uploadDate(el);
       if (up && up < deb) return 'uploaded before their debut';
+      if (!d && !up) el.__tvNoUp = 1;   // logged as kept with "[no upload date]", so the sheet shows when this can't work
     }
     if (CAT.id === 'champ' && window.__tvWrCheck) { var r = ''; try { r = window.__tvWrCheck(t, d, d ? '' : uploadDate(el)); } catch (e) { r = ''; } if (r) return r; }
     return '';
@@ -8712,10 +8741,16 @@ class MainActivity : Activity() {
       // The site's pager adds a card first and fills its title a moment later: judge it only once the title is there.
       var tt = itemTitle(el);
       if (!tt.replace(/\s+/g, '')) return;
+      // undated card on a page with a debut date: give its thumbnail up to 2.5 s to arrive (the upload date is in its
+      // address) before judging it
+      if (CAT && window.__tvWrDebut && !cardDate(tt) && !uploadDate(el)) {
+        if (!el.__tvSeen) el.__tvSeen = Date.now();
+        if (Date.now() - el.__tvSeen < 2500) { setTimeout(narrowList, 500); return; }
+      }
       el.__tvMt = 1;
       var fit = mtFits(tt), why = fit ? whoCheck(el, tt) : '';
       if (why) fit = false;
-      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(why ? '[' + why + '] ' + tt : tt, fit, ''); }
+      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(why ? '[' + why + '] ' + tt : (el.__tvNoUp ? '[no upload date] ' : '') + tt, fit, ''); }
       if (fit) { el.setAttribute('data-tv-mt-in', '1'); return; }
       if (!el.parentNode) return;
       // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
@@ -8753,7 +8788,7 @@ class MainActivity : Activity() {
             var why = whoCheck(el, itemTitle(el));
             if (why) { catLog('[' + why + '] ' + itemTitle(el), false, alt.mt || alt.ch); return; }
             if (id && (box.querySelector('a[href*="/' + id + '"]') || list0.querySelector('a[href*="/' + id + '"]'))) return;
-            catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
+            catLog((el.__tvNoUp ? '[no upload date] ' : '') + itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;
             c.setAttribute('data-tv-mt-in', '1');
@@ -9143,7 +9178,7 @@ class MainActivity : Activity() {
     } catch (e) {}
   }
   window.addEventListener('resize', alignBars);
-  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+  [300, 900, 2000, 4000, 7000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
   var tries = 0;
   (function tick() { if (mount()) return; if (++tries < 25) setTimeout(tick, 400); })();
