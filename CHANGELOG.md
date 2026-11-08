@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.47.2
+
+- The nightly GitHub schedule job no longer runs on its own. The Muse daily file carries the schedule; the job can still be started by hand.
+
 ## 2.47.1
 
 - Nightly GitHub schedule job: when the site's schedule pages can't be read or show no events, it keeps the last good schedule, finishes without failing and leaves a warning saying why. The Muse daily file is what's keeping the schedule current while the site's English pages are gone.
