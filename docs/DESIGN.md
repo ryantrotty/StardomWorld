@@ -201,3 +201,7 @@ Menu Wrestlers shelf: width 1000 (capped by the screen), names in three columns 
 
 Wrestler photos (2.35.2, private builds): no white backdrop; the photo copies carry a top-to-bottom fade from #2A323C (border grey) to #0F151C (panel). Set in scripts/make_wrestler_spots.py, not in CSS.
 
+## Index panel (2.45.0, private builds)
+
+Opened from the Index button in the bar under the player (`assets/indexpanel.js`). Full-screen dim over the page; panel #0F151C, 2 px #2A323C border, radius 12, 1280 wide. Heading 15/800 gold with .14em spacing, title 22/700, grey 14/600 facts line. One column per side (#121922, radius 12) with a 12/800 gold SIDE n label. Buttons are 44 high, 17/700, radius 8, #161F2A, 2 px #2A323C; focus is look A only (gold border, #172029 fill, no outline, glow or lift). The chosen result or picker tab is look B (orange fill, dark text). A name not in the library is error red #FF7A66 with a leading ?. The status line stays on screen. Pop-ups and the picker (four columns, letter row) use the same panel and buttons. No new colours or focus looks. The Index button is in the in-page bar only, not the full screen bar.
+

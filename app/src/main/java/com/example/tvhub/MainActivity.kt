@@ -622,6 +622,7 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
+    @Volatile private var indexPanelOpen = false   // the private Index panel is showing (set by the page)
     @Volatile private var sideMenuOpen = false   // the left slide-out menu is showing (set by the page)
     private var authPending = false
     private var loginStarting = false
@@ -2181,6 +2182,7 @@ class MainActivity : Activity() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 sideMenuOpen = false
+                indexPanelOpen = false
                 if (isPpvHost(url)) ppvSession = true else if (isSiteHost(url)) ppvSession = false
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
@@ -3212,6 +3214,16 @@ class MainActivity : Activity() {
         fun teamSync(reqId: String, payload: String) =
             sheetCall(reqId, payload, setOf("tm_get", "tm_put", "dbg_put"), "__tvTeamSyncReply")
 
+        // Index panel (private builds, assets/indexpanel.js): reads the approved names and saves reviewed matches in the
+        // sheet. Replies go to __tvIndexReply. Runs only when the panel is opened; it never calls the video site.
+        @android.webkit.JavascriptInterface
+        fun indexSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose"), "__tvIndexReply")
+
+        // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
+        @android.webkit.JavascriptInterface
+        fun indexPanel(open: Boolean) { indexPanelOpen = open }
+
         // One request to the private sheet: only the listed actions, the key added here, the reply handed to `callback`.
         private fun sheetCall(reqId: String, payload: String, allowed: Set<String>, callback: String) {
             fun reply(text: String) {
@@ -3448,7 +3460,7 @@ class MainActivity : Activity() {
 
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
-        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY }).toString()
+        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY } + (if (videoIndexOn()) listOf("index") else emptyList())).toString()
 
         @android.webkit.JavascriptInterface
         fun barLabels(statusJson: String): String {
@@ -3456,6 +3468,7 @@ class MainActivity : Activity() {
             if (j != null && ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
             val o = org.json.JSONObject()
             for (id in BAR_IDS) o.put(id, barLabel(id, j))
+            o.put("index", barLabel("index", j))
             return o.toString()
         }
 
@@ -10072,6 +10085,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
+        // First, so its key handler runs before every other one on the page.
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
@@ -10377,6 +10392,7 @@ class MainActivity : Activity() {
         }
         "speed" -> (j?.optDouble("rate", 1.0) ?: 1.0).toString() + "x"
         "full" -> if (fullScreenActive()) tr("Exit full screen", "全画面を終了") else tr("Full screen", "全画面")
+        "index" -> tr("Index", "登録")
         else -> id
     }
 
@@ -10391,6 +10407,7 @@ class MainActivity : Activity() {
             "cc" -> if (isPpvHost(webView.url)) webView.evaluateJavascript("window.__tvCommentary && window.__tvCommentary('toggle')", null) else cycleCc()
             "quality" -> playerCommand("quality", 0)
             "speed" -> playerCommand("speed", 0)
+            "index" -> webView.evaluateJavascript("window.__tvIndexOpen && window.__tvIndexOpen()", null)
             "full" -> if (fullScreenActive()) {
                 hideFsOverlay()
                 hideCustomView()
@@ -11238,6 +11255,13 @@ class MainActivity : Activity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (onboardingShowing) {
             if (onboardingView?.handleKey(event) != false) return true
+            return super.dispatchKeyEvent(event)
+        }
+        if (indexPanelOpen && !fullScreenActive()) {
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                if (event.action == KeyEvent.ACTION_DOWN) webView.evaluateJavascript("window.__tvIndexBack && window.__tvIndexBack()", null)
+                return true
+            }
             return super.dispatchKeyEvent(event)
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {

@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.45.0
+
+Private builds only:
+- Index button in the bar under the player opens a panel showing who the page says is in the match, side by side. Each name is checked against the approved library in the sheet. Partners share a side; any number of sides.
+- D-pad only: OK on a name changes, moves or removes it, or proposes a new one. No typing. Results stay hidden until opened. "Save and next match" walks through a whole show.
+- Saving writes to the sheet's new match tabs. The same people on the same date link together as versions of one match (English commentary, digest).
+- Video page reader: Japanese line-ups without spaces around VS, 《Champion》 and <Challenger> marks, full-show descriptions, English date lines, English Commentary pages and show names with a sponsor's year are now read correctly. Pages also record their version (jp, en, digest).
+- The Google Apps Script has new actions; paste it and publish a new version (docs/MATCH_INDEX.md).
+
 
 
 
