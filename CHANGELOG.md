@@ -13,6 +13,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.44.3
+
+Private builds only:
+- Championship lineage pages: "All … matches" now opens the same belt search as the Championships menu (site category for World, Wonder, High Speed and IWGP; keyword plus the title rule for the rest) with single matches only, so whole-show sets and LIVE items no longer appear.
+- Lineage reign lookups, wrestler links (menu current and past, My Favorites, team member buttons), faction home links and the team "more tag matches" link all ask the site for single matches only.
+
 ## 2.44.2
 
 - Category debug panel (private builds) moved below the video grid, after Back to top, on search result pages; it was between the filters and the videos. It still shows the same lines and still writes each search to the sheet's debug tab. Tag team pages already had it below the grid.

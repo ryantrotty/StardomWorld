@@ -51,7 +51,7 @@
   }
   function nameFor(k) { return names()[String(k).toLowerCase()] || k; }
   function facById(id) { var l = factions(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
-  function wrestlerPath(k) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(k); }
+  function wrestlerPath(k) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(k) + (H.categoriesOn && H.categoriesOn() ? '&q%5Btype%5D=single' : ''); }
   function keywordOf(href) {
     try { return new URL(href, location.href).searchParams.get('q[keyword]') || ''; } catch (e) { return ''; }
   }
@@ -462,7 +462,7 @@
         return u ? '<span class="tv-fv-av" style="background-image:url(' + u + ')"></span>' : '<span class="tv-fv-av tv-fv-ini">' + esc(teamInitials(m)) + '</span>';
       }).join('') + '</span>';
     });
-    var facPage = fac && fac.members && fac.members.length ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) : '/mypage?tvfav=1';
+    var facPage = fac && fac.members && fac.members.length ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(fac.members[0].search) + '&tvfaction=' + encodeURIComponent(fac.id) + (H.categoriesOn && H.categoriesOn() ? '&q%5Btype%5D=single' : '') : '/mypage?tvfav=1';
     var lg = fac ? logo(fac.id) : '';
     var facRight = fac ? '<span class="tv-fv-lg' + (fac.plate === 'dark' ? ' dk' : '') + '">' + (lg ? '<img src="' + lg + '" alt="">' : esc(fac.name)) + '</span>' + (d.fs.length > 1 ? n(d.fs.length) : '') : '<span style="color:#9aa6b4;font-size:15px">' + esc(T('none yet', 'なし')) + '</span>';
     var colA = '<div class="tv-fv-k">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' +
@@ -786,7 +786,7 @@
   }
   function bandHtml(f, cls) {
     var lg = logo(f.id), cnt = (f.members || []).length;
-    var page = cnt ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) : '/';
+    var page = cnt ? '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.members[0].search) + '&tvfaction=' + encodeURIComponent(f.id) + (H.categoriesOn && H.categoriesOn() ? '&q%5Btype%5D=single' : '') : '/';
     return '<a class="tv-fp-bd ' + cls + '" tabindex="0" data-fk="f" data-fv="' + esc(f.id) + '" href="' + esc(absUrl(page)) + '">' +
       '<div class="tl' + (f.plate === 'dark' ? ' dk' : '') + '">' + (lg ? '<img src="' + lg + '" alt="">' : esc(f.name)) + '</div>' +
       '<div class="tx"><div class="nm">' + esc(f.name) + '</div><div class="mm">' + cnt + T(' members', '人') + (cls === 'l' ? T(' · OK opens their videos', ' · OKで動画を開く') : '') + '</div></div>' +

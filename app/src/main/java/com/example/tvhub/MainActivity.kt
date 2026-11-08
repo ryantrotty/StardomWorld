@@ -5205,7 +5205,7 @@ class MainActivity : Activity() {
               var d = JSON.parse(AndroidHost.factionsJson());
               (d.factions || []).forEach(function(f) {
                 if (!f.members || !f.members.length) return;
-                (f.former ? old : out).push([f.former ? f.name + ' (former)' : f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id), f.name]);
+                (f.former ? old : out).push([f.former ? f.name + ' (former)' : f.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id) + singleOnly(), f.name]);
               });
             } catch (e) {}
             return out.concat(old);
@@ -5228,7 +5228,7 @@ class MainActivity : Activity() {
             } catch (e) {}
             if (!out.length) return wrestlers(CURRENT_W);
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
-            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]), m[2]]; });
+            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]) + singleOnly(), m[2]]; });
           }
           // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
           function pastWrestlers() {
@@ -5240,7 +5240,7 @@ class MainActivity : Activity() {
               (d.factions || []).forEach(function(f) {
                 if (!f.former) return;
                 (f.members || []).forEach(function(m) {
-                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name), JA_NAMES[m.name] || m.name]); }
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name) + singleOnly(), JA_NAMES[m.name] || m.name]); }
                 });
               });
             } catch (e) {}
@@ -5847,7 +5847,7 @@ class MainActivity : Activity() {
                   if (!f.members || !f.members.length || f.home === false) return;   // Unaffiliated is not listed
                   if (f.former) {
                     // Former factions: no logo, no titles; the years and the notable members.
-                    var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id);
+                    var opath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.search || f.name) + '&tvfaction=' + encodeURIComponent(f.id) + (window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : '');
                     var olg = ''; try { olg = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { olg = ''; }
                     var ocp = f.captains || [];
                     var ol2 = (ocp.length ? T(ocp.length > 1 ? 'Captains: ' : 'Captain: ', '\u30ad\u30e3\u30d7\u30c6\u30f3: ') + ocp.join(', ') + ' \u00b7 ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '\u4eba');
@@ -5857,7 +5857,7 @@ class MainActivity : Activity() {
                     return;
                   }
                   var lgo = ''; try { lgo = AndroidHost.factionLogo ? AndroidHost.factionLogo(f.id) : ''; } catch (e) { lgo = ''; }
-                  var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id);
+                  var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + '&tvfaction=' + encodeURIComponent(f.id) + (window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : '');
                   var nm2 = {}; f.members.forEach(function(m) { nm2[m.name.toLowerCase()] = 1; nm2[String(m.search).toLowerCase()] = 1; });
                   var held = curChamps.filter(function(c) { return c.who.some(function(n) { return nm2[n]; }); }).map(function(c) { return TSHORT[c.id]; });
                   var l2 = (f.captain ? T('Captain: ', 'キャプテン: ') + f.captain + ' · ' : '') + f.members.length + T(f.members.length === 1 ? ' member' : ' members', '人');
@@ -6973,7 +6973,7 @@ class MainActivity : Activity() {
       if (!f && x.name) { f = { id: x.id, name: x.name, search: x.search }; own = true; }
       if (!f) return '';
       var pic = ''; try { pic = AndroidHost.factionLogo(f.id) || ''; } catch (q) {}
-      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + (own ? '&activetab=contents&page=1' : '&tvfaction=' + encodeURIComponent(f.id));
+      var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(f.home === false ? f.members[0].search : (f.search || f.name)) + (own ? '&activetab=contents&page=1' : '&tvfaction=' + encodeURIComponent(f.id)) + (window.AndroidHost && AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : '');
       var nm = String(f.name).replace(/ \(.*\)$/, '');
       return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(x.mono || nm.slice(0, 2))) + '</div><div><div class="nm">' + esc(nm) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(x.sub || '') + '</div></div></a>';
     }).join('');

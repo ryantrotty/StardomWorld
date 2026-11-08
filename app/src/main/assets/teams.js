@@ -875,8 +875,8 @@
         '<div><div class="k">' + esc(T('REIGNS', '戴冠')) + '</div><div class="v">' + reignsN + '</div></div>' +
         '<div><div class="k">' + esc(T('DEFENCES', '防衛')) + '</div><div class="v">' + t.defTotal + '</div></div>' +
       '</div><div class="tt-btns">' +
-        t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
-        (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
+        t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1' + (CATS_ON ? '&q%5Btype%5D=single' : ''); return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
+        (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id) + (CATS_ON ? '&q%5Btype%5D=single' : ''))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
         (window.__tvFav ? '<a class="tt-btn tt-favb' + (isFav(t.id) ? ' tt-on' : '') + '" tabindex="0" data-favb="1">' + favBtnInner(t.id) + '</a>' : '') +
       '</div></div></div>';
     if (t.reigns.length) {
@@ -891,7 +891,7 @@
     TAB = CATS_ON ? (Q.get('tvtab') || 'all') : '';
     if (TAB) {   // private builds: tabs, one grid
       var tabs = [['all', T('All Tag Matches', 'すべてのタッグマッチ')], ['ch', T('Championship', '王座戦')], ['tl', T('Tag League', 'タッグリーグ')]];
-      var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(t.members[0]) + ' Tag Team ' + searchName(t.members[1])) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(searchName(t.members[0])) + '&tvmt=tag&tvco=' + encodeURIComponent(searchName(t.members[1]));
+      var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(t.members[0]) + ' Tag Team ' + searchName(t.members[1])) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(searchName(t.members[0])) + '&tvmt=tag&tvco=' + encodeURIComponent(searchName(t.members[1])) + (CATS_ON ? '&q%5Btype%5D=single' : '');
       h += '<div class="tt-chips" style="margin-top:26px">' + tabs.map(function(x) {
         return '<a class="tt-chip' + (x[0] === TAB ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(teamPath(t) + (x[0] === 'all' ? '' : '&tvtab=' + x[0]))) + '">' + (x[0] === 'tl' ? wings(16, x[0] === TAB ? '#1A1A1A' : '#F4C242', x[0] === TAB ? '#FFB347' : '#161F2A') : '') + esc(x[1]) + '</a>';
       }).join('') + '<a class="tt-chip" style="margin-left:14px" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';

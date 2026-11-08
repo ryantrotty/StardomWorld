@@ -37,7 +37,7 @@
   window.__tvWrestlerName = W.name;   // the page title shows the name (the menu's title code reads this)
 
   // ---- their factions: the ones that list them, current first (factions.json "former" marks past ones)
-  function facPath(f) { var m0 = (f.members || [])[0]; var kw = f.home === false && m0 ? m0.search : (f.search || f.name); return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw) + '&tvfaction=' + encodeURIComponent(f.id); }
+  function facPath(f) { var m0 = (f.members || [])[0]; var kw = f.home === false && m0 ? m0.search : (f.search || f.name); return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(kw) + '&tvfaction=' + encodeURIComponent(f.id) + (H.categoriesOn && H.categoriesOn() ? '&q%5Btype%5D=single' : ''); }
   var myFacs = FACS.filter(function(f) {
     return f.id !== 'unaffiliated' && (f.members || []).some(function(m) { return m && (low(m.name) === low(W.name) || low(m.search) === low(W.search)); });
   }).sort(function(a, b) { return (a.former ? 1 : 0) - (b.former ? 1 : 0); });

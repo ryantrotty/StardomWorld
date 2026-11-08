@@ -25,6 +25,24 @@
   function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
 
   var D = null;
+  // Private builds: searches ask for single matches only, and the "All matches" button
+  // opens the same belt search as the Championships menu (site category when the belt has one).
+  var CATS_ON = false;
+  try { CATS_ON = !!(H.categoriesOn && H.categoriesOn()); } catch (e) { CATS_ON = false; }
+  var SINGLE = CATS_ON ? '&q%5Btype%5D=single' : '';
+  function beltCategory(id) {
+    try {
+      var d = JSON.parse(H.championshipsJson()), hit = '';
+      ((d && d.groups) || []).forEach(function(g) { (g.items || []).forEach(function(x) { if (x.id === id && x.category) hit = String(x.category); }); });
+      return hit;
+    } catch (e) { return ''; }
+  }
+  function allMatchesPath() {
+    if (!CATS_ON) return D.path || ('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(D.search || ''));
+    var cat = beltCategory(P);
+    if (cat) return '/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(cat) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(P) + SINGLE;
+    return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(D.search || '') + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(P) + SINGLE;
+  }
   try { D = JSON.parse(H.lineageJson(P)); } catch (e) { D = null; }
 
   // ------------------------------------------------------------------ dates and numbers
@@ -170,7 +188,7 @@
     return out;
   }
   function fetchPage(q, page, cb) {
-    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + (page > 1 ? '&page=' + page : '');
+    var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + SINGLE + (page > 1 ? '&page=' + page : '');
     fetch(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { lsSet(BLOCK_KEY, String(Date.now() + 10 * 60000)); throw 'blocked (HTTP ' + res.status + ')'; }
       if (!res.ok) throw 'HTTP ' + res.status;
@@ -403,7 +421,7 @@
     var pic = belt ? '<img src="' + belt + '" alt="">' : '<div class="ln-plate">' + STAR + '</div>';
     var curLine = '<div id="ln-cur">' + curBox(sel) + '</div>';
     return '<div class="ln-hero"><div class="ln-belt">' + pic + '</div><div class="ln-hx">' + curLine +
-      '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(D.path || ('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(D.search || '')))) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
+      '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(allMatchesPath())) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
       '</div></div>';
   }
 
