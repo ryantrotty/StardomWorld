@@ -259,16 +259,45 @@
     return true;
   }
   // line the header up with the filter bar (which lines itself up with the first thumbnail)
+  // Line the header (and the category debug panel under the videos) up with the first video that is showing, the
+  // way a tag team page lines everything up on one left edge. Measured, not copied from the filter bar: the bar is
+  // hidden behind the category tabs' More, and the site's grid sits inset from the block the header is in. With no
+  // video showing the header keeps no margin. Run again as videos load and are judged.
+  // Left edge of the first video showing. The card's picture is measured, except while that card has focus (it is
+  // scaled up then): its column's edge plus the picture's inset seen last time.
+  var THUMB_IN = 0;
+  function firstLeft() {
+    var card = null;
+    Array.prototype.some.call(document.querySelectorAll('.content-list-item'), function(c) {
+      if (c.offsetParent && !c.hasAttribute('data-tv-mt-out') && !c.closest('#tv-wr')) { card = c; return true; }
+      return false;
+    });
+    if (!card) return null;
+    var base = card.getBoundingClientRect().left;
+    if (card.contains(document.activeElement)) return base + THUMB_IN;
+    var t = card.querySelector('.tv-thumbnail-link') || card.querySelector('img') || card;
+    var l = t.getBoundingClientRect().left;
+    THUMB_IN = l - base;
+    return l;
+  }
   function align() {
-    var bar = document.getElementById('tv-fb');
-    if (!root || !bar) return;
-    // the filter bar's margin lines it up with the first video; while the bar is hidden (category tabs) it isn't
-    // measured, so the header keeps no margin and lines up with the videos and the debug panel
-    root.style.marginLeft = bar.offsetParent ? (bar.style.marginLeft || '0px') : '0px';
+    if (!root || !root.parentNode) return;
+    var L = firstLeft(), dx = 0;
+    if (L != null) {
+      var cur = parseFloat(root.style.marginLeft) || 0;
+      dx = Math.round(L - (root.getBoundingClientRect().left - cur));
+    }
+    if (Math.abs((parseFloat(root.style.marginLeft) || 0) - dx) > 1) root.style.marginLeft = dx + 'px';
+    var dbg = document.getElementById('tv-catdbg');
+    if (dbg) {
+      var dc = parseFloat(dbg.style.marginLeft) || 0, want = L != null ? Math.round(L - (dbg.getBoundingClientRect().left - dc)) : 0;
+      if (Math.abs(dc - want) > 1) dbg.style.marginLeft = want + 'px';
+    }
   }
   var tries = 0;
   (function wait() { if (mount() || ++tries > 60) return; setTimeout(wait, 250); })();
   [400, 1000, 2100, 4100, 7100].forEach(function(t) { setTimeout(align, t); });
+  setInterval(align, 1500);   // videos arrive, are judged and paged in after the header is up
   window.addEventListener('resize', align);
 
   function favChanged() {

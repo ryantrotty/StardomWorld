@@ -13,6 +13,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.45.3
+
+- Wrestler pages: one left edge for everything, like tag team pages. The header (faction, titles, MATCHES, tabs) and the category debug panel now line up with the first video showing, measured on the page, instead of copying the filter bar's margin (the bar is hidden behind More with the tabs, and the site's grid is inset from the header's block). Re-measured as videos load; a focused, enlarged card isn't measured. All builds.
+
 ## 2.45.2
 
 - Design reference: the two Tag League block colours are listed as tokens in docs/DESIGN.md and the design audit (no app change beyond the version).
