@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.47.1
+
+- Nightly GitHub schedule job: when the site's schedule pages can't be read or show no events, it keeps the last good schedule, finishes without failing and leaves a warning saying why. The Muse daily file is what's keeping the schedule current while the site's English pages are gone.
+
 ## 2.47.0
 
 Includes the 2.45.0 match index, 2.46.0 and the debut and Tag League faces branch, which had also been numbered 2.45.0.
