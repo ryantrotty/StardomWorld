@@ -13,6 +13,13 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.46.0
+
+Private builds only, test:
+- New app-drawn wrestler page, tried from one entry first: "Rian · new page (test)" at the top of the Wrestlers shelf (and the Wrestlers list) opens `/mypage?tvwr=Rian`. The app draws the whole page like a tag team page: the same header (photo, faction, debut, titles, favorites), the category tabs, and one grid of the app's own video cards with dates. The search page wrestler pages are unchanged.
+- Each tab runs its searches in the background, 3 s apart, with the 7-day saved copies tag team pages use, and keeps a video only when it passes the tab's title rule and the wrestler checks (debut; Championship: their title record). The extra 5★STAR GP search ("5★STAR") joins the same list, newest first. On opening a tab it reads pages until there are 8 videos or 3 pages; after that one page at a time as focus reaches the last row or the More tile.
+- More opens the site's search for the wrestler with the full filter bar showing. Debug panel under the grid and each page sent to the sheet (page "wrestler-app").
+
 ## 2.45.3
 
 - Wrestler pages: one left edge for everything, like tag team pages. The header (faction, titles, MATCHES, tabs) and the category debug panel now line up with the first video showing, measured on the page, instead of copying the filter bar's margin (the bar is hidden behind More with the tabs, and the site's grid is inset from the header's block). Re-measured as videos load; a focused, enlarged card isn't measured. All builds.

@@ -214,7 +214,7 @@
   // ---- pages
   var Q = null;
   try { if (location.pathname === '/mypage') Q = new URLSearchParams(location.search); } catch (e) { Q = null; }
-  if (!Q || (!Q.get('tvteams') && !Q.get('tvteam'))) return;
+  if (!Q || (!Q.get('tvteams') && !Q.get('tvteam') && !Q.get('tvwr'))) return;
   var TEAM = Q.get('tvteam') ? teamById(Q.get('tvteam')) : null;
 
   var css = document.createElement('style');
@@ -661,7 +661,7 @@
     var r = parse(text); cb(r || { ok: false, error: 'bad reply' });
   };
   function sheet(action, payload, cb) {
-    var id = Math.random().toString(36).slice(2, 10), body = { action: action, team: TEAM.id };
+    var id = Math.random().toString(36).slice(2, 10), body = { action: action, team: TEAM ? TEAM.id : '' };
     for (var k in payload) body[k] = payload[k];
     sheetWait[id] = cb || function() {};
     setTimeout(function() { if (sheetWait[id]) { var f = sheetWait[id]; delete sheetWait[id]; f({ ok: false, error: 'no reply' }); } }, 30000);
@@ -969,6 +969,141 @@
     else scroller.addEventListener('scroll', function onScroll() { if (inView()) { scroller.removeEventListener('scroll', onScroll); start(); } });
   }
 
+  // ================================================================== a wrestler's page (/mypage?tvwr=<name>[&tvtab=<id>])
+  // Drawn by the app like a team page (2.46.0, tested from one menu entry first). assets/wrestler.js works out the
+  // wrestler, their title record, debut and header (window.__tvWrApi); this draws the page, runs the open tab's
+  // searches through fetchPage (3 s apart, 7-day saved copies) and keeps a card only when it passes the tab's title
+  // rule (match_types.json) and the wrestler checks (debut; Championship: their title record). One grid per tab,
+  // newest first; the next page loads when focus reaches the last row. More opens the site's search for them with
+  // the full filter bar.
+  var WP = { api: null, tab: '', x: null, queries: [], qi: 0, page: 1, done: false, busy: false, ran: false, kept: [], seen: {}, dropped: [], log: [], pages: 0, lastLoad: 0 };
+  function wpUp(b) { var m = /[?&]ts=(\d{9,11})/.exec(b || ''); return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) : ''; }
+  function wpWords(x) {   // the tab's search words: a faction's own (5★STAR GP: STARS members search BLUE STARS), else the type's
+    var api = WP.api, fs = x && x.factionSearch;
+    if (fs) for (var i = 0; i < api.factionIds.length; i++) { var o = fs[api.factionIds[i]]; if (o) return { search: o.search || x.search, alts: o.alts || [] }; }
+    return { search: (x && x.search) || '', alts: (x && x.alts) || [] };
+  }
+  function wpRule(x) {
+    var re = function(l) { return (l || []).map(function(p) { try { return new RegExp(p, 'i'); } catch (e) { return null; } }).filter(Boolean); };
+    return x ? { all: re(x.all), none: re(x.none) } : null;
+  }
+  function wpJudge(it) {   // '' keeps the card, else why it was left out
+    var t = half(it.t), d = dateOfTitle(t), api = WP.api, R = WP.rule;
+    if (R) {
+      for (var i = 0; i < R.all.length; i++) if (!R.all[i].test(t)) return 'not ' + (WP.x.name || WP.tab);
+      for (var j = 0; j < R.none.length; j++) if (R.none[j].test(t)) return 'not ' + (WP.x.name || WP.tab);
+    }
+    var deb = api.debut;
+    if (deb) {
+      if (d && d < deb) return 'before their debut';
+      var yr = d ? null : /(?:^|[^\d])(20\d\d)(?:[^\d]|$)/.exec(t);
+      if (yr && yr[1] + '-12-31' < deb) return 'before their debut';
+      var up = d ? '' : wpUp(it.b);
+      if (up && up < deb) return 'uploaded before their debut';
+    }
+    if (WP.tab === 'champ' && api.check) { var r = ''; try { r = api.check(t, d, d ? '' : wpUp(it.b)); } catch (e) { r = ''; } if (r) return r; }
+    return '';
+  }
+  function wpLoad(cb) {
+    if (WP.busy || WP.done) { if (cb) cb(); return; }
+    WP.busy = true; wpPaint();
+    var q = WP.queries[WP.qi];
+    fetchPage(q, WP.page, function(err, items, more, cached) {
+      WP.busy = false; WP.ran = true; WP.lastLoad = Date.now(); WP.pages++;
+      if (err) { WP.log.push(q + ' · page ' + WP.page + ': ' + err); WP.done = true; wpPaint(); if (cb) cb(); return; }
+      var kept = [], dropped = [];
+      items.forEach(function(it) {
+        if (WP.seen[it.id]) return; WP.seen[it.id] = 1;
+        var why = wpJudge(it);
+        if (why) { dropped.push('[' + why + '] ' + it.t); return; }
+        kept.push(it);
+      });
+      WP.kept = WP.kept.concat(kept); WP.dropped = WP.dropped.concat(dropped);
+      WP.log.push(q + ' · page ' + WP.page + ': ' + items.length + ' videos, ' + kept.length + ' kept' + (cached ? ' (saved copy)' : ''));
+      if (SHEET_ON) sheet('dbg_put', { page: 'wrestler-app', subject: WP.api.W.name, tab: WP.tab, url: location.pathname + location.search,
+        record: { query: q, pageNo: WP.page, cached: !!cached, videos: items.length, kept: kept.map(function(x) { return x.t; }), dropped: dropped } }, function() {});
+      if (more) WP.page++;
+      else { WP.qi++; WP.page = 1; if (WP.qi >= WP.queries.length) WP.done = true; }
+      wpPaint();
+      if (cb) cb();
+    });
+  }
+  // On opening a tab: pages until there are 8 videos to show, at most 3 pages (the gap between requests still applies).
+  function wpStart() {
+    (function step(n) { wpLoad(function() { if (!WP.done && WP.kept.length < 8 && n < 3) step(n + 1); }); })(1);
+  }
+  function wpList() { return WP.tab === 'all' ? WP.kept : byDate(WP.kept); }
+  function wpPaint() {
+    var box = document.getElementById('tt-vids'), st = document.getElementById('tt-vst'), dbg = document.getElementById('tt-dbg');
+    if (!box) return;
+    var ae = document.activeElement, had = ae && box.contains(ae) ? (ae.getAttribute('data-vid') || (ae.getAttribute('data-top') ? 'top' : 'more')) : '';
+    var list = wpList(), h = '';
+    var more = '<a class="tt-more" tabindex="0" data-wmore="1">' + esc(WP.busy ? T('Searching…', '検索中…') : T('More', 'さらに表示')) + '</a>';
+    if (!list.length) {
+      h = '<div class="tt-msg">' + esc(WP.done ? T('No matches were found here.', '試合は見つかりませんでした。') : (!WP.ran || WP.busy ? T('Looking for matches...', '試合を検索中...') : T('None on the pages searched so far.', 'これまでのページにはありません。'))) + '</div>';
+      if (!WP.done && WP.ran) h += '<div class="tt-vids">' + more + '</div>';
+      box.className = '';
+    } else {
+      box.className = 'tt-vids';
+      h = list.map(cardHtml).join('') + (WP.done ? '' : more);
+      if (WP.done && list.length > 4) h += '<a class="tt-more tt-top" tabindex="0" data-top="1">' + esc(T('Back to top', 'トップへ戻る')) + ' ↑</a>';
+    }
+    box.innerHTML = h;
+    if (st) st.textContent = WP.busy ? (list.length ? list.length + ' · ' : '') + T('looking for videos', '動画を検索中') : (list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合') + (WP.done ? '' : ' ' + T('so far', 'まで')));
+    if (dbg) {
+      dbg.textContent = [T('Tab: ', 'タブ: ') + WP.tab + ' · ' + T('searches: ', '検索: ') + WP.queries.join(' | ') + (WP.api.debut ? ' · debut ' + WP.api.debut : '')]
+        .concat(WP.log)
+        .concat(['Kept ' + WP.kept.length + ' · left out ' + WP.dropped.length + (SHEET_ON ? ' · sent to the sheet' : '')])
+        .concat(WP.dropped.length ? ['Left out: ' + WP.dropped.slice(0, 8).join(' | ') + (WP.dropped.length > 8 ? ' …' : '')] : []).join('\n');
+    }
+    if (had) { var f = had === 'top' ? box.querySelector('[data-top]') : had === 'more' ? box.querySelector('[data-wmore]') : box.querySelector('[data-vid="' + had + '"]'); if (f) focusEl(f); }
+  }
+  // the next page as focus reaches the last row or the More tile (one page per move, 3 s apart)
+  function wpNear(el) {
+    if (!WP.api || WP.busy || WP.done || !el || Date.now() - WP.lastLoad < 3000) return;
+    var box = document.getElementById('tt-vids');
+    if (!box || !box.contains(el)) return;
+    if (el.getAttribute('data-wmore') != null) { wpLoad(); return; }
+    var r = el.getBoundingClientRect(), below = Array.prototype.some.call(box.querySelectorAll('.tt-card'), function(c) { return c.getBoundingClientRect().top > r.bottom - 4; });
+    if (!below) wpLoad();
+  }
+  scroller.addEventListener('focusin', function(e) { if (WP.api) wpNear(e.target); });
+  function wpPath(tab) { return '/mypage?tvwr=' + encodeURIComponent(WP.api.W.name) + (tab && tab !== 'all' ? '&tvtab=' + encodeURIComponent(tab) : ''); }
+  function renderWrestler(tries) {
+    var api = window.__tvWrApi;
+    if (!api) {
+      if ((tries || 0) < 30) { setTimeout(function() { renderWrestler((tries || 0) + 1); }, 100); return; }
+      api = { missing: Q.get('tvwr') };
+    }
+    if (api.missing) {
+      scroller.innerHTML = '<div class="tt-head"><div class="tt-bar"></div><div class="tt-h1">' + esc(T('Wrestler not found', '選手が見つかりません')) + '</div></div><div class="tt-empty" style="margin-top:16px">' + esc(api.missing) + '</div>';
+      return;
+    }
+    WP.api = api;
+    var cats = api.cats || [], tab = Q.get('tvtab') || 'all', x = null;
+    cats.forEach(function(c) { if (c.id === tab) x = c; });
+    if (!x) tab = 'all';
+    WP.tab = tab; WP.x = x; WP.rule = wpRule(x);
+    var base = api.W.search, w = x ? wpWords(x) : null;
+    WP.queries = x ? [base + ' ' + w.search].concat(w.alts.map(function(a) { return base + ' ' + a; })) : [base];
+    var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(base) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(base) + (CATS_ON ? '&q%5Btype%5D=single' : '') + '&tvmore=1';
+    var tabs = '<div class="wr-tabs"><a class="wr-tab' + (tab === 'all' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('all'))) + '">' + esc(T('All Matches', 'すべての試合')) + '</a>' +
+      cats.map(function(c) { return '<a class="wr-tab' + (tab === c.id ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath(c.id))) + '">' + esc(isJa() && c.ja ? c.ja : c.name) + '</a>'; }).join('') +
+      '<a class="wr-tab wr-tab-more" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
+    var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(api.W.name) + '</div><div class="tt-note">' + esc(T('Wrestler', '選手')) + '</div></div>' +
+      '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
+    h += '<div id="tv-wr" class="notranslate" translate="no" style="margin-top:18px;padding-right:0">' + api.header(tabs) + '</div>';
+    h += '<div id="tt-vids"></div>' + (CATS_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');
+    scroller.innerHTML = h;
+    window.__tvWrAppFav = function() { var b = scroller.querySelector('[data-wrfav]'); if (b) { b.innerHTML = api.favInner(); b.classList.toggle('wr-on', api.isFav()); } };
+    // a tab was just chosen: open at MATCHES with that tab focused; otherwise on the favorites button
+    var on = scroller.querySelector('.wr-tab-on');
+    if (Q.get('tvtab') && on) { focusEl(on); try { var sec = on.closest('#tv-wr').querySelector('.wr-tabs').previousElementSibling; scroller.scrollTop += sec.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12; } catch (e) {} }
+    else focusEl(scroller.querySelector('.wr-btn') || on);
+    wpPaint();
+    wpStart();
+  }
+
   // ================================================================== remote: arrows move to the nearest item in that direction
   function focusables() { return Array.prototype.slice.call(scroller.querySelectorAll('[tabindex="0"]')).filter(function(e) { return e.offsetParent !== null; }); }
   function nearest(from, dir) {
@@ -990,8 +1125,10 @@
     if (el.getAttribute('data-more') != null) { if (!V.busy) loadMore(); return true; }
     if (el.getAttribute('data-lmore') != null) { if (!V.busy) leagueMore(); return true; }
     if (el.getAttribute('data-cmore') != null) { if (!V.busy) champMore(); return true; }
-    if (el.getAttribute('data-top') != null) { scroller.scrollTop = 0; focusEl(scroller.querySelector('.tt-chip.tt-on') || scroller.querySelector('[tabindex="0"]')); return true; }
+    if (el.getAttribute('data-top') != null) { scroller.scrollTop = 0; focusEl(scroller.querySelector('.tt-chip.tt-on, .wr-tab-on') || scroller.querySelector('[tabindex="0"]')); return true; }
     if (el.getAttribute('data-favb') != null) { if (window.__tvFav && TEAM) window.__tvFav.toggleTeam(TEAM.id); return true; }
+    if (el.getAttribute('data-wrfav') != null) { if (WP.api) { WP.api.toggleFav(); if (window.__tvWrAppFav) window.__tvWrAppFav(); } return true; }
+    if (el.getAttribute('data-wmore') != null) { if (!WP.busy) wpLoad(); return true; }
     return false;
   }
   scroller.addEventListener('click', function(e) { var el = e.target.closest ? e.target.closest('[tabindex]') : null; if (el && choose(el)) e.preventDefault(); });
@@ -1011,5 +1148,5 @@
     else if (dir === 'down') scroller.scrollTop += 240;   // fact rows below: scroll to read them
   }, true);
 
-  if (Q.get('tvteam')) renderTeam(); else if (Q.get('league')) renderLeague(null); else renderList(null);
+  if (Q.get('tvwr')) renderWrestler(0); else if (Q.get('tvteam')) renderTeam(); else if (Q.get('league')) renderLeague(null); else renderList(null);
 })();

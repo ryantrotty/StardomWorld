@@ -5564,7 +5564,10 @@ class MainActivity : Activity() {
             var showsPill = schedPillHtml();
             if (showsPill) showsRow = showsRow.replace('<span>' + esc(T('Shows', '番組')) + '</span>', '<span>' + esc(T('Shows', '番組')) + showsPill + '</span>');
             h += showsRow;
-            h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
+            // Private builds, test (2.46.0): one entry for the app-drawn wrestler page, before it replaces the search page
+            var wrTest = [];
+            try { if (AndroidHost.categoriesOn && AndroidHost.categoriesOn()) wrTest = [['Rian · new page (test)', '/mypage?tvwr=Rian', '梨杏・新ページ（テスト）']]; } catch (e) {}
+            h += group(T('Wrestlers', '選手'), wrTest.concat(currentWrestlers()), 'current');
             h += group(T('Years', '年別'), years, 'years');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
@@ -5893,7 +5896,10 @@ class MainActivity : Activity() {
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               // Two tabs, CURRENT (open first) and PAST, like the filter bar's wrestler lists.
-              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
+              // Private builds, test (2.46.0): the app-drawn wrestler page, one entry, before it replaces the search page
+              var wrTestRow = '';
+              try { if (AndroidHost.categoriesOn && AndroidHost.categoriesOn()) wrTestRow = '<div style="margin:0 0 8px 0">' + fiHtml(T('Rian · new page (test)', '梨杏・新ページ（テスト）'), '/mypage?tvwr=Rian') + '</div>'; } catch (e) {}
+              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' + wrTestRow +
                 '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
                 '<div class="tv-shl-wl" data-wbody="0" style="column-count:' + (spot ? 3 : 4) + ';column-gap:10px;">' + rowsHtml(crow) + '</div>' +
                 '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
