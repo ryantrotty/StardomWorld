@@ -505,9 +505,18 @@ class MainActivity : Activity() {
         .content-thumbnail-box, .tile-inner, .content-list-item article {
             transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
         }
+        /* No hover look on video cards: on a TV the pointer is never meant to be there, and a pointer left resting
+           over a card (or the site's own a:hover dimming) left one card darkened that wasn't in focus. Focus is shown
+           by the gold ring only. (Same cause as the dimmed menu row fixed in 2.15.2.) */
+        .content-list-item article:hover:not(:focus-within), .content-list-item a:hover, .content-list-item a:hover *,
+        .content-list-item:hover, .content-list-item:hover img, #tv-alt-list a:hover, #tv-alt-list a:hover *,
+        #tv-tt a:hover, #tv-tt a:hover * {
+            opacity: 1 !important;
+            filter: none !important;
+            mix-blend-mode: normal !important;
+        }
         .content-list-item article:hover:not(:focus-within) {
-            transform: scale(1.03) !important;
-            opacity: 0.85 !important;
+            transform: none !important;
         }
         /* Home hero banner: focus is shown by the outline only, never by dimming the image.
            (Covers site rules like a:hover/a:focus { opacity } and darkening overlays.) */

@@ -13,6 +13,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.45.0
+
+- Wrestler pages: a DEBUT fact (date) after FACTION, from the debuts list (the roster file now has 40 wrestlers' official debut dates). All builds.
+- Tag League page: each row shows the two wrestlers' circles (photos in private builds, initials otherwise), like the team page. All builds.
+- Video cards no longer dim or lift under a resting pointer. A card could stay darkened while not in focus (the same cause as the dimmed menu row fixed in 2.15.2); focus is shown by the gold ring only. All builds.
+
 ## 2.44.5
 
 Private builds only, fixes 2.44.4:

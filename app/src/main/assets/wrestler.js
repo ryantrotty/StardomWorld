@@ -196,6 +196,7 @@
     var av = photo ? '<div class="wr-av ph" style="background-image:url(\'' + esc(photo) + '\')"></div>' : '<div class="wr-av notranslate" translate="no">' + esc(initials(W.name)) + '</div>';
     var cur = myFacs.filter(function(f) { return !f.former; })[0];
     var facts = (cur ? '<div><div class="k">' + esc(T('FACTION', 'ユニット')) + '</div><div class="v notranslate" translate="no">' + esc(cur.name) + '</div></div>' : '') +
+      (window.__tvWrDebut ? '<div><div class="k">' + esc(T('DEBUT', 'デビュー')) + '</div><div class="v">' + esc(fmtD(window.__tvWrDebut)) + '</div></div>' : '') +
       (first ? '<div><div class="k">' + esc(T('FIRST TITLE', '初戴冠')) + '</div><div class="v">' + esc(first.slice(0, 4)) + '</div></div>' : '') +
       '<div><div class="k">' + esc(T('REIGNS', '戴冠')) + '</div><div class="v">' + reigns.length + '</div></div>' +
       '<div><div class="k">' + esc(T('DEFENCES', '防衛')) + '</div><div class="v">' + defTotal + '</div></div>';

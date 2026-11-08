@@ -261,6 +261,10 @@
     '#tv-tt .tt-lg-col{display:flex;flex-direction:column;gap:8px;min-width:0;}',
     '#tv-tt .tt-lg-row{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;background:#161F2A;border:2px solid #161F2A;border-radius:8px;min-width:0;cursor:pointer;}',
     '#tv-tt .tt-lg-row:focus{background:#172029;border-color:#F4C242;}',
+    '#tv-tt .tt-lg-av{display:flex;flex:none;}',
+    '#tv-tt .tt-lg-av i{width:38px;height:38px;overflow:hidden;white-space:nowrap;border-radius:50%;border:2px dashed #3B4656;background:#0F151C center top/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;font-style:normal;color:#C9D2DC;box-sizing:border-box;}',
+    '#tv-tt .tt-lg-av i.ph{border-style:solid;border-color:#2A323C;}',
+    '#tv-tt .tt-lg-av i + i{margin-left:-10px;}',
     '#tv-tt .tt-lg-row .a{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;}',
     '#tv-tt .tt-lg-row .b{font-size:13px;font-weight:600;color:#9AA6B4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;}',
     '#tv-tt .tt-lg-row.tt-fav .a::before{content:"\\2605  ";color:#F4C242;}',
@@ -383,7 +387,12 @@
         if (!t) return '';
         var win = !!(L.winnerTeam && pairKey(L.winnerTeam) === pairKey(m));
         var prev = !win && !!(L.prevWinners && L.prevWinners.team && pairKey(L.prevWinners.team) === pairKey(m));
-        return '<a class="tt-lg-row' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.name ? t.members.join(' & ') : '') + '</span>' +
+        // the two wrestlers' circles (the private build's photos, else initials), as on the team page but 38 px
+        var av = t.members.map(function(n) {
+          var p = call('wrestlerPhoto', n) || call('wrestlerPhoto', siteName(n));
+          return p ? '<i class="ph" style="background-image:url(\'' + esc(p) + '\')"></i>' : '<i class="notranslate" translate="no">' + esc(initials(n)) + '</i>';
+        }).join('');
+        return '<a class="tt-lg-row' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="tt-lg-av">' + av + '</span><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.name ? t.members.join(' & ') : '') + '</span>' +
           (win ? '<span class="tt-tag ch">' + esc(T('WINNERS', '優勝')) + '</span>' : '') +
           (prev ? '<span class="tt-tag ch">' + esc(T(L.prevWinners.year + ' WINNERS', L.prevWinners.year + '年優勝')) + '</span>' : '') + tags(t, true) + '</a>';
       }).join('');
