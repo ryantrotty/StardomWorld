@@ -27,6 +27,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Error | #FF7A66 | Login failures |
 | Live red | #D62839 (hover #E8374A, text #FF6B78) | Live only |
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
+| League blue / red | #4DA6FF, #FF5A6A | Tag League page block headers only (Blue / Red Goddesses) |
 | Done green | #2E9E5B | Completed step |
 | Tinted fills | #2A2410, #2A2210, #2A1C10, #1C1740 | Login focus, favorites, PPV tile gradient |
 | Paper ticket | #F3E2B8 (paper), #2A1C10 (text), #6B4A26 (small text) | My Favorites reminder tickets |

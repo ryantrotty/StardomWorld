@@ -13,6 +13,10 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.45.2
+
+- Design reference: the two Tag League block colours are listed as tokens in docs/DESIGN.md and the design audit (no app change beyond the version).
+
 ## 2.45.1
 
 - Wrestler pages with the category tabs: the header and tabs line up with the videos again. While the filter bar was hidden behind More it was measured with no position, and it and the header got the first video's whole distance from the screen edge, so the header sat to the right of the videos. The bar is only lined up while it shows, and only to a video that is showing. All builds (the private build shows the tabs).
