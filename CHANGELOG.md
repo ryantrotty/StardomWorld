@@ -13,6 +13,11 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+## 2.46.1
+
+- One background colour everywhere: the app-drawn pages' navy (#0B1118) replaces black on the reskinned site pages (search results, show and video pages, sort bar, footer, page title band, player bar), the sign-in page, the loading screen between pages, the splash and behind a loading page. Black stays only behind full-screen video. All builds.
+- Private builds: every wrestler link opens the app-drawn wrestler page (Wrestlers shelf and list, My Favorites, the member buttons on team pages); the test entry is gone. More on that page still opens the site's search with the full filter bar. Public builds keep the search page for now.
+
 ## 2.46.0
 
 Private builds only, test:

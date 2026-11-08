@@ -124,8 +124,8 @@ class MainActivity : Activity() {
 
             private val TV_RAW_CSS = """
         html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             color: #ffffff !important;
             box-shadow: none !important;
             border: none !important;
@@ -198,8 +198,8 @@ class MainActivity : Activity() {
         }
         footer, .box-footer {
             display: block !important;
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             padding: 20px 0 40px 0 !important;
             margin: 0 !important;
             border: none !important;
@@ -406,8 +406,8 @@ class MainActivity : Activity() {
             border-color: #FFB347 !important;
         }
         .box-sort {
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             padding: 12px 0 !important;
             margin: 10px 0 15px 0 !important;
             text-align: center !important;
@@ -749,7 +749,7 @@ class MainActivity : Activity() {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#0B1118 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
                 'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
                 'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
                 '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
@@ -2036,7 +2036,9 @@ class MainActivity : Activity() {
         root.setBackgroundColor(Color.BLACK)
 
         webView = WebView(this)
-        webView.setBackgroundColor(Color.BLACK)
+        // the app's page colour (#0B1118, as on the app-drawn pages) shows while a page loads; the root behind it
+        // stays black for full-screen video
+        webView.setBackgroundColor(0xFF0B1118.toInt())
         // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
         if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView.addJavascriptInterface(webAppInterface, "AndroidHost")
@@ -2060,7 +2062,7 @@ class MainActivity : Activity() {
 
         // Transition overlay for page loading
         transitionOverlay = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(0xFF0B1118.toInt())
             isClickable = true
             visibility = View.GONE
             alpha = 0f
@@ -2087,9 +2089,9 @@ class MainActivity : Activity() {
             )
         )
 
-        // Black splash with the logo, drawn above everything until the page is ready.
+        // Splash with the logo (app page colour), drawn above everything until the page is ready.
         splashView = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(0xFF0B1118.toInt())
             isClickable = true
             clipChildren = false
         }
@@ -5211,7 +5213,9 @@ class MainActivity : Activity() {
               return [m.name, m.ja || m.name];
             });
           } catch (e) {}
-          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name) + singleOnly(); }
+          // A wrestler's page. Private builds (2.46.1): the app-drawn page (/mypage?tvwr=); otherwise the site's search for them.
+          function wrPath(key) { return singleOnly() ? '/mypage?tvwr=' + encodeURIComponent(key) : '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(key); }
+          function searchPath(name) { return wrPath(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
             var out = [], old = [];
@@ -5242,7 +5246,7 @@ class MainActivity : Activity() {
             } catch (e) {}
             if (!out.length) return wrestlers(CURRENT_W);
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
-            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]) + singleOnly(), m[2]]; });
+            return out.map(function(m) { return [m[0], wrPath(m[1]), m[2]]; });
           }
           // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
           function pastWrestlers() {
@@ -5254,7 +5258,7 @@ class MainActivity : Activity() {
               (d.factions || []).forEach(function(f) {
                 if (!f.former) return;
                 (f.members || []).forEach(function(m) {
-                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name) + singleOnly(), JA_NAMES[m.name] || m.name]); }
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, wrPath(m.search || m.name), JA_NAMES[m.name] || m.name]); }
                 });
               });
             } catch (e) {}
@@ -5401,7 +5405,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-pastcols .tv-sm-fi{font-size:16px;word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;}',
             '#tv-ev{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#0b1118;color:#fff;font-family:Arial,Helvetica,sans-serif;}',
             '#tv-ev .tv-ev-in{display:flex;height:100%;}',
-            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#000;display:flex;align-items:center;}',
+            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#0B1118;display:flex;align-items:center;}',
             '#tv-ev .tv-ev-pc img{height:100%;width:auto;display:block;}',
             '#tv-ev, #tv-ev *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-ev .tv-ev-top{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
@@ -5466,7 +5470,7 @@ class MainActivity : Activity() {
             'html.tv-sm-open #tv-sm-tab{display:none;}',
             '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B1118;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
             'html.tv-sm-open #tv-sm-hint{display:none;}',
-            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#000000;}',
+            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#0B1118;}',
             '#tv-page-title .tv-pt-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
             '#tv-page-title .tv-pt-txt{min-width:0;line-height:1.2;}'
           ].join('\n');
@@ -5564,10 +5568,7 @@ class MainActivity : Activity() {
             var showsPill = schedPillHtml();
             if (showsPill) showsRow = showsRow.replace('<span>' + esc(T('Shows', '番組')) + '</span>', '<span>' + esc(T('Shows', '番組')) + showsPill + '</span>');
             h += showsRow;
-            // Private builds, test (2.46.0): one entry for the app-drawn wrestler page, before it replaces the search page
-            var wrTest = [];
-            try { if (AndroidHost.categoriesOn && AndroidHost.categoriesOn()) wrTest = [['Rian · new page (test)', '/mypage?tvwr=Rian', '梨杏・新ページ（テスト）']]; } catch (e) {}
-            h += group(T('Wrestlers', '選手'), wrTest.concat(currentWrestlers()), 'current');
+            h += group(T('Wrestlers', '選手'), currentWrestlers(), 'current');
             h += group(T('Years', '年別'), years, 'years');
             var PERSON = '<svg class="tv-sm-person" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
             if (signedIn()) {
@@ -5896,10 +5897,7 @@ class MainActivity : Activity() {
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               // Two tabs, CURRENT (open first) and PAST, like the filter bar's wrestler lists.
-              // Private builds, test (2.46.0): the app-drawn wrestler page, one entry, before it replaces the search page
-              var wrTestRow = '';
-              try { if (AndroidHost.categoriesOn && AndroidHost.categoriesOn()) wrTestRow = '<div style="margin:0 0 8px 0">' + fiHtml(T('Rian · new page (test)', '梨杏・新ページ（テスト）'), '/mypage?tvwr=Rian') + '</div>'; } catch (e) {}
-              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' + wrTestRow +
+              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
                 '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
                 '<div class="tv-shl-wl" data-wbody="0" style="column-count:' + (spot ? 3 : 4) + ';column-gap:10px;">' + rowsHtml(crow) + '</div>' +
                 '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
@@ -6361,7 +6359,7 @@ class MainActivity : Activity() {
           var st = document.createElement('style');
           st.id = 'tv-player-style';
           st.textContent = [
-            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
+            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#0B1118;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
             '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
             '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
           ].join('\n');

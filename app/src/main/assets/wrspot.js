@@ -105,9 +105,9 @@
       '<div class="tv-wsp-n"></div><div class="tv-wsp-l1"></div><div class="tv-wsp-l2"></div></div>';
   }
 
-  // The row's search words, from its address (/contents/search?q[keyword]=...).
+  // The row's search words, from its address (/mypage?tvwr=... or /contents/search?q[keyword]=...).
   function keyOf(a) {
-    try { return low(new URL(a.getAttribute('data-go') || a.href, location.origin).searchParams.get('q[keyword]')); } catch (e) { return ''; }
+    try { var sp = new URL(a.getAttribute('data-go') || a.href, location.origin).searchParams; return low(sp.get('tvwr') || sp.get('q[keyword]')); } catch (e) { return ''; }
   }
 
   function attach(shelf) {

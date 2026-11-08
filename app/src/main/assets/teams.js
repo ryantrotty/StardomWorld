@@ -914,7 +914,7 @@
         '<div><div class="k">' + esc(T('REIGNS', '戴冠')) + '</div><div class="v">' + reignsN + '</div></div>' +
         '<div><div class="k">' + esc(T('DEFENCES', '防衛')) + '</div><div class="v">' + t.defTotal + '</div></div>' +
       '</div><div class="tt-btns">' +
-        t.members.map(function(m) { var p = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1' + (CATS_ON ? '&q%5Btype%5D=single' : ''); return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
+        t.members.map(function(m) { var p = CATS_ON ? '/mypage?tvwr=' + encodeURIComponent(searchName(m)) : '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(m)) + '&activetab=contents&page=1'; return '<a class="tt-btn notranslate" translate="no" tabindex="0" href="' + esc(absUrl(p)) + '">' + esc(m) + '</a>'; }).join('') +
         (t.facObj && t.facObj.members && t.facObj.members.length ? '<a class="tt-btn" tabindex="0" href="' + esc(absUrl('/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(t.facObj.members[0].search) + '&tvfaction=' + encodeURIComponent(t.facObj.id) + (CATS_ON ? '&q%5Btype%5D=single' : ''))) + '">' + esc(T('Faction home', 'ユニットページ')) + '</a>' : '') +
         (window.__tvFav ? '<a class="tt-btn tt-favb' + (isFav(t.id) ? ' tt-on' : '') + '" tabindex="0" data-favb="1">' + favBtnInner(t.id) + '</a>' : '') +
       '</div></div></div>';
