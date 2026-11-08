@@ -1,6 +1,6 @@
 {
- "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Sections: tagTeams, factions (remove, set, members), past (add, remove), tagLeague (per year: blocks of teams). Use the app's spellings (assets/factions.json).",
- "updated": "2026-11-07",
+ "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Sections: tagTeams, factions (remove, set, members), past (add, remove), tagLeague (per year: blocks of teams), matchTypes, debuts. Use the app's spellings (assets/factions.json).",
+ "updated": "2026-11-08",
  "tagTeams": {
   "add": [
    {
@@ -319,5 +319,50 @@
     "cinderella|シンデレラ|5\\s*★?\\s*star\\s*gp"
    ]
   }
+ },
+ "debuts": {
+  "_note": "Debut dates (YYYY-MM-DD) from each wrestler's official Stardom profile (Fuwa Chan: first Stardom appearance). Private builds (2.44.4+) leave out category-tab videos dated before them.",
+  "AZM": "2013-10-06",
+  "Ami Sohrei": "2020-08-14",
+  "Anne Kanaya": "2025-03-20",
+  "Bea Priestley": "2012-12-21",
+  "Ema Maishima": "2025-05-21",
+  "Fuwa Chan": "2022-10-23",
+  "Fuwa-chan": "2022-10-23",
+  "Hanako": "2023-03-25",
+  "Hanan": "2017-04-09",
+  "Hime Yuria": "2025-01-26",
+  "Yuria Hime": "2025-01-26",
+  "Hina": "2018-10-13",
+  "Kikyo Furusawa": "2025-05-21",
+  "Kiyoka Kotatsu": "2021-07-01",
+  "Konami": "2015-02-25",
+  "Lady C": "2020-11-14",
+  "Maika": "2019-05-07",
+  "Maki Itoh": "2016-12-11",
+  "Matoi Hamabe": "2024-11-16",
+  "Mei Seira": "2018-11-18",
+  "Miyu Amasaki": "2022-03-11",
+  "Momo Kohgo": "2019-04-30",
+  "Momo Watanabe": "2014-11-16",
+  "Natsuko Tora": "2016-10-30",
+  "Natsupoi": "2015-05-31",
+  "Ranna Yagami": "2023-12-25",
+  "Rian": "2024-03-30",
+  "Rina": "2018-10-13",
+  "Ruaka": "2016-11-20",
+  "Sakura Aya": "2023-03-25",
+  "Saori Anou": "2015-05-31",
+  "Saya Iida": "2019-01-14",
+  "Saya Kamitani": "2019-08-10",
+  "Sayaka Kurara": "2023-12-25",
+  "Starlight Kid": "2015-10-11",
+  "Suzu Suzuki": "2018-12-31",
+  "Syuri": "2008-10-26",
+  "Tetsu Akira": "2025-01-25",
+  "Akira Kurogane": "2025-01-25",
+  "Utami Hayashishita": "2018-08-12",
+  "Waka Tsukiyama": "2020-09-06",
+  "Yuna Mizumori": "2018-02-28"
  }
 }
