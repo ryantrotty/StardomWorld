@@ -10455,7 +10455,7 @@ class MainActivity : Activity() {
             fsBtns[id] = b
             add(b)
         }
-        if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty() && !isPpvHost(webView.url)) {
+        if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()) {
             val b = fsButton("") { barAction("index") }
             val iconPx = (22 * density).toInt()
             fun icon(focused: Boolean) = telescopeDrawable(iconPx, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.WHITE, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.parseColor("#F4C242"))
@@ -10494,6 +10494,8 @@ class MainActivity : Activity() {
 
     private fun showFsOverlay() {
         val o = fsOverlay ?: buildFsOverlay()
+        // The bar is built once, so the telescope is shown or hidden each time: pay-per-view pages have no Index panel.
+        fsBtns["index"]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
         fsControlsMode = true
         // Hide the player's own bar so there is only one set of controls on screen.
         sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)

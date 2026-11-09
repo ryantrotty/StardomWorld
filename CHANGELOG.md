@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.52.1
+
+Private builds only:
+- The telescope no longer appears in the full screen bar on pay-per-view pages, which have no Index panel.
+
 ## 2.52.0
 
 Private builds only, Index panel:
