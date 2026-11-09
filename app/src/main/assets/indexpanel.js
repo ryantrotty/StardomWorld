@@ -11,10 +11,10 @@
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
   var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
@@ -147,16 +147,6 @@
     }
     if (!state || state.tab === 'people') h += '</div>';
     if (state) {
-      if (state.tab === 'people') h += '<div class="row">';
-      if (state.tab !== 'people') { /* the result row is on People only */ }
-      else if (!state.resOpen) h += chip('res', T.resHidden, 'ghost');
-      else {
-        var r = state.result;
-        h += chip('r0', T.notSet, !r.type ? 'on' : '');
-        state.sides.forEach(function(s, i) { h += chip('rw' + (i + 1), T.side + ' ' + (i + 1) + T.wins, r.type === 'win' && r.side === i + 1 ? 'on' : ''); });
-        h += chip('rd', T.draw, r.type === 'draw' ? 'on' : '') + chip('rn', T.nc, r.type === 'nc' ? 'on' : '');
-      }
-      if (state.tab === 'people') h += '</div>';
       h += '<div class="row">' + chip('save', T.save);
       if (setNext()) h += chip('next', T.next);
       h += chip('close', T.close, 'ghost') + '</div>';
@@ -174,7 +164,7 @@
   function lab(x) { return ja && x.ja ? x.ja : (x.en || x.id); }
   function has(g, v) { return (state.tags[g] || []).indexOf(v) >= 0; }
   function group(g, items) {
-    return '<div class="grp">' + T.groups[g] + '</div><div class="chips">' + items.map(function(x) { return chip('c:' + g + ':' + x.id, esc(lab(x)), has(g, x.id) ? 'on' : ''); }).join('') + chip('pr:' + g, T.suggest, 'ghost') + '</div>';
+    return '<div class="grp">' + T.groups[g] + '</div><div class="chips">' + items.map(function(x) { return chip('c:' + g + ':' + x.id, esc(lab(x)), has(g, x.id) ? 'on' : ''); }).join('') + chip('pr:' + g, '+', 'ghost', ' aria-label="' + T.proposeHead + '"') + '</div>';
   }
   function people() {
     var out = [];
@@ -212,6 +202,10 @@
     } else if (state.tab === 'finish') {
       if (!state.resOpen) h += '<div class="chips">' + chip('rev', T.reveal, 'ghost') + '</div>';
       else {
+        var r = state.result;
+        h += '<div class="grp">' + T.groups.result + '</div><div class="chips">' + chip('r0', T.notSet, !r.type ? 'on' : '');
+        state.sides.forEach(function(s, i) { if (s.people.length) h += chip('rw' + (i + 1), T.side + ' ' + (i + 1) + T.wins, r.type === 'win' && r.side === i + 1 ? 'on' : ''); });
+        h += chip('rd', T.draw, r.type === 'draw' ? 'on' : '') + chip('rn', T.nc, r.type === 'nc' ? 'on' : '') + '</div>';
         h += group('finish', listOf('finish'));
         h += '<div class="grp">' + T.fall + '</div><div class="chips">' + people().filter(function(x) { return x.p.id; }).map(function(x) { return chip('f:' + x.p.id, esc(nameOf(x.p.id)), state.fall === x.p.id ? 'on' : ''); }).join('') + '</div>';
       }
@@ -300,7 +294,12 @@
     if (k === 'dr') { state.date = rec.date || ''; state.dateManual = false; lastFocus = 'd-d'; render(); return true; }
     if (k === 'rev') { state.resOpen = true; lastFocus = k; render(); return true; }
     if ((m = /^c:([a-z]+):(.+)$/.exec(k))) { toggle(m[1], m[2]); render(); return true; }
-    if ((m = /^f:(.+)$/.exec(k))) { state.fall = state.fall === m[1] ? '' : m[1]; render(); return true; }
+    if ((m = /^f:(.+)$/.exec(k))) {
+      state.fall = state.fall === m[1] ? '' : m[1];
+      // Whoever got the fall won, unless a result was already set to something else.
+      if (state.fall && (!state.result.type || state.result.type === 'win')) state.sides.forEach(function(s, i) { if (s.people.some(function(p) { return p.id === state.fall; })) state.result = { type: 'win', side: i + 1 }; });
+      render(); return true;
+    }
     if ((m = /^e:(.+)$/.exec(k))) { v = personAt(m[1]); v.entry = v.entry ? '' : nextNo('entry'); render(); return true; }
     if ((m = /^x:(.+)$/.exec(k))) { v = personAt(m[1]); v.elim = v.elim ? '' : nextNo('elim'); render(); return true; }
     if (k === 'mb' || k === 'me') { mark(k === 'mb' ? 'bell' : 'end'); return true; }
@@ -334,7 +333,7 @@
     var h = '<div class="ov"><div class="pick"><div class="h">' + (pick.kind === 'venue' ? T.venue : T.pick) + (pick.raw ? ' · ' + esc(pick.raw) : '') + '</div><div class="ltr">';
     h += chip('tSUG', T.sug, pick.tab === '*' ? 'on' : '');
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(function(c) { h += chip('t' + (c === '#' ? 'N' : c), c, pick.tab === c ? 'on' : ''); });
-    h += chip('pNew', T.suggest, 'ghost') + '</div><div class="grid">';
+    h += chip('pNew', '+', 'ghost', ' aria-label="' + T.proposeHead + '"') + '</div><div class="grid">';
     var L = pickList();
     if (!L.length) h += '<div class="m">' + T.none + '</div>';
     L.forEach(function(t, i) { h += chip('g' + i, esc(t.en) + (t.ja ? '<small>' + esc(t.ja) + '</small>' : ''), '', ' data-id="' + esc(t.id) + '"'); });

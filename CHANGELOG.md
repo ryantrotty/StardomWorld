@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.53.0
+
+Private builds only, Index panel:
+- The result moved to the Finish tab with how it ended and who got the fall, behind one Show result button. Choosing who got the fall sets the winning side.
+- Propose buttons are now a + button.
+
 ## 2.52.1
 
 Private builds only:
