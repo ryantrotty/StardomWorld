@@ -217,3 +217,4 @@ Star backdrop (2.47.0, private builds, assets/starback.js): behind the existing 
 
 Index panel tabs (2.49.0): People, Match, Finish, Moments and Marks in a chip row under the facts line (44 high, chosen = look B, focus = gold border). Tag groups use the 12/800 gold label; chips are the panel's buttons. No new colours.
 
+Index panel transparency (2.50.0): dim layer 28% black, panel #0F151C at 68%, side columns #121922 at 55%, pop-ups and pickers at 86%. Buttons stay solid so text is readable over the video.

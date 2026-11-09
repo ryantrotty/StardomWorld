@@ -25,6 +25,8 @@ Paste the whole of `scripts/video_index_log.gs` into the sheet's Apps Script, th
 
 On the panel, OK on a red name offers **Pick the right name** or **Propose new**. Picking saves that spelling as an alias straight away. A proposal waits in `proposals`: set its status to `approved`, and it joins the library the next time a TV loads the library (at most an hour's cache).
 
+On the Match, Finish and Moments tabs and in the pickers, **+ Propose new** opens a text box. The proposal's `entity_id` names the list it belongs to.
+
 ## Keys and calls
 
 The panel only runs when opened and only talks to the sheet, never to the video site. The key stays in the app. `vi_export` returns the compiled index: ids and tags, with results in a separate block so nothing spoils by accident, ready for public builds later.

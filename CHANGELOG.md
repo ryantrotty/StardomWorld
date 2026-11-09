@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.50.0
+
+Private builds only, Index panel:
+- "+ Propose new" on every Match, Finish and Moments list, and in the wrestler and venue pickers, with a text box using the TV keyboard. Proposals appear as choices once approved in the sheet.
+- Match tab: venue for the show, matched automatically from the site's text and changeable from the list; date control for when the page is wrong. A corrected date stays through later saves.
+- The panel is see-through, so the video stays visible behind it.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.49.0
 
 Private builds only, Index panel:

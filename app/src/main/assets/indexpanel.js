@@ -10,10 +10,10 @@
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
   var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
@@ -69,17 +69,19 @@
     if (root) return;
     var st = document.createElement('style');
     st.textContent = [
-      '#tvx{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;color:#fff}',
-      '#tvx .p{width:1280px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-sizing:border-box;background:#0F151C;border:2px solid #2A323C;border-radius:12px;padding:22px 26px}',
+      '#tvx{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;color:#fff}',
+      '#tvx .p{width:1280px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-sizing:border-box;background:rgba(15,21,28,.68);border:2px solid #2A323C;border-radius:12px;padding:22px 26px}',
       '#tvx .h{font:800 15px Arial;letter-spacing:.14em;color:#F4C242}',
       '#tvx .t{font:700 22px Arial;margin:8px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
       '#tvx .m{font:600 14px Arial;color:#9AA6B4;margin-bottom:12px}',
       '#tvx .tabs{display:flex;gap:8px;margin-bottom:10px}',
       '#tvx .body{flex:1 1 auto;min-height:150px;overflow:auto;padding:3px}',
+      '#tvx input{box-sizing:border-box;width:100%;height:52px;background:#161F2A;color:#fff;border:2px solid #2A323C;border-radius:8px;font:700 20px Arial;padding:0 12px;outline:none!important}',
+      '#tvx input:focus{border-color:#F4C242!important;background:#172029}',
       '#tvx .grp{font:800 12px Arial;letter-spacing:1px;color:#F4C242;margin:10px 0 6px}',
       '#tvx .chips{display:flex;flex-wrap:wrap;gap:8px}',
       '#tvx .sides{display:flex;gap:12px;overflow:auto;flex:1 1 auto;min-height:150px;padding:3px}',
-      '#tvx .c{flex:1 1 0;min-width:220px;background:#121922;border:2px solid #2A323C;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box}',
+      '#tvx .c{flex:1 1 0;min-width:220px;background:rgba(18,25,34,.55);border:2px solid #2A323C;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box}',
       '#tvx .l{font:800 12px Arial;letter-spacing:1px;color:#F4C242;display:flex;justify-content:space-between}',
       '#tvx .l em{font-style:normal;color:#9AA6B4}',
       '#tvx button{appearance:none;box-sizing:border-box;background:#161F2A;color:#fff;border:2px solid #2A323C;border-radius:8px;font:700 17px Arial;min-height:44px;padding:6px 12px;text-align:left;outline:none!important;box-shadow:none!important;transform:none!important}',
@@ -91,9 +93,9 @@
       '#tvx .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}',
       '#tvx .s{font:700 15px Arial;color:#C9D2DC;margin-top:12px;min-height:20px}',
       '#tvx .s.bad{color:#FF7A66}',
-      '#tvx .ov{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center}',
-      '#tvx .menu{width:480px;background:#0F151C;border:2px solid #2A323C;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}',
-      '#tvx .pick{width:1240px;max-width:96vw;height:86vh;background:#0F151C;border:2px solid #2A323C;border-radius:12px;padding:18px;display:flex;flex-direction:column;box-sizing:border-box}',
+      '#tvx .ov{position:fixed;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center}',
+      '#tvx .menu{width:480px;background:rgba(15,21,28,.86);border:2px solid #2A323C;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}',
+      '#tvx .pick{width:1240px;max-width:96vw;height:86vh;background:rgba(15,21,28,.86);border:2px solid #2A323C;border-radius:12px;padding:18px;display:flex;flex-direction:column;box-sizing:border-box}',
       '#tvx .ltr{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0}',
       '#tvx .ltr button{min-width:36px;min-height:38px;padding:2px 4px;text-align:center;font-size:15px}',
       '#tvx .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;overflow:auto;padding:3px;align-content:start;flex:1 1 auto}',
@@ -126,7 +128,7 @@
     ensure();
     var title = rec ? (rec.title_en || rec.title_ja || rec.h1 || '') : '';
     var show = rec && rec.shows && rec.shows[0] ? rec.shows[0].show : '';
-    var h = '<div class="p"><div class="h">' + T.head + '</div><div class="t">' + esc(title) + '</div><div class="m">' + esc([rec && rec.date, show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div>';
+    var h = '<div class="p"><div class="h">' + T.head + '</div><div class="t">' + esc(title) + '</div><div class="m">' + esc([(state && state.date) || (rec && rec.date), show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div>';
     if (state) h += '<div class="tabs">' + TABS.map(function(t) { return chip('T' + t, T.tabs[t], state.tab === t ? 'on' : ''); }).join('') + '</div>';
     if (state && state.tab !== 'people') h += '<div class="body">' + tabHtml() + '</div>';
     else h += '<div class="sides">';
@@ -160,8 +162,9 @@
     h += '<div class="s' + (statusBad ? ' bad' : '') + '">' + esc(statusText) + '</div></div>';
     if (layer === 'menu') h += menuHtml();
     if (layer === 'pick') h += pickHtml();
+    if (layer === 'propose') h += proposeHtml();
     root.innerHTML = h;
-    focusKey(layer === 'main' ? lastFocus : (layer === 'menu' ? 'm0' : (pick.focus || 'first')));
+    focusKey(layer === 'main' ? lastFocus : (layer === 'menu' ? 'm0' : (layer === 'propose' ? 'in' : (pick.focus || 'first'))));
   }
 
   // ---- Match, Finish, Moments and Marks tabs
@@ -169,8 +172,7 @@
   function lab(x) { return ja && x.ja ? x.ja : (x.en || x.id); }
   function has(g, v) { return (state.tags[g] || []).indexOf(v) >= 0; }
   function group(g, items) {
-    if (!items.length) return '';
-    return '<div class="grp">' + T.groups[g] + '</div><div class="chips">' + items.map(function(x) { return chip('c:' + g + ':' + x.id, esc(lab(x)), has(g, x.id) ? 'on' : ''); }).join('') + '</div>';
+    return '<div class="grp">' + T.groups[g] + '</div><div class="chips">' + items.map(function(x) { return chip('c:' + g + ':' + x.id, esc(lab(x)), has(g, x.id) ? 'on' : ''); }).join('') + chip('pr:' + g, T.suggest, 'ghost') + '</div>';
   }
   function people() {
     var out = [];
@@ -182,6 +184,11 @@
     var h = '';
     if (state.tab === 'match') {
       var comp = (state.tags.competition || [])[0];
+      h += '<div class="grp">' + T.venue + '</div><div class="chips">' + chip('vp', state.venue && venueById(state.venue) ? esc(lab(venueById(state.venue))) : (state.venueRaw ? '? ' + esc(state.venueRaw) : T.noVenue), state.venue ? '' : 'bad') + '</div>';
+      h += '<div class="grp">' + T.date + '</div><div class="chips" style="align-items:center"><span style="font:800 19px Arial;margin-right:8px">' + esc(state.date || '–') + '</span>';
+      [['y', T.year], ['m', T.month], ['d', T.day]].forEach(function(u) { h += chip('d-' + u[0], u[1] + ' −', 'ghost') + chip('d+' + u[0], u[1] + ' +', 'ghost'); });
+      if (state.dateManual) h += chip('dr', T.dateReset, 'ghost');
+      h += '</div>';
       h += group('title', listOf('title')) + group('competition', listOf('competition')) + group('round', listOf('round'));
       h += group('block', listOf('block').filter(function(b) { return !comp || !b.p || b.p === comp; })) + group('stipulation', listOf('stipulation'));
     } else if (state.tab === 'finish') {
@@ -232,8 +239,44 @@
     try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); var j = JSON.parse(window.__tvStatusJson || 'null'); if (j && j.t >= 0) return Math.floor(j.t); } catch (e) {}
     return null;
   }
+  function venues() { return (lib.venues || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }); }
+  function venueById(id) { return (lib.venues || []).filter(function(v) { return v.id === id; })[0]; }
+  function matchVenue(raw) {
+    var n = norm(raw), hit = '';
+    if (!n) return '';
+    (lib.venues || []).some(function(v) { if ([v.en, v.ja, v.s].some(function(x) { return x && n.indexOf(norm(x)) >= 0; })) { hit = v.id; return true; } return false; });
+    if (!hit) (lib.venueAliases || []).some(function(a) { if (n.indexOf(a[0]) >= 0) { hit = a[1]; return true; } return false; });
+    return hit;
+  }
+  function shiftDate(u, dir) {
+    var d = state.date ? state.date.split('-').map(Number) : (function(x) { return [x.getFullYear(), x.getMonth() + 1, x.getDate()]; })(new Date());
+    var t = new Date(Date.UTC(d[0], d[1] - 1, d[2]));
+    if (u === 'y') t.setUTCFullYear(t.getUTCFullYear() + dir);
+    else if (u === 'm') t.setUTCMonth(t.getUTCMonth() + dir);
+    else t.setUTCDate(t.getUTCDate() + dir);
+    state.date = t.toISOString().slice(0, 10);
+    state.dateManual = true;
+    state.touched.match = 1;
+  }
+  function openPropose(p) { pick = p; layer = 'propose'; render(); }
+  function proposeHtml() {
+    return '<div class="ov"><div class="menu" style="width:640px"><div class="h">' + T.proposeHead + (pick.label ? ' · ' + esc(pick.label) : '') + '</div><input id="tvx-in" class="tvx-f" data-k="in" type="text" autocomplete="off" value="' + esc(pick.text || '') + '"><div class="m">' + T.propHint + '</div>' +
+      chip('psend', T.send) + chip('pcancel', T.cancel, 'ghost') + '</div></div>';
+  }
+  function pressPropose(k) {
+    if (k === 'pcancel') { layer = 'main'; pick = null; render(); return; }
+    if (k !== 'psend') return;
+    var input = root.querySelector('#tvx-in'), value = input ? input.value.trim() : '', p = pick;
+    if (!value) return;
+    layer = 'main'; pick = null; render(); say(T.saving);
+    call({ action: 'vi_propose', type: p.type, value: value, entity_id: p.entity || '', video: U[2] }, function(r) { say(r.ok ? T.proposed : String(r.error), !r.ok); });
+  }
   function pressTab(k) {
     var m, v;
+    if ((m = /^pr:(.+)$/.exec(k))) { openPropose({ type: 'new_option', entity: m[1], label: T.groups[m[1]], text: '' }); return true; }
+    if (k === 'vp') { pick = { kind: 'venue', tab: '*', raw: state.venueRaw }; layer = 'pick'; render(); return true; }
+    if ((m = /^d([-+])([ymd])$/.exec(k))) { shiftDate(m[2], m[1] === '+' ? 1 : -1); render(); return true; }
+    if (k === 'dr') { state.date = rec.date || ''; state.dateManual = false; lastFocus = 'd-d'; render(); return true; }
     if (k === 'rev') { state.resOpen = true; lastFocus = k; render(); return true; }
     if ((m = /^c:([a-z]+):(.+)$/.exec(k))) { toggle(m[1], m[2]); render(); return true; }
     if ((m = /^f:(.+)$/.exec(k))) { state.fall = state.fall === m[1] ? '' : m[1]; render(); return true; }
@@ -261,6 +304,7 @@
 
   function firstLetter(t) { var c = norm(t.en || t.id).charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; }
   function pickList() {
+    if (pick.kind === 'venue') return venues().filter(function(v) { return pick.tab === '*' || firstLetter(v) === pick.tab; });
     var all = (lib.talent || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); });
     if (pick.tab !== '*') return all.filter(function(t) { return firstLetter(t) === pick.tab; });
     var ids = [], add = function(id) { if (byId[id] && ids.indexOf(id) < 0) ids.push(id); };
@@ -269,10 +313,10 @@
     return ids.map(function(id) { return byId[id]; });
   }
   function pickHtml() {
-    var h = '<div class="ov"><div class="pick"><div class="h">' + T.pick + (pick.raw ? ' · ' + esc(pick.raw) : '') + '</div><div class="ltr">';
+    var h = '<div class="ov"><div class="pick"><div class="h">' + (pick.kind === 'venue' ? T.venue : T.pick) + (pick.raw ? ' · ' + esc(pick.raw) : '') + '</div><div class="ltr">';
     h += chip('tSUG', T.sug, pick.tab === '*' ? 'on' : '');
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(function(c) { h += chip('t' + (c === '#' ? 'N' : c), c, pick.tab === c ? 'on' : ''); });
-    h += '</div><div class="grid">';
+    h += chip('pNew', T.suggest, 'ghost') + '</div><div class="grid">';
     var L = pickList();
     if (!L.length) h += '<div class="m">' + T.none + '</div>';
     L.forEach(function(t, i) { h += chip('g' + i, esc(t.en) + (t.ja ? '<small>' + esc(t.ja) + '</small>' : ''), '', ' data-id="' + esc(t.id) + '"'); });
@@ -308,6 +352,7 @@
     var k = el.getAttribute('data-k');
     if (layer === 'menu') return pressMenu(el);
     if (layer === 'pick') return pressPick(el, k);
+    if (layer === 'propose') return pressPropose(k);
     var m;
     lastFocus = k;
     if (k.charAt(0) === 'T') { state.tab = k.slice(1); if (state.tab !== 'people') state.touched[state.tab] = 1; render(); return; }
@@ -342,6 +387,17 @@
     render();
   }
   function pressPick(el, k) {
+    if (k === 'pNew') {
+      var isV = pick.kind === 'venue';
+      openPropose({ type: isV ? 'new_venue' : 'new_talent', label: isV ? T.venue : '', text: pick.raw || '' });
+      return;
+    }
+    if (pick.kind === 'venue' && k.charAt(0) === 'g') {
+      var vid = el.getAttribute('data-id');
+      if (!vid) return;
+      if (state.venueRaw && !matchVenue(state.venueRaw)) state.venueAliases.push({ raw: state.venueRaw, id: vid });
+      state.venue = vid; state.touched.match = 1; lastFocus = 'vp'; layer = 'main'; pick = null; render(); return;
+    }
     if (k.charAt(0) === 't') {
       var c = k.slice(1); pick.tab = c === 'SUG' ? '*' : (c === 'N' ? '#' : c); pick.focus = k; render(); return;
     }
@@ -388,8 +444,8 @@
     var title = (rec.title_en || '') + ' ' + (rec.title_ja || '');
     var show = rec.shows && rec.shows[0];
     busy = true; say(T.saving);
-    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: state.marks,
-      match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', date: rec.date, card_no: rec.no, is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
+    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: state.marks, venueAliases: state.venueAliases,
+      match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_no: rec.no, is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
       if (!res.ok) { say(String(res.error || 'not saved'), true); return; }
@@ -417,6 +473,11 @@
       if (mine) state.marks = { bell: mine.bell_sec === '' || mine.bell_sec == null ? '' : Number(mine.bell_sec), end: mine.end_sec === '' || mine.end_sec == null ? '' : Number(mine.end_sec) };
     }
     if (!state.hadTags) suggestTags();
+    var show0 = rec && rec.shows && rec.shows[0];
+    state.venueRaw = (show0 && show0.venue) || ''; state.venueAliases = [];
+    state.venue = (saved && saved.show && saved.show.venue_id) || matchVenue(state.venueRaw);
+    state.date = (showAny && saved.match.date) || (rec && rec.date) || '';
+    state.dateManual = !!(showAny && saved.match.date_set === 'manual');
     if (showAny && saved.match.result_type) state.result = { type: saved.match.result_type, side: Number(saved.match.winner_side) || 0 };
     if (!state.sides.length) state.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
     state.okText = showAny ? T.loaded : (page.length ? T.ready : T.noMatch);
@@ -464,12 +525,14 @@
   function isOpen() { return !!window.__tvIndexIsOpen; }
   window.addEventListener('keydown', function(e) {
     if (!isOpen()) return;
-    var c = e.keyCode;
+    var c = e.keyCode, tgt = document.activeElement;
+    // In the proposal box the keyboard and cursor keys work as usual; Up and Down leave the box.
+    if (tgt && tgt.id === 'tvx-in' && c !== 38 && c !== 40) { e.stopImmediatePropagation(); return; }
     e.preventDefault(); e.stopImmediatePropagation();
     if (c === 37) move('L'); else if (c === 39) move('R'); else if (c === 38) move('U'); else if (c === 40) move('D');
     else if ((c === 13 || c === 23) && !e.repeat) { var a = document.activeElement; if (a && a.classList && a.classList.contains('tvx-f')) press(a); }
   }, true);
-  window.addEventListener('keyup', function(e) { if (isOpen()) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  window.addEventListener('keyup', function(e) { if (isOpen()) { if (!(document.activeElement && document.activeElement.id === 'tvx-in')) e.preventDefault(); e.stopImmediatePropagation(); } }, true);
   document.addEventListener('focusin', function(e) { if (isOpen() && root && !root.contains(e.target)) focusKey(layer === 'main' ? lastFocus : 'first'); }, true);
 
   // "Save and next match": the next page opens the panel once it has read its video.
