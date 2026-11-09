@@ -7,7 +7,7 @@
   var H = window.AndroidHost;
   if (!H || !H.starCards || !H.videoIndexOn || !H.videoIndexOn()) return;
   window.__tvStarCards = true;
-  var KEY = 'tvVixCardsV1', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+  var KEY = 'tvVixCardsV2', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) map = c.map; } catch (e) {}
   var st = document.createElement('style');
@@ -60,7 +60,7 @@
     return out.sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
   }
   function addButtons() {
-    Array.prototype.forEach.call(document.querySelectorAll('[data-scope]'), function(row) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-scope="w"],[data-scope="t"]'), function(row) {
       if (row.querySelector('.tvsp-btn')) return;
       var kind = row.getAttribute('data-scope'), a = row.getAttribute('data-scope-a'), b = row.getAttribute('data-scope-b');
       if (!results(kind, a, b).length) return;
@@ -103,7 +103,7 @@
   }
   function apply() { if (!map) return; if (scopeKind) renderScope(); else addButtons(); }
   var timer = 0;
-  function soon() { clearTimeout(timer); timer = setTimeout(apply, 350); }
+  function soon() { if (timer) return; timer = setTimeout(function() { timer = 0; apply(); }, 350); }   // not a debounce: a page that keeps changing must still get its button
   window.__tvStarCardsReply = function(id, text) {
     var r; try { r = JSON.parse(text); } catch (e) { return; }
     if (!r || !r.ok || !r.map) return;
@@ -112,7 +112,7 @@
     soon();
   };
   var fresh = 0;
-  try { fresh = (JSON.parse(localStorage.getItem(KEY) || '{}') || {}).t || 0; } catch (e) {}
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}, ids = Object.keys(saved.map || {}); if (ids.length && saved.map[ids[0]].p) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
   if (Date.now() - fresh > AGE) { try { H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);

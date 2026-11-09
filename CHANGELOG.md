@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.56.1
+
+Private builds only:
+- StarScope button: an older saved match list no longer hides it for up to 30 minutes, and a page that keeps changing can no longer hold it back.
+
 ## 2.56.0
 
 Private builds only:

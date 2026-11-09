@@ -543,7 +543,7 @@
       busy = false;
       if (!res.ok) { say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
-      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV1'); } catch (e) {}
+      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV2'); } catch (e) {}
       say((res.linked ? T.linked : T.saved) + ' · ' + res.match_id + ' · ' + res.status);
       if (nextHref) { try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (e) {} location.href = nextHref; }
     });
