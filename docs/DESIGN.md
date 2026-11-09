@@ -221,4 +221,4 @@ Index panel transparency (2.50.0): dim layer 28% black, panel #0F151C at 68%, si
 
 Index panel bell (2.52.0): first button in the tab row, first focus, gold outline bell icon, standard panel button and focus.
 
-StarScope video cards (2.55.0, private builds, assets/starcards.js): below the picture, no overlay on it. Event 12/800 gold uppercase with 1 px spacing; names 18/800, each later side on a new line beginning vs; a 1 px #2A323C rule; a 13/600 #C9D2DC line with block, round and Match x/y, with the date 13/700 gold on the right. Cards keep their focus look. No results.
+StarScope video cards (2.55.0, private builds, assets/starcards.js; from 2.55.1 for the StarScope filtered results only, not normal pages): below the picture, no overlay on it. Event 12/800 gold uppercase with 1 px spacing; names 18/800, each later side on a new line beginning vs; a 1 px #2A323C rule; a 13/600 #C9D2DC line with block, round and Match x/y, with the date 13/700 gold on the right. Cards keep their focus look. No results.

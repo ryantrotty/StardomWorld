@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.55.1
+
+Private builds only:
+- Video cards across the app are back to the site's titles and date badges. The StarScope card design is kept for the StarScope filtered results only.
+
 ## 2.55.0
 
 Private builds only:

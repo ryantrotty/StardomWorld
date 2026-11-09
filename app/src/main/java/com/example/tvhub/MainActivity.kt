@@ -10228,7 +10228,6 @@ class MainActivity : Activity() {
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(assetText("setcard.js"), null)

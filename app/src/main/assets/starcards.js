@@ -1,4 +1,5 @@
 (function(){
+  // Not loaded on normal pages (2.55.1): kept for the StarScope filtered results.
   // StarScope video cards (private builds, 2.55.0). A video you have logged shows who is in it instead of the site's generic
   // title: event, the wrestlers, then block, round, match number and date. It never shows the result. Other videos are left
   // alone. Reads one list from the private sheet at most every 30 minutes, and nothing from the video site.
