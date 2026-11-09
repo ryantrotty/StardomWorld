@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.55.0
+
+Private builds only:
+- StarScope video cards: a logged video shows its event, the wrestlers, then block, round, match number and date, instead of the site's title. Results are never shown; videos not logged are unchanged.
+- The Index panel saves a video's place in its set, for Match 3/10.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.54.1
 
 Private builds only:

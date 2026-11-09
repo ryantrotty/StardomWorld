@@ -3249,6 +3249,11 @@ class MainActivity : Activity() {
         fun indexSync(reqId: String, payload: String) =
             sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose"), "__tvIndexReply")
 
+        // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
+        @android.webkit.JavascriptInterface
+        fun starCards(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_cards"), "__tvStarCardsReply")
+
         // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
         @android.webkit.JavascriptInterface
         fun indexPanel(open: Boolean) { indexPanelOpen = open }
@@ -10223,6 +10228,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(assetText("setcard.js"), null)

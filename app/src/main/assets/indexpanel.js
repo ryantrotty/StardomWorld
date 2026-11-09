@@ -111,6 +111,22 @@
 
   function chip(k, label, cls, extra) { return '<button type="button" class="tvx-f ' + (cls || '') + '" data-k="' + k + '"' + (extra || '') + '>' + label + '</button>'; }
 
+  // Where this video sits in its set, in show order (the carousel is already in that order). Comment clips don't count.
+  function setPlace() {
+    if (!U[1]) return null;
+    var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];
+    if (!c) return null;
+    var ids = [], seen = {};
+    Array.prototype.forEach.call(c.querySelectorAll('.content-list-item, .sub-category-list-item'), function(it) {
+      if (it.classList.contains('slick-cloned') || it.closest('.slick-cloned')) return;
+      var a = it.querySelector('a[href*="/contents/"]'), m = a ? /\/contents\/(\d+)/.exec(a.getAttribute('href')) : null, t = it.textContent || '';
+      if (!m || seen[m[1]]) return;
+      if (/コメント|comments?\b/i.test(t) && !/試合|マッチ|match|commentary/i.test(t)) return;
+      seen[m[1]] = 1; ids.push(m[1]);
+    });
+    var i = ids.indexOf(U[2]);
+    return i < 0 ? null : { no: i + 1, total: ids.length };
+  }
   function setNext() {
     if (!U[1]) return null;
     var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];
@@ -519,14 +535,15 @@
     var level = Math.max(state.savedLevel, deep ? 3 : (state.touched.match ? 2 : 1));
     var title = (rec.title_en || '') + ' ' + (rec.title_ja || '');
     var show = rec.shows && rec.shows[0];
+    var place = setPlace();
     busy = true; say(T.saving);
     call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
-      match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_no: rec.no, is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
+      match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: place ? place.total : '', card_no: rec.no ? rec.no : (place ? place.no : rec.no), is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
       if (!res.ok) { say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
-      try { localStorage.removeItem(MARK_KEY); } catch (e) {}
+      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV1'); } catch (e) {}
       say((res.linked ? T.linked : T.saved) + ' · ' + res.match_id + ' · ' + res.status);
       if (nextHref) { try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (e) {} location.href = nextHref; }
     });

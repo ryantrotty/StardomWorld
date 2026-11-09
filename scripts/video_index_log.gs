@@ -55,6 +55,7 @@ function doPost(e) {
   if (body.action === 'dbg_export') return out(dbgExport());
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
+  if (body.action === 'vi_cards') return out(viCards());
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -292,7 +293,7 @@ function dbgExport() {
 // ---- match index (2.45.0) -------------------------------------------------------------------------------------
 // Raw captures stay in "videos". These tabs hold reviewed data; every id is permanent and nothing is deleted.
 var VI = {
-  matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set'],
+  matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set', 'card_total'],
   match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
@@ -486,7 +487,7 @@ function viSave(b) {
 
   var level = Math.max(1, Math.min(3, Number(m.level) || 1));
   var fields = { show_id: m.show_id == null ? '' : m.show_id, date: date, card_no: m.card_no == null ? '' : m.card_no, is_dark: m.is_dark ? 'TRUE' : 'FALSE',
-    result_type: resultType, winner_side: winner, level: level, status: pending ? 'needs_name' : 'reviewed', source: 'panel', device: device, updated: now };
+    card_total: Number(m.card_total) > 0 ? Number(m.card_total) : '', result_type: resultType, winner_side: winner, level: level, status: pending ? 'needs_name' : 'reviewed', source: 'panel', device: device, updated: now };
   if (fresh) {
     fields.date_set = m.date_manual ? 'manual' : '';
     var row = { match_id: id }; Object.keys(fields).forEach(function(k) { row[k] = fields[k]; });
@@ -495,6 +496,9 @@ function viSave(b) {
     var old = viRows('matches').filter(function(x) { return x.match_id === id; })[0];
     if (old) {
       if (Number(old.level) > level) { fields.level = old.level; level = Number(old.level); }
+      // A re-save from outside the set keeps the match's place on the card.
+      if (fields.card_no === '' && old.card_no !== '') fields.card_no = old.card_no;
+      if (fields.card_total === '' && old.card_total !== '') fields.card_total = old.card_total;
       // A date corrected by hand stays until it is changed by hand.
       if (old.date_set === 'manual' && !m.date_manual) fields.date = old.date;
       fields.date_set = m.date_manual ? 'manual' : (old.date_set === 'manual' ? 'manual' : '');
@@ -555,6 +559,50 @@ function viSave(b) {
   }
   viAppend('changes', log);
   return { ok: true, match_id: id, linked: linked, created: fresh, level: level, status: fields.status };
+}
+
+// What the private build's video cards show: names, event, block, round, match number, date. Never the result.
+function viCards() {
+  var label = {}, names = {}, parts = {}, tags = {}, m2 = {};
+  viRows('lists').forEach(function(l) { label[l.list + '/' + l.value_id] = { en: l.label_en, ja: l.label_ja || l.label_en }; });
+  viRows('talent').forEach(function(t) { names[t.talent_id] = { en: t.name_en, ja: t.name_ja || t.name_en }; });
+  viRows('participants').forEach(function(p) { (parts[p.match_id] = parts[p.match_id] || []).push(p); });
+  viRows('match_tags').forEach(function(t) { var o = tags[t.match_id] = tags[t.match_id] || {}; (o[t.tag_group] = o[t.tag_group] || []).push(t.tag_value); });
+  viRows('matches').forEach(function(m) { if (!m.merged_into) m2[m.match_id] = m; });
+  function lab(g, v, lang) { var l = label[g + '/' + v]; return l ? l[lang] : v; }
+  function sideList(list, lang) {
+    var sides = [];
+    list.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(p) {
+      var n = names[p.talent_id]; (sides[p.side_no - 1] = sides[p.side_no - 1] || []).push(n ? n[lang] : p.billed_name);
+    });
+    return sides.filter(Boolean);
+  }
+  function kind(s, lang) {
+    var size = Math.max.apply(null, s.map(function(x) { return x.length; }));
+    if (s.length > 2) return lang === 'ja' ? s.length + 'WAY' : s.length + '-way match';
+    if (size === 1) return lang === 'ja' ? 'シングルマッチ' : 'Singles match';
+    if (size === 2) return lang === 'ja' ? 'タッグマッチ' : 'Tag team match';
+    return lang === 'ja' ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
+  }
+  function event(m, t, s, lang) {
+    if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
+    if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
+    return kind(s, lang);
+  }
+  function foot(t, lang) {
+    var f = [];
+    if (t.block) f.push(lab('block', t.block[0], lang));
+    if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
+    return f;
+  }
+  var map = {};
+  viRows('match_videos').forEach(function(v) {
+    var m = m2[v.match_id], p = parts[v.match_id];
+    if (!m || !p || !p.length) return;
+    var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
+    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en'), fj: foot(t, 'ja'), n: m.card_no, t: m.card_total, d: m.date };
+  });
+  return { ok: true, map: map };
 }
 
 // The compiled index. Ids and tags only, so it can go to public builds later. Results are a separate block, hidden unless asked for.

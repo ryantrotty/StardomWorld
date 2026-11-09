@@ -220,3 +220,5 @@ Index panel tabs (2.49.0): People, Match, Finish, Moments and Marks in a chip ro
 Index panel transparency (2.50.0): dim layer 28% black, panel #0F151C at 68%, side columns #121922 at 55%, pop-ups and pickers at 86%. Buttons stay solid so text is readable over the video.
 
 Index panel bell (2.52.0): first button in the tab row, first focus, gold outline bell icon, standard panel button and focus.
+
+StarScope video cards (2.55.0, private builds, assets/starcards.js): below the picture, no overlay on it. Event 12/800 gold uppercase with 1 px spacing; names 18/800, each later side on a new line beginning vs; a 1 px #2A323C rule; a 13/600 #C9D2DC line with block, round and Match x/y, with the date 13/700 gold on the right. Cards keep their focus look. No results.
