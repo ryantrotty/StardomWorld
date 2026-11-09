@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.54.0
+
+Private builds only, Index panel:
+- Team and Faction buttons on each side of the People tab. Known partners fill in the team; the page's bracket fills in the faction. Choose another, none, or propose a new one with +. A new team proposal keeps its partners.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.53.0
 
 Private builds only, Index panel:

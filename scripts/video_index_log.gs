@@ -351,7 +351,8 @@ function viApplyApproved() {
     } else if (p.type === 'new_alias' && p.entity_id) {
       viAppend('aliases', [{ alias: p.value, normalized: viNorm(p.value), entity_type: 'talent', entity_id: p.entity_id, source: 'proposal', status: 'approved' }]);
     } else if (p.type === 'new_team') {
-      viAppend('teams', [{ team_id: p.entity_id || viSlug(p.value), name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      // entity_id holds the partners, a|b, as the panel sent them.
+      viAppend('teams', [{ team_id: viSlug(p.value) || ('t' + p.proposal_id), name_en: p.value, member_ids: p.entity_id, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_option' && p.entity_id) {
       viAppend('lists', [{ list: p.entity_id, value_id: viSlug(p.value) || ('o' + p.proposal_id), label_en: p.value, active: 'TRUE' }]);
     } else if (p.type === 'new_venue') {
@@ -385,7 +386,7 @@ function viAction(b) {
     if (!/^new_(talent|alias|team|faction|option|venue)$/.test(type) || !value) return { ok: false, error: 'bad proposal' };
     var dup = viRows('proposals').some(function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value) && (p.status === 'pending' || p.status === 'approved'); });
     if (dup) return { ok: true, duplicate: true };
-    viAppend('proposals', [{ proposal_id: 'p' + Date.now(), time: new Date().toISOString(), type: type, value: value, entity_id: String(b.entity_id || '').slice(0, 80), video_id: String(b.video || ''), device: String(b.device || '').slice(0, 40), status: 'pending' }]);
+    viAppend('proposals', [{ proposal_id: 'p' + Date.now(), time: new Date().toISOString(), type: type, value: value, entity_id: String(b.entity_id || '').slice(0, 300), video_id: String(b.video || ''), device: String(b.device || '').slice(0, 40), status: 'pending' }]);
     return { ok: true, added: true };
   }
   return viSave(b);

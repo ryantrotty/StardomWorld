@@ -11,10 +11,10 @@
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
   var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
@@ -61,7 +61,7 @@
     var sides = [];
     r.participants.forEach(function(p) {
       var i = Number(p.side_no) - 1;
-      sides[i] = sides[i] || { role: p.role || '', team: '', people: [] };
+      sides[i] = sides[i] || { role: p.role || '', team: '', people: [], teamId: p.team_id || '', factionId: p.faction_id || '' };
       sides[i].people.push({ id: p.talent_id && byId[p.talent_id] ? p.talent_id : '', billed: p.billed_name, entry: p.entry_order || '', elim: p.elim_order || '' });
     });
     return sides.filter(Boolean);
@@ -141,7 +141,13 @@
         s.people.forEach(function(p, j) {
           h += chip('p' + i + '_' + j, p.id ? esc(nameOf(p.id)) : '? ' + esc(p.billed), p.id ? '' : 'bad');
         });
-        h += chip('a' + i, T.add, 'ghost') + '</div>';
+        h += chip('a' + i, T.add, 'ghost');
+        if (s.people.length) {
+          var tid = sideTeam(s), fid = sideFaction(s), tn = (lib.teams || []).filter(function(x) { return x.id === tid; })[0], fn = (lib.factions || []).filter(function(x) { return x.id === fid; })[0];
+          if (s.people.length >= 2) h += chip('tm' + i, T.team + ': ' + esc(tn ? tn.en : '–'), 'ghost');
+          h += chip('fc' + i, T.faction + ': ' + esc(fn ? fn.en : '–'), 'ghost');
+        }
+        h += '</div>';
       });
       h += '<div style="display:flex;align-items:flex-start">' + chip('ns', T.addSide, 'ghost') + '</div>';
     }
@@ -322,6 +328,11 @@
   function firstLetter(t) { var c = norm(t.en || t.id).charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; }
   function pickList() {
     if (pick.kind === 'venue') return venues().filter(function(v) { return pick.tab === '*' || firstLetter(v) === pick.tab; });
+    if (pick.kind === 'faction') return (lib.factions || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }).filter(function(f) { return pick.tab === '*' || firstLetter(f) === pick.tab; });
+    if (pick.kind === 'team') {
+      var mk = memberKey(state.sides[pick.side].people.map(function(p) { return p.id; }).filter(Boolean));
+      return (lib.teams || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }).filter(function(t) { return pick.tab === '*' ? memberKey(t.m) === mk : firstLetter(t) === pick.tab; });
+    }
     var all = (lib.talent || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); });
     if (pick.tab !== '*') return all.filter(function(t) { return firstLetter(t) === pick.tab; });
     var ids = [], add = function(id) { if (byId[id] && ids.indexOf(id) < 0) ids.push(id); };
@@ -330,12 +341,13 @@
     return ids.map(function(id) { return byId[id]; });
   }
   function pickHtml() {
-    var h = '<div class="ov"><div class="pick"><div class="h">' + (pick.kind === 'venue' ? T.venue : T.pick) + (pick.raw ? ' · ' + esc(pick.raw) : '') + '</div><div class="ltr">';
+    var h = '<div class="ov"><div class="pick"><div class="h">' + (pick.kind === 'venue' ? T.venue : (pick.kind === 'team' ? T.team : (pick.kind === 'faction' ? T.faction : T.pick))) + (pick.raw ? ' · ' + esc(pick.raw) : '') + '</div><div class="ltr">';
     h += chip('tSUG', T.sug, pick.tab === '*' ? 'on' : '');
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(function(c) { h += chip('t' + (c === '#' ? 'N' : c), c, pick.tab === c ? 'on' : ''); });
     h += chip('pNew', '+', 'ghost', ' aria-label="' + T.proposeHead + '"') + '</div><div class="grid">';
     var L = pickList();
-    if (!L.length) h += '<div class="m">' + T.none + '</div>';
+    if (pick.kind === 'team' || pick.kind === 'faction') h += chip('gNone', pick.kind === 'team' ? T.noTeam : T.noFaction, 'ghost');
+    else if (!L.length) h += '<div class="m">' + T.none + '</div>';
     L.forEach(function(t, i) { h += chip('g' + i, esc(t.en) + (t.ja ? '<small>' + esc(t.ja) + '</small>' : ''), '', ' data-id="' + esc(t.id) + '"'); });
     return h + '</div></div></div>';
   }
@@ -411,6 +423,8 @@
     if (pressTab(k)) return;
     if ((m = /^p(\d+)_(\d+)$/.exec(k))) { menuFor = { side: +m[1], slot: +m[2] }; layer = 'menu'; render(); return; }
     if ((m = /^a(\d+)$/.exec(k))) { pick = { tab: '*', side: +m[1], slot: -1, raw: '' }; layer = 'pick'; render(); return; }
+    if ((m = /^tm(\d+)$/.exec(k))) { pick = { kind: 'team', tab: '*', side: +m[1] }; layer = 'pick'; render(); return; }
+    if ((m = /^fc(\d+)$/.exec(k))) { pick = { kind: 'faction', tab: '*', side: +m[1] }; layer = 'pick'; render(); return; }
     if (k === 'ns') { state.sides.push({ role: '', team: '', people: [] }); lastFocus = 'a' + (state.sides.length - 1); render(); return; }
     if (k === 'res') { state.resOpen = true; lastFocus = 'r0'; render(); return; }
     if (k === 'r0') { state.result = { type: '', side: 0 }; render(); return; }
@@ -441,8 +455,15 @@
   function pressPick(el, k) {
     if (k === 'pNew') {
       var isV = pick.kind === 'venue';
+      if (pick.kind === 'team') { openPropose({ type: 'new_team', label: T.team, text: '', entity: state.sides[pick.side].people.map(function(p) { return p.id; }).filter(Boolean).join('|') }); return; }
+      if (pick.kind === 'faction') { openPropose({ type: 'new_faction', label: T.faction, text: '' }); return; }
       openPropose({ type: isV ? 'new_venue' : 'new_talent', label: isV ? T.venue : '', text: pick.raw || '' });
       return;
+    }
+    if ((pick.kind === 'team' || pick.kind === 'faction') && k.charAt(0) === 'g') {
+      var sd = state.sides[pick.side], chosen = k === 'gNone' ? '' : el.getAttribute('data-id');
+      if (pick.kind === 'team') { sd.teamId = chosen; lastFocus = 'tm' + pick.side; } else { sd.factionId = chosen; lastFocus = 'fc' + pick.side; }
+      layer = 'main'; pick = null; render(); return;
     }
     if (pick.kind === 'venue' && k.charAt(0) === 'g') {
       var vid = el.getAttribute('data-id');
@@ -465,6 +486,9 @@
     remember(id); layer = 'main'; pick = null; nameStatus(); render();
   }
 
+  function sideTeam(s) { return s.teamId !== undefined ? s.teamId : teamFor(s); }
+  function sideFaction(s) { return s.factionId !== undefined ? s.factionId : factionFor(s); }
+  function memberKey(ids) { return ids.slice().sort().join('|'); }
   function teamFor(s) {
     var ids = s.people.map(function(p) { return p.id; }).filter(Boolean).sort().join('|');
     var t = (lib.teams || []).filter(function(x) { return x.m.slice().sort().join('|') === ids && x.m.length; })[0];
@@ -482,7 +506,7 @@
     var parts = [], r = state.result, winner = 0;
     S.forEach(function(s, i) {
       if (r.type === 'win' && state.sides[r.side - 1] === s) winner = i + 1;
-      var team = teamFor(s), fac = factionFor(s);
+      var team = sideTeam(s), fac = sideFaction(s);
       s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: s.role, team_id: team, faction_id: fac, entry: p.entry || '', elim: p.elim || '' }); });
     });
     // Tags pre-picked from the title and never looked at are saved as "auto", so they can be told from confirmed ones.
