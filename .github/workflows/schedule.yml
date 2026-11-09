@@ -1,10 +1,8 @@
 name: Update schedule
 
-# Once a day (and on demand from the Actions tab): reads the Stardom schedule pages and publishes schedule.json on
-# the "schedule-data" branch, which the app downloads. Main is never touched.
+# Retired as a nightly job (2.47.2): the site's English pages this reads are gone, and the Muse daily file now carries
+# the schedule. Still runs on demand from the Actions tab; it keeps the last good file if the site can't be read.
 on:
-  schedule:
-    - cron: '17 6 * * *'
   workflow_dispatch:
     inputs:
       full:

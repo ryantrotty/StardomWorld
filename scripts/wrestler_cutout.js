@@ -36,7 +36,9 @@ function run(argv) {
   var comp = $.CIFilter.filterWithName('CISourceOverCompositing');
   comp.setValueForKey(fg, 'inputImage');
   comp.setValueForKey(bg, 'inputBackgroundImage');
-  var img = comp.outputImage;
+  // topHex "none": no backdrop at all, saved as a transparent PNG (2.46.0).
+  var clear = top === 'none';
+  var img = clear ? fg : comp.outputImage;
 
   // Fill width x height, cropped from the middle.
   var s = Math.max(W / w, H / h);
@@ -50,6 +52,7 @@ function run(argv) {
   img = img.imageByApplyingTransform($.CGAffineTransformMakeTranslation(-img.extent.origin.x, -img.extent.origin.y));
 
   var ctx = $.CIContext.contextWithOptions($.NSDictionary.dictionary);
+  if (clear) return ctx.writePNGRepresentationOfImageToURLFormatColorSpaceOptionsError(img, $.NSURL.fileURLWithPath(out), $.kCIFormatRGBA8, $.CGColorSpaceCreateDeviceRGB(), $.NSDictionary.dictionary, err) ? 'ok' : 'write failed';
   var opts = $.NSDictionary.dictionaryWithObjectForKey($.NSNumber.numberWithDouble(q), 'kCGImageDestinationLossyCompressionQuality');
   var ok = ctx.writeJPEGRepresentationOfImageToURLColorSpaceOptionsError(img, $.NSURL.fileURLWithPath(out), $.CGColorSpaceCreateDeviceRGB(), opts, err);
   return ok ? 'ok' : 'write failed';

@@ -2,7 +2,8 @@
   // Wrestlers spotlight (private builds, 2.35.0). In the menu's Wrestlers shelf the names sit in three columns and a
   // portrait on the right follows focus: the wrestler's photo (the small copy, AndroidHost.wrestlerSpot), name,
   // current faction, title reigns and defences, the title they hold now, and a star when they are in My Favorites.
-  // Past wrestlers (no photos) show initials. Public builds: on() is false and the shelf keeps its four text columns.
+  // Past wrestlers (no photos) show initials. Since 2.47.0 in every build: public builds have no photos (private
+  // artwork), so every portrait shows initials. Under the faction: the debut date (debuts list).
   if (window.__tvWrSpot) return;
   var H = window.AndroidHost || {};
 
@@ -13,10 +14,12 @@
   // Android's bridge matches a method by its number of arguments: a no-argument method called with one fails.
   function call(fn, a) { try { return H[fn] ? (arguments.length > 1 ? H[fn](a) : H[fn]()) : ''; } catch (e) { return ''; } }
   function low(s) { return String(s || '').toLowerCase().trim(); }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function fmtD(iso) { var a = String(iso).split('-'); return isJa() ? (+a[0]) + '年' + (+a[1]) + '月' + (+a[2]) + '日' : (+a[2]) + ' ' + MONTHS[+a[1] - 1] + ' ' + a[0]; }
   function initials(n) { var p = String(n).trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
 
   function on() {
-    try { return !!(H.showPosters && H.showPosters() && H.wrestlerSpot); } catch (e) { return false; }
+    try { return !!H.wrestlerSpot; } catch (e) { return false; }
   }
 
   // ---- data, read once
@@ -43,7 +46,9 @@
     var BELTS = ['world', 'wonder', 'goddess', 'artist', 'highspeed', 'future', 'newblood', 'iwgp', 'strong', 'kawaii'];
     var lins = [];
     BELTS.forEach(function(b) { var L = parse(call('lineageJson', b)); if (L && L.reigns) lins.push(L); });
-    DATA = { people: people, lins: lins };
+    var deb = {};
+    try { var D = (parse(call('matchTypesJson')) || {}).debuts || {}; Object.keys(D).forEach(function(k) { if (k.charAt(0) !== '_') deb[low(k)] = String(D[k] || ''); }); } catch (e) {}
+    DATA = { people: people, lins: lins, debuts: deb };
     return DATA;
   }
 
@@ -78,7 +83,8 @@
   var photoCache = {};
   function photo(p) {
     if (p.past) return '';
-    if (!(p.name in photoCache)) photoCache[p.name] = call('wrestlerSpot', p.name) || '';
+    // The transparent cut-out when there is one, else the photo with its dark backdrop.
+    if (!(p.name in photoCache)) photoCache[p.name] = call('wrestlerCutout', p.name) || call('wrestlerSpot', p.name) || '';
     return photoCache[p.name];
   }
 
@@ -87,10 +93,18 @@
     '#tv-sm-shelf .tv-wsp-wrap{display:flex;gap:24px;align-items:flex-start;}',
     '#tv-sm-shelf .tv-wsp-names{flex:1 1 auto;min-width:0;}',
     '#tv-sm-shelf .tv-wsp{flex:0 0 300px;width:300px;font-family:Arial,Helvetica,sans-serif;}',
-    '#tv-sm-shelf .tv-wsp-ph{width:300px;height:450px;border-radius:12px;border:2px solid #2A323C;background:#161F2A center top/cover no-repeat;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
-    '#tv-sm-shelf .tv-wsp-ini{font-size:54px;font-weight:900;color:#C9D2DC;}',
+    // Portrait G (2.46.0): stars fading out on every side, warm light behind her, a soft ring, her face and upper body sharp.
+    '#tv-sm-shelf .tv-wsp-ph{position:relative;width:300px;height:450px;display:flex;align-items:center;justify-content:center;}',
+    '#tv-sm-shelf .tv-wsp-sky,#tv-sm-shelf .tv-wsp-glow,#tv-sm-shelf .tv-wsp-soft,#tv-sm-shelf .tv-wsp-sharp{position:absolute;pointer-events:none;background-repeat:no-repeat;}',
+    '#tv-sm-shelf .tv-wsp-sky{left:-24px;top:-20px;width:348px;height:510px;background-size:cover;background-position:center;-webkit-mask-image:radial-gradient(ellipse 174px 255px at 50% 50%,#000 0%,rgba(0,0,0,.94) 40%,rgba(0,0,0,.74) 58%,rgba(0,0,0,.44) 74%,rgba(0,0,0,.16) 89%,rgba(0,0,0,.03) 96%,transparent 100%);}',
+    '#tv-sm-shelf .tv-wsp-glow{left:-24px;top:-20px;width:348px;height:470px;mix-blend-mode:screen;background:radial-gradient(circle 172px at 50% 45%,rgba(255,240,205,.40) 0%,rgba(255,236,196,.32) 32%,rgba(250,226,180,.18) 56%,rgba(244,214,160,.07) 78%,rgba(244,210,150,0) 100%);}',
+    '#tv-sm-shelf .tv-wsp-soft,#tv-sm-shelf .tv-wsp-sharp{left:0;top:0;width:300px;height:450px;background-position:center top;background-size:cover;}',
+    '#tv-sm-shelf .tv-wsp-soft{filter:blur(5px);-webkit-mask-image:radial-gradient(circle 228px at 50% 40%,rgba(0,0,0,.9) 0%,rgba(0,0,0,.84) 60%,rgba(0,0,0,.52) 76%,rgba(0,0,0,.2) 90%,transparent 100%);}',
+    '#tv-sm-shelf .tv-wsp-sharp{-webkit-mask-image:radial-gradient(circle 196px at 50% 40%,#000 0%,#000 50%,rgba(0,0,0,.82) 64%,rgba(0,0,0,.5) 78%,rgba(0,0,0,.18) 91%,transparent 100%);}',
+    '#tv-sm-shelf .tv-wsp-ini{position:relative;font-size:54px;font-weight:900;color:#C9D2DC;}',
     '#tv-sm-shelf .tv-wsp-n{margin-top:10px;font-size:22px;font-weight:900;color:#ffffff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '#tv-sm-shelf .tv-wsp-l1{margin-top:3px;font-size:15px;font-weight:600;color:#C9D2DC;min-height:18px;}',
+    '#tv-sm-shelf .tv-wsp-l0{margin-top:2px;font-size:13px;font-weight:600;color:#9AA6B4;min-height:16px;}',
     '#tv-sm-shelf .tv-wsp-l2{margin-top:3px;font-size:13px;font-weight:700;color:#F4C242;min-height:16px;}'
   ].join('\n');
 
@@ -101,21 +115,25 @@
       st.textContent = CSS;
       (document.head || document.documentElement).appendChild(st);
     }
-    return '<div class="tv-wsp notranslate" translate="no"><div class="tv-wsp-ph"><span class="tv-wsp-ini"></span></div>' +
-      '<div class="tv-wsp-n"></div><div class="tv-wsp-l1"></div><div class="tv-wsp-l2"></div></div>';
+    return '<div class="tv-wsp notranslate" translate="no"><div class="tv-wsp-ph"><div class="tv-wsp-sky"></div><div class="tv-wsp-glow"></div><div class="tv-wsp-soft"></div><div class="tv-wsp-sharp"></div><span class="tv-wsp-ini"></span></div>' +
+      '<div class="tv-wsp-n"></div><div class="tv-wsp-l1"></div><div class="tv-wsp-l0"></div><div class="tv-wsp-l2"></div></div>';
   }
 
-  // The row's search words, from its address (/contents/search?q[keyword]=...).
+  // The row's search words, from its address (/mypage?tvwr=... or /contents/search?q[keyword]=...).
   function keyOf(a) {
-    try { return low(new URL(a.getAttribute('data-go') || a.href, location.origin).searchParams.get('q[keyword]')); } catch (e) { return ''; }
+    try { var sp = new URL(a.getAttribute('data-go') || a.href, location.origin).searchParams; return low(sp.get('tvwr') || sp.get('q[keyword]')); } catch (e) { return ''; }
   }
 
   function attach(shelf) {
     var box = shelf.querySelector('.tv-wsp');
     if (!box) return;
     var ph = box.querySelector('.tv-wsp-ph'), ini = box.querySelector('.tv-wsp-ini');
-    var nEl = box.querySelector('.tv-wsp-n'), l1 = box.querySelector('.tv-wsp-l1'), l2 = box.querySelector('.tv-wsp-l2');
+    var nEl = box.querySelector('.tv-wsp-n'), l1 = box.querySelector('.tv-wsp-l1'), l0 = box.querySelector('.tv-wsp-l0'), l2 = box.querySelector('.tv-wsp-l2');
     var cur = null, picTimer = null;
+    var soft = ph.querySelector('.tv-wsp-soft'), sharp = ph.querySelector('.tv-wsp-sharp'), stars = call('spotStars');
+    if (stars) ph.querySelector('.tv-wsp-sky').style.backgroundImage = "url('" + stars + "')";
+    else ph.style.cssText = 'border-radius:12px;border:2px solid #2A323C;background:#161F2A;box-sizing:border-box;overflow:hidden;';   // public builds keep their panel
+    function pic(v) { soft.style.backgroundImage = v; sharp.style.backgroundImage = v; }
 
     function show(a) {
       var k = keyOf(a);
@@ -124,6 +142,8 @@
       var st = stats(p), fav = isFav(p);
       nEl.innerHTML = (fav ? '<span style="color:#F4C242">&#9733; </span>' : '') + esc((a.textContent || p.name).trim());
       l1.textContent = p.fac || (p.past ? T('Past wrestler', '元所属') : '');
+      var dd = data().debuts[low(p.name)] || data().debuts[low(p.search)] || '';
+      if (l0) l0.textContent = dd ? T('Debut ', 'デビュー ') + fmtD(dd) : '';
       var bits = [];
       if (st.now.length) bits.push(T('Champion: ', '現王者：') + st.now.join(', '));
       if (st.n) bits.push(T(st.n + (st.n === 1 ? ' reign' : ' reigns') + ' · ' + st.defs + (st.defs === 1 ? ' defence' : ' defences'), '戴冠' + st.n + '回・防衛' + st.defs + '回'));
@@ -132,12 +152,12 @@
       clearTimeout(picTimer);
       var url = (p.name in photoCache) ? photoCache[p.name] : null;
       var paint = function(u) {
-        ph.style.backgroundImage = u ? "url('" + u + "')" : 'none';
+        pic(u ? "url('" + u + "')" : 'none');
         ini.textContent = u ? '' : initials(p.name);
       };
       if (url !== null) paint(url);
       else {
-        ph.style.backgroundImage = 'none';
+        pic('none');
         ini.textContent = '';
         picTimer = setTimeout(function() { if (cur && cur.p === p) paint(photo(p)); }, 120);
       }

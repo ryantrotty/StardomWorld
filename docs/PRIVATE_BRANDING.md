@@ -37,6 +37,7 @@ Place your custom PNG images into `branding-private/res/drawable-nodpi/` using t
 | **`header_logo.png`** | Site Header Logo | **1100 × 200 px** (Transparent PNG, placed top-left in web header) |
 | **`splash_logo.png`** | Launch Splash Screen Logo | **1100 × 271 px** (PNG on black background, centered on app start) |
 
+| **`wcut_<name>.png`** | Transparent wrestler cut-out for the menu spotlight | 480 × 720 px, made by the same script. |
 | **`wspot_<name>.jpg`** | Wrestler photo, used everywhere the app shows one (wrestler pages, tag teams, My Favorites, the menu's Wrestlers spotlight) | **480 × 720 px** with the white backdrop replaced by a dark fade (#2A323C to #0F151C), made by `python3 scripts/make_wrestler_spots.py` (macOS 14 or later: it uses the macOS subject cut-out); `<name>` is lower case with anything that is not a letter or digit written as `_` (e.g. `wspot_momo_watanabe.jpg`) |
 
 *Wrestler photo originals* (any size, .jpg or .png, named `momo_watanabe.jpg` or `wrestler_momo_watanabe.jpg`) go in `branding-private/wrestler-photos/`, outside `res/`, so they are not packed into the app. Run the script after adding or replacing one; it remakes only the copies that changed (`--all` remakes every copy). To change the fade, edit `FADE_TOP` / `FADE_BOTTOM` in the script and run it again. `--move-originals` moves any `wrestler_*` files still in `res/drawable-nodpi/` into that folder. The app still reads a `wrestler_<name>` file left in `res/drawable-nodpi/` when there is no copy.

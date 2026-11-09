@@ -46,6 +46,14 @@ Every section is optional; leave out what you are not changing.
 
 Each key is a match type id from `assets/match_types.json`; its fields replace the bundled ones (search, alts, all, none, factionSearch, tagBelt). Patterns are regular expressions, ignoring case.
 
+## Debuts (private builds' category tabs)
+
+```json
+"debuts": { "Rian": "2024-03-30" }
+```
+
+The site's search also returns older videos a wrestler isn't in. In the private build's category tabs (wrestler and tag team pages), a video dated before the wrestler's debut is left out; an undated one is judged by a year in its title, then by the upload time in its picture's address. On a team page the later debut of the two counts. Names are as the app shows them (case doesn't matter). These add to and override `debuts` in `assets/match_types.json`.
+
 ## Tag League
 
 ```json

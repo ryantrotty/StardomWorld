@@ -19,7 +19,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Gold | #F4C242 | Borders, rings and glows, text (dates, headings, selected) |
 | Orange | #FFB347 | Fills: button focus, progress, guide pill, login button focus |
 | Ink on accent | #1A1A1A, #111 | Text on any gold or orange fill |
-| Black / navy | #000, #0B1118 | Login and splash; details and QR |
+| Page / navy | #0B1118 (black #000 only behind full-screen video) | Every page background, app-drawn or reskinned, login, splash, loading screen, player bar (2.46.1) |
 | Menu / panel | #0F151C, #121922 | Menu; shelf and drop-down |
 | Card / focused row | #161F2A, #141A22, #172029 | Rows, steps; focused fill |
 | Border / track | #2A323C, #3B4656 | Lines; progress track |
@@ -27,6 +27,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Error | #FF7A66 | Login failures |
 | Live red | #D62839 (hover #E8374A, text #FF6B78) | Live only |
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
+| League blue / red | #4DA6FF, #FF5A6A | Tag League page block headers only (Blue / Red Goddesses) |
 | Done green | #2E9E5B | Completed step |
 | Tinted fills | #2A2410, #2A2210, #2A1C10, #1C1740 | Login focus, favorites, PPV tile gradient |
 | Paper ticket | #F3E2B8 (paper), #2A1C10 (text), #6B4A26 (small text) | My Favorites reminder tickets |
@@ -73,6 +74,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - Live red for the live tile border, Watch button, LIVE tag.
 - Done green for a completed step badge.
 - PPV tile with poster is half width with a 21 px title.
+- Video cards have no hover look (no dimming, no lift): a resting pointer left an unfocused card darkened (2.45.0). Focus is the gold ring only.
 - Live and PPV tiles show the gold ring on focus with no lift; the related-videos row has no lift; the hero is never dimmed.
 - Wrestler cards use look E (the old rainbow border hid the gold focus).
 - My Favorites top: "My Faction" shows one to six faction bands on white logo tiles (1 faction full width, 2 half, 3 to 6 a third each, two rows at most; the Open pill is shown for 1 and 2). "My Reminders" shows two paper tickets: a stub (purple PPV days left, red for the last 24 hours or live, gold for a show date) beside cream paper with the time in local time. An owned PPV comes first, then reminders; one ticket is topped up with the next show that has no reminder. A PPV counts as owned once the app has seen its replay play for 5 seconds on this TV.
@@ -117,7 +119,7 @@ All Years & Eras (2.21.0): page `tvera=0`, bands #121922 with a 2px #2A323C bord
 
 Wrestlers menu switch (2.21.5): Current / Past sit in one rounded track (#0F151C, 2px #2A323C border, 20px radius); the chosen one is filled #FFB347 with dark text (focus look B), the other is grey 17/700; focus is the gold border. Faction logos with white artwork use `plate: dark` (#0F151C) in My Favorites.
 
-Matches (menu group, replaces Match Types): the shelf is 994 wide with all 18 match types in three columns (Singles & tags, 3-Way, 4-Way | 5-Way & 6-Way, Multi-person | Special rules), each in a keyline item (#161F2A, 2px #2A323C border, radius 8, 56 x 40 dot icon, 17/600 name, look A focus). Below it a compact TOP RATED block: Overall and By match type bars, then one era card per era (26/900 gold kanji, 14/800 name, 12/600 count). Match type icons use one dot per wrestler and one colour per side from the design colours only (gold, white, orange, grey, hollow gold, hollow white); fixed shapes mark cage, ladder, High Speed, gauntlet, rumble and battle royal.
+Matches (menu group, replaces Match Types): the shelf is 994 wide with all 18 match types in three columns (Singles & tags, 3-Way, 4-Way | 5-Way & 6-Way, Multi-person | Special rules), each in a keyline item (#161F2A, 2px #2A323C border, radius 8, 56 x 40 dot icon, 17/600 name, look A focus). Below it a compact TOP RATED block: Overall and By match type bars (since 2.47.0 the era cards are gone from the shelf, as the Titles & tournaments group left no room; the Top Rated page keeps By era). Match type icons use one dot per wrestler and one colour per side from the design colours only (gold, white, orange, grey, hollow gold, hollow white); fixed shapes mark cage, ladder, High Speed, gauntlet, rumble and battle royal.
 
 Top Rated Matches page (`/mypage?tvtop=overall|era|type`, assets/toprated.js, data assets/top_matches.json): title 30/900 with a 10 x 36 gold bar, scope chips (chosen = look B). Rows are #161F2A, radius 8, 66 high, look A focus, with rank, star meter, type icon, title, optional orange tag (stipulation or team size) and score. A match with a confirmed video address (`u`) is a link: the whole row is the focus target (look A), OK plays the video, and an orange WATCH button (#FFB347, dark text, 15/800, radius 8, 40 high, play triangle) sits before the score. There are no thumbnails. A match without an address has no button and is not focusable or clickable. Up and Down move between linked rows and scroll over text-only rows. No new colours.
 
@@ -155,7 +157,7 @@ Tag Teams (2.28.0, assets/teams.js, settings assets/tag_teams.json): a menu grou
 
 Filter bar drop-downs (2.41.1): a list that would not fit below its button scrolls the page first so the bar sits near the top (at least 90 px down), then opens below it; Back scrolls back.
 
-Category tabs (2.43.0, private builds): wrestler pages show a tab row under MATCHES (chips: 44 high, radius 10, 2 px border, 17/700; chosen = look B fill; focus = gold border; More set 14 px apart). The filter bar is hidden until More. Tag team pages show the same chip row before MATCHES (Tag League chip carries wings 16). Category debug lines use the debug panel style under the filter bar (wrestler) or in the team page's debug panel.
+Category tabs (2.43.0, private builds; every build since 2.47.1, debug panels still private only): wrestler pages show a tab row under MATCHES (chips: 44 high, radius 10, 2 px border, 17/700; chosen = look B fill; focus = gold border; More set 14 px apart). The filter bar is hidden until More. Tag team pages show the same chip row before MATCHES (Tag League chip carries wings 16). Category debug lines use the debug panel style under the filter bar (wrestler) or in the team page's debug panel.
 
 Back to top (2.44.0, private builds): after the last video of a search results page, a 44 high button (radius 10, 2 px #2A323C border, #161F2A, 17/700, "Back to top ↑"); focus = gold border. On tag team page tabs it is a small More-style tile (60 high) after a finished grid.
 
@@ -163,7 +165,7 @@ Tag League (2.41.0, assets/teams.js, data in the roster file's `tagLeague`):
 - Mark: feathered angel wings, gold #F4C242 line on the surface colour (the fill hides the feather rows behind), drawn in code (`wings(h, colour, bg)`). Full drawing (three feather rows with feather lines) from 28 px; a two-row drawing below that. Sizes in use: 14 (row tag), 16 (shelf items, chip), 22 (shelf bar), 24 (team title, row heading), 44 (Tag League page). It means "entered a Tag League"; the drawn belt still means a title. Never a focus cue.
 - Shelf: "Tag League <year>" bar under All Tag Teams (wings 22, 19/700, grey line with count, blocks, dates); entrants of the newest year get wings 16 at the right edge of their item.
 - All Tag Teams: Tag League chip after NEW BLOOD (14 px further along, wings 16, opens the Tag League page); rows get a TAG LEAGUE tag in the tag style with wings 14 (×n for several years).
-- Tag League page: wings 44 and the title (30/900), grey line with dates and last winners, year chips on the right (newest left). Two columns, one per block, each with a section header (gold bar, 15/800 name, grey count) and rows 50 high (#161F2A, radius 8, 17/700 name, 13/600 grey members, tags; look A focus). Winners: gold-filled tag.
+- Tag League page: wings 44 and the title (30/900), grey line with dates and last winners, year chips on the right (newest left). Two columns, one per block, each with a section header (gold bar, 15/800 name, grey count) and rows 50 high (#161F2A, radius 8, the two wrestlers' circles at 38 px overlapping by 10 (photo in private builds, else 13/900 initials on a 2 px dashed #3B4656 circle) (2.45.0), 17/700 name, 13/600 grey members, tags; look A focus). Winners: gold-filled tag. Exception (2.45.1): a block's section header takes the block's colour on its bar and name, blue #4DA6FF for Blue Goddesses and red #FF5A6A for Red Goddesses (the only uses of these two colours; never a focus cue).
 - Team page: wings 24 after the team name; "· Red Goddesses, Tag League 2026" on the line under it. TAG LEAGUE MATCHES row (section header with wings 24 instead of the gold bar) above TAG MATCHES, same cards and More tile; shown for entrants or once a Tag League match is found.
 
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
@@ -178,9 +180,11 @@ Tag team favorites (2.30.0, kept in tvFavV1 as `t`, newest first, no limit):
 Team page searches (2.28.4, words from 2.29.3): the words are the filter bar's "A Tag Team B" with the Wrestler filter's names (a title history name not on the roster goes through the history's "alias" spellings); one search page when the Tag Matches section comes on screen, one more per press of "More tag matches"; other spellings only when a search finds nothing; 3 s minimum between searches; results kept 7 days.
 
 Wrestler pages (2.31.0, assets/wrestler.js): a wrestler's search page (the Wrestlers menu link, or a filtered search whose Wrestler filter is that wrestler; any roster or past wrestler) gets a header above the filter bar in the tag team page style.
-- Header: one 140 px circle (the private build's photo, else initials on a dashed circle, notranslate), FACTION (current) / FIRST TITLE / REIGNS / DEFENCES facts (13/700 grey over 22/700) counted over every title history (World, Wonder, Goddess, Artist, High Speed, Future, NEW BLOOD, IWGP Women's, STRONG, Kawaii), and buttons (look A): "☆ Add to My Favorites" / "★ In My Favorites" (gold text on #2A2410 once added), then one button per faction that lists them, current first, past ones with a grey 13/600 "past".
+- Header: one 140 px circle (the private build's photo, else initials on a dashed circle, notranslate), FACTION (current) / DEBUT (date, when the debuts list has one; 2.45.0) / FIRST TITLE / REIGNS / DEFENCES facts (13/700 grey over 22/700) counted over every title history (World, Wonder, Goddess, Artist, High Speed, Future, NEW BLOOD, IWGP Women's, STRONG, Kawaii), and buttons (look A): "☆ Add to My Favorites" / "★ In My Favorites" (gold text on #2A2410 once added), then one button per faction that lists them, current first, past ones with a grey 13/600 "past".
 - TITLES HELD: two per row, newest first, the team page's belt card (120 x 66 belt, 19/700 title and reign, 15/600 dates plus "with" partners, 13/700 gold days and defences), opening that reign on its title page.
 - MATCHES: a section header, then the filter bar, chips and the site's results as before.
+- App-drawn wrestler page (2.46.0; private builds' wrestler links from 2.46.1, every build from 2.47.0: Wrestlers shelf and list, My Favorites, team member buttons; the tabs are in every build, the debug panel only in private builds): `/mypage?tvwr=<name>[&tvtab=<id>]`, drawn by the app inside the tag team page frame (#tv-tt: 24/40 padding, page title 30/900 with the 10 x 36 gold bar, grey note, instruction line right). The wrestler header (the same #tv-wr markup and styles) sits under it; MATCHES carries the match count; tabs are links (look B for the open tab, gold focus border), More (▸) opens the site's search for them with the full filter bar. Videos are the team page's cards (gold date badge, look C ring) in a 4-column grid, newest first on the category tabs; a More tile while there are pages left (it loads when focused, as does reaching the last row); Back to top when done and more than four. Debug panel below the grid (private builds).
+- One left edge, as on tag team pages (2.45.3): the header (title row to tabs) and the category debug panel are moved to the left edge of the first video showing, measured on the page (the site's grid is inset from the block the header sits in). With no video showing they keep no margin.
 - The header is marked notranslate (it writes its own English or Japanese), and its focus rules name #tv-wr with !important: the site's search page puts it inside an article, where the app's card rule removes borders from anything focused (2.31.1).
 - The page title is the wrestler's name on every wrestler page, filtered or not (2.31.2), as on tag team pages.
 - Remote: arrows move to the nearest header item; Left at the left edge opens the menu (2.31.2); Down past the header goes to the filter bar and Up from the filter bar comes back. The Menu button anywhere in the header adds or removes the favorite. The page starts on the favorites button.
@@ -195,9 +199,24 @@ Set order card (2.32.1): one button, Reverse Order (17/700, at least 200 wide, s
 
 Set order controls (2.33.0): the card holds focus until a key is pressed (the player bar's focus calls wait for it); Down from the card goes to the player bar and Up from the bar returns to it while it is up. The set's video row starts with a Reverse Order tile in the View All tile style (#11171E, 2 px #2A323C border, radius 8, quarter width): a 34 px gold ⇅, 24/700 label and a 14 px #9AA6B4 "Starts with" line; video card focus (look C).
 
-## Wrestlers spotlight (2.35.0, private builds)
+## Wrestlers spotlight (2.35.0; every build since 2.47.0)
 
-Menu Wrestlers shelf: width 1000 (capped by the screen), names in three columns (CURRENT and PAST), and a 300 wide spotlight column 24 px to their right. Photo 300 x 450, radius 12, 2 px #2A323C border, #161F2A behind, cover from the top; no photo: initials 54/900 #C9D2DC. Below it: name 22/900 white (a gold ★ first when in My Favorites), faction 15/600 #C9D2DC ("Past wrestler" for past ones), then 13/700 gold lines for the title held now and reigns and defences. The spotlight is not focusable; focus stays on the names (shelf look). Public builds: unchanged four columns, 860 wide.
+Menu Wrestlers shelf: width 1000 (capped by the screen), names in three columns (CURRENT and PAST), and a 300 wide spotlight column 24 px to their right. Photo 300 x 450, radius 12, 2 px #2A323C border, #161F2A behind, cover from the top; no photo: initials 54/900 #C9D2DC. Below it: name 22/900 white (a gold ★ first when in My Favorites), faction 15/600 #C9D2DC ("Past wrestler" for past ones), the debut date 13/600 #9AA6B4 ("Debut 30 Mar 2024", when the debuts list has one; 2.47.0), then 13/700 gold lines for the title held now and reigns and defences. The spotlight is not focusable; focus stays on the names (shelf look). Public builds (since 2.47.0): the same layout; with no private photos every portrait shows initials.
 
 Wrestler photos (2.35.2, private builds): no white backdrop; the photo copies carry a top-to-bottom fade from #2A323C (border grey) to #0F151C (panel). Set in scripts/make_wrestler_spots.py, not in CSS.
 
+## Index panel (2.45.0, private builds)
+
+Opened from the Index button in the bar under the player (`assets/indexpanel.js`). Full-screen dim over the page; panel #0F151C, 2 px #2A323C border, radius 12, 1280 wide. Heading 15/800 gold with .14em spacing, title 22/700, grey 14/600 facts line. One column per side (#121922, radius 12) with a 12/800 gold SIDE n label. Buttons are 44 high, 17/700, radius 8, #161F2A, 2 px #2A323C; focus is look A only (gold border, #172029 fill, no outline, glow or lift). The chosen result or picker tab is look B (orange fill, dark text). A name not in the library is error red #FF7A66 with a leading ?. The status line stays on screen. Pop-ups and the picker (four columns, letter row) use the same panel and buttons. No new colours or focus looks. From 2.51.0 the telescope is in the full screen bar too; pressing it leaves full screen and opens the panel.
+
+Star Watcher (2.46.0): the Index button is a 30 px telescope on a tripod in the bar's usual button style; body white at rest, its star gold #F4C242; on focus (look B) body and star are #1A1A1A.
+
+Portrait G (2.46.0, menu Wrestlers spotlight): no border or panel. Layers, back to front: star field (assets/spot_stars.jpg, fading out on every side), warm light in screen blend, the cut-out blurred 5 px in a 228 px circle, the sharp cut-out in a 196 px circle centred 40% down. The star field is an ellipse so it fades out before it reaches the names beside it. No new focus looks.
+
+Star backdrop (2.47.0, private builds, assets/starback.js): behind the existing portrait element only, with no change to size, border or focus. Layers: transparent cut-out, warm glow, star field (zoomed in for 140 px circles and cards; the halves of a pair card share one sky). The 38 px Tag League circles use a #1B2540 to #0B1118 fade and the glow instead of stars. No blur.
+
+Index panel tabs (2.49.0): People, Match, Finish, Moments and Marks in a chip row under the facts line (44 high, chosen = look B, focus = gold border). Tag groups use the 12/800 gold label; chips are the panel's buttons. No new colours.
+
+Index panel transparency (2.50.0): dim layer 28% black, panel #0F151C at 68%, side columns #121922 at 55%, pop-ups and pickers at 86%. Buttons stay solid so text is readable over the video.
+
+Index panel bell (2.52.0): first button in the tab row, first focus, gold outline bell icon, standard panel button and focus.

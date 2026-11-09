@@ -124,8 +124,8 @@ class MainActivity : Activity() {
 
             private val TV_RAW_CSS = """
         html, body, #page-contents-search, #page-contents-index, #main-contents, main, .wrapper, header, .box-header, .header, nav, .nav-inner, .global-nav, .content-list, .content-info-box, .modal-content, .bg-dark, .bg-light, .box-section, .box-sort, .box-search, section, .container, .container-fluid, .col-12, .row, .tile-inner, .l-wrap-md, .ttl-wrap, .slick-slider, .slick-list, .slick-track, .slick-slide {
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             color: #ffffff !important;
             box-shadow: none !important;
             border: none !important;
@@ -198,8 +198,8 @@ class MainActivity : Activity() {
         }
         footer, .box-footer {
             display: block !important;
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             padding: 20px 0 40px 0 !important;
             margin: 0 !important;
             border: none !important;
@@ -406,8 +406,8 @@ class MainActivity : Activity() {
             border-color: #FFB347 !important;
         }
         .box-sort {
-            background: #000000 !important;
-            background-color: #000000 !important;
+            background: #0B1118 !important;
+            background-color: #0B1118 !important;
             padding: 12px 0 !important;
             margin: 10px 0 15px 0 !important;
             text-align: center !important;
@@ -505,9 +505,18 @@ class MainActivity : Activity() {
         .content-thumbnail-box, .tile-inner, .content-list-item article {
             transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
         }
+        /* No hover look on video cards: on a TV the pointer is never meant to be there, and a pointer left resting
+           over a card (or the site's own a:hover dimming) left one card darkened that wasn't in focus. Focus is shown
+           by the gold ring only. (Same cause as the dimmed menu row fixed in 2.15.2.) */
+        .content-list-item article:hover:not(:focus-within), .content-list-item a:hover, .content-list-item a:hover *,
+        .content-list-item:hover, .content-list-item:hover img, #tv-alt-list a:hover, #tv-alt-list a:hover *,
+        #tv-tt a:hover, #tv-tt a:hover * {
+            opacity: 1 !important;
+            filter: none !important;
+            mix-blend-mode: normal !important;
+        }
         .content-list-item article:hover:not(:focus-within) {
-            transform: scale(1.03) !important;
-            opacity: 0.85 !important;
+            transform: none !important;
         }
         /* Home hero banner: focus is shown by the outline only, never by dimming the image.
            (Covers site rules like a:hover/a:focus { opacity } and darkening overlays.) */
@@ -622,6 +631,7 @@ class MainActivity : Activity() {
     private var onboardingShowing = false
     private var authLoggedOut: Boolean? = null
     private var awaitingLogin = false
+    @Volatile private var indexPanelOpen = false   // the private Index panel is showing (set by the page)
     @Volatile private var sideMenuOpen = false   // the left slide-out menu is showing (set by the page)
     private var authPending = false
     private var loginStarting = false
@@ -740,7 +750,7 @@ class MainActivity : Activity() {
               var st = document.createElement('style');
               st.id = 'tv-login-style';
               st.textContent =
-                'html,body{background-color:#000 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
+                'html,body{background-color:#0B1118 !important;background-image:radial-gradient(circle,rgba(244,194,66,0.13) ' + f(2) + ',transparent ' + f(2.5) + ') !important;background-size:' + f(16) + ' ' + f(16) + ' !important;color:#fff !important;font-family:Roboto,Arial,sans-serif !important;}' +
                 'main,section,article,.container,.container-fluid,.wrapper,.content,.card,.panel,.box,.login,.login-box,.login-form,form{background:transparent !important;border:0 !important;box-shadow:none !important;}' +
                 'body::before{content:"";position:fixed;left:' + f(40) + ';top:' + f(430) + ';width:' + f(150) + ';height:' + f(150) + ';background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 150 150%27%3E%3Cpath d=%27M40 20 46 48 74 54 46 60 40 88 34 60 6 54 34 48Z%27 fill=%27white%27/%3E%3Cpath d=%27M110 84 114 100 130 104 114 108 110 124 106 108 90 104 106 100Z%27 fill=%27white%27/%3E%3Cpath d=%27M24 112 27 122 37 125 27 128 24 138 21 128 11 125 21 122Z%27 fill=%27white%27/%3E%3C/svg%3E") no-repeat;background-size:contain;pointer-events:none;}' +
                 '.tv-lbl{text-transform:uppercase !important;letter-spacing:1px !important;font-weight:900 !important;}' +
@@ -2027,7 +2037,9 @@ class MainActivity : Activity() {
         root.setBackgroundColor(Color.BLACK)
 
         webView = WebView(this)
-        webView.setBackgroundColor(Color.BLACK)
+        // the app's page colour (#0B1118, as on the app-drawn pages) shows while a page loads; the root behind it
+        // stays black for full-screen video
+        webView.setBackgroundColor(0xFF0B1118.toInt())
         // Fire OS renders WebView video black / mis-sized with a forced hardware layer; leave it default there.
         if (!isFireTv()) webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView.addJavascriptInterface(webAppInterface, "AndroidHost")
@@ -2051,7 +2063,7 @@ class MainActivity : Activity() {
 
         // Transition overlay for page loading
         transitionOverlay = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(0xFF0B1118.toInt())
             isClickable = true
             visibility = View.GONE
             alpha = 0f
@@ -2078,9 +2090,9 @@ class MainActivity : Activity() {
             )
         )
 
-        // Black splash with the logo, drawn above everything until the page is ready.
+        // Splash with the logo (app page colour), drawn above everything until the page is ready.
         splashView = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(0xFF0B1118.toInt())
             isClickable = true
             clipChildren = false
         }
@@ -2181,6 +2193,7 @@ class MainActivity : Activity() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 sideMenuOpen = false
+                indexPanelOpen = false
                 if (isPpvHost(url)) ppvSession = true else if (isSiteHost(url)) ppvSession = false
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
@@ -2605,15 +2618,24 @@ class MainActivity : Activity() {
     // Match types: assets/match_types.json with the roster file's "matchTypes" applied: { "<id>": { fields } } replaces
     // those fields on the match type with that id (search words, title patterns, alts), so a category rule can be fixed
     // without a new APK.
-    private fun rosterMatchTypes(): String {
+    private fun rosterMatchTypes(): String = rosterMatchTypes(true)   // the Titles & tournaments group is in every build since 2.47.1
+
+    // includePrivate: keep the private groups (Titles & tournaments) even in a public build; used by the app-drawn
+    // wrestler page's tabs, which are in every build (2.47.0)
+    private fun rosterMatchTypes(includePrivate: Boolean): String {
         val bundled = assetText("match_types.json")
         return try {
             val base = org.json.JSONObject(bundled)
             val all = base.optJSONArray("groups") ?: return bundled
             // public builds leave out the private groups (Titles & tournaments)
             val groups = org.json.JSONArray()
-            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (BuildConfig.SHOW_POSTERS || !it.optBoolean("private")) groups.put(it) }
+            for (g in 0 until all.length()) all.optJSONObject(g)?.let { if (includePrivate || !it.optBoolean("private")) groups.put(it) }
             base.put("groups", groups)
+            // "debuts": {name: "YYYY-MM-DD"}; the roster file's entries add to and override the bundled ones
+            rosterData()?.optJSONObject("debuts")?.let { rd ->
+                val deb = base.optJSONObject("debuts") ?: org.json.JSONObject().also { base.put("debuts", it) }
+                val ks = rd.keys(); while (ks.hasNext()) { val k = ks.next(); deb.put(k, rd.get(k)) }
+            }
             val mt = rosterData()?.optJSONObject("matchTypes") ?: return base.toString()
             for (g in 0 until groups.length()) {
                 val items = groups.optJSONObject(g)?.optJSONArray("items") ?: continue
@@ -3090,9 +3112,18 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun matchTypesJson(): String = this@MainActivity.rosterMatchTypes()
 
+        // Every build (2.47.0): the match types with the Titles & tournaments group, for the app-drawn wrestler page's tabs.
+        @android.webkit.JavascriptInterface
+        fun wrestlerTabsJson(): String = this@MainActivity.rosterMatchTypes(true)
+
         // Private builds: the Titles & tournaments categories (tabs on wrestler and tag team pages, Match type entries).
         @android.webkit.JavascriptInterface
-        fun categoriesOn(): Boolean = BuildConfig.SHOW_POSTERS
+        // The Titles & tournaments categories and single-match searches: every build since 2.47.1 (private only before).
+        fun categoriesOn(): Boolean = true
+
+        // Debug panels and sheet logging: private builds only.
+        @android.webkit.JavascriptInterface
+        fun debugOn(): Boolean = BuildConfig.SHOW_POSTERS
 
         // Top rated Stardom matches (assets/top_matches.json) for the Matches shelf and the Top Rated page.
         @android.webkit.JavascriptInterface
@@ -3211,6 +3242,16 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun teamSync(reqId: String, payload: String) =
             sheetCall(reqId, payload, setOf("tm_get", "tm_put", "dbg_put"), "__tvTeamSyncReply")
+
+        // Index panel (private builds, assets/indexpanel.js): reads the approved names and saves reviewed matches in the
+        // sheet. Replies go to __tvIndexReply. Runs only when the panel is opened; it never calls the video site.
+        @android.webkit.JavascriptInterface
+        fun indexSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose"), "__tvIndexReply")
+
+        // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
+        @android.webkit.JavascriptInterface
+        fun indexPanel(open: Boolean) { indexPanelOpen = open }
 
         // One request to the private sheet: only the listed actions, the key added here, the reply handed to `callback`.
         private fun sheetCall(reqId: String, payload: String, allowed: Set<String>, callback: String) {
@@ -3442,13 +3483,37 @@ class MainActivity : Activity() {
             } catch (_: Exception) { "" }
         }
 
+        // The transparent cut-out of a wrestler (wcut_<name>.png, 2.46.0), empty when there is none.
+        @android.webkit.JavascriptInterface
+        fun wrestlerCutout(name: String): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+                val res = this@MainActivity.resources
+                val resId = res.getIdentifier("wcut_" + slug, "drawable", this@MainActivity.packageName)
+                if (resId == 0) return ""
+                val bytes = res.openRawResource(resId).use { it.readBytes() }
+                "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
+        // The star field behind the spotlight (assets/spot_stars.jpg).
+        @android.webkit.JavascriptInterface
+        fun spotStars(): String {
+            if (!BuildConfig.SHOW_POSTERS) return ""
+            return try {
+                val bytes = this@MainActivity.assets.open("spot_stars.jpg").use { it.readBytes() }
+                "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            } catch (_: Exception) { "" }
+        }
+
         // The menu's Wrestlers spotlight (assets/wrspot.js): the same photo.
         @android.webkit.JavascriptInterface
         fun wrestlerSpot(name: String): String = wrestlerPhoto(name)
 
         // In-page control bar: the page asks for labels and sends button presses here.
         @android.webkit.JavascriptInterface
-        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY }).toString()
+        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY } + (if (videoIndexOn()) listOf("index") else emptyList())).toString()
 
         @android.webkit.JavascriptInterface
         fun barLabels(statusJson: String): String {
@@ -3456,6 +3521,7 @@ class MainActivity : Activity() {
             if (j != null && ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
             val o = org.json.JSONObject()
             for (id in BAR_IDS) o.put(id, barLabel(id, j))
+            o.put("index", barLabel("index", j))
             return o.toString()
         }
 
@@ -5197,7 +5263,9 @@ class MainActivity : Activity() {
               return [m.name, m.ja || m.name];
             });
           } catch (e) {}
-          function searchPath(name) { return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(SEARCH_AS[name] || name) + singleOnly(); }
+          // A wrestler's page: the app-drawn page (/mypage?tvwr=; private 2.46.1, every build 2.47.0).
+          function wrPath(key) { return '/mypage?tvwr=' + encodeURIComponent(key); }
+          function searchPath(name) { return wrPath(SEARCH_AS[name] || name); }
           // The Factions entries come from the app's factions.json: [name, address of its page, name].
           function factionRows() {
             var out = [], old = [];
@@ -5228,7 +5296,7 @@ class MainActivity : Activity() {
             } catch (e) {}
             if (!out.length) return wrestlers(CURRENT_W);
             out.sort(function(a, b) { var x = a[0].toLowerCase(), y = b[0].toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
-            return out.map(function(m) { return [m[0], '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m[1]) + singleOnly(), m[2]]; });
+            return out.map(function(m) { return [m[0], wrPath(m[1]), m[2]]; });
           }
           // "Past": the past-wrestlers list plus the members of former factions who are not current wrestlers.
           function pastWrestlers() {
@@ -5240,7 +5308,7 @@ class MainActivity : Activity() {
               (d.factions || []).forEach(function(f) {
                 if (!f.former) return;
                 (f.members || []).forEach(function(m) {
-                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(m.search || m.name) + singleOnly(), JA_NAMES[m.name] || m.name]); }
+                  if (m && m.name && !have[m.name.toLowerCase()]) { have[m.name.toLowerCase()] = 1; out.push([m.name, wrPath(m.search || m.name), JA_NAMES[m.name] || m.name]); }
                 });
               });
             } catch (e) {}
@@ -5387,7 +5455,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sch-pastcols .tv-sm-fi{font-size:16px;word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;}',
             '#tv-ev{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#0b1118;color:#fff;font-family:Arial,Helvetica,sans-serif;}',
             '#tv-ev .tv-ev-in{display:flex;height:100%;}',
-            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#000;display:flex;align-items:center;}',
+            '#tv-ev .tv-ev-pc{flex:0 0 auto;height:100%;background:#0B1118;display:flex;align-items:center;}',
             '#tv-ev .tv-ev-pc img{height:100%;width:auto;display:block;}',
             '#tv-ev, #tv-ev *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-ev .tv-ev-top{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;}',
@@ -5452,7 +5520,7 @@ class MainActivity : Activity() {
             'html.tv-sm-open #tv-sm-tab{display:none;}',
             '#tv-sm-hint{position:fixed;left:40px;top:calc(42% + 26px);height:58px;padding:0 22px;border-radius:29px;background:#F4C242;color:#0B1118;z-index:99991;display:flex;align-items:center;gap:10px;font:700 20px Arial,Helvetica,sans-serif;pointer-events:none;transition:opacity .6s;}',
             'html.tv-sm-open #tv-sm-hint{display:none;}',
-            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#000000;}',
+            '#tv-page-title{display:flex;align-items:center;gap:18px;box-sizing:border-box;padding:22px 40px 12px 40px;font:400 36px Arial,Helvetica,sans-serif;color:#ffffff;background:#0B1118;}',
             '#tv-page-title .tv-pt-bar{flex:0 0 auto;width:12px;height:44px;background:#F4C242;}',
             '#tv-page-title .tv-pt-txt{min-width:0;line-height:1.2;}'
           ].join('\n');
@@ -5809,11 +5877,8 @@ class MainActivity : Activity() {
                 var tOv = '/mypage?tvtop=overall', tTy = '/mypage?tvtop=type';
                 topHtml = '<div class="tv-shl-t" style="margin-top:14px;">' + esc(T('TOP RATED', '高評価')) + '</div>' +
                   '<div class="tv-shl-g2" style="gap:8px;margin-bottom:8px;"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + tOv + '" href="' + esc(absUrl(tOv)) + '">' + esc(T('Overall', '総合')) + '<span>' + tmData.matches.length + esc(T(' matches, best first', '試合・評価順')) + '</span></a>' +
-                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>' +
-                  '<div class="tv-shl-ec" style="margin-top:0;">' + tmEras.slice().reverse().map(function(x) {
-                    var ep = '/mypage?tvtop=era&e=' + x.n;
-                    return '<a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + ep + '" href="' + esc(absUrl(ep)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + (ecnt[x.n] || 0) + esc(T(' matches', '試合')) + '</span></span></a>';
-                  }).join('') + '</div>';
+                  '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>';
+                // (2.47.0) the era tiles are gone from the shelf: they no longer fit; the Top Rated page still has By era
               }
               h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-mcols">' + mhtml + '</div>' + topHtml;
             } else if (key === 'years') {
@@ -5874,7 +5939,7 @@ class MainActivity : Activity() {
               } else h = '<div class="tv-shl-t">' + esc(T('CURRENT FACTIONS', '現在のユニット')) + '</div><div>' + fl + '</div>';
             } else if (key === 'current') {
               w = 860;
-              // Private builds: names in three columns with a portrait spotlight on the right (assets/wrspot.js).
+              // Names in three columns with a portrait spotlight on the right (assets/wrspot.js; every build since 2.47.0, initials without the private photos).
               var spot = !!(window.__tvWrSpot && window.__tvWrSpot.on());
               var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
               var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
@@ -6341,7 +6406,7 @@ class MainActivity : Activity() {
           var st = document.createElement('style');
           st.id = 'tv-player-style';
           st.textContent = [
-            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#000000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
+            '#tv-player-bar{display:flex;align-items:center;gap:22px;box-sizing:border-box;padding:30px 40px 20px 40px;background:#0B1118;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}',
             '#tv-player-bar .tv-pb-bar{flex:0 0 auto;width:10px;height:42px;background:#F4C242;}',
             '#tv-player-bar .tv-pb-title{font:400 32px Arial,Helvetica,sans-serif;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
           ].join('\n');
@@ -6513,6 +6578,9 @@ class MainActivity : Activity() {
             '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
             '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
             '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}' +
+            '#tv-pbar button.tv-pbtn[data-id="index"]{padding:4px 10px;line-height:0;}' +
+            '#tv-pbar .tv-tel-s{fill:#F4C242;}' +
+            '#tv-pbar button.tv-pbtn:focus .tv-tel-s{fill:' + DARK + ';}' +
             '#tv-pskip{position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc;}' +
             '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center;}' +
             '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + ';}' +
@@ -6550,6 +6618,11 @@ class MainActivity : Activity() {
             fillEl = bar.querySelector('.tv-pb-fill');
             Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
               btns[b.getAttribute('data-id')] = b;
+              if (b.getAttribute('data-id') === 'index') {
+                // Star Watcher: the telescope stands in for a word on this button.
+                b.setAttribute('aria-label', 'Index this match');
+                b.innerHTML = '<svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="currentColor" stroke-width="1.4"/></g><path class="tv-tel-s" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
+              }
               b.addEventListener('focus', function() { lastId = b.getAttribute('data-id'); });
               b.addEventListener('click', function(e) { e.preventDefault(); act(b.getAttribute('data-id')); });
             });
@@ -6586,7 +6659,7 @@ class MainActivity : Activity() {
             var json = window.__tvStatusJson || '';
             var labels = {};
             try { labels = JSON.parse(AndroidHost.barLabels(json)); } catch (e) {}
-            ids.forEach(function(id) { if (labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+            ids.forEach(function(id) { if (id !== 'index' && labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
             if (json) {
               try {
                 var j = JSON.parse(json);
@@ -8499,19 +8572,25 @@ class MainActivity : Activity() {
   function alignBars() {
     if (FAC_MODE) return;
     try {
-      var t = document.querySelector('.content-list-item .tv-thumbnail-link') || document.querySelector('.content-list-item img') || document.querySelector('.content-list-item');
-      if (!t) return;
+      // the first card that is showing (a card the category filter hid has no position)
+      var card = null;
+      Array.prototype.some.call(document.querySelectorAll('.content-list-item'), function(c) { if (c.offsetParent && !c.hasAttribute('data-tv-mt-out')) { card = c; return true; } return false; });
+      if (!card) return;
+      var t = card.querySelector('.tv-thumbnail-link') || card.querySelector('img') || card;
       var target = t.getBoundingClientRect().left;
       ['tv-fb', 'tv-fbc'].forEach(function(id) {
         var el = document.getElementById(id);
-        if (!el) return;
+        // a bar hidden behind the category tabs' More has no position either: measuring it gave it (and the wrestler
+        // header, which copies its margin) the card's whole distance from the screen edge, so the header sat to the
+        // right of the videos (2.45.1)
+        if (!el || !el.offsetParent) return;
         el.style.marginLeft = '0px';
         el.style.marginLeft = (target - el.getBoundingClientRect().left) + 'px';
       });
     } catch (e) {}
   }
   window.addEventListener('resize', alignBars);
-  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+  [300, 900, 2000, 4000, 7000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
   // ---- match types that share words (4-Way Battle / Tag / Trios ...): the site's search finds the common words,
   // so the results are narrowed here by the titles. Titles that do not fit are taken out of the list, including
@@ -8606,9 +8685,54 @@ class MainActivity : Activity() {
         record: { words: CAT.words, kept: CAT.kept, dropped: CAT.dropped, alts: CAT.alts, onRecord: (window.__tvWrRecord || []).length } }));
     } catch (e) { CAT.sent = 'sheet: ' + e; catPaint(); }
   }
-  if (CAT) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
+  // the checks run in every build; the panel and the sheet only in private builds
+  var CAT_DBG = false; try { CAT_DBG = !!(window.AndroidHost && AndroidHost.debugOn && AndroidHost.debugOn()); } catch (e) { CAT_DBG = false; }
+  if (CAT && CAT_DBG) { CAT.sent = 'sheet: sending after the searches'; setInterval(catPaint, 1500); setTimeout(catSend, 3000 + ALTS.length * 4000); }
+  // Private builds, wrestler category tabs: the site's search also returns videos the wrestler isn't in. A card dated
+  // before their debut goes (undated: by the upload time in its picture's address), and a Championship tab card must
+  // pass the wrestler page's title-record check (wrestler.js). '' keeps the card, else the reason.
+  var WHO_T0 = Date.now();
+  function cardDate(t) {
+    t = String(t || '').replace(/[\uff10-\uff19]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); });
+    var m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t);
+    if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+    m = /(?:^|\D)(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\D|$)/.exec(t);
+    return m ? m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2) : '';
+  }
+  // The thumbnail can be an inline style, a style the site's script sets later (computed), or an <img> (lazy or not).
+  function uploadDate(el) {
+    var src = '';
+    try {
+      Array.prototype.forEach.call(el.querySelectorAll('.content-thumbnail-box-inner, .content-thumbnail-box, .content-thumbnail, [style*="background-image"]'), function(b) {
+        src += ' ' + (b.getAttribute('style') || '') + ' ' + (b.style.backgroundImage || '');
+        try { src += ' ' + (getComputedStyle(b).backgroundImage || ''); } catch (e) {}
+      });
+      Array.prototype.forEach.call(el.querySelectorAll('img'), function(im) {
+        src += ' ' + ['src', 'data-src', 'data-lazy', 'data-original', 'srcset', 'data-srcset'].map(function(a) { return im.getAttribute(a) || ''; }).join(' ') + ' ' + (im.currentSrc || '');
+      });
+    } catch (e) {}
+    var m = /[?&]ts=(\d{9,11})/.exec(src);
+    return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) : '';
+  }
+  function whoCheck(el, t) {
+    if (!CAT) return '';
+    var d = cardDate(t), deb = window.__tvWrDebut || '';
+    if (deb) {
+      if (d && d < deb) return 'before their debut';
+      var yr = d ? null : /(?:^|[^\d])(20\d\d)(?:[^\d]|$)/.exec(t);   // "5★STAR GP 2022": the whole year is before it
+      if (yr && yr[1] + '-12-31' < deb) return 'before their debut';
+      var up = d ? '' : uploadDate(el);
+      if (up && up < deb) return 'uploaded before their debut';
+      if (!d && !up) el.__tvNoUp = 1;   // logged as kept with "[no upload date]", so the sheet shows when this can't work
+    }
+    if (CAT.id === 'champ' && window.__tvWrCheck) { var r = ''; try { r = window.__tvWrCheck(t, d, d ? '' : uploadDate(el)); } catch (e) { r = ''; } if (r) return r; }
+    return '';
+  }
   function narrowList() {
     if (!MTR) return;
+    // wait (at most 3 s) for the wrestler page's record, so no card is judged without it (wrestler.js can start after
+  // this script; 2.44.4 judged the first page before it had, so nothing on it was checked)
+    if (CAT && !window.__tvWrReady && Date.now() - WHO_T0 < 3000) return;
     // Cards come as .content-list-item, or as bare <article> cards in pages added by the progressive loader.
     var list = document.querySelectorAll('.content-list-item, [class*="content-list"] article, #result article');
     Array.prototype.forEach.call(list, function(el) {
@@ -8617,9 +8741,16 @@ class MainActivity : Activity() {
       // The site's pager adds a card first and fills its title a moment later: judge it only once the title is there.
       var tt = itemTitle(el);
       if (!tt.replace(/\s+/g, '')) return;
+      // undated card on a page with a debut date: give its thumbnail up to 2.5 s to arrive (the upload date is in its
+      // address) before judging it
+      if (CAT && window.__tvWrDebut && !cardDate(tt) && !uploadDate(el)) {
+        if (!el.__tvSeen) el.__tvSeen = Date.now();
+        if (Date.now() - el.__tvSeen < 2500) { setTimeout(narrowList, 500); return; }
+      }
       el.__tvMt = 1;
-      var fit = mtFits(tt);
-      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(tt, fit, ''); }
+      var fit = mtFits(tt), why = fit ? whoCheck(el, tt) : '';
+      if (why) fit = false;
+      if (!el.__tvMtLogged) { el.__tvMtLogged = 1; catLog(why ? '[' + why + '] ' + tt : (el.__tvNoUp ? '[no upload date] ' : '') + tt, fit, ''); }
       if (fit) { el.setAttribute('data-tv-mt-in', '1'); return; }
       if (!el.parentNode) return;
       // Hidden, not removed: the site's own list code put removed cards back, the filter took them out again, and
@@ -8654,8 +8785,10 @@ class MainActivity : Activity() {
             var id = idOf(el);
             nA++;
             if (!mtFits(itemTitle(el))) { catLog(itemTitle(el), false, alt.mt || alt.ch); return; }
+            var why = whoCheck(el, itemTitle(el));
+            if (why) { catLog('[' + why + '] ' + itemTitle(el), false, alt.mt || alt.ch); return; }
             if (id && (box.querySelector('a[href*="/' + id + '"]') || list0.querySelector('a[href*="/' + id + '"]'))) return;
-            catLog(itemTitle(el), true, alt.mt || alt.ch); kA++;
+            catLog((el.__tvNoUp ? '[no upload date] ' : '') + itemTitle(el), true, alt.mt || alt.ch); kA++;
             var c = document.importNode(el, true);
             c.__tvMt = 1;
             c.setAttribute('data-tv-mt-in', '1');
@@ -9045,7 +9178,7 @@ class MainActivity : Activity() {
     } catch (e) {}
   }
   window.addEventListener('resize', alignBars);
-  [300, 900, 2000, 4000].forEach(function(ms) { setTimeout(alignBars, ms); });
+  [300, 900, 2000, 4000, 7000].forEach(function(ms) { setTimeout(alignBars, ms); });
 
   var tries = 0;
   (function tick() { if (mount()) return; if (++tries < 25) setTimeout(tick, 400); })();
@@ -10072,6 +10205,9 @@ class MainActivity : Activity() {
         view.evaluateJavascript(redirectToFirstMatchJs, null)
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
+        // First, so its key handler runs before every other one on the page.
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
+        if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
@@ -10168,6 +10304,52 @@ class MainActivity : Activity() {
             pollFsStatus()
             handler.postDelayed(this, 500)
         }
+    }
+
+    // The Star Watcher telescope for the full screen bar (the same drawing as the bar under the player).
+    private fun telescopeDrawable(size: Int, body: Int, star: Int): android.graphics.drawable.Drawable {
+        val d = object : android.graphics.drawable.Drawable() {
+            override fun draw(c: android.graphics.Canvas) {
+                val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                c.save()
+                c.scale(size / 60f, size / 60f)
+                c.translate(0f, 13f)
+                c.save()
+                c.rotate(-32f, 24f, 20f)
+                p.color = body
+                c.drawRoundRect(9f, 15f, 33f, 25f, 1.5f, 1.5f, p)
+                c.drawRoundRect(3f, 17.5f, 9f, 22.5f, 1f, 1f, p)
+                c.drawRect(33f, 12.5f, 40f, 27.5f, p)
+                p.color = 0xFF0B1118.toInt()
+                c.drawOval(35.5f, 11.5f, 44.5f, 28.5f, p)
+                p.color = body
+                p.style = android.graphics.Paint.Style.STROKE
+                p.strokeWidth = 1.4f
+                c.drawOval(35.5f, 11.5f, 44.5f, 28.5f, p)
+                c.restore()
+                p.strokeWidth = 2.4f
+                p.strokeCap = android.graphics.Paint.Cap.ROUND
+                c.drawLine(23f, 25f, 14f, 45f, p)
+                c.drawLine(25f, 25f, 34f, 45f, p)
+                c.drawLine(24f, 25f, 24f, 44f, p)
+                p.style = android.graphics.Paint.Style.FILL
+                p.color = star
+                val s = android.graphics.Path()
+                s.moveTo(50.5f, -13f)
+                s.quadTo(50.5f, -4.5f, 59f, -4.5f)
+                s.quadTo(50.5f, -4.5f, 50.5f, 4f)
+                s.quadTo(50.5f, -4.5f, 42f, -4.5f)
+                s.quadTo(50.5f, -4.5f, 50.5f, -13f)
+                c.drawPath(s, p)
+                c.restore()
+            }
+            override fun setAlpha(alpha: Int) {}
+            override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
+            @Deprecated("Deprecated in Java")
+            override fun getOpacity(): Int = android.graphics.PixelFormat.TRANSLUCENT
+        }
+        d.setBounds(0, 0, size, size)
+        return d
     }
 
     private fun fsButton(label: String, onClick: () -> Unit): android.widget.TextView {
@@ -10273,6 +10455,17 @@ class MainActivity : Activity() {
             fsBtns[id] = b
             add(b)
         }
+        if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()) {
+            val b = fsButton("") { barAction("index") }
+            val iconPx = (22 * density).toInt()
+            fun icon(focused: Boolean) = telescopeDrawable(iconPx, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.WHITE, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.parseColor("#F4C242"))
+            b.setCompoundDrawables(icon(false), null, null, null)
+            val paint = b.onFocusChangeListener
+            b.setOnFocusChangeListener { v, focused -> paint?.onFocusChange(v, focused); b.setCompoundDrawables(icon(focused), null, null, null) }
+            b.contentDescription = tr("Index this match", "この試合を登録")
+            fsBtns["index"] = b
+            add(b)
+        }
         main.addView(row)
         o.addView(main)
 
@@ -10301,6 +10494,8 @@ class MainActivity : Activity() {
 
     private fun showFsOverlay() {
         val o = fsOverlay ?: buildFsOverlay()
+        // The bar is built once, so the telescope is shown or hidden each time: pay-per-view pages have no Index panel.
+        fsBtns["index"]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
         fsControlsMode = true
         // Hide the player's own bar so there is only one set of controls on screen.
         sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
@@ -10377,6 +10572,7 @@ class MainActivity : Activity() {
         }
         "speed" -> (j?.optDouble("rate", 1.0) ?: 1.0).toString() + "x"
         "full" -> if (fullScreenActive()) tr("Exit full screen", "全画面を終了") else tr("Full screen", "全画面")
+        "index" -> ""   // drawn as a telescope
         else -> id
     }
 
@@ -10391,6 +10587,15 @@ class MainActivity : Activity() {
             "cc" -> if (isPpvHost(webView.url)) webView.evaluateJavascript("window.__tvCommentary && window.__tvCommentary('toggle')", null) else cycleCc()
             "quality" -> playerCommand("quality", 0)
             "speed" -> playerCommand("speed", 0)
+            "index" -> {
+                val open = { webView.evaluateJavascript("window.__tvIndexOpen && window.__tvIndexOpen()", null); Unit }
+                if (fullScreenActive()) {
+                    // The panel is part of the page, so full screen closes first; the video keeps playing behind it.
+                    hideFsOverlay()
+                    hideCustomView()
+                    handler.postDelayed({ open() }, 600)
+                } else open()
+            }
             "full" -> if (fullScreenActive()) {
                 hideFsOverlay()
                 hideCustomView()
@@ -11238,6 +11443,13 @@ class MainActivity : Activity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (onboardingShowing) {
             if (onboardingView?.handleKey(event) != false) return true
+            return super.dispatchKeyEvent(event)
+        }
+        if (indexPanelOpen && !fullScreenActive()) {
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                if (event.action == KeyEvent.ACTION_DOWN) webView.evaluateJavascript("window.__tvIndexBack && window.__tvIndexBack()", null)
+                return true
+            }
             return super.dispatchKeyEvent(event)
         }
         if (event.action == KeyEvent.ACTION_DOWN && (playerFocused || fullScreenActive())) {

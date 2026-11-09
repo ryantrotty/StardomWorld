@@ -8,6 +8,7 @@ from Stardom's own PPV news category: each new post names its show, price, sale 
 time (+09:00). Anything the page doesn't give is kept from the previous file, so a layout change can only stop
 updates, never wipe the list. Exits with an error (so the job turns red) when the month pages show no events.
 """
+import shutil
 import argparse, datetime, html, json, re, sys, time, urllib.parse, urllib.request
 
 BASE = "https://wwr-stardom.com"
@@ -335,6 +336,15 @@ def discover_ppv(events, seen):
     return n
 
 
+def keep_last_good(a, prev, why):
+    """The site could not be read: the last good file stays exactly as it is, and the run says why."""
+    print("::warning::Schedule not updated, keeping the last good file: " + why)
+    if not a.prev or not prev.get("events"):
+        sys.exit("No last good schedule to keep: " + why)
+    shutil.copyfile(a.prev, a.out)
+    print("kept %s: %d events" % (a.prev, len(prev["events"])))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prev", default=None, help="previous schedule.json (kept values)")
@@ -353,14 +363,19 @@ def main():
     months.append((now.year + (now.month == 12), 1 if now.month == 12 else now.month + 1))
     ids, kinds = [], {}
     for y, mo in months:
-        page = get("%s/en/schedule/?ym=%04d%02d" % (BASE, y, mo))
+        try:
+            page = get("%s/en/schedule/?ym=%04d%02d" % (BASE, y, mo))
+        except Exception as ex:
+            keep_last_good(a, prev, "could not read %s/en/schedule/?ym=%04d%02d: %s" % (BASE, y, mo, ex))
+            return
         found = event_links(page)
         print("month %04d%02d: %d events (%s)" % (y, mo, len(found), ", ".join("%s %s" % (k, sum(1 for f in found if f[1] == k)) for k in ("game", "other", "event", None))))
         for eid, kind in found:
             ids.append(eid)
             kinds[eid] = kind
     if not ids:
-        sys.exit("No events found on the month pages: the page layout may have changed.")
+        keep_last_good(a, prev, "no events found on the month pages: the page layout may have changed")
+        return
 
     today = now.strftime("%Y%m%d")
     changed = 0

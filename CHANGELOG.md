@@ -2,6 +2,91 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.54.1
+
+Private builds only:
+- Index panel picker: the N tab opened the # list, so wrestlers starting with N could not be found.
+
+## 2.54.0
+
+Private builds only, Index panel:
+- Team and Faction buttons on each side of the People tab. Known partners fill in the team; the page's bracket fills in the faction. Choose another, none, or propose a new one with +. A new team proposal keeps its partners.
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.53.0
+
+Private builds only, Index panel:
+- The result moved to the Finish tab with how it ended and who got the fall, behind one Show result button. Choosing who got the fall sets the winning side.
+- Propose buttons are now a + button.
+
+## 2.52.1
+
+Private builds only:
+- The telescope no longer appears in the full screen bar on pay-per-view pages, which have no Index panel.
+
+## 2.52.0
+
+Private builds only, Index panel:
+- Bell button first on the panel, focused as soon as it opens and usable while the rest loads: press at the start and end of the match. The time comes straight from the player and is kept on the TV until saved.
+- Remote arrows now follow the screen's rows, top to bottom, on every tab and pop-up.
+- The name, venue and option lists refresh each time the panel opens, so sheet changes appear without waiting an hour.
+
+## 2.51.0
+
+Private builds only:
+- The telescope is also in the full screen bar. Pressing it leaves full screen and opens the Index panel over the video, which keeps playing.
+
+## 2.50.0
+
+Private builds only, Index panel:
+- "+ Propose new" on every Match, Finish and Moments list, and in the wrestler and venue pickers, with a text box using the TV keyboard. Proposals appear as choices once approved in the sheet.
+- Match tab: venue for the show, matched automatically from the site's text and changeable from the list; date control for when the page is wrong. A corrected date stays through later saves.
+- The panel is see-through, so the video stays visible behind it.
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.49.0
+
+Private builds only, Index panel:
+- New tabs beside People: Match (title, competition, round, block, stipulation), Finish (how it ended, who got the fall), Moments, and Marks (bell and match end from the player position, entry and elimination order for matches with three or more sides).
+- Match details are pre-picked from the video title, and those not looked at are saved as suggestions.
+- Finish, and moments that give away the result, stay hidden behind Show result.
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.48.0
+
+Combines every line of work so one build has it all: the public wrestler pages and Titles & tournaments branch (its own 2.47.1), and the match index, Star Watcher telescope, portrait G, star backdrops and schedule fixes. The version code is above every earlier build so it installs as an update.
+
+## 2.47.2
+
+- The nightly GitHub schedule job no longer runs on its own. The Muse daily file carries the schedule; the job can still be started by hand.
+
+## 2.47.1
+
+- Nightly GitHub schedule job: when the site's schedule pages can't be read or show no events, it keeps the last good schedule, finishes without failing and leaves a warning saying why. The Muse daily file is what's keeping the schedule current while the site's English pages are gone.
+
+## 2.47.0
+
+Includes the 2.45.0 match index, 2.46.0 and the debut and Tag League faces branch, which had also been numbered 2.45.0.
+
+Private builds only:
+- Star backdrop behind wrestler portraits on wrestler pages, tag team pages, My Favorites (wrestlers and tag teams) and Tag League rows. Portrait sizes and page layouts are unchanged. The 38 px Tag League circles use the night sky colour and glow, without individual stars.
+- A wrestler without a transparent cut-out keeps the photo shown before.
+
+## 2.46.0
+
+Private builds only:
+- The Index button under the player is now a Star Watcher telescope on a tripod, aimed at one star.
+- Menu Wrestlers spotlight: the wrestler is shown in a realistic star field with warm light behind her. Her face and upper body stay sharp and she fades out in a circle, with no box around the picture.
+- The photo script now also makes transparent cut-outs (wcut_<name>.png). A wrestler without one keeps her dark-backdrop photo inside the same fade.
+
+## 2.45.0
+
+Private builds only:
+- Index button in the bar under the player opens a panel showing who the page says is in the match, side by side. Each name is checked against the approved library in the sheet. Partners share a side; any number of sides.
+- D-pad only: OK on a name changes, moves or removes it, or proposes a new one. No typing. Results stay hidden until opened. "Save and next match" walks through a whole show.
+- Saving writes to the sheet's new match tabs. The same people on the same date link together as versions of one match (English commentary, digest).
+- Video page reader: Japanese line-ups without spaces around VS, 《Champion》 and <Challenger> marks, full-show descriptions, English date lines, English Commentary pages and show names with a sponsor's year are now read correctly. Pages also record their version (jp, en, digest).
+- The Google Apps Script has new actions; paste it and publish a new version (docs/MATCH_INDEX.md).
 
 
 
@@ -12,6 +97,70 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 
 
 
+
+
+## 2.47.1
+
+- Titles & tournaments in every build: the Championship, 5★STAR GP, Cinderella Tournament and Tag League match types in the Matches menu, the tabs on tag team pages and on the search-page wrestler view, belt and year categories and single-match searches (no whole-show sets) are no longer private-only. The checks behind them (title rules, debut, title records) run in every build.
+- Debug panels (category tabs, team and wrestler pages) and the sheet logging stay in private builds only (new AndroidHost.debugOn()).
+
+## 2.47.0
+
+- Wrestler pages (all builds): every wrestler link opens the app-drawn wrestler page with its tabs (All Matches, Championship, 5★STAR GP, Cinderella Tournament, Tag League, More), single matches only and the debut and title-record checks. The debug panel and the sheet logging stay in private builds.
+- Wrestlers menu spotlight (all builds): the three columns and the portrait on the right are in public builds too, with initials instead of the private photos. The debut date now shows under the faction name.
+- Matches menu: the era cards under TOP RATED are gone (they no longer fit with Titles & tournaments); Overall and By match type stay, and the Top Rated page still has By era.
+
+## 2.46.2
+
+- Splash logo: transparent background, so it sits on the navy splash instead of in a black box. The generic logo here; the private build's logo (branding-private, not in git) was converted the same way on the build machine. All builds.
+
+## 2.46.1
+
+- One background colour everywhere: the app-drawn pages' navy (#0B1118) replaces black on the reskinned site pages (search results, show and video pages, sort bar, footer, page title band, player bar), the sign-in page, the loading screen between pages, the splash and behind a loading page. Black stays only behind full-screen video. All builds.
+- Private builds: every wrestler link opens the app-drawn wrestler page (Wrestlers shelf and list, My Favorites, the member buttons on team pages); the test entry is gone. More on that page still opens the site's search with the full filter bar. Public builds keep the search page for now.
+
+## 2.46.0
+
+Private builds only, test:
+- New app-drawn wrestler page, tried from one entry first: "Rian · new page (test)" at the top of the Wrestlers shelf (and the Wrestlers list) opens `/mypage?tvwr=Rian`. The app draws the whole page like a tag team page: the same header (photo, faction, debut, titles, favorites), the category tabs, and one grid of the app's own video cards with dates. The search page wrestler pages are unchanged.
+- Each tab runs its searches in the background, 3 s apart, with the 7-day saved copies tag team pages use, and keeps a video only when it passes the tab's title rule and the wrestler checks (debut; Championship: their title record). The extra 5★STAR GP search ("5★STAR") joins the same list, newest first. On opening a tab it reads pages until there are 8 videos or 3 pages; after that one page at a time as focus reaches the last row or the More tile.
+- More opens the site's search for the wrestler with the full filter bar showing. Debug panel under the grid and each page sent to the sheet (page "wrestler-app").
+
+## 2.45.3
+
+- Wrestler pages: one left edge for everything, like tag team pages. The header (faction, titles, MATCHES, tabs) and the category debug panel now line up with the first video showing, measured on the page, instead of copying the filter bar's margin (the bar is hidden behind More with the tabs, and the site's grid is inset from the header's block). Re-measured as videos load; a focused, enlarged card isn't measured. All builds.
+
+## 2.45.2
+
+- Design reference: the two Tag League block colours are listed as tokens in docs/DESIGN.md and the design audit (no app change beyond the version).
+
+## 2.45.1
+
+- Wrestler pages with the category tabs: the header and tabs line up with the videos again. While the filter bar was hidden behind More it was measured with no position, and it and the header got the first video's whole distance from the screen edge, so the header sat to the right of the videos. The bar is only lined up while it shows, and only to a video that is showing. All builds (the private build shows the tabs).
+- Tag League page: the Blue Goddesses and Red Goddesses headers are blue and red (bar and name). All builds.
+- Private builds, category tabs: an undated video's upload date is now read from the thumbnail however the site draws it (inline style, a style set later, or an image), and the card waits up to 2.5 s for its thumbnail before it is judged. When no upload date can be read the card is kept and logged as "[no upload date]" in the debug panel and the sheet.
+
+## 2.45.0
+
+- Wrestler pages: a DEBUT fact (date) after FACTION, from the debuts list (the roster file now has 40 wrestlers' official debut dates). All builds.
+- Tag League page: each row shows the two wrestlers' circles (photos in private builds, initials otherwise), like the team page. All builds.
+- Video cards no longer dim or lift under a resting pointer. A card could stay darkened while not in focus (the same cause as the dimmed menu row fixed in 2.15.2); focus is shown by the gold ring only. All builds.
+
+## 2.44.5
+
+Private builds only, fixes 2.44.4:
+- The checks now run on the first page of a wrestler's category tab too. In 2.44.4 the first page was judged before the wrestler page's record had loaded, so none of it was checked.
+- Championship tab: an undated title match (old numbered titles, English commentary copies) is kept only when one of the wrestler's matches for that belt is in the 45 days before the video was uploaded (upload date from the thumbnail address).
+
+## 2.44.4
+
+Private builds only (wrestler and tag team category tabs):
+- Championship tab on wrestler pages: a title match is kept only when it is on the wrestler's record in that belt's title history (won, defended, or challenged, a day either side). An undated one is kept when they have some match for that belt on record. Titles without a history in the app (CMLL, POP and so on) are kept only when the title names them. NEW BLOOD tag has no full defence list, so those stay.
+- The wrestler's record now includes their challenges (the match where they took the belt, and defences against them), and tolerates an extra word in a name in the title history ("Rian Hinata" in the daily file).
+- New `debuts` list (bundled, and the roster file can add more): category-tab videos dated before a wrestler's debut are left out. Undated ones are judged by a year in the title, then by the upload time in the thumbnail address. Team pages use the later debut of the two. Rian's debut is set (30 Mar 2024).
+- Team Championship tab: an undated Goddess of Stardom title match is left out when the pair has no Goddess title match on record.
+- Why each card was left out is shown in the debug panel and sent to the sheet.
+- Fixed name typos in the bundled Artist and Future title histories (Kikyo Furusawa, Rian).
 
 ## 2.44.3
 

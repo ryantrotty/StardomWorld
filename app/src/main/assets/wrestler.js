@@ -6,8 +6,12 @@
   // site's own, under a MATCHES header. Nothing here calls the site.
   if (window.__tvWrestler) return;
   window.__tvWrestler = true;
-  if (location.pathname !== '/contents/search') return;
-  if (/[?&](tvfaction|tvera|tvev|tvcomm|tvrecent|tvch)=/.test(location.search)) return;
+  // APP: the app-drawn wrestler page (/mypage?tvwr=<name>, drawn by teams.js). This script then only works out the
+  // wrestler, their record and the header, and hands them over as window.__tvWrApi; it mounts nothing itself.
+  var APP = false;
+  try { APP = location.pathname === '/mypage' && !!new URLSearchParams(location.search).get('tvwr'); } catch (e) { APP = false; }
+  if (!APP && location.pathname !== '/contents/search') { window.__tvWrReady = true; return; }
+  if (!APP && /[?&](tvfaction|tvera|tvev|tvcomm|tvrecent|tvch)=/.test(location.search)) { window.__tvWrReady = true; return; }
   var H = window.AndroidHost || {};
 
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -23,17 +27,18 @@
   function fmtD(iso) { if (!iso) return ''; var a = String(iso).split('-'); return isJa() ? (+a[0]) + '年' + (+a[1]) + '月' + (+a[2]) + '日' : (+a[2]) + ' ' + MONTHS[+a[1] - 1] + ' ' + a[0]; }
   function ord(n) { var v = n % 100; return n + (v >= 11 && v <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10 > 3 ? 0 : n % 10]); }
   function low(s) { return String(s || '').toLowerCase().trim(); }
+  function halfW(s) { return String(s || '').replace(/[\uff01-\uff5e]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).replace(/\u3000/g, ' '); }
   function qp(k) { try { return new URLSearchParams(location.search).get(k) || ''; } catch (e) { return ''; } }
 
   // ---- who is this page about: the Wrestler filter (tvb), else the search words
-  var base = qp('tvb') || qp('q[keyword]');
-  if (!base) return;
+  var base = APP ? qp('tvwr') : (qp('tvb') || qp('q[keyword]'));
+  if (!base) { window.__tvWrReady = true; return; }
   var FACS = ((parse(call('factionsJson')) || {}).factions) || [];
   var PAST = ((parse(call('pastWrestlersJson')) || {}).past) || [];
   var W = null;
-  FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name }; }); });
+  FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name, ja: m.ja || '' }; }); });
   PAST.forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name }; });
-  if (!W) return;
+  if (!W) { window.__tvWrReady = true; if (APP) window.__tvWrApi = { missing: base }; return; }
   window.__tvWrestlerName = W.name;   // the page title shows the name (the menu's title code reads this)
 
   // ---- their factions: the ones that list them, current first (factions.json "former" marks past ones)
@@ -44,7 +49,9 @@
 
   // ---- their title reigns, from every title history (lineageJson, so the daily file's newer copies count)
   var BELT_IDS = ['world', 'wonder', 'goddess', 'artist', 'highspeed', 'future', 'newblood', 'iwgp', 'strong', 'kawaii'];
-  var reigns = [], RECORD = [];   // RECORD: every title match on record (reign won, defences), for the Championship tab's check
+  var reigns = [], RECORD = [], BELTS = {}, KNOWN = {};
+  FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (m && m.name) KNOWN[low(m.name)] = 1; }); });
+  PAST.forEach(function(m) { if (m && m.name) KNOWN[low(m.name)] = 1; });   // RECORD: every title match on record (reign won, defences), for the Championship tab's check
   BELT_IDS.forEach(function(b) {
     var L = parse(call('lineageJson', b));
     if (!L || !L.reigns) return;
@@ -55,7 +62,24 @@
       if (hit) all.forEach(function(n) { names[low(n)] = 1; });
     });
     var title = String(L.title || b).replace(/\s+Championship$/i, '');
+    // For the Championship tab's check: how to spot this belt in a video title, and whether its history lists every
+    // defence with its date (NEW BLOOD tag doesn't, so its matches can't be checked against the record).
+    BELTS[b] = { pats: (L.titlePatterns || [L.search || L.title || b]).map(function(x) { return low(halfW(x)).replace(/\s+/g, ''); }).filter(Boolean),
+      strict: !L.reigns.some(function(r) { return r.defCount != null && r.defCount > (r.defences || []).length; }) };
+    // A name in the history with an extra word ("Rian Hinata" in the daily file) still counts as theirs, unless that
+    // full name is another wrestler on the roster ("Rina Yamashita" is not Rina).
+    var inIt = function(str) {
+      return String(str || '').replace(/[（(][^）)]*[）)]/g, ' ').split(/\s*(?:&|,|、|＆|\bvs\.?\b)\s*/i).some(function(n) {
+        var k = low(n); if (!k) return false;
+        if (names[k]) return true;
+        var fw = k.split(/\s+/)[0];
+        return fw !== k && names[fw] && !KNOWN[k];
+      });
+    };
     L.reigns.forEach(function(r) {
+      // their challenges: the match where they took the belt from this champion, and this champion's defences against them
+      if (r.won && inIt(r.vs)) RECORD.push({ belt: b, d: r.won, what: 'lost' });
+      (r.defences || []).forEach(function(df) { if (df && df.d && inIt(df.opp)) RECORD.push({ belt: b, d: df.d, what: 'challenge' }); });
       var who = String(r.champ || '').split(/\s*(?:&|,)\s*/).map(function(s) { return s.trim(); }).filter(Boolean);
       if (!who.some(function(n) { return names[low(n)]; })) return;
       if (r.won) RECORD.push({ belt: b, d: r.won, what: 'won' });
@@ -68,13 +92,43 @@
   reigns.sort(function(a, b) { return String(b.won).localeCompare(String(a.won)); });   // newest first
   RECORD.sort(function(a, b) { return a.d < b.d ? 1 : -1; });
   window.__tvWrRecord = RECORD;
+  // Private builds: the site's search also returns videos the wrestler isn't in (older shows, other people's title
+  // matches), so the filter bar asks these two before keeping a card in a Titles & tournaments tab.
+  // __tvWrDebut: their debut (match_types.json "debuts", the roster file can add more); nothing before it is theirs.
+  // __tvWrCheck(title, date): '' to keep a Championship tab card, else why it was left out. A belt with a full history
+  // must have the match on their record (won, defended, challenged; a day either side for time zones), or, undated,
+  // one of their matches for that belt in the 45 days before the upload date (in the picture's address). A title with no history kept here (CMLL, POP…) is kept only when
+  // the title names them.
+  try {
+    var DEB = (parse(call('matchTypesJson')) || {}).debuts || {}, debut = '';
+    Object.keys(DEB).forEach(function(k) { if (low(k) === low(W.name) || low(k) === low(W.search)) debut = String(DEB[k] || ''); });
+    window.__tvWrDebut = debut;
+  } catch (e) { window.__tvWrDebut = ''; }
+  function dayNear(a, b) { return a === b || Math.abs(ms(a) - ms(b)) <= 86400000; }
+  window.__tvWrCheck = function(title, d, up) {
+    var t = low(halfW(title)).replace(/\s+/g, ''), belt = '';
+    Object.keys(BELTS).forEach(function(b) { if (!belt && BELTS[b].pats.some(function(p) { return t.indexOf(p) >= 0; })) belt = b; });
+    if (!belt) {
+      var nm = [W.name, W.search, W.ja].filter(Boolean).map(function(n) { return low(halfW(n)).replace(/\s+/g, ''); });
+      return nm.some(function(n) { return t.indexOf(n) >= 0; }) ? '' : 'not on their title record';
+    }
+    if (!BELTS[belt].strict) return '';
+    var mine = RECORD.filter(function(x) { return x.belt === belt; });
+    if (!mine.length) return 'no ' + belt + ' title match on their record';
+    if (d) return mine.some(function(x) { return dayNear(x.d, d); }) ? '' : 'not a ' + belt + ' title match on their record';
+    // undated (old numbered titles, English commentary copies): by upload date, one of their matches for this belt
+    // must be in the 45 days before the video went up
+    if (up) return mine.some(function(x) { var g = ms(up) - ms(x.d); return g >= -86400000 && g <= 45 * 86400000; }) ? '' : 'undated, uploaded ' + up + ', no ' + belt + ' title match of theirs just before';
+    return '';
+  };
+  window.__tvWrReady = true;
 
   // ---- private builds: tabs above the filter bar for the Titles & tournaments categories (match_types.json, private group)
   var CATS = [];
   try {
-    if (H.categoriesOn && H.categoriesOn()) {
-      ((parse(call('matchTypesJson')) || {}).groups || []).forEach(function(g) { if (g.private) (g.items || []).forEach(function(x) { if ((x.pages || []).indexOf('wrestler') >= 0) CATS.push(x); }); });
-    }
+    // the app-drawn page has its tabs in every build (2.47.0); the search page's tabs stay in private builds
+    var mtSrc = APP && H.wrestlerTabsJson ? call('wrestlerTabsJson') : (H.categoriesOn && H.categoriesOn() ? call('matchTypesJson') : '');
+    ((parse(mtSrc) || {}).groups || []).forEach(function(g) { if (g.private) (g.items || []).forEach(function(x) { if ((x.pages || []).indexOf('wrestler') >= 0) CATS.push(x); }); });
   } catch (e) { CATS = []; }
   var curMt = qp('tvmt'), otherFilters = /[?&]tv(ch|co|sh|lo|yr)=[^&]/.test(location.search) || (curMt && !CATS.some(function(x) { return x.id === curMt; }));
   function tabsHtml() {
@@ -86,7 +140,9 @@
   }
   window.__tvWrTabFocus = function() { var tab = root && (root.querySelector('.wr-tab-on') || root.querySelector('.wr-tab')); if (tab) { focusEl(tab); return true; } return false; };
   function fbShown() { return !CATS.length || otherFilters || document.documentElement.classList.contains('tv-fb-show'); }
-  if (CATS.length && !otherFilters) document.documentElement.classList.add('tv-cats');
+  if (CATS.length && !otherFilters && !APP) document.documentElement.classList.add('tv-cats');
+  // the app page's More opens this search page with the full filter bar showing
+  if (!APP && qp('tvmore')) document.documentElement.classList.add('tv-fb-show');
   var first = reigns.length ? reigns[reigns.length - 1].won : '', defTotal = 0;
   reigns.forEach(function(r) { defTotal += r.defs || 0; });
 
@@ -141,11 +197,13 @@
   (document.head || document.documentElement).appendChild(css);
 
   function initials(n) { var p = String(n).trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
-  function html() {
+  function html(tabs) {
     var photo = call('wrestlerPhoto', W.name) || (W.search !== W.name ? call('wrestlerPhoto', W.search) : '');
-    var av = photo ? '<div class="wr-av ph" style="background-image:url(\'' + esc(photo) + '\')"></div>' : '<div class="wr-av notranslate" translate="no">' + esc(initials(W.name)) + '</div>';
+    var starBg = window.__tvStar ? window.__tvStar([W.name, W.search], 'circle') : '';
+    var av = photo ? '<div class="wr-av ph" style="' + (starBg || 'background-image:url(\'' + esc(photo) + '\')') + '"></div>' : '<div class="wr-av notranslate" translate="no">' + esc(initials(W.name)) + '</div>';
     var cur = myFacs.filter(function(f) { return !f.former; })[0];
     var facts = (cur ? '<div><div class="k">' + esc(T('FACTION', 'ユニット')) + '</div><div class="v notranslate" translate="no">' + esc(cur.name) + '</div></div>' : '') +
+      (window.__tvWrDebut ? '<div><div class="k">' + esc(T('DEBUT', 'デビュー')) + '</div><div class="v">' + esc(fmtD(window.__tvWrDebut)) + '</div></div>' : '') +
       (first ? '<div><div class="k">' + esc(T('FIRST TITLE', '初戴冠')) + '</div><div class="v">' + esc(first.slice(0, 4)) + '</div></div>' : '') +
       '<div><div class="k">' + esc(T('REIGNS', '戴冠')) + '</div><div class="v">' + reigns.length + '</div></div>' +
       '<div><div class="k">' + esc(T('DEFENCES', '防衛')) + '</div><div class="v">' + defTotal + '</div></div>';
@@ -164,8 +222,22 @@
           '<div class="t3">' + esc(T(days + ' days · ' + r.defs + (r.defs === 1 ? ' defence' : ' defences'), days + '日 · 防衛' + r.defs + '回')) + '</div></div></a>';
       }).join('') + '</div>';
     }
-    h += '<div class="wr-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b></div>' + tabsHtml();
+    h += '<div class="wr-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b><span id="tt-vst"></span></div>' + (tabs != null ? tabs : tabsHtml());
     return h;
+  }
+
+  // ---- the app-drawn page: hand everything over and stop
+  if (APP) {
+    var cur0 = myFacs.filter(function(f) { return !f.former; });
+    window.__tvWrApi = {
+      W: W, cats: CATS, factionIds: cur0.map(function(f) { return f.id; }),
+      header: function(tabs) { return html(tabs); },
+      check: window.__tvWrCheck, debut: window.__tvWrDebut || '', record: RECORD,
+      isFav: isFav, favInner: favInner,
+      toggleFav: function() { if (window.__tvFav) window.__tvFav.toggleWrestler(W.search); return isFav(); }
+    };
+    window.__tvWrestlerFav = function() { if (window.__tvFav) { window.__tvFav.toggleWrestler(W.search); if (window.__tvWrAppFav) window.__tvWrAppFav(); return true; } return false; };
+    return;
   }
 
   var root = null;
@@ -208,14 +280,45 @@
     return true;
   }
   // line the header up with the filter bar (which lines itself up with the first thumbnail)
+  // Line the header (and the category debug panel under the videos) up with the first video that is showing, the
+  // way a tag team page lines everything up on one left edge. Measured, not copied from the filter bar: the bar is
+  // hidden behind the category tabs' More, and the site's grid sits inset from the block the header is in. With no
+  // video showing the header keeps no margin. Run again as videos load and are judged.
+  // Left edge of the first video showing. The card's picture is measured, except while that card has focus (it is
+  // scaled up then): its column's edge plus the picture's inset seen last time.
+  var THUMB_IN = 0;
+  function firstLeft() {
+    var card = null;
+    Array.prototype.some.call(document.querySelectorAll('.content-list-item'), function(c) {
+      if (c.offsetParent && !c.hasAttribute('data-tv-mt-out') && !c.closest('#tv-wr')) { card = c; return true; }
+      return false;
+    });
+    if (!card) return null;
+    var base = card.getBoundingClientRect().left;
+    if (card.contains(document.activeElement)) return base + THUMB_IN;
+    var t = card.querySelector('.tv-thumbnail-link') || card.querySelector('img') || card;
+    var l = t.getBoundingClientRect().left;
+    THUMB_IN = l - base;
+    return l;
+  }
   function align() {
-    var bar = document.getElementById('tv-fb');
-    if (!root || !bar) return;
-    root.style.marginLeft = bar.style.marginLeft || '0px';
+    if (!root || !root.parentNode) return;
+    var L = firstLeft(), dx = 0;
+    if (L != null) {
+      var cur = parseFloat(root.style.marginLeft) || 0;
+      dx = Math.round(L - (root.getBoundingClientRect().left - cur));
+    }
+    if (Math.abs((parseFloat(root.style.marginLeft) || 0) - dx) > 1) root.style.marginLeft = dx + 'px';
+    var dbg = document.getElementById('tv-catdbg');
+    if (dbg) {
+      var dc = parseFloat(dbg.style.marginLeft) || 0, want = L != null ? Math.round(L - (dbg.getBoundingClientRect().left - dc)) : 0;
+      if (Math.abs(dc - want) > 1) dbg.style.marginLeft = want + 'px';
+    }
   }
   var tries = 0;
   (function wait() { if (mount() || ++tries > 60) return; setTimeout(wait, 250); })();
-  [400, 1000, 2100, 4100].forEach(function(t) { setTimeout(align, t); });
+  [400, 1000, 2100, 4100, 7100].forEach(function(t) { setTimeout(align, t); });
+  setInterval(align, 1500);   // videos arrive, are judged and paged in after the header is up
   window.addEventListener('resize', align);
 
   function favChanged() {
@@ -260,6 +363,8 @@
       if ((k === 13 || k === 23) && ae.getAttribute('data-wrmore') != null) {   // More: show or hide the full filter bar
         stop();
         document.documentElement.classList.toggle('tv-fb-show');
+        // line the bar (now shown or hidden) and the header up again
+        setTimeout(function() { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 30);
         if (fbShown()) { var b0 = document.querySelector('#tv-fb .tv-fbb'); if (b0) focusEl(b0); }
         return;
       }

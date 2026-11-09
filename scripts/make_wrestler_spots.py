@@ -104,11 +104,33 @@ for slug, src in sorted(sources.items()):
         plain.append('%s (%s)' % (slug, said or r.stderr.strip()[-80:]))
     made += 1
 
+# Transparent cut-outs for the star spotlight (2.46.0): wcut_<name>.png, same size and framing as the copies above.
+CUT_STYLE = 'cut:%dx%d' % (W, H)
+cut_made = 0
+no_cut = []
+for slug, src in sorted(sources.items()):
+    out = RES / ('wcut_' + slug + '.png')
+    key = 'cut/' + slug
+    if '--all' not in sys.argv and out.exists() and out.stat().st_mtime >= src.stat().st_mtime and marks.get(key) == CUT_STYLE:
+        continue
+    r = subprocess.run(['osascript', '-l', 'JavaScript', str(CUT), str(src.resolve()), str(out.resolve()),
+                        str(W), str(H), 'none', 'none', str(QUALITY)], capture_output=True, text=True)
+    said = (r.stdout.strip().splitlines() or [''])[-1]
+    if said == 'ok':
+        marks[key] = CUT_STYLE
+        cut_made += 1
+    else:
+        out.unlink(missing_ok=True)
+        no_cut.append('%s (%s)' % (slug, said or r.stderr.strip()[-80:]))
+
 MARK.write_text(json.dumps(marks, indent=1, sort_keys=True))
 
 orphans = sorted(p.name for p in RES.glob('wspot_*.jpg') if p.stem[len('wspot_'):] not in sources)
 total = sum(p.stat().st_size for p in RES.glob('wspot_*.jpg'))
 print('made %d, up to date %d, copies %.1f MB' % (made, kept, total / 1e6))
+print('cut-outs made %d, all cut-outs %.1f MB' % (cut_made, sum(p.stat().st_size for p in RES.glob('wcut_*.png')) / 1e6))
+if no_cut:
+    print('no transparent cut-out (the spotlight uses the dark-backdrop copy): ' + ', '.join(no_cut))
 if plain:
     print('kept the original backdrop (cut-out found no subject): ' + ', '.join(plain))
 if orphans:

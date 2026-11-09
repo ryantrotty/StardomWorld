@@ -17,25 +17,39 @@
   function iso(y, m, d) { return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2); }
   // Dates seen at the start of titles: 2026/10/04 (new), 6.14.2015 (old). And on their own line: 2026年10月4日.
   var D_YMD = /^\s*(\d{4})\/(\d{1,2})\/(\d{1,2})\s*/, D_MDY = /^\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\s*/, D_JA = /^\s*(\d{4})年(\d{1,2})月(\d{1,2})日\s*$/;
+  // A line that is only a date: 2026年1月21日, 2026/01/21, Sunday, December 29, 2024.
+  var D_YMD_ONLY = /^\s*\d{4}\/\d{1,2}\/\d{1,2}\s*$/, D_EN = /^\s*(?:[A-Za-z]+,\s*)?([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})\s*$/;
+  var MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+  function enDate(s) { var m = D_EN.exec(half(s)), n = m && MONTHS[m[1].slice(0, 3).toLowerCase()]; return n ? iso(m[3], n, m[2]) : null; }
+  function isDateLine(s) { s = half(s); return D_JA.test(s) || D_YMD_ONLY.test(s) || !!enDate(s); }
   function dateOf(s) {
     s = half(s); var m;
     if ((m = D_YMD.exec(s))) return iso(m[1], m[2], m[3]);
     if ((m = D_MDY.exec(s))) return iso(m[3], m[1], m[2]);
     if ((m = D_JA.exec(s))) return iso(m[1], m[2], m[3]);
-    return null;
+    return enDate(s);
   }
   var LEAD = /^\s*[◆◇■□●○★☆▼▽▶►・]+\s*/;
   function num(s) { s = half(s).replace(LEAD, ''); if (D_YMD.test(s) || D_MDY.test(s)) return null; var m = /^\s*(\d{1,2})\s*[、,.．]\s*/.exec(s); return m ? +m[1] : null; }
-  function cleanTitle(s) { return half(s).replace(LEAD, '').replace(D_YMD, '').replace(D_MDY, '').replace(/^\s*\d{1,2}\s*[、,.．]\s*/, '').trim(); }
+  var ENG_MARK = /^\s*【\s*(?:English\s*Commentary|ENG)\s*】\s*/i;
+  function cleanTitle(s) { return half(s).replace(ENG_MARK, '').replace(LEAD, '').replace(D_YMD, '').replace(D_MDY, '').replace(/^\s*\d{1,2}\s*[、,.．]\s*/, '').trim(); }
   var VS = /\s+(?:vs|VS|Vs)\.?\s+/;
   function isVsLine(s) { return /^\s*(?:vs|VS|Vs)\.?\s+/.test(half(s)); }
   // "A & B (TEAM)" vs "C (note) & D": sides of names. A bracket after the last name of a side is the side's team;
   // a bracket after any other name is a note on that wrestler.
   function sides(text) {
-    text = half(text || '').trim();
-    if (!text) return { names: [], teams: [], notes: [] };
-    var out = { names: [], teams: [], notes: [] };
+    // Japanese line-ups often have no spaces around VS.
+    text = half(text || '').replace(/([^\x00-\x7F])\s*(?:VS|vs|Vs)\.?(?=\s|[^\x00-\x7F])/g, '$1 vs ').replace(/\s(?:VS|vs|Vs)(?=[^\x00-\x7F])/g, ' vs ').trim();
+    if (!text) return { names: [], teams: [], notes: [], roles: [] };
+    var out = { names: [], teams: [], notes: [], roles: [] };
     text.split(VS).forEach(function(side) {
+      // 《Champion》 or <Challenger> belongs to the side, not to a name.
+      var role = null;
+      side = side.replace(/[《<〈＜]([^》>〉＞]*)[》>〉＞]/g, function(_, r) {
+        if (/champion|王者/i.test(r) && !/challenger/i.test(r)) role = 'champion';
+        else if (/challenger|挑戦者/i.test(r)) role = 'challenger';
+        return ' ';
+      });
       var parts = side.split(/\s*[&＆]\s*/).map(function(n) { return n.trim(); }).filter(Boolean);
       if (!parts.length) return;
       var team = null, names = [];
@@ -45,7 +59,7 @@
         bits.forEach(function(b) { out.notes.push([name, b]); });
         if (name) names.push(name);
       });
-      out.names.push(names); out.teams.push(team);
+      out.names.push(names); out.teams.push(team); out.roles.push(role);
     });
     return out;
   }
@@ -63,37 +77,44 @@
   function blocks(L) {
     var out = [], cur = null, dates = [];
     L.forEach(function(l) {
-      if (D_JA.test(half(l))) { dates.push(dateOf(l)); return; }
+      if (isDateLine(l)) { dates.push(dateOf(l)); return; }
+      if (LEAD.test(half(l))) { cur = { title: l, lineup: null }; out.push(cur); return; }   // a ◆ line always starts a match
       if (cur && isVsLine(l)) { cur.lineup = (cur.lineup || '') + ' ' + half(l).trim(); return; }
       if (cur && cur.lineup == null) { cur.lineup = half(l).trim(); return; }
       cur = { title: l, lineup: null }; out.push(cur);
     });
-    return { list: out, dates: dates };
+    // Full-show descriptions start with sponsor, show and venue lines that pair up like a title and line-up. When any
+    // block has a real line-up (two sides or more), only those count.
+    var real = out.filter(function(b) { return sides(b.lineup).names.length >= 2; });
+    return { list: real.length ? real : out, dates: dates };
   }
   // Set names: "2023/6/25_STARDOM SUNSHINE 2023", "10・4『STARDOM in SHIZUOKA 2026 Oct.』静岡・ツインメッセ静岡", "KAIRI Kollection".
+  function setOf(id, name, yearHint) {
+    var n = half(name).replace(ENG_MARK, ''), r = { id: id, name: name, date: null, show: n, venue: null }, d;
+    if ((d = /^(\d{4})\/(\d{1,2})\/(\d{1,2})[_\s]*(.*)$/.exec(n))) { r.date = iso(d[1], d[2], d[3]); r.show = d[4].trim(); }
+    else if ((d = /^\s*(\d{1,2})\s*[・.\/]\s*(\d{1,2})\s*(.*)$/.exec(n))) {
+      var rest = d[3], q = /『([^』]+)』\s*(.*)$/.exec(rest);
+      if (q) { r.show = q[1].trim(); r.venue = q[2].replace(/[（(]\d{4}\/\d{1,2}\/\d{1,2}[）)]\s*$/, '').trim() || null; } else r.show = rest.trim();
+      // The video's own date knows the year; a year inside a show name can be a sponsor's ("... Show 2025 presents ... 2024").
+      var y = /(20\d{2}|19\d{2})/.exec(rest);
+      var year = yearHint || (y ? y[1] : null);
+      r.date = year ? iso(year, d[1], d[2]) : null;
+    }
+    return r;
+  }
   function setsOf(yearHint) {
     var out = [];
     Array.prototype.forEach.call(document.querySelectorAll('.accordion-box a[href*="/set/"]'), function(a) {
       var m = /\/set\/([0-9]+)/.exec(a.getAttribute('href') || ''), name = txt(a);
       if (!m || !name) return;
-      var n = half(name), r = { id: +m[1], name: name, date: null, show: name, venue: null }, d;
-      if ((d = /^(\d{4})\/(\d{1,2})\/(\d{1,2})[_\s]*(.*)$/.exec(n))) { r.date = iso(d[1], d[2], d[3]); r.show = d[4].trim(); }
-      else if ((d = /^\s*(\d{1,2})\s*[・.\/]\s*(\d{1,2})\s*(.*)$/.exec(n))) {
-        var rest = d[3], q = /『([^』]+)』\s*(.*)$/.exec(rest);
-        if (q) { r.show = q[1].trim(); r.venue = q[2].trim() || null; } else r.show = rest.trim();
-        var y = /(20\d{2}|19\d{2})/.exec(rest);
-        var year = y ? y[1] : yearHint;
-        r.date = year ? iso(year, d[1], d[2]) : null;
-      }
+      var r = setOf(+m[1], name, yearHint);
       out.push(r);
     });
     return out;
   }
-  function read() {
-    var wrap = document.querySelector('.content-ttl-wrap');
-    if (!wrap) return null;
-    var h1 = txt(wrap.querySelector('h1'));
-    var L = lines(wrap.querySelector('.wswg-wrap')), B = blocks(L), list = B.list;
+  // The facts in the heading and description lines (no page access, so saved lines can be read again the same way).
+  function parseText(h1, L) {
+    var B = blocks(L), list = B.list;
     var ja = null, en = null;
     if (list.length >= 2) { ja = list[0]; en = list[1]; }                       // Japanese first, English second
     else if (list.length === 1) { if (hasJa(list[0].title + (list[0].lineup || ''))) ja = list[0]; else en = list[0]; }
@@ -101,21 +122,38 @@
     if (en && !ja && en.lineup == null && en.title !== h1 && !hasJa(h1)) en = { title: h1, lineup: en.title };
     if (!ja && hasJa(h1)) ja = { title: h1, lineup: null };
     if (!en && !ja && h1) (hasJa(h1) ? (ja = { title: h1, lineup: null }) : (en = { title: h1, lineup: null }));
-    var sEn = sides(en && en.lineup), sJa = sides(ja && ja.lineup);
-    var date = dateOf(h1) || (en && dateOf(en.title)) || (ja && dateOf(ja.title)) || B.dates[0] || null;
-    var shows = setsOf(date ? date.slice(0, 4) : null);
+    // One "side" is never a match: it is a show or venue line in the line-up's place.
+    function two(s) { return s.names.length >= 2 ? s : { names: [], teams: [], notes: [], roles: [] }; }
+    var sEn = two(sides(en && en.lineup)), sJa = two(sides(ja && ja.lineup));
+    return {
+      no: [en && num(en.title), ja && num(ja.title), num(h1)].filter(function(x) { return typeof x === 'number'; }).concat([null])[0],   // 0 is a real card number (dark match)
+      date: dateOf(h1) || (en && dateOf(en.title)) || (ja && dateOf(ja.title)) || B.dates[0] || null,
+      title_en: en ? cleanTitle(en.title) : '', title_ja: ja ? cleanTitle(ja.title) : '',
+      sides_en: sEn.names, teams_en: sEn.teams, notes_en: sEn.notes, roles_en: sEn.roles,
+      sides_ja: sJa.names, teams_ja: sJa.teams, notes_ja: sJa.notes, roles_ja: sJa.roles
+    };
+  }
+  window.__tvVixParse = parseText;
+  function read() {
+    var wrap = document.querySelector('.content-ttl-wrap');
+    if (!wrap) return null;
+    var h1 = txt(wrap.querySelector('h1'));
+    var L = lines(wrap.querySelector('.wswg-wrap')), P = parseText(h1, L);
+    var shows = setsOf(P.date ? P.date.slice(0, 4) : null);
+    var showName = shows.map(function(x) { return x.name; }).join(' ');
+    var version = /ダイジェスト|digest/i.test(h1 + ' ' + L.join(' ')) ? 'digest' : (/【\s*(?:English\s*Commentary|ENG)\s*】|\(English\)/i.test(h1 + ' ' + L.join(' ') + ' ' + showName) ? 'en' : 'jp');
     var og = document.querySelector('meta[property="og:image"]');
     var tags = [];
     Array.prototype.forEach.call(document.querySelectorAll('.tag-wrap a, .tag-wrap span'), function(t) { var s = txt(t); if (s && tags.indexOf(s) < 0) tags.push(s); });
     var access = [];
     Array.prototype.forEach.call(document.querySelectorAll('.content-ttl-wrap ~ * .tag, .content-status-box .tag'), function(t) { var s = txt(t); if (s && !/display:\s*none/.test(t.getAttribute('style') || '') && access.indexOf(s) < 0) access.push(s); });
     return {
-      id: +M[2], set: M[1] ? +M[1] : null,
-      no: (en && num(en.title)) || (ja && num(ja.title)) || num(h1),
-      date: date || (shows[0] && shows[0].date) || null,
-      title_en: en ? cleanTitle(en.title) : '', title_ja: ja ? cleanTitle(ja.title) : '',
-      sides_en: sEn.names, teams_en: sEn.teams, notes_en: sEn.notes,
-      sides_ja: sJa.names, teams_ja: sJa.teams, notes_ja: sJa.notes,
+      id: +M[2], set: M[1] ? +M[1] : null, h1: h1, version: version,
+      no: P.no,
+      date: P.date || (shows[0] && shows[0].date) || null,
+      title_en: P.title_en, title_ja: P.title_ja,
+      sides_en: P.sides_en, teams_en: P.teams_en, notes_en: P.notes_en, roles_en: P.roles_en,
+      sides_ja: P.sides_ja, teams_ja: P.teams_ja, notes_ja: P.notes_ja, roles_ja: P.roles_ja,
       shows: shows, tags: tags, access: access,
       thumb: og ? og.getAttribute('content') : '',
       lines: L, read: new Date().toISOString()
@@ -142,6 +180,7 @@
     clearInterval(t);
     if (!rec) rec = { id: +M[2], set: M[1] ? +M[1] : null, no: null, date: null, title_en: '', title_ja: '', sides_en: [], teams_en: [], notes_en: [], sides_ja: [], teams_ja: [], notes_ja: [], shows: [], tags: [], access: [], thumb: '', lines: [], read: new Date().toISOString(), note: 'no video information block found on this page' };
     store(rec);
+    window.__tvVixRec = rec;
     // Log (private builds with a log address): hand the record to the app, which sends it with its own key.
     // A page with nothing read (no title and no description) is not sent. No panel is shown; the last result is
     // kept on the TV (localStorage tvVideoIndexLast) in case a send needs looking into.
