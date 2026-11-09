@@ -10306,6 +10306,52 @@ class MainActivity : Activity() {
         }
     }
 
+    // The Star Watcher telescope for the full screen bar (the same drawing as the bar under the player).
+    private fun telescopeDrawable(size: Int, body: Int, star: Int): android.graphics.drawable.Drawable {
+        val d = object : android.graphics.drawable.Drawable() {
+            override fun draw(c: android.graphics.Canvas) {
+                val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                c.save()
+                c.scale(size / 60f, size / 60f)
+                c.translate(0f, 13f)
+                c.save()
+                c.rotate(-32f, 24f, 20f)
+                p.color = body
+                c.drawRoundRect(9f, 15f, 33f, 25f, 1.5f, 1.5f, p)
+                c.drawRoundRect(3f, 17.5f, 9f, 22.5f, 1f, 1f, p)
+                c.drawRect(33f, 12.5f, 40f, 27.5f, p)
+                p.color = 0xFF0B1118.toInt()
+                c.drawOval(35.5f, 11.5f, 44.5f, 28.5f, p)
+                p.color = body
+                p.style = android.graphics.Paint.Style.STROKE
+                p.strokeWidth = 1.4f
+                c.drawOval(35.5f, 11.5f, 44.5f, 28.5f, p)
+                c.restore()
+                p.strokeWidth = 2.4f
+                p.strokeCap = android.graphics.Paint.Cap.ROUND
+                c.drawLine(23f, 25f, 14f, 45f, p)
+                c.drawLine(25f, 25f, 34f, 45f, p)
+                c.drawLine(24f, 25f, 24f, 44f, p)
+                p.style = android.graphics.Paint.Style.FILL
+                p.color = star
+                val s = android.graphics.Path()
+                s.moveTo(50.5f, -13f)
+                s.quadTo(50.5f, -4.5f, 59f, -4.5f)
+                s.quadTo(50.5f, -4.5f, 50.5f, 4f)
+                s.quadTo(50.5f, -4.5f, 42f, -4.5f)
+                s.quadTo(50.5f, -4.5f, 50.5f, -13f)
+                c.drawPath(s, p)
+                c.restore()
+            }
+            override fun setAlpha(alpha: Int) {}
+            override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
+            @Deprecated("Deprecated in Java")
+            override fun getOpacity(): Int = android.graphics.PixelFormat.TRANSLUCENT
+        }
+        d.setBounds(0, 0, size, size)
+        return d
+    }
+
     private fun fsButton(label: String, onClick: () -> Unit): android.widget.TextView {
         val tv = android.widget.TextView(this)
         tv.text = label
@@ -10407,6 +10453,17 @@ class MainActivity : Activity() {
                 "speed" -> fsBtnSpeed = b
             }
             fsBtns[id] = b
+            add(b)
+        }
+        if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty() && !isPpvHost(webView.url)) {
+            val b = fsButton("") { barAction("index") }
+            val iconPx = (22 * density).toInt()
+            fun icon(focused: Boolean) = telescopeDrawable(iconPx, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.WHITE, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.parseColor("#F4C242"))
+            b.setCompoundDrawables(icon(false), null, null, null)
+            val paint = b.onFocusChangeListener
+            b.setOnFocusChangeListener { v, focused -> paint?.onFocusChange(v, focused); b.setCompoundDrawables(icon(focused), null, null, null) }
+            b.contentDescription = tr("Index this match", "この試合を登録")
+            fsBtns["index"] = b
             add(b)
         }
         main.addView(row)
@@ -10513,7 +10570,7 @@ class MainActivity : Activity() {
         }
         "speed" -> (j?.optDouble("rate", 1.0) ?: 1.0).toString() + "x"
         "full" -> if (fullScreenActive()) tr("Exit full screen", "全画面を終了") else tr("Full screen", "全画面")
-        "index" -> tr("Index", "登録")
+        "index" -> ""   // drawn as a telescope
         else -> id
     }
 
@@ -10528,7 +10585,15 @@ class MainActivity : Activity() {
             "cc" -> if (isPpvHost(webView.url)) webView.evaluateJavascript("window.__tvCommentary && window.__tvCommentary('toggle')", null) else cycleCc()
             "quality" -> playerCommand("quality", 0)
             "speed" -> playerCommand("speed", 0)
-            "index" -> webView.evaluateJavascript("window.__tvIndexOpen && window.__tvIndexOpen()", null)
+            "index" -> {
+                val open = { webView.evaluateJavascript("window.__tvIndexOpen && window.__tvIndexOpen()", null); Unit }
+                if (fullScreenActive()) {
+                    // The panel is part of the page, so full screen closes first; the video keeps playing behind it.
+                    hideFsOverlay()
+                    hideCustomView()
+                    handler.postDelayed({ open() }, 600)
+                } else open()
+            }
             "full" -> if (fullScreenActive()) {
                 hideFsOverlay()
                 hideCustomView()

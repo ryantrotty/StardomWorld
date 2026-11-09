@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.51.0
+
+Private builds only:
+- The telescope is also in the full screen bar. Pressing it leaves full screen and opens the Index panel over the video, which keeps playing.
+
 ## 2.50.0
 
 Private builds only, Index panel:
