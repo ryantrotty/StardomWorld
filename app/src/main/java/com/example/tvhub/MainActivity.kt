@@ -10213,6 +10213,7 @@ class MainActivity : Activity() {
         // First, so its key handler runs before every other one on the page.
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)

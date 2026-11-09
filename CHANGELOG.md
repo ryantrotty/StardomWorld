@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.56.0
+
+Private builds only:
+- StarScope button (the telescope) at the end of the quick filter bar on wrestler and tag team pages. It appears only when you have logged matches the site's search would miss, and opens them newest first in the StarScope card design. Team results need both partners on the same side.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.55.1
 
 Private builds only:

@@ -569,6 +569,23 @@ function viCards() {
   viRows('participants').forEach(function(p) { (parts[p.match_id] = parts[p.match_id] || []).push(p); });
   viRows('match_tags').forEach(function(t) { var o = tags[t.match_id] = tags[t.match_id] || {}; (o[t.tag_group] = o[t.tag_group] || []).push(t.tag_value); });
   viRows('matches').forEach(function(m) { if (!m.merged_into) m2[m.match_id] = m; });
+  // What the site's search can see for each video: its titles and description.
+  var seen = {}, vsh = sheet(), vn = vsh.getLastRow();
+  if (vn > 1) {
+    var iT = COLS.indexOf('thumb'), iL = COLS.indexOf('lines'), iE = COLS.indexOf('title_en'), iJ = COLS.indexOf('title_ja');
+    vsh.getRange(2, 1, vn - 1, COLS.length).getValues().forEach(function(r) { seen[String(r[0])] = { text: viNorm([r[iE], r[iJ], r[iL]].join(' ')), th: r[iT] }; });
+  }
+  var keys = {}, words = {};
+  viRows('talent').forEach(function(t) { keys[t.talent_id] = [t.name_en, t.search, t.name_ja].filter(String).map(viNorm); words[t.talent_id] = viNorm(t.search || t.name_en); });
+  viRows('aliases').forEach(function(a) { if (a.entity_type === 'talent' && keys[a.entity_id]) keys[a.entity_id].push(a.normalized || viNorm(a.alias)); });
+  function people(list, text) {
+    var sides = [];
+    list.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(p) {
+      var w = words[p.talent_id];
+      (sides[p.side_no - 1] = sides[p.side_no - 1] || []).push([keys[p.talent_id] || [viNorm(p.billed_name)], !(w && text.indexOf(w) >= 0)]);
+    });
+    return sides.filter(Boolean);
+  }
   function lab(g, v, lang) { var l = label[g + '/' + v]; return l ? l[lang] : v; }
   function sideList(list, lang) {
     var sides = [];
@@ -600,7 +617,7 @@ function viCards() {
     var m = m2[v.match_id], p = parts[v.match_id];
     if (!m || !p || !p.length) return;
     var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
-    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en'), fj: foot(t, 'ja'), n: m.card_no, t: m.card_total, d: m.date };
+    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en'), fj: foot(t, 'ja'), n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });
   return { ok: true, map: map };
 }

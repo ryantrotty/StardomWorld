@@ -938,7 +938,7 @@
     if (TAB) {   // private builds: tabs, one grid
       var tabs = [['all', T('All Tag Matches', 'すべてのタッグマッチ')], ['ch', T('Championship', '王座戦')], ['tl', T('Tag League', 'タッグリーグ')]];
       var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(t.members[0]) + ' Tag Team ' + searchName(t.members[1])) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(searchName(t.members[0])) + '&tvmt=tag&tvco=' + encodeURIComponent(searchName(t.members[1])) + (CATS_ON ? '&q%5Btype%5D=single' : '');
-      h += '<div class="tt-chips" style="margin-top:26px">' + tabs.map(function(x) {
+      h += '<div class="tt-chips" style="margin-top:26px" data-scope="t" data-scope-a="' + esc(t.members[0]) + '" data-scope-b="' + esc(t.members[1]) + '">' + tabs.map(function(x) {
         return '<a class="tt-chip' + (x[0] === TAB ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(teamPath(t) + (x[0] === 'all' ? '' : '&tvtab=' + x[0]))) + '">' + (x[0] === 'tl' ? wings(16, x[0] === TAB ? '#1A1A1A' : '#F4C242', x[0] === TAB ? '#FFB347' : '#161F2A') : '') + esc(x[1]) + '</a>';
       }).join('') + '<a class="tt-chip" style="margin-left:14px" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
       h += '<div class="tt-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div>' + (DEBUG_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');
@@ -1094,7 +1094,7 @@
     var base = api.W.search, w = x ? wpWords(x) : null;
     WP.queries = x ? [base + ' ' + w.search].concat(w.alts.map(function(a) { return base + ' ' + a; })) : [base];
     var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(base) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(base) + '&q%5Btype%5D=single&tvmore=1';
-    var tabs = '<div class="wr-tabs"><a class="wr-tab' + (tab === 'all' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('all'))) + '">' + esc(T('All Matches', 'すべての試合')) + '</a>' +
+    var tabs = '<div class="wr-tabs" data-scope="w" data-scope-a="' + esc(api.W.name) + '" data-scope-b="' + esc(api.W.search) + '"><a class="wr-tab' + (tab === 'all' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('all'))) + '">' + esc(T('All Matches', 'すべての試合')) + '</a>' +
       cats.map(function(c) { return '<a class="wr-tab' + (tab === c.id ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath(c.id))) + '">' + esc(isJa() && c.ja ? c.ja : c.name) + '</a>'; }).join('') +
       '<a class="wr-tab wr-tab-more" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(api.W.name) + '</div><div class="tt-note">' + esc(T('Wrestler', '選手')) + '</div></div>' +

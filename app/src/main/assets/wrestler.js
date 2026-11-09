@@ -134,7 +134,7 @@
   function tabsHtml() {
     if (!CATS.length) return '';
     var allOn = !curMt && !otherFilters;
-    var h = '<div class="wr-tabs">' + '<a class="wr-tab' + (allOn ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="">' + esc(T('All Matches', 'すべての試合')) + '</a>';
+    var h = '<div class="wr-tabs" data-scope="w" data-scope-a="' + esc(W.name) + '" data-scope-b="' + esc(W.search) + '">' + '<a class="wr-tab' + (allOn ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="">' + esc(T('All Matches', 'すべての試合')) + '</a>';
     CATS.forEach(function(x) { h += '<a class="wr-tab' + (curMt === x.id && !otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="' + esc(x.id) + '">' + esc(isJa() && x.ja ? x.ja : x.name) + '</a>'; });
     return h + '<a class="wr-tab wr-tab-more' + (otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrmore="1">' + esc(T('More', '詳細')) + ' ▾</a></div>';
   }
