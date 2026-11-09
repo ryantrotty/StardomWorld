@@ -91,10 +91,11 @@
     document.body.appendChild(d);
     var first = d.querySelector('a.c'); if (first) first.focus();
     window.addEventListener('keydown', function(e) {
+      if (document.documentElement.classList.contains('tv-sm-open')) return;   // the menu handles its own keys
       var c = e.keyCode, step = { 37: -1, 39: 1, 38: -4, 40: 4 }[c], all = Array.prototype.slice.call(d.querySelectorAll('a.c')), i = all.indexOf(document.activeElement);
       if (c === 13 || c === 23) { if (i >= 0) { e.preventDefault(); e.stopImmediatePropagation(); location.href = all[i].href; } return; }
       if (!step) return;
-      if (c === 37 && i % 4 === 0) return;   // Left at the edge opens the menu, as elsewhere
+      if (c === 37 && (i % 4 === 0 || !all.length)) { e.preventDefault(); e.stopImmediatePropagation(); if (window.__tvOpenMenu) window.__tvOpenMenu(); return; }   // Left at the edge opens the menu, as elsewhere
       e.preventDefault(); e.stopImmediatePropagation();
       var n = all[i + step] || (c === 40 ? all[all.length - 1] : null);
       if (i < 0) n = all[0];

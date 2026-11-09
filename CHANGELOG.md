@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.56.2
+
+Private builds only:
+- StarScope results: Left from the first column opens the slide-out menu, and the menu keeps its own keys while open.
+
 ## 2.56.1
 
 Private builds only:
