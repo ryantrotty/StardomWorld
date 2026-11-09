@@ -343,7 +343,7 @@
   function pickHtml() {
     var h = '<div class="ov"><div class="pick"><div class="h">' + (pick.kind === 'venue' ? T.venue : (pick.kind === 'team' ? T.team : (pick.kind === 'faction' ? T.faction : T.pick))) + (pick.raw ? ' · ' + esc(pick.raw) : '') + '</div><div class="ltr">';
     h += chip('tSUG', T.sug, pick.tab === '*' ? 'on' : '');
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(function(c) { h += chip('t' + (c === '#' ? 'N' : c), c, pick.tab === c ? 'on' : ''); });
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(function(c) { h += chip('t' + (c === '#' ? 'HASH' : c), c, pick.tab === c ? 'on' : ''); });
     h += chip('pNew', '+', 'ghost', ' aria-label="' + T.proposeHead + '"') + '</div><div class="grid">';
     var L = pickList();
     if (pick.kind === 'team' || pick.kind === 'faction') h += chip('gNone', pick.kind === 'team' ? T.noTeam : T.noFaction, 'ghost');
@@ -472,7 +472,7 @@
       state.venue = vid; state.touched.match = 1; lastFocus = 'vp'; layer = 'main'; pick = null; render(); return;
     }
     if (k.charAt(0) === 't') {
-      var c = k.slice(1); pick.tab = c === 'SUG' ? '*' : (c === 'N' ? '#' : c); pick.focus = k; render(); return;
+      var c = k.slice(1); pick.tab = c === 'SUG' ? '*' : (c === 'HASH' ? '#' : c); pick.focus = k; render(); return;
     }
     var id = el.getAttribute('data-id');
     if (!id) return;

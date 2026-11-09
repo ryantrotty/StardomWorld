@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.54.1
+
+Private builds only:
+- Index panel picker: the N tab opened the # list, so wrestlers starting with N could not be found.
+
 ## 2.54.0
 
 Private builds only, Index panel:
