@@ -1,34 +1,14 @@
 {
- "generated": "2026-11-08T13:02:30Z",
+ "generated": "2026-11-09T06:34:14Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-08T12:37:00Z",
-  "finished": "2026-11-08T13:02:30Z",
-  "requests": 130,
+  "started": "2026-11-09T06:29:14Z",
+  "finished": "2026-11-09T06:34:14Z",
+  "requests": 40,
   "schedule": {
    "ok": true,
    "events": 36,
-   "changed": [
-    "20261111-korakuen",
-    "20261120-njpw",
-    "20261122-senjo",
-    "20261126-ppp",
-    "20261128-okazaki",
-    "20261130-spark",
-    "20261204-ryukyu",
-    "20261205-himeji",
-    "20261206-kobe",
-    "20261210-korakuen",
-    "20261213-fuji",
-    "20261214-jto",
-    "20261215-gokigen",
-    "20261217-itodojyo",
-    "20261219-utsunomiya",
-    "20261220-sendai",
-    "20261221-thearts",
-    "20261224-korakuen",
-    "20270102-yokohama-event"
-   ],
+   "changed": [],
    "error": ""
   },
   "lineage": {
@@ -89,20 +69,6 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: existing event 20261204-ryukyu gains a Japanese venue string: 那覇文化芸術劇場なはーと小劇場",
-    "schedule: existing event 20261205-himeji gains a Japanese venue string: アクリエひめじ 展示場A",
-    "schedule: existing event 20261206-kobe gains a Japanese venue string: 神戸サンボーホール 2F大展示場",
-    "schedule: existing event 20261213-fuji gains a Japanese venue string: 静岡・ふじさんめっせ（富士市）",
-    "schedule: existing event 20261214-jto gains a Japanese venue string: 新木場1stRING",
-    "schedule: existing event 20261217-itodojyo gains a Japanese venue string: 新木場1stRING",
-    "schedule: existing event 20261219-utsunomiya gains a Japanese venue string: ライトキューブ宇都宮",
-    "schedule: existing event 20261220-sendai gains a Japanese venue string: 仙台PIT",
-    "schedule: existing event 20261221-thearts gains a Japanese venue string: 新木場1stRING",
-    "schedule: new event 20261122-senjo title translated from Japanese: [Participation from another organization] Sendai Girls",
-    "schedule: new event 20261130-spark takes its Japanese venue string: 新木場1stRING",
-    "schedule: new event 20261130-spark title translated from Japanese: [Participation from another organization] SPARK Joshi",
-    "schedule: new event 20261215-gokigen takes its Japanese venue string: 新木場1stRING",
-    "schedule: new event 20261215-gokigen title translated from Japanese: [Participation from another organization] Gokigen Pro Wrestling",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for both New Japan titles returned HTTP 307 with an empty body on both attempts; Wikipedia alone was used per spec, and that is not a site-wide block."
    ]
