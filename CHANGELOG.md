@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.52.0
+
+Private builds only, Index panel:
+- Bell button first on the panel, focused as soon as it opens and usable while the rest loads: press at the start and end of the match. The time comes straight from the player and is kept on the TV until saved.
+- Remote arrows now follow the screen's rows, top to bottom, on every tab and pop-up.
+- The name, venue and option lists refresh each time the panel opens, so sheet changes appear without waiting an hour.
+
 ## 2.51.0
 
 Private builds only:

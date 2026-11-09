@@ -6,17 +6,19 @@
   var U = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
   if (!U || !window.AndroidHost || !AndroidHost.indexSync) return;
   window.__tvIndexPanel = true;
-  var LIB_KEY = 'tvVixLibV2', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', LIB_AGE = 3600000;
+  var LIB_KEY = 'tvVixLibV3', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', MARK_KEY = 'tvVixMarks' + U[2];
+  var BELL = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-6px;margin-right:8px"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/><path d="M2.5 7.5A10 10 0 0 1 5.5 3M21.5 7.5A10 10 0 0 0 18.5 3"/></svg>';
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
   var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
+  var marks = { bell: '', end: '' };
   var root = null, layer = 'main', state = null, lib = null, rec = null, nameMap = {}, byId = {}, menuFor = null, pick = null, lastFocus = 'save', statusText = '', statusBad = false, seq = 0, cbs = {}, busy = false;
 
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -129,7 +131,7 @@
     var title = rec ? (rec.title_en || rec.title_ja || rec.h1 || '') : '';
     var show = rec && rec.shows && rec.shows[0] ? rec.shows[0].show : '';
     var h = '<div class="p"><div class="h">' + T.head + '</div><div class="t">' + esc(title) + '</div><div class="m">' + esc([(state && state.date) || (rec && rec.date), show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div>';
-    if (state) h += '<div class="tabs">' + TABS.map(function(t) { return chip('T' + t, T.tabs[t], state.tab === t ? 'on' : ''); }).join('') + '</div>';
+    h += '<div class="tabs">' + chip('bell', BELL + bellLabel(), '') + (state ? TABS.map(function(t) { return chip('T' + t, T.tabs[t], state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
     if (state && state.tab !== 'people') h += '<div class="body">' + tabHtml() + '</div>';
     else h += '<div class="sides">';
     if (state && state.tab === 'people') {
@@ -179,6 +181,22 @@
     state.sides.forEach(function(s, i) { s.people.forEach(function(p, j) { out.push({ p: p, k: i + '_' + j }); }); });
     return out;
   }
+  function bellLabel() {
+    if (marks.bell === '') return T.bellStart;
+    if (marks.end === '') return T.bellEnd + ' · ' + mmss(marks.bell);
+    return mmss(marks.bell) + ' – ' + mmss(marks.end);
+  }
+  function keepMarks() { store(MARK_KEY, marks); }
+  // The player's position right now, asked of the player itself so the mark is not a moment behind.
+  function withTime(done) {
+    var f = document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'), p = f && f.__tvPlayer;
+    function fallback() {
+      try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); var j = JSON.parse(window.__tvStatusJson || 'null'); if (j && j.t >= 0) { done(Math.floor(j.t)); return; } } catch (e) {}
+      done(null);
+    }
+    if (p && p.getCurrentTime) p.getCurrentTime().then(function(t) { done(Math.floor(t)); }).catch(fallback);
+    else fallback();
+  }
   function mmss(v) { v = Math.floor(Number(v) || 0); return Math.floor(v / 60) + ':' + ('0' + (v % 60)).slice(-2); }
   function tabHtml() {
     var h = '';
@@ -192,17 +210,17 @@
       h += group('title', listOf('title')) + group('competition', listOf('competition')) + group('round', listOf('round'));
       h += group('block', listOf('block').filter(function(b) { return !comp || !b.p || b.p === comp; })) + group('stipulation', listOf('stipulation'));
     } else if (state.tab === 'finish') {
-      if (!state.resOpen) h += chip('rev', T.reveal, 'ghost');
+      if (!state.resOpen) h += '<div class="chips">' + chip('rev', T.reveal, 'ghost') + '</div>';
       else {
         h += group('finish', listOf('finish'));
         h += '<div class="grp">' + T.fall + '</div><div class="chips">' + people().filter(function(x) { return x.p.id; }).map(function(x) { return chip('f:' + x.p.id, esc(nameOf(x.p.id)), state.fall === x.p.id ? 'on' : ''); }).join('') + '</div>';
       }
     } else if (state.tab === 'moments') {
       h += group('moment', listOf('moment').filter(function(x) { return state.resOpen || !SPOIL[x.id]; }));
-      if (!state.resOpen) h += '<div class="m" style="margin-top:12px">' + T.spoil + '</div>' + chip('rev', T.reveal, 'ghost');
+      if (!state.resOpen) h += '<div class="m" style="margin-top:12px">' + T.spoil + '</div><div class="chips">' + chip('rev', T.reveal, 'ghost') + '</div>';
     } else if (state.tab === 'marks') {
-      h += '<div class="chips">' + chip('mb', T.bell + (state.marks.bell !== '' ? ' · ' + mmss(state.marks.bell) : '')) + (state.marks.bell !== '' ? chip('mbx', T.clear, 'ghost') : '');
-      h += chip('me', T.end + (state.marks.end !== '' ? ' · ' + mmss(state.marks.end) : '')) + (state.marks.end !== '' ? chip('mex', T.clear, 'ghost') : '') + '</div>';
+      h += '<div class="chips">' + chip('mb', T.bell + (marks.bell !== '' ? ' · ' + mmss(marks.bell) : '')) + (marks.bell !== '' ? chip('mbx', T.clear, 'ghost') : '');
+      h += chip('me', T.end + (marks.end !== '' ? ' · ' + mmss(marks.end) : '')) + (marks.end !== '' ? chip('mex', T.clear, 'ghost') : '') + '</div>';
       if (state.sides.filter(function(s) { return s.people.length; }).length >= 3) {
         h += '<div class="grp">' + T.entry + ' / ' + T.out + '</div>';
         people().forEach(function(x) {
@@ -235,10 +253,6 @@
   }
   function nextNo(field) { var n = 0; people().forEach(function(x) { n = Math.max(n, Number(x.p[field]) || 0); }); return n + 1; }
   function personAt(k) { var m = /^(\d+)_(\d+)$/.exec(k); return state.sides[+m[1]].people[+m[2]]; }
-  function position() {
-    try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); var j = JSON.parse(window.__tvStatusJson || 'null'); if (j && j.t >= 0) return Math.floor(j.t); } catch (e) {}
-    return null;
-  }
   function venues() { return (lib.venues || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }); }
   function venueById(id) { return (lib.venues || []).filter(function(v) { return v.id === id; })[0]; }
   function matchVenue(raw) {
@@ -271,6 +285,13 @@
     layer = 'main'; pick = null; render(); say(T.saving);
     call({ action: 'vi_propose', type: p.type, value: value, entity_id: p.entity || '', video: U[2] }, function(r) { say(r.ok ? T.proposed : String(r.error), !r.ok); });
   }
+  function mark(which) {
+    withTime(function(v) {
+      if (v === null) { say(T.noPos, true); return; }
+      marks[which] = v; keepMarks();
+      if (root && root.style.display !== 'none') render();
+    });
+  }
   function pressTab(k) {
     var m, v;
     if ((m = /^pr:(.+)$/.exec(k))) { openPropose({ type: 'new_option', entity: m[1], label: T.groups[m[1]], text: '' }); return true; }
@@ -282,12 +303,9 @@
     if ((m = /^f:(.+)$/.exec(k))) { state.fall = state.fall === m[1] ? '' : m[1]; render(); return true; }
     if ((m = /^e:(.+)$/.exec(k))) { v = personAt(m[1]); v.entry = v.entry ? '' : nextNo('entry'); render(); return true; }
     if ((m = /^x:(.+)$/.exec(k))) { v = personAt(m[1]); v.elim = v.elim ? '' : nextNo('elim'); render(); return true; }
-    if (k === 'mb' || k === 'me') {
-      v = position();
-      if (v === null) { say(T.noPos, true); return true; }
-      state.marks[k === 'mb' ? 'bell' : 'end'] = v; render(); return true;
-    }
-    if (k === 'mbx' || k === 'mex') { state.marks[k === 'mbx' ? 'bell' : 'end'] = ''; lastFocus = k === 'mbx' ? 'mb' : 'me'; render(); return true; }
+    if (k === 'mb' || k === 'me') { mark(k === 'mb' ? 'bell' : 'end'); return true; }
+    if (k === 'bell') { mark(marks.bell === '' ? 'bell' : 'end'); return true; }
+    if (k === 'mbx' || k === 'mex') { marks[k === 'mbx' ? 'bell' : 'end'] = ''; keepMarks(); lastFocus = k === 'mbx' ? 'mb' : 'me'; render(); return true; }
     return false;
   }
 
@@ -329,19 +347,54 @@
     if (!el) el = (k === 'first' && r.querySelector('.grid .tvx-f')) || r.querySelector('[data-k="save"]') || r.querySelector('.tvx-f');
     if (el) { el.focus(); try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
   }
-  function move(dir) {
-    var r = layerRoot(), a = document.activeElement;
-    if (!r.contains(a) || !a.classList.contains('tvx-f')) { focusKey('save'); return; }
-    var A = a.getBoundingClientRect(), ax = A.left + A.width / 2, ay = A.top + A.height / 2, best = null, score = 1e12;
-    Array.prototype.forEach.call(r.querySelectorAll('.tvx-f'), function(b) {
-      if (b === a) return;
-      var B = b.getBoundingClientRect(), dx = B.left + B.width / 2 - ax, dy = B.top + B.height / 2 - ay;
-      var main = dir === 'L' ? -dx : dir === 'R' ? dx : dir === 'U' ? -dy : dy, cross = dir === 'L' || dir === 'R' ? Math.abs(dy) : Math.abs(dx);
-      if (main < 6) return;
-      var s = main + cross * 3;
-      if (s < score) { score = s; best = b; }
+  // The remote's arrows follow the screen's rows, top to bottom. Side columns are walked within a column first.
+  function navLines() {
+    var r = layerRoot(), all = Array.prototype.slice.call(r.querySelectorAll('.tvx-f')), blocks = [], lines = [];
+    all.forEach(function(el) { var b = el.closest('.tabs,.row,.chips,.ltr,.grid,.menu,.sides') || el.parentElement; if (blocks.indexOf(b) < 0) blocks.push(b); });
+    blocks.forEach(function(b) {
+      if (b.classList.contains('sides')) {
+        var cols = Array.prototype.map.call(b.children, function(c) { return Array.prototype.slice.call(c.querySelectorAll('.tvx-f')); }).filter(function(c) { return c.length; });
+        lines.push({ cols: cols });
+        return;
+      }
+      var cur = null, top = null;
+      all.filter(function(el) { return b.contains(el); }).forEach(function(el) {
+        var t = el.getBoundingClientRect().top;
+        if (cur === null || Math.abs(t - top) > 10) { cur = { items: [] }; top = t; lines.push(cur); }
+        cur.items.push(el);
+      });
     });
-    if (best) { best.focus(); try { best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
+    return lines;
+  }
+  function go(el) { if (!el) return; try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { el.focus(); } }
+  function nearest(items, x) {
+    var best = items[0], gap = 1e9;
+    items.forEach(function(el) { var R = el.getBoundingClientRect(), d = Math.abs(R.left + R.width / 2 - x); if (d < gap) { gap = d; best = el; } });
+    return best;
+  }
+  function enter(line, down, x) {
+    if (!line) return null;
+    if (!line.cols) return nearest(line.items, x);
+    var col = line.cols[0], gap = 1e9;
+    line.cols.forEach(function(c) { var R = c[0].getBoundingClientRect(), d = Math.abs(R.left + R.width / 2 - x); if (d < gap) { gap = d; col = c; } });
+    return down ? col[0] : col[col.length - 1];
+  }
+  function move(dir) {
+    var a = document.activeElement, lines = navLines(), li = -1, col = -1, idx = -1;
+    lines.forEach(function(l, i) {
+      if (l.cols) l.cols.forEach(function(c, ci) { var n = c.indexOf(a); if (n >= 0) { li = i; col = ci; idx = n; } });
+      else { var n = l.items.indexOf(a); if (n >= 0) { li = i; idx = n; } }
+    });
+    if (li < 0) { focusKey(layer === 'main' ? 'bell' : 'first'); return; }
+    var line = lines[li], R = a.getBoundingClientRect(), x = R.left + R.width / 2, down = dir === 'D';
+    if (dir === 'L' || dir === 'R') {
+      var step = dir === 'R' ? 1 : -1;
+      if (line.cols) { var c = line.cols[col + step]; if (c) go(c[Math.min(idx, c.length - 1)]); }
+      else go(line.items[idx + step]);
+      return;
+    }
+    if (line.cols) { var c2 = line.cols[col], n2 = idx + (down ? 1 : -1); if (c2[n2]) { go(c2[n2]); return; } }
+    go(enter(lines[li + (down ? 1 : -1)], down, x));
   }
 
   function say(text, bad) { statusText = text; statusBad = !!bad; var s = root && root.querySelector('.s'); if (s) { s.textContent = text; s.className = 's' + (bad ? ' bad' : ''); } }
@@ -439,17 +492,18 @@
       (state.tags[g] || []).forEach(function(v) { tags.push({ group: g, value: v, source: state.touched[TAB_OF[g]] || state.hadTags ? 'panel' : 'auto' }); });
     });
     if (state.fall) tags.push({ group: 'fall', value: state.fall, source: 'panel' });
-    var deep = state.fall || (state.touched.finish && (state.tags.finish || []).length) || (state.touched.moments && (state.tags.moment || []).length) || state.marks.bell !== '' || state.marks.end !== '';
+    var deep = state.fall || (state.touched.finish && (state.tags.finish || []).length) || (state.touched.moments && (state.tags.moment || []).length) || marks.bell !== '' || marks.end !== '';
     var level = Math.max(state.savedLevel, deep ? 3 : (state.touched.match ? 2 : 1));
     var title = (rec.title_en || '') + ' ' + (rec.title_ja || '');
     var show = rec.shows && rec.shows[0];
     busy = true; say(T.saving);
-    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: state.marks, venueAliases: state.venueAliases,
+    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_no: rec.no, is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
       if (!res.ok) { say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
+      try { localStorage.removeItem(MARK_KEY); } catch (e) {}
       say((res.linked ? T.linked : T.saved) + ' · ' + res.match_id + ' · ' + res.status);
       if (nextHref) { try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (e) {} location.href = nextHref; }
     });
@@ -465,12 +519,13 @@
   function begin(saved) {
     var page = rec ? fromPage() : [];
     var showAny = saved && saved.found;
-    state = { sides: showAny ? fromSaved(saved) : page, result: { type: '', side: 0 }, resOpen: false, onShow: (saved && saved.onShow) || [], aliases: [], tab: 'people', tags: {}, touched: {}, fall: '', marks: { bell: '', end: '' }, hadTags: false, savedLevel: showAny ? (Number(saved.match.level) || 1) : 1 };
+    state = { sides: showAny ? fromSaved(saved) : page, result: { type: '', side: 0 }, resOpen: false, onShow: (saved && saved.onShow) || [], aliases: [], tab: 'people', tags: {}, touched: {}, fall: '', hadTags: false, savedLevel: showAny ? (Number(saved.match.level) || 1) : 1 };
     if (showAny) {
       (saved.tags || []).forEach(function(t) { if (t.tag_group === 'fall') state.fall = t.tag_value; else (state.tags[t.tag_group] = state.tags[t.tag_group] || []).push(t.tag_value); });
       state.hadTags = !!(saved.tags || []).length;
       var mine = (saved.videos || []).filter(function(v) { return String(v.video_id) === U[2]; })[0];
-      if (mine) state.marks = { bell: mine.bell_sec === '' || mine.bell_sec == null ? '' : Number(mine.bell_sec), end: mine.end_sec === '' || mine.end_sec == null ? '' : Number(mine.end_sec) };
+      // A press not saved yet (kept on this TV) wins over what the sheet has.
+      if (mine) ['bell', 'end'].forEach(function(f) { var v = mine[f + '_sec']; if (marks[f] === '' && v !== '' && v != null) marks[f] = Number(v); });
     }
     if (!state.hadTags) suggestTags();
     var show0 = rec && rec.shows && rec.shows[0];
@@ -482,7 +537,7 @@
     if (!state.sides.length) state.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
     state.okText = showAny ? T.loaded : (page.length ? T.ready : T.noMatch);
     nameStatus();
-    lastFocus = 'save';
+    lastFocus = 'bell';
     render();
   }
 
@@ -492,7 +547,8 @@
     if (window.__tvFsCancel) window.__tvFsCancel();
     try { AndroidHost.indexPanel(true); } catch (e) {}
     rec = window.__tvVixRec || null;
-    state = null; layer = 'main'; say(T.loading); ensure(); root.style.display = 'flex'; render();
+    marks = load(MARK_KEY) || { bell: '', end: '' };
+    state = null; layer = 'main'; lastFocus = 'bell'; say(T.loading); ensure(); root.style.display = 'flex'; render();
     var cached = load(LIB_KEY);
     function withLib() {
       var show = rec && rec.shows && rec.shows[0];
@@ -502,7 +558,20 @@
         if (!r.ok) say(String(r.error), true);
       });
     }
-    if (cached && cached.lib && Date.now() - cached.t < LIB_AGE) { setLib(cached.lib); withLib(); return; }
+    // The last copy opens the panel at once; a fresh one comes in behind it, so sheet changes show without waiting.
+    if (cached && cached.lib) {
+      setLib(cached.lib); withLib();
+      call({ action: 'vi_lib' }, function(r) {
+        if (!r.ok) return;
+        store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r);
+        if (state && layer === 'main' && window.__tvIndexIsOpen) {
+          if (!state.venue) state.venue = matchVenue(state.venueRaw);
+          var a = document.activeElement; if (a && a.getAttribute && a.getAttribute('data-k')) lastFocus = a.getAttribute('data-k');
+          render();
+        }
+      });
+      return;
+    }
     call({ action: 'vi_lib' }, function(r) {
       if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); withLib(); }
       else if (cached && cached.lib) { setLib(cached.lib); withLib(); }
