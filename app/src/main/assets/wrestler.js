@@ -38,6 +38,15 @@
   var W = null;
   FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name, ja: m.ja || '' }; }); });
   PAST.forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name }; });
+  // Private builds (2.59.3): past and guest names from the match index (the logger's saved library on this TV).
+  if (!W) {
+    try {
+      if (H.videoIndexOn && H.videoIndexOn()) {
+        var lib = (JSON.parse(localStorage.getItem('tvVixLibV3') || 'null') || {}).lib || {};
+        (lib.talent || []).forEach(function(t) { if (!W && t && t.en && (low(t.s || t.en) === low(base) || low(t.en) === low(base))) W = { name: t.en, search: t.s || t.en, ja: t.ja || '' }; });
+      }
+    } catch (e) {}
+  }
   if (!W) { window.__tvWrReady = true; if (APP) window.__tvWrApi = { missing: base }; return; }
   window.__tvWrestlerName = W.name;   // the page title shows the name (the menu's title code reads this)
 

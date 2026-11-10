@@ -5363,6 +5363,18 @@ class MainActivity : Activity() {
                 });
               });
             } catch (e) {}
+            // Private builds (2.59.3): everyone the match index knows who is not a current wrestler (past and guest
+            // names added through StarScope), from the logger's saved library on this TV.
+            try {
+              if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
+                var lib = (JSON.parse(localStorage.getItem('tvVixLibV3') || 'null') || {}).lib || {};
+                (lib.talent || []).forEach(function(t) {
+                  if (!t || !t.en || t.st === 'current' || have[t.en.toLowerCase()] || (t.s && have[String(t.s).toLowerCase()])) return;
+                  have[t.en.toLowerCase()] = 1;
+                  out.push([t.en, wrPath(t.s || t.en), t.ja || t.en]);
+                });
+              }
+            } catch (e) {}
             return out;
           }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
@@ -5998,7 +6010,8 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
                 '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
                 '<div class="tv-shl-wl" data-wbody="0" style="column-count:' + (spot ? 3 : 4) + ';column-gap:10px;">' + rowsHtml(crow) + '</div>' +
-                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
+                // PAST (2.59.3): no spotlight (past wrestlers have no photos), so its names spread over five columns.
+                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:' + (spot ? 5 : 4) + ';column-gap:10px;">' + rowsHtml(prow) + '</div>';
               if (spot) {
                 w = 1000;
                 h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';
@@ -6085,6 +6098,7 @@ class MainActivity : Activity() {
                 var show = function() {
                   Array.prototype.forEach.call(wbs, function(bd, bi) { bd.style.display = bi === ti ? '' : 'none'; });
                   Array.prototype.forEach.call(wts, function(u, ui) { u.classList.toggle('tv-wtab-on', ui === ti); });
+                  var sp = shelfEl.querySelector('.tv-wsp'); if (sp) sp.style.display = ti === 1 ? 'none' : '';   // PAST: no spotlight
                 };
                 t.addEventListener('focus', show);
                 t.addEventListener('click', function(ev) { ev.preventDefault(); show(); });
@@ -6690,13 +6704,31 @@ class MainActivity : Activity() {
             var r = f.getBoundingClientRect();
             if (r.width < 50) return;
             bar.style.width = Math.round(r.width) + 'px';
+            // Where the picture ends: the frame's bottom, or higher when the player letterboxes the video inside a
+            // taller frame (its own black band under the picture would otherwise show as a gap above the bar).
+            var bottom = r.bottom, vw = f.__tvVW || 0, vh = f.__tvVH || 0;
+            if (vw > 0 && vh > 0) { var ph = r.width * vh / vw; if (ph < r.height - 1) bottom = r.top + (r.height + ph) / 2; }
+            else if (f.__tvPlayer && !f.__tvAsk) {
+              f.__tvAsk = true;
+              try { Promise.all([f.__tvPlayer.getVideoWidth(), f.__tvPlayer.getVideoHeight()]).then(function(d) { f.__tvVW = d[0]; f.__tvVH = d[1]; }).catch(function() {}); } catch (e) {}
+            }
             // Close the gap the player's wrapper leaves under the picture.
             bar.style.marginTop = '0px';
-            var gap = bar.getBoundingClientRect().top - r.bottom;
+            var top0 = bar.getBoundingClientRect().top, gap = top0 - bottom;
             bar.style.marginTop = (gap > 1 ? -Math.round(gap) : 0) + 'px';
             bar.style.marginLeft = '0px';
             var bl = bar.getBoundingClientRect().left;
             bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';
+            // Private builds, for now: the measurements on screen under the bar, to photograph (2.59.3).
+            try {
+              if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
+                var dbg = document.getElementById('tv-pbar-dbg');
+                if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px Arial,Helvetica,sans-serif;color:#9AA6B4;margin:-8px 0 10px 0;'; bar.parentElement.insertBefore(dbg, bar.nextSibling); }
+                var n = document.querySelectorAll('iframe[src*="vimeo.com"], iframe[src*="player"]').length;
+                dbg.textContent = 'bar fit · frames ' + n + ' · frame top ' + Math.round(r.top) + ' bottom ' + Math.round(r.bottom) + ' size ' + Math.round(r.width) + 'x' + Math.round(r.height) +
+                  ' · video ' + (vw ? vw + 'x' + vh : 'unknown') + ' · picture bottom ' + Math.round(bottom) + ' · bar top before ' + Math.round(top0) + ' after ' + Math.round(bar.getBoundingClientRect().top) + ' · margin ' + bar.style.marginTop;
+              }
+            } catch (e) {}
           }
 
           function fmt(sec) {
@@ -10464,9 +10496,13 @@ class MainActivity : Activity() {
     private fun buildFsOverlay(): android.widget.LinearLayout {
         val o = android.widget.LinearLayout(this)
         o.orientation = android.widget.LinearLayout.VERTICAL
-        o.setBackgroundColor(0xCC000000.toInt())
+        // Clear at the top, fading to dark behind the controls, so the picture shows through above them (2.59.3).
+        o.background = android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(0x00000000, 0x99000000.toInt(), 0xE0000000.toInt())
+        )
         val pad = (28 * density).toInt()
-        o.setPadding(pad, (14 * density).toInt(), pad, (14 * density).toInt())
+        o.setPadding(pad, (64 * density).toInt(), pad, (14 * density).toInt())
 
         val hint = android.widget.TextView(this)
         hint.setTextColor(Color.WHITE)
@@ -10821,7 +10857,6 @@ class MainActivity : Activity() {
 
     private fun cycleCc() {
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
-        showFsCcHint()
         fsSetIcon(fsBtnCc, "cc", null)
         // The player's own captions always go off: ours replace them (and are shown or hidden below).
         playerCommand("ccoff", 0)
@@ -10832,26 +10867,6 @@ class MainActivity : Activity() {
         } else {
             ccStart()
         }
-    }
-
-    // Above the bar for a moment after the captions button is pressed: every choice, the current one in gold.
-    private fun showFsCcHint() {
-        val tv = fsSkipHint ?: return
-        val sb = android.text.SpannableStringBuilder()
-        sb.append(tr("Captions   ", "字幕   "))
-        listOf(0 to tr("Off", "オフ"), 1 to "English", 2 to "日本語").forEach { (mode, name) ->
-            val start = sb.length
-            sb.append(if (mode == ccMode) "[ $name ]" else " $name ")
-            if (mode == ccMode) {
-                sb.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor("#F4C242")), start, sb.length, 0)
-                sb.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), start, sb.length, 0)
-            }
-            sb.append("  ")
-        }
-        tv.text = sb
-        tv.visibility = View.VISIBLE
-        handler.removeCallbacks(fsSkipHintHide)
-        handler.postDelayed(fsSkipHintHide, 2500)
     }
 
     private val ccHideNote = Runnable { if (ccMode == 0) ccView?.visibility = View.GONE }

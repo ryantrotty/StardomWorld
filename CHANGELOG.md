@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.3
+
+- Full screen bar: the dark backing now fades in from clear at the top instead of being one solid band, so the picture shows above the controls.
+- Captions: the choices line that appeared when the button was pressed (2.59.2) is gone; the box still reads EN or JA.
+- Bar under the picture: if the player shows the video letterboxed inside a taller frame, the bar now lines up with the bottom of the picture rather than the frame. Private builds show a line of measurements under the bar for now, to photograph if a gap is still there.
+- Menu, Wrestlers, PAST: no spotlight on this tab (past wrestlers have no photos), so the names use five columns. Private builds also list everyone the match index knows who is not a current wrestler (names added through StarScope), and their wrestler pages open.
+
 ## 2.59.2
 
 - Full screen bar: the telescope (Index) shows again, and the skip buttons no longer show "-30s" / "+30s" text beside their icons after the skip size changes.
