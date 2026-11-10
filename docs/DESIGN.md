@@ -234,3 +234,5 @@ Player bar height (2.59.4): 52 px under the picture (was 64) now that the button
 Player bar colour (2.59.5): solid #020305 (what 80 % black gave over the navy page), also used for the 40 px extension behind the bottom of the picture and the player frame's own background. Exception to the page navy, so the bar and picture meet with no page colour between them.
 
 Player bar placement (2.59.11): the bar is placed on the page body, absolutely, right under the picture, with a bar-sized spacer left in the page; inside the site's boxes its top 12 px was cut off.
+
+Logger buttons (2.60.0): rgba(5,8,12,.6), focused rgba(5,8,12,.78) with the gold border; the same for the text boxes. Selected (orange) chips stay solid.

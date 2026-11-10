@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.60.0
+
+Private builds only:
+- StarScope logger: buttons and the text boxes are see-through too, a little darker than the panel (black at 60 %, 78 % when focused) so they still stand apart from it. Chosen chips (orange) stay solid.
+
 ## 2.59.13
 
 - Main was merged with 2.59.11 under the 2.59.12 number, so the measurement lines were still in it. This takes them out (the 2.59.12 change), from main.
