@@ -232,3 +232,5 @@ Full screen controls backing (2.59.3): a vertical fade from clear to rgba(0,0,0,
 Player bar height (2.59.4): 52 px under the picture (was 64) now that the buttons are icons.
 
 Player bar colour (2.59.5): solid #020305 (what 80 % black gave over the navy page), also used for the 40 px extension behind the bottom of the picture and the player frame's own background. Exception to the page navy, so the bar and picture meet with no page colour between them.
+
+Player bar placement (2.59.11): the bar is placed on the page body, absolutely, right under the picture, with a bar-sized spacer left in the page; inside the site's boxes its top 12 px was cut off.

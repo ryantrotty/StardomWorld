@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.13
+
+- Main was merged with 2.59.11 under the 2.59.12 number, so the measurement lines were still in it. This takes them out (the 2.59.12 change), from main.
+
+## 2.59.12
+
+- Private builds: the measurement lines under the player bar are removed (2.59.11 confirmed the bar now meets the picture).
+
 ## 2.59.11
 
 - Bar under the picture: it now sits on the page itself, placed exactly under the picture, with a bar-sized space kept in the page so the rows below stay where they were. The 2.59.10 measurements showed the bar's top 12 px was not covered but cut off: the bar lived inside one of the site's boxes, which starts 12 px lower and hides anything above its edge.
