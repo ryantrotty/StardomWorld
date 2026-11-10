@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.58.0
+
+- Google TV's own screensaver (ambient mode) can now start while the app is idle. The app keeps the screen on only while a video or PPV stream plays, and for 30 seconds after it stops or pauses; after that the TV's usual screensaver timer applies.
+
 ## 2.57.0
 
 Private builds only:

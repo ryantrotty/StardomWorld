@@ -609,6 +609,7 @@ class MainActivity : Activity() {
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
+    private val screenMaySleep = Runnable { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
     private var density = 1f
 
     private var cursorMode = false
@@ -2028,7 +2029,7 @@ class MainActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // The screen is kept on only while a video plays (assets/keepawake.js); otherwise Google TV's ambient mode can start.
         metrics = Metrics(this)
         density = resources.displayMetrics.density
         // The schedule refresh runs from onResume, which always follows onCreate.
@@ -3163,6 +3164,17 @@ class MainActivity : Activity() {
                         "data:" + mime + ";base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
                     }
                 } catch (_: Exception) { "" }
+            }
+        }
+
+        // Playback heartbeat from assets/keepawake.js, every 10 seconds while a video plays. The screen stays on until
+        // 30 seconds after the last one, then the TV's own screensaver (ambient mode) can take over when it is due.
+        @android.webkit.JavascriptInterface
+        fun stillPlaying() {
+            this@MainActivity.runOnUiThread {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                handler.removeCallbacks(screenMaySleep)
+                handler.postDelayed(screenMaySleep, 30_000)
             }
         }
 
@@ -10184,6 +10196,7 @@ class MainActivity : Activity() {
 
     private fun injectPageScripts(view: WebView) {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
+        view.evaluateJavascript(assetText("keepawake.js"), null)
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("ppv_host.js"), null)
             return
