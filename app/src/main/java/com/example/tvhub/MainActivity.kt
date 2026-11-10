@@ -6715,16 +6715,23 @@ class MainActivity : Activity() {
               f.__tvAsk = true;
               try { Promise.all([f.__tvPlayer.getVideoWidth(), f.__tvPlayer.getVideoHeight()]).then(function(d) { f.__tvVW = d[0]; f.__tvVH = d[1]; }).catch(function() {}); } catch (e) {}
             }
-            // The player's wrapper can be shorter than the frame and cut its bottom off (2.59.7): the picture then ends
-            // where the lowest clipping box around it ends, and the bar goes there instead of under the hidden part.
+            // The player's wrapper on the site is shorter than the frame and cuts its bottom off. Let the whole picture
+            // show (2.59.8): any box around the frame that would hide part of it stops hiding. If one still does, the
+            // bar lines up with where the picture is cut (2.59.7) rather than sitting under the hidden part.
             for (var a = f.parentElement, k = 0; a && a !== document.body && k < 8; a = a.parentElement, k++) {
               var cs = getComputedStyle(a);
-              if (cs.overflow !== 'visible' || cs.overflowY !== 'visible') { var ab = a.getBoundingClientRect().bottom; if (ab < bottom) bottom = ab; }
+              if (cs.overflow === 'visible' && cs.overflowY === 'visible') continue;
+              var ab = a.getBoundingClientRect().bottom;
+              if (ab >= bottom - 1) continue;
+              a.style.setProperty('overflow', 'visible', 'important');
+              cs = getComputedStyle(a);
+              if (cs.overflow !== 'visible' || cs.overflowY !== 'visible') bottom = ab;
             }
             // Close the gap the player's wrapper leaves under the picture.
             bar.style.marginTop = '0px';
             var top0 = bar.getBoundingClientRect().top, gap = top0 - bottom;
-            bar.style.marginTop = (gap > 1 ? -Math.round(gap) : 0) + 'px';
+            // Up to close a gap, or down when the now-whole picture reaches past where the bar would start.
+            bar.style.marginTop = (Math.abs(gap) > 1 ? -Math.round(gap) : 0) + 'px';
             bar.style.marginLeft = '0px';
             var bl = bar.getBoundingClientRect().left;
             bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';

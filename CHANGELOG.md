@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.8
+
+- Video page: the whole picture shows. The site's box around the player is shorter than the player and was cutting off its bottom; it no longer hides any of it, and the control bar sits right under the full picture (moving down when it needs to, not only up).
+
 ## 2.59.7
 
 - Bar under the picture: lines up with where the picture is actually cut off. The player's wrapper on the site is shorter than the player and hides the bottom of it, so the bar was sitting under the hidden part, with a strip of page between. It now moves up to the wrapper's edge.
