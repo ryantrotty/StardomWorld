@@ -1140,7 +1140,7 @@
   }
   scroller.addEventListener('click', function(e) { var el = e.target.closest ? e.target.closest('[tabindex]') : null; if (el && choose(el)) e.preventDefault(); });
   window.addEventListener('keydown', function(e) {
-    if (!document.getElementById('tv-tt') || menuOpen()) return;
+    if (!document.getElementById('tv-tt') || menuOpen() || document.getElementById('tv-fp-pop')) return;   // the video options pop-up has its own keys
     var k = e.keyCode, ae = document.activeElement;
     var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
     if (k === 13 || k === 23) { if (ae && scroller.contains(ae) && choose(ae)) stop(); return; }

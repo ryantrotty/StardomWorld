@@ -349,7 +349,7 @@
     try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
   }
   window.addEventListener('keydown', function(e) {
-    if (!root || menuOpen()) return;
+    if (!root || menuOpen() || document.getElementById('tv-fp-pop')) return;   // the video options pop-up has its own keys
     var k = e.keyCode, ae = document.activeElement;
     var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
     if (ae && root.contains(ae)) {

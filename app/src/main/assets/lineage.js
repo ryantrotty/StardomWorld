@@ -614,7 +614,7 @@
     return true;
   }
   window.addEventListener('keydown', function(e) {
-    if (!document.getElementById('tv-ln') || menuOpen()) return;
+    if (!document.getElementById('tv-ln') || menuOpen() || document.getElementById('tv-fp-pop')) return;   // the video options pop-up has its own keys
     var k = e.keyCode, ae = document.activeElement;
     function stop() { e.preventDefault(); e.stopImmediatePropagation(); }
     var inside = ae && root.contains(ae) && ae.getAttribute && ae.getAttribute('data-k');

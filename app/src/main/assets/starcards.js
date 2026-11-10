@@ -91,7 +91,7 @@
     document.body.appendChild(d);
     var first = d.querySelector('a.c'); if (first) first.focus();
     window.addEventListener('keydown', function(e) {
-      if (document.documentElement.classList.contains('tv-sm-open')) return;   // the menu handles its own keys
+      if (document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;   // the menu and the video options pop-up handle their own keys
       var c = e.keyCode, step = { 37: -1, 39: 1, 38: -4, 40: 4 }[c], all = Array.prototype.slice.call(d.querySelectorAll('a.c')), i = all.indexOf(document.activeElement);
       if (c === 13 || c === 23) { if (i >= 0) { e.preventDefault(); e.stopImmediatePropagation(); location.href = all[i].href; } return; }
       if (!step) return;

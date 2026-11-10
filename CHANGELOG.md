@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.58.2
+
+- Video options pop-up on wrestler pages: Up and Down move through its buttons again instead of being taken by the page behind it. The same fix is on tag team, Top Rated, championship lineage and StarScope results pages.
+
 ## 2.58.1
 
 - Video options on a card in a show's video list (under the player): Add to Favorites now adds that video to the site's Favorite Videos (it was sending the show's number instead), and the menu offers Favorite Matches for a single video instead of Favorite Shows.
