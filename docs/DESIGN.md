@@ -230,3 +230,5 @@ Player controls (2.59.0): every control-bar button (under the picture, full scre
 Full screen controls backing (2.59.3): a vertical fade from clear to rgba(0,0,0,.88), 64 dp of it above the controls, replacing the solid #CC000000 band. Menu Wrestlers PAST tab (2.59.3): no spotlight, names in five columns across the full 1000 shelf width; CURRENT keeps three columns and the spotlight.
 
 Player bar height (2.59.4): 52 px under the picture (was 64) now that the buttons are icons.
+
+Player bar colour (2.59.5): solid #020305 (what 80 % black gave over the navy page), also used for the 40 px extension behind the bottom of the picture and the player frame's own background. Exception to the page navy, so the bar and picture meet with no page colour between them.

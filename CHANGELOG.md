@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.6
+
+- Design notes only: the player bar's #020305 is recorded in docs/DESIGN.md. No change in the app.
+
 ## 2.59.5
 
 - Bar under the picture: its black now reaches up behind the bottom of the picture, and the player frame itself is black, so no grey page colour shows between the picture and the controls. The bar is solid #020305 (the same colour its 80 % black gave on the navy page).
