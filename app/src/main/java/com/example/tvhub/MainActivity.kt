@@ -6738,28 +6738,6 @@ class MainActivity : Activity() {
               var top0 = spacer.getBoundingClientRect().top, gap = top0 - bottom;
               spacer.style.marginTop = (Math.abs(gap) > 1 ? -Math.round(gap) : 0) + 'px';
             }
-            // Private builds, for now (2.59.9): what is on screen just above the bottom of the frame, where the strip
-            // shows, and the boxes around the frame, to photograph.
-            try {
-              if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
-                var dbg = document.getElementById('tv-pbar-dbg');
-                if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;margin:0 0 10px 0;white-space:pre-wrap;'; (spacer || bar).parentElement.insertBefore(dbg, (spacer || bar).nextSibling); }
-                var nm = function(e) { if (!e || !e.tagName) return '?'; var c = typeof e.className === 'string' ? e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''; return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (c ? '.' + c : ''); };
-                var lines = [];
-                [3, 8, 14].forEach(function(dn) {
-                  var y = Math.round(r.bottom + dn), st = document.elementsFromPoint(Math.round(r.left + r.width / 2), y).slice(0, 3);
-                  lines.push('below the picture +' + dn + ': ' + st.map(function(e) { var g = getComputedStyle(e); return nm(e) + ' [' + g.backgroundColor + ' z' + g.zIndex + ' ' + g.position + ']'; }).join('  >  '));
-                });
-                var ch = [];
-                for (var q = f, i = 0; q && q !== document.body && i < 7; q = q.parentElement, i++) {
-                  var qr = q.getBoundingClientRect(), qs = getComputedStyle(q);
-                  ch.push(nm(q) + ' ' + Math.round(qr.top) + '-' + Math.round(qr.bottom) + (qs.overflow !== 'visible' ? ' ov:' + qs.overflow : '') + (qs.clipPath && qs.clipPath !== 'none' ? ' clip' : '') + (qs.transform !== 'none' ? ' tf' : ''));
-                }
-                lines.push('frame ' + Math.round(r.top) + '-' + Math.round(r.bottom) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' · video ' + (vw ? vw + 'x' + vh : '?') + ' · bar ' + Math.round(bar.getBoundingClientRect().top) + ' margin ' + bar.style.marginTop + ' · src ' + String(f.getAttribute('src') || '').replace(/^https?:\/\//, '').slice(0, 90));
-                lines.push('boxes: ' + ch.join('  <  '));
-                dbg.textContent = lines.join('\n');
-              }
-            } catch (e) {}
           }
 
           function fmt(sec) {
