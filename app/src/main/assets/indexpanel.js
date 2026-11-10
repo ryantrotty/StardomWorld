@@ -9,10 +9,10 @@
   var LIB_KEY = 'tvVixLibV3', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', MARK_KEY = 'tvVixMarks' + U[2];
   var BELL = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-6px;margin-right:8px"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/><path d="M2.5 7.5A10 10 0 0 1 5.5 3M21.5 7.5A10 10 0 0 0 18.5 3"/></svg>';
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
-  var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
+  var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '保存', notSaved: '保存できませんでした', linkedShort: 'リンクしました', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
     pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', added: '追加しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
-   : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
+   : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Save', notSaved: 'Not saved', linkedShort: 'Linked', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
     pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', added: 'Added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
@@ -110,6 +110,15 @@
     document.body.appendChild(root);
   }
 
+  // The Save button says how the save went (2.60.2): Saving…, Saved (or Linked), Not saved; back to Save after 3 s.
+  var saveLabel = '', saveTimer = 0;
+  function saveBtn(text, keep) {
+    saveLabel = text;
+    var b = root && root.querySelector('[data-k="save"]');
+    if (b) b.textContent = text || T.save;
+    clearTimeout(saveTimer);
+    if (text && !keep) saveTimer = setTimeout(function() { saveBtn(''); }, 3000);
+  }
   function chip(k, label, cls, extra) { return '<button type="button" class="tvx-f ' + (cls || '') + '" data-k="' + k + '"' + (extra || '') + '>' + label + '</button>'; }
 
   // Where this video sits in its set, in show order (the carousel is already in that order). Comment clips don't count.
@@ -170,7 +179,7 @@
     }
     if (!state || state.tab === 'people') h += '</div>';
     if (state) {
-      h += '<div class="row">' + chip('save', T.save);
+      h += '<div class="row">' + chip('save', esc(saveLabel || T.save), '', ' style="min-width:132px;text-align:center"');   // wide enough for Saving… so nothing shifts
       if (setNext()) h += chip('next', T.next);
       h += chip('close', T.close, 'ghost') + '</div>';
     } else h += '<div class="row">' + chip('close', T.close, 'ghost') + '</div>';
@@ -558,15 +567,16 @@
     var title = (rec.title_en || '') + ' ' + (rec.title_ja || '');
     var show = rec.shows && rec.shows[0];
     var place = setPlace();
-    busy = true; say(T.saving);
+    busy = true; saveBtn(T.saving, true);
     call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: place ? place.total : '', card_no: rec.no ? rec.no : (place ? place.no : rec.no), is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
-      if (!res.ok) { say(String(res.error || 'not saved'), true); return; }
+      if (!res.ok) { saveBtn(T.notSaved); say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
       try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV2'); } catch (e) {}
-      say((res.linked ? T.linked : T.saved) + ' · ' + res.match_id + ' · ' + res.status);
+      saveBtn(res.linked ? T.linkedShort : T.saved);
+      if (statusText && !statusBad) say('');   // the button says it now, not the line under it
       if (nextHref) { try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (e) {} location.href = nextHref; }
     });
   }

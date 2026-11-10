@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.60.2
+
+Private builds only:
+- StarScope logger: the save button reads Save (was Looks right, save). Pressing it shows Saving… then Saved (Linked for another version of a match already logged) on the button itself, back to Save after 3 seconds, instead of a line of text under the buttons. If it fails the button reads Not saved and the reason stays under the buttons.
+
 ## 2.60.1
 
 Private builds only:
