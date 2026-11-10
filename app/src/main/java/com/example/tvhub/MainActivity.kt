@@ -6856,7 +6856,8 @@ class MainActivity : Activity() {
             }
             if (tries > 120) clearInterval(timer);
           }, 500);
-          setInterval(function() { if (bar && !document.hidden) refresh(); }, 500);
+          // Keep the bar against the picture even when the page shifts later (fit only moves it when there is a gap).
+          setInterval(function() { if (bar && !document.hidden) { fit(); refresh(); } }, 500);
           window.addEventListener('resize', fit);
         })();
     """.trimIndent()
@@ -10428,7 +10429,7 @@ class MainActivity : Activity() {
             val b = fsIconSpec[id] ?: barIcon(id, null)
             BarIconDrawable(b, if (tv.isFocused) gold else if (b.off) 0xFF5A6472.toInt() else Color.WHITE, px)
         }
-        d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
+        if (d.intrinsicWidth > 0) d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)   // the telescope sets its own
         tv.setCompoundDrawables(d, null, null, null)
     }
 
@@ -10660,7 +10661,7 @@ class MainActivity : Activity() {
             "back" -> BarIcon("back", skipShort)
             "fwd" -> BarIcon("fwd", skipShort)
             "mute" -> BarIcon(if (j != null && j.optDouble("vol", 1.0) <= 0.0) "muted" else "mute")
-            "cc" -> if (j?.optBoolean("ppv") == true) BarIcon("cc", if (j.optString("lang") == "en") "EN" else "JA") else BarIcon("cc", "CC", ccMode != 0)
+            "cc" -> if (j?.optBoolean("ppv") == true) BarIcon("cc", if (j.optString("lang") == "en") "EN" else "JA") else BarIcon("cc", when (ccMode) { 1 -> "EN"; 2 -> "JA"; else -> "CC" }, ccMode != 0)   // the box names the language when on
             "quality" -> {
                 val q = barLabel("quality", j)
                 BarIcon("gear", if (q == tr("Auto", "自動")) "A" else q.removeSuffix("p"))
@@ -10820,6 +10821,7 @@ class MainActivity : Activity() {
 
     private fun cycleCc() {
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
+        showFsCcHint()
         fsSetIcon(fsBtnCc, "cc", null)
         // The player's own captions always go off: ours replace them (and are shown or hidden below).
         playerCommand("ccoff", 0)
@@ -10830,6 +10832,26 @@ class MainActivity : Activity() {
         } else {
             ccStart()
         }
+    }
+
+    // Above the bar for a moment after the captions button is pressed: every choice, the current one in gold.
+    private fun showFsCcHint() {
+        val tv = fsSkipHint ?: return
+        val sb = android.text.SpannableStringBuilder()
+        sb.append(tr("Captions   ", "字幕   "))
+        listOf(0 to tr("Off", "オフ"), 1 to "English", 2 to "日本語").forEach { (mode, name) ->
+            val start = sb.length
+            sb.append(if (mode == ccMode) "[ $name ]" else " $name ")
+            if (mode == ccMode) {
+                sb.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor("#F4C242")), start, sb.length, 0)
+                sb.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), start, sb.length, 0)
+            }
+            sb.append("  ")
+        }
+        tv.text = sb
+        tv.visibility = View.VISIBLE
+        handler.removeCallbacks(fsSkipHintHide)
+        handler.postDelayed(fsSkipHintHide, 2500)
     }
 
     private val ccHideNote = Runnable { if (ccMode == 0) ccView?.visibility = View.GONE }
@@ -11687,7 +11709,7 @@ class MainActivity : Activity() {
                         if (event.action == KeyEvent.ACTION_DOWN) {
                             if (onSkip) {
                                 skipStep(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) 1 else -1)
-                                for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") btn.text = barLabel(id, null)
+                                for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") fsSetIcon(btn, id, null)
                                 showFsSkipHint()
                                 fullScreenInteraction()
                             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {

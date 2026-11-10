@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.2
+
+- Full screen bar: the telescope (Index) shows again, and the skip buttons no longer show "-30s" / "+30s" text beside their icons after the skip size changes.
+- Captions button: the box reads EN or JA while those captions are on (CC when off or showing the player's own), and pressing it shows every choice above the bar for a moment with the current one in gold: Off, English, 日本語.
+- The bar under the picture keeps checking that it sits right against the picture, so a page that moves after it has loaded no longer leaves a gap.
+
 ## 2.59.1
 
 - Community menu: the Top 5 is now Most Favorited, all time (was Most Watched), and View all opens the all-time Most Favorited chart.
