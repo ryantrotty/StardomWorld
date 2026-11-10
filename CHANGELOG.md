@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.9
+
+Private builds only:
+- Under the player bar, a few lines of measurements for now: what is on screen just above the bottom of the player (where the strip shows) and the boxes around the player, to photograph.
+
 ## 2.59.8
 
 - Video page: the whole picture shows. The site's box around the player is shorter than the player and was cutting off its bottom; it no longer hides any of it, and the control bar sits right under the full picture (moving down when it needs to, not only up).
