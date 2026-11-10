@@ -238,7 +238,8 @@
       var link = box.querySelector('a[href*="/contents/"], a[href*="/set/"]') || el.closest('a[href*="/contents/"], a[href*="/set/"]') || el.querySelector('a[href*="/contents/"], a[href*="/set/"]');
       if (!link) continue;
       var href = absUrl(link.getAttribute('href') || link.href || '');
-      var m = href.match(/(?:contents|set)\/(\d+)/);
+      // A video inside a set links as /set/<set>/contents/<video>: the video is what was chosen, not the set.
+      var m = href.match(/contents\/(\d+)/) || href.match(/set\/(\d+)/);
       if (!m) continue;
       var bg = '';
       var th = box.querySelector('[style*="background-image"]') || (box.style && box.style.backgroundImage ? box : null);
@@ -292,7 +293,7 @@
     if (f && f.isConnected) { try { f.focus({ preventScroll: true }); } catch (e) { try { f.focus(); } catch (e2) {} } }
   }
   function popBtns() { return pop ? Array.prototype.slice.call(pop.querySelectorAll('.tv-fpb')) : []; }
-  function kindFor(info) { return /\/set\/\d+/.test(info.href) ? 's' : 'm'; }
+  function kindFor(info) { return /\/set\/\d+/.test(info.href) && !/\/contents\/\d+/.test(info.href) ? 's' : 'm'; }   // a single video in a set is a match
   function popFill(mode) {
     var info = popInfo, d = load(), h = '<div class="tv-fpp-t">' + esc(info.title) + '</div>';
     if (mode === 'name') {

@@ -134,7 +134,7 @@
   function tabsHtml() {
     if (!CATS.length) return '';
     var allOn = !curMt && !otherFilters;
-    var h = '<div class="wr-tabs">' + '<a class="wr-tab' + (allOn ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="">' + esc(T('All Matches', 'すべての試合')) + '</a>';
+    var h = '<div class="wr-tabs" data-scope="w" data-scope-a="' + esc(W.name) + '" data-scope-b="' + esc(W.search) + '">' + '<a class="wr-tab' + (allOn ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="">' + esc(T('All Matches', 'すべての試合')) + '</a>';
     CATS.forEach(function(x) { h += '<a class="wr-tab' + (curMt === x.id && !otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrtab="' + esc(x.id) + '">' + esc(isJa() && x.ja ? x.ja : x.name) + '</a>'; });
     return h + '<a class="wr-tab wr-tab-more' + (otherFilters ? ' wr-tab-on' : '') + '" tabindex="0" data-wrmore="1">' + esc(T('More', '詳細')) + ' ▾</a></div>';
   }
@@ -349,7 +349,7 @@
     try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
   }
   window.addEventListener('keydown', function(e) {
-    if (!root || menuOpen()) return;
+    if (!root || menuOpen() || document.getElementById('tv-fp-pop')) return;   // the video options pop-up has its own keys
     var k = e.keyCode, ae = document.activeElement;
     var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
     if (ae && root.contains(ae)) {

@@ -609,6 +609,7 @@ class MainActivity : Activity() {
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
+    private val screenMaySleep = Runnable { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
     private var density = 1f
 
     private var cursorMode = false
@@ -2028,7 +2029,7 @@ class MainActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // The screen is kept on only while a video plays (assets/keepawake.js); otherwise Google TV's ambient mode can start.
         metrics = Metrics(this)
         density = resources.displayMetrics.density
         // The schedule refresh runs from onResume, which always follows onCreate.
@@ -3166,6 +3167,17 @@ class MainActivity : Activity() {
             }
         }
 
+        // Playback heartbeat from assets/keepawake.js, every 10 seconds while a video plays. The screen stays on until
+        // 30 seconds after the last one, then the TV's own screensaver (ambient mode) can take over when it is due.
+        @android.webkit.JavascriptInterface
+        fun stillPlaying() {
+            this@MainActivity.runOnUiThread {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                handler.removeCallbacks(screenMaySleep)
+                handler.postDelayed(screenMaySleep, 30_000)
+            }
+        }
+
         // Video index log (private builds with branding-private/video_index.properties; see docs/VIDEO_INDEX_LOG.md).
         // The page script hands over the record it read; the log address and key stay here, never in the page.
         // A video is sent again only when what was read has changed (or after 30 days), at most 300 sends a day.
@@ -3249,6 +3261,11 @@ class MainActivity : Activity() {
         fun indexSync(reqId: String, payload: String) =
             sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose"), "__tvIndexReply")
 
+        // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
+        @android.webkit.JavascriptInterface
+        fun starCards(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_cards"), "__tvStarCardsReply")
+
         // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
         @android.webkit.JavascriptInterface
         fun indexPanel(open: Boolean) { indexPanelOpen = open }
@@ -3267,6 +3284,8 @@ class MainActivity : Activity() {
             Thread {
                 try {
                     body.put("key", BuildConfig.VIDEO_INDEX_KEY).put("device", favSyncDevice())
+                    // Your private build: proposals go straight into the library, no approval step.
+                    if (BuildConfig.VIDEO_INDEX_DRYRUN) body.put("owner", true)
                     val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
                     c.requestMethod = "POST"
                     c.doOutput = true
@@ -4359,7 +4378,8 @@ class MainActivity : Activity() {
 
               if (link) {
                 var href = link.getAttribute('href') || link.href || '';
-                var match = href.match(/(?:contents|set)\/(\d+)/);
+                // A video inside a set links as /set/<set>/contents/<video>: favourite the video, not the set.
+                var match = href.match(/contents\/(\d+)/) || href.match(/set\/(\d+)/);
                 if (match && match[1]) {
                   targetContentId = match[1];
                   targetCard = cardContainer;
@@ -10177,6 +10197,7 @@ class MainActivity : Activity() {
 
     private fun injectPageScripts(view: WebView) {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
+        view.evaluateJavascript(assetText("keepawake.js"), null)
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("ppv_host.js"), null)
             return
@@ -10208,6 +10229,7 @@ class MainActivity : Activity() {
         // First, so its key handler runs before every other one on the page.
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)

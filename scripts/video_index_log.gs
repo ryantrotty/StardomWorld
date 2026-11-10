@@ -31,7 +31,8 @@
  *   vi_lib     {}                                              approved names and lists; applies approved proposals first
  *   vi_get     {video}                                         the match this video belongs to, and who else is on that show
  *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides
- *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet
+ *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
+ *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
  */
 var SHEET = 'videos';
@@ -55,6 +56,7 @@ function doPost(e) {
   if (body.action === 'dbg_export') return out(dbgExport());
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
+  if (body.action === 'vi_cards') return out(viCards());
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -292,7 +294,7 @@ function dbgExport() {
 // ---- match index (2.45.0) -------------------------------------------------------------------------------------
 // Raw captures stay in "videos". These tabs hold reviewed data; every id is permanent and nothing is deleted.
 var VI = {
-  matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set'],
+  matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set', 'card_total'],
   match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
@@ -340,29 +342,39 @@ function viSet(name, row, fields) {
 }
 
 // A proposal set to "approved" in the sheet goes into the library the next time the library is read, then reads "applied".
+// Returns the new library id for each proposal it applied.
 function viApplyApproved() {
-  var now = new Date().toISOString();
+  var now = new Date().toISOString(), made = {};
   viRows('proposals').forEach(function(p) {
+    var made1 = '';
     if (p.status !== 'approved') return;
     if (p.type === 'new_talent') {
       var id = p.entity_id || viSlug(p.value);
       if (!id) id = 't' + p.proposal_id;
+      made1 = id;
       if (!viRows('talent').some(function(t) { return t.talent_id === id; })) viAppend('talent', [{ talent_id: id, name_en: p.value, search: p.value, status: 'guest', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_alias' && p.entity_id) {
+      made1 = p.entity_id;
       viAppend('aliases', [{ alias: p.value, normalized: viNorm(p.value), entity_type: 'talent', entity_id: p.entity_id, source: 'proposal', status: 'approved' }]);
     } else if (p.type === 'new_team') {
       // entity_id holds the partners, a|b, as the panel sent them.
-      viAppend('teams', [{ team_id: viSlug(p.value) || ('t' + p.proposal_id), name_en: p.value, member_ids: p.entity_id, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      made1 = viSlug(p.value) || ('t' + p.proposal_id);
+      viAppend('teams', [{ team_id: made1, name_en: p.value, member_ids: p.entity_id, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_option' && p.entity_id) {
-      viAppend('lists', [{ list: p.entity_id, value_id: viSlug(p.value) || ('o' + p.proposal_id), label_en: p.value, active: 'TRUE' }]);
+      made1 = viSlug(p.value) || ('o' + p.proposal_id);
+      viAppend('lists', [{ list: p.entity_id, value_id: made1, label_en: p.value, active: 'TRUE' }]);
     } else if (p.type === 'new_venue') {
       var ja = /[^\x00-\x7F]/.test(p.value);
-      viAppend('venues', [{ venue_id: viSlug(p.value) || ('v' + p.proposal_id), name_en: ja ? '' : p.value, name_ja: ja ? p.value : '', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      made1 = viSlug(p.value) || ('v' + p.proposal_id);
+      viAppend('venues', [{ venue_id: made1, name_en: ja ? '' : p.value, name_ja: ja ? p.value : '', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_faction') {
-      viAppend('factions', [{ faction_id: p.entity_id || viSlug(p.value), name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      made1 = p.entity_id || viSlug(p.value);
+      viAppend('factions', [{ faction_id: made1, name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else return;
     viSet('proposals', p._row, { status: 'applied', decided: now });
+    made[p.proposal_id] = made1;
   });
+  return made;
 }
 
 function viAction(b) {
@@ -384,12 +396,30 @@ function viAction(b) {
   if (b.action === 'vi_propose') {
     var type = String(b.type || ''), value = String(b.value || '').slice(0, 120);
     if (!/^new_(talent|alias|team|faction|option|venue)$/.test(type) || !value) return { ok: false, error: 'bad proposal' };
-    var dup = viRows('proposals').some(function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value) && (p.status === 'pending' || p.status === 'approved'); });
-    if (dup) return { ok: true, duplicate: true };
-    viAppend('proposals', [{ proposal_id: 'p' + Date.now(), time: new Date().toISOString(), type: type, value: value, entity_id: String(b.entity_id || '').slice(0, 300), video_id: String(b.video || ''), device: String(b.device || '').slice(0, 40), status: 'pending' }]);
-    return { ok: true, added: true };
+    // The owner's private build (the app adds owner, with the key) skips approval: the addition goes in now.
+    // Any other sender, as the public build will be, still waits for approval in the sheet.
+    var owner = b.owner === true, same = function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value); };
+    var dup = viRows('proposals').filter(function(p) { return same(p) && (p.status === 'pending' || p.status === 'approved' || (owner && p.status === 'applied')); })[0];
+    var pid = dup ? dup.proposal_id : 'p' + Date.now();
+    if (dup && !owner) return { ok: true, duplicate: true };
+    if (dup && dup.status === 'applied') return { ok: true, applied: true, id: viApplyIdOf(dup) };
+    if (dup) viSet('proposals', dup._row, { status: 'approved', note: 'owner build' });
+    else viAppend('proposals', [{ proposal_id: pid, time: new Date().toISOString(), type: type, value: value, entity_id: String(b.entity_id || '').slice(0, 300), video_id: String(b.video || ''), device: String(b.device || '').slice(0, 40), status: owner ? 'approved' : 'pending', note: owner ? 'owner build' : '' }]);
+    if (!owner) return { ok: true, added: true };
+    return { ok: true, applied: true, id: viApplyApproved()[pid] || '' };
   }
   return viSave(b);
+}
+
+// The library id an already-applied proposal made, found from its note.
+function viApplyIdOf(p) {
+  var note = 'proposal ' + p.proposal_id, hit = '';
+  if (p.type === 'new_alias') return p.entity_id;
+  var tab = { new_talent: ['talent', 'talent_id'], new_team: ['teams', 'team_id'], new_venue: ['venues', 'venue_id'], new_faction: ['factions', 'faction_id'] }[p.type];
+  if (tab) viRows(tab[0]).forEach(function(r) { if (r.note === note) hit = r[tab[1]]; });
+  if (!hit && p.type === 'new_talent') hit = p.entity_id || viSlug(p.value);
+  if (!hit && p.type === 'new_option') viRows('lists').forEach(function(l) { if (l.list === p.entity_id && viNorm(l.label_en) === viNorm(p.value)) hit = l.value_id; });
+  return hit;
 }
 
 function viKey(date, parts) {
@@ -486,7 +516,7 @@ function viSave(b) {
 
   var level = Math.max(1, Math.min(3, Number(m.level) || 1));
   var fields = { show_id: m.show_id == null ? '' : m.show_id, date: date, card_no: m.card_no == null ? '' : m.card_no, is_dark: m.is_dark ? 'TRUE' : 'FALSE',
-    result_type: resultType, winner_side: winner, level: level, status: pending ? 'needs_name' : 'reviewed', source: 'panel', device: device, updated: now };
+    card_total: Number(m.card_total) > 0 ? Number(m.card_total) : '', result_type: resultType, winner_side: winner, level: level, status: pending ? 'needs_name' : 'reviewed', source: 'panel', device: device, updated: now };
   if (fresh) {
     fields.date_set = m.date_manual ? 'manual' : '';
     var row = { match_id: id }; Object.keys(fields).forEach(function(k) { row[k] = fields[k]; });
@@ -495,6 +525,9 @@ function viSave(b) {
     var old = viRows('matches').filter(function(x) { return x.match_id === id; })[0];
     if (old) {
       if (Number(old.level) > level) { fields.level = old.level; level = Number(old.level); }
+      // A re-save from outside the set keeps the match's place on the card.
+      if (fields.card_no === '' && old.card_no !== '') fields.card_no = old.card_no;
+      if (fields.card_total === '' && old.card_total !== '') fields.card_total = old.card_total;
       // A date corrected by hand stays until it is changed by hand.
       if (old.date_set === 'manual' && !m.date_manual) fields.date = old.date;
       fields.date_set = m.date_manual ? 'manual' : (old.date_set === 'manual' ? 'manual' : '');
@@ -555,6 +588,67 @@ function viSave(b) {
   }
   viAppend('changes', log);
   return { ok: true, match_id: id, linked: linked, created: fresh, level: level, status: fields.status };
+}
+
+// What the private build's video cards show: names, event, block, round, match number, date. Never the result.
+function viCards() {
+  var label = {}, names = {}, parts = {}, tags = {}, m2 = {};
+  viRows('lists').forEach(function(l) { label[l.list + '/' + l.value_id] = { en: l.label_en, ja: l.label_ja || l.label_en }; });
+  viRows('talent').forEach(function(t) { names[t.talent_id] = { en: t.name_en, ja: t.name_ja || t.name_en }; });
+  viRows('participants').forEach(function(p) { (parts[p.match_id] = parts[p.match_id] || []).push(p); });
+  viRows('match_tags').forEach(function(t) { var o = tags[t.match_id] = tags[t.match_id] || {}; (o[t.tag_group] = o[t.tag_group] || []).push(t.tag_value); });
+  viRows('matches').forEach(function(m) { if (!m.merged_into) m2[m.match_id] = m; });
+  // What the site's search can see for each video: its titles and description.
+  var seen = {}, vsh = sheet(), vn = vsh.getLastRow();
+  if (vn > 1) {
+    var iT = COLS.indexOf('thumb'), iL = COLS.indexOf('lines'), iE = COLS.indexOf('title_en'), iJ = COLS.indexOf('title_ja');
+    vsh.getRange(2, 1, vn - 1, COLS.length).getValues().forEach(function(r) { seen[String(r[0])] = { text: viNorm([r[iE], r[iJ], r[iL]].join(' ')), th: r[iT] }; });
+  }
+  var keys = {}, words = {};
+  viRows('talent').forEach(function(t) { keys[t.talent_id] = [t.name_en, t.search, t.name_ja].filter(String).map(viNorm); words[t.talent_id] = viNorm(t.search || t.name_en); });
+  viRows('aliases').forEach(function(a) { if (a.entity_type === 'talent' && keys[a.entity_id]) keys[a.entity_id].push(a.normalized || viNorm(a.alias)); });
+  function people(list, text) {
+    var sides = [];
+    list.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(p) {
+      var w = words[p.talent_id];
+      (sides[p.side_no - 1] = sides[p.side_no - 1] || []).push([keys[p.talent_id] || [viNorm(p.billed_name)], !(w && text.indexOf(w) >= 0)]);
+    });
+    return sides.filter(Boolean);
+  }
+  function lab(g, v, lang) { var l = label[g + '/' + v]; return l ? l[lang] : v; }
+  function sideList(list, lang) {
+    var sides = [];
+    list.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(p) {
+      var n = names[p.talent_id]; (sides[p.side_no - 1] = sides[p.side_no - 1] || []).push(n ? n[lang] : p.billed_name);
+    });
+    return sides.filter(Boolean);
+  }
+  function kind(s, lang) {
+    var size = Math.max.apply(null, s.map(function(x) { return x.length; }));
+    if (s.length > 2) return lang === 'ja' ? s.length + 'WAY' : s.length + '-way match';
+    if (size === 1) return lang === 'ja' ? 'シングルマッチ' : 'Singles match';
+    if (size === 2) return lang === 'ja' ? 'タッグマッチ' : 'Tag team match';
+    return lang === 'ja' ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
+  }
+  function event(m, t, s, lang) {
+    if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
+    if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
+    return kind(s, lang);
+  }
+  function foot(t, lang) {
+    var f = [];
+    if (t.block) f.push(lab('block', t.block[0], lang));
+    if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
+    return f;
+  }
+  var map = {};
+  viRows('match_videos').forEach(function(v) {
+    var m = m2[v.match_id], p = parts[v.match_id];
+    if (!m || !p || !p.length) return;
+    var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
+    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en'), fj: foot(t, 'ja'), n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
+  });
+  return { ok: true, map: map };
 }
 
 // The compiled index. Ids and tags only, so it can go to public builds later. Results are a separate block, hidden unless asked for.

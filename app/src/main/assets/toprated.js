@@ -277,7 +277,7 @@
   function focusables() { return Array.prototype.slice.call(scroller.querySelectorAll('[tabindex="0"]')); }
   function rowOf(el) { return el.classList.contains('tp-row') ? el : el.parentNode; }
   window.addEventListener('keydown', function(e) {
-    if (!document.getElementById('tv-tp') || menuOpen()) return;
+    if (!document.getElementById('tv-tp') || menuOpen() || document.getElementById('tv-fp-pop')) return;   // the video options pop-up has its own keys
     var k = e.keyCode, ae = document.activeElement, list = focusables();
     var stop = function() { e.preventDefault(); e.stopImmediatePropagation(); };
     if (k === 13 || k === 23) {

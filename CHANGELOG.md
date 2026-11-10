@@ -2,6 +2,52 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.58.2
+
+- Video options pop-up on wrestler pages: Up and Down move through its buttons again instead of being taken by the page behind it. The same fix is on tag team, Top Rated, championship lineage and StarScope results pages.
+
+## 2.58.1
+
+- Video options on a card in a show's video list (under the player): Add to Favorites now adds that video to the site's Favorite Videos (it was sending the show's number instead), and the menu offers Favorite Matches for a single video instead of Favorite Shows.
+
+## 2.58.0
+
+- Google TV's own screensaver (ambient mode) can now start while the app is idle. The app keeps the screen on only while a video or PPV stream plays, and for 30 seconds after it stops or pauses; after that the TV's usual screensaver timer applies.
+
+## 2.57.0
+
+Private builds only:
+- Logger additions (+ and Propose new) skip approval: the name, venue, team, faction or option goes into the library at once and is filled in where you asked for it. They are still recorded in `proposals`, marked applied with the note "owner build". Other senders still wait for approval.
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.56.2
+
+Private builds only:
+- StarScope results: Left from the first column opens the slide-out menu, and the menu keeps its own keys while open.
+
+## 2.56.1
+
+Private builds only:
+- StarScope button: an older saved match list no longer hides it for up to 30 minutes, and a page that keeps changing can no longer hold it back.
+
+## 2.56.0
+
+Private builds only:
+- StarScope button (the telescope) at the end of the quick filter bar on wrestler and tag team pages. It appears only when you have logged matches the site's search would miss, and opens them newest first in the StarScope card design. Team results need both partners on the same side.
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.55.1
+
+Private builds only:
+- Video cards across the app are back to the site's titles and date badges. The StarScope card design is kept for the StarScope filtered results only.
+
+## 2.55.0
+
+Private builds only:
+- StarScope video cards: a logged video shows its event, the wrestlers, then block, round, match number and date, instead of the site's title. Results are never shown; videos not logged are unchanged.
+- The Index panel saves a video's place in its set, for Match 3/10.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.54.1
 
 Private builds only:
