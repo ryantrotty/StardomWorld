@@ -224,3 +224,11 @@ Index panel bell (2.52.0): first button in the tab row, first focus, gold outlin
 StarScope video cards (2.55.0, private builds, assets/starcards.js; from 2.55.1 for the StarScope filtered results only, not normal pages): below the picture, no overlay on it. Event 12/800 gold uppercase with 1 px spacing; names 18/800, each later side on a new line beginning vs; a 1 px #2A323C rule; a 13/600 #C9D2DC line with block, round and Match x/y, with the date 13/700 gold on the right. Cards keep their focus look. No results.
 
 StarScope filter (2.56.0, private builds): icon-only telescope at the end of the wrestler and tag team quick filter rows, in that row's chip style, shown only when there are results. Results page `/mypage?tvscope=w|t`: navy, 30/900 heading with the telescope, four-across StarScope cards, look C focus, newest first.
+
+Player controls (2.59.0): every control-bar button (under the picture, full screen and PPV) is an icon with no box or outline: white, #F4C242 when focused, #5A6472 when not available. Icons are drawn from one set (assets/baricons.js for the page bars, BarIconDrawable for the full screen bar), 28 px in a 44 px button; numbers sit inside the skip arrows and settings show as a small badge at the top right. Order: Previous, Back, Play, Forward, Next, then a 14 px gap and the settings. Previous and Next stay in place and grey out instead of hiding; PPV has neither. Exception to look B Fill: the bar's progress fill stays #FFB347.
+
+Full screen controls backing (2.59.3): a vertical fade from clear to rgba(0,0,0,.88), 64 dp of it above the controls, replacing the solid #CC000000 band. Menu Wrestlers PAST tab (2.59.3): no spotlight, names in five columns across the full 1000 shelf width; CURRENT keeps three columns and the spotlight.
+
+Player bar height (2.59.4): 52 px under the picture (was 64) now that the buttons are icons.
+
+Player bar colour (2.59.5): solid #020305 (what 80 % black gave over the navy page), also used for the 40 px extension behind the bottom of the picture and the player frame's own background. Exception to the page navy, so the bar and picture meet with no page colour between them.

@@ -110,7 +110,7 @@ class MainActivity : Activity() {
 
         // The player control bar exists twice (a native overlay in full screen, an in-page bar under the player).
         // Both are built from this one list, from barLabel() and from barAction() so they cannot drift apart.
-        private val BAR_IDS = listOf("play", "back", "fwd", "mute", "cc", "quality", "speed", "full")
+        private val BAR_IDS = listOf("prev", "back", "play", "fwd", "next", "mute", "cc", "quality", "speed", "full")
         // Not offered in the bar under the picture: the app draws its own EN / 日本語 captions in full screen only.
         private val BAR_FULLSCREEN_ONLY = setOf("cc")
         private const val BAR_ACCENT = "#FFB347"
@@ -3531,6 +3531,15 @@ class MainActivity : Activity() {
         fun wrestlerSpot(name: String): String = wrestlerPhoto(name)
 
         // In-page control bar: the page asks for labels and sends button presses here.
+        // Icons for the in-page bars (assets/baricons.js draws them): what each button shows right now.
+        @android.webkit.JavascriptInterface
+        fun barIcons(statusJson: String): String {
+            val j = try { if (statusJson.isEmpty()) null else org.json.JSONObject(statusJson) } catch (_: Exception) { null }
+            val o = org.json.JSONObject()
+            for (id in BAR_IDS) { val b = barIcon(id, j); o.put(id, org.json.JSONObject().put("k", b.k).put("t", b.t).put("on", b.on).put("off", b.off)) }
+            return o.toString()
+        }
+
         @android.webkit.JavascriptInterface
         fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY } + (if (videoIndexOn()) listOf("index") else emptyList())).toString()
 
@@ -3993,6 +4002,26 @@ class MainActivity : Activity() {
             }
           }
 
+          // The videos before and after this one, from the list already on the page (nothing is fetched), so the bar's
+          // Previous and Next buttons can grey out at once. Same list as the automatic next video below.
+          function neighbors() {
+            var list = carouselList(), pos = indexIn(list, location.href);
+            if (pos < 0) {
+              var stored = null;
+              try { stored = JSON.parse(sessionStorage.getItem('tvAutoNextList') || 'null'); } catch (e) {}
+              if (stored && stored.length) { var sp = indexIn(stored, location.href); if (sp >= 0) { list = stored; pos = sp; } }
+            }
+            return { list: list, prev: pos > 0 ? list[pos - 1] : '', next: pos >= 0 ? (list[pos + 1] || '') : '' };
+          }
+          window.__tvNeighbors = function() { var n = neighbors(); return { prev: !!n.prev, next: !!n.next }; };
+          window.__tvGoNeighbor = function(dir) {
+            var n = neighbors(), to = dir < 0 ? n.prev : n.next;
+            if (!to) return false;
+            try { sessionStorage.setItem('tvAutoNextList', JSON.stringify(n.list)); } catch (e) {}
+            location.href = to;
+            return true;
+          };
+
           function onEnded() {
             liveEnd();
             if (window.__tvAutoNextFired) return;
@@ -4312,7 +4341,9 @@ class MainActivity : Activity() {
               for (var i = 0; i < tr.length; i++) { if (tr[i].mode === 'showing') cc = tr[i].label || tr[i].language; }
               var qs = r[6] || [], ql = '', qn = qs.length;
               for (var k = 0; k < qs.length; k++) { if (qs[k].active) ql = qs[k].label || qs[k].id; }
-              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length, q: ql, nq: qn });
+              var nb = {};
+              try { nb = window.__tvNeighbors ? window.__tvNeighbors() : {}; } catch (e) {}
+              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length, q: ql, nq: qn, pv: !!nb.prev, nx: !!nb.next });
             }).catch(function() {});
           };
 
@@ -5332,6 +5363,18 @@ class MainActivity : Activity() {
                 });
               });
             } catch (e) {}
+            // Private builds (2.59.3): everyone the match index knows who is not a current wrestler (past and guest
+            // names added through StarScope), from the logger's saved library on this TV.
+            try {
+              if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
+                var lib = (JSON.parse(localStorage.getItem('tvVixLibV3') || 'null') || {}).lib || {};
+                (lib.talent || []).forEach(function(t) {
+                  if (!t || !t.en || t.st === 'current' || have[t.en.toLowerCase()] || (t.s && have[String(t.s).toLowerCase()])) return;
+                  have[t.en.toLowerCase()] = 1;
+                  out.push([t.en, wrPath(t.s || t.en), t.ja || t.en]);
+                });
+              }
+            } catch (e) {}
             return out;
           }
           function wrestlers(list) { return list.map(function(n) { return [n[0], searchPath(n[0]), n[1]]; }); }
@@ -5967,7 +6010,8 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
                 '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
                 '<div class="tv-shl-wl" data-wbody="0" style="column-count:' + (spot ? 3 : 4) + ';column-gap:10px;">' + rowsHtml(crow) + '</div>' +
-                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:3;column-gap:10px;">' + rowsHtml(prow) + '</div>';
+                // PAST (2.59.3): no spotlight (past wrestlers have no photos), so its names spread over five columns.
+                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:' + (spot ? 5 : 4) + ';column-gap:10px;">' + rowsHtml(prow) + '</div>';
               if (spot) {
                 w = 1000;
                 h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';
@@ -6054,6 +6098,7 @@ class MainActivity : Activity() {
                 var show = function() {
                   Array.prototype.forEach.call(wbs, function(bd, bi) { bd.style.display = bi === ti ? '' : 'none'; });
                   Array.prototype.forEach.call(wts, function(u, ui) { u.classList.toggle('tv-wtab-on', ui === ti); });
+                  var sp = shelfEl.querySelector('.tv-wsp'); if (sp) sp.style.display = ti === 1 ? 'none' : '';   // PAST: no spotlight
                 };
                 t.addEventListener('focus', show);
                 t.addEventListener('click', function(ev) { ev.preventDefault(); show(); });
@@ -6591,16 +6636,17 @@ class MainActivity : Activity() {
 
           var st = document.createElement('style');
           st.textContent =
-            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:64px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0;background:#020305;position:absolute;z-index:3;border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
             '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
             '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
             '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
-            '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:6px;align-items:center;}' +
-            '#tv-pbar button.tv-pbtn{margin:0;padding:8px 12px;border-radius:' + RADIUS + ';background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.53);color:#ffffff;font:700 15px Arial,Helvetica,sans-serif;white-space:nowrap;cursor:pointer;outline:none;}' +
-            '#tv-pbar button.tv-pbtn:focus{background:' + ACCENT + ';border-color:' + ACCENT + ';color:' + DARK + ';}' +
-            '#tv-pbar button.tv-pbtn[data-id="index"]{padding:4px 10px;line-height:0;}' +
+            '#tv-pbar .tv-pb-btns{flex:0 0 auto;display:flex;gap:2px;align-items:center;}' +
+            // Icon buttons (2.59.0): no box; the icon is white, gold when focused, grey when not available.
+            '#tv-pbar button.tv-pbtn{margin:0;padding:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;line-height:0;border-radius:0;background:none !important;border:0 !important;box-shadow:none !important;outline:none !important;color:#ffffff;cursor:pointer;}' +
+            '#tv-pbar button.tv-pbtn.tv-off{color:#5A6472;}' +
+            '#tv-pbar button.tv-pbtn:focus{color:#F4C242;}' +
+            '#tv-pbar button.tv-pbtn[data-id="mute"]{margin-left:14px;}' +
             '#tv-pbar .tv-tel-s{fill:#F4C242;}' +
-            '#tv-pbar button.tv-pbtn:focus .tv-tel-s{fill:' + DARK + ';}' +
             '#tv-pskip{position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(0,0,0,0.88);border:2px solid rgba(255,255,255,0.25);font:700 15px Arial,Helvetica,sans-serif;color:#c9d2dc;}' +
             '#tv-pskip div{padding:5px 14px;border-radius:8px;white-space:nowrap;text-align:center;}' +
             '#tv-pskip div.on{background:' + ACCENT + ';color:' + DARK + ';}' +
@@ -6610,7 +6656,7 @@ class MainActivity : Activity() {
           function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
           function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
 
-          var bar = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
+          var bar = null, spacer = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
 
           var buildTries = 0;
           function build() {
@@ -6621,6 +6667,7 @@ class MainActivity : Activity() {
             var sec = document.querySelector('.box-related-content');
             if (!sec && ++buildTries < 8) return false;
             f.setAttribute('tabindex', '-1');   // the frame itself is never a keyboard stop
+            f.style.background = '#020305';     // any edge the picture leaves inside the frame is black, like the bar
             // No thin outlines around the player or its wrappers.
             var n = f, depth = 0;
             while (n && n !== document.body && depth < 6) { n.classList.add('tv-nb'); n = n.parentElement; depth++; }
@@ -6629,11 +6676,14 @@ class MainActivity : Activity() {
             var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
             ids.forEach(function(id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
             bar.innerHTML = html + '</span>';
-            if (sec && sec.parentElement) sec.parentElement.insertBefore(bar, sec);
-            else {
-              var host = f.parentElement;
-              host.insertAdjacentElement('afterend', bar);
-            }
+            // The page keeps a bar-sized space where the bar used to go; the bar itself sits on the page body, placed
+            // exactly under the picture (2.59.11). Inside the site's boxes its top was cut off by one of them.
+            spacer = document.createElement('div');
+            spacer.id = 'tv-pbar-sp';
+            spacer.style.cssText = 'height:52px;margin:0 0 14px 0;';
+            if (sec && sec.parentElement) sec.parentElement.insertBefore(spacer, sec);
+            else f.parentElement.insertAdjacentElement('afterend', spacer);
+            document.body.appendChild(bar);
             timeEl = bar.querySelector('.tv-pb-time');
             fillEl = bar.querySelector('.tv-pb-fill');
             Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
@@ -6658,13 +6708,58 @@ class MainActivity : Activity() {
             var r = f.getBoundingClientRect();
             if (r.width < 50) return;
             bar.style.width = Math.round(r.width) + 'px';
-            // Close the gap the player's wrapper leaves under the picture.
-            bar.style.marginTop = '0px';
-            var gap = bar.getBoundingClientRect().top - r.bottom;
-            bar.style.marginTop = (gap > 1 ? -Math.round(gap) : 0) + 'px';
-            bar.style.marginLeft = '0px';
-            var bl = bar.getBoundingClientRect().left;
-            bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';
+            // Where the picture ends: the frame's bottom, or higher when the player letterboxes the video inside a
+            // taller frame (its own black band under the picture would otherwise show as a gap above the bar).
+            var bottom = r.bottom, vw = f.__tvVW || 0, vh = f.__tvVH || 0;
+            if (vw > 0 && vh > 0) { var ph = r.width * vh / vw; if (ph < r.height - 1) bottom = r.top + (r.height + ph) / 2; }
+            else if (f.__tvPlayer && !f.__tvAsk) {
+              f.__tvAsk = true;
+              try { Promise.all([f.__tvPlayer.getVideoWidth(), f.__tvPlayer.getVideoHeight()]).then(function(d) { f.__tvVW = d[0]; f.__tvVH = d[1]; }).catch(function() {}); } catch (e) {}
+            }
+            // The player's wrapper on the site is shorter than the frame and cuts its bottom off. Let the whole picture
+            // show (2.59.8): any box around the frame that would hide part of it stops hiding. If one still does, the
+            // bar lines up with where the picture is cut (2.59.7) rather than sitting under the hidden part.
+            for (var a = f.parentElement, k = 0; a && a !== document.body && k < 8; a = a.parentElement, k++) {
+              var cs = getComputedStyle(a);
+              if (cs.overflow === 'visible' && cs.overflowY === 'visible') continue;
+              var ab = a.getBoundingClientRect().bottom;
+              if (ab >= bottom - 1) continue;
+              a.style.setProperty('overflow', 'visible', 'important');
+              cs = getComputedStyle(a);
+              if (cs.overflow !== 'visible' || cs.overflowY !== 'visible') bottom = ab;
+            }
+            // The bar: on the page body, right under the picture, as wide as it.
+            var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+            bar.style.left = Math.round(r.left + sx) + 'px';
+            bar.style.top = Math.round(bottom + sy) + 'px';
+            // The space it leaves in the page starts where the bar does, so the rows below move with it.
+            if (spacer) {
+              spacer.style.marginTop = '0px';
+              var top0 = spacer.getBoundingClientRect().top, gap = top0 - bottom;
+              spacer.style.marginTop = (Math.abs(gap) > 1 ? -Math.round(gap) : 0) + 'px';
+            }
+            // Private builds, for now (2.59.9): what is on screen just above the bottom of the frame, where the strip
+            // shows, and the boxes around the frame, to photograph.
+            try {
+              if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
+                var dbg = document.getElementById('tv-pbar-dbg');
+                if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;margin:0 0 10px 0;white-space:pre-wrap;'; (spacer || bar).parentElement.insertBefore(dbg, (spacer || bar).nextSibling); }
+                var nm = function(e) { if (!e || !e.tagName) return '?'; var c = typeof e.className === 'string' ? e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''; return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (c ? '.' + c : ''); };
+                var lines = [];
+                [3, 8, 14].forEach(function(dn) {
+                  var y = Math.round(r.bottom + dn), st = document.elementsFromPoint(Math.round(r.left + r.width / 2), y).slice(0, 3);
+                  lines.push('below the picture +' + dn + ': ' + st.map(function(e) { var g = getComputedStyle(e); return nm(e) + ' [' + g.backgroundColor + ' z' + g.zIndex + ' ' + g.position + ']'; }).join('  >  '));
+                });
+                var ch = [];
+                for (var q = f, i = 0; q && q !== document.body && i < 7; q = q.parentElement, i++) {
+                  var qr = q.getBoundingClientRect(), qs = getComputedStyle(q);
+                  ch.push(nm(q) + ' ' + Math.round(qr.top) + '-' + Math.round(qr.bottom) + (qs.overflow !== 'visible' ? ' ov:' + qs.overflow : '') + (qs.clipPath && qs.clipPath !== 'none' ? ' clip' : '') + (qs.transform !== 'none' ? ' tf' : ''));
+                }
+                lines.push('frame ' + Math.round(r.top) + '-' + Math.round(r.bottom) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' · video ' + (vw ? vw + 'x' + vh : '?') + ' · bar ' + Math.round(bar.getBoundingClientRect().top) + ' margin ' + bar.style.marginTop + ' · src ' + String(f.getAttribute('src') || '').replace(/^https?:\/\//, '').slice(0, 90));
+                lines.push('boxes: ' + ch.join('  <  '));
+                dbg.textContent = lines.join('\n');
+              }
+            } catch (e) {}
           }
 
           function fmt(sec) {
@@ -6679,7 +6774,16 @@ class MainActivity : Activity() {
             var json = window.__tvStatusJson || '';
             var labels = {};
             try { labels = JSON.parse(AndroidHost.barLabels(json)); } catch (e) {}
-            ids.forEach(function(id) { if (id !== 'index' && labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+            var icons = {};
+            try { icons = JSON.parse(AndroidHost.barIcons(json)); } catch (e) {}
+            ids.forEach(function(id) {
+              var b = btns[id], ic = icons[id];
+              if (labels[id] && b.getAttribute('aria-label') !== labels[id]) b.setAttribute('aria-label', labels[id]);
+              if (!ic || !window.__tvBarSvg) return;
+              var key = ic.k + '|' + ic.t + '|' + ic.on;
+              if (b.__tvIcon !== key) { b.__tvIcon = key; b.innerHTML = window.__tvBarSvg(ic, 28); }
+              b.classList.toggle('tv-off', !!ic.off);
+            });
             if (json) {
               try {
                 var j = JSON.parse(json);
@@ -6815,7 +6919,8 @@ class MainActivity : Activity() {
             }
             if (tries > 120) clearInterval(timer);
           }, 500);
-          setInterval(function() { if (bar && !document.hidden) refresh(); }, 500);
+          // Keep the bar against the picture even when the page shifts later (fit only moves it when there is a gap).
+          setInterval(function() { if (bar && !document.hidden) { fit(); refresh(); } }, 500);
           window.addEventListener('resize', fit);
         })();
     """.trimIndent()
@@ -10199,6 +10304,7 @@ class MainActivity : Activity() {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         view.evaluateJavascript(assetText("keepawake.js"), null)
         if (isPpvFlow(view.url)) {
+            view.evaluateJavascript(assetText("baricons.js"), null)
             view.evaluateJavascript(assetText("ppv_host.js"), null)
             return
         }
@@ -10245,6 +10351,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
+        view.evaluateJavascript(assetText("baricons.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
         view.evaluateJavascript(assetText("setcard.js"), null)
@@ -10302,6 +10409,7 @@ class MainActivity : Activity() {
     private var fsBtnSpeed: android.widget.TextView? = null
     private var fsBtnQuality: android.widget.TextView? = null
     private val fsBtns = LinkedHashMap<String, android.widget.TextView>()
+    private val fsIconSpec = HashMap<String, BarIcon>()
     private var barQuality: String = ""
     private var fsDebugView: android.widget.TextView? = null
 
@@ -10374,33 +10482,39 @@ class MainActivity : Activity() {
         return d
     }
 
-    private fun fsButton(label: String, onClick: () -> Unit): android.widget.TextView {
+    // One full screen bar button: an icon only, no box. White, gold (#F4C242) when focused, grey when not available.
+    private fun fsPaintIcon(tv: android.widget.TextView) {
+        val id = tv.tag as? String ?: return
+        val px = (28 * density).toInt()
+        val gold = Color.parseColor("#F4C242")
+        val d = if (id == "index") telescopeDrawable((30 * density).toInt(), if (tv.isFocused) gold else Color.WHITE, gold)
+        else {
+            val b = fsIconSpec[id] ?: barIcon(id, null)
+            BarIconDrawable(b, if (tv.isFocused) gold else if (b.off) 0xFF5A6472.toInt() else Color.WHITE, px)
+        }
+        if (d.intrinsicWidth > 0) d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)   // the telescope sets its own
+        tv.setCompoundDrawables(d, null, null, null)
+    }
+
+    private fun fsSetIcon(tv: android.widget.TextView?, id: String, j: org.json.JSONObject?) {
+        tv ?: return
+        if (id != "index") fsIconSpec[id] = barIcon(id, j)
+        tv.contentDescription = if (id == "index") tr("Index this match", "この試合を登録") else barLabel(id, j)
+        fsPaintIcon(tv)
+    }
+
+    private fun fsButton(id: String, onClick: () -> Unit): android.widget.TextView {
         val tv = android.widget.TextView(this)
-        tv.text = label
-        tv.setTextColor(Color.WHITE)
-        tv.textSize = 15f
-        tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
+        tv.text = ""
         tv.gravity = Gravity.CENTER
-        val padH = (12 * density).toInt()
-        val padV = (8 * density).toInt()
-        tv.setPadding(padH, padV, padH, padV)
+        val pad = (8 * density).toInt()
+        tv.setPadding(pad, pad, pad, pad)
+        tv.background = null
         tv.isFocusable = true
         tv.isClickable = true
-        fun paint(focused: Boolean) {
-            val d = android.graphics.drawable.GradientDrawable()
-            d.cornerRadius = BAR_RADIUS_DP * density
-            if (focused) {
-                d.setColor(Color.parseColor(BAR_ACCENT))
-                tv.setTextColor(Color.parseColor(BAR_TEXT_ON_ACCENT))
-            } else {
-                d.setColor(0x66000000)
-                d.setStroke((2 * density).toInt(), 0x88FFFFFF.toInt())
-                tv.setTextColor(Color.WHITE)
-            }
-            tv.background = d
-        }
-        paint(false)
-        tv.setOnFocusChangeListener { _, focused -> paint(focused) }
+        tv.tag = id
+        fsSetIcon(tv, id, null)
+        tv.setOnFocusChangeListener { _, _ -> fsPaintIcon(tv) }
         tv.setOnClickListener {
             fsDebugView?.visibility = View.GONE
             onClick()
@@ -10413,9 +10527,13 @@ class MainActivity : Activity() {
     private fun buildFsOverlay(): android.widget.LinearLayout {
         val o = android.widget.LinearLayout(this)
         o.orientation = android.widget.LinearLayout.VERTICAL
-        o.setBackgroundColor(0xCC000000.toInt())
+        // Clear at the top, fading to dark behind the controls, so the picture shows through above them (2.59.3).
+        o.background = android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(0x00000000, 0x99000000.toInt(), 0xE0000000.toInt())
+        )
         val pad = (28 * density).toInt()
-        o.setPadding(pad, (14 * density).toInt(), pad, (14 * density).toInt())
+        o.setPadding(pad, (64 * density).toInt(), pad, (14 * density).toInt())
 
         val hint = android.widget.TextView(this)
         hint.setTextColor(Color.WHITE)
@@ -10466,7 +10584,7 @@ class MainActivity : Activity() {
             )
         }
         for (id in BAR_IDS) {
-            val b = fsButton(barLabel(id, null)) { barAction(id) }
+            val b = fsButton(id) { barAction(id) }
             when (id) {
                 "play" -> fsBtnPlay = b
                 "mute" -> fsBtnMute = b
@@ -10476,15 +10594,11 @@ class MainActivity : Activity() {
             }
             fsBtns[id] = b
             add(b)
+            // A little more room between the video buttons (previous to next) and the settings.
+            if (id == "next") (b.layoutParams as android.widget.LinearLayout.LayoutParams).rightMargin = (20 * density).toInt()
         }
         if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()) {
-            val b = fsButton("") { barAction("index") }
-            val iconPx = (22 * density).toInt()
-            fun icon(focused: Boolean) = telescopeDrawable(iconPx, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.WHITE, if (focused) Color.parseColor(BAR_TEXT_ON_ACCENT) else Color.parseColor("#F4C242"))
-            b.setCompoundDrawables(icon(false), null, null, null)
-            val paint = b.onFocusChangeListener
-            b.setOnFocusChangeListener { v, focused -> paint?.onFocusChange(v, focused); b.setCompoundDrawables(icon(focused), null, null, null) }
-            b.contentDescription = tr("Index this match", "この試合を登録")
+            val b = fsButton("index") { barAction("index") }
             fsBtns["index"] = b
             add(b)
         }
@@ -10518,6 +10632,8 @@ class MainActivity : Activity() {
         val o = fsOverlay ?: buildFsOverlay()
         // The bar is built once, so the telescope is shown or hidden each time: pay-per-view pages have no Index panel.
         fsBtns["index"]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
+        // Pay-per-view shows have no previous or next video.
+        for (id in listOf("prev", "next")) fsBtns[id]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
         fsControlsMode = true
         // Hide the player's own bar so there is only one set of controls on screen.
         sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
@@ -10595,7 +10711,109 @@ class MainActivity : Activity() {
         "speed" -> (j?.optDouble("rate", 1.0) ?: 1.0).toString() + "x"
         "full" -> if (fullScreenActive()) tr("Exit full screen", "全画面を終了") else tr("Full screen", "全画面")
         "index" -> ""   // drawn as a telescope
+        "prev" -> tr("Previous video", "前の動画")
+        "next" -> tr("Next video", "次の動画")
         else -> id
+    }
+
+    // What one control-bar button shows as an icon (k), with its number or badge (t), filled (on) or greyed out (off).
+    // The in-page bars draw it with assets/baricons.js, the full screen bar with BarIconDrawable: the same shapes.
+    private class BarIcon(val k: String, val t: String = "", val on: Boolean = false, val off: Boolean = false)
+
+    private fun barIcon(id: String, j: org.json.JSONObject?): BarIcon {
+        val skip = SKIP_SIZES[skipIdx]
+        val skipShort = if (skip < 60) skip.toString() else (skip / 60).toString() + "m"
+        return when (id) {
+            "play" -> BarIcon(if (j?.optBoolean("paused") == true) "play" else "pause")
+            "back" -> BarIcon("back", skipShort)
+            "fwd" -> BarIcon("fwd", skipShort)
+            "mute" -> BarIcon(if (j != null && j.optDouble("vol", 1.0) <= 0.0) "muted" else "mute")
+            "cc" -> if (j?.optBoolean("ppv") == true) BarIcon("cc", if (j.optString("lang") == "en") "EN" else "JA") else BarIcon("cc", when (ccMode) { 1 -> "EN"; 2 -> "JA"; else -> "CC" }, ccMode != 0)   // the box names the language when on
+            "quality" -> {
+                val q = barLabel("quality", j)
+                BarIcon("gear", if (q == tr("Auto", "自動")) "A" else q.removeSuffix("p"))
+            }
+            "speed" -> {
+                val r = j?.optDouble("rate", 1.0) ?: 1.0
+                BarIcon("speed", if (r == Math.floor(r)) r.toInt().toString() + "x" else r.toString())
+            }
+            "full" -> BarIcon(if (fullScreenActive()) "exit" else "full")
+            // Greyed out (never hidden, so nothing moves) when the list under the player has no video that way.
+            "prev" -> BarIcon("prev", off = j?.optBoolean("pv") != true)
+            "next" -> BarIcon("next", off = j?.optBoolean("nx") != true)
+            else -> BarIcon(id)
+        }
+    }
+
+    // The same icons as assets/baricons.js, drawn natively for the full screen bar, in a 28 x 28 box (24 + 2 each side).
+    private inner class BarIconDrawable(private val b: BarIcon, private val color: Int, private val px: Int) : android.graphics.drawable.Drawable() {
+        override fun draw(c: android.graphics.Canvas) {
+            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            p.color = color
+            p.strokeCap = android.graphics.Paint.Cap.ROUND
+            p.strokeJoin = android.graphics.Paint.Join.ROUND
+            fun stroke(w: Float) { p.style = android.graphics.Paint.Style.STROKE; p.strokeWidth = w }
+            fun fill() { p.style = android.graphics.Paint.Style.FILL }
+            fun poly(vararg xy: Float, close: Boolean): android.graphics.Path {
+                val path = android.graphics.Path(); path.moveTo(xy[0], xy[1])
+                var i = 2; while (i < xy.size) { path.lineTo(xy[i], xy[i + 1]); i += 2 }
+                if (close) path.close(); return path
+            }
+            fun arc(cx: Float, cy: Float, r: Float, start: Float, sweep: Float) = c.drawArc(cx - r, cy - r, cx + r, cy + r, start, sweep, false, p)
+            fun label(x: Float, y: Float, size: Float, t: String, align: android.graphics.Paint.Align, col: Int = color) {
+                val tp = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                tp.color = col; tp.textSize = size; tp.textAlign = align
+                tp.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)
+                c.drawText(t, x, y, tp)
+            }
+            c.save()
+            c.scale(px / 28f, px / 28f)
+            c.translate(2f, 2f)
+            when (b.k) {
+                "prev" -> { stroke(2.4f); c.drawLine(6f, 5f, 6f, 19f, p); fill(); c.drawPath(poly(18.5f, 5.5f, 9f, 12f, 18.5f, 18.5f, close = true), p) }
+                "next" -> { stroke(2.4f); c.drawLine(18f, 5f, 18f, 19f, p); fill(); c.drawPath(poly(5.5f, 5.5f, 15f, 12f, 5.5f, 18.5f, close = true), p) }
+                "play" -> { fill(); c.drawPath(poly(7f, 4.5f, 19.5f, 12f, 7f, 19.5f, close = true), p) }
+                "pause" -> { fill(); c.drawRoundRect(6f, 5f, 10f, 19f, 1f, 1f, p); c.drawRoundRect(14f, 5f, 18f, 19f, 1f, 1f, p) }
+                "back", "fwd" -> {
+                    stroke(2f)
+                    if (b.k == "back") { arc(12f, 12f, 7.5f, 180f, -315f); c.drawPath(poly(4f, 3.5f, 4f, 8f, 8.5f, 8f, close = false), p) }
+                    else { arc(12f, 12f, 7.5f, 0f, 315f); c.drawPath(poly(20f, 3.5f, 20f, 8f, 15.5f, 8f, close = false), p) }
+                    label(12f, 15.3f, if (b.t.length > 2) 6.3f else 7.5f, b.t, android.graphics.Paint.Align.CENTER)
+                }
+                "mute", "muted" -> {
+                    fill(); c.drawPath(poly(4f, 9.5f, 7.5f, 9.5f, 12f, 5.5f, 12f, 18.5f, 7.5f, 14.5f, 4f, 14.5f, close = true), p)
+                    stroke(2f)
+                    if (b.k == "mute") { arc(12.85f, 12f, 4f, -48.6f, 97.2f); arc(12.9f, 12f, 7.5f, -47.2f, 94.4f) }
+                    else { c.drawLine(16f, 9.5f, 21f, 14.5f, p); c.drawLine(21f, 9.5f, 16f, 14.5f, p) }
+                }
+                "cc" -> {
+                    if (b.on) fill() else stroke(2f)
+                    c.drawRoundRect(3f, 5.5f, 21f, 18.5f, 2.5f, 2.5f, p)
+                    if (b.on) { stroke(2f); c.drawRoundRect(3f, 5.5f, 21f, 18.5f, 2.5f, 2.5f, p) }
+                    label(12f, 14.8f, 6.8f, b.t, android.graphics.Paint.Align.CENTER, if (b.on) 0xFF0B1118.toInt() else color)
+                }
+                "gear" -> {
+                    stroke(1.9f); c.drawCircle(12f, 12f, 3f, p); c.drawCircle(12f, 12f, 6.5f, p)
+                    stroke(2.6f); p.strokeCap = android.graphics.Paint.Cap.BUTT
+                    for (i in 0 until 8) {
+                        val a = i * Math.PI / 4; val cs = Math.cos(a).toFloat(); val sn = Math.sin(a).toFloat()
+                        c.drawLine(12f + 6.5f * cs, 12f + 6.5f * sn, 12f + 9f * cs, 12f + 9f * sn, p)
+                    }
+                    p.strokeCap = android.graphics.Paint.Cap.ROUND
+                }
+                "speed" -> { stroke(2f); arc(12f, 17f, 8f, 180f, 180f); stroke(2.2f); c.drawLine(12f, 17f, 16f, 12f, p); fill(); c.drawCircle(12f, 17f, 1.7f, p) }
+                "full" -> { stroke(2.3f); for (q in listOf(floatArrayOf(4f, 9f, 4f, 4f, 9f, 4f), floatArrayOf(20f, 9f, 20f, 4f, 15f, 4f), floatArrayOf(4f, 15f, 4f, 20f, 9f, 20f), floatArrayOf(20f, 15f, 20f, 20f, 15f, 20f))) c.drawPath(poly(*q, close = false), p) }
+                "exit" -> { stroke(2.3f); for (q in listOf(floatArrayOf(9f, 4f, 9f, 9f, 4f, 9f), floatArrayOf(15f, 4f, 15f, 9f, 20f, 9f), floatArrayOf(9f, 20f, 9f, 15f, 4f, 15f), floatArrayOf(15f, 20f, 15f, 15f, 20f, 15f))) c.drawPath(poly(*q, close = false), p) }
+            }
+            if ((b.k == "gear" || b.k == "speed") && b.t.isNotEmpty()) label(26f, 5f, 7.5f, b.t, android.graphics.Paint.Align.RIGHT)
+            c.restore()
+        }
+        override fun setAlpha(alpha: Int) {}
+        override fun setColorFilter(cf: android.graphics.ColorFilter?) {}
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity(): Int = android.graphics.PixelFormat.TRANSLUCENT
+        override fun getIntrinsicWidth(): Int = px
+        override fun getIntrinsicHeight(): Int = px
     }
 
     // What a control-bar button does; used by the full screen overlay and the in-page bar alike.
@@ -10609,6 +10827,9 @@ class MainActivity : Activity() {
             "cc" -> if (isPpvHost(webView.url)) webView.evaluateJavascript("window.__tvCommentary && window.__tvCommentary('toggle')", null) else cycleCc()
             "quality" -> playerCommand("quality", 0)
             "speed" -> playerCommand("speed", 0)
+            // The video before or after this one in the list under the player (nothing happens when greyed out).
+            "prev" -> webView.evaluateJavascript("window.__tvGoNeighbor && window.__tvGoNeighbor(-1)", null)
+            "next" -> webView.evaluateJavascript("window.__tvGoNeighbor && window.__tvGoNeighbor(1)", null)
             "index" -> {
                 val open = { webView.evaluateJavascript("window.__tvIndexOpen && window.__tvIndexOpen()", null); Unit }
                 if (fullScreenActive()) {
@@ -10648,7 +10869,7 @@ class MainActivity : Activity() {
                 val d = j.optDouble("d", 0.0)
                 // The player may have its own captions on from the start: show that as the current state.
                 if (ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
-                for ((id, btn) in fsBtns) btn.text = barLabel(id, j)
+                for ((id, btn) in fsBtns) if (id != "index") fsSetIcon(btn, id, j)
                 fsTimeText?.text = fmtTime(t) + " / " + fmtTime(d)
                 fsProgress?.progress = if (d > 0) (t / d * 1000).toInt() else 0
             } catch (_: Exception) {
@@ -10667,7 +10888,7 @@ class MainActivity : Activity() {
 
     private fun cycleCc() {
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
-        fsBtnCc?.text = ccLabel()
+        fsSetIcon(fsBtnCc, "cc", null)
         // The player's own captions always go off: ours replace them (and are shown or hidden below).
         playerCommand("ccoff", 0)
         if (ccMode == 0) {
@@ -10690,11 +10911,11 @@ class MainActivity : Activity() {
                 val n = try { org.json.JSONObject(str).optJSONArray("tracks")?.length() ?: 0 } catch (_: Exception) { 0 }
                 if (n > 0) {
                     ccMode = 3
-                    fsBtnCc?.text = ccLabel()
+                    fsSetIcon(fsBtnCc, "cc", null)
                     playerCommand("ccnative", 0)
                 } else {
                     ccMode = 0
-                    fsBtnCc?.text = ccLabel()
+                    fsSetIcon(fsBtnCc, "cc", null)
                     playerCommand("ccoff", 0)
                     handler.removeCallbacks(ccTick)
                     ccTicking = false
@@ -11534,7 +11755,7 @@ class MainActivity : Activity() {
                         if (event.action == KeyEvent.ACTION_DOWN) {
                             if (onSkip) {
                                 skipStep(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) 1 else -1)
-                                for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") btn.text = barLabel(id, null)
+                                for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") fsSetIcon(btn, id, null)
                                 showFsSkipHint()
                                 fullScreenInteraction()
                             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {

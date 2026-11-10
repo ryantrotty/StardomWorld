@@ -2,6 +2,62 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.11
+
+- Bar under the picture: it now sits on the page itself, placed exactly under the picture, with a bar-sized space kept in the page so the rows below stay where they were. The 2.59.10 measurements showed the bar's top 12 px was not covered but cut off: the bar lived inside one of the site's boxes, which starts 12 px lower and hides anything above its edge.
+
+## 2.59.10
+
+- Bar under the picture: drawn on top of the site's boxes around the player. Those boxes reach about 12 px below the picture and were painted over the top of the bar, which is the page-coloured strip between picture and controls. The black extension added in 2.59.5 is removed (it never showed).
+- Private builds: the measurement lines now look just below the bottom of the picture as well, to confirm.
+
+## 2.59.9
+
+Private builds only:
+- Under the player bar, a few lines of measurements for now: what is on screen just above the bottom of the player (where the strip shows) and the boxes around the player, to photograph.
+
+## 2.59.8
+
+- Video page: the whole picture shows. The site's box around the player is shorter than the player and was cutting off its bottom; it no longer hides any of it, and the control bar sits right under the full picture (moving down when it needs to, not only up).
+
+## 2.59.7
+
+- Bar under the picture: lines up with where the picture is actually cut off. The player's wrapper on the site is shorter than the player and hides the bottom of it, so the bar was sitting under the hidden part, with a strip of page between. It now moves up to the wrapper's edge.
+
+## 2.59.6
+
+- Design notes only: the player bar's #020305 is recorded in docs/DESIGN.md. No change in the app.
+
+## 2.59.5
+
+- Bar under the picture: its black now reaches up behind the bottom of the picture, and the player frame itself is black, so no grey page colour shows between the picture and the controls. The bar is solid #020305 (the same colour its 80 % black gave on the navy page).
+
+## 2.59.4
+
+- Bar under the picture: 52 high (was 64), so the icons and time sit right under the picture. The measurements showed the bar already touching the picture; the space seen was the bar's own empty top, which the icons (smaller than the old boxed words) left showing. The measurement line from 2.59.3 is gone.
+
+## 2.59.3
+
+- Full screen bar: the dark backing now fades in from clear at the top instead of being one solid band, so the picture shows above the controls.
+- Captions: the choices line that appeared when the button was pressed (2.59.2) is gone; the box still reads EN or JA.
+- Bar under the picture: if the player shows the video letterboxed inside a taller frame, the bar now lines up with the bottom of the picture rather than the frame. Private builds show a line of measurements under the bar for now, to photograph if a gap is still there.
+- Menu, Wrestlers, PAST: no spotlight on this tab (past wrestlers have no photos), so the names use five columns. Private builds also list everyone the match index knows who is not a current wrestler (names added through StarScope), and their wrestler pages open.
+
+## 2.59.2
+
+- Full screen bar: the telescope (Index) shows again, and the skip buttons no longer show "-30s" / "+30s" text beside their icons after the skip size changes.
+- Captions button: the box reads EN or JA while those captions are on (CC when off or showing the player's own), and pressing it shows every choice above the bar for a moment with the current one in gold: Off, English, 日本語.
+- The bar under the picture keeps checking that it sits right against the picture, so a page that moves after it has loaded no longer leaves a gap.
+
+## 2.59.1
+
+- Community menu: the Top 5 is now Most Favorited, all time (was Most Watched), and View all opens the all-time Most Favorited chart.
+
+## 2.59.0
+
+- Video player controls are icons instead of words, under the picture, in full screen and on PPV shows: no box around a button; the icon is white and turns gold when focused. Skip back and forward show their skip size inside the arrow; quality and speed show the current setting as a small badge; captions (full screen) fill in when on, and on PPV shows the same box reads EN or JA for the commentary.
+- New Previous and Next buttons (not on PPV shows): they open the video before or after this one in the list under the player, the same list the automatic next video uses. They are always there and grey out when there is no video that way, so nothing moves.
+
 ## 2.58.2
 
 - Video options pop-up on wrestler pages: Up and Down move through its buttons again instead of being taken by the page behind it. The same fix is on tag team, Top Rated, championship lineage and StarScope results pages.
