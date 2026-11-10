@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.10
+
+- Bar under the picture: drawn on top of the site's boxes around the player. Those boxes reach about 12 px below the picture and were painted over the top of the bar, which is the page-coloured strip between picture and controls. The black extension added in 2.59.5 is removed (it never showed).
+- Private builds: the measurement lines now look just below the bottom of the picture as well, to confirm.
+
 ## 2.59.9
 
 Private builds only:

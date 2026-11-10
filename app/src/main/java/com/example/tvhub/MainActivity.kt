@@ -6636,9 +6636,7 @@ class MainActivity : Activity() {
 
           var st = document.createElement('style');
           st.textContent =
-            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0 0 14px 0;background:#020305;position:relative;border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
-            // The bar's black reaches up behind the picture (2.59.5), so no page colour shows between them.
-            '#tv-pbar::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:40px;background:#020305;z-index:-1;pointer-events:none;}' +
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0 0 14px 0;background:#020305;position:relative;z-index:3;border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
             '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
             '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
             '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
@@ -6743,9 +6741,9 @@ class MainActivity : Activity() {
                 if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;margin:0 0 10px 0;white-space:pre-wrap;'; bar.parentElement.insertBefore(dbg, bar.nextSibling); }
                 var nm = function(e) { if (!e || !e.tagName) return '?'; var c = typeof e.className === 'string' ? e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''; return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (c ? '.' + c : ''); };
                 var lines = [];
-                [4, 10, 18].forEach(function(up) {
-                  var y = Math.round(r.bottom - up), st = document.elementsFromPoint(Math.round(r.left + r.width / 2), y).slice(0, 3);
-                  lines.push('at frame bottom -' + up + ': ' + st.map(function(e) { var g = getComputedStyle(e); return nm(e) + ' [' + g.backgroundColor + ' z' + g.zIndex + ' ' + g.position + ']'; }).join('  >  '));
+                [3, 8, 14].forEach(function(dn) {
+                  var y = Math.round(r.bottom + dn), st = document.elementsFromPoint(Math.round(r.left + r.width / 2), y).slice(0, 3);
+                  lines.push('below the picture +' + dn + ': ' + st.map(function(e) { var g = getComputedStyle(e); return nm(e) + ' [' + g.backgroundColor + ' z' + g.zIndex + ' ' + g.position + ']'; }).join('  >  '));
                 });
                 var ch = [];
                 for (var q = f, i = 0; q && q !== document.body && i < 7; q = q.parentElement, i++) {
