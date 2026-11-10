@@ -6636,7 +6636,7 @@ class MainActivity : Activity() {
 
           var st = document.createElement('style');
           st.textContent =
-            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0 0 14px 0;background:#020305;position:relative;z-index:3;border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0;background:#020305;position:absolute;z-index:3;border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
             '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
             '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
             '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
@@ -6656,7 +6656,7 @@ class MainActivity : Activity() {
           function playerFrame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
           function menuOpen() { return document.documentElement.classList.contains('tv-sm-open'); }
 
-          var bar = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
+          var bar = null, spacer = null, timeEl = null, fillEl = null, btns = {}, lastId = 'play';
 
           var buildTries = 0;
           function build() {
@@ -6676,11 +6676,14 @@ class MainActivity : Activity() {
             var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
             ids.forEach(function(id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
             bar.innerHTML = html + '</span>';
-            if (sec && sec.parentElement) sec.parentElement.insertBefore(bar, sec);
-            else {
-              var host = f.parentElement;
-              host.insertAdjacentElement('afterend', bar);
-            }
+            // The page keeps a bar-sized space where the bar used to go; the bar itself sits on the page body, placed
+            // exactly under the picture (2.59.11). Inside the site's boxes its top was cut off by one of them.
+            spacer = document.createElement('div');
+            spacer.id = 'tv-pbar-sp';
+            spacer.style.cssText = 'height:52px;margin:0 0 14px 0;';
+            if (sec && sec.parentElement) sec.parentElement.insertBefore(spacer, sec);
+            else f.parentElement.insertAdjacentElement('afterend', spacer);
+            document.body.appendChild(bar);
             timeEl = bar.querySelector('.tv-pb-time');
             fillEl = bar.querySelector('.tv-pb-fill');
             Array.prototype.forEach.call(bar.querySelectorAll('button.tv-pbtn'), function(b) {
@@ -6725,20 +6728,22 @@ class MainActivity : Activity() {
               cs = getComputedStyle(a);
               if (cs.overflow !== 'visible' || cs.overflowY !== 'visible') bottom = ab;
             }
-            // Close the gap the player's wrapper leaves under the picture.
-            bar.style.marginTop = '0px';
-            var top0 = bar.getBoundingClientRect().top, gap = top0 - bottom;
-            // Up to close a gap, or down when the now-whole picture reaches past where the bar would start.
-            bar.style.marginTop = (Math.abs(gap) > 1 ? -Math.round(gap) : 0) + 'px';
-            bar.style.marginLeft = '0px';
-            var bl = bar.getBoundingClientRect().left;
-            bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';
+            // The bar: on the page body, right under the picture, as wide as it.
+            var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+            bar.style.left = Math.round(r.left + sx) + 'px';
+            bar.style.top = Math.round(bottom + sy) + 'px';
+            // The space it leaves in the page starts where the bar does, so the rows below move with it.
+            if (spacer) {
+              spacer.style.marginTop = '0px';
+              var top0 = spacer.getBoundingClientRect().top, gap = top0 - bottom;
+              spacer.style.marginTop = (Math.abs(gap) > 1 ? -Math.round(gap) : 0) + 'px';
+            }
             // Private builds, for now (2.59.9): what is on screen just above the bottom of the frame, where the strip
             // shows, and the boxes around the frame, to photograph.
             try {
               if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
                 var dbg = document.getElementById('tv-pbar-dbg');
-                if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;margin:0 0 10px 0;white-space:pre-wrap;'; bar.parentElement.insertBefore(dbg, bar.nextSibling); }
+                if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;margin:0 0 10px 0;white-space:pre-wrap;'; (spacer || bar).parentElement.insertBefore(dbg, (spacer || bar).nextSibling); }
                 var nm = function(e) { if (!e || !e.tagName) return '?'; var c = typeof e.className === 'string' ? e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''; return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (c ? '.' + c : ''); };
                 var lines = [];
                 [3, 8, 14].forEach(function(dn) {
