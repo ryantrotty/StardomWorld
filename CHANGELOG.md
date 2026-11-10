@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.60.1
+
+Private builds only:
+- StarScope logger about 20 % more see-through: the panel fades from 55 % at the top to 16 % at the bottom (was 68 % throughout), so the names on the video's on-screen graphics show through the lower part; the dim over the whole screen fades out towards the bottom; buttons and text boxes 48 % (62 % focused); pop-ups 69 %.
+
 ## 2.60.0
 
 Private builds only:

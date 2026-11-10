@@ -236,3 +236,5 @@ Player bar colour (2.59.5): solid #020305 (what 80 % black gave over the navy pa
 Player bar placement (2.59.11): the bar is placed on the page body, absolutely, right under the picture, with a bar-sized spacer left in the page; inside the site's boxes its top 12 px was cut off.
 
 Logger buttons (2.60.0): rgba(5,8,12,.6), focused rgba(5,8,12,.78) with the gold border; the same for the text boxes. Selected (orange) chips stay solid.
+
+Logger transparency (2.60.1): panel a vertical fade rgba(15,21,28) .55 → .42 (55 %) → .16 at the bottom; screen dim .22 at the top fading out by 70 %; columns .44; buttons and text boxes rgba(5,8,12,.48), focused .62; pop-ups .69, their dim .24.
