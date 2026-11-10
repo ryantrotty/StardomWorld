@@ -25,6 +25,8 @@ Paste the whole of `scripts/video_index_log.gs` into the sheet's Apps Script, th
 
 On the panel, OK on a red name offers **Pick the right name** or **Propose new**. Picking saves that spelling as an alias straight away. A proposal waits in `proposals`: set its status to `approved`, and it joins the library the next time a TV loads the library (at most an hour's cache).
 
+From the private build (2.57.0) there is no approval step: the app marks its requests as the owner's, the script applies the addition at once, and the panel fills it in where it was asked for. The row still appears in `proposals` as applied, note "owner build". Anything else sent to the script without that mark, as the public build will be, waits for approval as before.
+
 On the Match, Finish and Moments tabs and in the pickers, **+ Propose new** opens a text box. The proposal's `entity_id` names the list it belongs to.
 
 ## Keys and calls

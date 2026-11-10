@@ -31,7 +31,8 @@
  *   vi_lib     {}                                              approved names and lists; applies approved proposals first
  *   vi_get     {video}                                         the match this video belongs to, and who else is on that show
  *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides
- *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet
+ *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
+ *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
  */
 var SHEET = 'videos';
@@ -341,29 +342,39 @@ function viSet(name, row, fields) {
 }
 
 // A proposal set to "approved" in the sheet goes into the library the next time the library is read, then reads "applied".
+// Returns the new library id for each proposal it applied.
 function viApplyApproved() {
-  var now = new Date().toISOString();
+  var now = new Date().toISOString(), made = {};
   viRows('proposals').forEach(function(p) {
+    var made1 = '';
     if (p.status !== 'approved') return;
     if (p.type === 'new_talent') {
       var id = p.entity_id || viSlug(p.value);
       if (!id) id = 't' + p.proposal_id;
+      made1 = id;
       if (!viRows('talent').some(function(t) { return t.talent_id === id; })) viAppend('talent', [{ talent_id: id, name_en: p.value, search: p.value, status: 'guest', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_alias' && p.entity_id) {
+      made1 = p.entity_id;
       viAppend('aliases', [{ alias: p.value, normalized: viNorm(p.value), entity_type: 'talent', entity_id: p.entity_id, source: 'proposal', status: 'approved' }]);
     } else if (p.type === 'new_team') {
       // entity_id holds the partners, a|b, as the panel sent them.
-      viAppend('teams', [{ team_id: viSlug(p.value) || ('t' + p.proposal_id), name_en: p.value, member_ids: p.entity_id, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      made1 = viSlug(p.value) || ('t' + p.proposal_id);
+      viAppend('teams', [{ team_id: made1, name_en: p.value, member_ids: p.entity_id, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_option' && p.entity_id) {
-      viAppend('lists', [{ list: p.entity_id, value_id: viSlug(p.value) || ('o' + p.proposal_id), label_en: p.value, active: 'TRUE' }]);
+      made1 = viSlug(p.value) || ('o' + p.proposal_id);
+      viAppend('lists', [{ list: p.entity_id, value_id: made1, label_en: p.value, active: 'TRUE' }]);
     } else if (p.type === 'new_venue') {
       var ja = /[^\x00-\x7F]/.test(p.value);
-      viAppend('venues', [{ venue_id: viSlug(p.value) || ('v' + p.proposal_id), name_en: ja ? '' : p.value, name_ja: ja ? p.value : '', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      made1 = viSlug(p.value) || ('v' + p.proposal_id);
+      viAppend('venues', [{ venue_id: made1, name_en: ja ? '' : p.value, name_ja: ja ? p.value : '', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_faction') {
-      viAppend('factions', [{ faction_id: p.entity_id || viSlug(p.value), name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      made1 = p.entity_id || viSlug(p.value);
+      viAppend('factions', [{ faction_id: made1, name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else return;
     viSet('proposals', p._row, { status: 'applied', decided: now });
+    made[p.proposal_id] = made1;
   });
+  return made;
 }
 
 function viAction(b) {
@@ -385,12 +396,30 @@ function viAction(b) {
   if (b.action === 'vi_propose') {
     var type = String(b.type || ''), value = String(b.value || '').slice(0, 120);
     if (!/^new_(talent|alias|team|faction|option|venue)$/.test(type) || !value) return { ok: false, error: 'bad proposal' };
-    var dup = viRows('proposals').some(function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value) && (p.status === 'pending' || p.status === 'approved'); });
-    if (dup) return { ok: true, duplicate: true };
-    viAppend('proposals', [{ proposal_id: 'p' + Date.now(), time: new Date().toISOString(), type: type, value: value, entity_id: String(b.entity_id || '').slice(0, 300), video_id: String(b.video || ''), device: String(b.device || '').slice(0, 40), status: 'pending' }]);
-    return { ok: true, added: true };
+    // The owner's private build (the app adds owner, with the key) skips approval: the addition goes in now.
+    // Any other sender, as the public build will be, still waits for approval in the sheet.
+    var owner = b.owner === true, same = function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value); };
+    var dup = viRows('proposals').filter(function(p) { return same(p) && (p.status === 'pending' || p.status === 'approved' || (owner && p.status === 'applied')); })[0];
+    var pid = dup ? dup.proposal_id : 'p' + Date.now();
+    if (dup && !owner) return { ok: true, duplicate: true };
+    if (dup && dup.status === 'applied') return { ok: true, applied: true, id: viApplyIdOf(dup) };
+    if (dup) viSet('proposals', dup._row, { status: 'approved', note: 'owner build' });
+    else viAppend('proposals', [{ proposal_id: pid, time: new Date().toISOString(), type: type, value: value, entity_id: String(b.entity_id || '').slice(0, 300), video_id: String(b.video || ''), device: String(b.device || '').slice(0, 40), status: owner ? 'approved' : 'pending', note: owner ? 'owner build' : '' }]);
+    if (!owner) return { ok: true, added: true };
+    return { ok: true, applied: true, id: viApplyApproved()[pid] || '' };
   }
   return viSave(b);
+}
+
+// The library id an already-applied proposal made, found from its note.
+function viApplyIdOf(p) {
+  var note = 'proposal ' + p.proposal_id, hit = '';
+  if (p.type === 'new_alias') return p.entity_id;
+  var tab = { new_talent: ['talent', 'talent_id'], new_team: ['teams', 'team_id'], new_venue: ['venues', 'venue_id'], new_faction: ['factions', 'faction_id'] }[p.type];
+  if (tab) viRows(tab[0]).forEach(function(r) { if (r.note === note) hit = r[tab[1]]; });
+  if (!hit && p.type === 'new_talent') hit = p.entity_id || viSlug(p.value);
+  if (!hit && p.type === 'new_option') viRows('lists').forEach(function(l) { if (l.list === p.entity_id && viNorm(l.label_en) === viNorm(p.value)) hit = l.value_id; });
+  return hit;
 }
 
 function viKey(date, parts) {

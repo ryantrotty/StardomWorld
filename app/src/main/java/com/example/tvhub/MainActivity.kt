@@ -3272,6 +3272,8 @@ class MainActivity : Activity() {
             Thread {
                 try {
                     body.put("key", BuildConfig.VIDEO_INDEX_KEY).put("device", favSyncDevice())
+                    // Your private build: proposals go straight into the library, no approval step.
+                    if (BuildConfig.VIDEO_INDEX_DRYRUN) body.put("owner", true)
                     val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
                     c.requestMethod = "POST"
                     c.doOutput = true

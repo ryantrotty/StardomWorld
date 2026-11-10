@@ -11,10 +11,10 @@
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '正しいので保存', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', added: '追加しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Looks right, save', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', added: 'Added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
   var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
@@ -299,7 +299,27 @@
     var input = root.querySelector('#tvx-in'), value = input ? input.value.trim() : '', p = pick;
     if (!value) return;
     layer = 'main'; pick = null; render(); say(T.saving);
-    call({ action: 'vi_propose', type: p.type, value: value, entity_id: p.entity || '', video: U[2] }, function(r) { say(r.ok ? T.proposed : String(r.error), !r.ok); });
+    call({ action: 'vi_propose', type: p.type, value: value, entity_id: p.entity || '', video: U[2] }, function(r) { proposed(r, p, value); });
+  }
+  // Private build: the sheet has already added it, so load the library again and use the new entry where it was asked for.
+  function proposed(r, p, value) {
+    if (!r.ok) { say(String(r.error), true); return; }
+    if (!r.applied || !r.id) { say(T.proposed); return; }
+    call({ action: 'vi_lib' }, function(l) {
+      if (l.ok) { store(LIB_KEY, { t: Date.now(), lib: l }); setLib(l); }
+      if (!state || !window.__tvIndexIsOpen) return;
+      var id = r.id, from = p.from || {}, S = from.side != null ? state.sides[from.side] : null;
+      if (p.type === 'new_talent' && S) {
+        if (from.slot == null || from.slot < 0) { S.people.push({ id: id, billed: value }); lastFocus = 'a' + from.side; }
+        else { var q = S.people[from.slot]; if (q) { q.id = id; lastFocus = 'p' + from.side + '_' + from.slot; } }
+        remember(id); nameStatus();
+      } else if (p.type === 'new_venue') { state.venue = id; state.touched.match = 1; lastFocus = 'vp'; }
+      else if (p.type === 'new_team' && S) { S.teamId = id; lastFocus = 'tm' + from.side; }
+      else if (p.type === 'new_faction' && S) { S.factionId = id; lastFocus = 'fc' + from.side; }
+      else if (p.type === 'new_option' && !has(p.entity, id)) toggle(p.entity, id);
+      if (layer === 'main') render();
+      say(T.added);
+    });
   }
   function mark(which) {
     withTime(function(v) {
@@ -457,7 +477,7 @@
     if (a === 'change') { pick = { tab: '*', side: i, slot: j, raw: p.id ? '' : p.billed }; layer = 'pick'; }
     else if (a === 'propose') {
       say(T.saving);
-      call({ action: 'vi_propose', type: 'new_talent', value: p.billed, video: U[2] }, function(r) { say(r.ok ? T.proposed : String(r.error), !r.ok); });
+      call({ action: 'vi_propose', type: 'new_talent', value: p.billed, video: U[2] }, function(r) { proposed(r, { type: 'new_talent', from: { side: i, slot: j } }, p.billed); });
     } else if (a === 'remove') { S[i].people.splice(j, 1); lastFocus = 'a' + i; }
     else if (a === 'move') {
       var to = el.getAttribute('data-to');
@@ -471,9 +491,10 @@
   function pressPick(el, k) {
     if (k === 'pNew') {
       var isV = pick.kind === 'venue';
-      if (pick.kind === 'team') { openPropose({ type: 'new_team', label: T.team, text: '', entity: state.sides[pick.side].people.map(function(p) { return p.id; }).filter(Boolean).join('|') }); return; }
-      if (pick.kind === 'faction') { openPropose({ type: 'new_faction', label: T.faction, text: '' }); return; }
-      openPropose({ type: isV ? 'new_venue' : 'new_talent', label: isV ? T.venue : '', text: pick.raw || '' });
+      var from = { side: pick.side, slot: pick.slot };
+      if (pick.kind === 'team') { openPropose({ type: 'new_team', label: T.team, text: '', from: from, entity: state.sides[pick.side].people.map(function(p) { return p.id; }).filter(Boolean).join('|') }); return; }
+      if (pick.kind === 'faction') { openPropose({ type: 'new_faction', label: T.faction, text: '', from: from }); return; }
+      openPropose({ type: isV ? 'new_venue' : 'new_talent', label: isV ? T.venue : '', text: pick.raw || '', from: from });
       return;
     }
     if ((pick.kind === 'team' || pick.kind === 'faction') && k.charAt(0) === 'g') {

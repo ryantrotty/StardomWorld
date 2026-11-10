@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.57.0
+
+Private builds only:
+- Logger additions (+ and Propose new) skip approval: the name, venue, team, faction or option goes into the library at once and is filled in where you asked for it. They are still recorded in `proposals`, marked applied with the note "owner build". Other senders still wait for approval.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.56.2
 
 Private builds only:
