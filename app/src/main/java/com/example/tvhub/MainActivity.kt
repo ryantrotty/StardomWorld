@@ -6715,6 +6715,12 @@ class MainActivity : Activity() {
               f.__tvAsk = true;
               try { Promise.all([f.__tvPlayer.getVideoWidth(), f.__tvPlayer.getVideoHeight()]).then(function(d) { f.__tvVW = d[0]; f.__tvVH = d[1]; }).catch(function() {}); } catch (e) {}
             }
+            // The player's wrapper can be shorter than the frame and cut its bottom off (2.59.7): the picture then ends
+            // where the lowest clipping box around it ends, and the bar goes there instead of under the hidden part.
+            for (var a = f.parentElement, k = 0; a && a !== document.body && k < 8; a = a.parentElement, k++) {
+              var cs = getComputedStyle(a);
+              if (cs.overflow !== 'visible' || cs.overflowY !== 'visible') { var ab = a.getBoundingClientRect().bottom; if (ab < bottom) bottom = ab; }
+            }
             // Close the gap the player's wrapper leaves under the picture.
             bar.style.marginTop = '0px';
             var top0 = bar.getBoundingClientRect().top, gap = top0 - bottom;

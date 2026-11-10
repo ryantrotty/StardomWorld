@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.7
+
+- Bar under the picture: lines up with where the picture is actually cut off. The player's wrapper on the site is shorter than the player and hides the bottom of it, so the bar was sitting under the hidden part, with a strip of page between. It now moves up to the wrapper's edge.
+
 ## 2.59.6
 
 - Design notes only: the player bar's #020305 is recorded in docs/DESIGN.md. No change in the app.
