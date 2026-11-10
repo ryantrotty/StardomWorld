@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.0
+
+- Video player controls are icons instead of words, under the picture, in full screen and on PPV shows: no box around a button; the icon is white and turns gold when focused. Skip back and forward show their skip size inside the arrow; quality and speed show the current setting as a small badge; captions (full screen) fill in when on, and on PPV shows the same box reads EN or JA for the commentary.
+- New Previous and Next buttons (not on PPV shows): they open the video before or after this one in the list under the player, the same list the automatic next video uses. They are always there and grey out when there is no video that way, so nothing moves.
+
 ## 2.58.2
 
 - Video options pop-up on wrestler pages: Up and Down move through its buttons again instead of being taken by the page behind it. The same fix is on tag team, Top Rated, championship lineage and StarScope results pages.

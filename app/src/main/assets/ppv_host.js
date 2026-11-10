@@ -101,7 +101,12 @@ window.__tvPpvAll = 1;
     '#tv-ppv-bar .tv-pb-time{flex:0 0 auto;font-size:' + px(14) + ';white-space:nowrap}' +
     '#tv-ppv-bar .tv-pb-track{flex:1 1 0;min-width:' + px(60) + ';height:' + px(8) + ';border-radius:' + px(4) + ';background:#3b4656;position:relative;overflow:hidden}' +
     '#tv-ppv-bar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + '}' +
-    '#tv-ppv-bar .tv-pb-btns{flex:0 0 auto;display:flex;gap:' + px(6) + ';align-items:center}' +
+    '#tv-ppv-bar .tv-pb-btns{flex:0 0 auto;display:flex;gap:' + px(2) + ';align-items:center}' +
+    // Icon buttons (2.59.0, assets/baricons.js): no box; the icon is white, gold when focused.
+    '#tv-ppv-bar button.tv-pbtn.tv-ico{padding:0 !important;width:' + px(44) + ';height:' + px(44) + ';display:flex;align-items:center;justify-content:center;line-height:0;border-radius:0 !important;background:none !important;border:0 !important;box-shadow:none !important;outline:none !important;color:#ffffff !important}' +
+    '#tv-ppv-bar button.tv-pbtn.tv-ico:focus{background:none !important;color:#F4C242 !important}' +
+    '#tv-ppv-bar button.tv-pbtn.tv-ico svg{width:' + px(28) + ';height:' + px(28) + '}' +
+    '#tv-ppv-bar button.tv-pbtn[data-id="mute"]{margin-left:' + px(14) + '}' +
     '#tv-ppv-bar button.tv-pbtn{margin:0;padding:' + px(8) + ' ' + px(12) + ';border-radius:' + px(10) + ';background:rgba(0,0,0,0.4) !important;border:' + px(2) + ' solid rgba(255,255,255,0.53) !important;color:#ffffff !important;font:700 ' + px(15) + ' Arial,Helvetica,sans-serif !important;white-space:nowrap;cursor:pointer;outline:none !important;box-shadow:none !important}' +
     '#tv-ppv-bar button.tv-pbtn:focus{background:' + ACCENT + ' !important;border-color:' + ACCENT + ' !important;color:' + DARK + ' !important;outline:none !important}' +
     '#tv-pskip{position:fixed;z-index:2147483647;display:none;flex-direction:column;gap:' + px(4) + ';padding:' + px(10) + ';border-radius:' + px(12) + ';background:rgba(0,0,0,0.88);border:' + px(2) + ' solid rgba(255,255,255,0.25);font:700 ' + px(15) + ' Arial,Helvetica,sans-serif;color:#c9d2dc}' +
@@ -115,14 +120,14 @@ window.__tvPpvAll = 1;
   var ids = [];
   try { ids = JSON.parse(window.AndroidHost.barIds()); } catch (e) {}
   // The player's quality list is not reachable here, and the language choice stands in for the captions button.
-  ids = ids.filter(function (i) { return i !== 'quality' && i !== 'index'; });
+  ids = ids.filter(function (i) { return i !== 'quality' && i !== 'index' && i !== 'prev' && i !== 'next'; });   // a show has no previous or next video
   if (ids.indexOf('speed') >= 0) ids.splice(ids.indexOf('speed') + 1, 0, 'cc'); else ids.splice(ids.length - 1, 0, 'cc');
   if (ids.indexOf('full') < 0) ids.push('full');
 
   var bar = document.createElement('div');
   bar.id = 'tv-ppv-bar';
   var html = '<span class="tv-pb-time">0:00 / 0:00</span><span class="tv-pb-track"><span class="tv-pb-fill"></span></span><span class="tv-pb-btns">';
-  ids.forEach(function (id) { html += '<button type="button" class="tv-pbtn notranslate" translate="no" data-id="' + id + '"></button>'; });
+  ids.forEach(function (id) { html += '<button type="button" class="tv-pbtn tv-ico notranslate" translate="no" data-id="' + id + '"></button>'; });
   bar.innerHTML = html + '</span>';
   document.documentElement.appendChild(bar);
   var timeEl = bar.querySelector('.tv-pb-time'), fillEl = bar.querySelector('.tv-pb-fill'), btns = {}, lastId = 'full';
@@ -207,7 +212,15 @@ window.__tvPpvAll = 1;
     try { if (window.__tvRefreshStatus) window.__tvRefreshStatus(); } catch (e) {}
     var json = window.__tvStatusJson || '', labels = {};
     try { labels = JSON.parse(window.AndroidHost.barLabels(json)); } catch (e) {}
-    ids.forEach(function (id) { if (labels[id] && btns[id].textContent !== labels[id]) btns[id].textContent = labels[id]; });
+    var icons = {};
+    try { icons = JSON.parse(window.AndroidHost.barIcons(json)); } catch (e) {}
+    ids.forEach(function (id) {
+      var b = btns[id], ic = icons[id];
+      if (labels[id] && b.getAttribute('aria-label') !== labels[id]) b.setAttribute('aria-label', labels[id]);
+      if (!ic || !window.__tvBarSvg) { if (labels[id] && b.textContent !== labels[id]) b.textContent = labels[id]; return; }
+      var key = ic.k + '|' + ic.t + '|' + ic.on;
+      if (b.__tvIcon !== key) { b.__tvIcon = key; b.innerHTML = window.__tvBarSvg(ic, 28); }
+    });
     if (json) {
       try {
         var j = JSON.parse(json);
