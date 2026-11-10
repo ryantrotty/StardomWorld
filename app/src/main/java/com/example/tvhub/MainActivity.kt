@@ -6636,7 +6636,7 @@ class MainActivity : Activity() {
 
           var st = document.createElement('style');
           st.textContent =
-            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:64px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
             '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
             '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
             '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
@@ -6719,16 +6719,6 @@ class MainActivity : Activity() {
             bar.style.marginLeft = '0px';
             var bl = bar.getBoundingClientRect().left;
             bar.style.marginLeft = Math.max(0, Math.round(r.left - bl)) + 'px';
-            // Private builds, for now: the measurements on screen under the bar, to photograph (2.59.3).
-            try {
-              if (AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) {
-                var dbg = document.getElementById('tv-pbar-dbg');
-                if (!dbg) { dbg = document.createElement('div'); dbg.id = 'tv-pbar-dbg'; dbg.style.cssText = 'font:600 12px Arial,Helvetica,sans-serif;color:#9AA6B4;margin:-8px 0 10px 0;'; bar.parentElement.insertBefore(dbg, bar.nextSibling); }
-                var n = document.querySelectorAll('iframe[src*="vimeo.com"], iframe[src*="player"]').length;
-                dbg.textContent = 'bar fit · frames ' + n + ' · frame top ' + Math.round(r.top) + ' bottom ' + Math.round(r.bottom) + ' size ' + Math.round(r.width) + 'x' + Math.round(r.height) +
-                  ' · video ' + (vw ? vw + 'x' + vh : 'unknown') + ' · picture bottom ' + Math.round(bottom) + ' · bar top before ' + Math.round(top0) + ' after ' + Math.round(bar.getBoundingClientRect().top) + ' · margin ' + bar.style.marginTop;
-              }
-            } catch (e) {}
           }
 
           function fmt(sec) {

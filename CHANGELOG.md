@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.4
+
+- Bar under the picture: 52 high (was 64), so the icons and time sit right under the picture. The measurements showed the bar already touching the picture; the space seen was the bar's own empty top, which the icons (smaller than the old boxed words) left showing. The measurement line from 2.59.3 is gone.
+
 ## 2.59.3
 
 - Full screen bar: the dark backing now fades in from clear at the top instead of being one solid band, so the picture shows above the controls.

@@ -228,3 +228,5 @@ StarScope filter (2.56.0, private builds): icon-only telescope at the end of the
 Player controls (2.59.0): every control-bar button (under the picture, full screen and PPV) is an icon with no box or outline: white, #F4C242 when focused, #5A6472 when not available. Icons are drawn from one set (assets/baricons.js for the page bars, BarIconDrawable for the full screen bar), 28 px in a 44 px button; numbers sit inside the skip arrows and settings show as a small badge at the top right. Order: Previous, Back, Play, Forward, Next, then a 14 px gap and the settings. Previous and Next stay in place and grey out instead of hiding; PPV has neither. Exception to look B Fill: the bar's progress fill stays #FFB347.
 
 Full screen controls backing (2.59.3): a vertical fade from clear to rgba(0,0,0,.88), 64 dp of it above the controls, replacing the solid #CC000000 band. Menu Wrestlers PAST tab (2.59.3): no spotlight, names in five columns across the full 1000 shelf width; CURRENT keeps three columns and the spotlight.
+
+Player bar height (2.59.4): 52 px under the picture (was 64) now that the buttons are icons.
