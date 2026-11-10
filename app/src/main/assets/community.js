@@ -8,8 +8,9 @@
   // How a show's date starts a video title; "This month" searches for it (e.g. "2026/10").
   // The chart prints the words it searched for, so a different style of date is easy to spot and change here.
   var MONTH_FMT = '{y}/{m}';
-  var TOP_KEY = 'tvCommTop', TOP_TTL = 24 * 3600 * 1000, RANK_KEY = 'tvCommRank', FOCUS_KEY = 'tvCommFocus';
+  var TOP_KEY = 'tvCommTopFav', TOP_TTL = 24 * 3600 * 1000, RANK_KEY = 'tvCommRank', FOCUS_KEY = 'tvCommFocus';
   var BUILD = '/contents/search?s=pc&o=d&activetab=contents&page=1';
+  var TOP_URL = '/contents/search?s=fc&o=d&activetab=contents&page=1';   // the menu's Top 5: most favorited (2.59.0)
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -113,7 +114,7 @@
     return out;
   }
 
-  // ---- the menu's Top 10 (most watched, all time): kept from the last visit, refreshed at most once a day
+  // ---- the menu's Top 10 (most favorited, all time): kept from the last visit, refreshed at most once a day
   var fetching = false;
   function topCache() {
     try { var d = JSON.parse(lsGet(TOP_KEY) || 'null'); if (d && Array.isArray(d.items)) return d; } catch (e) {}
@@ -123,7 +124,7 @@
   function fetchTop() {
     if (fetching || !window.fetch) return;
     fetching = true;
-    fetch(BUILD, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
+    fetch(TOP_URL, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
       var doc = new DOMParser().parseFromString(html, 'text/html');
       saveTop(readCards(doc, null));
       fetching = false;
@@ -143,13 +144,13 @@
         h += '<a class="tv-sm-fi tv-cm-li" tabindex="0" data-go="' + esc(go) + '" href="' + esc(it.href) + '"><span class="tv-cm-n">' + (i + 1) + '</span><span class="tv-cm-lt">' + esc(it.title) + '</span></a>';
       }
     });
-    h += '<a class="tv-sm-fi tv-cm-more" tabindex="0" data-go="' + esc(chartUrl({ m: 'pc', w: 'a' })) + '" href="' + esc(absUrl(chartUrl({ m: 'pc', w: 'a' }))) + '">' + esc(T('View all Top 10', 'トップ10をすべて見る')) + ' &rsaquo;</a>';
+    h += '<a class="tv-sm-fi tv-cm-more" tabindex="0" data-go="' + esc(chartUrl({ m: 'fc', w: 'a' })) + '" href="' + esc(absUrl(chartUrl({ m: 'fc', w: 'a' }))) + '">' + esc(T('View all Top 10', 'トップ10をすべて見る')) + ' &rsaquo;</a>';
     return h;
   }
   function top10Html() {
     var c = topCache();
     if (!c || Date.now() - c.t > TOP_TTL) fetchTop();
-    return '<div class="tv-shl-t" style="color:#F4C242;">' + esc(T('TOP 5 · MOST WATCHED · ALL TIME', 'トップ5 · 再生数 · 全期間')) + '</div><div id="tv-cm-top">' + topInner() + '</div>';
+    return '<div class="tv-shl-t" style="color:#F4C242;">' + esc(T('TOP 5 · MOST FAVORITED · ALL TIME', 'トップ5 · お気に入り数 · 全期間')) + '</div><div id="tv-cm-top">' + topInner() + '</div>';
   }
 
   // the menu's Top 10 (inside the shelf) is styled on every page, not only on the Community page

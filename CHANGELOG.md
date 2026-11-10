@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.1
+
+- Community menu: the Top 5 is now Most Favorited, all time (was Most Watched), and View all opens the all-time Most Favorited chart.
+
 ## 2.59.0
 
 - Video player controls are icons instead of words, under the picture, in full screen and on PPV shows: no box around a button; the icon is white and turns gold when focused. Skip back and forward show their skip size inside the arrow; quality and speed show the current setting as a small badge; captions (full screen) fill in when on, and on PPV shows the same box reads EN or JA for the commentary.
