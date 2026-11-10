@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.58.1
+
+- Video options on a card in a show's video list (under the player): Add to Favorites now adds that video to the site's Favorite Videos (it was sending the show's number instead), and the menu offers Favorite Matches for a single video instead of Favorite Shows.
+
 ## 2.58.0
 
 - Google TV's own screensaver (ambient mode) can now start while the app is idle. The app keeps the screen on only while a video or PPV stream plays, and for 30 seconds after it stops or pauses; after that the TV's usual screensaver timer applies.

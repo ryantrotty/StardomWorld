@@ -4378,7 +4378,8 @@ class MainActivity : Activity() {
 
               if (link) {
                 var href = link.getAttribute('href') || link.href || '';
-                var match = href.match(/(?:contents|set)\/(\d+)/);
+                // A video inside a set links as /set/<set>/contents/<video>: favourite the video, not the set.
+                var match = href.match(/contents\/(\d+)/) || href.match(/set\/(\d+)/);
                 if (match && match[1]) {
                   targetContentId = match[1];
                   targetCard = cardContainer;
