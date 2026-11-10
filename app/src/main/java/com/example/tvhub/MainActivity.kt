@@ -6636,7 +6636,9 @@ class MainActivity : Activity() {
 
           var st = document.createElement('style');
           st.textContent =
-            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0 0 14px 0;background:rgba(0,0,0,0.8);border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            '#tv-pbar{display:flex;align-items:center;gap:14px;box-sizing:border-box;height:52px;padding:0 14px;margin:0 0 14px 0;background:#020305;position:relative;border:none;border-radius:0 0 6px 6px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;}' +
+            // The bar's black reaches up behind the picture (2.59.5), so no page colour shows between them.
+            '#tv-pbar::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:40px;background:#020305;z-index:-1;pointer-events:none;}' +
             '#tv-pbar .tv-pb-time{flex:0 0 auto;font-size:14px;white-space:nowrap;}' +
             '#tv-pbar .tv-pb-track{flex:1 1 0;min-width:60px;height:8px;border-radius:4px;background:#3b4656;position:relative;overflow:hidden;}' +
             '#tv-pbar .tv-pb-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:' + ACCENT + ';}' +
@@ -6667,6 +6669,7 @@ class MainActivity : Activity() {
             var sec = document.querySelector('.box-related-content');
             if (!sec && ++buildTries < 8) return false;
             f.setAttribute('tabindex', '-1');   // the frame itself is never a keyboard stop
+            f.style.background = '#020305';     // any edge the picture leaves inside the frame is black, like the bar
             // No thin outlines around the player or its wrappers.
             var n = f, depth = 0;
             while (n && n !== document.body && depth < 6) { n.classList.add('tv-nb'); n = n.parentElement; depth++; }

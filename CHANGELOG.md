@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.59.5
+
+- Bar under the picture: its black now reaches up behind the bottom of the picture, and the player frame itself is black, so no grey page colour shows between the picture and the controls. The bar is solid #020305 (the same colour its 80 % black gave on the navy page).
+
 ## 2.59.4
 
 - Bar under the picture: 52 high (was 64), so the icons and time sit right under the picture. The measurements showed the bar already touching the picture; the space seen was the bar's own empty top, which the icons (smaller than the old boxed words) left showing. The measurement line from 2.59.3 is gone.
