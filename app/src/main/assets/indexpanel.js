@@ -11,12 +11,12 @@
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '保存', notSaved: '保存できませんでした', linkedShort: 'リンクしました', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', added: '追加しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク' }, groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', added: '追加しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク', card: 'カード' }, cardNow: 'サイトの表示', cardNew: 'STARSCOPEの表示', cardHave: '入力済み', cardNames: '選手', cardEvent: '大会・王座', cardRound: 'ブロック・ラウンド', cardPlace: '試合順', cardDate: '日付', groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Save', notSaved: 'Not saved', linkedShort: 'Linked', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', added: 'Added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks' }, groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', added: 'Added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks', card: 'Card' }, cardNow: 'ON THE SITE NOW', cardNew: 'WITH STARSCOPE', cardHave: 'FILLED IN', cardNames: 'Names', cardEvent: 'Event or title', cardRound: 'Block or round', cardPlace: 'Match number', cardDate: 'Date', groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
-  var TABS = ['people', 'match', 'finish', 'moments', 'marks'], MULTI = { title: 1, stipulation: 1, moment: 1 };
+  var TABS = ['people', 'match', 'finish', 'moments', 'marks', 'card'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
   var marks = { bell: '', end: '' };
   var root = null, layer = 'main', state = null, lib = null, rec = null, nameMap = {}, byId = {}, menuFor = null, pick = null, lastFocus = 'save', statusText = '', statusBad = false, seq = 0, cbs = {}, busy = false;
@@ -244,6 +244,8 @@
     } else if (state.tab === 'moments') {
       h += group('moment', listOf('moment').filter(function(x) { return state.resOpen || !SPOIL[x.id]; }));
       if (!state.resOpen) h += '<div class="m" style="margin-top:12px">' + T.spoil + '</div><div class="chips">' + chip('rev', T.reveal, 'ghost') + '</div>';
+    } else if (state.tab === 'card') {
+      h += cardHtml();
     } else if (state.tab === 'marks') {
       h += '<div class="chips">' + chip('mb', T.bell + (marks.bell !== '' ? ' · ' + mmss(marks.bell) : '')) + (marks.bell !== '' ? chip('mbx', T.clear, 'ghost') : '');
       h += chip('me', T.end + (marks.end !== '' ? ' · ' + mmss(marks.end) : '')) + (marks.end !== '' ? chip('mex', T.clear, 'ghost') : '') + '</div>';
@@ -254,6 +256,58 @@
         });
       }
     }
+    return h;
+  }
+  // ---- Card tab (2.61.0): the video's card as the site shows it now, and as StarScope will show it from what is filled
+  // in so far (the same card as the StarScope results, assets/starcards.js). It fills in as the other tabs do.
+  function cardData() {
+    var sides = state.sides.filter(function(s) { return s.people.length; });
+    var en = sides.map(function(s) { return s.people.map(function(p) { var t = p.id && byId[p.id]; return t ? t.en : p.billed; }); });
+    var jp = sides.map(function(s) { return s.people.map(function(p) { var t = p.id && byId[p.id]; return t ? (t.ja || t.en) : p.billed; }); });
+    function labIn(g, id, lang) { var x = listOf(g).filter(function(o) { return o.id === id; })[0]; return x ? (lang === 'ja' && x.ja ? x.ja : x.en || id) : id; }
+    function kind(s, lang) {
+      var size = Math.max.apply(null, s.map(function(x) { return x.length; }).concat([0]));
+      if (s.length > 2) return lang === 'ja' ? s.length + 'WAY' : s.length + '-way match';
+      if (size <= 1) return lang === 'ja' ? 'シングルマッチ' : 'Singles match';
+      if (size === 2) return lang === 'ja' ? 'タッグマッチ' : 'Tag team match';
+      return lang === 'ja' ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
+    }
+    function event(lang, s) {
+      var c = (state.tags.competition || [])[0], t = state.tags.title || [];
+      if (c) return labIn('competition', c, lang) + ' ' + String(state.date || '').slice(0, 4);
+      if (t.length) return t.map(function(v) { return labIn('title', v, lang); }).join(' / ');
+      return kind(s, lang);
+    }
+    function foot(lang) {
+      var f = [];
+      (state.tags.block || []).slice(0, 1).forEach(function(b) { f.push(labIn('block', b, lang)); });
+      (state.tags.round || []).slice(0, 1).forEach(function(r) { f.push(String(labIn('round', r, lang)).replace(/ match$/i, '')); });
+      return f;
+    }
+    var place = setPlace();
+    return {
+      v: { s: en, sj: jp, e: event('en', en), ej: event('ja', jp), f: foot('en'), fj: foot('ja'), n: place ? place.no : '', t: place ? place.total : '', d: state.date || '' },
+      have: [
+        [T.cardNames, sides.length >= 2 && sides.every(function(s) { return s.people.every(function(p) { return p.id; }); })],
+        [T.cardEvent, !!((state.tags.competition || []).length || (state.tags.title || []).length)],
+        [T.cardRound, !!((state.tags.block || []).length || (state.tags.round || []).length)],
+        [T.cardPlace, !!place],
+        [T.cardDate, !!state.date]
+      ]
+    };
+  }
+  function cardHtml() {
+    var d = cardData(), th = esc((rec && rec.thumb) || ''), siteTitle = esc((ja ? rec && (rec.title_ja || rec.title_en) : rec && (rec.title_en || rec.title_ja)) || '');
+    var img = '<div style="height:202px;background:#0B1118 center/cover no-repeat;' + (th ? 'background-image:url(\'' + th + '\');' : '') + 'border-radius:8px 8px 0 0"></div>';
+    var star = window.__tvStarCard ? window.__tvStarCard.html(d.v) : '';
+    var h = '<div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">';
+    h += '<div style="width:360px"><div class="grp">' + T.cardNow + '</div><div style="background:rgba(26,26,26,.85);border-radius:8px;overflow:hidden">' + img +
+      '<div style="padding:11px 14px 13px;font:700 17px/1.3 Arial;color:#fff;min-height:44px">' + (siteTitle || '–') + '</div></div></div>';
+    h += '<div style="width:360px"><div class="grp">' + T.cardNew + '</div><div style="background:rgba(26,26,26,.85);border-radius:8px;overflow:hidden">' + img +
+      '<div class="tvsc-host" style="padding:11px 14px 13px">' + star + '</div></div></div>';
+    h += '<div style="min-width:220px"><div class="grp">' + T.cardHave + '</div>' + d.have.map(function(x) {
+      return '<div style="font:700 17px Arial;margin:8px 0;color:' + (x[1] ? '#fff' : '#9AA6B4') + '"><span style="display:inline-block;width:26px;color:' + (x[1] ? '#F4C242' : '#5A6472') + '">' + (x[1] ? '✓' : '○') + '</span>' + esc(x[0]) + '</div>';
+    }).join('') + '</div></div>';
     return h;
   }
   function suggestTags() {

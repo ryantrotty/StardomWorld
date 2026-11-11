@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.61.0
+
+Private builds only:
+- StarScope logger: new Card tab, last in the row. It shows the video's card as the site shows it now (picture and the site's title) next to the StarScope card made from what has been filled in so far (event or title, the wrestlers with vs, block and round, match number and date: the same card as the StarScope results), and a short Filled in list (names, event or title, block or round, match number, date) with a gold tick for each part that is done. It changes as the other tabs are filled in.
+
 ## 2.60.2
 
 Private builds only:

@@ -238,3 +238,5 @@ Player bar placement (2.59.11): the bar is placed on the page body, absolutely, 
 Logger buttons (2.60.0): rgba(5,8,12,.6), focused rgba(5,8,12,.78) with the gold border; the same for the text boxes. Selected (orange) chips stay solid.
 
 Logger transparency (2.60.1): panel a vertical fade rgba(15,21,28) .55 → .42 (55 %) → .16 at the bottom; screen dim .22 at the top fading out by 70 %; columns .44; buttons and text boxes rgba(5,8,12,.48), focused .62; pop-ups .69, their dim .24.
+
+Logger Card tab (2.61.0): two 360-wide cards side by side (site card: picture 202 high + 17/700 title; StarScope card: same picture + the StarScope card block), then a FILLED IN list, 17/700, gold tick or grey ring.
