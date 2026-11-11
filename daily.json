@@ -1,14 +1,16 @@
 {
- "generated": "2026-11-10T06:38:57Z",
+ "generated": "2026-11-11T06:39:28Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-10T06:30:06Z",
-  "finished": "2026-11-10T06:38:57Z",
-  "requests": 39,
+  "started": "2026-11-11T06:30:31Z",
+  "finished": "2026-11-11T06:39:28Z",
+  "requests": 42,
   "schedule": {
    "ok": true,
-   "events": 36,
-   "changed": [],
+   "events": 37,
+   "changed": [
+    "20261212-toyosu-kaiken"
+   ],
    "error": ""
   },
   "lineage": {
@@ -69,6 +71,8 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
+    "schedule: new event 20261212-toyosu-kaiken takes its Japanese title (no English title available): STARDOM DREAM QUEENDOM 2026 公開記者会見 supported by LAWSON UNITED CINEMAS",
+    "schedule: new event 20261212-toyosu-kaiken takes its Japanese venue string: ユナイテッド・シネマ 豊洲 （ららぽーと豊洲内）",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for both New Japan titles returned HTTP 307 with an empty body on both attempts; Wikipedia alone was used per spec, and that is not a site-wide block."
    ]
@@ -77,7 +81,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-08T13:01:29Z",
+  "updated": "2026-11-11T06:39:21Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -114,7 +118,8 @@
    "20261122-senjo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261122_senjo_poster.jpg",
    "20261130-spark": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261130_spark_poster.jpg",
    "20261215-gokigen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261215_gokigen_card.jpg",
-   "20261229-ryogoku": "https://wwr-stardom.com/wp/wp-content/uploads/2026/07/1229ryogoku_SD_02.png"
+   "20261229-ryogoku": "https://wwr-stardom.com/wp/wp-content/uploads/2026/07/1229ryogoku_SD_02.png",
+   "20261212-toyosu-kaiken": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/%E4%B8%A1%E5%9B%BD%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg"
   },
   "ppv_seen": {},
   "events": [
@@ -157,7 +162,7 @@
      {
       "type": "8-person Tag Match",
       "sides": [
-       "Sakura Aya, Sayaka Kurara, Saori Anou & Anne Kanaya",
+       "Aya Sakura, Sayaka Kurara, Saori Anou & Anne Kanaya",
        "Lady C, Tomoka Inaba, Ranna Yagami & Kiyoka Kotatsu"
       ]
      },
@@ -211,7 +216,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Sakura Aya & Sayaka Kurara",
+       "Aya Sakura & Sayaka Kurara",
        "Saori Anou & Fuwa-chan"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -272,7 +277,7 @@
       "type": "Blue Goddess Official Tournament",
       "sides": [
        "Hina & Lady C",
-       "Ranna Yagami & Iron Akira"
+       "Ranna Yagami & Akira Kurogane"
       ],
       "type_ja": "ブルーゴッデス公式戦",
       "sides_ja": [
@@ -372,7 +377,7 @@
       "type": "Red Goddess Official Tournament",
       "sides": [
        "Hanan & Waka Tsukiyama",
-       "Sakura Aya & Sayaka Kurara"
+       "Aya Sakura & Sayaka Kurara"
       ],
       "type_ja": "レッドゴッデス公式戦",
       "sides_ja": [
@@ -384,7 +389,7 @@
       "type": "Red Goddess Official Tournament",
       "sides": [
        "Kikyo Furusawa & Kiyoka Kotatsu",
-       "Saori Anou & Fuwa -chan"
+       "Saori Anou & Fuwa-chan"
       ],
       "type_ja": "レッドゴッデス公式戦",
       "sides_ja": [
@@ -396,7 +401,7 @@
       "type": "Blue Goddess Official Tournament",
       "sides": [
        "Saya Iida & Utami Hayashishita",
-       "Ranna Yagami & Tetsu Akira Kurogane"
+       "Ranna Yagami & Akira Kurogane"
       ],
       "type_ja": "ブルーゴッデス公式戦",
       "sides_ja": [
@@ -455,7 +460,7 @@
       "type": "Red Goddess Official Tournament",
       "sides": [
        "Maika & HANAKO",
-       "Saori Anou & Fuwa Chan"
+       "Saori Anou & Fuwa-chan"
       ],
       "type_ja": "レッドゴッデス公式戦",
       "sides_ja": [
@@ -478,7 +483,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Sakura Aya & Sayaka Kurara",
+       "Aya Sakura & Sayaka Kurara",
        "Kikyo Furusawa & Kiyoka Kotatsu"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -491,7 +496,7 @@
       "type": "Blue Goddess Official Tournament",
       "sides": [
        "Natsupoi & Rian",
-       "Ranna Yagami & Tetsu Akira"
+       "Ranna Yagami & Akira Kurogane"
       ],
       "type_ja": "ブルーゴッデス公式戦",
       "sides_ja": [
@@ -616,7 +621,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Sakura Aya & Sayaka Kurara",
+       "Aya Sakura & Sayaka Kurara",
        "Mei Seira & Ema Maishima"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -702,7 +707,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Saori Anou & Fuwa Chan",
+       "Saori Anou & Fuwa-chan",
        "Starlight Kid & Maki Itoh"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -727,7 +732,7 @@
       "type": "Blue Goddess Official Tournament",
       "sides": [
        "Suzu Suzuki & Rina Yamashita",
-       "Ranna Yagami & Tetsu Akira"
+       "Ranna Yagami & Akira Kurogane"
       ],
       "type_ja": "ブルーゴッデス公式戦",
       "sides_ja": [
@@ -800,7 +805,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Saori Anou & Fuwa Chan",
+       "Saori Anou & Fuwa-chan",
        "Momo Watanabe & Saya Kamitani"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -885,7 +890,7 @@
       "type": "Red Goddess Official Tournament",
       "sides": [
        "Hanan & Waka Tsukiyama",
-       "Saori Anou & Fuwa Chan"
+       "Saori Anou & Fuwa-chan"
       ],
       "type_ja": "レッドゴッデス公式戦",
       "sides_ja": [
@@ -896,7 +901,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Sakura Aya & Sayaka Kurara",
+       "Aya Sakura & Sayaka Kurara",
        "Starlight Kid & Maki Itoh"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -909,7 +914,7 @@
       "type": "Blue Goddess Official Tournament",
       "sides": [
        "Hazuki & Koguma",
-       "Ranna Yagami & Tetsu Akira"
+       "Ranna Yagami & Akira Kurogane"
       ],
       "type_ja": "ブルーゴッデス公式戦",
       "sides_ja": [
@@ -992,7 +997,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Sakura Aya & Sayaka Kurara",
+       "Aya Sakura & Sayaka Kurara",
        "Yuna Mizumori & Anne Kanaya"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -1028,7 +1033,7 @@
      {
       "type": "Blue Goddess Official Tournament",
       "sides": [
-       "Ranna Yagami & Tetsu Akira",
+       "Ranna Yagami & Akira Kurogane",
        "Natsuko Tora & Ruaka"
       ],
       "type_ja": "ブルーゴッデス公式戦",
@@ -1102,7 +1107,7 @@
      {
       "type": "Blue Goddess Official Tournament",
       "sides": [
-       "Ranna Yagami & Tetsu Akira",
+       "Ranna Yagami & Akira Kurogane",
        "Dark Silueta & Valkyria"
       ],
       "type_ja": "ブルーゴッデス公式戦",
@@ -1163,7 +1168,7 @@
       "type": "Red Goddess Official Tournament",
       "sides": [
        "Mei Seira & Ema Maishima",
-       "Saori Anou & Fuwa Chan"
+       "Saori Anou & Fuwa-chan"
       ],
       "type_ja": "レッドゴッデス公式戦",
       "sides_ja": [
@@ -1186,7 +1191,7 @@
      {
       "type": "Red Goddess Official Tournament",
       "sides": [
-       "Sakura Aya & Sayaka Kurara",
+       "Aya Sakura & Sayaka Kurara",
        "Momo Watanabe & Saya Kamitani"
       ],
       "type_ja": "レッドゴッデス公式戦",
@@ -1222,7 +1227,7 @@
      {
       "type": "Blue Goddess Official Tournament",
       "sides": [
-       "Ranna Yagami & Tetsu Akira",
+       "Ranna Yagami & Akira Kurogane",
        "Konami & Rina"
       ],
       "type_ja": "ブルーゴッデス公式戦",
@@ -1350,6 +1355,18 @@
     "fc": "2026-12-10T17:30:00+09:00",
     "doors": "2026-12-10T17:40:00+09:00",
     "venue": "Korakuen Hall, Tokyo"
+   },
+   {
+    "id": "20261212-toyosu-kaiken",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261212_toyosu-kaiken/",
+    "poster": "20261212-toyosu-kaiken",
+    "title": "STARDOM DREAM QUEENDOM 2026 公開記者会見 supported by LAWSON UNITED CINEMAS",
+    "short": "STARDOM DREAM QUEENDOM 2026 公開記者会見 supported by LAWSON UNITED CINEMAS",
+    "start": "2026-12-12T15:30:00+09:00",
+    "doors": "2026-12-12T15:10:00+09:00",
+    "fc": "2026-12-12T15:00:00+09:00",
+    "venue": "ユナイテッド・シネマ 豊洲 （ららぽーと豊洲内）"
    },
    {
     "id": "20261213-fuji",
