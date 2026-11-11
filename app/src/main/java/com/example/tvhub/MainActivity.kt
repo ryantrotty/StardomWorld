@@ -3266,6 +3266,11 @@ class MainActivity : Activity() {
         fun starCards(reqId: String, payload: String) =
             sheetCall(reqId, payload, setOf("vi_cards"), "__tvStarCardsReply")
 
+        // The Wrestlers menu (2.64.0, private builds): every wrestler's status from the sheet, replies to __tvRosterReply.
+        @android.webkit.JavascriptInterface
+        fun starRoster(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_roster"), "__tvRosterReply")
+
         // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
         @android.webkit.JavascriptInterface
         fun indexPanel(open: Boolean) { indexPanelOpen = open }
@@ -5436,7 +5441,12 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;}',
             '#tv-sm-shelf .tv-shl-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px;align-items:start;}',   // same two columns as the Stardom card grid
             '#tv-sm-shelf .tv-shl-wtabs{display:inline-flex;gap:2px;margin:0 0 10px 0;padding:3px;border:2px solid #2a323c;border-radius:20px;background:#0f151c;}',
-            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{font-size:17px;font-weight:700;padding:6px 30px;margin:0;border-radius:20px;border:3px solid transparent;background:transparent;color:#9aa6b4 !important;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;padding:6px 20px;margin:0;border-radius:20px;border:3px solid transparent;background:transparent;color:#9aa6b4 !important;}',
+            '#tv-sm-shelf .tv-shl-wtab svg{flex:none;}',
+            '#tv-sm-shelf .tv-shl-wtab .tv-wtab-n{font-size:14px;opacity:.75;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-wr-n{display:flex;align-items:center;justify-content:space-between;gap:6px;}',
+            '#tv-sm-shelf .tv-wr-l{min-width:0;}',
+            '#tv-sm-shelf .tv-wr-c{flex:none;display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{background:#FFB347 !important;color:#1A1A1A !important;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab:focus{border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
@@ -5480,6 +5490,19 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-fc .tv-shl-ft3{display:block;margin-top:3px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-ssb-b{margin:0;padding:7px 14px;font-size:16px;font-weight:700;background:#161f2a;border-color:#2a323c;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-ssb-b:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-ssb-logo{display:flex;align-items:center;gap:10px;margin:0 0 0 -10px;padding:4px 10px;}',
+            '#tv-sm-shelf .tv-ssb-c .tvsc-host{padding:7px 10px 8px !important;}',
+            '#tv-sm-shelf .tv-ssb-c .tvsc .nm{margin-top:4px;padding-bottom:6px;font-size:16px;-webkit-line-clamp:2;}',
+            '#tv-sm-shelf .tv-ssb-c .tvsc .ft{margin-top:6px;}',
+            '#tv-sm-shelf .tv-cm3{display:grid;grid-template-columns:280px minmax(0,1fr) 220px;gap:24px;align-items:start;}',
+            '#tv-sm-shelf .tv-cm3 > .tv-shl-t{grid-column:1 / 3;grid-row:1;margin:0;}',
+            '#tv-sm-shelf .tv-cm3 > #tv-cm-top{grid-column:1 / 3;grid-row:2;display:grid;grid-template-columns:280px minmax(0,1fr);column-gap:24px;align-items:start;margin-top:-14px;}',
+            '#tv-sm-shelf .tv-cm3 > #tv-cm-top > .tv-cm-h1{grid-column:1;grid-row:1 / 7;}',
+            '#tv-sm-shelf .tv-cm3 > #tv-cm-top > a:not(.tv-cm-h1){grid-column:2;}',
+            '#tv-sm-shelf .tv-cm3 > div:last-child{grid-column:3;grid-row:1 / 3;}',
+            '#tv-sm-shelf .tv-cm3 > div:last-child .tv-sm-fi{padding:4px 10px;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
             '#tv-sm, #tv-sm *, #tv-sm-shelf, #tv-sm-shelf *{-webkit-tap-highlight-color:transparent !important;}',
             '#tv-sm-shelf .tv-sm-fi:hover, #tv-sm .tv-sm-item:hover, #tv-sm .tv-sm-item:hover *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;}',
@@ -5849,6 +5872,97 @@ class MainActivity : Activity() {
 
           // ---- shelf flyout (to the right of the menu)
           var shelfEl = null, shelfRow = null;
+          // Wrestlers menu (2.64.0): Current | Past | Guests. In private builds the sheet's talent tab is the source of
+          // truth for who is where; its list is kept on the TV and checked again (at most once a minute) each time the
+          // menu opens, and the open menu redraws when a newer list arrives. Without it the menu is Current | Past as before.
+          var ROSTER_KEY = 'tvRosterV1', rosterAsk = 0;
+          function rosterSaved() { try { var r = JSON.parse(localStorage.getItem(ROSTER_KEY) || 'null'); return r && r.talent && r.talent.length ? r : null; } catch (e) { return null; } }
+          function rosterCheck() {
+            try { if (!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.starRoster)) return; } catch (e) { return; }
+            if (Date.now() - rosterAsk < 60000) return;
+            rosterAsk = Date.now();
+            try { AndroidHost.starRoster('r1', JSON.stringify({ action: 'vi_roster' })); } catch (e) {}
+          }
+          window.__tvRosterReply = function(id, text) {
+            var r; try { r = JSON.parse(text); } catch (e) { return; }
+            if (!r || !r.ok || !r.talent || !r.talent.length) return;
+            var old = null; try { old = localStorage.getItem(ROSTER_KEY); } catch (e) {}
+            var now = JSON.stringify({ t: Date.now(), talent: r.talent, merged: r.merged || [] });
+            try { localStorage.setItem(ROSTER_KEY, now); } catch (e) {}
+            try { if (old && JSON.stringify(JSON.parse(old).talent) === JSON.stringify(r.talent) && JSON.stringify(JSON.parse(old).merged || []) === JSON.stringify(r.merged || [])) return; } catch (e) {}   // nothing changed: leave the open menu alone
+            if (shelfEl && shelfRow && shelfRow.getAttribute('data-shelf') === 'current') {
+              var on = shelfEl.querySelector('.tv-shl-wtab.tv-wtab-on'), ae = document.activeElement;
+              var tab = on ? on.getAttribute('data-wtab') : '0', fg = ae && shelfEl.contains(ae) ? (ae.getAttribute('data-go') || 'wtab:' + ae.getAttribute('data-wtab')) : '';
+              openShelf('current', shelfRow);
+              var t2 = shelfEl && shelfEl.querySelector('.tv-shl-wtab[data-wtab="' + tab + '"]');
+              if (t2) { t2.dispatchEvent(new Event('focus')); }
+              var back = null;
+              if (fg) Array.prototype.forEach.call(shelfEl.querySelectorAll('.tv-sm-fi'), function(a) { if ((a.getAttribute('data-go') || 'wtab:' + a.getAttribute('data-wtab')) === fg && a.offsetParent !== null) back = a; });
+              if (back || t2) focusItem(back || t2);
+            }
+          };
+          var TELE_SM = '<svg width="14" height="14" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/></g><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/></svg>';
+          var WR_ICONS = [
+            '<path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="currentColor"/>',
+            '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M3.2 3.8v4.6h4.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7.6V12l3 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+            '<path d="M9 2.5h6v4H9z" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="16" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="11.6" r="2.4" fill="currentColor"/><path d="M7.8 18.2c.7-2.2 2.3-3.2 4.2-3.2s3.5 1 4.2 3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'
+          ];
+          // The three lists as [shown name, path, Japanese name, StarScope matches]. The sheet moves a name between
+          // lists and adds names the app's files don't have; the app's own lists stay the base (and the only source
+          // when there is no sheet list).
+          function wrLists() {
+            var cur = currentWrestlers().map(function(r) { return [r[0], r[1], r[2], 0]; });
+            var past = pastWrestlers().map(function(r) { return [r[0], r[1], r[2], 0]; });
+            var ros = rosterSaved();
+            if (!ros) return { cur: cur, past: past, guest: null };
+            var tal = ros.talent, low = function(x) { return String(x || '').trim().toLowerCase(); }, by = {}, gone = {};
+            (ros.merged || []).forEach(function(m) { if (m[0]) gone[low(m[0])] = 1; if (m[1]) gone[low(m[1])] = 1; });
+            tal.forEach(function(t) { by[low(t.en)] = t; if (t.s) by[low(t.s)] = by[low(t.s)] || t; });
+            var st = function(r) { return by[low(r[0])] || by[low(SEARCH_AS[r[0]])] || null; };
+            var lists = { current: [], past: [], guest: [] }, have = {};
+            cur.concat(past).forEach(function(r, i) {
+              var t = st(r), k = t ? t.st : (i < cur.length ? 'current' : 'past');
+              if (!t && gone[low(r[0])]) return;   // another name for someone already listed
+              if (!lists[k]) k = i < cur.length ? 'current' : 'past';
+              if (t) { r[3] = +t.n || 0; have[t.id] = 1; }
+              if (!have['n:' + low(r[0])]) { have['n:' + low(r[0])] = 1; lists[k].push(r); }
+            });
+            tal.forEach(function(t) {
+              if (have[t.id] || have['n:' + low(t.en)] || !lists[t.st]) return;
+              have[t.id] = 1;
+              lists[t.st].push([t.en, wrPath(t.s || t.en), t.ja || t.en, +t.n || 0]);
+            });
+            var az = function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); };
+            return { cur: lists.current.sort(az), past: lists.past.sort(az), guest: lists.guest.sort(az) };
+          }
+          function wrRowsHtml(rows, counts) {
+            return rows.map(function(r) {
+              var c = counts && r[3] ? '<span class="tv-wr-c">' + TELE_SM + r[3] + '</span>' : '';
+              return '<a class="tv-sm-fi' + (c ? ' tv-wr-n' : '') + '" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + (c ? '<span class="tv-wr-l">' : '') + esc(isJa() && r[2] ? r[2] : r[0]) + (c ? '</span>' + c : '') + '</a>';
+            }).join('');
+          }
+          // Community menu, private builds (2.63.0): a StarScope band above the charts, with links to the StarScope page
+          // and the three newest StarScope matches as cards. Drawn from the index list the app already keeps.
+          function scopeBand() {
+            var sc = window.__tvScope, list = [];
+            try { if (sc && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) list = sc.newest(3); } catch (e) { list = []; }
+            if (!sc) return '';
+            var pill = function(label, path) { return '<a class="tv-sm-fi tv-ssb-b" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>'; };
+            var h = '<div style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,#1A2433,#0F151C);border:2px solid #2A323C;">' +
+              '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><a class="tv-sm-fi tv-ssb-logo" tabindex="0" data-go="/mypage?tvscope=recent" href="' + esc(absUrl('/mypage?tvscope=recent')) + '"><svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0F151C" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>' +
+              '<span style="font:900 18px Arial;letter-spacing:.06em;color:#fff;">STAR<span style="color:#F4C242;">SCOPE</span></span></a><span style="font:600 13px Arial;color:#9AA6B4;margin-left:4px;">' + esc(T('Map all the Stars in the World', '世界中のスターを地図に')) + '</span>' +
+              '<span style="margin-left:auto;display:flex;gap:8px;">' + pill(T('Recently added', '新着'), '/mypage?tvscope=recent') + pill(T('Top rated', '高評価'), '/mypage?tvscope=top') + pill(T('All matches', 'すべての試合') + ' \u203a', '/mypage?tvscope=all') + '</span></div>';
+            if (list.length) {
+              h += '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">';
+              list.forEach(function(x) {
+                var path = '/contents/' + x.id, th = x.v.th || '';
+                h += '<a class="tv-sm-fi tv-ssb-c" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="display:block;margin:0;padding:0;border-radius:8px;overflow:hidden;background:#1A1A1A;">' +
+                  '<div style="height:0;padding-top:56.25%;background:#161F2A center/cover no-repeat;' + (th ? 'background-image:url(' + esc(th) + ');' : '') + '"></div><div class="tvsc-host">' + sc.card(x) + '</div></a>';
+              });
+              h += '</div>';
+            }
+            return h + '</div>';
+          }
           function fiHtml(label, path) {
             return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>';
           }
@@ -6004,14 +6118,12 @@ class MainActivity : Activity() {
               w = 860;
               // Names in three columns with a portrait spotlight on the right (assets/wrspot.js; every build since 2.47.0, initials without the private photos).
               var spot = !!(window.__tvWrSpot && window.__tvWrSpot.on());
-              var crow = currentWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              var prow = pastWrestlers().slice().sort(function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); });
-              // Two tabs, CURRENT (open first) and PAST, like the filter bar's wrestler lists.
-              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div>' +
-                '<div class="tv-shl-wtabs"><a class="tv-sm-fi tv-shl-wtab tv-wtab-on" tabindex="0" data-wtab="0">' + esc(T('CURRENT', '現役')) + '</a><a class="tv-sm-fi tv-shl-wtab" tabindex="0" data-wtab="1">' + esc(T('PAST', '元所属')) + '</a></div>' +
-                '<div class="tv-shl-wl" data-wbody="0" style="column-count:' + (spot ? 3 : 4) + ';column-gap:10px;">' + rowsHtml(crow) + '</div>' +
-                // PAST (2.59.3): no spotlight (past wrestlers have no photos), so its names spread over five columns.
-                '<div class="tv-shl-wl" data-wbody="1" style="display:none;column-count:' + (spot ? 5 : 4) + ';column-gap:10px;">' + rowsHtml(prow) + '</div>';
+              var wl = wrLists(), tabs = [[T('CURRENT', '現役'), wl.cur], [T('PAST', '元所属'), wl.past]];
+              if (wl.guest) tabs.push([T('GUESTS', 'ゲスト'), wl.guest]);
+              h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div><div class="tv-shl-wtabs">' +
+                tabs.map(function(tb, ti) { return '<a class="tv-sm-fi tv-shl-wtab' + (ti ? '' : ' tv-wtab-on') + '" tabindex="0" data-wtab="' + ti + '"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">' + WR_ICONS[ti] + '</svg><span>' + esc(tb[0]) + '</span><span class="tv-wtab-n">' + tb[1].length + '</span></a>'; }).join('') + '</div>' +
+                // Current keeps the spotlight; Past and Guests have none (no photos), so their names spread over five columns.
+                tabs.map(function(tb, ti) { return '<div class="tv-shl-wl" data-wbody="' + ti + '" style="' + (ti ? 'display:none;' : '') + 'column-count:' + (ti ? (spot ? 5 : 4) : (spot ? 3 : 4)) + ';column-gap:10px;">' + wrRowsHtml(tb[1], ti > 0) + '</div>'; }).join('');
               if (spot) {
                 w = 1000;
                 h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';
@@ -6029,15 +6141,11 @@ class MainActivity : Activity() {
                 for (var yy = cy; yy > cy - 4; yy--) cmYears += fiHtml(String(yy), cm.url({ m: 'pc', w: 'yr', y: String(yy) }));
                 var cmHome = cm.url({ m: 'pc', w: 'a' });
                 h = '<a class="tv-sm-fi tv-fv-open" tabindex="0" data-go="' + esc(cmHome) + '" href="' + esc(absUrl(cmHome)) + '"><span style="font-size:24px;color:#F4C242">&#9733;</span><span class="tv-fv-l"><b>' + esc(T('Open Community', 'コミュニティを開く')) + '</b></span></a>' +
-                  '<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;align-items:start;">' +
-                  '<div>' + cm.top10Html() + '</div>' +
-                  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;">' +
+                  scopeBand() +
+                  '<div class="tv-cm3">' + cm.top10Html() +
                     '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST WATCHED', '再生数')) + '</div>' + cmRows('pc') + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST FAVORITED', 'お気に入り数')) + '</div>' + cmRows('fc') + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('TOOLS', 'ツール')) + '</div>' + fiHtml(T('Build a chart', 'チャートを作る'), cm.buildUrl) + '</div></div>' +
-                    '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('BY YEAR', '年別')) + '</div>' + cmYears + fiHtml(T('More years...', 'ほかの年'), cm.url({ m: 'pc', w: 'yr' })) + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' + fiHtml(T('Places, shows, titles', '開催地・大会・王座'), cm.collUrl) + '</div></div>' +
-                  '</div></div>';
+                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST FAVORITED', 'お気に入り数')) + '</div>' + cmRows('fc') + '</div></div>' +
+                  '</div>';
               }
             }
             else if (key === 'tagteams') {
@@ -6092,13 +6200,14 @@ class MainActivity : Activity() {
             document.body.appendChild(shelfEl);
             try { if (window.__tvFav) window.__tvFav.decorate(shelfEl, key); } catch (e) {}
             try { if (key === 'current' && window.__tvWrSpot) window.__tvWrSpot.attach(shelfEl); } catch (e) {}
+            if (key === 'current') rosterCheck();
             if (key === 'current') {
               var wts = shelfEl.querySelectorAll('.tv-shl-wtab'), wbs = shelfEl.querySelectorAll('[data-wbody]');
               Array.prototype.forEach.call(wts, function(t, ti) {
                 var show = function() {
                   Array.prototype.forEach.call(wbs, function(bd, bi) { bd.style.display = bi === ti ? '' : 'none'; });
                   Array.prototype.forEach.call(wts, function(u, ui) { u.classList.toggle('tv-wtab-on', ui === ti); });
-                  var sp = shelfEl.querySelector('.tv-wsp'); if (sp) sp.style.display = ti === 1 ? 'none' : '';   // PAST: no spotlight
+                  var sp = shelfEl.querySelector('.tv-wsp'); if (sp) sp.style.display = ti ? 'none' : '';   // Past and Guests: no spotlight
                 };
                 t.addEventListener('focus', show);
                 t.addEventListener('click', function(ev) { ev.preventDefault(); show(); });

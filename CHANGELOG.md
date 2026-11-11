@@ -2,6 +2,89 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.64.0
+
+- Wrestlers menu: three tabs, Current, Past and Guests, each with an icon and how many names it holds. Left and Right move between the tabs and show each list, Down goes into the names. Current keeps the portrait spotlight; Past and Guests have none and spread over five columns.
+- Private builds: the sheet's talent tab decides who is where. The app's own lists stay the base, the sheet moves a name between them (Hazuki to Current, Yoko Bito to Past) and adds the names the app doesn't have; other names for the same person (HZK, Azumi) are left out. Past and Guests names show a small telescope with the number of StarScope matches they are in.
+- Opening the menu checks the sheet again (at most once a minute) without waiting for it: the menu draws from the list kept on the TV and redraws in place, same tab and same name focused, if the sheet's list has changed. Public builds, and a private build before its first answer, show Current | Past as before.
+- The Apps Script has a new read-only call (vi_roster) with no lock, so it never answers "busy". Paste the script and publish a new version; until then the Guests tab does not appear.
+
+## 2.63.3
+
+- StarScope logger: picking a different wrestler for someone already in the match now also replaces the name saved with her (the sheet's billed_name). It used to keep the first text, so a placeholder or a wrong first pick stayed in that column even though the right wrestler was saved. Saving again still replaces the whole match, as before.
+
+## 2.63.2
+
+- Community menu: the Top 5 shows the most favorited videos again. Opening the Community page (Most watched, All time) was saving its list over the menu's Top 5; now only the Most favorited, All time list does. The old saved list is dropped.
+- Community menu: StarScope card names are 16 px and stop at two lines in the menu (the StarScope page still shows them in full), so the Top 5 and the Most watched / Most favorited links fit on screen.
+
+## 2.63.1
+
+- Community menu: the StarScope cards show the whole picture (16:9) instead of a strip cut from the middle.
+- Community menu: Recently added, Top rated and All matches are plain menu buttons (dark, gold border when focused); none is orange any more.
+- Community menu: the StarScope telescope and wordmark are a button to Recently added, and Down from Open Community lands on it.
+- Community menu: the Top 5 is three columns: the #1 picture, then 2 to 5 and View all, then Most watched and Most favorited. The By year, Collections and Build a chart links are gone from the menu (they are still on the Community page). Everything fits without scrolling.
+- StarScope page: Back closes an open filter list instead of leaving the page.
+- StarScope pages: Left in the open menu puts the menu away; it used to reopen straight away.
+
+## 2.63.0
+
+Private builds only:
+- StarScope page, drawn by the app: `/mypage?tvscope=recent`, `top` or `all`. Header with the telescope, wordmark, tagline and how many matches and wrestlers are logged; tabs Recently added (newest saves first), Top rated (average stars, with a ★ 4.7 · 3 badge), All matches. All matches has the main filters (All, Singles, Tag, Multi-team, Title matches, Tournaments) and, under More, Wrestler, Team or faction, Year, Tournament, Title, Rating and Sort. Every filter is built from what has been logged in StarScope: a main filter only shows when some match fits it, a More filter only when it has values, and each list shows only the values left by the other filters, with how many matches each has. D-pad moves to the nearest button or card; Left from the left edge opens the menu; Back closes a filter list.
+- Community menu: a StarScope band at the top with links to Recently added, Top rated and All matches and the three newest StarScope matches as cards; the Top 5 (with the #1 picture) and the chart links sit below as before.
+- Top rated counts a match from 1 rating for now (one TV); this should go up to 3 when StarScope is public.
+- The Apps Script has changed (the card list carries what the page and filters need); paste it and publish a new version. Until then the page is empty.
+
+## 2.62.3
+
+Private builds only:
+- StarScope logger, Match step: new MATCH ON THE CARD line under the date, the match number and the show's total, each with − and + (0 is the dark match). It starts from what was saved, else the show's video list, else the page; it is what is saved, and it fills the Match number tick on Preview and the card.
+- Tagline: "Map all the Stars in the World".
+
+## 2.62.2
+
+Private builds only:
+- StarScope logger header: the tagline is back beside the wordmark, now "Map all of the Stars in the World"; the video's title and the date and show line under it are gone, so the tabs sit right under the wordmark.
+- After Save (or Looks right · Save), the logger shows Saved for a moment and closes by itself. If the save fails it stays open with Not saved and the reason.
+
+## 2.62.1
+
+Private builds only:
+- StarScope cards, big matches: more than two sides (or a gauntlet, battle royal or rumble) show team or faction names when every side has one, otherwise the first wrestler of each side and how many more ("Saya Iida +2 · Lady C +2 · …"), at most four sides then "+N more teams"; never more than four lines, and names only wrap between words. The kind of match says what it is: "6-team gauntlet · 3 per team", "6 teams of 3", "10-woman battle royal", "2-on-3 handicap"; under a tournament or title it goes in the footer. Same on the StarScope results and in the logger.
+- Logger: Card is now Preview; the tagline next to the wordmark and the video number and version in the facts line are gone; the logger sits lower, clear of the page title behind it; the panel is darker at the top and clearer towards the bottom (74 % → 46 % → 10 %).
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.62.0
+
+Private builds only:
+- StarScope logger reorganised as a flow, keeping every field: it opens on the Card (the site's card now beside the StarScope card, and what was found in the video), then three steps, Competitors, Match and Finish, then Confirm. Each step shows a gold tick once it has what it needs, and they can be done in any order. The bell button stays first, as before.
+- Competitors: the sides as before, with entry and elimination order folded under them (was on Marks).
+- Finish: result, finish and fall as before, then Moments folded (was its own tab) and a star rating out of 5.
+- Confirm: one line each for Competitors, Match, Finish (result hidden) and the bell times, each with Change, next to the new card; Save and Save and next match.
+- Header shows the StarScope wordmark and "Help everyone find every match."
+- Star ratings: your own rating is kept per device, and the logger shows everyone's average and how many ratings there are. New ratings tab in the sheet.
+- The Apps Script has changed; paste it and publish a new version.
+
+## 2.61.0
+
+Private builds only:
+- StarScope logger: new Card tab, last in the row. It shows the video's card as the site shows it now (picture and the site's title) next to the StarScope card made from what has been filled in so far (event or title, the wrestlers with vs, block and round, match number and date: the same card as the StarScope results), and a short Filled in list (names, event or title, block or round, match number, date) with a gold tick for each part that is done. It changes as the other tabs are filled in.
+
+## 2.60.2
+
+Private builds only:
+- StarScope logger: the save button reads Save (was Looks right, save). Pressing it shows Saving… then Saved (Linked for another version of a match already logged) on the button itself, back to Save after 3 seconds, instead of a line of text under the buttons. If it fails the button reads Not saved and the reason stays under the buttons.
+
+## 2.60.1
+
+Private builds only:
+- StarScope logger about 20 % more see-through: the panel fades from 55 % at the top to 16 % at the bottom (was 68 % throughout), so the names on the video's on-screen graphics show through the lower part; the dim over the whole screen fades out towards the bottom; buttons and text boxes 48 % (62 % focused); pop-ups 69 %.
+
+## 2.60.0
+
+Private builds only:
+- StarScope logger: buttons and the text boxes are see-through too, a little darker than the panel (black at 60 %, 78 % when focused) so they still stand apart from it. Chosen chips (orange) stay solid.
+
 ## 2.59.13
 
 - Main was merged with 2.59.11 under the 2.59.12 number, so the measurement lines were still in it. This takes them out (the 2.59.12 change), from main.

@@ -234,3 +234,19 @@ Player bar height (2.59.4): 52 px under the picture (was 64) now that the button
 Player bar colour (2.59.5): solid #020305 (what 80 % black gave over the navy page), also used for the 40 px extension behind the bottom of the picture and the player frame's own background. Exception to the page navy, so the bar and picture meet with no page colour between them.
 
 Player bar placement (2.59.11): the bar is placed on the page body, absolutely, right under the picture, with a bar-sized spacer left in the page; inside the site's boxes its top 12 px was cut off.
+
+Logger buttons (2.60.0): rgba(5,8,12,.6), focused rgba(5,8,12,.78) with the gold border; the same for the text boxes. Selected (orange) chips stay solid.
+
+Logger transparency (2.60.1): panel a vertical fade rgba(15,21,28) .55 → .42 (55 %) → .16 at the bottom; screen dim .22 at the top fading out by 70 %; columns .44; buttons and text boxes rgba(5,8,12,.48), focused .62; pop-ups .69, their dim .24.
+
+Logger Card tab (2.61.0): two 360-wide cards side by side (site card: picture 202 high + 17/700 title; StarScope card: same picture + the StarScope card block), then a FILLED IN list, 17/700, gold tick or grey ring.
+
+StarScope logger flow (2.62.0): header = telescope (34) + STAR/SCOPE wordmark 24/900 (.06em, SCOPE gold) + tagline 14/600 #C9D2DC. Tab row = bell, Card, Competitors, Match, Finish, Confirm; a finished step shows a ✓ (gold, or the chip's own colour when selected). Star rating: five 48-wide chips with 26 px stars, gold filled / #5A6472 outline. Confirm rows: 12/800 gold label (150 wide), 18/800 text, Change chip.
+
+Logger placement and fade (2.62.1): top-aligned 88 px down (clear of the page title), panel fade rgba(15,21,28) .74 → .46 (50 %) → .10, screen dim .34 fading out by 70 %. No tagline. StarScope card names: at most 4 lines, wrap between words only; big matches compress (team names, or first wrestler +N per side, 4 sides then +N more).
+
+Logger header (2.62.2): wordmark row with the tagline "Map all of the Stars in the World" (14/600 #C9D2DC), then 14 px, then the tab row; no video title or facts line.
+
+StarScope page (2.63.0): navy page, header 10 x 36 gold bar + telescope 40 + wordmark 30/900 + tagline 15/600 + counts 15/700 grey at the right; tab and filter chips 44 high (17/700, #161F2A, #2A323C border; chosen #FFB347; focus border #F4C242); More row in a #121922 box; four-across StarScope cards with a 3 px focus border; rating badge #F4C242 13/800 top right of the picture. Community menu band: #1A2433 → #0F151C box; telescope + wordmark 18/900 as one link (look A focus); Recently added, Top rated and All matches as shelf buttons (#161F2A, #2A323C border, radius 8, look A focus; none orange, they are links, not a chosen state); three StarScope cards with 16:9 pictures and names at 16/800, two lines at most. Below it the Top 5 runs in three columns: #1 picture (280), 2 to 5 and View all, then Most watched and Most favorited (220).
+
+Wrestlers menu tabs (2.64.0): Current, Past and Guests in the existing rounded track (chosen = #FFB347 fill, focus = gold border). Each tab has a 20 px icon (filled star, clock with a rewind arrow, visitor badge) in the text colour, the 17/700 label and a 14/700 count at 75 % opacity; tab padding 6 x 20. Past and Guests rows show a 14 px telescope and a 12/700 #9AA6B4 count at the right when the wrestler is in StarScope matches. No new colours.

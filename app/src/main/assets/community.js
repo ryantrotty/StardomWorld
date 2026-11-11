@@ -8,7 +8,7 @@
   // How a show's date starts a video title; "This month" searches for it (e.g. "2026/10").
   // The chart prints the words it searched for, so a different style of date is easy to spot and change here.
   var MONTH_FMT = '{y}/{m}';
-  var TOP_KEY = 'tvCommTopFav', TOP_TTL = 24 * 3600 * 1000, RANK_KEY = 'tvCommRank', FOCUS_KEY = 'tvCommFocus';
+  var TOP_KEY = 'tvCommTopFav2', TOP_TTL = 24 * 3600 * 1000, RANK_KEY = 'tvCommRank', FOCUS_KEY = 'tvCommFocus';
   var BUILD = '/contents/search?s=pc&o=d&activetab=contents&page=1';
   var TOP_URL = '/contents/search?s=fc&o=d&activetab=contents&page=1';   // the menu's Top 5: most favorited (2.59.0)
 
@@ -505,7 +505,7 @@
     if (MODE === 'coll' || (items.length && items.length === last) || (!items.length && tries > 10) || tries > 24) {
       clearInterval(tm);
       cards = items;
-      if (MODE === '1' && !CUR.s && CUR.w === 'a' && CUR.m === 'pc' && items.length) saveTop(items);
+      if (MODE === '1' && !CUR.s && CUR.w === 'a' && CUR.m === 'fc' && items.length) saveTop(items);   // only the most favorited list feeds the menu's Top 5 (most watched used to overwrite it)
       render();
       return;
     }

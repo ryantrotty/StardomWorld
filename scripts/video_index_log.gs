@@ -57,6 +57,7 @@ function doPost(e) {
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
   if (body.action === 'vi_cards') return out(viCards());
+  if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -306,7 +307,9 @@ var VI = {
   aliases: ['alias', 'normalized', 'entity_type', 'entity_id', 'lang', 'valid_from', 'valid_to', 'source', 'status'],
   lists: ['list', 'value_id', 'label_en', 'label_ja', 'parent', 'match_keywords', 'sort', 'active'],
   proposals: ['proposal_id', 'time', 'type', 'value', 'entity_id', 'video_id', 'match_id', 'device', 'status', 'decided', 'note'],
-  changes: ['time', 'match_id', 'tab', 'field', 'old', 'new', 'source', 'device']
+  changes: ['time', 'match_id', 'tab', 'field', 'old', 'new', 'source', 'device'],
+  // One star rating (1 to 5) per match per device: your own, and the average of everyone's (2.62.0).
+  ratings: ['match_id', 'device', 'stars', 'updated']
 };
 function viSheet(name) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(name);
@@ -375,6 +378,26 @@ function viApplyApproved() {
     made[p.proposal_id] = made1;
   });
   return made;
+}
+
+// The Wrestlers menu (2.64.0): every wrestler with her status (current, past, guest) and how many StarScope matches
+// she is in. Read only, no lock, so it never answers "busy". A merged name's matches count for the name it points to.
+function viRoster() {
+  var tal = viRows('talent'), to = {}, n = {}, seen = {};
+  tal.forEach(function(t) { if (t.merged_into) to[t.talent_id] = t.merged_into; });
+  viRows('participants').forEach(function(p) {
+    var id = to[p.talent_id] || p.talent_id, k = p.match_id + '|' + id;
+    if (!id || seen[k]) return;
+    seen[k] = 1; n[id] = (n[id] || 0) + 1;
+  });
+  return {
+    ok: true, at: new Date().toISOString(),
+    talent: tal.filter(function(t) { return viTrue(t.active) && !t.merged_into; }).map(function(t) {
+      return { id: t.talent_id, en: t.name_en, ja: t.name_ja, s: t.search, st: String(t.status || '').toLowerCase(), n: n[t.talent_id] || 0 };
+    }),
+    // other names for the same person (HZK is Hazuki, Azumi is AZM): the menu leaves these out
+    merged: tal.filter(function(t) { return t.merged_into; }).map(function(t) { return [t.name_en, t.search, t.merged_into]; })
+  };
 }
 
 function viAction(b) {
@@ -462,7 +485,21 @@ function viGet(b) {
   res.participants = parts.filter(function(p) { return p.match_id === id; }).sort(function(x, y) { return (x.side_no - y.side_no) || (x.slot - y.slot); });
   res.videos = viRows('match_videos').filter(function(v) { return v.match_id === id; });
   res.tags = viRows('match_tags').filter(function(t) { return t.match_id === id; });
+  var rs = viRows('ratings').filter(function(r) { return r.match_id === id && Number(r.stars) >= 1; }), dev = String(b.device || '').slice(0, 40);
+  res.myRating = (rs.filter(function(r) { return String(r.device) === dev; })[0] || {}).stars || 0;
+  res.ratingCount = rs.length;
+  res.ratingAvg = rs.length ? (Math.round(rs.reduce(function(a, r) { return a + Number(r.stars); }, 0) / rs.length * 10) / 10).toFixed(1) : '';
   return res;
+}
+
+// This device's star rating for a match: 1 to 5 sets it, 0 takes it away.
+function viRate(id, device, stars, now) {
+  if (!device || !(stars >= 0 && stars <= 5)) return;
+  var mine = viRows('ratings').filter(function(r) { return r.match_id === id && String(r.device) === device; });
+  if (mine.length) {
+    if (stars) viSet('ratings', mine[0]._row, { stars: stars, updated: now });
+    else viSheet('ratings').deleteRow(mine[0]._row);
+  } else if (stars) viAppend('ratings', [{ match_id: id, device: device, stars: stars, updated: now }]);
 }
 
 function viSave(b) {
@@ -587,6 +624,7 @@ function viSave(b) {
     viAppend('aliases', add);
   }
   viAppend('changes', log);
+  viRate(id, device, Math.floor(Number(b.rating) || 0), now);
   return { ok: true, match_id: id, linked: linked, created: fresh, level: level, status: fields.status };
 }
 
@@ -623,30 +661,66 @@ function viCards() {
     });
     return sides.filter(Boolean);
   }
-  function kind(s, lang) {
-    var size = Math.max.apply(null, s.map(function(x) { return x.length; }));
-    if (s.length > 2) return lang === 'ja' ? s.length + 'WAY' : s.length + '-way match';
-    if (size === 1) return lang === 'ja' ? 'シングルマッチ' : 'Singles match';
-    if (size === 2) return lang === 'ja' ? 'タッグマッチ' : 'Tag team match';
-    return lang === 'ja' ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
+  // The kind of match, for the card (2.62.1): gauntlets, battle royals, rumbles, handicaps and multi-team
+  // matches say so ("6-team gauntlet · 3 per team"). Same rules as kindOf in assets/indexpanel.js.
+  function kind(s, lang, st) {
+    st = st || [];
+    var sizes = s.map(function(x) { return x.length; }), size = Math.max.apply(null, sizes.concat([0])), n = s.length, all = sizes.reduce(function(a, b) { return a + b; }, 0), J = lang === 'ja';
+    if (st.indexOf('gauntlet') >= 0) return n > 2 && size > 1 ? (J ? n + 'チーム・ガントレット（' + size + '人）' : n + '-team gauntlet · ' + size + ' per team') : (J ? all + '人ガントレット' : all + '-wrestler gauntlet');
+    if (st.indexOf('royal') >= 0) return J ? all + '人バトルロイヤル' : all + '-woman battle royal';
+    if (st.indexOf('rumble') >= 0) return J ? all + '人ランブル' : all + '-woman rumble';
+    if (n > 2) return size > 1 ? (J ? n + 'チーム（各' + size + '人）' : n + ' teams of ' + size) : (J ? n + 'WAY' : n + '-way match');
+    if (n === 2 && sizes[0] !== sizes[1]) return J ? sizes[0] + '対' + sizes[1] + 'ハンディキャップ' : sizes[0] + '-on-' + sizes[1] + ' handicap';
+    if (size === 1) return J ? 'シングルマッチ' : 'Singles match';
+    if (size === 2) return J ? 'タッグマッチ' : 'Tag team match';
+    return J ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
   }
+  function big(s, st) { return s.length > 2 || (st || []).some(function(x) { return /^(gauntlet|royal|rumble)$/.test(x); }); }
   function event(m, t, s, lang) {
     if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
     if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
-    return kind(s, lang);
+    return kind(s, lang, t.stipulation);
   }
-  function foot(t, lang) {
+  // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
+  function teamNames(p, lang) {
+    var by = [], ok = true, tn = {}, fn = {};
+    viRows('teams').forEach(function(x) { tn[x.team_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
+    viRows('factions').forEach(function(x) { fn[x.faction_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
+    p.forEach(function(x) { var nm = tn[x.team_id] || fn[x.faction_id] || ''; if (!by[x.side_no - 1]) by[x.side_no - 1] = nm; });
+    by = by.filter(function(x) { return x !== undefined; });
+    by.forEach(function(x) { if (!x) ok = false; });
+    return ok && by.length ? by : null;
+  }
+  function foot(t, lang, s) {
     var f = [];
+    // A big match under a tournament or title still says what kind it is.
+    if (s && big(s, t.stipulation) && (t.competition || t.title)) f.push(kind(s, lang, t.stipulation));
     if (t.block) f.push(lab('block', t.block[0], lang));
     if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
     return f;
   }
+  // For the StarScope page (2.63.0): ratings, and what the filters are built from.
+  var rate = {};
+  viRows('ratings').forEach(function(r) { if (Number(r.stars) >= 1) { var o = rate[r.match_id] = rate[r.match_id] || { s: 0, n: 0 }; o.s += Number(r.stars); o.n++; } });
+  var tmn = {}, fcn = {};
+  viRows('teams').forEach(function(x) { tmn[x.team_id] = x.name_en; });
+  viRows('factions').forEach(function(x) { fcn[x.faction_id] = x.name_en; });
   var map = {};
   viRows('match_videos').forEach(function(v) {
     var m = m2[v.match_id], p = parts[v.match_id];
     if (!m || !p || !p.length) return;
     var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
-    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en'), fj: foot(t, 'ja'), n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
+    var sizes = en.map(function(x) { return x.length; }), rt = rate[v.match_id], groups = {};
+    p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
+    var extra = {
+      u: String(m.updated || ''),
+      k: en.length > 2 ? 'multi' : (Math.max.apply(null, sizes) <= 1 ? 'singles' : 'tag'),
+      c: t.competition ? lab('competition', t.competition[0], 'en') : '',
+      ti: (t.title || []).map(function(x) { return lab('title', x, 'en'); }),
+      g: Object.keys(groups),
+      r: rt ? Math.round(rt.s / rt.n * 10) / 10 : 0, rc: rt ? rt.n : 0
+    };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });
   return { ok: true, map: map };
 }

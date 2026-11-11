@@ -11,6 +11,7 @@ Paste the whole of `scripts/video_index_log.gs` into the sheet's Apps Script, th
 - `videos`: raw page captures. Written by the app only.
 - `matches`, `match_videos`, `participants`, `match_tags`: reviewed data. One match can have many videos.
 - `talent`, `teams`, `factions`, `shows`, `venues`, `aliases`, `lists`: the approved library.
+- `ratings`: one star rating (1 to 5) per match per device (2.62.0); the logger shows the device's own and the average.
 - `proposals`: suggested additions. `changes`: edit history.
 
 ## Rules
