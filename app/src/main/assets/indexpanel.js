@@ -704,7 +704,7 @@
       busy = false;
       if (!res.ok) { saveBtn(T.notSaved); say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
-      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV2'); } catch (e) {}
+      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV3'); } catch (e) {}
       saveBtn(res.linked ? T.linkedShort : T.saved);
       if (statusText && !statusBad) say('');   // the button says it now, not the line under it
       // Once the sheet has it, the logger closes by itself (2.62.2), after a moment so "Saved" is seen.

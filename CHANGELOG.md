@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.63.0
+
+Private builds only:
+- StarScope page, drawn by the app: `/mypage?tvscope=recent`, `top` or `all`. Header with the telescope, wordmark, tagline and how many matches and wrestlers are logged; tabs Recently added (newest saves first), Top rated (average stars, with a ★ 4.7 · 3 badge), All matches. All matches has the main filters (All, Singles, Tag, Multi-team, Title matches, Tournaments) and, under More, Wrestler, Team or faction, Year, Tournament, Title, Rating and Sort. Every filter is built from what has been logged in StarScope: a main filter only shows when some match fits it, a More filter only when it has values, and each list shows only the values left by the other filters, with how many matches each has. D-pad moves to the nearest button or card; Left from the left edge opens the menu; Back closes a filter list.
+- Community menu: a StarScope band at the top with links to Recently added, Top rated and All matches and the three newest StarScope matches as cards; the Top 5 (with the #1 picture) and the chart links sit below as before.
+- Top rated counts a match from 1 rating for now (one TV); this should go up to 3 when StarScope is public.
+- The Apps Script has changed (the card list carries what the page and filters need); paste it and publish a new version. Until then the page is empty.
+
 ## 2.62.3
 
 Private builds only:

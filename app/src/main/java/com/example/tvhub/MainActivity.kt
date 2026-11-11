@@ -5849,6 +5849,28 @@ class MainActivity : Activity() {
 
           // ---- shelf flyout (to the right of the menu)
           var shelfEl = null, shelfRow = null;
+          // Community menu, private builds (2.63.0): a StarScope band above the charts, with links to the StarScope page
+          // and the three newest StarScope matches as cards. Drawn from the index list the app already keeps.
+          function scopeBand() {
+            var sc = window.__tvScope, list = [];
+            try { if (sc && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) list = sc.newest(3); } catch (e) { list = []; }
+            if (!sc) return '';
+            var pill = function(label, path, on) { return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="margin:0;padding:7px 14px;border-radius:18px;font-size:16px;font-weight:700;' + (on ? 'background:#FFB347;border-color:#FFB347;color:#1A1A1A;' : '') + '">' + esc(label) + '</a>'; };
+            var h = '<div style="margin:6px 0 18px;padding:14px 16px;border-radius:12px;background:linear-gradient(135deg,#1A2433,#0F151C);border:2px solid #2A323C;">' +
+              '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0F151C" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>' +
+              '<span style="font:900 18px Arial;letter-spacing:.06em;">STAR<span style="color:#F4C242;">SCOPE</span></span><span style="font:600 13px Arial;color:#9AA6B4;margin-left:4px;">' + esc(T('Map all the Stars in the World', '世界中のスターを地図に')) + '</span>' +
+              '<span style="margin-left:auto;display:flex;gap:8px;">' + pill(T('Recently added', '新着'), '/mypage?tvscope=recent', true) + pill(T('Top rated', '高評価'), '/mypage?tvscope=top') + pill(T('All matches', 'すべての試合') + ' \u203a', '/mypage?tvscope=all') + '</span></div>';
+            if (list.length) {
+              h += '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">';
+              list.forEach(function(x) {
+                var path = '/contents/' + x.id, th = x.v.th || '';
+                h += '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="display:block;margin:0;padding:0;border-radius:8px;overflow:hidden;background:#1A1A1A;">' +
+                  '<div style="height:0;padding-top:42%;background:#161F2A center/cover no-repeat;' + (th ? 'background-image:url(' + esc(th) + ');' : '') + '"></div><div class="tvsc-host" style="padding:8px 10px 10px;">' + sc.card(x) + '</div></a>';
+              });
+              h += '</div>';
+            }
+            return h + '</div>';
+          }
           function fiHtml(label, path) {
             return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>';
           }
@@ -6029,6 +6051,7 @@ class MainActivity : Activity() {
                 for (var yy = cy; yy > cy - 4; yy--) cmYears += fiHtml(String(yy), cm.url({ m: 'pc', w: 'yr', y: String(yy) }));
                 var cmHome = cm.url({ m: 'pc', w: 'a' });
                 h = '<a class="tv-sm-fi tv-fv-open" tabindex="0" data-go="' + esc(cmHome) + '" href="' + esc(absUrl(cmHome)) + '"><span style="font-size:24px;color:#F4C242">&#9733;</span><span class="tv-fv-l"><b>' + esc(T('Open Community', 'コミュニティを開く')) + '</b></span></a>' +
+                  scopeBand() +
                   '<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;align-items:start;">' +
                   '<div>' + cm.top10Html() + '</div>' +
                   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;">' +

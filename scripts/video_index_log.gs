@@ -678,12 +678,28 @@ function viCards() {
     if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
     return f;
   }
+  // For the StarScope page (2.63.0): ratings, and what the filters are built from.
+  var rate = {};
+  viRows('ratings').forEach(function(r) { if (Number(r.stars) >= 1) { var o = rate[r.match_id] = rate[r.match_id] || { s: 0, n: 0 }; o.s += Number(r.stars); o.n++; } });
+  var tmn = {}, fcn = {};
+  viRows('teams').forEach(function(x) { tmn[x.team_id] = x.name_en; });
+  viRows('factions').forEach(function(x) { fcn[x.faction_id] = x.name_en; });
   var map = {};
   viRows('match_videos').forEach(function(v) {
     var m = m2[v.match_id], p = parts[v.match_id];
     if (!m || !p || !p.length) return;
     var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
-    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
+    var sizes = en.map(function(x) { return x.length; }), rt = rate[v.match_id], groups = {};
+    p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
+    var extra = {
+      u: String(m.updated || ''),
+      k: en.length > 2 ? 'multi' : (Math.max.apply(null, sizes) <= 1 ? 'singles' : 'tag'),
+      c: t.competition ? lab('competition', t.competition[0], 'en') : '',
+      ti: (t.title || []).map(function(x) { return lab('title', x, 'en'); }),
+      g: Object.keys(groups),
+      r: rt ? Math.round(rt.s / rt.n * 10) / 10 : 0, rc: rt ? rt.n : 0
+    };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });
   return { ok: true, map: map };
 }

@@ -246,3 +246,5 @@ StarScope logger flow (2.62.0): header = telescope (34) + STAR/SCOPE wordmark 24
 Logger placement and fade (2.62.1): top-aligned 88 px down (clear of the page title), panel fade rgba(15,21,28) .74 → .46 (50 %) → .10, screen dim .34 fading out by 70 %. No tagline. StarScope card names: at most 4 lines, wrap between words only; big matches compress (team names, or first wrestler +N per side, 4 sides then +N more).
 
 Logger header (2.62.2): wordmark row with the tagline "Map all of the Stars in the World" (14/600 #C9D2DC), then 14 px, then the tab row; no video title or facts line.
+
+StarScope page (2.63.0): navy page, header 10 x 36 gold bar + telescope 40 + wordmark 30/900 + tagline 15/600 + counts 15/700 grey at the right; tab and filter chips 44 high (17/700, #161F2A, #2A323C border; chosen #FFB347; focus border #F4C242); More row in a #121922 box; four-across StarScope cards with a 3 px focus border; rating badge #F4C242 13/800 top right of the picture. Community menu band: #1A2433 → #0F151C box, wordmark 18/900, three pill links (first #FFB347), three StarScope cards.
