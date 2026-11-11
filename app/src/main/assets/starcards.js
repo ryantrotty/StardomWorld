@@ -16,7 +16,7 @@
     '.tvsc,.tvsc *{text-decoration:none !important;}',
     '.tvsc{font-family:Arial,Helvetica,sans-serif;color:#fff;font-weight:400;}',
     '.tvsc .ev{font-size:12px;font-weight:800;letter-spacing:1px;color:#F4C242;text-transform:uppercase;}',
-    '.tvsc .nm{margin-top:7px;padding-bottom:8px;border-bottom:1px solid #2A323C;font-size:18px;font-weight:800;line-height:1.22;}',
+    '.tvsc .nm{margin-top:7px;padding-bottom:8px;border-bottom:1px solid #2A323C;font-size:18px;font-weight:800;line-height:1.22;word-break:normal !important;overflow-wrap:break-word !important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;}',
     '.tvsc .ft{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px;font-weight:600;color:#C9D2DC;}',
     '.tvsc .ft b{flex:none;color:#F4C242;font-weight:700;}'
   ].join('');
@@ -32,7 +32,15 @@
   function block(v) {
     var sides = (ja && v.sj && v.sj.length === v.s.length ? v.sj : v.s), foot = (ja ? v.fj : v.f).slice();
     if (v.n !== '' && v.n != null) foot.push((ja ? '第' : 'Match ') + v.n + (v.t ? '/' + v.t : '') + (ja ? '試合' : ''));
-    var lines = sides.map(function(s, i) { return (i ? 'vs ' : '') + esc(names(s)); }).join('<br>');
+    var lines, tn = ja ? (v.tnj || v.tn) : v.tn, big = sides.length > 2 || sides.some(function(s) { return s.length > 4; });
+    if (!big) lines = sides.map(function(s, i) { return (i ? 'vs ' : '') + esc(names(s)); }).join('<br>');
+    else {
+      // Big matches (2.62.1): team or faction names when every side has one, otherwise the first wrestler of each side
+      // and how many more, at most four sides then "+N more teams", so the names never run past three lines.
+      var each = sides.map(function(s, i) { return tn && tn[i] ? tn[i] : (s.length > 1 ? s[0] + ' +' + (s.length - 1) : s[0]); });
+      var shown = each.slice(0, 4), rest = each.length - shown.length;
+      lines = esc(shown.join(tn || sides.every(function(s) { return s.length === 1; }) ? ' vs ' : ' · ')) + (rest ? ' · ' + esc(ja ? 'ほか' + rest + (sides.some(function(s) { return s.length > 1; }) ? 'チーム' : '人') : '+' + rest + ' more' + (sides.some(function(s) { return s.length > 1; }) ? ' teams' : '')) : '');
+    }
     return '<div class="tvsc notranslate" translate="no"><div class="ev">' + esc(ja ? v.ej : v.e) + '</div><div class="nm">' + lines + '</div><div class="ft"><span>' + esc(foot.join(' · ')) + '</span><b>' + esc(dateText(v.d)) + '</b></div></div>';
   }
   // The logger's Card tab draws its preview with the same card (2.61.0).

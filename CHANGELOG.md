@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.62.1
+
+Private builds only:
+- StarScope cards, big matches: more than two sides (or a gauntlet, battle royal or rumble) show team or faction names when every side has one, otherwise the first wrestler of each side and how many more ("Saya Iida +2 · Lady C +2 · …"), at most four sides then "+N more teams"; never more than four lines, and names only wrap between words. The kind of match says what it is: "6-team gauntlet · 3 per team", "6 teams of 3", "10-woman battle royal", "2-on-3 handicap"; under a tournament or title it goes in the footer. Same on the StarScope results and in the logger.
+- Logger: Card is now Preview; the tagline next to the wordmark and the video number and version in the facts line are gone; the logger sits lower, clear of the page title behind it; the panel is darker at the top and clearer towards the bottom (74 % → 46 % → 10 %).
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.62.0
 
 Private builds only:

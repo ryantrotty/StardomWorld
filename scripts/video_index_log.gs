@@ -640,20 +640,40 @@ function viCards() {
     });
     return sides.filter(Boolean);
   }
-  function kind(s, lang) {
-    var size = Math.max.apply(null, s.map(function(x) { return x.length; }));
-    if (s.length > 2) return lang === 'ja' ? s.length + 'WAY' : s.length + '-way match';
-    if (size === 1) return lang === 'ja' ? 'シングルマッチ' : 'Singles match';
-    if (size === 2) return lang === 'ja' ? 'タッグマッチ' : 'Tag team match';
-    return lang === 'ja' ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
+  // The kind of match, for the card (2.62.1): gauntlets, battle royals, rumbles, handicaps and multi-team
+  // matches say so ("6-team gauntlet · 3 per team"). Same rules as kindOf in assets/indexpanel.js.
+  function kind(s, lang, st) {
+    st = st || [];
+    var sizes = s.map(function(x) { return x.length; }), size = Math.max.apply(null, sizes.concat([0])), n = s.length, all = sizes.reduce(function(a, b) { return a + b; }, 0), J = lang === 'ja';
+    if (st.indexOf('gauntlet') >= 0) return n > 2 && size > 1 ? (J ? n + 'チーム・ガントレット（' + size + '人）' : n + '-team gauntlet · ' + size + ' per team') : (J ? all + '人ガントレット' : all + '-wrestler gauntlet');
+    if (st.indexOf('royal') >= 0) return J ? all + '人バトルロイヤル' : all + '-woman battle royal';
+    if (st.indexOf('rumble') >= 0) return J ? all + '人ランブル' : all + '-woman rumble';
+    if (n > 2) return size > 1 ? (J ? n + 'チーム（各' + size + '人）' : n + ' teams of ' + size) : (J ? n + 'WAY' : n + '-way match');
+    if (n === 2 && sizes[0] !== sizes[1]) return J ? sizes[0] + '対' + sizes[1] + 'ハンディキャップ' : sizes[0] + '-on-' + sizes[1] + ' handicap';
+    if (size === 1) return J ? 'シングルマッチ' : 'Singles match';
+    if (size === 2) return J ? 'タッグマッチ' : 'Tag team match';
+    return J ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
   }
+  function big(s, st) { return s.length > 2 || (st || []).some(function(x) { return /^(gauntlet|royal|rumble)$/.test(x); }); }
   function event(m, t, s, lang) {
     if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
     if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
-    return kind(s, lang);
+    return kind(s, lang, t.stipulation);
   }
-  function foot(t, lang) {
+  // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
+  function teamNames(p, lang) {
+    var by = [], ok = true, tn = {}, fn = {};
+    viRows('teams').forEach(function(x) { tn[x.team_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
+    viRows('factions').forEach(function(x) { fn[x.faction_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
+    p.forEach(function(x) { var nm = tn[x.team_id] || fn[x.faction_id] || ''; if (!by[x.side_no - 1]) by[x.side_no - 1] = nm; });
+    by = by.filter(function(x) { return x !== undefined; });
+    by.forEach(function(x) { if (!x) ok = false; });
+    return ok && by.length ? by : null;
+  }
+  function foot(t, lang, s) {
     var f = [];
+    // A big match under a tournament or title still says what kind it is.
+    if (s && big(s, t.stipulation) && (t.competition || t.title)) f.push(kind(s, lang, t.stipulation));
     if (t.block) f.push(lab('block', t.block[0], lang));
     if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
     return f;
@@ -663,7 +683,7 @@ function viCards() {
     var m = m2[v.match_id], p = parts[v.match_id];
     if (!m || !p || !p.length) return;
     var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
-    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en'), fj: foot(t, 'ja'), n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
+    map[v.video_id] = { s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });
   return { ok: true, map: map };
 }

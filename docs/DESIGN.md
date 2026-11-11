@@ -242,3 +242,5 @@ Logger transparency (2.60.1): panel a vertical fade rgba(15,21,28) .55 → .42 (
 Logger Card tab (2.61.0): two 360-wide cards side by side (site card: picture 202 high + 17/700 title; StarScope card: same picture + the StarScope card block), then a FILLED IN list, 17/700, gold tick or grey ring.
 
 StarScope logger flow (2.62.0): header = telescope (34) + STAR/SCOPE wordmark 24/900 (.06em, SCOPE gold) + tagline 14/600 #C9D2DC. Tab row = bell, Card, Competitors, Match, Finish, Confirm; a finished step shows a ✓ (gold, or the chip's own colour when selected). Star rating: five 48-wide chips with 26 px stars, gold filled / #5A6472 outline. Confirm rows: 12/800 gold label (150 wide), 18/800 text, Change chip.
+
+Logger placement and fade (2.62.1): top-aligned 88 px down (clear of the page title), panel fade rgba(15,21,28) .74 → .46 (50 %) → .10, screen dim .34 fading out by 70 %. No tagline. StarScope card names: at most 4 lines, wrap between words only; big matches compress (team names, or first wrestler +N per side, 4 sides then +N more).
