@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.62.0
+
+Private builds only:
+- StarScope logger reorganised as a flow, keeping every field: it opens on the Card (the site's card now beside the StarScope card, and what was found in the video), then three steps, Competitors, Match and Finish, then Confirm. Each step shows a gold tick once it has what it needs, and they can be done in any order. The bell button stays first, as before.
+- Competitors: the sides as before, with entry and elimination order folded under them (was on Marks).
+- Finish: result, finish and fall as before, then Moments folded (was its own tab) and a star rating out of 5.
+- Confirm: one line each for Competitors, Match, Finish (result hidden) and the bell times, each with Change, next to the new card; Save and Save and next match.
+- Header shows the StarScope wordmark and "Help everyone find every match."
+- Star ratings: your own rating is kept per device, and the logger shows everyone's average and how many ratings there are. New ratings tab in the sheet.
+- The Apps Script has changed; paste it and publish a new version.
+
 ## 2.61.0
 
 Private builds only:

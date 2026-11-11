@@ -306,7 +306,9 @@ var VI = {
   aliases: ['alias', 'normalized', 'entity_type', 'entity_id', 'lang', 'valid_from', 'valid_to', 'source', 'status'],
   lists: ['list', 'value_id', 'label_en', 'label_ja', 'parent', 'match_keywords', 'sort', 'active'],
   proposals: ['proposal_id', 'time', 'type', 'value', 'entity_id', 'video_id', 'match_id', 'device', 'status', 'decided', 'note'],
-  changes: ['time', 'match_id', 'tab', 'field', 'old', 'new', 'source', 'device']
+  changes: ['time', 'match_id', 'tab', 'field', 'old', 'new', 'source', 'device'],
+  // One star rating (1 to 5) per match per device: your own, and the average of everyone's (2.62.0).
+  ratings: ['match_id', 'device', 'stars', 'updated']
 };
 function viSheet(name) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(name);
@@ -462,7 +464,21 @@ function viGet(b) {
   res.participants = parts.filter(function(p) { return p.match_id === id; }).sort(function(x, y) { return (x.side_no - y.side_no) || (x.slot - y.slot); });
   res.videos = viRows('match_videos').filter(function(v) { return v.match_id === id; });
   res.tags = viRows('match_tags').filter(function(t) { return t.match_id === id; });
+  var rs = viRows('ratings').filter(function(r) { return r.match_id === id && Number(r.stars) >= 1; }), dev = String(b.device || '').slice(0, 40);
+  res.myRating = (rs.filter(function(r) { return String(r.device) === dev; })[0] || {}).stars || 0;
+  res.ratingCount = rs.length;
+  res.ratingAvg = rs.length ? (Math.round(rs.reduce(function(a, r) { return a + Number(r.stars); }, 0) / rs.length * 10) / 10).toFixed(1) : '';
   return res;
+}
+
+// This device's star rating for a match: 1 to 5 sets it, 0 takes it away.
+function viRate(id, device, stars, now) {
+  if (!device || !(stars >= 0 && stars <= 5)) return;
+  var mine = viRows('ratings').filter(function(r) { return r.match_id === id && String(r.device) === device; });
+  if (mine.length) {
+    if (stars) viSet('ratings', mine[0]._row, { stars: stars, updated: now });
+    else viSheet('ratings').deleteRow(mine[0]._row);
+  } else if (stars) viAppend('ratings', [{ match_id: id, device: device, stars: stars, updated: now }]);
 }
 
 function viSave(b) {
@@ -587,6 +603,7 @@ function viSave(b) {
     viAppend('aliases', add);
   }
   viAppend('changes', log);
+  viRate(id, device, Math.floor(Number(b.rating) || 0), now);
   return { ok: true, match_id: id, linked: linked, created: fresh, level: level, status: fields.status };
 }
 

@@ -11,12 +11,12 @@
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '保存', notSaved: '保存できませんでした', linkedShort: 'リンクしました', next: '保存して次の試合', close: '閉じる',
     resHidden: '結果: 非表示', resShow: '結果', notSet: '未設定', wins: 'の勝ち', draw: '引き分け', nc: 'ノーコンテスト', change: '選手を選ぶ', propose: '新規として提案: ', remove: '削除', moveTo: '移動: ',
-    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', added: '追加しました', none: '該当なし', tabs: { people: '選手', match: '試合', finish: '決着', moments: '出来事', marks: 'マーク', card: 'カード' }, cardNow: 'サイトの表示', cardNew: 'STARSCOPEの表示', cardHave: '入力済み', cardNames: '選手', cardEvent: '大会・王座', cardRound: 'ブロック・ラウンド', cardPlace: '試合順', cardDate: '日付', groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
+    pick: '選手を選ぶ', sug: 'おすすめ', loading: '読み込み中…', noMatch: 'このページから試合を読み取れませんでした。選手を追加できます。', ready: '内容を確認して保存してください。', saving: '保存中…', saved: '保存しました', linked: '同じ試合の別バージョンとしてリンクしました', need: '少なくとも2つのサイドが必要です', unknown: '未登録: ', loaded: '保存済みの内容を表示しています。', proposed: '提案を保存しました', added: '追加しました', none: '該当なし', tabs: { card: 'カード', people: '選手', match: '試合', finish: '決着', confirm: '確認' }, nextStep: '次へ', check: '各項目を確認', looksRight: '正しいので保存', change: '変更', xo: '入場・退場の順番', xoHint: 'ガントレット、バトルロイヤル', xm: '出来事', xmHint: 'デビュー、王座移動、復帰など', rating: 'あなたの評価', ratingHint: '5点満点。任意、ネタバレなし。', ratingAvg: '平均', ratingN: '件', ratingNone: 'まだ評価はありません', cBell: 'ゴング', cHidden: '入力済み・ネタバレ防止のため非表示', cNone: '未入力', tagline: 'すべての試合を見つけやすく。', from: '動画から', fNames: '選手', fEvent: '大会・王座', fWhen: '日付と試合順', fEnd: '決着', cardNow: 'サイトの表示', cardNew: 'STARSCOPEの表示', cardIntro: 'サイトでの現在の表示と、StarScopeに登録した後の表示です。', cardHave: '入力済み', cardNames: '選手', cardEvent: '大会・王座', cardRound: 'ブロック・ラウンド', cardPlace: '試合順', cardDate: '日付', groups: { result: '結果', title: '王座', competition: '大会', round: 'ラウンド', block: 'ブロック', stipulation: '特別ルール', finish: '決着方法', moment: '出来事' }, fall: '勝負を決めた選手', reveal: '結果を表示', bell: 'ゴング', end: '試合終了', clear: '消去', entry: '入場', out: '脱落', noPos: '再生位置を読み取れません', spoil: '結果に関わる項目は「結果を表示」の後に出ます', team: 'チーム', faction: 'ユニット', noTeam: 'チーム名なし', noFaction: 'ユニットなし', bellStart: '開始', bellEnd: '終了', suggest: '+ 追加を提案', proposeHead: '追加の提案', send: '提案を送る', cancel: 'キャンセル', propHint: 'OKでキーボードを開きます。承認後に選択肢に出ます。', venue: '会場', noVenue: '会場を選ぶ', date: '日付', day: '日', month: '月', year: '年', dateReset: '元の日付に戻す' }
    : { head: 'INDEX THIS MATCH', side: 'SIDE', add: '+ Add wrestler', addSide: '+ Side', save: 'Save', notSaved: 'Not saved', linkedShort: 'Linked', next: 'Save and next match', close: 'Close',
     resHidden: 'Result: hidden', resShow: 'Result', notSet: 'Not set', wins: ' wins', draw: 'Draw', nc: 'No contest', change: 'Pick the right name', propose: 'Propose new: ', remove: 'Remove', moveTo: 'Move to ',
-    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', added: 'Added', none: 'Nothing here', tabs: { people: 'People', match: 'Match', finish: 'Finish', moments: 'Moments', marks: 'Marks', card: 'Card' }, cardNow: 'ON THE SITE NOW', cardNew: 'WITH STARSCOPE', cardHave: 'FILLED IN', cardNames: 'Names', cardEvent: 'Event or title', cardRound: 'Block or round', cardPlace: 'Match number', cardDate: 'Date', groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
+    pick: 'Pick a wrestler', sug: 'Suggested', loading: 'Loading…', noMatch: 'No match could be read from this page. You can add wrestlers.', ready: 'Check the names, then save.', saving: 'Saving…', saved: 'Saved', linked: 'Linked as another version of the same match', need: 'A match needs at least two sides', unknown: 'Not in library: ', loaded: 'Showing what was saved.', proposed: 'Proposal added', added: 'Added', none: 'Nothing here', tabs: { card: 'Card', people: 'Competitors', match: 'Match', finish: 'Finish', confirm: 'Confirm' }, nextStep: 'Next', check: 'Check each part', looksRight: 'Looks right · Save', change: 'Change', xo: 'Entry and elimination order', xoHint: 'gauntlets, battle royals', xm: 'Moments', xmHint: 'debut, title change, return, last match…', rating: 'YOUR RATING', ratingHint: 'Your own score, out of 5. Optional, and no spoiler.', ratingAvg: 'Average', ratingN: ' ratings', ratingNone: 'No ratings yet', cBell: 'BELL TIMES', cHidden: 'Set · hidden here so it isn\'t spoiled', cNone: 'Not filled in', tagline: 'Help everyone find every match.', from: 'FROM THE VIDEO', fNames: 'Wrestlers', fEvent: 'Tournament or title', fWhen: 'Date and match number', fEnd: 'How it ended', cardNow: 'ON THE SITE NOW', cardNew: 'WITH STARSCOPE', cardIntro: 'How this match looks on the site now, and how it will look once it\'s in StarScope.', cardHave: 'FILLED IN', cardNames: 'Names', cardEvent: 'Event or title', cardRound: 'Block or round', cardPlace: 'Match number', cardDate: 'Date', groups: { result: 'RESULT', title: 'TITLE', competition: 'COMPETITION', round: 'ROUND', block: 'BLOCK', stipulation: 'STIPULATION', finish: 'FINISH', moment: 'MOMENTS' }, fall: 'WHO GOT THE FALL', reveal: 'Show result', bell: 'Mark bell', end: 'Mark end', clear: 'Clear', entry: 'Entry', out: 'Out', noPos: 'Could not read the video position', spoil: 'Moments that give away the result appear after Show result', team: 'Team', faction: 'Faction', noTeam: 'No team name', noFaction: 'No faction', bellStart: 'Match start', bellEnd: 'Match end', suggest: '+ Propose new', proposeHead: 'PROPOSE AN ADDITION', send: 'Send proposal', cancel: 'Cancel', propHint: 'Press OK on the box to open the keyboard. It appears as a choice once approved in the sheet.', venue: 'VENUE', noVenue: 'Choose a venue', date: 'DATE', day: 'Day', month: 'Month', year: 'Year', dateReset: 'Back to the page date' };
 
-  var TABS = ['people', 'match', 'finish', 'moments', 'marks', 'card'], MULTI = { title: 1, stipulation: 1, moment: 1 };
+  var TABS = ['card', 'people', 'match', 'finish', 'confirm'], STEPS = { people: 1, match: 1, finish: 1 }, MULTI = { title: 1, stipulation: 1, moment: 1 };
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], SPOIL = { 'title-change': 1, 'first-title': 1 };
   var marks = { bell: '', end: '' };
   var root = null, layer = 'main', state = null, lib = null, rec = null, nameMap = {}, byId = {}, menuFor = null, pick = null, lastFocus = 'save', statusText = '', statusBad = false, seq = 0, cbs = {}, busy = false;
@@ -93,6 +93,7 @@
       '#tvx button.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A}',
       '#tvx button.on:focus{background:#FFB347!important;color:#1A1A1A!important;border-color:#F4C242!important}',
       '#tvx button.ghost{color:#C9D2DC;font-weight:600}',
+      '#tvx button.star{min-width:48px;padding:6px 8px;text-align:center;line-height:0}',
       '#tvx .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}',
       '#tvx .s{font:700 15px Arial;color:#C9D2DC;margin-top:12px;min-height:20px}',
       '#tvx .s.bad{color:#FF7A66}',
@@ -156,8 +157,8 @@
     ensure();
     var title = rec ? (rec.title_en || rec.title_ja || rec.h1 || '') : '';
     var show = rec && rec.shows && rec.shows[0] ? rec.shows[0].show : '';
-    var h = '<div class="p"><div class="h">' + T.head + '</div><div class="t">' + esc(title) + '</div><div class="m">' + esc([(state && state.date) || (rec && rec.date), show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div>';
-    h += '<div class="tabs">' + chip('bell', BELL + bellLabel(), '') + (state ? TABS.map(function(t) { return chip('T' + t, T.tabs[t], state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
+    var h = '<div class="p"><div style="display:flex;align-items:center;gap:12px"><span style="line-height:0"><svg width="34" height="34" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></span><span style="font:900 24px Arial;letter-spacing:.06em">STAR<span style="color:#F4C242">SCOPE</span></span><span style="font:600 14px Arial;color:#C9D2DC;margin-left:6px">' + T.tagline + '</span></div><div class="t">' + esc(title) + '</div><div class="m">' + esc([(state && state.date) || (rec && rec.date), show, 'video ' + U[2], rec && rec.version].filter(Boolean).join(' · ')) + '</div>';
+    h += '<div class="tabs">' + chip('bell', BELL + bellLabel(), '') + (state ? TABS.map(function(t) { return chip('T' + t, tabLabel(t), state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
     if (state && state.tab !== 'people') h += '<div class="body">' + tabHtml() + '</div>';
     else h += '<div class="sides">';
     if (state && state.tab === 'people') {
@@ -178,9 +179,14 @@
       h += '<div style="display:flex;align-items:flex-start">' + chip('ns', T.addSide, 'ghost') + '</div>';
     }
     if (!state || state.tab === 'people') h += '</div>';
+    if (state && state.tab === 'people') h += entryHtml();
     if (state) {
-      h += '<div class="row">' + chip('save', esc(saveLabel || T.save), '', ' style="min-width:132px;text-align:center"');   // wide enough for Saving… so nothing shifts
-      if (setNext()) h += chip('next', T.next);
+      // The buttons follow the screen: the Card offers save-as-is or a check of each part, each step a Next.
+      var t = state.tab, i = TABS.indexOf(t), saveBtnHtml = chip('save', esc(saveLabel || (t === 'card' ? T.looksRight : T.save)), '', ' style="min-width:132px;text-align:center"');   // wide enough for Saving… so nothing shifts
+      h += '<div class="row">';
+      if (t === 'card') h += saveBtnHtml + chip('Tpeople', T.check + ' ›');
+      else if (t === 'confirm') { h += saveBtnHtml; if (setNext()) h += chip('next', T.next); }
+      else h += chip('T' + TABS[i + 1], T.nextStep + ' · ' + T.tabs[TABS[i + 1]] + ' ›') + saveBtnHtml;
       h += chip('close', T.close, 'ghost') + '</div>';
     } else h += '<div class="row">' + chip('close', T.close, 'ghost') + '</div>';
     h += '<div class="s' + (statusBad ? ' bad' : '') + '">' + esc(statusText) + '</div></div>';
@@ -232,6 +238,7 @@
       h += group('title', listOf('title')) + group('competition', listOf('competition')) + group('round', listOf('round'));
       h += group('block', listOf('block').filter(function(b) { return !comp || !b.p || b.p === comp; })) + group('stipulation', listOf('stipulation'));
     } else if (state.tab === 'finish') {
+      h += finishExtra(true);
       if (!state.resOpen) h += '<div class="chips">' + chip('rev', T.reveal, 'ghost') + '</div>';
       else {
         var r = state.result;
@@ -241,23 +248,64 @@
         h += group('finish', listOf('finish'));
         h += '<div class="grp">' + T.fall + '</div><div class="chips">' + people().filter(function(x) { return x.p.id; }).map(function(x) { return chip('f:' + x.p.id, esc(nameOf(x.p.id)), state.fall === x.p.id ? 'on' : ''); }).join('') + '</div>';
       }
-    } else if (state.tab === 'moments') {
-      h += group('moment', listOf('moment').filter(function(x) { return state.resOpen || !SPOIL[x.id]; }));
-      if (!state.resOpen) h += '<div class="m" style="margin-top:12px">' + T.spoil + '</div><div class="chips">' + chip('rev', T.reveal, 'ghost') + '</div>';
+      h += finishExtra(false);
     } else if (state.tab === 'card') {
       h += cardHtml();
-    } else if (state.tab === 'marks') {
-      h += '<div class="chips">' + chip('mb', T.bell + (marks.bell !== '' ? ' · ' + mmss(marks.bell) : '')) + (marks.bell !== '' ? chip('mbx', T.clear, 'ghost') : '');
-      h += chip('me', T.end + (marks.end !== '' ? ' · ' + mmss(marks.end) : '')) + (marks.end !== '' ? chip('mex', T.clear, 'ghost') : '') + '</div>';
-      if (state.sides.filter(function(s) { return s.people.length; }).length >= 3) {
-        h += '<div class="grp">' + T.entry + ' / ' + T.out + '</div>';
-        people().forEach(function(x) {
-          h += '<div class="chips" style="margin-bottom:6px;align-items:center"><span style="width:280px;font:700 17px Arial">' + esc(x.p.id ? nameOf(x.p.id) : x.p.billed) + '</span>' + chip('e:' + x.k, T.entry + ': ' + (x.p.entry || '–')) + chip('x:' + x.k, T.out + ': ' + (x.p.elim || '–')) + '</div>';
-        });
-      }
+    } else if (state.tab === 'confirm') {
+      h += confirmHtml();
     }
     return h;
   }
+  // ---- StarScope flow (2.62.0): Card, then the three steps (Competitors, Match, Finish), then Confirm.
+  // A step shows a tick once it has what it needs; the steps can be done in any order.
+  function stepDone(t) {
+    if (!state) return false;
+    if (t === 'people') { var S = state.sides.filter(function(s) { return s.people.length; }); return S.length >= 2 && S.every(function(s) { return s.people.every(function(p) { return p.id; }); }); }
+    if (t === 'match') return !!(state.venue || ['competition', 'title', 'round', 'block', 'stipulation'].some(function(g) { return (state.tags[g] || []).length; }));
+    if (t === 'finish') return !!(state.result.type || state.fall || (state.tags.finish || []).length || state.rating);
+    return false;
+  }
+  function tabLabel(t) { return (STEPS[t] && stepDone(t) ? '<span style="color:' + (state.tab === t ? 'inherit' : '#F4C242') + '">✓</span> ' : '') + T.tabs[t]; }
+  // Entry and elimination order, folded under the competitors (gauntlets, battle royals).
+  function entryHtml() {
+    var h = '<div class="chips" style="margin-top:10px">' + chip('xo', (state.xoOpen ? '▾ ' : '▸ ') + T.xo + ' <span style="color:#9AA6B4;font-weight:600">· ' + T.xoHint + '</span>', 'ghost') + '</div>';
+    if (!state.xoOpen) return h;
+    people().forEach(function(x) {
+      h += '<div class="chips" style="margin-top:6px;align-items:center"><span style="width:280px;font:700 17px Arial">' + esc(x.p.id ? nameOf(x.p.id) : x.p.billed) + '</span>' + chip('e:' + x.k, T.entry + ': ' + (x.p.entry || '–')) + chip('x:' + x.k, T.out + ': ' + (x.p.elim || '–')) + '</div>';
+    });
+    return h;
+  }
+  // The end of the Finish step: moments (folded) and the star rating. The rating is not a spoiler, so it shows
+  // even while the result is hidden.
+  function finishExtra(top) {
+    if (top) return '';
+    var h = '<div class="chips" style="margin-top:14px">' + chip('xm', (state.momOpen ? '▾ ' : '▸ ') + T.xm + ' <span style="color:#9AA6B4;font-weight:600">· ' + T.xmHint + '</span>', 'ghost') + '</div>';
+    if (state.momOpen) {
+      h += group('moment', listOf('moment').filter(function(x) { return state.resOpen || !SPOIL[x.id]; }));
+      if (!state.resOpen) h += '<div class="m" style="margin-top:8px">' + T.spoil + '</div>';
+    }
+    h += '<div class="grp">' + T.rating + '</div><div class="chips" style="align-items:center">';
+    for (var i = 1; i <= 5; i++) h += chip('rt' + i, '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" ' + (i <= (state.rating || 0) ? 'fill="#F4C242"' : 'fill="none" stroke="#5A6472" stroke-width="1.8" stroke-linejoin="round"') + '/></svg>', 'star', ' aria-label="' + i + '/5"');
+    h += '<span style="font:800 18px Arial;margin:0 10px">' + (state.rating ? state.rating + ' / 5' : '–') + '</span>';
+    if (state.rating) h += chip('rt0', T.clear, 'ghost');
+    h += '<span style="font:600 14px Arial;color:#9AA6B4;margin-left:6px">' + (state.ratingN ? T.ratingAvg + ' ' + state.ratingAvg + ' · ' + state.ratingN + T.ratingN : T.ratingNone) + '</span></div>';
+    h += '<div class="m" style="margin-top:6px">' + T.ratingHint + '</div>';
+    return h;
+  }
+  // Confirm: one line per step with Change, the bell times, and the new card.
+  function confirmHtml() {
+    var d = cardData(), en = d.v.s.map(function(x) { return x.join(' & '); }).join(' vs ');
+    var matchBits = [d.v.e, d.v.f.join(' · '), d.v.n ? (ja ? '第' + d.v.n + '試合' : 'Match ' + d.v.n + (d.v.t ? ' of ' + d.v.t : '')) : '', state.date, state.venue && venueById(state.venue) ? lab(venueById(state.venue)) : ''].filter(Boolean).join(' · ');
+    var fin = stepDone('finish') ? T.cHidden + (state.rating ? ' · ' + state.rating + ' / 5' : '') : T.cNone;
+    function line(label, text, k) { return '<div class="chips" style="align-items:center;margin-bottom:8px"><span style="width:150px;font:800 12px Arial;letter-spacing:1px;color:#F4C242">' + label + '</span><span style="flex:1 1 0;min-width:0;font:800 18px Arial">' + esc(text || T.cNone) + '</span>' + chip(k, T.change, 'ghost') + '</div>'; }
+    var h = '<div style="display:flex;gap:28px;align-items:flex-start"><div style="flex:1 1 0;min-width:0">';
+    h += line(T.tabs.people.toUpperCase(), en, 'Tpeople') + line(T.tabs.match.toUpperCase(), matchBits, 'Tmatch') + line(T.tabs.finish.toUpperCase(), fin, 'Tfinish');
+    h += '<div class="chips" style="align-items:center;margin-bottom:8px"><span style="width:150px;font:800 12px Arial;letter-spacing:1px;color:#F4C242">' + T.cBell + '</span><span style="flex:1 1 0;font:800 18px Arial">' + (marks.bell !== '' ? mmss(marks.bell) : '–') + ' – ' + (marks.end !== '' ? mmss(marks.end) : '–') + '</span>' +
+      (marks.bell !== '' ? chip('mbx', T.clear + ' ' + T.bell.toLowerCase(), 'ghost') : '') + (marks.end !== '' ? chip('mex', T.clear + ' ' + T.end.toLowerCase(), 'ghost') : '') + '</div>';
+    h += '</div><div style="width:330px;flex:none">' + cardPair(true) + '</div></div>';
+    return h;
+  }
+
   // ---- Card tab (2.61.0): the video's card as the site shows it now, and as StarScope will show it from what is filled
   // in so far (the same card as the StarScope results, assets/starcards.js). It fills in as the other tabs do.
   function cardData() {
@@ -292,20 +340,25 @@
         [T.cardEvent, !!((state.tags.competition || []).length || (state.tags.title || []).length)],
         [T.cardRound, !!((state.tags.block || []).length || (state.tags.round || []).length)],
         [T.cardPlace, !!place],
-        [T.cardDate, !!state.date]
+        [T.cardDate, !!state.date],
+        [T.fEnd, stepDone('finish')]
       ]
     };
   }
-  function cardHtml() {
+  function cardPair(onlyNew) {
     var d = cardData(), th = esc((rec && rec.thumb) || ''), siteTitle = esc((ja ? rec && (rec.title_ja || rec.title_en) : rec && (rec.title_en || rec.title_ja)) || '');
-    var img = '<div style="height:202px;background:#0B1118 center/cover no-repeat;' + (th ? 'background-image:url(\'' + th + '\');' : '') + 'border-radius:8px 8px 0 0"></div>';
+    var img = '<div style="height:186px;background:#0B1118 center/cover no-repeat;' + (th ? 'background-image:url(\'' + th + '\');' : '') + '"></div>';
     var star = window.__tvStarCard ? window.__tvStarCard.html(d.v) : '';
-    var h = '<div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">';
-    h += '<div style="width:360px"><div class="grp">' + T.cardNow + '</div><div style="background:rgba(26,26,26,.85);border-radius:8px;overflow:hidden">' + img +
-      '<div style="padding:11px 14px 13px;font:700 17px/1.3 Arial;color:#fff;min-height:44px">' + (siteTitle || '–') + '</div></div></div>';
-    h += '<div style="width:360px"><div class="grp">' + T.cardNew + '</div><div style="background:rgba(26,26,26,.85);border-radius:8px;overflow:hidden">' + img +
+    var mine = '<div style="width:330px"><div class="grp">' + T.cardNew + '</div><div style="background:rgba(26,26,26,.85);border-radius:8px;overflow:hidden">' + img +
       '<div class="tvsc-host" style="padding:11px 14px 13px">' + star + '</div></div></div>';
-    h += '<div style="min-width:220px"><div class="grp">' + T.cardHave + '</div>' + d.have.map(function(x) {
+    if (onlyNew) return mine;
+    return '<div style="width:330px"><div class="grp" style="color:#9AA6B4">' + T.cardNow + '</div><div style="background:rgba(26,26,26,.85);border-radius:8px;overflow:hidden">' + img +
+      '<div style="padding:11px 14px 13px;font:700 17px/1.3 Arial;color:#fff;min-height:44px">' + (siteTitle || '–') + '</div></div></div>' + mine;
+  }
+  function cardHtml() {
+    var d = cardData();
+    var h = '<div class="m" style="font-size:17px;color:#C9D2DC;margin:0 0 12px">' + T.cardIntro + '</div><div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">' + cardPair(false);
+    h += '<div style="min-width:220px;padding-top:4px"><div class="grp">' + T.from + '</div>' + d.have.map(function(x) {
       return '<div style="font:700 17px Arial;margin:8px 0;color:' + (x[1] ? '#fff' : '#9AA6B4') + '"><span style="display:inline-block;width:26px;color:' + (x[1] ? '#F4C242' : '#5A6472') + '">' + (x[1] ? '✓' : '○') + '</span>' + esc(x[0]) + '</div>';
     }).join('') + '</div></div>';
     return h;
@@ -531,6 +584,9 @@
     if ((m = /^rw(\d+)$/.exec(k))) { state.result = { type: 'win', side: +m[1] }; render(); return; }
     if (k === 'rd') { state.result = { type: 'draw', side: 0 }; render(); return; }
     if (k === 'rn') { state.result = { type: 'nc', side: 0 }; render(); return; }
+    if (k === 'xo') { state.xoOpen = !state.xoOpen; render(); return; }
+    if (k === 'xm') { state.momOpen = !state.momOpen; state.touched.moments = 1; render(); return; }
+    if ((m = /^rt([0-5])$/.exec(k))) { state.rating = +m[1] === state.rating ? 0 : +m[1]; if (!state.rating) lastFocus = 'rt1'; render(); return; }
     if (k === 'save') return save(null);
     if (k === 'next') return save(setNext());
     if (k === 'close') close();
@@ -622,7 +678,7 @@
     var show = rec.shows && rec.shows[0];
     var place = setPlace();
     busy = true; saveBtn(T.saving, true);
-    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
+    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: place ? place.total : '', card_no: rec.no ? rec.no : (place ? place.no : rec.no), is_dark: rec.no === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
@@ -645,7 +701,9 @@
   function begin(saved) {
     var page = rec ? fromPage() : [];
     var showAny = saved && saved.found;
-    state = { sides: showAny ? fromSaved(saved) : page, result: { type: '', side: 0 }, resOpen: false, onShow: (saved && saved.onShow) || [], aliases: [], tab: 'people', tags: {}, touched: {}, fall: '', hadTags: false, savedLevel: showAny ? (Number(saved.match.level) || 1) : 1 };
+    state = { sides: showAny ? fromSaved(saved) : page, result: { type: '', side: 0 }, resOpen: false, onShow: (saved && saved.onShow) || [], aliases: [], tab: 'card', tags: {}, touched: {}, fall: '', hadTags: false, savedLevel: showAny ? (Number(saved.match.level) || 1) : 1 };
+    // The star rating: this TV's own, and everyone's average (2.62.0).
+    state.rating = (saved && Number(saved.myRating)) || 0; state.ratingAvg = (saved && saved.ratingAvg) || ''; state.ratingN = (saved && Number(saved.ratingCount)) || 0;
     if (showAny) {
       (saved.tags || []).forEach(function(t) { if (t.tag_group === 'fall') state.fall = t.tag_value; else (state.tags[t.tag_group] = state.tags[t.tag_group] || []).push(t.tag_value); });
       state.hadTags = !!(saved.tags || []).length;
