@@ -658,7 +658,7 @@
     else {
       var p = S.people[pick.slot];
       if (!p.id && p.billed && norm(p.billed)) { state.aliases.push({ raw: p.billed, id: id }); nameMap[norm(p.billed)] = id; }
-      p.id = id; lastFocus = 'p' + pick.side + '_' + pick.slot;
+      p.id = id; p.billed = byId[id].en; lastFocus = 'p' + pick.side + '_' + pick.slot;   // the saved name follows the pick (a placeholder or a wrong first pick no longer stays in billed_name)
     }
     remember(id); layer = 'main'; pick = null; nameStatus(); render();
   }

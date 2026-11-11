@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.63.3
+
+- StarScope logger: picking a different wrestler for someone already in the match now also replaces the name saved with her (the sheet's billed_name). It used to keep the first text, so a placeholder or a wrong first pick stayed in that column even though the right wrestler was saved. Saving again still replaces the whole match, as before.
+
 ## 2.63.2
 
 - Community menu: the Top 5 shows the most favorited videos again. Opening the Community page (Most watched, All time) was saving its list over the menu's Top 5; now only the Most favorited, All time list does. The old saved list is dropped.
