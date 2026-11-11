@@ -5480,6 +5480,16 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-shl-fc .tv-shl-ft3{display:block;margin-top:3px;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl{padding:4px 6px 6px 6px;font-size:13px;line-height:15px;font-weight:700;color:#F4C242 !important;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-hl:focus{color:#F4C242 !important;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-ssb-b{margin:0;padding:7px 14px;font-size:16px;font-weight:700;background:#161f2a;border-color:#2a323c;white-space:nowrap;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-ssb-b:focus{background:#172029;border-color:#F4C242;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-ssb-logo{display:flex;align-items:center;gap:10px;margin:0 0 0 -10px;padding:4px 10px;}',
+            '#tv-sm-shelf .tv-cm3{display:grid;grid-template-columns:280px minmax(0,1fr) 220px;gap:24px;align-items:start;}',
+            '#tv-sm-shelf .tv-cm3 > .tv-shl-t{grid-column:1 / 3;grid-row:1;margin:0;}',
+            '#tv-sm-shelf .tv-cm3 > #tv-cm-top{grid-column:1 / 3;grid-row:2;display:grid;grid-template-columns:280px minmax(0,1fr);column-gap:24px;align-items:start;margin-top:-14px;}',
+            '#tv-sm-shelf .tv-cm3 > #tv-cm-top > .tv-cm-h1{grid-column:1;grid-row:1 / 7;}',
+            '#tv-sm-shelf .tv-cm3 > #tv-cm-top > a:not(.tv-cm-h1){grid-column:2;}',
+            '#tv-sm-shelf .tv-cm3 > div:last-child{grid-column:3;grid-row:1 / 3;}',
+            '#tv-sm-shelf .tv-cm3 > div:last-child .tv-sm-fi{padding:4px 10px;}',
             '#tv-sm-shelf .tv-sm-fi{cursor:pointer;display:block;box-sizing:border-box;padding:7px 10px;margin:1px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#c9d2dc !important;text-decoration:none !important;outline:none !important;white-space:normal;}',
             '#tv-sm, #tv-sm *, #tv-sm-shelf, #tv-sm-shelf *{-webkit-tap-highlight-color:transparent !important;}',
             '#tv-sm-shelf .tv-sm-fi:hover, #tv-sm .tv-sm-item:hover, #tv-sm .tv-sm-item:hover *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;}',
@@ -5855,17 +5865,17 @@ class MainActivity : Activity() {
             var sc = window.__tvScope, list = [];
             try { if (sc && AndroidHost.videoIndexOn && AndroidHost.videoIndexOn()) list = sc.newest(3); } catch (e) { list = []; }
             if (!sc) return '';
-            var pill = function(label, path, on) { return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="margin:0;padding:7px 14px;border-radius:18px;font-size:16px;font-weight:700;' + (on ? 'background:#FFB347;border-color:#FFB347;color:#1A1A1A;' : '') + '">' + esc(label) + '</a>'; };
-            var h = '<div style="margin:6px 0 18px;padding:14px 16px;border-radius:12px;background:linear-gradient(135deg,#1A2433,#0F151C);border:2px solid #2A323C;">' +
-              '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0F151C" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>' +
-              '<span style="font:900 18px Arial;letter-spacing:.06em;">STAR<span style="color:#F4C242;">SCOPE</span></span><span style="font:600 13px Arial;color:#9AA6B4;margin-left:4px;">' + esc(T('Map all the Stars in the World', '世界中のスターを地図に')) + '</span>' +
-              '<span style="margin-left:auto;display:flex;gap:8px;">' + pill(T('Recently added', '新着'), '/mypage?tvscope=recent', true) + pill(T('Top rated', '高評価'), '/mypage?tvscope=top') + pill(T('All matches', 'すべての試合') + ' \u203a', '/mypage?tvscope=all') + '</span></div>';
+            var pill = function(label, path) { return '<a class="tv-sm-fi tv-ssb-b" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>'; };
+            var h = '<div style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,#1A2433,#0F151C);border:2px solid #2A323C;">' +
+              '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><a class="tv-sm-fi tv-ssb-logo" tabindex="0" data-go="/mypage?tvscope=recent" href="' + esc(absUrl('/mypage?tvscope=recent')) + '"><svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0F151C" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>' +
+              '<span style="font:900 18px Arial;letter-spacing:.06em;color:#fff;">STAR<span style="color:#F4C242;">SCOPE</span></span></a><span style="font:600 13px Arial;color:#9AA6B4;margin-left:4px;">' + esc(T('Map all the Stars in the World', '世界中のスターを地図に')) + '</span>' +
+              '<span style="margin-left:auto;display:flex;gap:8px;">' + pill(T('Recently added', '新着'), '/mypage?tvscope=recent') + pill(T('Top rated', '高評価'), '/mypage?tvscope=top') + pill(T('All matches', 'すべての試合') + ' \u203a', '/mypage?tvscope=all') + '</span></div>';
             if (list.length) {
               h += '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">';
               list.forEach(function(x) {
                 var path = '/contents/' + x.id, th = x.v.th || '';
                 h += '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="display:block;margin:0;padding:0;border-radius:8px;overflow:hidden;background:#1A1A1A;">' +
-                  '<div style="height:0;padding-top:42%;background:#161F2A center/cover no-repeat;' + (th ? 'background-image:url(' + esc(th) + ');' : '') + '"></div><div class="tvsc-host" style="padding:8px 10px 10px;">' + sc.card(x) + '</div></a>';
+                  '<div style="height:0;padding-top:56.25%;background:#161F2A center/cover no-repeat;' + (th ? 'background-image:url(' + esc(th) + ');' : '') + '"></div><div class="tvsc-host" style="padding:6px 10px 8px;">' + sc.card(x) + '</div></a>';
               });
               h += '</div>';
             }
@@ -6052,15 +6062,10 @@ class MainActivity : Activity() {
                 var cmHome = cm.url({ m: 'pc', w: 'a' });
                 h = '<a class="tv-sm-fi tv-fv-open" tabindex="0" data-go="' + esc(cmHome) + '" href="' + esc(absUrl(cmHome)) + '"><span style="font-size:24px;color:#F4C242">&#9733;</span><span class="tv-fv-l"><b>' + esc(T('Open Community', 'コミュニティを開く')) + '</b></span></a>' +
                   scopeBand() +
-                  '<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:28px;align-items:start;">' +
-                  '<div>' + cm.top10Html() + '</div>' +
-                  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;">' +
+                  '<div class="tv-cm3">' + cm.top10Html() +
                     '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST WATCHED', '再生数')) + '</div>' + cmRows('pc') + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST FAVORITED', 'お気に入り数')) + '</div>' + cmRows('fc') + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('TOOLS', 'ツール')) + '</div>' + fiHtml(T('Build a chart', 'チャートを作る'), cm.buildUrl) + '</div></div>' +
-                    '<div><div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('BY YEAR', '年別')) + '</div>' + cmYears + fiHtml(T('More years...', 'ほかの年'), cm.url({ m: 'pc', w: 'yr' })) + '</div>' +
-                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('COLLECTIONS', 'コレクション')) + '</div>' + fiHtml(T('Places, shows, titles', '開催地・大会・王座'), cm.collUrl) + '</div></div>' +
-                  '</div></div>';
+                      '<div class="tv-shl-blk"><div class="tv-shl-h">' + esc(T('MOST FAVORITED', 'お気に入り数')) + '</div>' + cmRows('fc') + '</div></div>' +
+                  '</div>';
               }
             }
             else if (key === 'tagteams') {

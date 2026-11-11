@@ -102,7 +102,7 @@
     document.body.appendChild(d);
     var first = d.querySelector('a.c'); if (first) first.focus();
     window.addEventListener('keydown', function(e) {
-      if (document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;   // the menu and the video options pop-up handle their own keys
+      if (e.defaultPrevented || document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;   // the menu and the video options pop-up handle their own keys
       var c = e.keyCode, step = { 37: -1, 39: 1, 38: -4, 40: 4 }[c], all = Array.prototype.slice.call(d.querySelectorAll('a.c')), i = all.indexOf(document.activeElement);
       if (c === 13 || c === 23) { if (i >= 0) { e.preventDefault(); e.stopImmediatePropagation(); location.href = all[i].href; } return; }
       if (!step) return;
@@ -227,11 +227,13 @@
     home.pop = key;
     prevClose = window.__tvMenuClose || null;
     window.__tvMenuClose = function() { closePop(); return true; };
+    try { if (H && H.setSideMenuOpen) H.setSideMenuOpen(true); } catch (e) {}   // so Back closes the list instead of leaving the page
     homeRender();
   }
   function closePop() {
     var key = home.pop; home.pop = null;
     window.__tvMenuClose = prevClose; prevClose = null;
+    try { if (H && H.setSideMenuOpen) H.setSideMenuOpen(false); } catch (e) {}
     homeRender('d:' + key);
   }
   function homePress(el) {
@@ -250,6 +252,7 @@
   }
   // D-pad: the nearest button or card in the arrow's direction. Left from the page's left edge opens the menu.
   function homeKey(e) {
+    if (e.defaultPrevented) return;   // already handled (the menu's Left that just closed it)
     if (!homeEl || document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;
     var c = e.keyCode, dir = { 37: 'l', 38: 'u', 39: 'r', 40: 'd' }[c], scope = home.pop ? homeEl.querySelector('.pp') : homeEl, ae = document.activeElement;
     if (c === 13 || c === 23) { if (ae && homeEl.contains(ae)) { e.preventDefault(); e.stopImmediatePropagation(); homePress(ae); } return; }

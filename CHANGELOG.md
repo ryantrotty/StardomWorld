@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.63.1
+
+- Community menu: the StarScope cards show the whole picture (16:9) instead of a strip cut from the middle.
+- Community menu: Recently added, Top rated and All matches are plain menu buttons (dark, gold border when focused); none is orange any more.
+- Community menu: the StarScope telescope and wordmark are a button to Recently added, and Down from Open Community lands on it.
+- Community menu: the Top 5 is three columns: the #1 picture, then 2 to 5 and View all, then Most watched and Most favorited. The By year, Collections and Build a chart links are gone from the menu (they are still on the Community page). Everything fits without scrolling.
+- StarScope page: Back closes an open filter list instead of leaving the page.
+- StarScope pages: Left in the open menu puts the menu away; it used to reopen straight away.
+
 ## 2.63.0
 
 Private builds only:
