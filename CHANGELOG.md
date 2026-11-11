@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.62.2
+
+Private builds only:
+- StarScope logger header: the tagline is back beside the wordmark, now "Map all of the Stars in the World"; the video's title and the date and show line under it are gone, so the tabs sit right under the wordmark.
+- After Save (or Looks right · Save), the logger shows Saved for a moment and closes by itself. If the save fails it stays open with Not saved and the reason.
+
 ## 2.62.1
 
 Private builds only:
