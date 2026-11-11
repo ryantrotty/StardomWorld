@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.63.2
+
+- Community menu: the Top 5 shows the most favorited videos again. Opening the Community page (Most watched, All time) was saving its list over the menu's Top 5; now only the Most favorited, All time list does. The old saved list is dropped.
+- Community menu: StarScope card names are 16 px and stop at two lines in the menu (the StarScope page still shows them in full), so the Top 5 and the Most watched / Most favorited links fit on screen.
+
 ## 2.63.1
 
 - Community menu: the StarScope cards show the whole picture (16:9) instead of a strip cut from the middle.

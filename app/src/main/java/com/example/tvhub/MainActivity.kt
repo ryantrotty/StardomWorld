@@ -5483,6 +5483,9 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi.tv-ssb-b{margin:0;padding:7px 14px;font-size:16px;font-weight:700;background:#161f2a;border-color:#2a323c;white-space:nowrap;}',
             '#tv-sm-shelf .tv-sm-fi.tv-ssb-b:focus{background:#172029;border-color:#F4C242;}',
             '#tv-sm-shelf .tv-sm-fi.tv-ssb-logo{display:flex;align-items:center;gap:10px;margin:0 0 0 -10px;padding:4px 10px;}',
+            '#tv-sm-shelf .tv-ssb-c .tvsc-host{padding:7px 10px 8px !important;}',
+            '#tv-sm-shelf .tv-ssb-c .tvsc .nm{margin-top:4px;padding-bottom:6px;font-size:16px;-webkit-line-clamp:2;}',
+            '#tv-sm-shelf .tv-ssb-c .tvsc .ft{margin-top:6px;}',
             '#tv-sm-shelf .tv-cm3{display:grid;grid-template-columns:280px minmax(0,1fr) 220px;gap:24px;align-items:start;}',
             '#tv-sm-shelf .tv-cm3 > .tv-shl-t{grid-column:1 / 3;grid-row:1;margin:0;}',
             '#tv-sm-shelf .tv-cm3 > #tv-cm-top{grid-column:1 / 3;grid-row:2;display:grid;grid-template-columns:280px minmax(0,1fr);column-gap:24px;align-items:start;margin-top:-14px;}',
@@ -5874,8 +5877,8 @@ class MainActivity : Activity() {
               h += '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">';
               list.forEach(function(x) {
                 var path = '/contents/' + x.id, th = x.v.th || '';
-                h += '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="display:block;margin:0;padding:0;border-radius:8px;overflow:hidden;background:#1A1A1A;">' +
-                  '<div style="height:0;padding-top:56.25%;background:#161F2A center/cover no-repeat;' + (th ? 'background-image:url(' + esc(th) + ');' : '') + '"></div><div class="tvsc-host" style="padding:6px 10px 8px;">' + sc.card(x) + '</div></a>';
+                h += '<a class="tv-sm-fi tv-ssb-c" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '" style="display:block;margin:0;padding:0;border-radius:8px;overflow:hidden;background:#1A1A1A;">' +
+                  '<div style="height:0;padding-top:56.25%;background:#161F2A center/cover no-repeat;' + (th ? 'background-image:url(' + esc(th) + ');' : '') + '"></div><div class="tvsc-host">' + sc.card(x) + '</div></a>';
               });
               h += '</div>';
             }
