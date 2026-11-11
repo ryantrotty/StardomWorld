@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.62.3
+
+Private builds only:
+- StarScope logger, Match step: new MATCH ON THE CARD line under the date, the match number and the show's total, each with − and + (0 is the dark match). It starts from what was saved, else the show's video list, else the page; it is what is saved, and it fills the Match number tick on Preview and the card.
+- Tagline: "Map all the Stars in the World".
+
 ## 2.62.2
 
 Private builds only:
