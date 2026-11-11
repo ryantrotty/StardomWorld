@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.64.0
+
+- Wrestlers menu: three tabs, Current, Past and Guests, each with an icon and how many names it holds. Left and Right move between the tabs and show each list, Down goes into the names. Current keeps the portrait spotlight; Past and Guests have none and spread over five columns.
+- Private builds: the sheet's talent tab decides who is where. The app's own lists stay the base, the sheet moves a name between them (Hazuki to Current, Yoko Bito to Past) and adds the names the app doesn't have; other names for the same person (HZK, Azumi) are left out. Past and Guests names show a small telescope with the number of StarScope matches they are in.
+- Opening the menu checks the sheet again (at most once a minute) without waiting for it: the menu draws from the list kept on the TV and redraws in place, same tab and same name focused, if the sheet's list has changed. Public builds, and a private build before its first answer, show Current | Past as before.
+- The Apps Script has a new read-only call (vi_roster) with no lock, so it never answers "busy". Paste the script and publish a new version; until then the Guests tab does not appear.
+
 ## 2.63.3
 
 - StarScope logger: picking a different wrestler for someone already in the match now also replaces the name saved with her (the sheet's billed_name). It used to keep the first text, so a placeholder or a wrong first pick stayed in that column even though the right wrestler was saved. Saving again still replaces the whole match, as before.

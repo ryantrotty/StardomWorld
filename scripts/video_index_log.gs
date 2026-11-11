@@ -57,6 +57,7 @@ function doPost(e) {
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
   if (body.action === 'vi_cards') return out(viCards());
+  if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -377,6 +378,26 @@ function viApplyApproved() {
     made[p.proposal_id] = made1;
   });
   return made;
+}
+
+// The Wrestlers menu (2.64.0): every wrestler with her status (current, past, guest) and how many StarScope matches
+// she is in. Read only, no lock, so it never answers "busy". A merged name's matches count for the name it points to.
+function viRoster() {
+  var tal = viRows('talent'), to = {}, n = {}, seen = {};
+  tal.forEach(function(t) { if (t.merged_into) to[t.talent_id] = t.merged_into; });
+  viRows('participants').forEach(function(p) {
+    var id = to[p.talent_id] || p.talent_id, k = p.match_id + '|' + id;
+    if (!id || seen[k]) return;
+    seen[k] = 1; n[id] = (n[id] || 0) + 1;
+  });
+  return {
+    ok: true, at: new Date().toISOString(),
+    talent: tal.filter(function(t) { return viTrue(t.active) && !t.merged_into; }).map(function(t) {
+      return { id: t.talent_id, en: t.name_en, ja: t.name_ja, s: t.search, st: String(t.status || '').toLowerCase(), n: n[t.talent_id] || 0 };
+    }),
+    // other names for the same person (HZK is Hazuki, Azumi is AZM): the menu leaves these out
+    merged: tal.filter(function(t) { return t.merged_into; }).map(function(t) { return [t.name_en, t.search, t.merged_into]; })
+  };
 }
 
 function viAction(b) {
