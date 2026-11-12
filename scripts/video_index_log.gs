@@ -653,7 +653,7 @@ function viCards() {
     });
     return sides.filter(Boolean);
   }
-  function lab(g, v, lang) { var l = label[g + '/' + v]; return l ? l[lang] : v; }
+  function lab(g, v, lang) { var l = label[g + '/' + v]; return l ? (l[lang] || l.en) : v; }
   function sideList(list, lang) {
     var sides = [];
     list.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(p) {
@@ -676,10 +676,18 @@ function viCards() {
     return J ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
   }
   function big(s, st) { return s.length > 2 || (st || []).some(function(x) { return /^(gauntlet|royal|rumble)$/.test(x); }); }
+  // A special match type or stipulation (ladder, cage, MMA, haircut, no DQ...) names the match ahead of singles, tag
+  // or multi-team (2.64.1). Gauntlets, royals, rumbles and handicaps already have their own wording in kind().
+  function special(st, lang) {
+    return (st || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x); }).map(function(x) {
+      var l = String(lab('stipulation', x, lang) || '');
+      return lang === 'ja' ? (/マッチ|戦$/.test(l) ? l : l + 'マッチ') : (/match$/i.test(l) ? l : l + ' match');
+    }).join(' · ');
+  }
   function event(m, t, s, lang) {
     if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
     if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
-    return kind(s, lang, t.stipulation);
+    return special(t.stipulation, lang) || kind(s, lang, t.stipulation);
   }
   // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
   function teamNames(p, lang) {
@@ -695,6 +703,7 @@ function viCards() {
     var f = [];
     // A big match under a tournament or title still says what kind it is.
     if (s && big(s, t.stipulation) && (t.competition || t.title)) f.push(kind(s, lang, t.stipulation));
+    if ((t.competition || t.title) && special(t.stipulation, lang)) f.push(special(t.stipulation, lang));   // a title ladder match still says ladder
     if (t.block) f.push(lab('block', t.block[0], lang));
     if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
     return f;

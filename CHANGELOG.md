@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.64.1
+
+Private builds only:
+- StarScope cards: three wrestlers on a side read "Giulia, Mai Sakurai & Thekla" (a comma before the last &). Two stay "A & B"; more than three stay "First +N".
+- StarScope cards: a special match type or stipulation (Ladder, Cage, Mixed Martial Arts, Loser's Haircut, No Disqualification, High Speed, and any added to the list later) now names the match in place of Singles, Tag team or multi-team: "MIXED MARTIAL ARTS MATCH". A tournament or title still comes first, and the stipulation then goes on the line under the names. Gauntlets, battle royals, rumbles and handicaps keep their own wording.
+- The logger's Preview shows the same, straight away.
+- The Apps Script has changed; paste it and publish a new version (the cards on the StarScope pages come from it).
+
 ## 2.64.0
 
 - Wrestlers menu: three tabs, Current, Past and Guests, each with an icon and how many names it holds. Left and Right move between the tabs and show each list, Down goes into the names. Current keeps the portrait spotlight; Past and Guests have none and spread over five columns.

@@ -22,7 +22,8 @@
   ].join('');
   (document.head || document.documentElement).appendChild(st);
 
-  function names(side) { return side.length > 3 ? side[0] + ' + ' + (side.length - 1) : side.join(' & '); }
+  // Three on a side: "Giulia, Mai Sakurai & Thekla" (2.64.1); more than three: the first and how many more.
+  function names(side) { return side.length > 3 ? side[0] + ' + ' + (side.length - 1) : (side.length === 3 ? side[0] + ', ' + side[1] + ' & ' + side[2] : side.join(' & ')); }
   function dateText(d) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || '');
     if (!m) return '';

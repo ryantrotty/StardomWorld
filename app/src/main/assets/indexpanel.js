@@ -296,7 +296,7 @@
   }
   // Confirm: one line per step with Change, the bell times, and the new card.
   function confirmHtml() {
-    var d = cardData(), en = d.v.s.map(function(x) { return x.join(' & '); }).join(' vs ');
+    var d = cardData(), en = d.v.s.map(function(x) { return x.length > 2 ? x.slice(0, -1).join(', ') + ' & ' + x[x.length - 1] : x.join(' & '); }).join(' vs ');
     var matchBits = [d.v.e, d.v.f.join(' · '), d.v.n ? (ja ? '第' + d.v.n + '試合' : 'Match ' + d.v.n + (d.v.t ? ' of ' + d.v.t : '')) : '', state.date, state.venue && venueById(state.venue) ? lab(venueById(state.venue)) : ''].filter(Boolean).join(' · ');
     var fin = stepDone('finish') ? T.cHidden + (state.rating ? ' · ' + state.rating + ' / 5' : '') : T.cNone;
     function line(label, text, k) { return '<div class="chips" style="align-items:center;margin-bottom:8px"><span style="width:150px;font:800 12px Arial;letter-spacing:1px;color:#F4C242">' + label + '</span><span style="flex:1 1 0;min-width:0;font:800 18px Arial">' + esc(text || T.cNone) + '</span>' + chip(k, T.change, 'ghost') + '</div>'; }
@@ -332,15 +332,23 @@
       var out = sides.map(function(sd) { var t = (lib.teams || []).filter(function(x) { return x.id === sideTeam(sd); })[0], f = (lib.factions || []).filter(function(x) { return x.id === sideFaction(sd); })[0]; return t ? t.en : (f ? (lang === 'ja' && f.ja ? f.ja : f.en) : ''); });
       return out.every(Boolean) ? out : null;
     }
+    // Same rule as special() in scripts/video_index_log.gs (2.64.1): a special match type or stipulation names the match.
+    function special(lang) {
+      return (state.tags.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x); }).map(function(x) {
+        var l = String(labIn('stipulation', x, lang) || '');
+        return lang === 'ja' ? (/マッチ|戦$/.test(l) ? l : l + 'マッチ') : (/match$/i.test(l) ? l : l + ' match');
+      }).join(' · ');
+    }
     function event(lang, s) {
       var c = (state.tags.competition || [])[0], t = state.tags.title || [];
       if (c) return labIn('competition', c, lang) + ' ' + String(state.date || '').slice(0, 4);
       if (t.length) return t.map(function(v) { return labIn('title', v, lang); }).join(' / ');
-      return kind(s, lang);
+      return special(lang) || kind(s, lang);
     }
     function foot(lang, s) {
       var f = [];
       if (big(s) && ((state.tags.competition || []).length || (state.tags.title || []).length)) f.push(kind(s, lang));
+      if (((state.tags.competition || []).length || (state.tags.title || []).length) && special(lang)) f.push(special(lang));
       (state.tags.block || []).slice(0, 1).forEach(function(b) { f.push(labIn('block', b, lang)); });
       (state.tags.round || []).slice(0, 1).forEach(function(r) { f.push(String(labIn('round', r, lang)).replace(/ match$/i, '')); });
       return f;
