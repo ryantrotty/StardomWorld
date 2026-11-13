@@ -3268,6 +3268,12 @@ class MainActivity : Activity() {
         fun starCards(reqId: String, payload: String) =
             sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply")
 
+        // StarScope on the phone (2.68.0, private builds, assets/scopelink.js): the video page's play / pause / seek notes
+        // go to the sheet's playback tab, so a tap on the phone logger can be turned into a place in the video.
+        @android.webkit.JavascriptInterface
+        fun scopeLink(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("pb_put"), "__tvScopeLinkReply")
+
         // The Wrestlers menu (2.64.0, private builds): every wrestler's status from the sheet, replies to __tvRosterReply.
         @android.webkit.JavascriptInterface
         fun starRoster(reqId: String, payload: String) =
@@ -10489,6 +10495,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("scopelink.js"), null)
         view.evaluateJavascript(assetText("baricons.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)

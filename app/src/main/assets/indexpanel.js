@@ -138,6 +138,8 @@
     var i = ids.indexOf(U[2]);
     return i < 0 ? null : { no: i + 1, total: ids.length };
   }
+  // For the phone logger's playback notes (assets/scopelink.js, 2.68.0): where this video sits on the show's card.
+  window.__tvVixPlace = setPlace;
   function setNext() {
     if (!U[1]) return null;
     var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];

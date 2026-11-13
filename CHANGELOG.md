@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.0
+
+- StarScope on the phone (private builds): log the match the TV is playing from your iPhone. A web page served by the sheet's own Apps Script (no app to install): add it to your home screen. It shows what's on the TV and where it is, the competitors (names from the library, a search picker, Propose new), match number, title, competition, round, block, stipulation, the result (hidden until Show result) and your rating. Save sends the same thing the TV's logger saves.
+- Bell and Finish are taps. The TV now sends the sheet a short note whenever playback changes (the page opening, play, pause, a seek or skip, buffering, speed, the end, leaving the page), with its clock time and the video position. The phone turns a tap into a place in the video from the last note before it, about 3 seconds after the tap so late notes are in. −1 s / +1 s to nudge.
+- Notes only go out when something changes (quick skips go as one), never while the video just plays on, and only to the sheet. The new "playback" tab keeps the current video and the one before it; older notes are wiped when a new video starts.
+- Ratings from the phone count as the TV's (same device), so they don't add a second vote. Finish, moments and the fall saved on the TV are kept when the phone saves.
+- Apps Script: paste the script, add an HTML file named "phone" with scripts/starscope_phone.html, and publish a new version. See docs/STARSCOPE_PHONE.md for the phone link.
+
 ## 2.67.0
 
 - StarScope Log next (private builds): a fifth tab on the StarScope page, "Log next · N", listing the shows you've watched but not finished logging, from the sheet's video log. Shows you've started logging come first, then the most matches watched, the most plays and the most recently watched. Dai Zero Time matches and backstage comment clips don't count, and fully logged shows never appear.

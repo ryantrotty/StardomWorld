@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<!-- StarScope on the phone (2.68.0, docs/STARSCOPE_PHONE.md). Apps Script HTML file named "phone" next to
+     video_index_log.gs; opened from the script's web app address with ?p=phone&k=KEY. Log the match the TV is playing:
+     Bell and Finish are taps, turned into places in the video from the TV's play / pause / seek notes. -->
+<style>
+  :root{--navy:#0B1118;--panel:#0F151C;--card:#161F2A;--line:#2A323C;--gold:#F4C242;--orange:#FFB347;--ink:#1A1A1A;--t1:#fff;--t2:#C9D2DC;--t3:#9AA6B4;--bad:#FF7A66;--green:#2E9E5B}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--navy);color:var(--t1);font-family:Arial,Helvetica,sans-serif}
+  body{padding:0 14px calc(96px + env(safe-area-inset-bottom))}
+  button{appearance:none;font:700 16px Arial;color:var(--t1);background:var(--card);border:2px solid var(--line);border-radius:10px;min-height:44px;padding:8px 12px;text-align:left}
+  button:active{border-color:var(--gold)}
+  button.on{background:var(--orange);border-color:var(--orange);color:var(--ink)}
+  button.ghost{background:transparent;color:var(--t2);font-weight:600}
+  button.bad{color:var(--bad)}
+  button:disabled{opacity:.45}
+  input{width:100%;height:48px;background:var(--panel);color:#fff;border:2px solid var(--line);border-radius:10px;font:700 17px Arial;padding:0 12px;outline:none}
+  input:focus{border-color:var(--gold)}
+  .top{display:flex;align-items:center;gap:10px;padding:14px 0 10px;position:sticky;top:0;background:var(--navy);z-index:5}
+  .brand{font:900 20px Arial;letter-spacing:.06em}
+  .brand span{color:var(--gold)}
+  .live{margin-left:auto;font:700 13px Arial;color:var(--t3);text-align:right}
+  .live b{color:var(--t1)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--t3);margin-right:6px;vertical-align:1px}
+  .dot.on{background:var(--green)}
+  .box{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+  .eb{font:800 12px Arial;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  .eb em{font-style:normal;color:var(--t3);letter-spacing:0;text-transform:none;font-weight:700}
+  .t1{font:700 18px Arial;line-height:1.3}
+  .t2{font:600 14px Arial;color:var(--t2);margin-top:4px;line-height:1.35}
+  .t3{font:600 13px Arial;color:var(--t3);margin-top:4px}
+  .banner{background:#2A2410;border:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;gap:10px;align-items:center;font:700 14px Arial}
+  .banner button{margin-left:auto;flex:none}
+  .bells{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .bell{min-height:96px;text-align:center;font:800 20px Arial;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .bell small{font:700 14px Arial;color:var(--t3)}
+  .bell.set{border-color:var(--gold)}
+  .bell.set small{color:var(--gold);font-size:18px}
+  .nudge{display:flex;gap:6px;margin-top:6px}
+  .nudge button{flex:1;min-height:36px;padding:4px;text-align:center;font-size:14px}
+  .side{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+  .person{display:flex;gap:6px;margin-bottom:6px}
+  .person button:first-child{flex:1}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips button{min-height:38px;padding:6px 12px;font-size:15px}
+  .grp{font:800 12px Arial;letter-spacing:1px;color:var(--gold);margin:14px 0 8px}
+  .step{display:flex;align-items:center;gap:8px}
+  .step b{font:800 18px Arial;min-width:96px;text-align:center}
+  .step button{min-width:48px;text-align:center}
+  .stars{display:flex;gap:6px}
+  .stars button{flex:1;text-align:center;font-size:24px;padding:4px;line-height:1}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(11,17,24,.96);border-top:2px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:6}
+  .bar .msg{flex:1;font:700 14px Arial;color:var(--t2);line-height:1.3}
+  .bar .msg.bad{color:var(--bad)}
+  .bar button{min-width:120px;text-align:center;background:var(--orange);border-color:var(--orange);color:var(--ink);font-weight:800}
+  .sheet{position:fixed;inset:0;background:var(--navy);z-index:10;display:flex;flex-direction:column;padding:14px 14px env(safe-area-inset-bottom)}
+  .sheet .list{flex:1;overflow:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px;padding-bottom:20px}
+  .sheet .list button small{display:block;font:600 12px Arial;color:var(--t3);margin-top:2px}
+  .hide{display:none}
+</style>
+</head>
+<body data-k="<?= k ?>">
+<div class="top">
+  <svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+  <div class="brand">STAR<span>SCOPE</span></div>
+  <div class="live" id="live"><span class="dot"></span>Looking for the TV…</div>
+</div>
+<div id="app"></div>
+<div class="bar"><div class="msg" id="msg">Loading…</div><button id="save" type="button">Save</button></div>
+<div class="sheet hide" id="sheet"></div>
+
+<script>
+(function(){
+  var K = document.body.getAttribute('data-k');
+  var POLL = 6000, RESOLVE = 3500, LIB_KEY = 'ssLibV1';
+  var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation'], MULTI = { title: 1, stipulation: 1, moment: 1 };
+  var EDITED = { title: 1, competition: 1, round: 1, block: 1, stipulation: 1 };
+  var GROUP = { title: 'Title', competition: 'Competition', round: 'Round', block: 'Block', stipulation: 'Stipulation' };
+  var lib = null, nameMap = {}, byId = {}, now = null, clockSkew = 0, form = null, busy = false, pending = {}, pollTimer = 0;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
+  function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function load(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function mmss(s) {
+    if (s === '' || s == null || !isFinite(s)) return '–';
+    s = Math.max(0, Math.floor(s));
+    var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    return (h ? h + ':' + ('0' + m).slice(-2) : m) + ':' + ('0' + x).slice(-2);
+  }
+  function say(t, bad) { var m = $('msg'); m.textContent = t || ''; m.className = 'msg' + (bad ? ' bad' : ''); }
+  function run(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(ok, no) {
+      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function(e) { no(e && e.message ? e.message : String(e)); });
+      r[fn].apply(r, [K].concat(args));
+    });
+  }
+
+  // ---- the library (names, lists, venues), kept on the phone so the page opens at once
+  function setLib(l) {
+    lib = l; nameMap = {}; byId = {};
+    (l.talent || []).forEach(function(t) { byId[t.id] = t; [t.en, t.ja, t.s].forEach(function(n) { if (n) nameMap[norm(n)] = t.id; }); });
+    var merged = {}; (l.merged || []).forEach(function(m) { merged[m[0]] = m[1]; });
+    (l.aliases || []).forEach(function(a) { var id = a[1]; while (merged[id]) id = merged[id]; if (byId[id]) nameMap[a[0]] = id; });
+  }
+  function resolve(raw) { return nameMap[norm(raw)] || ''; }
+  function nameOf(id) { var t = byId[id]; return t ? t.en || t.ja || id : id; }
+  function listOf(g) { return (lib && lib.lists && lib.lists[g]) || []; }
+  function matchVenue(raw) {
+    var n = norm(raw), hit = '';
+    if (!n || !lib) return '';
+    (lib.venues || []).some(function(v) { if ([v.en, v.ja, v.s].some(function(x) { return x && n.indexOf(norm(x)) >= 0; })) { hit = v.id; return true; } return false; });
+    if (!hit) (lib.venueAliases || []).some(function(a) { if (n.indexOf(a[0]) >= 0) { hit = a[1]; return true; } return false; });
+    return hit;
+  }
+
+  // ---- where the TV is: the last note before a moment, plus the time since (if it was playing)
+  function allEvents() {
+    var out = [];
+    ((now && now.videos) || []).forEach(function(v) { v.events.forEach(function(e) { out.push({ video: v.video, ts: e[0], ev: e[1], pos: e[2], playing: e[3], rate: e[4] }); }); });
+    return out.sort(function(a, b) { return a.ts - b.ts; });
+  }
+  function at(ts) {
+    var last = null;
+    allEvents().forEach(function(e) { if (e.ts <= ts) last = e; });
+    if (!last) return null;
+    return { video: last.video, pos: last.pos + (last.playing ? (ts - last.ts) / 1000 * last.rate : 0), playing: !!last.playing, ev: last.ev };
+  }
+  function current() { return now && now.videos && now.videos[0]; }
+
+  function poll() {
+    clearTimeout(pollTimer);
+    return run('phoneNow').then(function(r) {
+      now = r;
+      clockSkew = Date.now() - r.now;
+      drawLive();
+      var c = current();
+      if (c && !form) openVideo(c);
+      else if (c && form && c.video !== form.video && !form.dirty) openVideo(c);
+      else render();
+    }).catch(function(e) { $('live').innerHTML = '<span class="dot"></span>Can\'t reach the sheet'; say(String(e), true); })
+      .then(function() { if (!document.hidden) pollTimer = setTimeout(poll, POLL); });
+  }
+  document.addEventListener('visibilitychange', function() { if (!document.hidden) poll(); else clearTimeout(pollTimer); });
+
+  function drawLive() {
+    var c = current(), p = c ? at(Date.now()) : null, el = $('live');
+    if (!c || !p) { el.innerHTML = '<span class="dot"></span>Nothing on the TV yet'; return; }
+    var word = p.ev === 'stop' ? 'Left the video' : (p.playing ? 'Playing' : (p.ev === 'buffer' ? 'Loading' : 'Paused'));
+    el.innerHTML = '<span class="dot' + (p.playing ? ' on' : '') + '"></span>' + word + ' <b>' + mmss(p.pos) + '</b>';
+  }
+  setInterval(drawLive, 1000);
+
+  // ---- a video's form: what's saved for it, else what its page said
+  function recOf(v) { return (v && v.rec) || {}; }
+  function fromPage(rec) {
+    var useEn = rec.sides_en && rec.sides_en.length >= 2;
+    var A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : [];
+    var roles = (useEn ? rec.roles_en : rec.roles_ja) || [], teams = (useEn ? rec.teams_en : rec.teams_ja) || [];
+    return A.map(function(names, i) {
+      return { role: roles[i] || '', team: teams[i] || '', people: names.map(function(raw, j) {
+        var other = B[i] && B[i].length === names.length ? B[i][j] : '';
+        return { id: resolve(raw) || resolve(other), billed: raw };
+      }) };
+    });
+  }
+  function fromSaved(r) {
+    var sides = [];
+    r.participants.forEach(function(p) {
+      var i = Number(p.side_no) - 1;
+      sides[i] = sides[i] || { role: p.role || '', team: '', people: [], teamId: p.team_id || '', factionId: p.faction_id || '' };
+      sides[i].people.push({ id: p.talent_id && byId[p.talent_id] ? p.talent_id : '', billed: p.billed_name, entry: p.entry_order || '', elim: p.elim_order || '' });
+    });
+    return sides.filter(Boolean);
+  }
+  function suggestTags(f) {
+    var text = [f.rec.title_en, f.rec.title_ja, f.rec.h1].filter(Boolean).join(' ');
+    SUGGEST.forEach(function(g) {
+      if (g === 'title' && (!/championship|選手権/i.test(text) || /挑戦者決定|next\s*challenger/i.test(text))) return;
+      listOf(g).forEach(function(x) {
+        if (!x.k) return;
+        var hit = false;
+        try { hit = new RegExp(x.k, 'i').test(text); } catch (e) {}
+        if (hit && (f.tags[g] || []).indexOf(x.id) < 0 && (MULTI[g] || !(f.tags[g] || []).length)) (f.tags[g] = f.tags[g] || []).push(x.id);
+      });
+    });
+  }
+  function markKey(video) { return 'ssMarks' + video; }
+
+  function openVideo(v) {
+    var rec = recOf(v);
+    form = { video: v.video, set: v.set, rec: rec, info: v.info || {}, loading: true, dirty: false };
+    say('Loading the match…');
+    render();
+    var show = rec.shows && rec.shows[0];
+    run('phoneGet', v.video, show ? String(show.id) : (v.set || '')).then(function(saved) {
+      if (!form || form.video !== v.video) return;
+      begin(form, saved && saved.ok ? saved : null);
+    }).catch(function(e) { if (form && form.video === v.video) { begin(form, null); say(String(e), true); } });
+  }
+  function begin(f, saved) {
+    var found = saved && saved.found, rec = f.rec, place = f.info.place;
+    f.loading = false;
+    f.sides = found ? fromSaved(saved) : fromPage(rec);
+    if (!f.sides.length) f.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
+    f.onShow = (saved && saved.onShow) || [];
+    f.tags = {}; f.keepTags = []; f.fall = ''; f.touched = false; f.aliases = [];
+    f.result = { type: '', side: 0 }; f.resOpen = false;
+    f.savedLevel = found ? (Number(saved.match.level) || 1) : 1;
+    f.rating = (saved && Number(saved.myRating)) || 0;
+    f.marks = load(markKey(f.video)) || { bell: '', end: '' };
+    if (found) {
+      // Groups this page doesn't edit (finish, moments, the fall) go back unchanged when it saves.
+      (saved.tags || []).forEach(function(t) {
+        if (EDITED[t.tag_group]) (f.tags[t.tag_group] = f.tags[t.tag_group] || []).push(t.tag_value);
+        else { f.keepTags.push({ group: t.tag_group, value: t.tag_value, source: t.source === 'auto' ? 'auto' : 'panel' }); if (t.tag_group === 'fall') f.fall = t.tag_value; }
+      });
+      f.hadTags = !!(saved.tags || []).length;
+      var mine = (saved.videos || []).filter(function(x) { return String(x.video_id) === String(f.video); })[0];
+      if (mine) ['bell', 'end'].forEach(function(k) { var x = mine[k + '_sec']; if (f.marks[k] === '' && x !== '' && x != null) f.marks[k] = Number(x); });
+      if (saved.match.result_type) f.result = { type: saved.match.result_type, side: Number(saved.match.winner_side) || 0 };
+    }
+    if (!f.hadTags) suggestTags(f);
+    var show0 = rec.shows && rec.shows[0];
+    f.venueRaw = (show0 && show0.venue) || '';
+    f.venue = (saved && saved.show && saved.show.venue_id) || matchVenue(f.venueRaw);
+    f.date = (found && saved.match.date) || rec.date || '';
+    var sn = found ? saved.match.card_no : '', st = found ? saved.match.card_total : '';
+    f.cardNo = sn !== '' && sn != null ? Number(sn) : (place ? place.no : (rec.no != null ? rec.no : ''));
+    f.cardTotal = st !== '' && st != null ? Number(st) : (place ? place.total : '');
+    say(found ? 'Showing what was saved.' : (f.sides[0].people.length ? 'Check the names, then save.' : 'No line-up on the page. Add the wrestlers.'));
+    nameStatus();
+    render();
+  }
+  function nameStatus() {
+    var miss = [];
+    form.sides.forEach(function(s) { s.people.forEach(function(p) { if (!p.id) miss.push(p.billed); }); });
+    if (miss.length) say('Not in the library: ' + miss.join(', '), true);
+  }
+  function touch() { form.dirty = true; }
+
+  // ---- drawing
+  function showLine(rec, info) {
+    var s = rec.shows && rec.shows[0], bits = [];
+    if (s && s.show) bits.push(s.show);
+    if (rec.date) bits.push(rec.date);
+    return bits.join(' · ');
+  }
+  function placeText(f) {
+    if (f.cardNo === '' || f.cardNo == null) return '';
+    if (f.cardNo === 0) return 'Dark match';
+    return 'Match ' + f.cardNo + (f.cardTotal ? ' of ' + f.cardTotal : '');
+  }
+  function render() {
+    var h = '', f = form, c = current();
+    if (!lib) { $('app').innerHTML = ''; return; }
+    if (!f) { $('app').innerHTML = '<div class="box"><div class="t2">Start a video on the TV (your private build). It shows up here within a few seconds.</div></div>'; return; }
+    if (c && c.video !== f.video) h += '<div class="banner">The TV is on another video now.<button type="button" data-a="follow">Load it</button></div>';
+    var rec = f.rec, title = rec.title_en || rec.title_ja || f.info.title || ('Video ' + f.video);
+    h += '<div class="box"><div class="eb">' + (c && c.video === f.video ? 'On the TV' : 'Logging') + '<em>' + esc(f.loading ? '' : placeText(f)) + '</em></div>' +
+      '<div class="t1">' + esc(title) + '</div><div class="t2">' + esc(showLine(rec)) + '</div></div>';
+    if (f.loading) { $('app').innerHTML = h; return; }
+
+    // Bell and Finish
+    h += '<div class="box"><div class="eb">Bell times<em>tap when it happens</em></div><div class="bells">';
+    ['bell', 'end'].forEach(function(k) {
+      var v = f.marks[k], p = pending[k];
+      h += '<div><button type="button" class="bell' + (v !== '' ? ' set' : '') + '" data-a="mark" data-k="' + k + '">' + (k === 'bell' ? 'Bell' : 'Finish') +
+        '<small>' + (p ? 'Working it out…' : (v !== '' ? mmss(v) : (k === 'bell' ? 'match start' : 'match end'))) + '</small></button>';
+      if (v !== '') h += '<div class="nudge"><button type="button" data-a="nudge" data-k="' + k + '" data-d="-1">−1 s</button><button type="button" data-a="nudge" data-k="' + k + '" data-d="1">+1 s</button><button type="button" class="ghost" data-a="clearmark" data-k="' + k + '">Clear</button></div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+
+    // Competitors
+    h += '<div class="box"><div class="eb">Competitors</div>';
+    f.sides.forEach(function(s, i) {
+      var tag = s.role === 'champion' ? 'Champion' : (s.role === 'challenger' ? 'Challenger' : '');
+      h += '<div class="side"><div class="eb">Side ' + (i + 1) + '<em>' + tag + '</em></div>';
+      s.people.forEach(function(p, j) {
+        h += '<div class="person"><button type="button" class="' + (p.id ? '' : 'bad') + '" data-a="pick" data-i="' + i + '" data-j="' + j + '">' + (p.id ? esc(nameOf(p.id)) : '? ' + esc(p.billed)) + '</button>' +
+          '<button type="button" class="ghost" data-a="rm" data-i="' + i + '" data-j="' + j + '" aria-label="Remove">✕</button></div>';
+      });
+      h += '<div class="chips"><button type="button" class="ghost" data-a="add" data-i="' + i + '">+ Add wrestler</button>' +
+        (f.sides.length > 2 && !s.people.length ? '<button type="button" class="ghost" data-a="rmside" data-i="' + i + '">Remove side</button>' : '') + '</div></div>';
+    });
+    h += '<div class="chips"><button type="button" class="ghost" data-a="addside">+ Side</button></div></div>';
+
+    // Match
+    var cn = f.cardNo, ct = f.cardTotal, comp = (f.tags.competition || [])[0];
+    h += '<div class="box"><div class="eb">Match</div>';
+    h += '<div class="grp">MATCH ON THE CARD</div><div class="step"><button type="button" data-a="cn" data-d="-1">−</button><b>' + (cn === '' || cn == null ? '–' : (cn === 0 ? 'Dark' : 'Match ' + cn)) + '</b><button type="button" data-a="cn" data-d="1">+</button>' +
+      '<span class="t3" style="margin:0 4px">of</span><button type="button" data-a="ct" data-d="-1">−</button><b style="min-width:34px">' + (ct || '–') + '</b><button type="button" data-a="ct" data-d="1">+</button></div>';
+    ['title', 'competition', 'round'].forEach(function(g) { h += group(g, listOf(g)); });
+    h += group('block', listOf('block').filter(function(b) { return !comp || !b.p || b.p === comp; }));
+    h += group('stipulation', listOf('stipulation'));
+    h += '</div>';
+
+    // Result (hidden until asked) and rating
+    h += '<div class="box"><div class="eb">Result<em>hidden so it isn\'t spoiled</em></div>';
+    if (!f.resOpen) h += '<div class="chips"><button type="button" class="ghost" data-a="reveal">Show result</button></div>';
+    else {
+      var r = f.result;
+      h += '<div class="chips"><button type="button" class="' + (!r.type ? 'on' : '') + '" data-a="res" data-t="">Not set</button>';
+      f.sides.forEach(function(s, i) { if (s.people.length) h += '<button type="button" class="' + (r.type === 'win' && r.side === i + 1 ? 'on' : '') + '" data-a="res" data-t="win" data-s="' + (i + 1) + '">Side ' + (i + 1) + ' wins</button>'; });
+      h += '<button type="button" class="' + (r.type === 'draw' ? 'on' : '') + '" data-a="res" data-t="draw">Draw</button><button type="button" class="' + (r.type === 'nc' ? 'on' : '') + '" data-a="res" data-t="nc">No contest</button></div>';
+    }
+    h += '<div class="grp">YOUR RATING</div><div class="stars">';
+    for (var n = 1; n <= 5; n++) h += '<button type="button" class="' + (f.rating >= n ? 'on' : '') + '" data-a="rate" data-n="' + n + '">★</button>';
+    h += '</div></div>';
+    $('app').innerHTML = h;
+  }
+  function group(g, items) {
+    var sel = form.tags[g] || [], h = '<div class="grp">' + GROUP[g].toUpperCase() + '</div><div class="chips">';
+    items.forEach(function(x) { h += '<button type="button" class="' + (sel.indexOf(x.id) >= 0 ? 'on' : '') + '" data-a="tag" data-g="' + g + '" data-v="' + esc(x.id) + '">' + esc(x.en || x.id) + '</button>'; });
+    return h + '<button type="button" class="ghost" data-a="propopt" data-g="' + g + '">+ Propose new</button></div>';
+  }
+
+  // ---- taps
+  document.addEventListener('click', function(e) {
+    var b = e.target.closest('[data-a]');
+    if (!b || !form) return;
+    var a = b.getAttribute('data-a'), i = +b.getAttribute('data-i'), j = +b.getAttribute('data-j'), k = b.getAttribute('data-k');
+    if (a === 'mark') return mark(k);
+    if (a === 'follow') { var c = current(); if (c) openVideo(c); return; }
+    if (a === 'pick') return openPicker({ side: i, slot: j });
+    if (a === 'add') return openPicker({ side: i, slot: -1 });
+    if (a === 'propopt') return openPropose(b.getAttribute('data-g'));
+    touch();
+    if (a === 'nudge') { form.marks[k] = Math.max(0, Number(form.marks[k]) + Number(b.getAttribute('data-d'))); store(markKey(form.video), form.marks); }
+    else if (a === 'clearmark') { form.marks[k] = ''; store(markKey(form.video), form.marks); }
+    else if (a === 'rm') form.sides[i].people.splice(j, 1);
+    else if (a === 'rmside') form.sides.splice(i, 1);
+    else if (a === 'addside') form.sides.push({ role: '', team: '', people: [] });
+    else if (a === 'cn') { var x = form.cardNo === '' || form.cardNo == null ? 0 : form.cardNo; form.cardNo = Math.max(0, x + Number(b.getAttribute('data-d'))); }
+    else if (a === 'ct') { var y = form.cardTotal || 0; y += Number(b.getAttribute('data-d')); form.cardTotal = y > 0 ? y : ''; }
+    else if (a === 'tag') toggle(b.getAttribute('data-g'), b.getAttribute('data-v'));
+    else if (a === 'reveal') form.resOpen = true;
+    else if (a === 'res') form.result = { type: b.getAttribute('data-t'), side: Number(b.getAttribute('data-s')) || 0 };
+    else if (a === 'rate') { var n = Number(b.getAttribute('data-n')); form.rating = form.rating === n ? 0 : n; }
+    render();
+  });
+  function toggle(g, v) {
+    form.touched = true;
+    var L = form.tags[g] = form.tags[g] || [], i = L.indexOf(v);
+    if (MULTI[g]) { if (i >= 0) L.splice(i, 1); else L.push(v); }
+    else form.tags[g] = i >= 0 ? [] : [v];
+    if (g === 'competition') {
+      var c = form.tags.competition[0];
+      form.tags.block = (form.tags.block || []).filter(function(b) { var x = listOf('block').filter(function(y) { return y.id === b; })[0]; return c && x && (!x.p || x.p === c); });
+    }
+  }
+
+  // Bell / Finish: the tap's time now; its place once the TV's notes up to that moment are in (a note can take a
+  // couple of seconds to arrive, so the answer waits a moment).
+  function mark(k) {
+    var ts = Date.now(), f = form;
+    pending[k] = true; render();
+    setTimeout(function() {
+      run('phoneNow').then(function(r) {
+        now = r; drawLive();
+        var p = at(ts);
+        delete pending[k];
+        if (form !== f) return;
+        if (!p) say('The TV hasn\'t sent anything yet. Is the video playing?', true);
+        else if (String(p.video) !== String(f.video)) say('At that tap the TV was on a different video.', true);
+        else { touch(); f.marks[k] = Math.round(p.pos); store(markKey(f.video), f.marks); say((k === 'bell' ? 'Bell' : 'Finish') + ' at ' + mmss(p.pos) + (p.playing ? '' : ' (the video was paused)')); }
+        render();
+      }).catch(function(e) { delete pending[k]; say(String(e), true); render(); });
+    }, RESOLVE);
+  }
+
+  // ---- the name picker: on this show first, then everyone, filtered as you type
+  function openPicker(at) {
+    var sh = $('sheet'), p = at.slot >= 0 ? form.sides[at.side].people[at.slot] : null;
+    sh.innerHTML = '<div class="eb">' + (p ? 'Pick the right name' + (p.id ? '' : ' for “' + esc(p.billed) + '”') : 'Add to side ' + (at.side + 1)) + '<button type="button" class="ghost" id="pkx">Close</button></div>' +
+      '<input id="pkq" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search names" value="' + esc(p && !p.id ? p.billed : '') + '"><div class="list" id="pkl"></div>';
+    sh.classList.remove('hide');
+    var q = $('pkq');
+    function draw() {
+      var t = norm(q.value), out = [], onShow = {}, h = '';
+      form.onShow.forEach(function(id) { onShow[id] = 1; });
+      (lib.talent || []).forEach(function(x) {
+        if (t && ![x.en, x.ja, x.s].some(function(n) { return n && norm(n).indexOf(t) >= 0; })) return;
+        out.push(x);
+      });
+      out.sort(function(a, b) { return (onShow[b.id] ? 1 : 0) - (onShow[a.id] ? 1 : 0) || String(a.en).localeCompare(String(b.en)); });
+      out.slice(0, 60).forEach(function(x) { h += '<button type="button" data-id="' + esc(x.id) + '">' + esc(x.en || x.ja) + '<small>' + esc([x.ja, onShow[x.id] ? 'on this show' : '', x.st].filter(Boolean).join(' · ')) + '</small></button>'; });
+      if (q.value.trim()) h += '<button type="button" class="ghost" data-new="1">Propose new: ' + esc(q.value.trim()) + '</button>';
+      if (!h) h = '<div class="t3">Type a name.</div>';
+      $('pkl').innerHTML = h;
+    }
+    q.addEventListener('input', draw);
+    draw();
+    $('pkx').onclick = closeSheet;
+    $('pkl').onclick = function(e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      if (b.getAttribute('data-new')) {
+        var value = q.value.trim();
+        b.disabled = true; b.textContent = 'Adding…';
+        run('phonePropose', { type: 'new_talent', value: value, video: form.video }).then(function(r) {
+          if (!r.ok || !r.id) { b.textContent = 'Not added: ' + (r.error || 'no id'); return; }
+          lib.talent.push({ id: r.id, en: value });
+          byId[r.id] = lib.talent[lib.talent.length - 1]; nameMap[norm(value)] = r.id;
+          place(at, r.id, value); closeSheet();
+        }).catch(function(err) { b.textContent = 'Not added: ' + err; });
+        return;
+      }
+      var id = b.getAttribute('data-id');
+      // A spelling matched to a person here works from then on (saved with the match).
+      if (p && !p.id && p.billed && norm(p.billed) !== norm(nameOf(id))) form.aliases.push({ raw: p.billed, id: id });
+      place(at, id, p ? p.billed : nameOf(id));
+      closeSheet();
+    };
+    setTimeout(function() { q.focus(); }, 50);
+  }
+  function place(at, id, billed) {
+    touch();
+    if (at.slot >= 0) { var p = form.sides[at.side].people[at.slot]; p.id = id; if (!p.billed) p.billed = billed; }
+    else form.sides[at.side].people.push({ id: id, billed: nameOf(id) });
+    delete form.sides[at.side].teamId;
+    say(''); nameStatus(); render();
+  }
+  function openPropose(g) {
+    var sh = $('sheet');
+    sh.innerHTML = '<div class="eb">Propose a new ' + GROUP[g].toLowerCase() + '<button type="button" class="ghost" id="pkx">Close</button></div>' +
+      '<input id="pkq" type="text" autocomplete="off" placeholder="Name it as it should appear"><div class="list"><button type="button" id="pks">Add it</button><div class="t3" id="pkm"></div></div>';
+    sh.classList.remove('hide');
+    $('pkx').onclick = closeSheet;
+    $('pks').onclick = function() {
+      var value = $('pkq').value.trim();
+      if (!value) return;
+      $('pks').disabled = true; $('pkm').textContent = 'Adding…';
+      run('phonePropose', { type: 'new_option', value: value, entity_id: g, video: form.video }).then(function(r) {
+        if (!r.ok || !r.id) { $('pks').disabled = false; $('pkm').textContent = 'Not added: ' + (r.error || 'no id'); return; }
+        (lib.lists[g] = lib.lists[g] || []).push({ id: r.id, en: value });
+        toggle(g, r.id); touch(); closeSheet(); render();
+      }).catch(function(err) { $('pks').disabled = false; $('pkm').textContent = 'Not added: ' + err; });
+    };
+    setTimeout(function() { $('pkq').focus(); }, 50);
+  }
+  function closeSheet() { $('sheet').classList.add('hide'); $('sheet').innerHTML = ''; }
+
+  // ---- saving: the same shape the TV's logger sends
+  function teamFor(s) {
+    var ids = s.people.map(function(p) { return p.id; }).filter(Boolean).sort().join('|');
+    var t = (lib.teams || []).filter(function(x) { return x.m.length && x.m.slice().sort().join('|') === ids; })[0];
+    return t ? t.id : '';
+  }
+  function factionFor(s) {
+    if (!s.team) return '';
+    var n = norm(s.team), x = (lib.factions || []).filter(function(y) { return norm(y.en) === n || norm(y.ja) === n; })[0];
+    return x ? x.id : '';
+  }
+  $('save').addEventListener('click', function() {
+    var f = form;
+    if (!f || f.loading || busy) return;
+    var S = f.sides.filter(function(s) { return s.people.length; });
+    if (S.length < 2) { say('A match needs at least two sides.', true); return; }
+    var parts = [], r = f.result, winner = 0;
+    S.forEach(function(s, i) {
+      if (r.type === 'win' && f.sides[r.side - 1] === s) winner = i + 1;
+      var team = s.people.length >= 2 ? (s.teamId !== undefined ? s.teamId : teamFor(s)) : '', fac = s.factionId !== undefined ? s.factionId : factionFor(s);
+      s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: s.role, team_id: team, faction_id: fac, entry: p.entry || '', elim: p.elim || '' }); });
+    });
+    var tags = f.keepTags.slice();
+    Object.keys(f.tags).forEach(function(g) { (f.tags[g] || []).forEach(function(v) { tags.push({ group: g, value: v, source: f.touched || f.hadTags ? 'panel' : 'auto' }); }); });
+    var deep = f.marks.bell !== '' || f.marks.end !== '' || f.keepTags.length;
+    var level = Math.max(f.savedLevel, deep ? 3 : (f.touched ? 2 : 1));
+    var show = f.rec.shows && f.rec.shows[0], title = (f.rec.title_en || '') + ' ' + (f.rec.title_ja || '');
+    busy = true; $('save').textContent = 'Saving…';
+    run('phoneSave', { video: String(f.video), version: f.rec.version || 'jp', rating: f.rating || 0, aliases: f.aliases, participants: parts, tags: tags, marks: f.marks, venueAliases: [],
+      match: { show_id: show ? show.id : (f.set || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: f.venue, date: f.date, date_manual: false,
+        card_total: f.cardTotal || '', card_no: f.cardNo, is_dark: f.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } })
+    .then(function(res) {
+      busy = false;
+      if (!res.ok) { $('save').textContent = 'Not saved'; say(String(res.error || 'not saved'), true); return; }
+      f.aliases = []; f.dirty = false;
+      try { localStorage.removeItem(markKey(f.video)); } catch (e) {}
+      $('save').textContent = res.linked ? 'Linked' : 'Saved';
+      say(res.linked ? 'Linked as another version of the same match.' : 'Saved to StarScope.');
+      setTimeout(function() { $('save').textContent = 'Save'; }, 2500);
+      // The TV may have moved on while you were logging: follow it now.
+      var c = current(); if (c && c.video !== f.video) setTimeout(function() { openVideo(c); }, 1200);
+    }).catch(function(e) { busy = false; $('save').textContent = 'Not saved'; say(String(e), true); });
+  });
+
+  // ---- start: the library from the phone straight away, a fresh copy behind it
+  var cached = load(LIB_KEY);
+  if (cached) setLib(cached);
+  run('phoneLib').then(function(l) {
+    if (!l || !l.ok) throw new Error((l && l.error) || 'library not loaded');
+    store(LIB_KEY, l); setLib(l);
+    if (form && !form.loading) render();
+  }).catch(function(e) { if (!lib) say('Library: ' + e, true); })
+    .then(function() { if (lib) { render(); poll(); } });
+})();
+</script>
+</body>
+</html>

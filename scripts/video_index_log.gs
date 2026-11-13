@@ -39,6 +39,13 @@
  *                                                              match id, round and special rules for the Shows page (2.66.0)
  *   vi_suggest {}                                              StarScope's Log next tab (2.67.0): videos watched but not logged,
  *                                                              by show (set), with views, last watched and the venue's names
+ *
+ * StarScope on the phone (2.68.0, see docs/STARSCOPE_PHONE.md):
+ *   pb_put {video, set, events: [{ts, ev, pos, playing, rate}], info}  the TV's play / pause / seek record ("playback" tab);
+ *                                                              only the current video and the one before it are kept
+ *   GET ?p=phone&k=KEY                                         the phone logger page (the "phone" HTML file in this project);
+ *                                                              its calls (phoneNow, phoneLib, phoneGet, phoneSave, phonePropose)
+ *                                                              need the same key
  */
 var SHEET = 'videos';
 var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_en', 'title_ja',
@@ -64,6 +71,7 @@ function doPost(e) {
   if (body.action === 'vi_cards') return out(viCards());
   if (body.action === 'vi_suggest') return out(viSuggest());
   if (body.action === 'vi_roster') return out(viRoster());
+  if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -79,7 +87,15 @@ function withLock(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
-function doGet() { return out({ ok: false, error: 'POST only' }); }
+// The only page: the StarScope phone logger, for the owner's key. Anything else gets the same answer as before.
+function doGet(e) {
+  var p = (e && e.parameter) || {}, key = PropertiesService.getScriptProperties().getProperty('KEY');
+  if (p.p !== 'phone' || !key || p.k !== key) return out({ ok: false, error: 'POST only' });
+  var t = HtmlService.createTemplateFromFile('phone');
+  t.k = p.k;
+  return t.evaluate().setTitle('StarScope').addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+}
 
 // Only the shape the app writes is accepted.
 function check(r) {
@@ -809,4 +825,119 @@ function viExport() {
     if (m.result_type || spoil[m.match_id]) results[m.match_id] = { type: m.result_type || null, side: m.winner_side === '' ? null : Number(m.winner_side), tags: spoil[m.match_id] || {} };
   });
   return { ok: true, schema: 1, at: new Date().toISOString(), matches: matches, results: results };
+}
+
+
+// ---- StarScope on the phone (2.68.0) ---------------------------------------------------------------------------------
+// The TV (private build, assets/scopelink.js) sends a note each time playback changes: play, pause, seek, buffering,
+// speed, and when a video page opens or closes. Each note has the TV's clock time and the video position, so a tap on the
+// phone (its own clock time) can be turned into a place in the video: the last note before the tap, plus the time since.
+var PB_SHEET = 'playback';
+var PB_COLS = ['ts', 'video', 'set', 'ev', 'pos', 'playing', 'rate', 'device', 'info', 'received'];
+var PB_EVENTS = /^(open|play|pause|seek|buffer|resume|rate|sync|end|stop)$/;
+
+function pbSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(PB_SHEET);
+  if (!sh) { sh = ss.insertSheet(PB_SHEET); sh.appendRow(PB_COLS); sh.setFrozenRows(1); }
+  return sh;
+}
+function pbRows() {
+  var sh = pbSheet(), n = sh.getLastRow();
+  if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, PB_COLS.length).getValues().map(function(v) {
+    var o = {}; PB_COLS.forEach(function(c, i) { o[c] = v[i]; }); return o;
+  });
+}
+
+function pbPut(b) {
+  var video = String(b.video || ''), set = /^\d{1,9}$/.test(String(b.set || '')) ? String(b.set) : '';
+  if (!/^\d{1,9}$/.test(video)) return { ok: false, error: 'bad video' };
+  if (!Array.isArray(b.events) || !b.events.length || b.events.length > 60) return { ok: false, error: 'bad events' };
+  var now = new Date().toISOString(), device = String(b.device || '').slice(0, 40);
+  var info = b.info && typeof b.info === 'object' ? JSON.stringify(b.info).slice(0, 2000) : '';
+  var add = [];
+  b.events.forEach(function(e, i) {
+    var ts = Number(e && e.ts), pos = Number(e && e.pos), rate = Number(e && e.rate) || 1;
+    if (!(ts > 1.5e12 && ts < 4e12) || !(pos >= 0 && pos < 86400) || !PB_EVENTS.test(String(e.ev))) return;
+    add.push({ ts: ts, video: video, set: set, ev: e.ev, pos: Math.round(pos * 100) / 100, playing: e.playing ? 1 : 0,
+      rate: rate > 0 && rate <= 4 ? rate : 1, device: device, info: i === 0 ? info : '', received: now });
+  });
+  if (!add.length) return { ok: false, error: 'no good events' };
+  var rows = pbRows().concat(add);
+  // Only the video now playing and the one before it are kept, so a late tap on the last match still finds its place.
+  var order = [];
+  rows.slice().sort(function(x, y) { return y.ts - x.ts; }).forEach(function(r) { var v = String(r.video); if (order.indexOf(v) < 0) order.push(v); });
+  var keep = order.slice(0, 2);
+  var kept = rows.filter(function(r) { return keep.indexOf(String(r.video)) >= 0; });
+  // A long session on one video: the oldest notes go once there are 400 (the newest note before a tap is what counts).
+  kept.sort(function(x, y) { return x.ts - y.ts; });
+  if (kept.length > 400) kept = kept.slice(kept.length - 400);
+  var sh = pbSheet(), old = sh.getLastRow();
+  if (kept.length === rows.length) {
+    sh.getRange(old + 1, 1, add.length, PB_COLS.length).setValues(add.map(function(r) { return PB_COLS.map(function(c) { return r[c]; }); }));
+  } else {
+    if (old > 1) sh.getRange(2, 1, old - 1, PB_COLS.length).clearContent();
+    sh.getRange(2, 1, kept.length, PB_COLS.length).setValues(kept.map(function(r) { return PB_COLS.map(function(c) { return r[c]; }); }));
+  }
+  return { ok: true, added: add.length, wiped: rows.length - kept.length };
+}
+
+// The page's own calls (google.script.run). Each needs the key the page was opened with.
+function phoneKey_(k) {
+  var key = PropertiesService.getScriptProperties().getProperty('KEY');
+  if (!key || k !== key) throw new Error('bad key');
+}
+// The TV the notes come from: its device name is used for the star rating, so the phone and that TV share one.
+function phoneDevice_(rows) {
+  for (var i = rows.length - 1; i >= 0; i--) if (rows[i].device) return String(rows[i].device);
+  return 'phone';
+}
+
+// What the TV is playing: its notes for the current and the last video, and what the page said about each video.
+function phoneNow(k) {
+  phoneKey_(k);
+  var rows = pbRows().sort(function(x, y) { return x.ts - y.ts; }), vids = [];
+  rows.forEach(function(r) { var v = String(r.video); var i = vids.indexOf(v); if (i >= 0) vids.splice(i, 1); vids.push(v); });
+  vids = vids.slice(-2).reverse();
+  var res = { ok: true, now: Date.now(), device: phoneDevice_(rows), videos: [] };
+  vids.forEach(function(v) {
+    var mine = rows.filter(function(r) { return String(r.video) === v; }), info = {};
+    mine.forEach(function(r) { if (r.info) { try { info = JSON.parse(r.info); } catch (e) {} } });
+    res.videos.push({ video: v, set: String(mine[0].set || ''), info: info, rec: phoneRec_(v),
+      events: mine.map(function(r) { return [Number(r.ts), String(r.ev), Number(r.pos), Number(r.playing) ? 1 : 0, Number(r.rate) || 1]; }) });
+  });
+  return res;
+}
+// The video's page facts from the videos tab (what the TV read: title, line-up, show, date, version).
+function phoneRec_(video) {
+  var sh = sheet(), n = sh.getLastRow();
+  if (n < 2) return null;
+  var hit = sh.getRange(2, 1, n - 1, 1).createTextFinder(String(video)).matchEntireCell(true).findNext();
+  if (!hit) return null;
+  var raw = sh.getRange(hit.getRow(), COLS.indexOf('rec') + 1).getValue();
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+function phoneLib(k) {
+  phoneKey_(k);
+  var r = withLock(function() { return viAction({ action: 'vi_lib' }); });
+  return r;
+}
+function phoneGet(k, video, show) {
+  phoneKey_(k);
+  return viGet({ video: String(video || ''), show: String(show || ''), device: phoneDevice_(pbRows().sort(function(x, y) { return x.ts - y.ts; })) });
+}
+function phoneSave(k, body) {
+  phoneKey_(k);
+  body = body || {};
+  body.action = 'vi_save';
+  body.device = phoneDevice_(pbRows().sort(function(x, y) { return x.ts - y.ts; }));
+  return withLock(function() { return viSave(body); });
+}
+function phonePropose(k, body) {
+  phoneKey_(k);
+  body = body || {};
+  body.action = 'vi_propose';
+  body.owner = true;     // the owner's phone, like the private build: the addition goes in at once
+  body.device = 'phone';
+  return withLock(function() { return viAction(body); });
 }
