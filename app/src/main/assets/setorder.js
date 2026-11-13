@@ -49,10 +49,27 @@
     try { var ses = JSON.parse(sessionStorage.getItem(SKEY) || '{}') || {}; delete ses[set]; sessionStorage.setItem(SKEY, JSON.stringify(ses)); } catch (e) {}
   }
 
-  // The answer for one set: the Reverse Order choice, else the rule.
+  // StarScope match numbers (2.65.0, private builds): when two or more videos in the list have one, they say which
+  // way the list runs, for certain. Read from the StarScope list the TV keeps (assets/starcards.js); nothing is fetched.
+  function scopeOrder(items) {
+    var map = null;
+    try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); map = c && c.map; } catch (e) { map = null; }
+    if (!map) return null;
+    var seen = [];
+    (items || []).forEach(function(x) {
+      var v = x && map[String(x.id)], n = v && v.n !== '' && v.n != null ? Number(v.n) : NaN;
+      if (isFinite(n)) seen.push(n);
+    });
+    if (seen.length < 2 || seen[0] === seen[seen.length - 1]) return null;
+    return { flip: seen[0] > seen[seen.length - 1], sure: true, why: 'scope' };
+  }
+
+  // The answer for one set: the Reverse Order choice, else StarScope's match numbers, else the rule.
   function forSet(set, items) {
     var m = saved();
     if (set && Object.prototype.hasOwnProperty.call(m, set)) return { flip: m[set] === 1, sure: true, why: 'your choice' };
+    var sc = scopeOrder(items);
+    if (sc) return sc;
     // Same answer for the whole visit: the set page and the video page's row can read the titles before
     // and after the page translator has changed them.
     var ses = {};
@@ -72,5 +89,5 @@
     return m ? m[1] + ':' + m[2] : '';
   }
 
-  window.__tvSetOrder = { decide: decide, forSet: forSet, remember: remember, setKey: setKey, score: score };
+  window.__tvSetOrder = { decide: decide, forSet: forSet, scopeOrder: scopeOrder, remember: remember, setKey: setKey, score: score };
 })();

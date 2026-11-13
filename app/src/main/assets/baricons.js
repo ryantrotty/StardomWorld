@@ -31,6 +31,9 @@
     gear: gear,
     speed: function() { return '<path d="M4 17a8 8 0 1 1 16 0" ' + S + ' stroke-width="2"/><path d="M12 17l4-5" ' + S + ' stroke-width="2.2"/><circle cx="12" cy="17" r="1.7" fill="currentColor"/>'; },
     full: function() { return '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" ' + S + ' stroke-width="2.3"/>'; },
+    // StarScope bell (2.65.0, private builds): outline = entrances play, filled = skipped, arrow = bell to bell.
+    bell: function(t, on) { return '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l2 2H4z" ' + (on ? 'fill="currentColor"' : S + ' stroke-width="2"') + '/><path d="M10 21h4" ' + S + ' stroke-width="2.2"/>'; },
+    bell2: function() { return SHAPES.bell('', true) + '<path d="M20.5 3.5l3.5 3-3.5 3" ' + S + ' stroke-width="2.2"/>'; },
     exit: function() { return '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" ' + S + ' stroke-width="2.3"/>'; }
   };
   // Badges (quality, speed) sit at the top right, inside the icon's own box, so the button never changes size.

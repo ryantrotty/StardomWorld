@@ -2195,6 +2195,7 @@ class MainActivity : Activity() {
                 super.onPageStarted(view, url, favicon)
                 sideMenuOpen = false
                 indexPanelOpen = false
+                showScopeCard("")
                 if (isPpvHost(url)) ppvSession = true else if (isSiteHost(url)) ppvSession = false
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
@@ -2307,6 +2308,7 @@ class MainActivity : Activity() {
                     .start()
                 refreshCursorVisibility()
                 scheduleFullScreenResizeNudges()
+                updateScopeCard()
                 if (ccMode == 1 || ccMode == 2) ccStart()
                 // Entered through the player's own full-screen button: start the 8 second countdown and
                 // take keyboard focus off the player, otherwise its controls never fade.
@@ -3541,19 +3543,19 @@ class MainActivity : Activity() {
         fun barIcons(statusJson: String): String {
             val j = try { if (statusJson.isEmpty()) null else org.json.JSONObject(statusJson) } catch (_: Exception) { null }
             val o = org.json.JSONObject()
-            for (id in BAR_IDS) { val b = barIcon(id, j); o.put(id, org.json.JSONObject().put("k", b.k).put("t", b.t).put("on", b.on).put("off", b.off)) }
+            for (id in barIdList()) { val b = barIcon(id, j); o.put(id, org.json.JSONObject().put("k", b.k).put("t", b.t).put("on", b.on).put("off", b.off)) }
             return o.toString()
         }
 
         @android.webkit.JavascriptInterface
-        fun barIds(): String = org.json.JSONArray(BAR_IDS.filter { it !in BAR_FULLSCREEN_ONLY } + (if (videoIndexOn()) listOf("index") else emptyList())).toString()
+        fun barIds(): String = org.json.JSONArray(barIdList().filter { it !in BAR_FULLSCREEN_ONLY } + (if (videoIndexOn()) listOf("index") else emptyList())).toString()
 
         @android.webkit.JavascriptInterface
         fun barLabels(statusJson: String): String {
             val j = try { if (statusJson.isEmpty()) null else org.json.JSONObject(statusJson) } catch (_: Exception) { null }
             if (j != null && ccMode == 0 && j.optString("cc", "Off") != "Off") ccMode = 3
             val o = org.json.JSONObject()
-            for (id in BAR_IDS) o.put(id, barLabel(id, j))
+            for (id in barIdList()) o.put(id, barLabel(id, j))
             o.put("index", barLabel("index", j))
             return o.toString()
         }
@@ -3567,6 +3569,24 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun skipInfo(): String = this@MainActivity.skipInfoJson()
+
+        // StarScope bell (2.65.0, private builds): Up / Down on the bell picks Off, Skip entrances or Bell to bell.
+        @android.webkit.JavascriptInterface
+        fun bellStep(dir: Int): String {
+            this@MainActivity.bellStep(dir)
+            handler.post { fsRepaintBell() }
+            return this@MainActivity.bellInfoJson()
+        }
+
+        @android.webkit.JavascriptInterface
+        fun bellInfo(): String = this@MainActivity.bellInfoJson()
+
+        // The StarScope card on the video (assets/scopeplayer.js): the match at the start, Up next at the end mark.
+        // An empty string puts it away.
+        @android.webkit.JavascriptInterface
+        fun scopeCard(json: String) {
+            handler.post { this@MainActivity.showScopeCard(json) }
+        }
 
         @android.webkit.JavascriptInterface
         fun barAction(id: String) {
@@ -4019,6 +4039,7 @@ class MainActivity : Activity() {
             return { list: list, prev: pos > 0 ? list[pos - 1] : '', next: pos >= 0 ? (list[pos + 1] || '') : '' };
           }
           window.__tvNeighbors = function() { var n = neighbors(); return { prev: !!n.prev, next: !!n.next }; };
+          window.__tvNextHref = function() { return neighbors().next || ''; };   // for StarScope's Up next
           window.__tvGoNeighbor = function(dir) {
             var n = neighbors(), to = dir < 0 ? n.prev : n.next;
             if (!to) return false;
@@ -4255,6 +4276,9 @@ class MainActivity : Activity() {
               } else {
                 post(f, { method: 'setCurrentTime', value: Math.max(0, tvTime + val) });
               }
+            } else if (cmd === 'seekto') {
+              // To a place in the video (the StarScope bell, 2.65.0).
+              if (p) { p.setCurrentTime(Math.max(0, val)).catch(function() {}); } else { post(f, { method: 'setCurrentTime', value: Math.max(0, val) }); }
             } else if (cmd === 'play') {
               if (p) { p.play().catch(function() {}); } else { post(f, { method: 'play' }); }
             } else if (cmd === 'toggle') {
@@ -4348,7 +4372,9 @@ class MainActivity : Activity() {
               for (var k = 0; k < qs.length; k++) { if (qs[k].active) ql = qs[k].label || qs[k].id; }
               var nb = {};
               try { nb = window.__tvNeighbors ? window.__tvNeighbors() : {}; } catch (e) {}
-              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length, q: ql, nq: qn, pv: !!nb.prev, nx: !!nb.next });
+              var bl = false;
+              try { bl = !!(window.__tvScopeHasBell && window.__tvScopeHasBell()); } catch (e) {}
+              window.__tvStatusJson = JSON.stringify({ paused: r[0], t: r[1], d: r[2], vol: r[3], rate: r[4], cc: cc, ncc: tr.length, q: ql, nq: qn, pv: !!nb.prev, nx: !!nb.next, bl: bl });
             }).catch(function() {});
           };
 
@@ -6602,10 +6628,19 @@ class MainActivity : Activity() {
               bar.innerHTML = '<span class="tv-pb-bar"></span><span class="tv-pb-title"></span>';
               document.body.insertBefore(bar, document.body.firstChild);
             }
+            // A video logged in StarScope (2.65.0, private builds): match number, show, date and venue above the names,
+            // with the event and the StarScope mark on the right (assets/scopeplayer.js builds it). Never the result.
+            var sc = null;
+            try { sc = window.__tvScopeTitle ? window.__tvScopeTitle() : null; } catch (e) { sc = null; }
+            if (sc) {
+              if (bar.__tvScope !== sc.key) { bar.__tvScope = sc.key; bar.className = 'tv-pb-scope notranslate'; bar.setAttribute('translate', 'no'); bar.innerHTML = sc.html; }
+              return;
+            }
             var tt = bar.querySelector('.tv-pb-title');
             var txt = titleText();
             if (txt && tt.textContent !== txt) tt.textContent = txt;
           }
+          window.__tvPlayerTitle = addBar;
           addBar();
           var barTries = 0;
           var barTimer = setInterval(function() { barTries++; addBar(); if (barTries > 40) clearInterval(barTimer); }, 1000);
@@ -6900,6 +6935,11 @@ class MainActivity : Activity() {
             skipTimer = setTimeout(function() { if (skipBox) skipBox.style.display = 'none'; }, 2500);
           }
 
+          // Up / Down on the StarScope bell (2.65.0): the same pop-up, listing the entrance modes, top to bottom.
+          function showBell(info, anchor) {
+            showSkip({ sizes: info.modes.slice().reverse(), idx: info.modes.length - 1 - info.idx }, anchor);
+          }
+
           function act(id) {
             try { AndroidHost.barAction(id); } catch (e) {}
             setTimeout(refresh, 300);
@@ -6968,6 +7008,15 @@ class MainActivity : Activity() {
               try { info = JSON.parse(AndroidHost.skipStep(k === 38 ? 1 : -1)); } catch (x) {}
               refresh();
               if (info) showSkip(info, ae);
+              return;
+            }
+            if ((k === 38 || k === 40) && did === 'bell' && AndroidHost.bellStep) {
+              // Up / Down on the bell: Off, Skip entrances, Bell to bell (Up = towards Off).
+              e.preventDefault(); e.stopPropagation();
+              var bi = null;
+              try { bi = JSON.parse(AndroidHost.bellStep(k === 38 ? -1 : 1)); } catch (x) {}
+              refresh();
+              if (bi) showBell(bi, ae);
               return;
             }
             if (k === 39) {                       // Right: next button, stops at the last
@@ -10423,6 +10472,8 @@ class MainActivity : Activity() {
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
+        // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
+        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("scopeplayer.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
@@ -10670,7 +10721,8 @@ class MainActivity : Activity() {
                 ).apply { rightMargin = (6 * density).toInt() }
             )
         }
-        for (id in BAR_IDS) {
+        val ids = barIdList()
+        for (id in ids) {
             val b = fsButton(id) { barAction(id) }
             when (id) {
                 "play" -> fsBtnPlay = b
@@ -10682,7 +10734,7 @@ class MainActivity : Activity() {
             fsBtns[id] = b
             add(b)
             // A little more room between the video buttons (previous to next) and the settings.
-            if (id == "next") (b.layoutParams as android.widget.LinearLayout.LayoutParams).rightMargin = (20 * density).toInt()
+            if (id == (if ("bell" in ids) "bell" else "next")) (b.layoutParams as android.widget.LinearLayout.LayoutParams).rightMargin = (20 * density).toInt()
         }
         if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()) {
             val b = fsButton("index") { barAction("index") }
@@ -10720,7 +10772,7 @@ class MainActivity : Activity() {
         // The bar is built once, so the telescope is shown or hidden each time: pay-per-view pages have no Index panel.
         fsBtns["index"]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
         // Pay-per-view shows have no previous or next video.
-        for (id in listOf("prev", "next")) fsBtns[id]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
+        for (id in listOf("prev", "next", "bell")) fsBtns[id]?.visibility = if (isPpvFlow(webView.url)) View.GONE else View.VISIBLE
         fsControlsMode = true
         // Hide the player's own bar so there is only one set of controls on screen.
         sendFullScreenHover(MotionEvent.ACTION_HOVER_EXIT, 0f, 0f)
@@ -10730,6 +10782,7 @@ class MainActivity : Activity() {
         fullScreenInteraction()
         handler.removeCallbacks(fsStatusRunnable)
         handler.post(fsStatusRunnable)
+        updateScopeCard()
     }
 
     private fun hideFsOverlay() {
@@ -10738,6 +10791,7 @@ class MainActivity : Activity() {
         fsDebugView?.visibility = View.GONE
         handler.removeCallbacks(fsStatusRunnable)
         fsOverlay?.visibility = View.GONE
+        updateScopeCard()
     }
 
     // Skip size of the -/+ buttons (shared by the bar under the picture and the full screen bar).
@@ -10783,6 +10837,152 @@ class MainActivity : Activity() {
         handler.postDelayed(fsSkipHintHide, 2500)
     }
 
+    // ---- StarScope player (2.65.0, private builds) ----
+    // The bell button sits after Next. Mode: 0 Off (a Skip entrance offer on the video), 1 Skip entrances (jump to
+    // 8 s before the bell), 2 Bell to bell (also Up next at the end mark). Kept on this TV.
+    private var bellMode = -1
+
+    private fun scopeOn(): Boolean =
+        BuildConfig.VIDEO_INDEX_DRYRUN && BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+
+    private fun barIdList(): List<String> =
+        if (scopeOn()) BAR_IDS.flatMap { if (it == "next") listOf(it, "bell") else listOf(it) } else BAR_IDS
+
+    private fun bellModeNow(): Int {
+        if (bellMode < 0) bellMode = getSharedPreferences("player", MODE_PRIVATE).getInt("bellMode", 0).coerceIn(0, 2)
+        return bellMode
+    }
+
+    private fun bellNames(): List<String> =
+        listOf(tr("Off", "オフ"), tr("Skip entrances", "入場をスキップ"), tr("Bell to bell", "ゴングからゴング"))
+
+    private fun bellInfoJson(): String =
+        org.json.JSONObject().put("idx", bellModeNow()).put("modes", org.json.JSONArray(bellNames())).toString()
+
+    // dir > 0: the next mode down the list (Down on the remote), dir < 0: up. Stops at the ends.
+    private fun bellStep(dir: Int) {
+        bellMode = (bellModeNow() + if (dir > 0) 1 else -1).coerceIn(0, 2)
+        getSharedPreferences("player", MODE_PRIVATE).edit().putInt("bellMode", bellMode).apply()
+    }
+
+    // Repaints the full screen bell after a mode change, keeping whether this video has a bell time.
+    private fun fsRepaintBell() {
+        val b = fsBtns["bell"] ?: return
+        val was = fsIconSpec["bell"]
+        val now = barIcon("bell", null)
+        fsIconSpec["bell"] = BarIcon(now.k, now.t, now.on, was?.off ?: true)
+        b.contentDescription = barLabel("bell", null)
+        fsPaintIcon(b)
+    }
+
+    private fun showFsBellHint() {
+        val tv = fsSkipHint ?: return
+        val sb = android.text.SpannableStringBuilder()
+        sb.append(tr("Entrances   ", "入場   "))
+        bellNames().forEachIndexed { i, t ->
+            val start = sb.length
+            sb.append(if (i == bellModeNow()) "[ $t ]" else " $t ")
+            if (i == bellModeNow()) {
+                sb.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor(BAR_ACCENT)), start, sb.length, 0)
+                sb.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), start, sb.length, 0)
+            }
+            sb.append("  ")
+        }
+        tv.text = sb
+        tv.visibility = View.VISIBLE
+        handler.removeCallbacks(fsSkipHintHide)
+        handler.postDelayed(fsSkipHintHide, 2500)
+    }
+
+    // The card on the video: a native view, so it shows over the full screen picture. The page decides what it says
+    // ({eb, title, sub, hint, hintPage, bar 0-1000, pos "left"|"right", page, ok, back}); OK and Back go back to the
+    // page as window.__tvScopeKey('ok' | 'back') while the card offers them.
+    private var scopeSpec: org.json.JSONObject? = null
+    private var scopeCardView: android.widget.LinearLayout? = null
+    private var scopeEb: android.widget.TextView? = null
+    private var scopeTitle: android.widget.TextView? = null
+    private var scopeSub: android.widget.TextView? = null
+    private var scopeHint: android.widget.TextView? = null
+    private var scopeBar: android.widget.ProgressBar? = null
+
+    private fun scopeEnsureCard(): android.widget.LinearLayout {
+        scopeCardView?.let { return it }
+        val d = density
+        val card = android.widget.LinearLayout(this)
+        card.orientation = android.widget.LinearLayout.VERTICAL
+        card.background = android.graphics.drawable.GradientDrawable().apply {
+            setColor(0xE60F151C.toInt())
+            cornerRadius = 12 * d
+            setStroke((2 * d).toInt(), 0xFF2A323C.toInt())
+        }
+        card.setPadding((20 * d).toInt(), (16 * d).toInt(), (20 * d).toInt(), (16 * d).toInt())
+        card.isFocusable = false
+        fun text(color: Int, sp: Float, bold: Boolean, top: Int): android.widget.TextView {
+            val t = android.widget.TextView(this)
+            t.setTextColor(color)
+            t.textSize = sp
+            if (bold) t.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)
+            card.addView(t, android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = (top * d).toInt() })
+            return t
+        }
+        scopeEb = text(0xFFF4C242.toInt(), 12f, true, 0).also { it.letterSpacing = 0.08f; it.isAllCaps = true }
+        scopeTitle = text(Color.WHITE, 20f, true, 6)
+        scopeSub = text(0xFFC9D2DC.toInt(), 14f, false, 4)
+        scopeHint = text(0xFF9AA6B4.toInt(), 13f, false, 8)
+        val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
+        bar.max = 1000
+        bar.progressDrawable.setColorFilter(Color.parseColor(BAR_ACCENT), android.graphics.PorterDuff.Mode.SRC_IN)
+        card.addView(bar, android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (4 * d).toInt()).apply { topMargin = (10 * d).toInt() })
+        scopeBar = bar
+        card.visibility = View.GONE
+        root.addView(card, FrameLayout.LayoutParams((440 * d).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM or Gravity.START))
+        scopeCardView = card
+        return card
+    }
+
+    private fun showScopeCard(json: String) {
+        val j = try { if (json.isEmpty()) null else org.json.JSONObject(json) } catch (_: Exception) { null }
+        scopeSpec = j
+        if (j == null) { scopeCardView?.visibility = View.GONE; return }
+        val card = scopeEnsureCard()
+        fun set(t: android.widget.TextView?, s: String) { t ?: return; t.text = s; t.visibility = if (s.isEmpty()) View.GONE else View.VISIBLE }
+        set(scopeEb, j.optString("eb"))
+        set(scopeTitle, j.optString("title"))
+        set(scopeSub, j.optString("sub"))
+        val bar = j.optInt("bar", -1)
+        scopeBar?.visibility = if (bar >= 0) View.VISIBLE else View.GONE
+        if (bar >= 0) scopeBar?.progress = bar.coerceIn(0, 1000)
+        val lp = card.layoutParams as FrameLayout.LayoutParams
+        val right = j.optString("pos") == "right"
+        lp.gravity = Gravity.BOTTOM or (if (right) Gravity.END else Gravity.START)
+        lp.leftMargin = (40 * density).toInt(); lp.rightMargin = (40 * density).toInt(); lp.bottomMargin = (48 * density).toInt()
+        card.layoutParams = lp
+        updateScopeCard()
+    }
+
+    // Shown over the full screen picture (and over the page too when the page asks), never with the button bar up.
+    private fun updateScopeCard() {
+        val card = scopeCardView ?: return
+        val j = scopeSpec
+        val show = j != null && !fsControlsMode && (fullScreenActive() || j.optBoolean("page"))
+        if (show && j != null) {
+            val h = if (!fullScreenActive() && j.has("hintPage")) j.optString("hintPage") else j.optString("hint")
+            scopeHint?.text = h
+            scopeHint?.visibility = if (h.isEmpty()) View.GONE else View.VISIBLE
+        }
+        card.visibility = if (show) View.VISIBLE else View.GONE
+        if (show) root.bringChildToFront(card)
+    }
+
+    private fun scopeKeyActive(kind: String): Boolean =
+        scopeSpec?.optBoolean(kind) == true && scopeCardView?.visibility == View.VISIBLE
+
+    private fun scopeKey(kind: String) {
+        webView.evaluateJavascript("window.__tvScopeKey && window.__tvScopeKey('" + kind + "')", null)
+    }
+
     // Label of one control-bar button, from the player's latest status (null = not known yet).
     private fun barLabel(id: String, j: org.json.JSONObject?): String = when (id) {
         "play" -> if (j?.optBoolean("paused") == true) tr("Play", "再生") else tr("Pause", "一時停止")
@@ -10800,6 +11000,7 @@ class MainActivity : Activity() {
         "index" -> ""   // drawn as a telescope
         "prev" -> tr("Previous video", "前の動画")
         "next" -> tr("Next video", "次の動画")
+        "bell" -> tr("Entrances", "入場") + ": " + bellNames()[bellModeNow()]
         else -> id
     }
 
@@ -10828,6 +11029,8 @@ class MainActivity : Activity() {
             // Greyed out (never hidden, so nothing moves) when the list under the player has no video that way.
             "prev" -> BarIcon("prev", off = j?.optBoolean("pv") != true)
             "next" -> BarIcon("next", off = j?.optBoolean("nx") != true)
+            // Grey when this video has no StarScope bell time; filled when entrances are skipped.
+            "bell" -> BarIcon(if (bellModeNow() == 2) "bell2" else "bell", on = bellModeNow() >= 1, off = j?.optBoolean("bl") != true)
             else -> BarIcon(id)
         }
     }
@@ -10890,6 +11093,16 @@ class MainActivity : Activity() {
                 }
                 "speed" -> { stroke(2f); arc(12f, 17f, 8f, 180f, 180f); stroke(2.2f); c.drawLine(12f, 17f, 16f, 12f, p); fill(); c.drawCircle(12f, 17f, 1.7f, p) }
                 "full" -> { stroke(2.3f); for (q in listOf(floatArrayOf(4f, 9f, 4f, 4f, 9f, 4f), floatArrayOf(20f, 9f, 20f, 4f, 15f, 4f), floatArrayOf(4f, 15f, 4f, 20f, 9f, 20f), floatArrayOf(20f, 15f, 20f, 20f, 15f, 20f))) c.drawPath(poly(*q, close = false), p) }
+                "bell", "bell2" -> {
+                    val path = android.graphics.Path()
+                    path.moveTo(6f, 16.5f); path.lineTo(6f, 11f)
+                    path.arcTo(android.graphics.RectF(6f, 5f, 18f, 17f), 180f, 180f)
+                    path.lineTo(18f, 16.5f); path.lineTo(20f, 18.5f); path.lineTo(4f, 18.5f); path.close()
+                    if (b.on || b.k == "bell2") fill() else stroke(2f)
+                    c.drawPath(path, p)
+                    stroke(2.2f); c.drawLine(10f, 21f, 14f, 21f, p)
+                    if (b.k == "bell2") c.drawPath(poly(20.5f, 3.5f, 24f, 6.5f, 20.5f, 9.5f, close = false), p)
+                }
                 "exit" -> { stroke(2.3f); for (q in listOf(floatArrayOf(9f, 4f, 9f, 9f, 4f, 9f), floatArrayOf(15f, 4f, 15f, 9f, 20f, 9f), floatArrayOf(9f, 20f, 9f, 15f, 4f, 15f), floatArrayOf(15f, 20f, 15f, 15f, 20f, 15f))) c.drawPath(poly(*q, close = false), p) }
             }
             if ((b.k == "gear" || b.k == "speed") && b.t.isNotEmpty()) label(26f, 5f, 7.5f, b.t, android.graphics.Paint.Align.RIGHT)
@@ -10917,6 +11130,8 @@ class MainActivity : Activity() {
             // The video before or after this one in the list under the player (nothing happens when greyed out).
             "prev" -> webView.evaluateJavascript("window.__tvGoNeighbor && window.__tvGoNeighbor(-1)", null)
             "next" -> webView.evaluateJavascript("window.__tvGoNeighbor && window.__tvGoNeighbor(1)", null)
+            // OK on the bell: straight to 8 s before the bell (nothing happens when greyed out).
+            "bell" -> webView.evaluateJavascript("window.__tvScopeBell && window.__tvScopeBell()", null)
             "index" -> {
                 val open = { webView.evaluateJavascript("window.__tvIndexOpen && window.__tvIndexOpen()", null); Unit }
                 if (fullScreenActive()) {
@@ -11815,6 +12030,11 @@ class MainActivity : Activity() {
                         hideFsOverlay()
                         return true
                     }
+                    if (scopeKeyActive("back")) {
+                        // Up next is showing: Back stays on this match instead of leaving it.
+                        scopeKey("back")
+                        return true
+                    }
                     if (customView != null) {
                         hideCustomView()
                         return true
@@ -11839,8 +12059,14 @@ class MainActivity : Activity() {
                 when (event.keyCode) {
                     KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
                         val onSkip = fsBtns["back"]?.isFocused == true || fsBtns["fwd"]?.isFocused == true
+                        val onBell = fsBtns["bell"]?.isFocused == true
                         if (event.action == KeyEvent.ACTION_DOWN) {
-                            if (onSkip) {
+                            if (onBell) {
+                                bellStep(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) -1 else 1)
+                                fsRepaintBell()
+                                showFsBellHint()
+                                fullScreenInteraction()
+                            } else if (onSkip) {
                                 skipStep(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) 1 else -1)
                                 for ((id, btn) in fsBtns) if (id == "back" || id == "fwd") fsSetIcon(btn, id, null)
                                 showFsSkipHint()
@@ -11857,6 +12083,10 @@ class MainActivity : Activity() {
                         return super.dispatchKeyEvent(event)
                     }
                 }
+            } else if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) && scopeKeyActive("ok")) {
+                // The StarScope card offers something (skip the entrance, watch it, play the next match now).
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) { scopeKey("ok"); fullScreenInteraction() }
+                return true
             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                 if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) showFsOverlay()
                 return true

@@ -27,12 +27,12 @@
     head: 'このセットの再生順', first: '最初', last: '最後', swap: '順番を逆にする',
     fsIn: function(s) { return 'あと' + s + '秒で全画面'; }, fsWait: '再生が始まると全画面になります',
     tileSub: '最初から：',
-    why: { matches: '順番：試合の内容から', ids: '順番：動画番号から（推定）', mine: '順番：あなたが選んだ順' }
+    why: { matches: '順番：試合の内容から', ids: '順番：動画番号から（推定）', mine: '順番：あなたが選んだ順', scope: '順番：STARSCOPEの試合順' }
   } : {
     head: 'PLAYING THIS SET', first: 'FIRST', last: 'LAST', swap: 'Reverse Order',
     fsIn: function(s) { return 'Full screen in ' + s + ' s'; }, fsWait: 'Full screen once the video starts',
     tileSub: 'Starts with: ',
-    why: { matches: 'Order read from the match titles', ids: 'Order from video numbers (a guess)', mine: 'Order you chose' }
+    why: { matches: 'Order read from the match titles', ids: 'Order from video numbers (a guess)', mine: 'Order you chose', scope: 'Order from StarScope match numbers' }
   };
 
   function esc(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -147,7 +147,7 @@
   }
 
   if (mk) {
-    var whyKey = mk.why === 'your choice' ? 'mine' : (mk.sure === false ? 'ids' : 'matches');
+    var whyKey = mk.why === 'your choice' ? 'mine' : (mk.why === 'scope' ? 'scope' : (mk.sure === false ? 'ids' : 'matches'));
     card = document.createElement('div');
     card.id = 'tv-setcard';
     card.innerHTML =

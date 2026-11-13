@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.65.0
+
+- StarScope player (private builds), for videos logged in StarScope:
+- Player bar: a bell button after Next, in the bar under the picture and in full screen. Up / Down on it picks Off, Skip entrances or Bell to bell in the same pop-up as the skip sizes; the choice is kept on this TV. OK on it jumps to 8 s before the bell. It is grey when the video has no bell time, outline when Off, filled for Skip entrances, filled with an arrow for Bell to bell.
+- Skip entrances: when a logged video starts from the beginning, it jumps to 8 s before the bell, once per page. Never on a video that resumed part way, and never again after you seek back. A card on the full screen video shows the match and "OK to watch them" for 8 s (OK goes back to 0:00).
+- Off: while the entrances play, the card shows the match with "OK · Skip entrance". A logged video with no bell time shows the match for 10 s.
+- Bell to bell: at the match's end mark, an Up next card (bottom right) names the next match and counts down 5 s, then plays it (from 8 s before its bell). OK plays it now, Back stays on this match.
+- Title above the player: match number, show, date and venue on a gold line above the names, with the event and a STARSCOPE mark on the right. Never the result.
+- Row under the player: when the show is in StarScope it reads "Show · The card", opens at the match that is playing, and the tiles get MATCH numbers, Now playing / Up next / Not logged tags and the names in place of the site's title.
+- Set order: two or more StarScope match numbers in a set now decide which way it runs (the set card says "Order from StarScope match numbers"). Your own Reverse Order choice still wins.
+- The Apps Script's vi_cards now also sends the show, venue, bell and end times. Paste the script and publish a new version; until then the bell stays grey and the title has no show or venue. The TV fetches the StarScope list again once (new cache name).
+
 ## 2.64.0
 
 - Wrestlers menu: three tabs, Current, Past and Guests, each with an icon and how many names it holds. Left and Right move between the tabs and show each list, Down goes into the names. Current keeps the portrait spotlight; Past and Guests have none and spread over five columns.

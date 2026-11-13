@@ -7,7 +7,7 @@
   var H = window.AndroidHost;
   if (!H || !H.starCards || !H.videoIndexOn || !H.videoIndexOn()) return;
   window.__tvStarCards = true;
-  var KEY = 'tvVixCardsV3', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+  var KEY = 'tvVixCardsV4', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) map = c.map; } catch (e) {}
   var st = document.createElement('style');
@@ -295,6 +295,7 @@
     if (!r || !r.ok || !r.map) return;
     map = r.map;
     try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), map: map })); } catch (e) {}
+    try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
     soon();
   };
   var fresh = 0;
