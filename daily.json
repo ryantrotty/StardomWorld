@@ -1,15 +1,17 @@
 {
- "generated": "2026-11-12T06:34:11Z",
+ "generated": "2026-11-13T06:33:18Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-12T06:29:18Z",
-  "finished": "2026-11-12T06:34:11Z",
-  "requests": 40,
+  "started": "2026-11-13T06:29:16Z",
+  "finished": "2026-11-13T06:33:18Z",
+  "requests": 29,
   "schedule": {
    "ok": true,
    "events": 38,
    "changed": [
-    "20261201-chichi"
+    "20261114-matsuyama",
+    "20261115-kochi",
+    "20261118-korakuen"
    ],
    "error": ""
   },
@@ -17,39 +19,39 @@
    "ok": false,
    "titles": {
     "world": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "wonder": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "future": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "artist": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 37 (Thekla, Julia Hart, Skye Blue) and all 1 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "goddess": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 37 (AZM, Miyu Amasaki) and all 3 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "highspeed": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "newblood": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 6 (Kikyo Furusawa, Rian) and all 0 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
     },
     "kawaii": {
      "read": false,
@@ -59,29 +61,27 @@
     "iwgp": {
      "read": true,
      "changed": false,
-     "note": "Reign 6 (Syuri) and all 5 defences confirmed against Wikipedia; Cagematch 307, not used"
+     "note": "Reign 6 (Syuri) and all 5 defences confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     },
     "strong": {
      "read": true,
      "changed": false,
-     "note": "Reign 8 (Alex Windsor) and all 1 defences confirmed against Wikipedia; Cagematch 307, not used"
+     "note": "Reign 8 (Alex Windsor) and all 1 defences confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     }
    },
    "changed": [],
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: new event 20261201-chichi takes its Japanese venue string: 東京・新木場1stRING",
-    "schedule: new event 20261201-chichi title translated from Japanese: [Participation from another organization] Chi Chi Dream House",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
-    "Cagematch cross-checks for both New Japan titles returned HTTP 307 with an empty body on both attempts; Wikipedia alone was used per spec, and that is not a site-wide block."
+    "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
   },
   "blocks": [],
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-12T06:30:27Z",
+  "updated": "2026-11-13T06:30:32Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -666,6 +666,30 @@
        "鈴季すず & 山下りな",
        "なつぽい & 梨杏"
       ]
+     },
+     {
+      "type": "8-person Tag Match",
+      "sides": [
+       "Saya Iida & Utami Hayashishita & HANAKO & Hime Yuria",
+       "Momo Watanabe & Saya Kamitani & Dark Silueta & Valkyria"
+      ],
+      "type_ja": "8人タッグマッチ",
+      "sides_ja": [
+       "飯田沙耶 & 林下詩美 & HANAKO & 姫ゆりあ",
+       "渡辺桃 & 上谷沙弥 & ダーク・シルエタ(CMLL) & バルキリア(CMLL)"
+      ]
+     },
+     {
+      "type": "Tag Match",
+      "sides": [
+       "Maika & Matoi Hamabe",
+       "Ranna Yagami & Akira Kurogane"
+      ],
+      "type_ja": "タッグマッチ",
+      "sides_ja": [
+       "舞華 & 浜辺纏",
+       "八神蘭奈 & 鉄アキラ"
+      ]
      }
     ]
    },
@@ -751,6 +775,44 @@
       "sides_ja": [
        "葉月 & コグマ",
        "なつぽい & 梨杏"
+      ]
+     },
+     {
+      "type": "Tag Match",
+      "sides": [
+       "Matoi Hamabe & Hime Yuria",
+       "Dark Silueta & Valkyria"
+      ],
+      "type_ja": "タッグマッチ",
+      "sides_ja": [
+       "浜辺纏 & 姫ゆりあ",
+       "ダーク・シルエタ(CMLL) & バルキリア(CMLL)"
+      ]
+     },
+     {
+      "type": "6-person tag match",
+      "sides": [
+       "Hanan & Saya Iida & Utami Hayashishita",
+       "Aya Sakura & Sayaka Kurara & Ema Maishima"
+      ],
+      "type_ja": "6人タッグマッチ",
+      "sides_ja": [
+       "羽南 & 飯田沙耶 & 林下詩美",
+       "さくらあや & 玖麗さやか & 儛島エマ"
+      ]
+     },
+     {
+      "type": "3WAY Battle",
+      "sides": [
+       "Waka Tsukiyama",
+       "Lady C",
+       "Mei Seira"
+      ],
+      "type_ja": "3WAYバトル",
+      "sides_ja": [
+       "月山和香",
+       "レディ・C",
+       "星来芽依"
       ]
      }
     ]
@@ -849,6 +911,30 @@
       "sides_ja": [
        "飯田沙耶 & 林下詩美",
        "刀羅ナツコ & 琉悪夏"
+      ]
+     },
+     {
+      "type": "Tag Match",
+      "sides": [
+       "Aya Sakura & Sayaka Kurara",
+       "Natsupoi & Rian"
+      ],
+      "type_ja": "タッグマッチ",
+      "sides_ja": [
+       "さくらあや & 玖麗さやか",
+       "なつぽい & 梨杏"
+      ]
+     },
+     {
+      "type": "6-person tag match",
+      "sides": [
+       "Hina & Lady C & Ranna Yagami",
+       "Hime Yuria & Matoi Hamabe & Akira Kurogane"
+      ],
+      "type_ja": "6人タッグマッチ",
+      "sides_ja": [
+       "妃南 & レディ・C & 八神蘭奈",
+       "姫ゆりあ & 浜辺纏 & 鉄アキラ"
       ]
      }
     ]
