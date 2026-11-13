@@ -120,7 +120,7 @@ window.__tvPpvAll = 1;
   var ids = [];
   try { ids = JSON.parse(window.AndroidHost.barIds()); } catch (e) {}
   // The player's quality list is not reachable here, and the language choice stands in for the captions button.
-  ids = ids.filter(function (i) { return i !== 'quality' && i !== 'index' && i !== 'prev' && i !== 'next'; });   // a show has no previous or next video
+  ids = ids.filter(function (i) { return i !== 'quality' && i !== 'index' && i !== 'prev' && i !== 'next' && i !== 'bell'; });   // a show has no previous or next video
   if (ids.indexOf('speed') >= 0) ids.splice(ids.indexOf('speed') + 1, 0, 'cc'); else ids.splice(ids.length - 1, 0, 'cc');
   if (ids.indexOf('full') < 0) ids.push('full');
 

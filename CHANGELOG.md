@@ -2,6 +2,49 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.67.0
+
+- StarScope Log next (private builds): a fifth tab on the StarScope page, "Log next · N", listing the shows you've watched but not finished logging, from the sheet's video log. Shows you've started logging come first, then the most matches watched, the most plays and the most recently watched. Dai Zero Time matches and backstage comment clips don't count, and fully logged shows never appear.
+- Each show uses the same card as the Shows tab. What's logged is filled in; the rest is left as empty bars (main event, highlights). Watched-but-not-logged matches get a dashed gold square, and a line above the card says how many you watched, how many plays and when you last watched.
+- OK on a card opens the first watched match that isn't logged, with the StarScope logger already open.
+- Apps Script: a new read-only call (vi_suggest), no lock. Paste the script and publish a new version; until then the tab says Loading…. The answer is kept on the TV for 10 minutes.
+
+## 2.66.1
+
+- StarScope Shows: every show card now ends with the same row. Card size known: one square per match as before. Card size not logged: squares up to the highest logged match, then a "?". No match numbers at all: "7 logged · no match numbers yet" in the same place. A match numbered past the card size (5★STAR GP 2016, Match 7 of 6) now counts the card as that big instead of showing 0/6.
+- StarScope page (Shows, Recently added, Top rated, All matches): pictures load a row at a time. The first two rows load straight away, and the next row loads when a card in the row above it gets focus, so a long page no longer asks for every thumbnail at once.
+
+## 2.66.0
+
+- StarScope Shows (private builds): a fourth tab on the StarScope page, and a "Shows ›" pill next to Recently added, Top rated and All matches in the Community menu. Every show with a logged match gets a poster card: the main event's picture, the date as a stamp, the venue, a telescope count (matches logged / on the card), the main event, up to three highlights (title matches, then finals and semis, then special rules such as Mixed Martial Arts, then tournament matches, then the opener) and the card as numbered squares (logged, missing, main event).
+- Newest first, the latest fully logged show leads, wide, with its whole running order. Filters: Year, Venue, Complete only; sort Newest, Oldest or Most logged.
+- A show whose main event isn't logged yet uses its highest logged match ("Match 9 of 10 · main event not logged"). A show with no card size shows how many matches are logged and no squares. The show's date is the one most of its matches have.
+- OK on a show opens its first logged match, so it plays on in card order.
+- Apps Script: vi_cards also sends each video's match, round, special rules and dark-match flag. Paste the script and publish a new version; until then shows still appear, but a match logged with more than one video counts twice and the highlights only find titles and tournaments.
+
+## 2.65.2
+
+- StarScope cards: a match logged with a rule that isn't already the kind of match (Mixed Martial Arts, Ladder, Cage, Loser's Haircut, No Disqualification) now says so. With no tournament or title, the rule is the card's heading ("Mixed Martial Arts match"), with the kind of match underneath unless it is singles. Under a tournament or title it goes in the footer ("Ladder match · Final"). Gauntlets, battle royals, rumbles and handicaps are unchanged, and High Speed isn't repeated under the High Speed title. Same rules in the Apps Script (vi_cards) and the logger's Card preview.
+- Paste the script and publish a new version; TVs pick the new cards up within 30 minutes, or straight away after saving a match.
+
+## 2.65.1
+
+- StarScope player: no Japanese in the English title line or the row heading. The show's Japanese subtitle (〜しらんけどスターダム〜) is left out in English; Japanese keeps the whole name.
+- StarScope player: the tiles in the card row use the same StarScope card as the StarScope pages (event, names, match number), in the same fonts, sizes and places. Only the date is left off, since the page already shows it.
+- StarScope player: Skip entrances (the jump, and the Skip entrance offer) only when the video starts from the beginning. It now watches the first 2 seconds of playback before deciding, so a video that resumes part way, even one that shows 0:00 for a moment first, is left where it is.
+
+## 2.65.0
+
+- StarScope player (private builds), for videos logged in StarScope:
+- Player bar: a bell button after Next, in the bar under the picture and in full screen. Up / Down on it picks Off, Skip entrances or Bell to bell in the same pop-up as the skip sizes; the choice is kept on this TV. OK on it jumps to 8 s before the bell. It is grey when the video has no bell time, outline when Off, filled for Skip entrances, filled with an arrow for Bell to bell.
+- Skip entrances: when a logged video starts from the beginning, it jumps to 8 s before the bell, once per page. Never on a video that resumed part way, and never again after you seek back. A card on the full screen video shows the match and "OK to watch them" for 8 s (OK goes back to 0:00).
+- Off: while the entrances play, the card shows the match with "OK · Skip entrance". A logged video with no bell time shows the match for 10 s.
+- Bell to bell: at the match's end mark, an Up next card (bottom right) names the next match and counts down 5 s, then plays it (from 8 s before its bell). OK plays it now, Back stays on this match.
+- Title above the player: match number, show, date and venue on a gold line above the names, with the event and a STARSCOPE mark on the right. Never the result.
+- Row under the player: when the show is in StarScope it reads "Show · The card", opens at the match that is playing, and the tiles get MATCH numbers, Now playing / Up next / Not logged tags and the names in place of the site's title.
+- Set order: two or more StarScope match numbers in a set now decide which way it runs (the set card says "Order from StarScope match numbers"). Your own Reverse Order choice still wins.
+- The Apps Script's vi_cards now also sends the show, venue, bell and end times. Paste the script and publish a new version; until then the bell stays grey and the title has no show or venue. The TV fetches the StarScope list again once (new cache name).
+
 ## 2.64.0
 
 - Wrestlers menu: three tabs, Current, Past and Guests, each with an icon and how many names it holds. Left and Right move between the tabs and show each list, Down goes into the names. Current keeps the portrait spotlight; Past and Guests have none and spread over five columns.

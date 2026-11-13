@@ -25,6 +25,8 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Border / track | #2A323C, #3B4656 | Lines; progress track |
 | Text | #FFFFFF, #C9D2DC, #9AA6B4 | Title, description, fine print |
 | Error | #FF7A66 | Login failures |
+| Unavailable | #5A6472 | Player bar buttons that can't be used (greyed), StarScope shows' missing match squares (2.66.0) |
+| Logged square edge | #6B5A22 | Border of a logged match square on StarScope show cards, on the #2A2410 tint (2.66.0) |
 | Live red | #D62839 (hover #E8374A, text #FF6B78) | Live only |
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
 | League blue / red | #4DA6FF, #FF5A6A | Tag League page block headers only (Blue / Red Goddesses) |
@@ -250,3 +252,24 @@ Logger header (2.62.2): wordmark row with the tagline "Map all of the Stars in t
 StarScope page (2.63.0): navy page, header 10 x 36 gold bar + telescope 40 + wordmark 30/900 + tagline 15/600 + counts 15/700 grey at the right; tab and filter chips 44 high (17/700, #161F2A, #2A323C border; chosen #FFB347; focus border #F4C242); More row in a #121922 box; four-across StarScope cards with a 3 px focus border; rating badge #F4C242 13/800 top right of the picture. Community menu band: #1A2433 → #0F151C box; telescope + wordmark 18/900 as one link (look A focus); Recently added, Top rated and All matches as shelf buttons (#161F2A, #2A323C border, radius 8, look A focus; none orange, they are links, not a chosen state); three StarScope cards with 16:9 pictures and names at 16/800, two lines at most. Below it the Top 5 runs in three columns: #1 picture (280), 2 to 5 and View all, then Most watched and Most favorited (220).
 
 Wrestlers menu tabs (2.64.0): Current, Past and Guests in the existing rounded track (chosen = #FFB347 fill, focus = gold border). Each tab has a 20 px icon (filled star, clock with a rewind arrow, visitor badge) in the text colour, the 17/700 label and a 14/700 count at 75 % opacity; tab padding 6 x 20. Past and Guests rows show a 14 px telescope and a 12/700 #9AA6B4 count at the right when the wrestler is in StarScope matches. No new colours.
+
+## StarScope player (2.65.0, private builds)
+
+- Bell button: in the player bar after Next (both bars), same icon button rules as the others: white at rest, gold focused, grey (#5A6472) when this video has no StarScope bell time. Outline = Off, filled = Skip entrances, filled with a small arrow = Bell to bell. Up / Down on it opens the skip-size pop-up listing Off / Skip entrances / Bell to bell (orange fill on the current one, like the skip sizes).
+- Card on the video: a native card over the full screen picture, bottom left (the match) or bottom right (Up next): #0F151C at 90 %, 2 px #2A323C border, radius 12, 440 dp wide; gold 12/800 uppercase eyebrow, white 20/700 names, #C9D2DC 14 sub line, #9AA6B4 13 hint, 4 dp orange countdown strip. Never shown with the button bar up. Up next also shows over the page.
+- Title bar on a logged video: the gold bar grows to 70 px; a gold 13/800 uppercase line (match number, show, date, venue) above the 32/400 names with a gold 22 px "vs"; pills on the right (2 px #2A323C border, radius 20): the event in #C9D2DC 15/700 and a gold STARSCOPE mark with the telescope.
+- Card row: when the show is in StarScope the row heading reads "Show · The card" with a grey right-aligned count; tiles keep their thumbnails and get a gold MATCH n badge (#0B1118 at 90 %, radius 4) top left and a tag top right: Now playing (orange fill), Up next (gold outline), Not logged (grey, tile at 85 % opacity). Logged tiles use the same StarScope card as the StarScope pages (assets/starcards.js: event, names, footer), without the date, which the page already shows. In English, Japanese parts of the show name (a 〜subtitle〜) are left out of the title and row heading.
+
+## StarScope Shows (2.66.0, private builds)
+
+- Fourth tab on the StarScope page (Shows), also a "Shows ›" pill in the Community menu's StarScope area.
+- Poster card, three to a row: the main event's picture (16:9) with a date stamp top left (#0B1118, 2 px gold border, radius 6: gold 11/800 month, white 24/900 day, #C9D2DC 11 year) and a telescope count top right (logged/on the card, #0B1118 at 90 %, radius 4). Body: show name 18/700, venue 14/600 #C9D2DC with a pin; a main event box (#141A22, 1 px #2A323C, radius 8: gold 12/800 uppercase label, grey when the main event isn't logged); "Also on the card" with up to three highlights (gold 16 px line icons: belt for titles, trophy for finals, semis and tournament matches, star for special rules, arrow for the opener); numbered squares for the card (gold-tinted = logged, solid gold = main event, dashed = missing, dashed gold = main event missing). Focus: gold border (look C without lift).
+- Card squares (2.66.1): on every card. Card size unknown: squares to the highest logged match, then a dashed "?". No match numbers: a 12/700 #9AA6B4 line in the same place.
+- Featured: newest first, the latest fully logged show leads, wide: picture on the left, the whole running order on the right (gold numbers, uppercase grey event, names), the main event row on #2A2410.
+- Results and spoilers: finalists' names are shown (Ryan's call); results never are.
+
+## StarScope Log next (2.67.0, private builds)
+
+- Fifth tab on the StarScope page ("Log next · N"). The same show cards as Shows; a line above each card (16 px gold eye, 14/600 #C9D2DC, the counts in white) says what was watched and when.
+- Not logged yet: #2A323C bars (11 px, radius 4) where the main event and highlights will go, with a #3B4656 circle in place of the icon; the main event label is grey "Main event · not logged yet".
+- Squares gain a fourth state: watched, not logged = dashed gold border, no fill (logged stays the gold-tinted fill with a solid edge). A key at the top right names Logged, Watched and Not seen.

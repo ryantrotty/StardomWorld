@@ -332,15 +332,28 @@
       var out = sides.map(function(sd) { var t = (lib.teams || []).filter(function(x) { return x.id === sideTeam(sd); })[0], f = (lib.factions || []).filter(function(x) { return x.id === sideFaction(sd); })[0]; return t ? t.en : (f ? (lang === 'ja' && f.ja ? f.ja : f.en) : ''); });
       return out.every(Boolean) ? out : null;
     }
+    // Same rules as specials() in scripts/video_index_log.gs (2.65.2): the stipulations kind() doesn't already say.
+    function specials(lang) {
+      var t = state.tags.title || [];
+      return (state.tags.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && t.indexOf(x) < 0; })
+        .map(function(x) { var l = String(labIn('stipulation', x, lang)); return lang === 'ja' || /match$/i.test(l) ? l : l + ' match'; });
+    }
     function event(lang, s) {
       var c = (state.tags.competition || [])[0], t = state.tags.title || [];
       if (c) return labIn('competition', c, lang) + ' ' + String(state.date || '').slice(0, 4);
       if (t.length) return t.map(function(v) { return labIn('title', v, lang); }).join(' / ');
+      var sp = specials(lang);
+      if (sp.length) return sp[0];
       return kind(s, lang);
     }
     function foot(lang, s) {
-      var f = [];
-      if (big(s) && ((state.tags.competition || []).length || (state.tags.title || []).length)) f.push(kind(s, lang));
+      var f = [], sp = specials(lang), headed = (state.tags.competition || []).length || (state.tags.title || []).length;
+      if (big(s) && headed) f.push(kind(s, lang));
+      if (headed) f = f.concat(sp);
+      else if (sp.length) {
+        f = f.concat(sp.slice(1));
+        if (s.length > 2 || Math.max.apply(null, s.map(function(x) { return x.length; }).concat([0])) > 1) f.unshift(kind(s, lang));
+      }
       (state.tags.block || []).slice(0, 1).forEach(function(b) { f.push(labIn('block', b, lang)); });
       (state.tags.round || []).slice(0, 1).forEach(function(r) { f.push(String(labIn('round', r, lang)).replace(/ match$/i, '')); });
       return f;
@@ -704,7 +717,7 @@
       busy = false;
       if (!res.ok) { saveBtn(T.notSaved); say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
-      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV3'); } catch (e) {}
+      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV4'); } catch (e) {}
       saveBtn(res.linked ? T.linkedShort : T.saved);
       if (statusText && !statusBad) say('');   // the button says it now, not the line under it
       // Once the sheet has it, the logger closes by itself (2.62.2), after a moment so "Saved" is seen.
