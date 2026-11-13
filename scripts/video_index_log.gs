@@ -93,7 +93,10 @@ function doGet(e) {
   if (p.p !== 'phone' || !key || p.k !== key) return out({ ok: false, error: 'POST only' });
   var t = HtmlService.createTemplateFromFile('phone');
   t.k = p.k;
-  return t.evaluate().setTitle('StarScope').addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+  // Fixed scale (2.68.1): the page no longer zooms or drifts around when it is dragged.
+  return t.evaluate().setTitle('StarScope')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover')
+    .setFaviconUrl('https://raw.githubusercontent.com/ryantrotty/StardomWorld/main/scripts/starscope_icon.png')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 

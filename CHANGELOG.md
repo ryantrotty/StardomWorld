@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.1
+
+- StarScope phone page: no longer drifts around when dragged. The scale is fixed (no pinch zoom), the page only scrolls up and down, and the Match number row wraps instead of running past the screen edge.
+- Browser tab icon: the StarScope telescope (scripts/starscope_icon.png, read from main once merged). iPhone home screen icons can't be set from an Apps Script page, so the home screen still shows a letter.
+- Apps Script: paste the script and publish a new version (the phone HTML file changed too).
+
 ## 2.68.0
 
 - StarScope on the phone (private builds): log the match the TV is playing from your iPhone. A web page served by the sheet's own Apps Script (no app to install): add it to your home screen. It shows what's on the TV and where it is, the competitors (names from the library, a search picker, Propose new), match number, title, competition, round, block, stipulation, the result (hidden until Show result) and your rating. Save sends the same thing the TV's logger saves.

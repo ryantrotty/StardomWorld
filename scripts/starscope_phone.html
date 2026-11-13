@@ -8,7 +8,9 @@
 <style>
   :root{--navy:#0B1118;--panel:#0F151C;--card:#161F2A;--line:#2A323C;--gold:#F4C242;--orange:#FFB347;--ink:#1A1A1A;--t1:#fff;--t2:#C9D2DC;--t3:#9AA6B4;--bad:#FF7A66;--green:#2E9E5B}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--navy);color:var(--t1);font-family:Arial,Helvetica,sans-serif}
+  html,body{margin:0;background:var(--navy);color:var(--t1);font-family:Arial,Helvetica,sans-serif;width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;touch-action:pan-y}
+  #app,.box,.side{max-width:100%;min-width:0}
+  .t1,.t2,button{overflow-wrap:anywhere}
   body{padding:0 14px calc(96px + env(safe-area-inset-bottom))}
   button{appearance:none;font:700 16px Arial;color:var(--t1);background:var(--card);border:2px solid var(--line);border-radius:10px;min-height:44px;padding:8px 12px;text-align:left}
   button:active{border-color:var(--gold)}
@@ -46,9 +48,9 @@
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chips button{min-height:38px;padding:6px 12px;font-size:15px}
   .grp{font:800 12px Arial;letter-spacing:1px;color:var(--gold);margin:14px 0 8px}
-  .step{display:flex;align-items:center;gap:8px}
-  .step b{font:800 18px Arial;min-width:96px;text-align:center}
-  .step button{min-width:48px;text-align:center}
+  .step{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .step b{font:800 17px Arial;min-width:78px;text-align:center}
+  .step button{min-width:44px;padding:8px 6px;text-align:center}
   .stars{display:flex;gap:6px}
   .stars button{flex:1;text-align:center;font-size:24px;padding:4px;line-height:1}
   .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(11,17,24,.96);border-top:2px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:6}
