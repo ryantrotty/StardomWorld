@@ -117,8 +117,8 @@
   // ---- The StarScope page (2.63.0, private builds): /mypage?tvscope=recent | top | all. Drawn by the app from the
   // index's own list (the same one list the cards use), so the filters only ever offer what has been logged.
   var MIN_RATINGS = 1;   // one TV for now; raise to 3 when StarScope goes public, so one rating can't top the list
-  var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし' }
-    : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered' };
+  var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし', noNums: '試合番号未登録' }
+    : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered', noNums: 'no match numbers yet' };
   var home = null;   // { tab, f: filters, more, pop, focus }
   function homeList() { return Object.keys(map || {}).map(function(id) { return { id: id, v: map[id] }; }).filter(function(x) { return x.v && x.v.x; }); }
   function people(v) { var o = []; (v.s || []).forEach(function(sd) { sd.forEach(function(n) { if (o.indexOf(n) < 0) o.push(n); }); }); return o; }
@@ -152,7 +152,7 @@
   }
   function hcard(x, badge) {
     var th = esc(x.v.th || ''), X = x.v.x;
-    return '<a class="hc" data-f="1" data-k="v' + esc(x.id) + '" href="/contents/' + esc(x.id) + '"><div class="im" style="' + (th ? 'background-image:url(\'' + th + '\')' : '') + '"></div>' +
+    return '<a class="hc" data-f="1" data-k="v' + esc(x.id) + '" href="/contents/' + esc(x.id) + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '></div>' +
       (badge && X.rc ? '<span class="bd">★ ' + X.r.toFixed(1) + ' · ' + X.rc + '</span>' : '') + '<div class="tvsc-host">' + block(x.v) + '</div></a>';
   }
   function chipH(k, label, on, extra) { return '<button type="button" class="ch' + (on ? ' on' : '') + '" data-f="1" data-k="' + k + '"' + (extra || '') + '>' + label + '</button>'; }
@@ -226,6 +226,7 @@
       // The show's date: the one most of its matches have (the shows tab can disagree with its own matches).
       var date = Object.keys(dates).sort(function(a, b) { return dates[b] - dates[a]; })[0] || '';
       var ns = Object.keys(nums).map(Number).sort(function(a, b) { return a - b; });
+      if (total != null && ns.length && ns[ns.length - 1] > total) total = ns[ns.length - 1];   // a match numbered past the card size: the card is at least that big
       var top = ns.length ? nums[ns[ns.length - 1]] : (L.filter(function(x) { return x.v.x.ti.length; })[0] || L[0]);
       var mainN = num(top.v.n), isMain = total != null && mainN === total;
       var counted = ns.filter(function(n) { return total == null || n <= total; }).length;
@@ -268,15 +269,20 @@
     if (n != null) return matchNo(n) + ' · ' + HT.noSize;
     return HT.logged;
   }
+  // The card's squares, on every show card (2.66.1). Card size known: one square per match, the last one the main
+  // event. Not known: squares up to the highest logged match and a "?" for the rest. No match numbers at all: a line
+  // saying so, in the same place, so every card ends the same way.
   function pips(s) {
-    if (s.total == null) return '';
-    var h = '', from = s.hasDark ? 0 : 1, to = Math.min(s.total, 14);
+    var h = '', unn = s.list.filter(function(x) { return num(x.v.n) == null; }).length;
+    var ns = Object.keys(s.nums).map(Number), top = ns.length ? Math.max.apply(null, ns) : 0;
+    var tail = s.more ? '+' + s.more + ' ' + HT.moreN : (unn && ns.length ? '+' + unn + ' ' + HT.unnum : '');
+    if (s.total == null && !ns.length) return '<div class="pips"><span class="nn">' + esc(s.list.length + ' ' + HT.logged + ' · ' + HT.noNums) + '</span>' + (s.more ? '<span class="mo">+' + s.more + ' ' + HT.moreN + '</span>' : '') + '</div>';
+    var from = s.hasDark ? 0 : 1, to = Math.min(s.total != null ? s.total : top, 14);
     for (var i = from; i <= to; i++) {
-      var on = i === 0 ? s.hasDark : !!s.nums[i], cls = i === s.mainN && s.isMain ? 'main' : (on ? 'on' : (i === s.total ? 'mainoff' : 'off'));
+      var on = i === 0 ? s.hasDark : !!s.nums[i], cls = i === s.mainN && s.isMain ? 'main' : (on ? 'on' : (s.total != null && i === s.total ? 'mainoff' : 'off'));
       h += '<span class="pip ' + cls + '">' + (i === 0 ? 'D' : i) + '</span>';
     }
-    var unn = s.list.filter(function(x) { return num(x.v.n) == null; }).length;
-    var tail = s.more ? '+' + s.more + ' ' + HT.moreN : (unn ? '+' + unn + ' ' + HT.unnum : '');
+    if (s.total == null) h += '<span class="pip off">?</span>';
     return '<div class="pips">' + h + (tail ? '<span class="mo">' + esc(tail) + '</span>' : '') + '</div>';
   }
   function hlRow(o) {
@@ -287,7 +293,7 @@
   // OK on a show opens its first logged match, so the show plays in card order from there.
   function showCard(s) {
     var th = esc(s.top.v.th || ''), v = s.top.v;
-    return '<a class="sc" data-f="1" data-k="v' + esc(s.first.id) + '" href="/contents/' + esc(s.first.id) + '"><div class="im" style="' + (th ? 'background-image:url(\'' + th + '\')' : '') + '">' + stamp(s.date) +
+    return '<a class="sc" data-f="1" data-k="v' + esc(s.first.id) + '" href="/contents/' + esc(s.first.id) + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '>' + stamp(s.date) +
       '<span class="cn' + (s.complete ? '' : ' part') + '">' + TEL18 + esc(countText(s)) + '</span></div>' +
       '<div class="bd"><div><div class="nm">' + esc(s.name) + '</div>' + (s.venue ? '<div class="vn">' + ico('pin', 14, '#C9D2DC') + esc(s.venue) + '</div>' : '') + '</div>' +
       '<div class="me"><div class="eb' + (s.isMain ? '' : ' dim') + '">' + esc(mainLabel(s)) + '</div><div class="t">' + esc(oneLine(v)) + '</div><div class="s">' + esc(eventLine(v)) + '</div></div>' +
@@ -301,7 +307,7 @@
       var v = s.nums[n].v, main = n === s.mainN && s.isMain;
       rows += '<div class="ro' + (main ? ' mn' : '') + '"><span class="no">' + n + '</span><span class="ev">' + esc(main ? HT.main : eventLine(v)) + '</span><span class="rn">' + esc(oneLine(v)) + '</span></div>';
     });
-    return '<div class="fe"><div class="lb fl">' + HT.latest + '</div><a class="fc" data-f="1" data-k="v' + esc(s.first.id) + '" href="/contents/' + esc(s.first.id) + '"><div class="im" style="' + (th ? 'background-image:url(\'' + th + '\')' : '') + '">' + stamp(s.date) +
+    return '<div class="fe"><div class="lb fl">' + HT.latest + '</div><a class="fc" data-f="1" data-k="v' + esc(s.first.id) + '" href="/contents/' + esc(s.first.id) + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '>' + stamp(s.date) +
       '<span class="cn">' + TEL18 + esc(countText(s)) + '</span></div><div class="bd"><div class="nm">' + esc(s.name) + '</div>' +
       (s.venue ? '<div class="vn">' + ico('pin', 14, '#C9D2DC') + esc(s.venue) + '</div>' : '') + '<div class="rl">' + rows + '</div></div></a></div>';
   }
@@ -382,7 +388,7 @@
     '#tvsh .pip{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font:800 10px Arial;box-sizing:border-box}' +
     '#tvsh .pip.on{background:#2A2410;color:#F4C242;border:1px solid #6B5A22}#tvsh .pip.main{background:#F4C242;color:#1A1A1A}' +
     '#tvsh .pip.mainoff{border:1px dashed #F4C242;color:#F4C242}#tvsh .pip.off{border:1px dashed #3B4656;color:#5A6472}' +
-    '#tvsh .mo{margin-left:auto;font:700 12px Arial;color:#9AA6B4}' +
+    '#tvsh .mo{margin-left:auto;font:700 12px Arial;color:#9AA6B4}#tvsh .nn{font:700 12px Arial;color:#9AA6B4;line-height:20px}' +
     '#tvsh .fe{margin-bottom:26px}#tvsh .fc{display:flex}#tvsh .fc .im{position:relative;flex:0 0 46%;aspect-ratio:16/9;background:#172029 center/cover no-repeat}' +
     '#tvsh .fc .bd{flex:1 1 0;min-width:0}#tvsh .rl{margin-top:4px}' +
     '#tvsh .ro{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid #2A323C}' +
@@ -391,17 +397,40 @@
     '#tvsh .ro .rn{flex:1 1 0;font:700 15px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '#tvsh .ro.mn{border-bottom:0;background:#2A2410;margin:4px -14px 0;padding:7px 14px}#tvsh .ro.mn .ev{color:#F4C242}';
   var homeEl = null, prevClose = null;
+  // Pictures load a row at a time (2.66.1): the first two rows straight away, then the row below whichever row has
+  // focus, so a long page never asks for every thumbnail at once. Rows are the cards' tops on the page.
+  function loadPictures() {
+    if (!homeEl) return;
+    var cards = Array.prototype.slice.call(homeEl.querySelectorAll('.hc, .sc, .fc'));
+    if (!cards.length) return;
+    var base = homeEl.getBoundingClientRect().top - homeEl.scrollTop, tops = [];
+    function top(el) { return Math.round(el.getBoundingClientRect().top - base); }
+    cards.forEach(function(c) { var t = top(c); if (tops.indexOf(t) < 0) tops.push(t); });
+    tops.sort(function(a, b) { return a - b; });
+    var ae = document.activeElement, fi = 0;
+    if (ae && cards.indexOf(ae) >= 0) fi = tops.indexOf(top(ae));
+    var limit = tops[Math.min(Math.max(fi, 0) + 1, tops.length - 1)];
+    cards.forEach(function(c) {
+      if (top(c) > limit) return;
+      var im = c.querySelector('.im[data-bg]');
+      if (!im) return;
+      im.style.backgroundImage = 'url(\'' + im.getAttribute('data-bg') + '\')';
+      im.removeAttribute('data-bg');
+    });
+  }
   function homeRender(keep) {
     if (!homeEl) {
       homeEl = document.createElement('div'); homeEl.id = 'tvsh'; homeEl.className = 'notranslate'; homeEl.setAttribute('translate', 'no');
       var st = document.createElement('style'); st.textContent = HCSS; document.head.appendChild(st);
       document.body.appendChild(homeEl);
       window.addEventListener('keydown', homeKey, true);
+      homeEl.addEventListener('focusin', loadPictures);
     }
     homeEl.innerHTML = homeHtml();
     var el = homeEl.querySelector('[data-k="' + (keep || '') + '"]') || (home.pop ? homeEl.querySelector('.pp .ch.on') || homeEl.querySelector('.pp .ch') : homeEl.querySelector('.ch.on'));
     if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); }
     try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab); } catch (e) {}
+    loadPictures();
   }
   function openPop(key) {
     home.pop = key;

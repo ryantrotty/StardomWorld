@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.66.1
+
+- StarScope Shows: every show card now ends with the same row. Card size known: one square per match as before. Card size not logged: squares up to the highest logged match, then a "?". No match numbers at all: "7 logged · no match numbers yet" in the same place. A match numbered past the card size (5★STAR GP 2016, Match 7 of 6) now counts the card as that big instead of showing 0/6.
+- StarScope page (Shows, Recently added, Top rated, All matches): pictures load a row at a time. The first two rows load straight away, and the next row loads when a card in the row above it gets focus, so a long page no longer asks for every thumbnail at once.
+
 ## 2.66.0
 
 - StarScope Shows (private builds): a fourth tab on the StarScope page, and a "Shows ›" pill next to Recently added, Top rated and All matches in the Community menu. Every show with a logged match gets a poster card: the main event's picture, the date as a stamp, the venue, a telescope count (matches logged / on the card), the main event, up to three highlights (title matches, then finals and semis, then special rules such as Mixed Martial Arts, then tournament matches, then the opener) and the card as numbered squares (logged, missing, main event).
