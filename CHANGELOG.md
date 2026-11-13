@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.65.1
+
+- StarScope player: no Japanese in the English title line or the row heading. The show's Japanese subtitle (〜しらんけどスターダム〜) is left out in English; Japanese keeps the whole name.
+- StarScope player: the tiles in the card row use the same StarScope card as the StarScope pages (event, names, match number), in the same fonts, sizes and places. Only the date is left off, since the page already shows it.
+- StarScope player: Skip entrances (the jump, and the Skip entrance offer) only when the video starts from the beginning. It now watches the first 2 seconds of playback before deciding, so a video that resumes part way, even one that shows 0:00 for a moment first, is left where it is.
+
 ## 2.65.0
 
 - StarScope player (private builds), for videos logged in StarScope:

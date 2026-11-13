@@ -29,6 +29,16 @@
   function sidesOf(x) { return (ja && x.sj && x.sj.length === x.s.length ? x.sj : x.s) || []; }
   function side(s) { return s.length > 3 ? s[0] + ' +' + (s.length - 1) : s.join(' & '); }
   function eventOf(x) { return (ja ? x.ej : x.e) || ''; }
+  // The show's name in English: the sheet keeps one name, often with a Japanese subtitle (〜しらんけどスターダム〜).
+  // In English the Japanese parts are left out; in Japanese the name is shown whole.
+  function showName(x) {
+    var n = String((x && x.sh) || '');
+    if (ja) return n;
+    n = n.replace(/[〜～~][^〜～~]*[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f][^〜～~]*[〜～~]/g, ' ')
+      .replace(/[\u3000-\u303f\u3040-\u30ff\u3400-\u9fff\uff00-\uffef]+/g, ' ')
+      .replace(/\s+/g, ' ').replace(/[\s·\-–:]+$/, '').trim();
+    return n;
+  }
   function matchLabel(x, total) {
     var n = num(x.n);
     if (n == null) return '';
@@ -62,7 +72,7 @@
   window.__tvScopeHasBell = function() { return target() != null; };
 
   // ---- the card on the video
-  var phase = 'wait', startAt = 0, until = 0, upHref = '', upAt = 0;
+  var phase = 'wait', startAt = 0, until = 0, upHref = '', upAt = 0, samples = [];
   var SKIP_MS = 8000, INTRO_MS = 10000, UP_MS = 5000;
   function matchCard(hint, extra) {
     var n = namesLine(v);
@@ -114,8 +124,13 @@
     var st = state(), now = Date.now();
     if (phase === 'wait') {
       if (st.t <= 0.3) return;   // not playing yet
-      startAt = st.t;
-      var tg = target(), fresh = startAt < 15;
+      // Only a video that really starts from the beginning: watch the first 2 s of playback, since a video that
+      // resumes where you left off can report a moment at 0:00 before it moves to its place.
+      samples.push(st.t);
+      if (samples.length < 4) return;
+      startAt = Math.min.apply(null, samples);
+      var f = document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'), at = /#t=(\d+)/.exec((f && f.src) || '');
+      var tg = target(), fresh = Math.max.apply(null, samples) < 15 && !(at && +at[1] > 0);
       if (fresh && tg != null && tg > startAt + 3) {
         if (mode() >= 1) {
           seekTo(tg); phase = 'skipped'; until = now + SKIP_MS;
@@ -168,9 +183,7 @@
     '.tv-sc-tg.now{background:#FFB347;color:#1A1A1A;}',
     '.tv-sc-tg.next{background:rgba(11,17,24,0.9);color:#F4C242;border:1px solid #F4C242;}',
     '.tv-sc-tg.not{background:#141A22;color:#9AA6B4;border:1px solid #3B4656;}',
-    '.tv-sc-nm{display:block;font-weight:700;}',
-    '.tv-sc-nm .vs{color:#F4C242;font-size:13px;margin-right:6px;}',
-    '.tv-sc-sb{display:block;font-weight:400;font-size:13px;color:#9AA6B4;margin-top:2px;}',
+    '.tv-related-row a.tv-card .tvsc-host{background:#1A1A1A;}',
     '.tv-sc-meta{margin-left:auto;display:flex;align-items:center;gap:8px;font:700 14px Arial,Helvetica,sans-serif;color:#9AA6B4;}',
     '.tv-sc-meta svg{color:#FFFFFF;}'
   ].join('');
@@ -179,7 +192,7 @@
   window.__tvScopeTitle = function() {
     if (!v || !(v.s && v.s.length)) return null;
     var n = namesLine(v);
-    var eb = [matchLabel(v, true), v.sh, dateText(v.d), ja ? (v.vnj || v.vn) : v.vn].filter(function(x) { return x; });
+    var eb = [matchLabel(v, true), showName(v), dateText(v.d), ja ? (v.vnj || v.vn) : v.vn].filter(function(x) { return x; });
     var title = n.map(function(x, i) { return (i ? '<span class="tv-sc-vs">vs</span>' : '') + esc(x); }).join(' ');
     var ev = eventOf(v);
     var html = '<span class="tv-pb-bar"></span><div class="tv-sc-hd">' + (eb.length ? '<span class="tv-sc-eb">' + esc(eb.join(' · ')) + '</span>' : '') +
@@ -205,7 +218,7 @@
     if (h2 && !h2.__tvsc) {
       h2.__tvsc = true;
       var barEl = h2.firstElementChild, nameEl = h2.children[1];
-      var show = v.sh || (nameEl ? nameEl.textContent : '');
+      var show = showName(v) || (nameEl ? nameEl.textContent : '');
       var total = num(v.t) || cards.length;
       if (nameEl) { nameEl.textContent = show; nameEl.classList.add('notranslate'); nameEl.setAttribute('translate', 'no'); }
       var more = document.createElement('span');
@@ -232,12 +245,14 @@
       var lab = ok ? matchLabel(x, false) : '';
       thumb.insertAdjacentHTML('beforeend', (lab ? '<span class="tv-sc-no notranslate" translate="no">' + esc(lab) + '</span>' : '') +
         (tag ? '<span class="tv-sc-tg ' + tag[0] + ' notranslate" translate="no">' + esc(tag[1]) + '</span>' : ''));
-      if (ok) {
-        var n = namesLine(x);
-        text.classList.add('notranslate'); text.setAttribute('translate', 'no');
-        text.innerHTML = '<span class="tv-sc-nm">' + esc(n[0] || '') + '</span>' + (n.length > 1 ? '<span class="tv-sc-nm"><span class="vs">vs</span>' + esc(n.slice(1).join(' vs ')) + '</span>' : '') +
-          (eventOf(x) ? '<span class="tv-sc-sb">' + esc(eventOf(x)) + '</span>' : '');
-      } else a.style.opacity = '0.85';
+      if (ok && window.__tvStarCard) {
+        // The same StarScope card as on the StarScope pages (assets/starcards.js), less the date: the page has it.
+        var y = {}; for (var k in x) y[k] = x[k];
+        y.d = '';
+        text.removeAttribute('style');
+        text.className = 'tvsc-host';
+        text.innerHTML = window.__tvStarCard.html(y);
+      } else if (!ok) a.style.opacity = '0.85';
     });
     // Open the row at the match that is playing (only while nothing in the row has focus).
     if (!scrolled) {
