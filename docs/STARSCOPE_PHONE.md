@@ -31,7 +31,7 @@ The logger also lives on GitHub Pages: `starscope/index.html` on the `gh-pages` 
 
 - Polls `phoneNow` every 6 s while it is on screen (not when the phone is locked or the page is in the background).
 - Opens the TV's video by itself, unless you have unsaved changes; then a banner offers **Load it**. After a save it follows the TV.
-- Edits competitors, match number, title, competition, round, block, stipulation, result (hidden until Show result) and the star rating. Finish, moments, the fall, teams, factions, entry and elimination order saved on the TV are sent back unchanged.
+- Edits everything the TV's logger does (2.68.6): competitors (pick, propose, move between sides, remove), each side's team and faction, entry and elimination order, venue, date, match number, title, competition, round, block, stipulation, the result by name, how it ended, who got the fall, moments and the star rating. Not on the phone: Preview, Confirm and Save and next match.
 - Saves with `viSave`, the same as the TV's logger. Proposals (names, list options) are the owner's, so they go straight into the library.
 - The rating is saved under the TV's device name (from the notes), so the phone and that TV share one rating.
 

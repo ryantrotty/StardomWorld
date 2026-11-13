@@ -49,7 +49,8 @@
   .banner{background:#2A2410;border:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;gap:10px;align-items:center;font:700 14px Arial}
   .banner button{margin-left:auto;flex:none}
   .bells{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .bell{min-height:96px;text-align:center;font:800 20px Arial;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .bellcol{min-width:0}
+  .bell{width:100%;min-height:96px;text-align:center;font:800 20px Arial;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
   .bell small{font:700 14px Arial;color:var(--t3)}
   .bell.set{border-color:var(--gold)}
   .bell.set small{color:var(--gold);font-size:18px}
@@ -64,6 +65,13 @@
   .step{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .step b{font:800 17px Arial;min-width:78px;text-align:center}
   .step button{min-width:44px;padding:8px 6px;text-align:center}
+  .dates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .dates div{display:flex;flex-direction:column;gap:6px}
+  .dates button{text-align:center;min-height:40px;padding:6px;font-size:15px}
+  .xo{display:flex;gap:6px;align-items:center;margin-top:8px}
+  .xo span{flex:1;min-width:0;font:700 15px Arial}
+  .xo button{min-height:38px;padding:6px 10px;font-size:14px}
+  .sheet .list button.bad{color:var(--bad)}
   .stars{display:flex;gap:6px}
   .stars button{flex:1;text-align:center;font-size:24px;padding:4px;line-height:1}
   .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(11,17,24,.96);border-top:2px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:6}
@@ -102,9 +110,11 @@
     return !!K;
   }
   var POLL = 6000, RESOLVE = 3500, LIB_KEY = 'ssLibV1';
-  var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation'], MULTI = { title: 1, stipulation: 1, moment: 1 };
-  var EDITED = { title: 1, competition: 1, round: 1, block: 1, stipulation: 1 };
-  var GROUP = { title: 'Title', competition: 'Competition', round: 'Round', block: 'Block', stipulation: 'Stipulation' };
+  var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation', 'moment'], MULTI = { title: 1, stipulation: 1, moment: 1 };
+  // Every group the TV's logger edits (2.68.6); the fall is kept apart, as on the TV.
+  var EDITED = { title: 1, competition: 1, round: 1, block: 1, stipulation: 1, finish: 1, moment: 1 };
+  var GROUP = { title: 'Title', competition: 'Competition', round: 'Round', block: 'Block', stipulation: 'Stipulation', finish: 'How it ended', moment: 'Moments' };
+  var SPOIL = { 'title-change': 1, 'first-title': 1 }, RECENT_KEY = 'ssRecentV1';
   var lib = null, nameMap = {}, byId = {}, now = null, clockSkew = 0, form = null, busy = false, pending = {}, pollTimer = 0;
 
   function $(id) { return document.getElementById(id); }
@@ -250,16 +260,18 @@
     f.sides = found ? fromSaved(saved) : fromPage(rec);
     if (!f.sides.length) f.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
     f.onShow = (saved && saved.onShow) || [];
-    f.tags = {}; f.keepTags = []; f.fall = ''; f.touched = false; f.aliases = [];
-    f.result = { type: '', side: 0 }; f.resOpen = false;
+    f.tags = {}; f.keepTags = []; f.fall = ''; f.aliases = []; f.venueAliases = [];
+    f.touched = {};   // match, finish, moments: a group looked at is saved as "panel", one only pre-picked as "auto"
+    f.result = { type: '', side: 0 }; f.resOpen = false; f.xoOpen = false; f.momOpen = false;
     f.savedLevel = found ? (Number(saved.match.level) || 1) : 1;
     f.rating = (saved && Number(saved.myRating)) || 0;
+    f.ratingAvg = (saved && saved.ratingAvg) || ''; f.ratingN = (saved && Number(saved.ratingCount)) || 0;
     f.marks = load(markKey(f.video)) || { bell: '', end: '' };
     if (found) {
-      // Groups this page doesn't edit (finish, moments, the fall) go back unchanged when it saves.
       (saved.tags || []).forEach(function(t) {
-        if (EDITED[t.tag_group]) (f.tags[t.tag_group] = f.tags[t.tag_group] || []).push(t.tag_value);
-        else { f.keepTags.push({ group: t.tag_group, value: t.tag_value, source: t.source === 'auto' ? 'auto' : 'panel' }); if (t.tag_group === 'fall') f.fall = t.tag_value; }
+        if (t.tag_group === 'fall') f.fall = t.tag_value;
+        else if (EDITED[t.tag_group]) (f.tags[t.tag_group] = f.tags[t.tag_group] || []).push(t.tag_value);
+        else f.keepTags.push({ group: t.tag_group, value: t.tag_value, source: t.source === 'auto' ? 'auto' : 'panel' });
       });
       f.hadTags = !!(saved.tags || []).length;
       var mine = (saved.videos || []).filter(function(x) { return String(x.video_id) === String(f.video); })[0];
@@ -271,6 +283,7 @@
     f.venueRaw = (show0 && show0.venue) || '';
     f.venue = (saved && saved.show && saved.show.venue_id) || matchVenue(f.venueRaw);
     f.date = (found && saved.match.date) || rec.date || '';
+    f.dateManual = !!(found && saved.match.date_set === 'manual');
     var sn = found ? saved.match.card_no : '', st = found ? saved.match.card_total : '';
     f.cardNo = sn !== '' && sn != null ? Number(sn) : (place ? place.no : (rec.no != null ? rec.no : ''));
     f.cardTotal = st !== '' && st != null ? Number(st) : (place ? place.total : '');
@@ -284,9 +297,40 @@
     if (miss.length) say('Not in the library: ' + miss.join(', '), true);
   }
   function touch() { form.dirty = true; }
+  function people() { var out = []; form.sides.forEach(function(s, i) { s.people.forEach(function(p, j) { out.push({ p: p, i: i, j: j }); }); }); return out; }
+  function nextNo(field) { var n = 0; people().forEach(function(x) { n = Math.max(n, Number(x.p[field]) || 0); }); return n + 1; }
+  function teamFor(s) {
+    var ids = s.people.map(function(p) { return p.id; }).filter(Boolean).sort().join('|');
+    var t = (lib.teams || []).filter(function(x) { return x.m.length && x.m.slice().sort().join('|') === ids; })[0];
+    return t ? t.id : '';
+  }
+  function factionFor(s) {
+    if (!s.team) return '';
+    var n = norm(s.team), x = (lib.factions || []).filter(function(y) { return norm(y.en) === n || norm(y.ja) === n; })[0];
+    return x ? x.id : '';
+  }
+  function sideTeam(s) { return s.people.length < 2 ? '' : (s.teamId !== undefined ? s.teamId : teamFor(s)); }
+  function sideFaction(s) { return s.factionId !== undefined ? s.factionId : factionFor(s); }
+  function byList(L, id) { return (L || []).filter(function(x) { return x.id === id; })[0]; }
+  // A side by name: its team name when it has one, else its people ("Momo Watanabe", "A & B", "A, B +2").
+  function sideName(s) {
+    var t = byList(lib.teams, sideTeam(s));
+    if (t) return t.en;
+    var n = s.people.map(function(p) { return p.id ? nameOf(p.id) : p.billed; });
+    return n.length > 3 ? n.slice(0, 2).join(', ') + ' +' + (n.length - 2) : n.join(' & ');
+  }
+  function remember(id) { var L = (load(RECENT_KEY) || []).filter(function(x) { return x !== id; }); L.unshift(id); store(RECENT_KEY, L.slice(0, 16)); }
+  function shiftDate(u, dir) {
+    var d = form.date ? form.date.split('-').map(Number) : (function(x) { return [x.getFullYear(), x.getMonth() + 1, x.getDate()]; })(new Date());
+    var t = new Date(Date.UTC(d[0], d[1] - 1, d[2]));
+    if (u === 'y') t.setUTCFullYear(t.getUTCFullYear() + dir);
+    else if (u === 'm') t.setUTCMonth(t.getUTCMonth() + dir);
+    else t.setUTCDate(t.getUTCDate() + dir);
+    form.date = t.toISOString().slice(0, 10); form.dateManual = true;
+  }
 
   // ---- drawing
-  function showLine(rec, info) {
+  function showLine(rec) {
     var s = rec.shows && rec.shows[0], bits = [];
     if (s && s.show) bits.push(s.show);
     if (rec.date) bits.push(rec.date);
@@ -297,11 +341,13 @@
     if (f.cardNo === 0) return 'Dark match';
     return 'Match ' + f.cardNo + (f.cardTotal ? ' of ' + f.cardTotal : '');
   }
+  function btn(a, label, cls, data) { return '<button type="button" class="' + (cls || '') + '" data-a="' + a + '"' + (data || '') + '>' + label + '</button>'; }
+  function fold(a, open, label, hint) { return '<div class="chips" style="margin-top:12px">' + btn(a, (open ? '▾ ' : '▸ ') + label + (hint ? ' <span style="color:var(--t3);font-weight:600">· ' + hint + '</span>' : ''), 'ghost') + '</div>'; }
   function render() {
     var h = '', f = form, c = current();
     if (!lib) { $('app').innerHTML = ''; return; }
     if (!f) { $('app').innerHTML = '<div class="box"><div class="t2">Start a video on the TV (your private build). It shows up here within a few seconds.</div></div>'; return; }
-    if (c && c.video !== f.video) h += '<div class="banner">The TV is on another video now.<button type="button" data-a="follow">Load it</button></div>';
+    if (c && c.video !== f.video) h += '<div class="banner">The TV is on another video now.' + btn('follow', 'Load it') + '</div>';
     var rec = f.rec, title = rec.title_en || rec.title_ja || f.info.title || ('Video ' + f.video);
     h += '<div class="box"><div class="eb">' + (c && c.video === f.video ? 'On the TV' : 'Logging') + '<em>' + esc(f.loading ? '' : placeText(f)) + '</em></div>' +
       '<div class="t1">' + esc(title) + '</div><div class="t2">' + esc(showLine(rec)) + '</div></div>';
@@ -311,83 +357,126 @@
     h += '<div class="box"><div class="eb">Bell times<em>tap when it happens</em></div><div class="bells">';
     ['bell', 'end'].forEach(function(k) {
       var v = f.marks[k], p = pending[k];
-      h += '<div><button type="button" class="bell' + (v !== '' ? ' set' : '') + '" data-a="mark" data-k="' + k + '">' + (k === 'bell' ? 'Bell' : 'Finish') +
+      h += '<div class="bellcol"><button type="button" class="bell' + (v !== '' ? ' set' : '') + '" data-a="mark" data-k="' + k + '">' + (k === 'bell' ? 'Bell' : 'Finish') +
         '<small>' + (p ? 'Working it out…' : (v !== '' ? mmss(v) : (k === 'bell' ? 'match start' : 'match end'))) + '</small></button>';
-      if (v !== '') h += '<div class="nudge"><button type="button" data-a="nudge" data-k="' + k + '" data-d="-1">−1 s</button><button type="button" data-a="nudge" data-k="' + k + '" data-d="1">+1 s</button><button type="button" class="ghost" data-a="clearmark" data-k="' + k + '">Clear</button></div>';
+      if (v !== '') h += '<div class="nudge">' + btn('nudge', '−1 s', '', ' data-k="' + k + '" data-d="-1"') + btn('nudge', '+1 s', '', ' data-k="' + k + '" data-d="1"') + btn('clearmark', 'Clear', 'ghost', ' data-k="' + k + '"') + '</div>';
       h += '</div>';
     });
     h += '</div></div>';
 
-    // Competitors
+    // Competitors: names, then each side's team and faction; entry and elimination order folded underneath
     h += '<div class="box"><div class="eb">Competitors</div>';
     f.sides.forEach(function(s, i) {
       var tag = s.role === 'champion' ? 'Champion' : (s.role === 'challenger' ? 'Challenger' : '');
       h += '<div class="side"><div class="eb">Side ' + (i + 1) + '<em>' + tag + '</em></div>';
       s.people.forEach(function(p, j) {
-        h += '<div class="person"><button type="button" class="' + (p.id ? '' : 'bad') + '" data-a="pick" data-i="' + i + '" data-j="' + j + '">' + (p.id ? esc(nameOf(p.id)) : '? ' + esc(p.billed)) + '</button>' +
-          '<button type="button" class="ghost" data-a="rm" data-i="' + i + '" data-j="' + j + '" aria-label="Remove">✕</button></div>';
+        h += '<div class="person">' + btn('person', p.id ? esc(nameOf(p.id)) : '? ' + esc(p.billed), p.id ? '' : 'bad', ' data-i="' + i + '" data-j="' + j + '"') +
+          btn('rm', '✕', 'ghost', ' data-i="' + i + '" data-j="' + j + '" aria-label="Remove"') + '</div>';
       });
-      h += '<div class="chips"><button type="button" class="ghost" data-a="add" data-i="' + i + '">+ Add wrestler</button>' +
-        (f.sides.length > 2 && !s.people.length ? '<button type="button" class="ghost" data-a="rmside" data-i="' + i + '">Remove side</button>' : '') + '</div></div>';
+      h += '<div class="chips">' + btn('add', '+ Add wrestler', 'ghost', ' data-i="' + i + '"') + (f.sides.length > 2 && !s.people.length ? btn('rmside', 'Remove side', 'ghost', ' data-i="' + i + '"') : '') + '</div>';
+      if (s.people.length) {
+        var tm = byList(lib.teams, sideTeam(s)), fc = byList(lib.factions, sideFaction(s));
+        h += '<div class="chips" style="margin-top:8px">' + (s.people.length >= 2 ? btn('team', 'Team: ' + esc(tm ? tm.en : '–'), 'ghost', ' data-i="' + i + '"') : '') +
+          btn('faction', 'Faction: ' + esc(fc ? fc.en : '–'), 'ghost', ' data-i="' + i + '"') + '</div>';
+      }
+      h += '</div>';
     });
-    h += '<div class="chips"><button type="button" class="ghost" data-a="addside">+ Side</button></div></div>';
+    h += '<div class="chips">' + btn('addside', '+ Side', 'ghost') + '</div>';
+    h += fold('xo', f.xoOpen, 'Entry and elimination order', 'gauntlets, battle royals');
+    if (f.xoOpen) people().forEach(function(x) {
+      h += '<div class="xo"><span>' + esc(x.p.id ? nameOf(x.p.id) : x.p.billed) + '</span>' + btn('entry', 'Entry: ' + (x.p.entry || '–'), '', ' data-i="' + x.i + '" data-j="' + x.j + '"') + btn('elim', 'Out: ' + (x.p.elim || '–'), '', ' data-i="' + x.i + '" data-j="' + x.j + '"') + '</div>';
+    });
+    h += '</div>';
 
-    // Match
-    var cn = f.cardNo, ct = f.cardTotal, comp = (f.tags.competition || [])[0];
+    // Match: venue, date, place on the card, then the event groups
+    var cn = f.cardNo, ct = f.cardTotal, comp = (f.tags.competition || [])[0], ven = byList(lib.venues, f.venue);
     h += '<div class="box"><div class="eb">Match</div>';
-    h += '<div class="grp">MATCH ON THE CARD</div><div class="step"><button type="button" data-a="cn" data-d="-1">−</button><b>' + (cn === '' || cn == null ? '–' : (cn === 0 ? 'Dark' : 'Match ' + cn)) + '</b><button type="button" data-a="cn" data-d="1">+</button>' +
-      '<span class="t3" style="margin:0 4px">of</span><button type="button" data-a="ct" data-d="-1">−</button><b style="min-width:34px">' + (ct || '–') + '</b><button type="button" data-a="ct" data-d="1">+</button></div>';
+    h += '<div class="grp">VENUE</div><div class="chips">' + btn('venue', ven ? esc(ven.en || ven.ja) : (f.venueRaw ? '? ' + esc(f.venueRaw) : 'Choose a venue'), ven ? '' : 'bad') + '</div>';
+    h += '<div class="grp">DATE</div><div class="t1" style="margin-bottom:8px">' + esc(f.date || '–') + '</div><div class="dates">';
+    [['d', 'Day'], ['m', 'Month'], ['y', 'Year']].forEach(function(u) { h += '<div>' + btn('date', u[1] + ' −', '', ' data-u="' + u[0] + '" data-d="-1"') + btn('date', u[1] + ' +', '', ' data-u="' + u[0] + '" data-d="1"') + '</div>'; });
+    h += '</div>' + (f.dateManual ? '<div class="chips" style="margin-top:8px">' + btn('datereset', 'Back to the page date', 'ghost') + '</div>' : '');
+    h += '<div class="grp">MATCH ON THE CARD</div><div class="step">' + btn('cn', '−', '', ' data-d="-1"') + '<b>' + (cn === '' || cn == null ? '–' : (cn === 0 ? 'Dark' : 'Match ' + cn)) + '</b>' + btn('cn', '+', '', ' data-d="1"') +
+      '<span class="t3" style="margin:0 4px">of</span>' + btn('ct', '−', '', ' data-d="-1"') + '<b style="min-width:34px">' + (ct || '–') + '</b>' + btn('ct', '+', '', ' data-d="1"') + '</div>';
     ['title', 'competition', 'round'].forEach(function(g) { h += group(g, listOf(g)); });
     h += group('block', listOf('block').filter(function(b) { return !comp || !b.p || b.p === comp; }));
     h += group('stipulation', listOf('stipulation'));
     h += '</div>';
 
-    // Result (hidden until asked) and rating
-    h += '<div class="box"><div class="eb">Result<em>hidden so it isn\'t spoiled</em></div>';
-    if (!f.resOpen) h += '<div class="chips"><button type="button" class="ghost" data-a="reveal">Show result</button></div>';
+    // Finish: the result by name, how it ended and who got the fall, all hidden until asked; moments folded (the
+    // ones that give the result away only after Show result); the rating, which is no spoiler
+    h += '<div class="box"><div class="eb">Finish<em>' + (f.resOpen ? '' : 'hidden so it isn\'t spoiled') + '</em></div>';
+    if (!f.resOpen) h += '<div class="chips">' + btn('reveal', 'Show result', 'ghost') + '</div>';
     else {
       var r = f.result;
-      h += '<div class="chips"><button type="button" class="' + (!r.type ? 'on' : '') + '" data-a="res" data-t="">Not set</button>';
-      f.sides.forEach(function(s, i) { if (s.people.length) h += '<button type="button" class="' + (r.type === 'win' && r.side === i + 1 ? 'on' : '') + '" data-a="res" data-t="win" data-s="' + (i + 1) + '">Side ' + (i + 1) + ' wins</button>'; });
-      h += '<button type="button" class="' + (r.type === 'draw' ? 'on' : '') + '" data-a="res" data-t="draw">Draw</button><button type="button" class="' + (r.type === 'nc' ? 'on' : '') + '" data-a="res" data-t="nc">No contest</button></div>';
+      h += '<div class="grp">RESULT</div><div class="chips">' + btn('res', 'Not set', !r.type ? 'on' : '', ' data-t=""');
+      f.sides.forEach(function(s, i) { if (s.people.length) h += btn('res', esc(sideName(s)) + ' win' + (s.people.length > 1 && !byList(lib.teams, sideTeam(s)) ? '' : 's'), r.type === 'win' && r.side === i + 1 ? 'on' : '', ' data-t="win" data-s="' + (i + 1) + '"'); });
+      h += btn('res', 'Draw', r.type === 'draw' ? 'on' : '', ' data-t="draw"') + btn('res', 'No contest', r.type === 'nc' ? 'on' : '', ' data-t="nc"') + '</div>';
+      h += group('finish', listOf('finish'));
+      h += '<div class="grp">WHO GOT THE FALL</div><div class="chips">' + people().filter(function(x) { return x.p.id; }).map(function(x) { return btn('fall', esc(nameOf(x.p.id)), f.fall === x.p.id ? 'on' : '', ' data-id="' + esc(x.p.id) + '"'); }).join('') + '</div>';
+    }
+    h += fold('mom', f.momOpen, 'Moments', 'debut, title change, return, last match…');
+    if (f.momOpen) {
+      h += group('moment', listOf('moment').filter(function(x) { return f.resOpen || !SPOIL[x.id]; }));
+      if (!f.resOpen) h += '<div class="t3">Moments that give away the result appear after Show result.</div>';
     }
     h += '<div class="grp">YOUR RATING</div><div class="stars">';
-    for (var n = 1; n <= 5; n++) h += '<button type="button" class="' + (f.rating >= n ? 'on' : '') + '" data-a="rate" data-n="' + n + '">★</button>';
-    h += '</div></div>';
+    for (var n = 1; n <= 5; n++) h += btn('rate', '★', f.rating >= n ? 'on' : '', ' data-n="' + n + '"');
+    h += '</div><div class="t3">' + (f.ratingN ? 'Average ' + esc(f.ratingAvg) + ' · ' + f.ratingN + ' rating' + (f.ratingN === 1 ? '' : 's') : 'No ratings yet') + ' · your own score, no spoiler</div></div>';
     $('app').innerHTML = h;
   }
   function group(g, items) {
     var sel = form.tags[g] || [], h = '<div class="grp">' + GROUP[g].toUpperCase() + '</div><div class="chips">';
-    items.forEach(function(x) { h += '<button type="button" class="' + (sel.indexOf(x.id) >= 0 ? 'on' : '') + '" data-a="tag" data-g="' + g + '" data-v="' + esc(x.id) + '">' + esc(x.en || x.id) + '</button>'; });
-    return h + '<button type="button" class="ghost" data-a="propopt" data-g="' + g + '">+ Propose new</button></div>';
+    items.forEach(function(x) { h += btn('tag', esc(x.en || x.id), sel.indexOf(x.id) >= 0 ? 'on' : '', ' data-g="' + g + '" data-v="' + esc(x.id) + '"'); });
+    return h + btn('propopt', '+ Propose new', 'ghost', ' data-g="' + g + '"') + '</div>';
   }
 
   // ---- taps
   document.addEventListener('click', function(e) {
-    var b = e.target.closest('[data-a]');
+    var b = e.target.closest('#app [data-a]');
     if (!b || !form) return;
     var a = b.getAttribute('data-a'), i = +b.getAttribute('data-i'), j = +b.getAttribute('data-j'), k = b.getAttribute('data-k');
     if (a === 'mark') return mark(k);
     if (a === 'follow') { var c = current(); if (c) openVideo(c); return; }
-    if (a === 'pick') return openPicker({ side: i, slot: j });
-    if (a === 'add') return openPicker({ side: i, slot: -1 });
-    if (a === 'propopt') return openPropose(b.getAttribute('data-g'));
+    if (a === 'person') return personMenu(i, j);
+    if (a === 'add') return namePicker({ side: i, slot: -1 });
+    if (a === 'team') return teamPicker(i);
+    if (a === 'faction') return factionPicker(i);
+    if (a === 'venue') return venuePicker();
+    if (a === 'propopt') return openPropose({ type: 'new_option', entity: b.getAttribute('data-g'), label: GROUP[b.getAttribute('data-g')].toLowerCase() });
     touch();
+    var x;
     if (a === 'nudge') { form.marks[k] = Math.max(0, Number(form.marks[k]) + Number(b.getAttribute('data-d'))); store(markKey(form.video), form.marks); }
     else if (a === 'clearmark') { form.marks[k] = ''; store(markKey(form.video), form.marks); }
-    else if (a === 'rm') form.sides[i].people.splice(j, 1);
+    else if (a === 'rm') { form.sides[i].people.splice(j, 1); delete form.sides[i].teamId; nameStatus(); }
     else if (a === 'rmside') form.sides.splice(i, 1);
     else if (a === 'addside') form.sides.push({ role: '', team: '', people: [] });
-    else if (a === 'cn') { var x = form.cardNo === '' || form.cardNo == null ? 0 : form.cardNo; form.cardNo = Math.max(0, x + Number(b.getAttribute('data-d'))); }
-    else if (a === 'ct') { var y = form.cardTotal || 0; y += Number(b.getAttribute('data-d')); form.cardTotal = y > 0 ? y : ''; }
+    else if (a === 'xo') form.xoOpen = !form.xoOpen;
+    else if (a === 'mom') { form.momOpen = !form.momOpen; form.touched.moments = 1; }
+    else if (a === 'entry') { x = form.sides[i].people[j]; x.entry = x.entry ? '' : nextNo('entry'); }
+    else if (a === 'elim') { x = form.sides[i].people[j]; x.elim = x.elim ? '' : nextNo('elim'); }
+    else if (a === 'date') { shiftDate(b.getAttribute('data-u'), Number(b.getAttribute('data-d'))); form.touched.match = 1; }
+    else if (a === 'datereset') { form.date = form.rec.date || ''; form.dateManual = false; }
+    else if (a === 'cn' || a === 'ct') {
+      var key = a === 'cn' ? 'cardNo' : 'cardTotal', cur = form[key] === '' || form[key] == null ? (a === 'cn' ? 0 : (form.cardNo || 0)) : Number(form[key]);
+      cur += Number(b.getAttribute('data-d'));
+      form[key] = Math.max(a === 'cn' ? 0 : 1, Math.min(40, cur));
+      if (a === 'cn' && form.cardTotal && form.cardNo > form.cardTotal) form.cardTotal = form.cardNo;
+      form.touched.match = 1;
+    }
     else if (a === 'tag') toggle(b.getAttribute('data-g'), b.getAttribute('data-v'));
     else if (a === 'reveal') form.resOpen = true;
-    else if (a === 'res') form.result = { type: b.getAttribute('data-t'), side: Number(b.getAttribute('data-s')) || 0 };
+    else if (a === 'res') { form.result = { type: b.getAttribute('data-t'), side: Number(b.getAttribute('data-s')) || 0 }; form.touched.finish = 1; }
+    else if (a === 'fall') {
+      var id = b.getAttribute('data-id');
+      form.fall = form.fall === id ? '' : id; form.touched.finish = 1;
+      // Whoever got the fall won, unless the result is already something else.
+      if (form.fall && (!form.result.type || form.result.type === 'win')) form.sides.forEach(function(s, n) { if (s.people.some(function(p) { return p.id === form.fall; })) form.result = { type: 'win', side: n + 1 }; });
+    }
     else if (a === 'rate') { var n = Number(b.getAttribute('data-n')); form.rating = form.rating === n ? 0 : n; }
     render();
   });
   function toggle(g, v) {
-    form.touched = true;
+    form.touched[g === 'finish' ? 'finish' : (g === 'moment' ? 'moments' : 'match')] = 1;
     var L = form.tags[g] = form.tags[g] || [], i = L.indexOf(v);
     if (MULTI[g]) { if (i >= 0) L.splice(i, 1); else L.push(v); }
     else form.tags[g] = i >= 0 ? [] : [v];
@@ -412,93 +501,153 @@
         else if (String(p.video) !== String(f.video)) say('At that tap the TV was on a different video.', true);
         else { touch(); f.marks[k] = Math.round(p.pos); store(markKey(f.video), f.marks); say((k === 'bell' ? 'Bell' : 'Finish') + ' at ' + mmss(p.pos) + (p.playing ? '' : ' (the video was paused)')); }
         render();
-      }).catch(function(e) { delete pending[k]; say(String(e), true); render(); });
+      }).catch(function(e) { delete pending[k]; say(String(e && e.message || e), true); render(); });
     }, RESOLVE);
   }
 
-  // ---- the name picker: on this show first, then everyone, filtered as you type
-  function openPicker(at) {
-    var sh = $('sheet'), p = at.slot >= 0 ? form.sides[at.side].people[at.slot] : null;
-    sh.innerHTML = '<div class="eb">' + (p ? 'Pick the right name' + (p.id ? '' : ' for “' + esc(p.billed) + '”') : 'Add to side ' + (at.side + 1)) + '<button type="button" class="ghost" id="pkx">Close</button></div>' +
-      '<input id="pkq" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search names" value="' + esc(p && !p.id ? p.billed : '') + '"><div class="list" id="pkl"></div>';
+  // ---- sheets over the page: a person's menu, the pickers (names, team, faction, venue) and proposals
+  function sheet(head, body) {
+    var sh = $('sheet');
+    sh.innerHTML = '<div class="eb">' + head + '<button type="button" class="ghost" id="pkx">Close</button></div>' + body;
     sh.classList.remove('hide');
+    $('pkx').onclick = closeSheet;
+    return sh;
+  }
+  function closeSheet() { $('sheet').classList.add('hide'); $('sheet').innerHTML = ''; }
+  function personMenu(i, j) {
+    var p = form.sides[i].people[j], h = '<div class="list">';
+    h += '<button type="button" data-m="change">Pick the right name</button>';
+    if (!p.id) h += '<button type="button" data-m="propose">Propose new: ' + esc(p.billed) + '</button>';
+    form.sides.forEach(function(s, x) { if (x !== i) h += '<button type="button" data-m="move" data-to="' + x + '">Move to side ' + (x + 1) + '</button>'; });
+    h += '<button type="button" data-m="move" data-to="new">Move to a new side</button><button type="button" class="bad" data-m="remove">Remove</button></div>';
+    var sh = sheet(esc(p.id ? nameOf(p.id) : p.billed), h);
+    sh.querySelector('.list').onclick = function(e) {
+      var b = e.target.closest('button'); if (!b) return;
+      var m = b.getAttribute('data-m'), S = form.sides;
+      if (m === 'change') return namePicker({ side: i, slot: j });
+      if (m === 'propose') { closeSheet(); return proposeTalent(p.billed, { side: i, slot: j }); }
+      touch();
+      if (m === 'remove') S[i].people.splice(j, 1);
+      if (m === 'move') {
+        var to = b.getAttribute('data-to');
+        if (to === 'new') { S.push({ role: '', team: '', people: [] }); to = S.length - 1; } else to = +to;
+        S[to].people.push(S[i].people.splice(j, 1)[0]);
+        delete S[to].teamId;
+      }
+      delete S[i].teamId;
+      closeSheet(); nameStatus(); render();
+    };
+  }
+  // One searchable list: items [{id, label, sub}], first ones shown before you type.
+  function listSheet(head, items, opts) {
+    var sh = sheet(head, '<input id="pkq" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search" value="' + esc(opts.q || '') + '"><div class="list" id="pkl"></div>');
     var q = $('pkq');
     function draw() {
-      var t = norm(q.value), out = [], onShow = {}, h = '';
-      form.onShow.forEach(function(id) { onShow[id] = 1; });
-      (lib.talent || []).forEach(function(x) {
-        if (t && ![x.en, x.ja, x.s].some(function(n) { return n && norm(n).indexOf(t) >= 0; })) return;
-        out.push(x);
-      });
-      out.sort(function(a, b) { return (onShow[b.id] ? 1 : 0) - (onShow[a.id] ? 1 : 0) || String(a.en).localeCompare(String(b.en)); });
-      out.slice(0, 60).forEach(function(x) { h += '<button type="button" data-id="' + esc(x.id) + '">' + esc(x.en || x.ja) + '<small>' + esc([x.ja, onShow[x.id] ? 'on this show' : '', x.st].filter(Boolean).join(' · ')) + '</small></button>'; });
-      if (q.value.trim()) h += '<button type="button" class="ghost" data-new="1">Propose new: ' + esc(q.value.trim()) + '</button>';
-      if (!h) h = '<div class="t3">Type a name.</div>';
+      var t = norm(q.value), h = '';
+      if (opts.none) h += '<button type="button" class="ghost" data-id="">' + esc(opts.none) + '</button>';
+      var L = t ? items.filter(function(x) { return [x.label, x.sub, x.alt].some(function(n) { return n && norm(n).indexOf(t) >= 0; }); }) : (opts.first && opts.first.length ? opts.first : items);
+      L.slice(0, 80).forEach(function(x) { h += '<button type="button" data-id="' + esc(x.id) + '">' + esc(x.label) + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</button>'; });
+      if (!L.length && !t) h += '<div class="t3">Type to search.</div>';
+      if (opts.propose) h += '<button type="button" class="ghost" data-new="1">' + (q.value.trim() ? 'Propose new: ' + esc(q.value.trim()) : '+ Propose new') + '</button>';
       $('pkl').innerHTML = h;
     }
     q.addEventListener('input', draw);
     draw();
-    $('pkx').onclick = closeSheet;
     $('pkl').onclick = function(e) {
-      var b = e.target.closest('button');
-      if (!b) return;
-      if (b.getAttribute('data-new')) {
-        var value = q.value.trim();
-        b.disabled = true; b.textContent = 'Adding…';
-        run('phonePropose', { type: 'new_talent', value: value, video: form.video }).then(function(r) {
-          if (!r.ok || !r.id) { b.textContent = 'Not added: ' + (r.error || 'no id'); return; }
-          lib.talent.push({ id: r.id, en: value });
-          byId[r.id] = lib.talent[lib.talent.length - 1]; nameMap[norm(value)] = r.id;
-          place(at, r.id, value); closeSheet();
-        }).catch(function(err) { b.textContent = 'Not added: ' + err; });
-        return;
-      }
-      var id = b.getAttribute('data-id');
-      // A spelling matched to a person here works from then on (saved with the match).
-      if (p && !p.id && p.billed && norm(p.billed) !== norm(nameOf(id))) form.aliases.push({ raw: p.billed, id: id });
-      place(at, id, p ? p.billed : nameOf(id));
-      closeSheet();
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.getAttribute('data-new')) { var v = q.value.trim(); closeSheet(); opts.propose(v); return; }
+      closeSheet(); opts.pick(b.getAttribute('data-id'));
     };
-    setTimeout(function() { q.focus(); }, 50);
+    if (opts.q) setTimeout(function() { q.focus(); }, 50);
   }
-  function place(at, id, billed) {
-    touch();
-    if (at.slot >= 0) { var p = form.sides[at.side].people[at.slot]; p.id = id; if (!p.billed) p.billed = billed; }
-    else form.sides[at.side].people.push({ id: id, billed: nameOf(id) });
-    delete form.sides[at.side].teamId;
-    say(''); nameStatus(); render();
+  function talentItem(t, onShow) { return { id: t.id, label: t.en || t.ja, alt: t.s, sub: [t.ja, onShow && onShow[t.id] ? 'on this show' : '', t.st].filter(Boolean).join(' · ') }; }
+  function namePicker(at) {
+    var p = at.slot >= 0 ? form.sides[at.side].people[at.slot] : null, onShow = {}, first = [], seen = {};
+    form.onShow.forEach(function(id) { onShow[id] = 1; });
+    var all = (lib.talent || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }).map(function(t) { return talentItem(t, onShow); });
+    // Before typing: on this show, then the names you picked lately.
+    form.onShow.concat(load(RECENT_KEY) || []).forEach(function(id) { if (byId[id] && !seen[id]) { seen[id] = 1; first.push(talentItem(byId[id], onShow)); } });
+    listSheet(p ? 'Pick the right name' + (p.id ? '' : ' for “' + esc(p.billed) + '”') : 'Add to side ' + (at.side + 1), all, {
+      first: first, q: p && !p.id ? p.billed : '',
+      propose: function(v) { proposeTalent(v || (p && p.billed) || '', at); },
+      pick: function(id) {
+        if (!id) return;
+        touch();
+        var S = form.sides[at.side];
+        if (at.slot < 0) S.people.push({ id: id, billed: nameOf(id) });
+        else {
+          var q = S.people[at.slot];
+          // A spelling matched to a person here works from then on (saved with the match).
+          if (!q.id && q.billed && norm(q.billed)) { form.aliases.push({ raw: q.billed, id: id }); nameMap[norm(q.billed)] = id; }
+          q.id = id; q.billed = nameOf(id);
+        }
+        delete S.teamId;
+        remember(id); say(''); nameStatus(); render();
+      }
+    });
   }
-  function openPropose(g) {
-    var sh = $('sheet');
-    sh.innerHTML = '<div class="eb">Propose a new ' + GROUP[g].toLowerCase() + '<button type="button" class="ghost" id="pkx">Close</button></div>' +
-      '<input id="pkq" type="text" autocomplete="off" placeholder="Name it as it should appear"><div class="list"><button type="button" id="pks">Add it</button><div class="t3" id="pkm"></div></div>';
-    sh.classList.remove('hide');
-    $('pkx').onclick = closeSheet;
+  function teamPicker(i) {
+    var S = form.sides[i], mk = S.people.map(function(p) { return p.id; }).filter(Boolean).sort().join('|');
+    var all = (lib.teams || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }).map(function(t) { return { id: t.id, label: t.en, sub: t.m.map(nameOf).join(' & '), mk: t.m.slice().sort().join('|') }; });
+    listSheet('Team · side ' + (i + 1), all, { none: 'No team name', first: all.filter(function(t) { return t.mk === mk; }),
+      propose: function(v) { openPropose({ type: 'new_team', label: 'team', text: v, entity: S.people.map(function(p) { return p.id; }).filter(Boolean).join('|'), from: { side: i } }); },
+      pick: function(id) { touch(); S.teamId = id; render(); } });
+  }
+  function factionPicker(i) {
+    var S = form.sides[i];
+    var all = (lib.factions || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }).map(function(x) { return { id: x.id, label: x.en, sub: x.ja }; });
+    listSheet('Faction · side ' + (i + 1), all, { none: 'No faction',
+      propose: function(v) { openPropose({ type: 'new_faction', label: 'faction', text: v, from: { side: i } }); },
+      pick: function(id) { touch(); S.factionId = id; render(); } });
+  }
+  function venuePicker() {
+    var all = (lib.venues || []).slice().sort(function(a, b) { return String(a.en).localeCompare(String(b.en)); }).map(function(v) { return { id: v.id, label: v.en || v.ja, sub: [v.ja, v.p].filter(Boolean).join(' · ') }; });
+    listSheet('Venue' + (form.venueRaw ? ' · ' + esc(form.venueRaw) : ''), all, {
+      propose: function(v) { openPropose({ type: 'new_venue', label: 'venue', text: v || form.venueRaw }); },
+      pick: function(id) {
+        if (!id) return;
+        touch();
+        if (form.venueRaw && !matchVenue(form.venueRaw)) form.venueAliases.push({ raw: form.venueRaw, id: id });
+        form.venue = id; form.touched.match = 1; render();
+      } });
+  }
+  function openPropose(p) {
+    var sh = sheet('Propose a new ' + esc(p.label), '<input id="pkq" type="text" autocomplete="off" placeholder="Name it as it should appear" value="' + esc(p.text || '') + '"><div class="list"><button type="button" id="pks" class="on" style="text-align:center">Add it</button><div class="t3" id="pkm">From your phone it goes straight into the library.</div></div>');
     $('pks').onclick = function() {
       var value = $('pkq').value.trim();
       if (!value) return;
       $('pks').disabled = true; $('pkm').textContent = 'Adding…';
-      run('phonePropose', { type: 'new_option', value: value, entity_id: g, video: form.video }).then(function(r) {
-        if (!r.ok || !r.id) { $('pks').disabled = false; $('pkm').textContent = 'Not added: ' + (r.error || 'no id'); return; }
-        (lib.lists[g] = lib.lists[g] || []).push({ id: r.id, en: value });
-        toggle(g, r.id); touch(); closeSheet(); render();
-      }).catch(function(err) { $('pks').disabled = false; $('pkm').textContent = 'Not added: ' + err; });
+      propose(p, value, function(err) { $('pks').disabled = false; $('pkm').textContent = 'Not added: ' + err; });
     };
     setTimeout(function() { $('pkq').focus(); }, 50);
   }
-  function closeSheet() { $('sheet').classList.add('hide'); $('sheet').innerHTML = ''; }
+  function proposeTalent(value, at) {
+    if (!value) return openPropose({ type: 'new_talent', label: 'wrestler', text: '', from: at });
+    say('Adding ' + value + '…');
+    propose({ type: 'new_talent', from: at }, value, function(err) { say('Not added: ' + err, true); });
+  }
+  // The owner's additions go straight in; then the library is read again and the new entry is used where it was asked for.
+  function propose(p, value, fail) {
+    run('phonePropose', { type: p.type, value: value, entity_id: p.entity || '', video: form.video }).then(function(r) {
+      if (!r || !r.ok || !r.id) { fail((r && r.error) || 'no id'); return; }
+      return run('phoneLib').then(function(l) {
+        if (l && l.ok) { store(LIB_KEY, l); setLib(l); }
+        closeSheet(); touch();
+        var id = r.id, from = p.from || {}, S = from.side != null ? form.sides[from.side] : null;
+        if (p.type === 'new_talent' && S) {
+          if (from.slot == null || from.slot < 0) S.people.push({ id: id, billed: value });
+          else { var q = S.people[from.slot]; if (q) { q.id = id; q.billed = value; } }
+          remember(id);
+        } else if (p.type === 'new_venue') { form.venue = id; form.touched.match = 1; }
+        else if (p.type === 'new_team' && S) S.teamId = id;
+        else if (p.type === 'new_faction' && S) S.factionId = id;
+        else if (p.type === 'new_option' && (form.tags[p.entity] || []).indexOf(id) < 0) toggle(p.entity, id);
+        say('Added ' + value + '.'); nameStatus(); render();
+      });
+    }).catch(function(e) { fail(String(e && e.message || e)); });
+  }
 
   // ---- saving: the same shape the TV's logger sends
-  function teamFor(s) {
-    var ids = s.people.map(function(p) { return p.id; }).filter(Boolean).sort().join('|');
-    var t = (lib.teams || []).filter(function(x) { return x.m.length && x.m.slice().sort().join('|') === ids; })[0];
-    return t ? t.id : '';
-  }
-  function factionFor(s) {
-    if (!s.team) return '';
-    var n = norm(s.team), x = (lib.factions || []).filter(function(y) { return norm(y.en) === n || norm(y.ja) === n; })[0];
-    return x ? x.id : '';
-  }
   $('save').addEventListener('click', function() {
     var f = form;
     if (!f || f.loading || busy) return;
@@ -507,29 +656,31 @@
     var parts = [], r = f.result, winner = 0;
     S.forEach(function(s, i) {
       if (r.type === 'win' && f.sides[r.side - 1] === s) winner = i + 1;
-      var team = s.people.length >= 2 ? (s.teamId !== undefined ? s.teamId : teamFor(s)) : '', fac = s.factionId !== undefined ? s.factionId : factionFor(s);
+      var team = sideTeam(s), fac = sideFaction(s);
       s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: s.role, team_id: team, faction_id: fac, entry: p.entry || '', elim: p.elim || '' }); });
     });
+    var TAB_OF = { title: 'match', competition: 'match', round: 'match', block: 'match', stipulation: 'match', finish: 'finish', moment: 'moments' };
     var tags = f.keepTags.slice();
-    Object.keys(f.tags).forEach(function(g) { (f.tags[g] || []).forEach(function(v) { tags.push({ group: g, value: v, source: f.touched || f.hadTags ? 'panel' : 'auto' }); }); });
-    var deep = f.marks.bell !== '' || f.marks.end !== '' || f.keepTags.length;
-    var level = Math.max(f.savedLevel, deep ? 3 : (f.touched ? 2 : 1));
+    Object.keys(f.tags).forEach(function(g) { (f.tags[g] || []).forEach(function(v) { tags.push({ group: g, value: v, source: f.touched[TAB_OF[g]] || f.hadTags ? 'panel' : 'auto' }); }); });
+    if (f.fall) tags.push({ group: 'fall', value: f.fall, source: 'panel' });
+    var deep = f.fall || (f.touched.finish && (f.tags.finish || []).length) || (f.touched.moments && (f.tags.moment || []).length) || f.marks.bell !== '' || f.marks.end !== '';
+    var level = Math.max(f.savedLevel, deep ? 3 : (f.touched.match ? 2 : 1));
     var show = f.rec.shows && f.rec.shows[0], title = (f.rec.title_en || '') + ' ' + (f.rec.title_ja || '');
     busy = true; $('save').textContent = 'Saving…';
-    run('phoneSave', { video: String(f.video), version: f.rec.version || 'jp', rating: f.rating || 0, aliases: f.aliases, participants: parts, tags: tags, marks: f.marks, venueAliases: [],
-      match: { show_id: show ? show.id : (f.set || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: f.venue, date: f.date, date_manual: false,
+    run('phoneSave', { video: String(f.video), version: f.rec.version || 'jp', rating: f.rating || 0, aliases: f.aliases, participants: parts, tags: tags, marks: f.marks, venueAliases: f.venueAliases,
+      match: { show_id: show ? show.id : (f.set || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: f.venue, date: f.date, date_manual: f.dateManual,
         card_total: f.cardTotal || '', card_no: f.cardNo, is_dark: f.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } })
     .then(function(res) {
       busy = false;
       if (!res.ok) { $('save').textContent = 'Not saved'; say(String(res.error || 'not saved'), true); return; }
-      f.aliases = []; f.dirty = false;
+      f.aliases = []; f.venueAliases = []; f.dirty = false; f.savedLevel = res.level || level;
       try { localStorage.removeItem(markKey(f.video)); } catch (e) {}
       $('save').textContent = res.linked ? 'Linked' : 'Saved';
       say(res.linked ? 'Linked as another version of the same match.' : 'Saved to StarScope.');
       setTimeout(function() { $('save').textContent = 'Save'; }, 2500);
       // The TV may have moved on while you were logging: follow it now.
       var c = current(); if (c && c.video !== f.video) setTimeout(function() { openVideo(c); }, 1200);
-    }).catch(function(e) { busy = false; $('save').textContent = 'Not saved'; say(String(e), true); });
+    }).catch(function(e) { busy = false; $('save').textContent = 'Not saved'; say(String(e && e.message || e), true); });
   });
 
   // ---- start: on Pages, the link first (pasted once, kept on this phone); then the library from the phone straight

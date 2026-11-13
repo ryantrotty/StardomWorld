@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.6
+
+- StarScope phone logger now covers what the TV's logger does:
+  - Competitors: tap a name for Pick the right name, Propose new, Move to side N or a new side, Remove. Each side gets Team (two or more people; worked out from the members like the TV, or picked, or proposed) and Faction (picked or proposed). Entry and elimination order, folded under the sides.
+  - Match: venue (picked or proposed; a site spelling matched by hand is remembered), date with Day / Month / Year − and + and Back to the page date, as well as match number, title, competition, round, block and stipulation.
+  - Finish: the result by name ("Momo Watanabe wins", a team's name when it has one) instead of Side 1 / Side 2, how it ended, and who got the fall (which sets the winner, as on the TV). Moments folded, the ones that give the result away only after Show result. The rating shows the average and how many ratings.
+  - Name picker: wrestlers on this show and the ones you picked lately come first, everyone else as you type.
+- Bell and Finish buttons each fill half the row.
+- Not on the phone: the TV's Preview and Confirm screens and Save and next match (the TV decides what plays next; the phone follows it after a save).
+- Copy scripts/starscope_phone.html to the gh-pages branch (done for this version); no Apps Script change.
+
 ## 2.68.5
 
 - StarScope home screen icon fills its tile: larger icons (180, 192, 512 and 1024 px) and a web app manifest on the GitHub Pages copy, so iOS no longer shrinks it onto a white square. Remove the old icon and add it again to pick this up.
