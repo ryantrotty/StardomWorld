@@ -11,6 +11,16 @@ Log the match the TV is playing from an iPhone, while you watch on the TV. The p
 
 The link carries the key, so keep it to yourself. Without the right key the address answers "POST only", as before.
 
+## Home screen icon (2.68.2)
+
+Apps Script pages can't set the iPhone's home screen icon, so a launcher page carries it: `starscope/index.html` on the `gh-pages` branch, served by GitHub Pages.
+
+1. Once: GitHub > the repo > **Settings > Pages > Build and deployment**: Source "Deploy from a branch", branch `gh-pages`, folder `/ (root)`, Save.
+2. On the iPhone in Safari: `https://ryantrotty.github.io/StardomWorld/starscope/`. Paste the phone link, Save and open.
+3. Go back to the launcher page (Back), then **Share > Add to Home Screen**. The telescope is the icon.
+
+The launcher keeps the link in the phone's own storage (it is never in the page or the repo) and opens it straight away from then on. Add `?reset` to the launcher address to paste a new link. The page asks search engines not to list it.
+
 ## How Bell and Finish work
 
 - The TV (private build, `assets/scopelink.js`) sends `pb_put` notes to the `playback` tab whenever playback changes: `open` (the page has read its video), `play`, `pause`, `seek` (seeks and skips), `buffer` / `resume`, `rate`, `end`, `stop` (leaving the page), and `sync` when the player is more than 2 s from where the notes say it should be (at most every 10 s). Notes within 1.5 s go as one send. Nothing is sent while the video just plays on.

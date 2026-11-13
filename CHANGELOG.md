@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.2
+
+- StarScope launcher for the iPhone home screen (telescope icon instead of a letter): a small page on the gh-pages branch, served by GitHub Pages at /starscope/. It holds no link and no key: you paste the phone link once, it stays on that phone, and the icon opens the logger from then on. ?reset to change the link. No app changes.
+
 ## 2.68.1
 
 - StarScope phone page: no longer drifts around when dragged. The scale is fixed (no pinch zoom), the page only scrolls up and down, and the Match number row wraps instead of running past the screen edge.
