@@ -3266,7 +3266,7 @@ class MainActivity : Activity() {
         // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
         @android.webkit.JavascriptInterface
         fun starCards(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_cards"), "__tvStarCardsReply")
+            sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply")
 
         // The Wrestlers menu (2.64.0, private builds): every wrestler's status from the sheet, replies to __tvRosterReply.
         @android.webkit.JavascriptInterface

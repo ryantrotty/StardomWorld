@@ -37,6 +37,8 @@
  *   vi_cards   {}                                              one entry per logged video for the StarScope cards and player:
  *                                                              names, event, match number, show, venue, bell and end times (2.65.0),
  *                                                              match id, round and special rules for the Shows page (2.66.0)
+ *   vi_suggest {}                                              StarScope's Log next tab (2.67.0): videos watched but not logged,
+ *                                                              by show (set), with views, last watched and the venue's names
  */
 var SHEET = 'videos';
 var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_en', 'title_ja',
@@ -60,6 +62,7 @@ function doPost(e) {
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
   if (body.action === 'vi_cards') return out(viCards());
+  if (body.action === 'vi_suggest') return out(viSuggest());
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
@@ -749,6 +752,40 @@ function viCards() {
     map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });
   return { ok: true, map: map };
+}
+
+// StarScope Log next (2.67.0): every video the private build has read ("videos") that has no match_videos row, grouped
+// by its set (the show). Read only, no lock. Zero-time (dark) matches and backstage comment clips are marked, so the app
+// can leave them out of the ranking. The venue is matched to the venues tab by its Japanese name where it can be.
+function viSuggest() {
+  var logged = {};
+  viRows('match_videos').forEach(function(v) { logged[String(v.video_id)] = 1; });
+  var ven = viRows('venues').filter(function(x) { return x.name_ja; });
+  function venue(raw) {
+    raw = String(raw || '');
+    if (!raw) return null;
+    var hit = ven.filter(function(x) { return raw.indexOf(x.name_ja) >= 0; })[0];
+    return hit ? { id: hit.venue_id, en: hit.name_en, ja: hit.name_ja } : null;
+  }
+  var sh = sheet(), n = sh.getLastRow(), sets = {};
+  if (n < 2) return { ok: true, sets: [] };
+  var I = {}; ['id', 'last_seen', 'times_seen', 'no', 'title_en', 'title_ja', 'show', 'show_date', 'venue', 'set_id', 'thumb'].forEach(function(c) { I[c] = COLS.indexOf(c); });
+  sh.getRange(2, 1, n - 1, COLS.length).getValues().forEach(function(r) {
+    var id = String(r[I.id]), set = String(r[I.set_id] || '');
+    if (!id || !set || logged[id]) return;
+    var t = [r[I.title_en], r[I.title_ja]].join(' '), no = r[I.no] === '' ? null : Number(r[I.no]);
+    var g = sets[set] = sets[set] || { set: set, show: '', dates: {}, venueRaw: '', videos: [] };
+    if (r[I.show]) g.show = String(r[I.show]);
+    if (r[I.show_date]) { var d = String(r[I.show_date] instanceof Date ? Utilities.formatDate(r[I.show_date], 'UTC', 'yyyy-MM-dd') : r[I.show_date]).slice(0, 10); g.dates[d] = (g.dates[d] || 0) + 1; }
+    if (r[I.venue]) g.venueRaw = String(r[I.venue]);
+    g.videos.push({ id: id, no: isFinite(no) ? no : null, views: Number(r[I.times_seen]) || 1, last: r[I.last_seen] instanceof Date ? r[I.last_seen].toISOString() : String(r[I.last_seen] || ''), th: String(r[I.thumb] || ''),
+      zero: no === 0 || /ダイゼロ|ゼロタイム|zero\s*-?\s*time|第0試合/i.test(t), comment: /コメント|comments?\b/i.test(t) && !/試合|マッチ|match|commentary/i.test(t) });
+  });
+  var out = Object.keys(sets).map(function(k) {
+    var g = sets[k], date = Object.keys(g.dates).sort(function(a, b) { return g.dates[b] - g.dates[a]; })[0] || '';
+    return { set: g.set, show: g.show, date: date, venueRaw: g.venueRaw, venue: venue(g.venueRaw), videos: g.videos };
+  });
+  return { ok: true, sets: out };
 }
 
 // The compiled index. Ids and tags only, so it can go to public builds later. Results are a separate block, hidden unless asked for.

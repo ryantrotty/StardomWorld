@@ -267,3 +267,9 @@ Wrestlers menu tabs (2.64.0): Current, Past and Guests in the existing rounded t
 - Card squares (2.66.1): on every card. Card size unknown: squares to the highest logged match, then a dashed "?". No match numbers: a 12/700 #9AA6B4 line in the same place.
 - Featured: newest first, the latest fully logged show leads, wide: picture on the left, the whole running order on the right (gold numbers, uppercase grey event, names), the main event row on #2A2410.
 - Results and spoilers: finalists' names are shown (Ryan's call); results never are.
+
+## StarScope Log next (2.67.0, private builds)
+
+- Fifth tab on the StarScope page ("Log next · N"). The same show cards as Shows; a line above each card (16 px gold eye, 14/600 #C9D2DC, the counts in white) says what was watched and when.
+- Not logged yet: #232B35 bars (11 px, radius 3) where the main event and highlights will go, with a #3B4656 circle in place of the icon; the main event label is grey "Main event · not logged yet".
+- Squares gain a fourth state: watched, not logged = dashed gold border, no fill (logged stays the gold-tinted fill with a solid edge). A key at the top right names Logged, Watched and Not seen.

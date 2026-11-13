@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.67.0
+
+- StarScope Log next (private builds): a fifth tab on the StarScope page, "Log next · N", listing the shows you've watched but not finished logging, from the sheet's video log. Shows you've started logging come first, then the most matches watched, the most plays and the most recently watched. Dai Zero Time matches and backstage comment clips don't count, and fully logged shows never appear.
+- Each show uses the same card as the Shows tab. What's logged is filled in; the rest is left as empty bars (main event, highlights). Watched-but-not-logged matches get a dashed gold square, and a line above the card says how many you watched, how many plays and when you last watched.
+- OK on a card opens the first watched match that isn't logged, with the StarScope logger already open.
+- Apps Script: a new read-only call (vi_suggest), no lock. Paste the script and publish a new version; until then the tab says Loading…. The answer is kept on the TV for 10 minutes.
+
 ## 2.66.1
 
 - StarScope Shows: every show card now ends with the same row. Card size known: one square per match as before. Card size not logged: squares up to the highest logged match, then a "?". No match numbers at all: "7 logged · no match numbers yet" in the same place. A match numbered past the card size (5★STAR GP 2016, Match 7 of 6) now counts the card as that big instead of showing 0/6.
