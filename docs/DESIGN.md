@@ -25,6 +25,8 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Border / track | #2A323C, #3B4656 | Lines; progress track |
 | Text | #FFFFFF, #C9D2DC, #9AA6B4 | Title, description, fine print |
 | Error | #FF7A66 | Login failures |
+| Unavailable | #5A6472 | Player bar buttons that can't be used (greyed), StarScope shows' missing match squares (2.66.0) |
+| Logged square edge | #6B5A22 | Border of a logged match square on StarScope show cards, on the #2A2410 tint (2.66.0) |
 | Live red | #D62839 (hover #E8374A, text #FF6B78) | Live only |
 | PPV purple | #7B5CFF (text #B6A4FF) | PPV only |
 | League blue / red | #4DA6FF, #FF5A6A | Tag League page block headers only (Blue / Red Goddesses) |
