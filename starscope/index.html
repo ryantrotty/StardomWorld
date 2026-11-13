@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-title" content="StarScope">
+<title>StarScope</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-32.png">
+<!-- StarScope launcher: a home screen icon for the phone logger. This page holds no link and no key: the link you
+     paste stays on this phone (localStorage) and the page opens it straight away from then on. Add ?reset to change it. -->
+<style>
+  html,body{margin:0;background:#0B1118;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow-x:hidden}
+  main{max-width:520px;margin:0 auto;padding:40px 18px}
+  .brand{display:flex;align-items:center;gap:12px;font:900 24px Arial;letter-spacing:.06em}
+  .brand span{color:#F4C242}
+  p{font:600 15px Arial;color:#C9D2DC;line-height:1.45}
+  input{box-sizing:border-box;width:100%;height:50px;background:#0F151C;color:#fff;border:2px solid #2A323C;border-radius:10px;font:600 16px Arial;padding:0 12px;outline:none}
+  input:focus{border-color:#F4C242}
+  button{margin-top:12px;width:100%;min-height:50px;background:#FFB347;border:0;border-radius:10px;color:#1A1A1A;font:800 17px Arial}
+  .bad{color:#FF7A66;font:700 14px Arial;min-height:20px;margin-top:10px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<main id="m" class="hide">
+  <div class="brand"><img src="icon-180.png" width="44" height="44" alt="" style="border-radius:10px">STAR<span>SCOPE</span></div>
+  <p>Paste your StarScope phone link once (the one ending <b>?p=phone&amp;k=…</b>). It stays on this phone only, and this icon opens the logger from then on.</p>
+  <input id="u" type="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?p=phone&k=…">
+  <button id="go" type="button">Save and open</button>
+  <div class="bad" id="e"></div>
+  <p style="font-size:13px;color:#9AA6B4">Then Share › Add to Home Screen. To change the link later, open this page with ?reset on the end.</p>
+</main>
+<script>
+(function(){
+  var KEY = 'starscopeLink', OK = /^https:\/\/script\.google\.com\/[^\s]*\/exec\?(?=[^\s]*\bp=phone\b)(?=[^\s]*\bk=[^&\s]+)[^\s]*$/;
+  function get() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem(KEY); } catch (e) {} }
+  var saved = get();
+  if (OK.test(saved)) { location.replace(saved); return; }
+  document.getElementById('m').className = '';
+  document.getElementById('go').onclick = function() {
+    var v = document.getElementById('u').value.trim();
+    if (!OK.test(v)) { document.getElementById('e').textContent = 'That doesn’t look like the phone link. It should start https://script.google.com/ and end with ?p=phone&k=…'; return; }
+    try { localStorage.setItem(KEY, v); } catch (e) {}
+    location.replace(v);
+  };
+})();
+</script>
+</body>
+</html>
