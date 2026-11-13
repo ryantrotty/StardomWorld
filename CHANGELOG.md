@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.65.2
+
+- StarScope cards: a match logged with a rule that isn't already the kind of match (Mixed Martial Arts, Ladder, Cage, Loser's Haircut, No Disqualification) now says so. With no tournament or title, the rule is the card's heading ("Mixed Martial Arts match"), with the kind of match underneath unless it is singles. Under a tournament or title it goes in the footer ("Ladder match · Final"). Gauntlets, battle royals, rumbles and handicaps are unchanged, and High Speed isn't repeated under the High Speed title. Same rules in the Apps Script (vi_cards) and the logger's Card preview.
+- Paste the script and publish a new version; TVs pick the new cards up within 30 minutes, or straight away after saving a match.
+
 ## 2.65.1
 
 - StarScope player: no Japanese in the English title line or the row heading. The show's Japanese subtitle (〜しらんけどスターダム〜) is left out in English; Japanese keeps the whole name.

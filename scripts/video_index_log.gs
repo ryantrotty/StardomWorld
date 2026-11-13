@@ -678,9 +678,18 @@ function viCards() {
     return J ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
   }
   function big(s, st) { return s.length > 2 || (st || []).some(function(x) { return /^(gauntlet|royal|rumble)$/.test(x); }); }
+  // Rules that are not the kind of match (2.65.2): Mixed Martial Arts, Ladder, Cage, Loser's Haircut and so on.
+  // Gauntlets, battle royals, rumbles and handicaps are already said by kind(); a stipulation named like the title
+  // (High Speed) is already said by the title. Same rules as specials() in assets/indexpanel.js.
+  function specials(t, lang) {
+    return (t.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && (t.title || []).indexOf(x) < 0; })
+      .map(function(x) { var l = String(lab('stipulation', x, lang)); return lang === 'ja' || /match$/i.test(l) ? l : l + ' match'; });
+  }
   function event(m, t, s, lang) {
     if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
     if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
+    var sp = specials(t, lang);
+    if (sp.length) return sp[0];
     return kind(s, lang, t.stipulation);
   }
   // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
@@ -697,6 +706,13 @@ function viCards() {
     var f = [];
     // A big match under a tournament or title still says what kind it is.
     if (s && big(s, t.stipulation) && (t.competition || t.title)) f.push(kind(s, lang, t.stipulation));
+    var sp = specials(t, lang);
+    if (t.competition || t.title) f = f.concat(sp);
+    else if (sp.length) {
+      // The rule is the headline: what kind of match it is goes underneath, unless it is a plain singles match.
+      f = f.concat(sp.slice(1));
+      if (s && (s.length > 2 || Math.max.apply(null, s.map(function(x) { return x.length; }).concat([0])) > 1)) f.unshift(kind(s, lang, t.stipulation));
+    }
     if (t.block) f.push(lab('block', t.block[0], lang));
     if (t.round) f.push(String(lab('round', t.round[0], lang)).replace(/ match$/i, ''));
     return f;
