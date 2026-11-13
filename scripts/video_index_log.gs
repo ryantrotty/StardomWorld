@@ -35,7 +35,8 @@
  *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
  *   vi_cards   {}                                              one entry per logged video for the StarScope cards and player:
- *                                                              names, event, match number, show, venue, bell and end times (2.65.0)
+ *                                                              names, event, match number, show, venue, bell and end times (2.65.0),
+ *                                                              match id, round and special rules for the Shows page (2.66.0)
  */
 var SHEET = 'videos';
 var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_en', 'title_ja',
@@ -740,7 +741,10 @@ function viCards() {
       c: t.competition ? lab('competition', t.competition[0], 'en') : '',
       ti: (t.title || []).map(function(x) { return lab('title', x, 'en'); }),
       g: Object.keys(groups),
-      r: rt ? Math.round(rt.s / rt.n * 10) / 10 : 0, rc: rt ? rt.n : 0
+      r: rt ? Math.round(rt.s / rt.n * 10) / 10 : 0, rc: rt ? rt.n : 0,
+      // For the StarScope Shows page (2.66.0): the match, its round and the special rules, to pick a show's highlights.
+      m: String(v.match_id), rd: t.round || [], st: (t.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && (t.title || []).indexOf(x) < 0; }),
+      dk: String(m.is_dark).toUpperCase() === 'TRUE'
     };
     map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });

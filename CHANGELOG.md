@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.66.0
+
+- StarScope Shows (private builds): a fourth tab on the StarScope page, and a "Shows ›" pill next to Recently added, Top rated and All matches in the Community menu. Every show with a logged match gets a poster card: the main event's picture, the date as a stamp, the venue, a telescope count (matches logged / on the card), the main event, up to three highlights (title matches, then finals and semis, then special rules such as Mixed Martial Arts, then tournament matches, then the opener) and the card as numbered squares (logged, missing, main event).
+- Newest first, the latest fully logged show leads, wide, with its whole running order. Filters: Year, Venue, Complete only; sort Newest, Oldest or Most logged.
+- A show whose main event isn't logged yet uses its highest logged match ("Match 9 of 10 · main event not logged"). A show with no card size shows how many matches are logged and no squares. The show's date is the one most of its matches have.
+- OK on a show opens its first logged match, so it plays on in card order.
+- Apps Script: vi_cards also sends each video's match, round, special rules and dark-match flag. Paste the script and publish a new version; until then shows still appear, but a match logged with more than one video counts twice and the highlights only find titles and tournaments.
+
 ## 2.65.2
 
 - StarScope cards: a match logged with a rule that isn't already the kind of match (Mixed Martial Arts, Ladder, Cage, Loser's Haircut, No Disqualification) now says so. With no tournament or title, the rule is the card's heading ("Mixed Martial Arts match"), with the kind of match underneath unless it is singles. Under a tournament or title it goes in the footer ("Ladder match · Final"). Gauntlets, battle royals, rumbles and handicaps are unchanged, and High Speed isn't repeated under the High Speed title. Same rules in the Apps Script (vi_cards) and the logger's Card preview.
