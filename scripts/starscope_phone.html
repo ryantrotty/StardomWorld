@@ -1,7 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
 <base target="_top">
+<!-- Used by the GitHub Pages copy only (Apps Script ignores meta and link tags written in the file). -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StarScope">
+<meta name="theme-color" content="#0B1118">
+<title>StarScope</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-32.png">
 <!-- StarScope on the phone (2.68.0, docs/STARSCOPE_PHONE.md). Apps Script HTML file named "phone" next to
      video_index_log.gs; opened from the script's web app address with ?p=phone&k=KEY. Log the match the TV is playing:
      Bell and Finish are taps, turned into places in the video from the TV's play / pause / seek notes. -->
@@ -20,7 +31,7 @@
   button:disabled{opacity:.45}
   input{width:100%;height:48px;background:var(--panel);color:#fff;border:2px solid var(--line);border-radius:10px;font:700 17px Arial;padding:0 12px;outline:none}
   input:focus{border-color:var(--gold)}
-  .top{display:flex;align-items:center;gap:10px;padding:14px 0 10px;position:sticky;top:0;background:var(--navy);z-index:5}
+  .top{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top)) 0 10px;position:sticky;top:0;background:var(--navy);z-index:5}
   .brand{font:900 20px Arial;letter-spacing:.06em}
   .brand span{color:var(--gold)}
   .live{margin-left:auto;font:700 13px Arial;color:var(--t3);text-align:right}
@@ -57,7 +68,7 @@
   .bar .msg{flex:1;font:700 14px Arial;color:var(--t2);line-height:1.3}
   .bar .msg.bad{color:var(--bad)}
   .bar button{min-width:120px;text-align:center;background:var(--orange);border-color:var(--orange);color:var(--ink);font-weight:800}
-  .sheet{position:fixed;inset:0;background:var(--navy);z-index:10;display:flex;flex-direction:column;padding:14px 14px env(safe-area-inset-bottom)}
+  .sheet{position:fixed;inset:0;background:var(--navy);z-index:10;display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top)) 14px env(safe-area-inset-bottom)}
   .sheet .list{flex:1;overflow:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px;padding-bottom:20px}
   .sheet .list button small{display:block;font:600 12px Arial;color:var(--t3);margin-top:2px}
   .hide{display:none}
@@ -75,7 +86,19 @@
 
 <script>
 (function(){
-  var K = document.body.getAttribute('data-k');
+  // Two homes (2.68.4): served by the Apps Script (key in the page, google.script.run), or on GitHub Pages
+  // (gh-pages branch, starscope/index.html), where the phone link is pasted once and kept on the phone, and calls go
+  // to the script as POSTs, like the TV's. The Pages copy never meets Google's "unable to open the file" page.
+  var K = document.body.getAttribute('data-k') || '';
+  var GAS = !!(window.google && google.script && google.script.run) && K && K.charAt(0) !== '<';
+  var LINK_KEY = 'starscopeLink', EXEC = '', device = '';
+  var LINK_OK = /^https:\/\/script\.google\.com\/[^\s]*\/exec\?(?=[^\s]*\bp=phone\b)(?=[^\s]*\bk=[^&\s]+)[^\s]*$/;
+  function setLink(v) {
+    if (!LINK_OK.test(v)) return false;
+    EXEC = v.split('?')[0];
+    K = decodeURIComponent((/[?&]k=([^&]+)/.exec(v) || [])[1] || '');
+    return !!K;
+  }
   var POLL = 6000, RESOLVE = 3500, LIB_KEY = 'ssLibV1';
   var SUGGEST = ['title', 'competition', 'round', 'block', 'stipulation'], MULTI = { title: 1, stipulation: 1, moment: 1 };
   var EDITED = { title: 1, competition: 1, round: 1, block: 1, stipulation: 1 };
@@ -96,10 +119,25 @@
   function say(t, bad) { var m = $('msg'); m.textContent = t || ''; m.className = 'msg' + (bad ? ' bad' : ''); }
   function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
-    return new Promise(function(ok, no) {
+    if (GAS) return new Promise(function(ok, no) {
       var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function(e) { no(e && e.message ? e.message : String(e)); });
       r[fn].apply(r, [K].concat(args));
     });
+    var body = fn === 'phoneNow' ? { action: 'pb_now' }
+      : fn === 'phoneLib' ? { action: 'vi_lib' }
+      : fn === 'phoneGet' ? { action: 'vi_get', video: String(args[0] || ''), show: String(args[1] || ''), device: device }
+      : fn === 'phoneSave' ? Object.assign({}, args[0], { action: 'vi_save', device: device || 'phone' })
+      : Object.assign({}, args[0], { action: 'vi_propose', owner: true, device: 'phone' });
+    body.key = K;
+    // text/plain keeps it a simple request (no CORS preflight); no cookies are sent, so Google's sign-in plays no part.
+    return fetch(EXEC, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, credentials: 'omit', redirect: 'follow' })
+      .then(function(r) { return r.text(); })
+      .then(function(t) {
+        var j; try { j = JSON.parse(t); } catch (e) { throw new Error('The sheet answered oddly. Check the link (?reset).'); }
+        if (j && j.ok === false && j.error === 'bad key') throw new Error('The key in your link is wrong (?reset to paste it again).');
+        if (fn === 'phoneNow' && j && j.device) device = j.device;
+        return j;
+      });
   }
 
   // ---- the library (names, lists, venues), kept on the phone so the page opens at once
@@ -492,15 +530,36 @@
     }).catch(function(e) { busy = false; $('save').textContent = 'Not saved'; say(String(e), true); });
   });
 
-  // ---- start: the library from the phone straight away, a fresh copy behind it
-  var cached = load(LIB_KEY);
-  if (cached) setLib(cached);
-  run('phoneLib').then(function(l) {
-    if (!l || !l.ok) throw new Error((l && l.error) || 'library not loaded');
-    store(LIB_KEY, l); setLib(l);
-    if (form && !form.loading) render();
-  }).catch(function(e) { if (!lib) say('Library: ' + e, true); })
-    .then(function() { if (lib) { render(); poll(); } });
+  // ---- start: on Pages, the link first (pasted once, kept on this phone); then the library from the phone straight
+  // away, a fresh copy behind it
+  function start() {
+    var cached = load(LIB_KEY);
+    if (cached) setLib(cached);
+    run('phoneLib').then(function(l) {
+      if (!l || !l.ok) throw new Error((l && l.error) || 'library not loaded');
+      store(LIB_KEY, l); setLib(l);
+      if (form && !form.loading) render();
+    }).catch(function(e) { if (!lib) say('Library: ' + (e && e.message || e), true); })
+      .then(function() { if (lib) { render(); poll(); } });
+  }
+  if (GAS) { start(); return; }
+  if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem(LINK_KEY); } catch (e) {} }
+  var savedLink = ''; try { savedLink = localStorage.getItem(LINK_KEY) || ''; } catch (e) {}
+  if (setLink(savedLink)) { start(); return; }
+  $('save').style.display = 'none';
+  say('');
+  $('live').textContent = '';
+  $('app').innerHTML = '<div class="box"><div class="eb">Set up</div><div class="t2">Paste your StarScope phone link once (the one ending <b>?p=phone&amp;k=…</b>). It stays on this phone only.</div>' +
+    '<div style="height:10px"></div><input id="lnk" type="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?p=phone&k=…">' +
+    '<div style="height:10px"></div><button type="button" id="lnkgo" class="on" style="width:100%;text-align:center">Save</button><div class="t3" id="lnkmsg"></div>' +
+    '<div class="t3" style="margin-top:14px">To change it later, open this page with ?reset on the end.</div></div>';
+  $('lnkgo').onclick = function() {
+    var v = $('lnk').value.trim();
+    if (!setLink(v)) { $('lnkmsg').textContent = 'That doesn\u2019t look like the phone link. It should start https://script.google.com/ and end with ?p=phone&k=\u2026'; return; }
+    try { localStorage.setItem(LINK_KEY, v); } catch (e) {}
+    $('save').style.display = ''; $('app').innerHTML = ''; say('Loading…');
+    start();
+  };
 })();
 </script>
 </body>

@@ -43,6 +43,9 @@
  * StarScope on the phone (2.68.0, see docs/STARSCOPE_PHONE.md):
  *   pb_put {video, set, events: [{ts, ev, pos, playing, rate}], info}  the TV's play / pause / seek record ("playback" tab);
  *                                                              only the current video and the one before it are kept
+ *   pb_now {}                                                  what the TV is playing: its notes for the last two videos and their
+ *                                                              page facts (2.68.4: the logger on GitHub Pages calls this, and the
+ *                                                              vi_lib / vi_get / vi_save / vi_propose actions, with the key)
  *   GET ?p=phone&k=KEY                                         the phone logger page (the "phone" HTML file in this project);
  *                                                              its calls (phoneNow, phoneLib, phoneGet, phoneSave, phonePropose)
  *                                                              need the same key
@@ -72,6 +75,7 @@ function doPost(e) {
   if (body.action === 'vi_suggest') return out(viSuggest());
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
+  if (body.action === 'pb_now') return out(pbNow_());
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -899,6 +903,10 @@ function phoneDevice_(rows) {
 // What the TV is playing: its notes for the current and the last video, and what the page said about each video.
 function phoneNow(k) {
   phoneKey_(k);
+  return pbNow_();
+}
+// Also a doPost action (pb_now, 2.68.4) for the logger hosted on GitHub Pages, which calls the script like the TV does.
+function pbNow_() {
   var rows = pbRows().sort(function(x, y) { return x.ts - y.ts; }), vids = [];
   rows.forEach(function(r) { var v = String(r.video); var i = vids.indexOf(v); if (i >= 0) vids.splice(i, 1); vids.push(v); });
   vids = vids.slice(-2).reverse();

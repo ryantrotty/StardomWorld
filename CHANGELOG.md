@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.4
+
+- StarScope phone logger now lives on GitHub Pages too (gh-pages branch, starscope/index.html, the same file as scripts/starscope_phone.html), with the telescope home screen icon. It talks to the sheet in the background the way the TV does, so Google's "Sorry, unable to open the file at this time" page can't appear, and it opens full screen from the home screen.
+- The phone link is pasted once and kept on the phone; ?reset to paste a new one. The page holds no link and no key.
+- Apps Script: a new pb_now action (what the TV is playing), for the Pages logger. Paste the script and publish a new version. The Apps Script page (?p=phone&k=…) still works as before.
+
 ## 2.68.3
 
 - docs/STARSCOPE_PHONE.md: add the launcher to the home screen before pasting the link (afterwards it opens the logger straight away). No app changes.

@@ -11,15 +11,13 @@ Log the match the TV is playing from an iPhone, while you watch on the TV. The p
 
 The link carries the key, so keep it to yourself. Without the right key the address answers "POST only", as before.
 
-## Home screen icon (2.68.2)
+## On the home screen (2.68.4)
 
-Apps Script pages can't set the iPhone's home screen icon, so a launcher page carries it: `starscope/index.html` on the `gh-pages` branch, served by GitHub Pages.
+The logger also lives on GitHub Pages: `starscope/index.html` on the `gh-pages` branch is a copy of `scripts/starscope_phone.html`, with `icon-180.png` (home screen) and `icon-32.png` (tab) beside it. Copy the file over when it changes. On Pages it calls the script with POSTs (`pb_now`, `vi_lib`, `vi_get`, `vi_save`, `vi_propose`), like the TV, with no cookies, so Google's "Sorry, unable to open the file at this time" page (a sign-in cookie problem with Apps Script pages on iPhones) never comes up. Opened from the home screen it runs full screen.
 
-1. Once: GitHub > the repo > **Settings > Pages > Build and deployment**: Source "Deploy from a branch", branch `gh-pages`, folder `/ (root)`, Save.
-2. On the iPhone in Safari: `https://ryantrotty.github.io/StardomWorld/starscope/`. While the paste box is showing, **Share > Add to Home Screen** (the telescope is the icon). Add it before pasting: once a link is saved the page opens the logger straight away.
-3. Open the new icon, paste the phone link, Save and open.
-
-The launcher keeps the link in the phone's own storage (it is never in the page or the repo) and opens it straight away from then on. Add `?reset` to the launcher address to paste a new link. The page asks search engines not to list it.
+1. Pages: Settings > Pages, "Deploy from a branch", `gh-pages`, `/ (root)`.
+2. On the iPhone in Safari: `https://ryantrotty.github.io/StardomWorld/starscope/`, then **Share > Add to Home Screen**.
+3. Open the icon and paste the phone link once. It is kept in the phone's own storage for that icon (never in the page or the repo). Add `?reset` to the address to paste a new link.
 
 ## How Bell and Finish work
 
