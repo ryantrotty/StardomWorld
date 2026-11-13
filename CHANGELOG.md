@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.3
+
+- docs/STARSCOPE_PHONE.md: add the launcher to the home screen before pasting the link (afterwards it opens the logger straight away). No app changes.
+
 ## 2.68.2
 
 - StarScope launcher for the iPhone home screen (telescope icon instead of a letter): a small page on the gh-pages branch, served by GitHub Pages at /starscope/. It holds no link and no key: you paste the phone link once, it stays on that phone, and the icon opens the logger from then on. ?reset to change the link. No app changes.

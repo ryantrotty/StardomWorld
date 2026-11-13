@@ -16,8 +16,8 @@ The link carries the key, so keep it to yourself. Without the right key the addr
 Apps Script pages can't set the iPhone's home screen icon, so a launcher page carries it: `starscope/index.html` on the `gh-pages` branch, served by GitHub Pages.
 
 1. Once: GitHub > the repo > **Settings > Pages > Build and deployment**: Source "Deploy from a branch", branch `gh-pages`, folder `/ (root)`, Save.
-2. On the iPhone in Safari: `https://ryantrotty.github.io/StardomWorld/starscope/`. Paste the phone link, Save and open.
-3. Go back to the launcher page (Back), then **Share > Add to Home Screen**. The telescope is the icon.
+2. On the iPhone in Safari: `https://ryantrotty.github.io/StardomWorld/starscope/`. While the paste box is showing, **Share > Add to Home Screen** (the telescope is the icon). Add it before pasting: once a link is saved the page opens the logger straight away.
+3. Open the new icon, paste the phone link, Save and open.
 
 The launcher keeps the link in the phone's own storage (it is never in the page or the repo) and opens it straight away from then on. Add `?reset` to the launcher address to paste a new link. The page asks search engines not to list it.
 
