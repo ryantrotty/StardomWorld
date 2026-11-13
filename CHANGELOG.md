@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.5
+
+- StarScope home screen icon fills its tile: larger icons (180, 192, 512 and 1024 px) and a web app manifest on the GitHub Pages copy, so iOS no longer shrinks it onto a white square. Remove the old icon and add it again to pick this up.
+
 ## 2.68.4
 
 - StarScope phone logger now lives on GitHub Pages too (gh-pages branch, starscope/index.html, the same file as scripts/starscope_phone.html), with the telescope home screen icon. It talks to the sheet in the background the way the TV does, so Google's "Sorry, unable to open the file at this time" page can't appear, and it opens full screen from the home screen.
