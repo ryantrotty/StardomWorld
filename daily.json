@@ -1,17 +1,19 @@
 {
- "generated": "2026-11-13T06:33:18Z",
+ "generated": "2026-11-14T06:33:19Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-13T06:29:16Z",
-  "finished": "2026-11-13T06:33:18Z",
-  "requests": 29,
+  "started": "2026-11-14T06:30:26Z",
+  "finished": "2026-11-14T06:33:19Z",
+  "requests": 37,
   "schedule": {
    "ok": true,
-   "events": 38,
+   "events": 42,
    "changed": [
-    "20261114-matsuyama",
-    "20261115-kochi",
-    "20261118-korakuen"
+    "20261114-cmll",
+    "20261115-cmll",
+    "20261116-cmll",
+    "20261117-cmll",
+    "20261204-ryukyu"
    ],
    "error": ""
   },
@@ -21,37 +23,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-12T06:34:11Z)"
+     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
     },
     "kawaii": {
      "read": false,
@@ -73,6 +75,14 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
+    "schedule: new event 20261114-cmll takes its Japanese venue string: メキシコ・アレナ・メヒコ",
+    "schedule: new event 20261114-cmll title translated from Japanese: [Participation from another organization] CMLL",
+    "schedule: new event 20261115-cmll takes its Japanese venue string: メキシコ・アレナ・コリセオ",
+    "schedule: new event 20261115-cmll title translated from Japanese: [Participation from another organization] CMLL",
+    "schedule: new event 20261116-cmll takes its Japanese venue string: メキシコ・アレナ・メヒコ",
+    "schedule: new event 20261116-cmll title translated from Japanese: [Participation from another organization] CMLL",
+    "schedule: new event 20261117-cmll takes its Japanese venue string: メキシコ・アレナ・メヒコ",
+    "schedule: new event 20261117-cmll title translated from Japanese: [Participation from another organization] CMLL＆新日本プロレス「Lucha Kingdom」",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
@@ -81,7 +91,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-13T06:30:32Z",
+  "updated": "2026-11-14T06:32:29Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -120,7 +130,12 @@
    "20261215-gokigen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261215_gokigen_card.jpg",
    "20261229-ryogoku": "https://wwr-stardom.com/wp/wp-content/uploads/2026/07/1229ryogoku_SD_02.png",
    "20261212-toyosu-kaiken": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/%E4%B8%A1%E5%9B%BD%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
-   "20261201-chichi": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/download-1.jpeg"
+   "20261201-chichi": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/download-1.jpeg",
+   "20261114-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261114_JST_CMLL_%E7%8F%BE%E5%9C%B01113.jpg",
+   "20261115-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261115_JST_CMLL_%E7%8F%BE%E5%9C%B01114.jpg",
+   "20261116-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261116_JST_CMLL_%E7%8F%BE%E5%9C%B01115.jpg",
+   "20261117-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261117_JST_CMLL_LuchaKingdom_%E7%8F%BE%E5%9C%B01116.jpg",
+   "20261204-ryukyu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/1204poi_anne.jpg"
   },
   "ppv_seen": {},
   "events": [
@@ -694,6 +709,16 @@
     ]
    },
    {
+    "id": "20261114-cmll",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261114_cmll/",
+    "poster": "20261114-cmll",
+    "title": "[Participation from another organization] CMLL",
+    "short": "[Participation from another organization] CMLL",
+    "start": "2026-11-14T20:30:00+09:00",
+    "venue": "メキシコ・アレナ・メヒコ"
+   },
+   {
     "id": "20261115-kochi",
     "title": "The 16th Goddesses of Stardom Tag League Tournament in Kochi",
     "short": "Tag League Kochi",
@@ -816,6 +841,36 @@
       ]
      }
     ]
+   },
+   {
+    "id": "20261115-cmll",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261115_cmll/",
+    "poster": "20261115-cmll",
+    "title": "[Participation from another organization] CMLL",
+    "short": "[Participation from another organization] CMLL",
+    "start": "2026-11-15T19:30:00+09:00",
+    "venue": "メキシコ・アレナ・コリセオ"
+   },
+   {
+    "id": "20261116-cmll",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261116_cmll/",
+    "poster": "20261116-cmll",
+    "title": "[Participation from another organization] CMLL",
+    "short": "[Participation from another organization] CMLL",
+    "start": "2026-11-16T17:00:00+09:00",
+    "venue": "メキシコ・アレナ・メヒコ"
+   },
+   {
+    "id": "20261117-cmll",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261117_cmll/",
+    "poster": "20261117-cmll",
+    "title": "[Participation from another organization] CMLL＆新日本プロレス「Lucha Kingdom」",
+    "short": "[Participation from another organization] CMLL＆新日本プロレス「Lucha Kingdom」",
+    "start": "2026-11-17T17:00:00+09:00",
+    "venue": "メキシコ・アレナ・メヒコ"
    },
    {
     "id": "20261118-korakuen",
@@ -1411,7 +1466,7 @@
     "id": "20261204-ryukyu",
     "own": false,
     "url": "https://wwr-stardom.com/schedule/20261204_ryukyu/",
-    "poster": "202612",
+    "poster": "20261204-ryukyu",
     "title": "[Other organizations participating] Ryukyu Dragon \"Ryukyu Dragon Champloo 2026\"",
     "short": "[Other organizations participating] Ryukyu Dragon \"Ryukyu Dragon Champloo 2026\"",
     "start": "2026-12-04T19:00:00+09:00",
