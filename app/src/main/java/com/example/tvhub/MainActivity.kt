@@ -6132,6 +6132,18 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *, #tv-sm-shelf, #tv-sm-shelf *{-webkit-tap-highlight-color:transparent !important;}',
             '#tv-sm-shelf .tv-sm-fi:hover, #tv-sm .tv-sm-item:hover, #tv-sm .tv-sm-item:hover *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
+            // Home shelf (2.78.0)
+            '#tv-sm-shelf .tv-hs-top{margin:0 0 12px 0;}',
+            '#tv-sm-shelf .tv-hs-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
+            '#tv-sm-shelf .tv-hs-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;}',
+            '#tv-sm-shelf .tv-hs-h{color:#F4C242;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-hs-v{display:flex;align-items:center;gap:12px;padding:6px;margin:0 0 6px 0;}',
+            '#tv-sm-shelf .tv-hs-im{flex:0 0 112px;width:112px;height:63px;border-radius:6px;background:#172029 center/cover no-repeat;}',
+            '#tv-sm-shelf .tv-hs-tt{min-width:0;font-size:14px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:normal;overflow-wrap:break-word;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-hs-all{font-size:14px;padding:5px 8px;color:#9aa6b4 !important;}',
+            '#tv-sm-shelf .tv-hs-empty{font-size:14px;color:#9aa6b4;padding:6px 2px 10px 2px;}',
+            '#tv-sm-shelf .tv-hs-rowsh{margin-top:18px;}',
+            '#tv-sm-shelf .tv-hs-rows{column-count:3;column-gap:8px;}',
             '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
             '#tv-sm-shelf, #tv-sm-shelf *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-sm-shelf .tv-sch-wrap{display:flex;align-items:stretch;}',
@@ -6607,6 +6619,54 @@ class MainActivity : Activity() {
             }
             return h + '</div>';
           }
+          // ---- Home shelf (2.78.0): the first three videos of New, Recently Watched and Watch Later, then every row the
+          // site's home page has. All from what the TV already keeps: New and the row list from the last home page
+          // visit, Recently Watched from the sheet's list (your build) or the home page's copy, Watch Later from My
+          // Favorites. Opening the shelf asks nothing of the site.
+          function hsItems(kind) {
+            var out = [];
+            try {
+              if (kind === 'new') out = JSON.parse(lsGet('tvHomeNewV1') || '[]') || [];
+              else if (kind === 'later') out = ((JSON.parse(lsGet('tvFavV1') || '{}') || {}).later || []).map(function(x) { return { href: x.href, title: x.title, bg: x.bg || '' }; });
+              else if (kind === 'recent') {
+                var rs = JSON.parse(lsGet('tvRecentSheetV1') || 'null');
+                if (rs && rs.rows && window.__tvRecent && window.__tvRecent.on) {
+                  var ja = isJa();
+                  out = rs.rows.map(function(r) { return { href: BASE + '/contents/' + r.id, title: (ja ? (r.tj || r.te) : (r.te || r.tj)) || '', bg: r.th || '' }; });
+                } else {
+                  var hc = JSON.parse(lsGet('tvHomeAcctV1') || '{}') || {};
+                  out = (hc.recent || []).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; });
+                }
+              }
+            } catch (e) { out = []; }
+            return out.filter(function(x) { return x && x.href; }).slice(0, 3);
+          }
+          function hsCol(title, kind, allPath, empty) {
+            var list = hsItems(kind), h = '<div class="tv-hs-col"><div class="tv-shl-t tv-hs-h">' + esc(title) + '</div>';
+            if (!list.length) h += '<div class="tv-hs-empty">' + esc(empty) + '</div>';
+            list.forEach(function(it) {
+              h += '<a class="tv-sm-fi tv-hs-v" tabindex="0" data-go="' + esc(relHref(it.href)) + '" href="' + esc(absUrl(it.href)) + '">' +
+                '<span class="tv-hs-im" style="' + (it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '') + '"></span>' +
+                '<span class="tv-hs-tt">' + esc(it.title || 'Stardom World Video') + '</span></a>';
+            });
+            if (allPath) h += '<a class="tv-sm-fi tv-hs-all" tabindex="0" data-go="' + esc(allPath) + '" href="' + esc(absUrl(allPath)) + '">' + esc(T('View all', 'すべて見る')) + '</a>';
+            return h + '</div>';
+          }
+          function relHref(h) { try { var u = new URL(h, BASE); return u.pathname + u.search; } catch (e) { return h; } }
+          function homeShelfHtml() {
+            // your build: refresh the sheet's Recently Watched list in the background for the next opening (at most every 10 min)
+            try { if (window.__tvRecent && window.__tvRecent.on) window.__tvRecent.get(function() {}, 600000); } catch (e) {}
+            var rows = homeRows(), newAll = lsGet(NEW_KEY) || '/';
+            var h = '<div class="tv-hs-top">' + fiHtml(T('Main page', 'メインページ'), '/') + '</div>';
+            h += '<div class="tv-hs-cols">' +
+              hsCol(T('NEW', '新着'), 'new', relHref(newAll), T('Open the main page once to fill this in.', 'メインページを一度開くと表示されます。')) +
+              hsCol(T('RECENTLY WATCHED', '最近視聴した動画'), 'recent', '/mypage?tvrecent=1', T('Nothing watched yet.', 'まだありません。')) +
+              hsCol(T('WATCH LATER', 'あとで見る'), 'later', '/mypage?tvfav=later', T('Nothing saved yet.', 'まだありません。')) +
+              '</div>';
+            var siteRows = rows.filter(function(r) { return hrefPath(r[1]) !== hrefPath(newAll); });
+            if (siteRows.length) h += '<div class="tv-shl-t tv-hs-rowsh">' + esc(T('VIDEO ROWS ON THE SITE', 'サイトの動画一覧')) + '</div><div class="tv-hs-rows">' + rowsHtml(siteRows) + '</div>';
+            return h;
+          }
           function fiHtml(label, path) {
             return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>';
           }
@@ -6799,6 +6859,10 @@ class MainActivity : Activity() {
             else if (key === 'favs') {
               w = 1000;
               try { h = window.__tvFav ? window.__tvFav.shelfHtml() : ''; } catch (e) { h = ''; }
+            }
+            else if (key === 'home') {
+              w = 1100;
+              h = homeShelfHtml();
             }
             else {
               var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], favs: [T('MY FAVORITES', 'お気に入り'), FAVS], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
@@ -10504,6 +10568,10 @@ class MainActivity : Activity() {
             // from this same page: no extra request), but the home page itself only draws the first row (New). The other
             // rows were a dozen rows of pictures the TV had to load and keep on every visit to the home page.
             saveHomeRowList(allRowsData);
+            // the first three New videos, for the menu's Home shelf (2.78.0)
+            try {
+              if (allRowsData && allRowsData[0] && allRowsData[0].items) localStorage.setItem('tvHomeNewV1', JSON.stringify(allRowsData[0].items.slice(0, 3).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; })));
+            } catch (e) {}
             if (allRowsData && allRowsData.length > HOME_ROWS_SHOWN) allRowsData = allRowsData.slice(0, HOME_ROWS_SHOWN);
 
             // Hide original desktop site carousels, news lists, and old hero banners ONLY on home page
