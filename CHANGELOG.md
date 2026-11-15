@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.74.1
+
+Housekeeping, nothing changes in the app.
+
+- A Python cache file that had been committed by mistake is removed, and such files are now ignored.
+- README: "How it works" describes the app as it is now (asset scripts, bundled and downloaded data, docs), not a single file.
+
 ## 2.74.0
 
 The app's layout timers rest when the page can't be seen. Nothing changes on screen.

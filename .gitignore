@@ -23,3 +23,7 @@ Thumbs.db
 
 # Your own private artwork (see docs/PRIVATE_BRANDING.md)
 branding-private/
+
+# Python bytecode
+__pycache__/
+*.pyc
