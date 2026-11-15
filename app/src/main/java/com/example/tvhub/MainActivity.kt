@@ -3036,7 +3036,32 @@ class MainActivity : Activity() {
         try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
     }
 
-    private fun scheduleText(): String = withLearnedWatch(scheduleTextRaw())
+    private fun scheduleText(): String = withLearnedWatch(withRosterPpv(scheduleTextRaw()))
+
+    // The roster file's "ppv" section (2.79.0) marks shows as PPV without a new build, before Stagecrowd lists them:
+    //   "ppv": { "20261129-hamamatsu": {}, "<id>": { "page": "...", "url": "...", "sale_start": "..." }, "<id>": false }
+    // {} marks the show as PPV (shown as "not on sale yet" until it has a page or url); fields given replace the ones
+    // in the schedule; false takes a wrong PPV mark off.
+    private fun withRosterPpv(text: String): String {
+        val r = rosterData()?.optJSONObject("ppv") ?: return text
+        if (r.length() == 0) return text
+        return try {
+            val j = org.json.JSONObject(text)
+            val a = j.optJSONArray("events") ?: return text
+            for (i in 0 until a.length()) {
+                val e = a.getJSONObject(i)
+                val id = e.optString("id")
+                if (!r.has(id)) continue
+                val v = r.get(id)
+                if (v == false) { e.remove("ppv"); continue }
+                val o = v as? org.json.JSONObject ?: continue
+                val p = e.optJSONObject("ppv") ?: org.json.JSONObject().also { e.put("ppv", it) }
+                val ks = o.keys()
+                while (ks.hasNext()) { val k = ks.next(); p.put(k, o.get(k)) }
+            }
+            j.toString()
+        } catch (_: Exception) { text }
+    }
 
     // A replay address the app learned by playing a PPV (see ppvPlayed) fills in an event that has none.
     private fun withLearnedWatch(text: String): String {
@@ -5333,11 +5358,14 @@ class MainActivity : Activity() {
           var PPV_LOGIN_URL = 'https://intl.stagecrowd.live/s/scint/login';
           function ppvMs(s) { var t = Date.parse(s || ''); return isNaN(t) ? 0 : t; }
           function fmtMD(ms) { try { return new Date(ms).toLocaleDateString(schedLoc(), { month: 'short', day: 'numeric' }); } catch (x) { return ''; } }
+          // A PPV show is "listed" once its Stagecrowd page is known. Until then (a show flagged as PPV by the daily file or
+          // the roster file before Stagecrowd has it) it is "not on sale yet": no Buy or Watch, reminders still work.
+          function ppvListed(e) { return !!(e && e.ppv && (e.ppv.page || e.ppv.url)); }
           function ppvReplayEnd(e) { return ppvMs(e.ppv && e.ppv.replay_end) || (e._t + 14 * 86400000); }
           function ppvState(e) {
             if (!e || !e.ppv) return '';
             var n = Date.now(), ss = ppvMs(e.ppv.sale_start);
-            if (e._t > n) return ss && n < ss ? 'soon' : 'sale';
+            if (e._t > n) return (!ppvListed(e) || (ss && n < ss)) ? 'soon' : 'sale';
             if (n < e._t + 3 * 3600000) return 'live';
             return n < ppvReplayEnd(e) ? 'replay' : 'ended';
           }
@@ -5395,7 +5423,7 @@ class MainActivity : Activity() {
             if (act === 'test') { ppvGo(PPV_TEST_URL); return; }
             if (act === 'signup') { ppvGo(PPV_SIGNUP_URL); return; }
             if (act === 'bought') { ppvSetBought(id, !ppvBought(id)); evOpen(id); return; }
-            if (act === 'phone') { ppvQrOpen(e); return; }
+            if (act === 'phone') { if (url) ppvQrOpen(e); return; }
             if (act === 'qrclose') { ppvQrClose(); return; }
             if (act === 'signin') { ppvGo(PPV_LOGIN_URL); return; }   // their login page (it links to registration too); it returns to the show page
             if (!url) return;
@@ -5440,13 +5468,13 @@ class MainActivity : Activity() {
             function b(act, label, extra) { return '<a class="tv-ev-b tv-ppv-b' + (extra || '') + '" tabindex="0" data-ppv="' + act + '" data-id="' + id + '">' + esc(label) + '</a>'; }
             function box(n, ttl, sub, btns, done) { return '<div class="tv-ppv-step"><div class="tv-ppv-h"><div class="tv-ppv-n' + (done ? ' tv-ppv-done' : '') + '">' + (done ? '\u2713' : n) + '</div><div class="tv-ppv-t">' + esc(ttl) + '</div></div><div class="tv-ppv-s">' + esc(sub) + '</div><div class="tv-ppv-bt">' + btns + '</div></div>'; }
             var watchLbl = st === 'live' ? T('Watch live', 'ライブを見る') : st === 'replay' ? T('Watch replay', '見逃し配信を見る') : T('Open their page', '配信ページを開く');
-            var buyOk = st !== 'ended';
+            var buyOk = st !== 'ended' && ppvListed(e), listed = ppvListed(e);
             return '<div class="tv-ev-k" style="margin-top:14px;">' + esc(T('FOUR STEPS \u00b7 EACH OPENS STAGECROWD INSIDE THE APP, BACK RETURNS HERE', '4つのステップ \u00b7 Stagecrowdがアプリ内で開きます。戻るでここに戻ります')) + '</div>' +
               '<div class="tv-ppv-steps">' +
               box(1, T('Test playback', '再生テスト'), T('Free check that it plays on this TV.', 'このテレビで再生できるか無料で確認します。'), b('test', T('Run the test', 'テストする'))) +
               box(2, T('Sign up or sign in', '登録・ログイン'), T('New here? Their sign-in page has Register.', '初めての方は、ログイン画面から新規登録できます。'), b('signin', T('Sign in', 'ログイン'))) +
               box(3, T('Buy', '購入'), (price ? price + ' \u00b7 ' : '') + T('Scan a code and pay on your phone.', 'コードを読み取り、スマホで購入します。'), buyOk ? b('phone', T('Buy', '購入')) : '') +
-              box(4, T('Watch', '視聴'), T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。'), b('watch', watchLbl), false) +
+              box(4, T('Watch', '視聴'), listed ? T('Unlocks at showtime, or when the replay is up.', '開演時、または見逃し配信の公開後に見られます。') : T('Buy and Watch open once the show is on Stagecrowd.', 'Stagecrowdに掲載されると購入・視聴できます。'), listed ? b('watch', watchLbl) : '', false) +
               '</div>';
           }
           function schedTileHtml(e) {
@@ -5645,15 +5673,33 @@ class MainActivity : Activity() {
             if (!up) return;
             var row = liveRow(true);
             if (!row) return;
+            row.insertBefore(nextTile(up, 'tv-next-live', T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a')), row.firstChild);
+          }
+          // 2.79.0: with no PPV tile to show, the slot beside the next-live tile shows the live show after it, same look.
+          function ensureSecondTile() {
+            var a = document.getElementById('tv-next-live-2');
+            var firstEl = document.getElementById('tv-live-card') || document.getElementById('tv-next-live');
+            var first = firstEl ? (firstEl.id === 'tv-live-card' ? schedUpcoming()[0] : schedById(firstEl.getAttribute('data-ev'))) : null;
+            var e = null;
+            if (isHome() && contentRow() && first && !ppvHomeEvent())
+              e = schedUpcoming().filter(function(x) { return !x.ppv && x.id !== first.id && x._t >= first._t; })[0] || null;
+            if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); liveRowTidy(); return; }
+            if (a && a.getAttribute('data-ev') === e.id && a.previousSibling === firstEl) return;
+            if (a && a.parentNode) a.parentNode.removeChild(a);
+            var row = liveRow(true);
+            if (!row) return;
+            row.insertBefore(nextTile(e, 'tv-next-live-2', T('AFTER THAT', '\u305d\u306e\u6b21')), firstEl.nextSibling);
+          }
+          function nextTile(up, id, label) {
             var p = posterFor(up), a = document.createElement('a');
-            a.id = 'tv-next-live';
+            a.id = id;
             a.className = 'tv-card';
             a.tabIndex = 0;
             a.href = 'javascript:void(0)';
             a.setAttribute('translate', 'no');
             a.setAttribute('data-ev', up.id);
             var whenTxt = esc(fmtDay(up._t) + ' \u00b7 ' + fmtTimeZ(up._t));
-            var tagTxt = esc(T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a') + ' \u00b7 ' + T('in ', '\u3042\u3068') + schedLeft(up).toLowerCase());
+            var tagTxt = esc(label + ' \u00b7 ' + T('in ', '\u3042\u3068') + schedLeft(up).toLowerCase());
             if (p) {
               // Private build: wide card, poster on the left, details beside it.
               a.style.cssText = 'flex:0 0 calc(50% - 12px); max-width:calc(50% - 12px); height:228px; background:#1a1a1a; border:2px solid #F4C242; border-radius:10px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:flex;';
@@ -5667,12 +5713,12 @@ class MainActivity : Activity() {
               // Public build: normal tile, countdown in place of artwork.
               a.style.cssText = 'flex:0 0 calc(25% - 18px); max-width:calc(25% - 18px); background:#1a1a1a; border:2px solid #F4C242; border-radius:8px; overflow:hidden; cursor:pointer; box-sizing:border-box; text-decoration:none; display:block;';
               a.innerHTML = '<div style="width:100%; aspect-ratio:16/9; min-height:165px; background:linear-gradient(135deg,#2a2210,#11171E); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-sizing:border-box;">' +
-                '<div style="color:#F4C242; font-size:12px; font-weight:800; letter-spacing:2px;">' + esc(T('NEXT LIVE', '\u6b21\u306e\u5927\u4f1a')) + '</div>' +
+                '<div style="color:#F4C242; font-size:12px; font-weight:800; letter-spacing:2px;">' + esc(label) + '</div>' +
                 '<div style="color:#fff; font-size:44px; font-weight:800; line-height:1em;">' + esc(schedLeft(up)) + '</div>' +
                 '<div style="color:#c9d2dc; font-size:14px;">' + whenTxt + '</div></div>' +
                 '<div style="padding:12px 14px; color:#fff; font-size:15px; font-weight:bold; line-height:1.35em; box-sizing:border-box;"><div>' + esc(up.short || up.title) + '</div><div style="font-size:13px; font-weight:normal; color:#9aa6b4;">' + esc(up.venue || '') + '</div></div>';
             }
-            row.insertBefore(a, row.firstChild);
+            return a;
           }
           // Home page: the pay-per-view show gets its own tile beside the next-live tile while it is worth showing:
           // on sale (or about to be), live, or in its replay window. Pressing it opens the show's details page.
@@ -5691,7 +5737,7 @@ class MainActivity : Activity() {
             if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); liveRowTidy(); return; }
             var row = liveRow(true);
             if (!row) return;
-            var st = ppvState(e), p = posterFor(e), key = e.id + ':' + st + ':' + (p ? 1 : 0) + ':' + (ppvBought(e.id) ? 1 : 0);
+            var st = ppvState(e), p = posterFor(e), key = e.id + ':' + st + ':' + (p ? 1 : 0) + ':' + (ppvBought(e.id) ? 1 : 0) + ':' + (ppvListed(e) ? 1 : 0);
             var anchor = document.getElementById('tv-live-card') || document.getElementById('tv-next-live');
             if (a && a.__k === key && a.parentNode === row) {
               var want = anchor ? anchor.nextSibling : row.firstChild;
@@ -5709,7 +5755,10 @@ class MainActivity : Activity() {
             a.setAttribute('data-ev', e.id);
             var ss = ppvMs(e.ppv.sale_end), price = ppvPrice(e.ppv), live = st === 'live';
             var tag = st === 'live' ? T('PPV · LIVE NOW', 'PPV · 開催中') : st === 'replay' ? T('PPV · REPLAY', 'PPV · 見逃し配信') : st === 'sale' ? T('PPV · ON SALE', 'PPV · 発売中') : T('PPV · ON SALE SOON', 'PPV · まもなく発売');
-            var line = st === 'live' ? T('Watch live', 'ライブを見る') : st === 'replay' ? T('Watch until ', '視聴期限 ') + fmtMD(ppvReplayEnd(e)) + T('', 'まで') : (price ? price + ' · ' : '') + (ss ? T('Sale ends ', '販売終了 ') + fmtMD(ss) + T('', '') : '');
+            var so = ppvMs(e.ppv.sale_start);
+            var line = st === 'live' ? T('Watch live', 'ライブを見る') : st === 'replay' ? T('Watch until ', '視聴期限 ') + fmtMD(ppvReplayEnd(e)) + T('', 'まで') :
+              st === 'soon' ? (!ppvListed(e) ? T('Not on Stagecrowd yet', 'Stagecrowd掲載前') : (price ? price + ' · ' : '') + (so ? T('Sale opens ', '発売開始 ') + fmtMD(so) : '')) :
+              (price ? price + ' · ' : '') + (ss ? T('Sale ends ', '販売終了 ') + fmtMD(ss) + T('', '') : '');
             var when = esc(fmtDay(e._t) + ' · ' + fmtTimeZ(e._t));
             var col = live ? '#D62839' : '#7B5CFF';
             if (p) {
@@ -5738,7 +5787,7 @@ class MainActivity : Activity() {
           var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
           (function() {
             var st = document.createElement('style');
-            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus, #tv-ppv-home:focus{transform:none !important; border-color:transparent !important;}';
+            st.textContent = '@keyframes tvLivePulse{0%,100%{opacity:1}50%{opacity:.3}} #tv-live-card:focus, #tv-next-live:focus, #tv-next-live-2:focus, #tv-ppv-home:focus{transform:none !important; border-color:transparent !important;}';
             (document.head || document.documentElement).appendChild(st);
           })();
           function liveCardMatches(e, txt) {
@@ -5754,7 +5803,7 @@ class MainActivity : Activity() {
             var cards = row.querySelectorAll('a.tv-card');
             for (var i = 0; i < cards.length; i++) {
               var c = cards[i];
-              if (c.id === 'tv-next-live' || c.id === 'tv-live-card') continue;
+              if (c.id === 'tv-next-live' || c.id === 'tv-next-live-2' || c.id === 'tv-live-card') continue;
               if (liveCardMatches(e, c.textContent || '')) return c;
             }
             return null;
@@ -5857,7 +5906,7 @@ class MainActivity : Activity() {
             var k = liveRender(a, up, a.__id, a.__bg);
             return true;
           }
-          function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); ensurePpvTile(); }
+          function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); ensurePpvTile(); ensureSecondTile(); }
           setInterval(function() { if (!(window.__tvRest && window.__tvRest())) liveTick(); }, 1500);
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword

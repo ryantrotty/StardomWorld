@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.79.0
+
+Home page live row: two tiles, and PPV shows before Stagecrowd lists them.
+
+- **Second tile:** when there is no PPV show to show, the slot beside the next-live tile now shows the live show after it (gold, same size and look, labelled **AFTER THAT · in …**). It steps aside as soon as a PPV tile has something to show.
+- **PPV shows can be marked early.** A show marked as PPV but with no Stagecrowd page yet gets the PPV tile with its poster, **PPV · ON SALE SOON** and "Not on Stagecrowd yet". Its details page keeps the reminder and the playback test / sign-in steps; Buy and Watch appear once its page is known. A show with a known sale start now says "Sale opens …" instead of the sale end.
+- **Roster file `ppv` section** (`docs/ROSTER.md`): mark a show as PPV, fill in its Stagecrowd details, or take a wrong mark off, with no new build. The daily file's own `ppv` entries still work the same and are merged first.
+
 ## 2.78.0
 
 - **Home shelf in the menu:** Main page on top, then three columns with the first three videos of **New**, **Recently Watched** and **Watch Later** (picture and title, plus View all), then **Video rows on the site**: every row the site's home page has, in three columns. Opening it asks nothing of the site: New and the row list are kept from the last home page visit, Recently Watched from the sheet (your build) or the home page's copy, Watch Later from My Favorites.
