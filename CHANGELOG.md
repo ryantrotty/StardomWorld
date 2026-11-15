@@ -2,6 +2,74 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.72.1
+
+- Tag team pages (private builds): videos from the team's saved list in the sheet open again, and the Menu button offers them for Favorites, Watch Later and playlists again. The sheet keeps only each video's number, title and picture, so those cards had an empty link: OK reloaded the team page and Menu found no video. The address is now built from the video's number.
+- The Favorites pop-up from a team page video shows the match title alone (it took every word on the card, badges and date included).
+
+## 2.72.0
+
+Recently Watched from the private sheet, and fixes from the 2.70.1 TV test.
+
+- **Recently Watched from the sheet (private builds).** The Recently Watched page, the Recently Watched row on My Favorites and the home page row now read the sheet's `videos` tab (newest first) instead of downloading the site's My page: one fewer request to the site on every home page and My Favorites visit. The list now covers what was opened in your private build, not what was watched on a phone or computer. A video opened again with nothing new on its page now updates its "last seen" in the sheet (at most every 10 minutes per video), so rewatches move to the front; before, a video was only written again after 30 days. Public builds read My page as before.
+- **My Favorites and Recently Watched use the app page shell (private builds),** so the site's My page no longer shows behind them, and they use less memory. On the TV test, opening a video from My Tag Teams ran the TV out of memory (error report "PageProcessGone"), and the 2.68.9 recovery reopened the page you were on; that was the video "returning" to the team page.
+- **Adding a video to the site's Favorites works from tag team pages, wrestler pages, My Favorites and the other app pages.** The site's favorites call isn't on My page, so it failed there. When it is missing, the app now opens a small site search page once in a hidden frame and uses the call from it.
+- **Public builds:** the plain cover over My Favorites and Recently Watched now stays up to 6 seconds (was 2), until the app's page is drawn, so the site's My page no longer shows on a slow TV.
+- **If the sheet can't answer** (no connection, or the script not updated yet), these pages fall back to the site's My page as before.
+- **Apps Script:** new `vi_recent` and `vi_seen` actions. Paste `scripts/video_index_log.gs` into the sheet's Apps Script and publish a new version (Deploy > Manage deployments > Edit > Version: New version). Until then the app uses My page.
+
+## 2.71.0
+
+App page shell: six kinds of app-drawn page no longer load the site's My page underneath.
+
+- Tag Teams, team pages, wrestler pages, Top Rated, championship pages and StarScope used to open `/mypage?tv...`, download the site's My page and draw over it. The app now answers those addresses itself with an empty dark page. The address is the same, so sign-in, saved data and Back work as before. One fewer request to the site per page, the page opens without waiting for the site, and there is no site page to flash.
+- The shell includes the site's own style sheets and its own page translator, taken from the last real site page (`assets/shelllearn.js`), so the app's pages look the same and Japanese video titles are still turned into English. On a first launch, until a site page has been seen, the real My page is used as before.
+- Side menu on these pages: the account name and its links are the ones remembered from the last real site page. A plain link opens its address; anything else (such as Log out) opens the site's My page, where it can be chosen.
+- Adding a video to the site's Favorites from one of these pages opens the site's My page once in a hidden frame and uses the site's own call from it.
+- Not changed, still on the real page (with the 2.70.1 cover): My Favorites and Recently Watched (they read the viewing history from My page), Community (it reads the site's search results), faction pages, Eras and Events.
+- `SHELL_ON` and `SHELL_TRANSLATE` in MainActivity switch the shell, or its translator, off.
+
+## 2.70.1
+
+- App-drawn pages no longer show the site's own page (the Japanese My page, or a search page) for half a second before the app's page appears. Since 2.70.0 they have no transition screen, which uncovered that moment. The app now holds a plain cover in the page colour from the instant the site's page would show until the app's page is drawn over it (2 seconds at most), so the order is: the page you were on, a brief plain dark screen, the app's page. No wand and no Up next strip.
+
+## 2.70.0
+
+The transition screen between pages (not the app's loading screen) now follows the page instead of a fixed 5 seconds.
+
+- Pages the app draws itself get no transition screen at all: My Favorites, Tag Teams and team pages, Top Rated, wrestler pages, championship pages, StarScope, Recently Watched, faction pages, Eras, Events and Community.
+- Every other page: the screen lifts as soon as the first screenful is ready (`assets/pageready.js`): content in, the app's styles on, the English translation applied, the layout still for 350 ms, and the pictures in view loaded (it waits at most 2.5 s for pictures). A page that loads quickly, such as one opened before, shows it only briefly: at least 0.4 s, with a 0.3 s fade.
+- It never stays longer than before: 5 seconds is still the limit, and PPV pages keep the fixed 5 seconds.
+- A set page that jumps to its first match keeps the screen up through the jump.
+
+## 2.69.0
+
+One shared gate for every request the app's own scripts make to Stardom World (`assets/sitegate.js`). Nothing changes on screen.
+
+- All of these now go through it: faction pages, championship pages, tag team pages, the extra searches behind category tabs, the next page of a long list, the menu's Top 10 and the Recently Watched read. One request at a time, at least 1.2 seconds apart, also across page changes.
+- When the site answers 403, 429 or 503, every one of them stops for 10 minutes. Before, only faction, championship and tag team pages did; long lists and category tabs carried on.
+- Long lists: a failed load of the next page now waits before trying again (10 seconds, doubling up to 5 minutes) instead of trying every second, and an error page is no longer read as the end of the list.
+- Category tabs: a refusal ends the extra searches for that visit.
+
+## 2.68.10
+
+Safety settings of the built-in browser; nothing changes on screen.
+
+- Certificate problems are no longer waved through on a real TV or Firestick: the page is not loaded. Before, only the PPV site was protected, so on an untrusted network the Stardom World sign-in could be read. The Android Studio emulator still proceeds (not on the PPV site). A TV whose date is badly wrong will now show the browser's error page until its clock is fixed.
+- An https page can still show http pictures but can no longer run http scripts.
+- Pages can only be granted protected video playback, never the camera or microphone (the PPV site already had this rule).
+- Private builds: requests to the private sheet (video log, favorites sync, StarScope, the phone link) are only accepted while a Stardom World page is showing, not from Stagecrowd or an outside page.
+- The browser can no longer read files on the TV (the app's own bundled pages are unaffected).
+
+## 2.68.9
+
+- The app no longer closes when the TV ends the page's process (usually low memory, for example after a very long list). It rebuilds itself and reopens the page that was showing; a second failure within a minute opens the home page, a third closes the app. Each time is sent as an error report ("PageProcessGone") with the page name, in builds with usage stats on.
+- Leaving the app (Home, another app, TV off) now pauses the page: its video, its timers and, in private builds, the favorites sync checks. Everything carries on when the app is opened again. An overlay drawn over the app, such as a voice assistant, changes nothing.
+
+## 2.68.8
+
+- Translated captions are private builds only again. In public builds the captions button now only switches the player's own captions on and off (it says so when a video has none), and no build without the private branding folder calls the translator, for captions or for Japanese Home row titles. The switch for this existed but nothing checked it. Private builds are unchanged: Off, English, 日本語.
+
 ## 2.68.7
 
 - StarScope cards: 3- and 4-way matches now use the same names as the match type list. Three teams of two is "3-Way Tag Battle" (was "3 teams of 2"); also 3-Way Battle, 3-Way Trios, 4-Way Battle, 4-Way Tag Battle, 4-Way Trios (3WAYタッグバトル etc. in Japanese). Five or more sides say "5-Way", and sides of different sizes or more than three per side keep "N teams of N". Same on the StarScope results, the logger's Card tab and the Apps Script cards.

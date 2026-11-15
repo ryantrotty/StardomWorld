@@ -37,6 +37,10 @@
  *   vi_cards   {}                                              one entry per logged video for the StarScope cards and player:
  *                                                              names, event, match number, show, venue, bell and end times (2.65.0),
  *                                                              match id, round and special rules for the Shows page (2.66.0)
+ *   vi_recent {limit}                                          Recently Watched (2.72.0): the newest videos in "videos" by last_seen
+ *                                                              (id, titles, thumbnail, when), at most 100. Read only, no lock.
+ *   vi_seen   {id}                                             a video opened again whose page facts haven't changed (2.72.0): its
+ *                                                              last_seen and times_seen are brought up to date, nothing else
  *   vi_suggest {}                                              StarScope's Log next tab (2.67.0): videos watched but not logged,
  *                                                              by show (set), with views, last watched and the venue's names
  *
@@ -73,6 +77,8 @@ function doPost(e) {
   if (body.action === 'vi_export') return out(viExport());
   if (body.action === 'vi_cards') return out(viCards());
   if (body.action === 'vi_suggest') return out(viSuggest());
+  if (body.action === 'vi_recent') return out(viRecent(body));
+  if (body.action === 'vi_seen') return out(withLock(function() { return viSeen(body); }));
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
   if (body.action === 'pb_now') return out(pbNow_());
@@ -811,6 +817,35 @@ function viSuggest() {
     return { set: g.set, show: g.show, date: date, venueRaw: g.venueRaw, venue: venue(g.venueRaw), videos: g.videos };
   });
   return { ok: true, sets: out };
+}
+
+// Recently Watched (2.72.0): the newest rows of "videos" by last_seen. Read only, no lock.
+function viRecent(b) {
+  var limit = Math.max(1, Math.min(100, Number(b.limit) || 60));
+  var sh = sheet(), n = sh.getLastRow();
+  if (n < 2) return { ok: true, rows: [] };
+  var I = {}; ['id', 'last_seen', 'title_en', 'title_ja', 'thumb', 'set_id'].forEach(function(c) { I[c] = COLS.indexOf(c); });
+  var rows = sh.getRange(2, 1, n - 1, COLS.length).getValues().map(function(r) {
+    var ls = r[I.last_seen];
+    return { id: String(r[I.id]), te: String(r[I.title_en] || ''), tj: String(r[I.title_ja] || ''), th: String(r[I.thumb] || ''), set: String(r[I.set_id] || ''),
+      at: ls instanceof Date ? ls.toISOString() : String(ls || '') };
+  }).filter(function(x) { return /^\d{1,9}$/.test(x.id) && x.at; });
+  rows.sort(function(a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+  return { ok: true, rows: rows.slice(0, limit) };
+}
+
+// A video opened again with nothing new on its page (2.72.0): only when and how often it was seen change.
+function viSeen(b) {
+  var id = String(b.id || '');
+  if (!/^\d{1,9}$/.test(id)) return { ok: false, error: 'bad video' };
+  var sh = sheet(), n = sh.getLastRow();
+  if (n < 2) return { ok: true, found: false };
+  var found = sh.getRange(2, 1, n - 1, 1).createTextFinder(id).matchEntireCell(true).findNext();
+  if (!found) return { ok: true, found: false };
+  var row = found.getRow(), iL = COLS.indexOf('last_seen') + 1, iT = COLS.indexOf('times_seen') + 1;
+  sh.getRange(row, iL).setValue(new Date().toISOString());
+  sh.getRange(row, iT).setValue((Number(sh.getRange(row, iT).getValue()) || 0) + 1);
+  return { ok: true, found: true };
 }
 
 // The compiled index. Ids and tags only, so it can go to public builds later. Results are a separate block, hidden unless asked for.

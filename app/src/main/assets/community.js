@@ -124,7 +124,7 @@
   function fetchTop() {
     if (fetching || !window.fetch) return;
     fetching = true;
-    fetch(TOP_URL, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
+    (window.__tvFetch || fetch)(TOP_URL, { credentials: 'same-origin' }).then(function(r) { if (!r.ok) throw 'http'; return r.text(); }).then(function(html) {
       var doc = new DOMParser().parseFromString(html, 'text/html');
       saveTop(readCards(doc, null));
       fetching = false;

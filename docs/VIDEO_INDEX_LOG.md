@@ -23,6 +23,8 @@ If you edit the script later, publish the change with **Deploy > Manage deployme
 
 - Once the page has been read, it hands the record to the app (`AndroidHost.videoIndexPut`). The app adds the key and posts it to the log in the background.
 - A video is sent again only when what was read has changed, or after 30 days. There are at most 300 sends a day. A page where nothing was read is not sent.
+- A video opened again with nothing new on its page sends only a short "seen" note (`vi_seen`, at most every 10 minutes per video), which updates `last_seen` and `times_seen` (2.72.0).
+- Recently Watched (the page, the My Favorites row and the home row) reads the newest rows by `last_seen` with `vi_recent` (2.72.0).
 - The sheet keeps one row per video: the newest copy, plus first seen, last seen and times seen.
 
 ## Reading the log (for analysis)

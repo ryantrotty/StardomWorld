@@ -87,7 +87,16 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        // Page-process recovery (2.68.9): kept here so they survive the rebuild of the screen.
+        private var rendererGoneAt = 0L
+        private var rendererGoneCount = 0
+        private var resumeUrl: String? = null
         private const val START_URL = "https://www.stardom-world.com/"
+        private const val TRANSITION_MAX_MS = 5000L   // as before 2.70.0: the transition screen never stays longer
+        private const val TRANSITION_MIN_MS = 400L    // once up, it stays at least this long
+        private const val APP_COVER_MAX_MS = 6000L    // the plain cover over an app-drawn page never stays longer (2 s until 2.72.0: too short on a slow TV)
+        private const val SHELL_ON = true             // app page shell (2.71.0); false = app pages load the site's My page again
+        private const val SHELL_TRANSLATE = true      // the shell includes the site's own page translator, as the site's pages do
         private const val LOGIN_LOGO_FRACTION = 0.26f
         private const val LOGIN_URL =
             "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
@@ -606,6 +615,20 @@ class MainActivity : Activity() {
     private lateinit var transitionView: TransitionOverlayView
     private var transitionStrip: android.widget.LinearLayout? = null
     private var transitionShowing = false
+    // Transition screen between pages (2.70.0): when it went up, how long its fade is, and a counter that goes up with
+    // every new page so a "ready" report from the page before is ignored.
+    private var transitionShownAt = 0L
+    private var transitionFadeMs = 500L
+    private var navSeq = 0
+    // App-drawn pages (2.70.1): a plain cover in the page colour, held over the site's own page from the moment it would
+    // first show until the app's page is drawn on top of it. Not the transition screen: no wand, no Up next strip.
+    private var appCover: View? = null
+    private var appCoverSeq = -1
+    private val hideAppCoverRunnable = Runnable {
+        val v = appCover ?: return@Runnable
+        if (v.visibility != View.VISIBLE) return@Runnable
+        v.animate().alpha(0f).setDuration(120L).withEndAction { v.visibility = View.GONE }.start()
+    }
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -1240,6 +1263,9 @@ class MainActivity : Activity() {
           window.__tvInfiniteScroll = true;
 
           var loading = false, lastLoad = 0, lastKey = 0;
+          // 2.69.0: a failed load waits before the next try (10 s, doubling up to 5 min) instead of trying again every
+          // second, and nothing is asked for while the site's pause is on (assets/sitegate.js).
+          var fails = 0, retryAt = 0;
           // While the filter bar narrows the list by title (window.__tvNarrowing), cards it removes leave the page short,
           // which used to trigger the next page, and the next, without end (a request every second, cards flashing at
           // the end). Then a page is only loaded after a key press, one page per press.
@@ -1254,6 +1280,8 @@ class MainActivity : Activity() {
 
           function checkAndLoadNextPage() {
             if (loading) return;
+            if (Date.now() < retryAt) return;
+            if (window.__tvSiteGate && window.__tvSiteGate.blockedFor()) return;
 
             var scrollBottom = window.innerHeight + window.scrollY;
             var pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
@@ -1268,9 +1296,14 @@ class MainActivity : Activity() {
             loading = true;
             lastLoad = Date.now();
 
-            fetch(nextUrl)
-              .then(function(res) { return res.text(); })
+            (window.__tvFetch || fetch)(nextUrl)
+              .then(function(res) {
+                // An error page is not a page of results: keep the list as it is and try again later.
+                if (!res.ok) throw 'http';
+                return res.text();
+              })
               .then(function(html) {
+                fails = 0;
                 var parser = new DOMParser();
                 var doc = parser.parseFromString(html, 'text/html');
 
@@ -1317,6 +1350,8 @@ class MainActivity : Activity() {
               })
               .catch(function(err) {
                 loading = false;
+                fails++;
+                retryAt = Date.now() + Math.min(300000, 10000 * Math.pow(2, fails - 1));
               });
           }
 
@@ -2052,6 +2087,21 @@ class MainActivity : Activity() {
             )
         )
 
+        // Plain cover for app-drawn pages (2.70.1), directly above the page and below everything else.
+        appCover = View(this).apply {
+            setBackgroundColor(0xFF0B1118.toInt())
+            isFocusable = false
+            isClickable = false
+            visibility = View.GONE
+        }
+        root.addView(
+            appCover,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+
         // Wand cursor, drawn above the page.
         val cursorPx = (CURSOR_DP * density).toInt()
         cursorView = ImageView(this).apply {
@@ -2160,6 +2210,13 @@ class MainActivity : Activity() {
         authPending = true
         handler.postDelayed(authTimeoutRunnable, 10000L)
 
+        // App page shell: what was learned on earlier runs, plus the two values only the app knows.
+        shellLogo = getResourceBase64(R.drawable.header_logo)
+        shellViewport = (resources.displayMetrics.widthPixels / (LAYOUT_WIDTH * density)).let {
+            "width=$LAYOUT_WIDTH, initial-scale=$it, minimum-scale=$it, maximum-scale=$it, user-scalable=no"
+        }
+        loadShellPrefs()
+
         with(webView.settings) {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -2167,8 +2224,10 @@ class MainActivity : Activity() {
             mediaPlaybackRequiresUserGesture = false
             useWideViewPort = true
             loadWithOverviewMode = true
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            allowFileAccess = true
+            // As a desktop browser does (2.68.10): an https page may still show http pictures, but not run http scripts.
+            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+            // The app's own bundled pages (file:///android_asset/...) don't need this; nothing else on the TV should be readable.
+            allowFileAccess = false
             // Present as Desktop Chrome so the site serves its 1440px desktop grid layout.
             userAgentString = DESKTOP_USER_AGENT
         }
@@ -2197,10 +2256,13 @@ class MainActivity : Activity() {
                 indexPanelOpen = false
                 showScopeCard("")
                 if (isPpvHost(url)) ppvSession = true else if (isSiteHost(url)) ppvSession = false
+                pageOnSite = isSiteHost(url)
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
-                    showPageTransitionOverlay()
+                    navSeq++
+                    // A page the app draws itself covers the screen as soon as it starts: no transition screen (2.70.0).
+                    if (!isAppDrawnUrl(url)) showPageTransitionOverlay()
                 }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
@@ -2229,6 +2291,13 @@ class MainActivity : Activity() {
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
                 super.doUpdateVisitedHistory(view, url, isReload)
                 if (!isReload) metrics.page(url)
+                // The new page is about to replace the old one on screen. For an app-drawn page that would be the site's
+                // own page for a moment: hold the plain cover over it (once per page; later address changes inside the
+                // same page, such as a tab change, don't bring it back).
+                if (isAppDrawnUrl(url) && appCoverSeq != navSeq) {
+                    appCoverSeq = navSeq
+                    showAppCover()
+                }
             }
 
             override fun onPageCommitVisible(view: WebView, url: String?) {
@@ -2239,7 +2308,31 @@ class MainActivity : Activity() {
                 view.evaluateJavascript("document.documentElement.style.opacity = '1';", null)
                 injectPageScripts(view)
                 CookieManager.getInstance().flush()
+                // A shell page has no site header for the sign-in check to read. If the app starts on one (after a
+                // page-process recovery), carry on as signed in: that is where the person was a moment ago.
+                if (authPending && isShellUrl(url)) onAuthReported(false, "/mypage")
                 onPageReady()
+            }
+
+            // App page shell (2.71.0): the app answers these addresses itself, so the site's My page is never asked for.
+            // Runs off the main thread; reads only @Volatile values. Anything unexpected falls back to the real page.
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): android.webkit.WebResourceResponse? {
+                return try {
+                    if (!request.isForMainFrame || request.method != "GET" || !isShellUrl(request.url.toString())) return null
+                    val html = shellHtml() ?: return null
+                    android.webkit.WebResourceResponse(
+                        "text/html", "utf-8", 200, "OK",
+                        mapOf("Cache-Control" to "no-store"),
+                        java.io.ByteArrayInputStream(html.toByteArray(Charsets.UTF_8))
+                    )
+                } catch (_: Exception) { null }
+            }
+
+            // Android ended the page's process (usually the TV ran low on memory) or it crashed. Unhandled, that closes
+            // the whole app; handled, the app rebuilds itself and reopens the page it was on.
+            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                recoverFromRendererGone(detail.didCrash())
+                return true
             }
 
             @SuppressLint("WebViewClientOnReceivedSslError")
@@ -2248,8 +2341,10 @@ class MainActivity : Activity() {
                 handler: SslErrorHandler,
                 error: SslError
             ) {
-                // Never wave through certificate problems on the PPV site (sign-in and payment); elsewhere proceed (e.g. emulator without CAs).
-                if (isPpvFlow(error.url)) handler.cancel() else handler.proceed()
+                // A certificate problem is never waved through on a real TV (2.68.10): the connection carries the account's
+                // sign-in. Only the Android Studio emulator, which can lack up-to-date certificates, still proceeds, and
+                // never on the PPV site (sign-in and payment).
+                if (isEmulator() && !isPpvFlow(error.url)) handler.proceed() else handler.cancel()
             }
         }
 
@@ -2261,7 +2356,9 @@ class MainActivity : Activity() {
                         val ok = request.resources.filter { it == android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }.toTypedArray()
                         if (ok.isNotEmpty()) request.grant(ok) else request.deny()
                     } else {
-                        request.grant(request.resources)
+                        // Same rule everywhere (2.68.10): protected video playback only, never camera, microphone or the like.
+                        val ok = request.resources.filter { it == android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }.toTypedArray()
+                        if (ok.isNotEmpty()) request.grant(ok) else request.deny()
                     }
                 }
             }
@@ -2326,7 +2423,145 @@ class MainActivity : Activity() {
         }
 
         startPlayerDebug()
-        webView.loadUrl(START_URL)
+        // After a page-process recovery: back to the page that was open (a Stardom World page only), else the home page.
+        val resume = resumeUrl
+        resumeUrl = null
+        // Timers are paused while the app is out of sight (onStop); make sure a fresh start never inherits that.
+        webView.resumeTimers()
+        webView.loadUrl(resume ?: START_URL)
+    }
+
+    private var rendererDead = false
+
+    // ---- App page shell (2.71.0) -----------------------------------------------------------------------------------
+    // Tag Teams, team pages, wrestler pages, Top Rated, championship pages and StarScope are drawn entirely by the app,
+    // but each sat on the site's My page (/mypage?tv...=), which was downloaded every time and showed for a moment.
+    // For those addresses the app now hands the browser an empty page of its own. The address is unchanged, so the
+    // sign-in, saved data and Back all work as before, and the site is not asked for anything.
+    // The shell carries the site's own style sheets and its own page translator, learned from real site pages
+    // (assets/shelllearn.js). Until those are known (first launch), the real page is used as before.
+    @Volatile private var shellCss: List<String> = emptyList()
+    @Volatile private var shellTrSrc = ""
+    @Volatile private var shellTrInit = ""
+    @Volatile private var shellLogo = ""
+    @Volatile private var shellViewport = ""
+
+    private fun loadShellPrefs() {
+        try {
+            val o = org.json.JSONObject(getSharedPreferences("shell", MODE_PRIVATE).getString("site", "") ?: "")
+            applyShellInfo(o)
+        } catch (_: Exception) {}
+    }
+
+    // Keeps only what is safe to write into a page: https style sheet addresses, the translator's https address, and
+    // the translator's start-up lines when they can sit inside a script tag unchanged.
+    private fun applyShellInfo(o: org.json.JSONObject): Boolean {
+        val css = ArrayList<String>()
+        val arr = o.optJSONArray("css") ?: return false
+        for (i in 0 until minOf(arr.length(), 12)) {
+            val h = arr.optString(i)
+            if (h.startsWith("https://") && h.length < 600 && !h.contains('"') && !h.contains('<') && !h.contains('>')) css.add(h)
+        }
+        if (css.isEmpty()) return false
+        var src = o.optString("trSrc")
+        var init = o.optString("trInit")
+        if (!src.startsWith("https://") || src.length > 600 || src.contains('"') || src.contains('<') || src.contains('>')) src = ""
+        if (init.length > 4000 || init.contains("</script", ignoreCase = true) || init.contains("<!--")) init = ""
+        if (src.isEmpty() || init.isEmpty()) { src = ""; init = "" }
+        shellCss = css
+        shellTrSrc = src
+        shellTrInit = init
+        return true
+    }
+
+    private fun isShellUrl(url: String?): Boolean {
+        if (!SHELL_ON || url == null || !isSiteHost(url)) return false
+        val u = try { android.net.Uri.parse(url) } catch (_: Exception) { return false }
+        if (u.path != "/mypage") return false
+        val q = u.encodedQuery ?: return false
+        if (Regex("(^|&)tv(b|real)=").containsMatchIn(q)) return false
+        if (Regex("(^|&)tv(teams|team|top|wr|ch|scope)=").containsMatchIn(q)) return true
+        // My Favorites and Recently Watched (2.72.0): only builds with the private sheet, where the viewing history
+        // comes from the sheet. Public builds read it from the site's My page, so they keep the real page.
+        val sheet = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+        return sheet && Regex("(^|&)tv(fav|recent)=").containsMatchIn(q)
+    }
+
+    private fun htmlAttr(v: String): String = v.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+
+    // The empty page. Japanese as its language, like the site's pages, so the translator treats it the same way.
+    private fun shellHtml(): String? {
+        val css = shellCss
+        if (css.isEmpty()) return null
+        val sb = StringBuilder(4096)
+        sb.append("<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"utf-8\"><title>Stardom World</title>")
+        if (shellViewport.isNotEmpty()) sb.append("<meta name=\"viewport\" content=\"").append(htmlAttr(shellViewport)).append("\">")
+        sb.append("<style>html,body{margin:0;background:#0B1118;color:#fff;}</style>")
+        for (h in css) sb.append("<link rel=\"stylesheet\" href=\"").append(htmlAttr(h)).append("\">")
+        sb.append("<style>html,body{background:#0B1118 !important;}</style>")
+        sb.append("<script>window.__tvShell=true;</script></head><body data-tv-shell=\"1\">")
+        // The header logo, where the menu looks for it (hidden; the menu draws its own copy).
+        if (shellLogo.isNotEmpty()) sb.append("<div style=\"display:none\"><h1><a href=\"/\"><img alt=\"\" src=\"").append(shellLogo).append("\"></a></h1></div>")
+        if (SHELL_TRANSLATE && shellTrSrc.isNotEmpty() && shellTrInit.isNotEmpty()) {
+            sb.append("<div id=\"google_translate_element\"></div><script>").append(shellTrInit).append("</script>")
+            sb.append("<script src=\"").append(htmlAttr(shellTrSrc)).append("\"></script>")
+        }
+        sb.append("</body></html>")
+        return sb.toString()
+    }
+
+    // Whether the page now showing is a Stardom World page. The app's bridge (AndroidHost) is visible to whatever page
+    // is open, so the calls that reach the private sheet check this first (2.68.10) and answer nothing anywhere else
+    // (Stagecrowd, or any outside page a link leads to). Read from the bridge's own thread, hence @Volatile.
+    @Volatile private var pageOnSite = false
+
+    // One request to the private sheet whose answer nobody waits for (2.72.0: the "seen again" note).
+    private fun sheetPostQuiet(body: org.json.JSONObject) {
+        if (BuildConfig.VIDEO_INDEX_URL.isEmpty() || BuildConfig.VIDEO_INDEX_KEY.isEmpty()) return
+        Thread {
+            try {
+                body.put("key", BuildConfig.VIDEO_INDEX_KEY)
+                val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
+                c.requestMethod = "POST"
+                c.doOutput = true
+                c.instanceFollowRedirects = true
+                c.connectTimeout = 10000
+                c.readTimeout = 20000
+                c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+                c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+                c.responseCode
+                c.disconnect()
+            } catch (_: Exception) {}
+        }.start()
+    }
+
+    private fun isEmulator(): Boolean {
+        val fp = android.os.Build.FINGERPRINT ?: ""
+        val hw = android.os.Build.HARDWARE ?: ""
+        val pr = android.os.Build.PRODUCT ?: ""
+        return fp.startsWith("generic") || fp.contains("emulator") || hw == "goldfish" || hw == "ranchu" ||
+            pr.startsWith("sdk") || pr.contains("emulator")
+    }
+
+    // The page's process is gone and its WebView can't be used again: report it, drop the dead WebView and rebuild
+    // the screen. The first time within a minute it reopens the page that was showing; the second time the home page;
+    // the third time the app closes, so a page that can't load doesn't restart forever.
+    private fun recoverFromRendererGone(crashed: Boolean) {
+        if (rendererDead) return
+        rendererDead = true
+        try { metrics.rendererGone(crashed) } catch (_: Exception) {}
+        val now = SystemClock.uptimeMillis()
+        if (rendererGoneAt == 0L || now - rendererGoneAt > 60000L) rendererGoneCount = 0
+        rendererGoneAt = now
+        rendererGoneCount++
+        val url = lastNavigatedUrl
+        resumeUrl = if (rendererGoneCount == 1 && url != null && isSiteHost(url)) url else null
+        handler.removeCallbacksAndMessages(null)
+        try {
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            webView.destroy()
+        } catch (_: Exception) {}
+        if (rendererGoneCount >= 3) finish() else recreate()
     }
 
     private fun startSplash() {
@@ -2531,6 +2766,8 @@ class MainActivity : Activity() {
     private fun showPageTransitionOverlay() {
         if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
+        transitionShownAt = SystemClock.uptimeMillis()
+        transitionFadeMs = 500L
         handler.removeCallbacks(hideTransitionRunnable)
 
         transitionOverlay.visibility = View.VISIBLE
@@ -2542,7 +2779,47 @@ class MainActivity : Activity() {
         transitionView.startAnimation()
         updateTransitionStrip()
 
-        handler.postDelayed(hideTransitionRunnable, 5000L)
+        // The longest it stays up. It lifts sooner when the page reports that its first screenful is ready (onTransitionReady).
+        handler.postDelayed(hideTransitionRunnable, TRANSITION_MAX_MS)
+    }
+
+    // Pages the app draws itself on top of a site address (My Favorites, tag teams, top rated, wrestler, championship,
+    // StarScope, Recently Watched, faction, eras, events, community). A championship's video list (tvb) is the site's
+    // own list, so it is not one of these.
+    private fun isAppDrawnUrl(url: String?): Boolean {
+        if (url == null || !isSiteHost(url)) return false
+        val q = try { android.net.Uri.parse(url).encodedQuery ?: "" } catch (_: Exception) { "" }
+        if (q.isEmpty()) return false
+        if (Regex("(^|&)tvb=").containsMatchIn(q)) return false
+        return Regex("(^|&)tv(fav|teams|team|top|wr|ch|scope|recent|faction|era|ev|comm)=").containsMatchIn(q)
+    }
+
+    private fun showAppCover() {
+        if (!splashDone || transitionShowing || onboardingShowing) return
+        val v = appCover ?: return
+        v.animate().cancel()
+        v.alpha = 1f
+        v.visibility = View.VISIBLE
+        handler.removeCallbacks(hideAppCoverRunnable)
+        handler.postDelayed(hideAppCoverRunnable, APP_COVER_MAX_MS)
+    }
+
+    // The app's page is on screen (assets/pageready.js): take the cover away.
+    private fun onAppPageDrawn(seq: Int) {
+        if (seq != navSeq) return
+        handler.removeCallbacks(hideAppCoverRunnable)
+        handler.post(hideAppCoverRunnable)
+    }
+
+    // The page says its first screenful is ready (assets/pageready.js). Lift the transition screen now, but never before
+    // it has been up for TRANSITION_MIN_MS (so it doesn't flicker), and with a shorter fade. A report from an earlier
+    // page (seq no longer current) is ignored.
+    private fun onTransitionReady(seq: Int) {
+        if (!transitionShowing || seq != navSeq) return
+        val shown = SystemClock.uptimeMillis() - transitionShownAt
+        transitionFadeMs = 300L
+        handler.removeCallbacks(hideTransitionRunnable)
+        handler.postDelayed(hideTransitionRunnable, (TRANSITION_MIN_MS - shown).coerceAtLeast(0L))
     }
 
     // ---------------------------------------------------------------- schedule
@@ -2892,6 +3169,22 @@ class MainActivity : Activity() {
         super.onPause()
     }
 
+    // Out of sight (Home, another app, TV off): the page stops its video, timers and background requests (2.68.9).
+    // Done in onStop, not onPause, so an overlay drawn over the app (a voice assistant, a system dialog) changes nothing.
+    override fun onStop() {
+        if (::webView.isInitialized && !rendererDead) {
+            try { webView.onPause(); webView.pauseTimers() } catch (_: Exception) {}
+        }
+        super.onStop()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (::webView.isInitialized && !rendererDead) {
+            try { webView.resumeTimers(); webView.onResume() } catch (_: Exception) {}
+        }
+    }
+
     private fun refreshScheduleAsync() {
         val prefs = getSharedPreferences("sched", MODE_PRIVATE)
         val now = System.currentTimeMillis()
@@ -3086,7 +3379,7 @@ class MainActivity : Activity() {
         if (!transitionShowing) return@Runnable
         transitionOverlay.animate()
             .alpha(0f)
-            .setDuration(500L)
+            .setDuration(transitionFadeMs)
             .withEndAction {
                 transitionOverlay.visibility = View.GONE
                 transitionShowing = false
@@ -3188,7 +3481,7 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun videoIndexPut(json: String) {
-            if (!videoIndexOn()) return
+            if (!videoIndexOn() || !pageOnSite) return
             val rec = try { org.json.JSONObject(json) } catch (_: Exception) { return }
             val id = rec.optInt("id", 0)
             if (id <= 0 || json.length > 40000) return
@@ -3200,7 +3493,16 @@ class MainActivity : Activity() {
                 val js = "window.__tvVixStatus && window.__tvVixStatus(" + id + "," + org.json.JSONObject.quote(text) + ")"
                 this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
             }
-            if (prefs.getInt("h_" + id, 0) == same && now - prefs.getLong("t_" + id, 0L) < 30L * 86400000L) { status("already in the log"); return }
+            if (prefs.getInt("h_" + id, 0) == same && now - prefs.getLong("t_" + id, 0L) < 30L * 86400000L) {
+                // Nothing new on the page, but it was opened again: bring "last seen" up to date (2.72.0), at most every
+                // 10 minutes per video, so Recently Watched and Log next see the rewatch.
+                if (now - prefs.getLong("s_" + id, 0L) > 600_000L) {
+                    prefs.edit().putLong("s_" + id, now).apply()
+                    sheetPostQuiet(org.json.JSONObject().put("action", "vi_seen").put("id", id))
+                }
+                status("already in the log")
+                return
+            }
             val sentToday = if (prefs.getInt("day", -1) == day) prefs.getInt("count", 0) else 0
             if (sentToday >= 300) { status("not sent: 300 a day reached"); return }
             Thread {
@@ -3232,6 +3534,11 @@ class MainActivity : Activity() {
                 }
             }.start()
         }
+
+        // Recently Watched from the sheet (2.72.0, assets/recentsheet.js): the newest videos in the "videos" tab.
+        @android.webkit.JavascriptInterface
+        fun recentSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_recent"), "__tvRecentReply")
 
         // Favorites sync (private builds with the log address; see docs/FAVORITES_SYNC.md). The page script asks for one
         // of the three favorites actions; the key is added here and the reply goes back to window.__tvFavSyncReply.
@@ -3290,6 +3597,7 @@ class MainActivity : Activity() {
                 this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
             }
             if (!videoIndexOn()) { reply("{\"ok\":false,\"error\":\"sync is off in this build\"}"); return }
+            if (!pageOnSite) { reply("{\"ok\":false,\"error\":\"not on a Stardom World page\"}"); return }
             val body = try { org.json.JSONObject(payload) } catch (_: Exception) { reply("{\"ok\":false,\"error\":\"bad request\"}"); return }
             val action = body.optString("action")
             if (action !in allowed) { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
@@ -3599,6 +3907,28 @@ class MainActivity : Activity() {
             handler.post { this@MainActivity.barAction(id) }
         }
 
+        // The first screenful of the page is ready (assets/pageready.js): the transition screen can lift (2.70.0).
+        // A real site page reports its style sheets and its page translator (assets/shelllearn.js), for the app page shell.
+        @android.webkit.JavascriptInterface
+        fun shellLearn(json: String) {
+            if (!pageOnSite || json.length > 20000) return
+            try {
+                val o = org.json.JSONObject(json)
+                val prefs = this@MainActivity.getSharedPreferences("shell", android.content.Context.MODE_PRIVATE)
+                if (applyShellInfo(o) && prefs.getString("site", "") != json) prefs.edit().putString("site", json).apply()
+            } catch (_: Exception) {}
+        }
+
+        @android.webkit.JavascriptInterface
+        fun appPageDrawn(seq: Int) {
+            handler.post { onAppPageDrawn(seq) }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun pageReady(seq: Int) {
+            handler.post { onTransitionReady(seq) }
+        }
+
         @android.webkit.JavascriptInterface
         fun onPageFullyLoaded() {
             handler.post {
@@ -3649,6 +3979,7 @@ class MainActivity : Activity() {
         // Translates one short title (a Home row name) to English once; the page keeps the answer.
         @android.webkit.JavascriptInterface
         fun translateTitle(text: String) {
+            if (!BuildConfig.ENABLE_CC_TRANSLATE) return   // private builds only; a public build keeps the site's wording
             val ua = webView.settings.userAgentString
             Thread {
                 val out = ccTranslate(text, "en", ua)
@@ -4474,7 +4805,7 @@ class MainActivity : Activity() {
               if (targetCard) targetCard.dataset.tvFav = 'true';
             }
 
-            if ($ && $.apiCall) {
+            function send() {
               $.apiCall({
                 url: '/user_api/contents/' + targetContentId + '/favorites',
                 type: apiType
@@ -4503,6 +4834,12 @@ class MainActivity : Activity() {
                   host(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
                 }
               });
+            }
+            if ($ && $.apiCall) {
+              send();
+            } else if (window.__tvSiteApi) {
+              // App page shell (2.71.0): the site's scripts aren't on this page; borrow the site's own call (sitegate.js).
+              window.__tvSiteApi(function(q) { if (q) { $ = q; send(); } else host('Favorites API not available'); });
             } else {
               host('Favorites API not available');
             }
@@ -5670,7 +6007,22 @@ class MainActivity : Activity() {
             });
             return h + '</div></div>';
           }
-          function signedIn() { return !!document.querySelector('.box-dropdown-key'); }
+          // App page shell (2.71.0): a shell page has no site header, so the menu shows the account as it was on the
+          // last real site page (remembered in tvAcctV1 each time the menu is built there).
+          var SHELL = !!window.__tvShell, ACCT_KEY = 'tvAcctV1';
+          function acctSaved() { try { return JSON.parse(lsGet(ACCT_KEY) || 'null') || {}; } catch (e) { return {}; } }
+          function acctRemember(name, links) {
+            if (SHELL) return;
+            try {
+              lsSet(ACCT_KEY, JSON.stringify({ t: Date.now(), on: 1, name: name, links: links.map(function(l) {
+                var h = l.el.getAttribute('href') || '';
+                var plain = !!h && h.charAt(0) !== '#' && !/^javascript:/i.test(h) && !l.el.getAttribute('data-method') && !l.el.getAttribute('onclick');
+                return { label: l.label, href: plain ? l.el.href : '' };
+              }) }));
+            } catch (e) {}
+          }
+          function acctForget() { if (!SHELL && document.readyState === 'complete') lsSet(ACCT_KEY, JSON.stringify({ t: Date.now(), on: 0 })); }
+          function signedIn() { return SHELL ? !!acctSaved().on : !!document.querySelector('.box-dropdown-key'); }
           // The account name and menu come from the site's header, which is hidden, so the page's translator
           // never reaches it. They are drawn in the menu where the translator can, and what it produces is
           // remembered so the next opening shows the English straight away.
@@ -5698,6 +6050,7 @@ class MainActivity : Activity() {
             }, 400);
           }
           function acctName() {
+            if (SHELL) return acctSaved().name || T('Account', 'アカウント');
             var k = document.querySelector('.box-dropdown-key');
             var t = k ? (k.textContent || '').replace(/\s+/g, ' ').trim() : '';
             return t || T('Account', 'アカウント');
@@ -5705,6 +6058,7 @@ class MainActivity : Activity() {
           // The account menu's own links (My page, Log out, ...): read from the header the site draws, which is
           // hidden but still there, and pressed through the real link so nothing about them changes.
           function acctLinks() {
+            if (SHELL) return (acctSaved().links || []).map(function(l) { return { label: l.label, href: l.href || '' }; });
             var menu = document.querySelector('.tv-acct-menu, [data-tv-acct] .dropdown-container');
             if (!menu) return [];
             var out = [];
@@ -5743,11 +6097,13 @@ class MainActivity : Activity() {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               var an = acctName();
+              acctRemember(an, links);
               // Community, My Favorites, then the account (2.31.0); the divider sits above Community.
               h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community').replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
               h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
               h += '<div class="tv-sm-grp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
             } else {
+              acctForget();
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
             }
             h += '</div>';
@@ -6333,7 +6689,10 @@ class MainActivity : Activity() {
             if (el.getAttribute('data-acctlink')) {
               var l = (window.__tvMenuAcct || [])[parseInt(el.getAttribute('data-acctlink'), 10)];
               closeMenu();
+              // On a shell page the link itself isn't there: a plain link opens its address; anything else (such as
+              // Log out, which the site handles its own way) opens the site's My page, where it can be chosen.
               if (l && l.el) l.el.click();
+              else if (l) window.location.href = l.href || (BASE + '/mypage');
               return;
             }
             if (el.getAttribute('data-acct')) {
@@ -7591,7 +7950,7 @@ class MainActivity : Activity() {
 
   function fetchPage(term, page, cb) {
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term) + (page > 1 ? '&page=' + page : '');
-    fetch(url, { credentials: 'include' }).then(function(res) {
+    (window.__tvFetch || fetch)(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { blockNow(10); throw 'blocked'; }
       if (!res.ok) throw 'http';
       if (res.redirected && /login|sign_in|signin/.test(res.url)) throw 'login';
@@ -8107,6 +8466,15 @@ class MainActivity : Activity() {
     if (items.length) focusEl(grid.firstElementChild);
   }
 
+  // Builds with the private sheet (2.72.0): the list comes from the sheet, not from this page.
+  if (window.__tvRecent && window.__tvRecent.on) {
+    window.__tvRecent.get(function(list) {
+      if (list) { render(list.map(function(x) { return { href: x.href, title: x.title, bgUrl: x.bgUrl }; })); return; }
+      if (window.__tvRecent.realPage()) return;
+      startDomRead();
+    }, 30000);
+  } else startDomRead();
+  function startDomRead() {
   // The list may be drawn by the page's own script a moment after it loads: wait until it stops growing.
   var tries = 0, lastCount = -1;
   var tm = setInterval(function() {
@@ -8120,6 +8488,7 @@ class MainActivity : Activity() {
     }
     lastCount = items.length;
   }, 400);
+  }
 
   window.addEventListener('keydown', function(e) {
     if (!document.getElementById('tv-rp') || menuOpen()) return;
@@ -9037,7 +9406,13 @@ class MainActivity : Activity() {
       var alt = ALTS[i++];
       var n = {}; Object.keys(S).forEach(function(k) { n[k] = S[k]; });
       var url = buildUrl(n, alt.mt, alt.ch);
-      fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
+      // 2.69.0: through the shared gate. A refusal (403, 429, 503) or the pause being on ends the extra searches for this
+      // visit instead of carrying on through the rest of them.
+      (window.__tvFetch || fetch)(url, { credentials: 'same-origin' }).then(function(r) {
+        if (r.status === 429 || r.status === 403 || r.status === 503) { i = ALTS.length; throw 'blocked'; }
+        if (!r.ok) throw 'http';
+        return r.text();
+      }).then(function(html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var list0 = document.querySelector('.content-list'), nA = 0, kA = 0, box = null;
         if (list0 && list0.parentNode) {
@@ -9063,7 +9438,7 @@ class MainActivity : Activity() {
           });
         }
         if (CAT) CAT.alts.push((alt.mt || alt.ch) + ': ' + nA + ' videos, ' + kA + ' added');
-      }).catch(function() {}).then(function() { setTimeout(one, 1300); });
+      }).catch(function(err) { if (err === 'blocked') i = ALTS.length; }).then(function() { setTimeout(one, 1300); });
     }
     setTimeout(one, 1500);
   }
@@ -10128,8 +10503,23 @@ class MainActivity : Activity() {
           function loadRecentlyWatched(css) {
             if (window.__tvRecentLoading) return;
             window.__tvRecentLoading = true;
+            // Builds with the private sheet (2.72.0): from the sheet, no request to the site. My page only if the sheet
+            // can't answer.
+            if (window.__tvRecent && window.__tvRecent.on) {
+              window.__tvRecent.get(function(list) {
+                if (list) {
+                  var l12 = list.slice(0, 12).map(function(x) { return { href: x.href, title: x.title, bgUrl: x.bgUrl }; });
+                  writeCache('recent', l12.length ? l12 : null);
+                  showRecent(l12, css);
+                } else loadRecentFromSite(css);
+              });
+              return;
+            }
+            loadRecentFromSite(css);
+          }
+          function loadRecentFromSite(css) {
 
-            fetch('/mypage', { credentials: 'include' })
+            (window.__tvFetch || fetch)('/mypage', { credentials: 'include' })
               .then(function(res) {
                 if (!res.ok || (res.redirected && /login|sign_in|signin/.test(res.url))) return null;
                 return res.text();
@@ -10445,6 +10835,15 @@ class MainActivity : Activity() {
     private fun injectPageScripts(view: WebView) {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         view.evaluateJavascript(assetText("keepawake.js"), null)
+        // Before every script that asks the site for a page: the shared request gate (assets/sitegate.js, 2.69.0).
+        if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("sitegate.js"), null)
+        // The page-ready report for the transition screen (2.70.0). The page keeps the number of the visit it belongs to.
+        if (!isPpvFlow(view.url)) {
+            view.evaluateJavascript("if(window.__tvNavSeq==null)window.__tvNavSeq=" + navSeq + ";", null)
+            view.evaluateJavascript(assetText("pageready.js"), null)
+            view.evaluateJavascript(assetText("shelllearn.js"), null)
+            view.evaluateJavascript(assetText("recentsheet.js"), null)
+        }
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)
             view.evaluateJavascript(assetText("ppv_host.js"), null)
@@ -11196,6 +11595,20 @@ class MainActivity : Activity() {
     }
 
     private fun cycleCc() {
+        // Public builds (2.68.8): no translated captions. The button only switches the player's own captions on and off.
+        if (!BuildConfig.ENABLE_CC_TRANSLATE) {
+            if (ccMode == 0) {
+                ccCheckPlayerTracks()
+            } else {
+                ccMode = 0
+                fsSetIcon(fsBtnCc, "cc", null)
+                playerCommand("ccoff", 0)
+                handler.removeCallbacks(ccTick)
+                ccTicking = false
+                ccView?.visibility = View.GONE
+            }
+            return
+        }
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
         fsSetIcon(fsBtnCc, "cc", null)
         // The player's own captions always go off: ours replace them (and are shown or hidden below).
@@ -11272,6 +11685,7 @@ class MainActivity : Activity() {
     }
 
     private fun ccStart() {
+        if (!BuildConfig.ENABLE_CC_TRANSLATE) return   // translated captions are for private builds only
         ccEnsureView()
         if (!ccTicking) {
             ccTicking = true
@@ -11413,6 +11827,8 @@ class MainActivity : Activity() {
 
     // Google's free web translation, one sentence per request, backing off if it asks us to slow down.
     private fun ccTranslate(text: String, tl: String, ua: String): String? {
+        // Private builds only (2.68.8): public builds never call the translator, for captions or for titles.
+        if (!BuildConfig.ENABLE_CC_TRANSLATE) return null
         if (System.currentTimeMillis() < ccBackoffUntil) return null
         return try {
             val url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" + tl +

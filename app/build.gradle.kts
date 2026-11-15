@@ -13,14 +13,15 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 490
-        versionName = "2.68.7"
+        versionCode = 499
+        versionName = "2.72.1"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
         buildConfigField("String", "START_URL", "\"$startUrl\"")
 
         val hasPrivateBranding = rootProject.file("branding-private/res").exists()
+        // Translated captions (CC: EN / 日本語) and translated Home row titles: private builds only (enforced since 2.68.8).
         buildConfigField("Boolean", "ENABLE_CC_TRANSLATE", hasPrivateBranding.toString())
         // Event poster artwork is only fetched and shown in builds that have the private branding folder.
         buildConfigField("Boolean", "SHOW_POSTERS", hasPrivateBranding.toString())

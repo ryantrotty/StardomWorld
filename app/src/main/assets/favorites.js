@@ -250,7 +250,7 @@
       }
       if (bg.indexOf('data:') === 0) bg = '';
       if (bg) bg = absUrl(bg);
-      var tEl = box.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box, .tv-rc-t, .tv-fp-tt');
+      var tEl = box.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box, .tv-rc-t, .tv-fp-tt, .tt-card > .tt');
       var title = clean(tEl ? tEl.textContent : (link.getAttribute('title') || link.getAttribute('aria-label') || box.textContent)) || 'Stardom World Video';
       return { id: m[1], href: href, title: title, bg: bg, card: box };
     }
@@ -269,8 +269,14 @@
     if (og) bg = og.getAttribute('content') || '';
     return { id: m[2], href: location.origin + location.pathname, title: t || 'Stardom World Video', bg: bg, card: null };
   }
-  function siteFav(id) {
-    var $ = window.jQuery || window.$;
+  function siteFav(id, viaShell) {
+    var $ = viaShell || window.jQuery || window.$;
+    // The site's favorites call isn't on this page (an app page shell, or My page, which never had it): borrow the
+    // site's own call from a page that has it (sitegate.js, 2.72.0).
+    if ((!$ || !$.apiCall) && !viaShell && window.__tvSiteApi) {
+      window.__tvSiteApi(function(q) { if (q) siteFav(id, q); else toast('Favorites API not available'); });
+      return;
+    }
     if (!$ || !$.apiCall) { toast('Favorites API not available'); return; }
     $.apiCall({ url: '/user_api/contents/' + id + '/favorites', type: 'POST' }).done(function() { toast('♥ Added to Favorites!'); })
       .fail(function(x) {
@@ -945,7 +951,17 @@
   document.addEventListener('focusin', function() { if (document.getElementById('tv-fp')) hint(); }, true);
 
   render(false);
-  if (MODE === 'home') {
+  // Builds with the private sheet (2.72.0): the Recently Watched row comes from the sheet, not from My page.
+  if (MODE === 'home' && window.__tvRecent && window.__tvRecent.on) {
+    window.__tvRecent.get(function(list) {
+      if (list) {
+        hist = list.map(function(x) { return { href: x.href, title: x.title, bg: x.bg }; }); histDone = true;
+        if (hist.length) lsSet('tvFavHistN', String(hist.length));
+        render(true);
+      } else if (!window.__tvRecent.realPage()) domHistory();
+    }, 30000);
+  } else if (MODE === 'home') domHistory();
+  function domHistory() {
     var tries = 0, last = -1;
     var tm = setInterval(function() {
       tries++;

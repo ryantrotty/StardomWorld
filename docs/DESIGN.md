@@ -273,3 +273,7 @@ Wrestlers menu tabs (2.64.0): Current, Past and Guests in the existing rounded t
 - Fifth tab on the StarScope page ("Log next · N"). The same show cards as Shows; a line above each card (16 px gold eye, 14/600 #C9D2DC, the counts in white) says what was watched and when.
 - Not logged yet: #2A323C bars (11 px, radius 4) where the main event and highlights will go, with a #3B4656 circle in place of the icon; the main event label is grey "Main event · not logged yet".
 - Squares gain a fourth state: watched, not logged = dashed gold border, no fill (logged stays the gold-tinted fill with a solid edge). A key at the top right names Logged, Watched and Not seen.
+
+Transition screen between pages (2.70.0): not shown for app-drawn pages; for site pages it lifts when the page reports its first screenful ready (`assets/pageready.js`), at least 0.4 s after it went up, with a 0.3 s fade; 5 s stays the limit (0.5 s fade then). Its look (navy #0B1118, wand animation, Up next strip) is unchanged. The launch splash is separate and unchanged.
+
+App-drawn page cover (2.70.1): while the site's own page is underneath and the app's page isn't drawn yet, a plain #0B1118 cover (no wand, no strip) is held over the page; it goes with a 0.12 s fade once the app's page is on screen, 2 s at most.
