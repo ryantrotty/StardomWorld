@@ -197,9 +197,11 @@
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function num(x) { if (x === '' || x == null) return null; var n = Number(x); return isFinite(n) ? n : null; }
   // The sheet keeps one name per show, often with a Japanese subtitle: in English the Japanese parts are left out.
-  function showName(n) {
+  // English names from the schedule or the word list (assets/shownames.js, 2.78.2); the short schedule name on cards.
+  function showName(n, date) {
     n = String(n || '');
     if (ja) return n;
+    if (window.__tvShowName) return window.__tvShowName.en(n, date, true);
     return n.replace(/[〜～~][^〜～~]*[぀-ヿ㐀-鿿ｦ-ﾟ][^〜～~]*[〜～~]/g, ' ')
       .replace(/[　-〿぀-ヿ㐀-鿿＀-￯]+/g, ' ').replace(/\s+/g, ' ').replace(/[\s·\-–:]+$/, '').trim();
   }
@@ -245,7 +247,7 @@
       }).sort(function(a, b) { return (a.sc - b.sc) || (a.n - b.n); });
       var hl = others.filter(function(o) { return o.sc < 9; }).slice(0, 3);
       var first = ns.length ? nums[ns[0]] : top;
-      return { sid: sid, name: showName(v0.sh) || v0.sh || '', date: date, venue: (ja ? (v0.vnj || v0.vn) : v0.vn) || '', total: total,
+      return { sid: sid, name: showName(v0.sh, date) || v0.sh || '', date: date, venue: (ja ? (v0.vnj || v0.vn) : v0.vn) || '', total: total,
         list: L, nums: nums, top: top, mainN: mainN, isMain: isMain, counted: counted, complete: total != null && counted >= total,
         hl: hl, more: Math.max(0, L.length - 1 - hl.length), first: first,
         hasDark: L.some(function(x) { return x.v.x.dk || num(x.v.n) === 0; }) };
@@ -412,7 +414,7 @@
         sq = '<div class="pips">' + sq + '</div>';
       } else sq = '<div class="pips"><span class="nn">' + esc(e.w + ' ' + HT.watched + ' · ' + HT.noNums) + '</span></div>';
       card = cardHtml({ href: href, auto: true, th: e.first.th, date: g.date, count: top ? '0/' + top : '0 ' + HT.logged, complete: false,
-        name: showName(g.show) || g.show, venue: g.venue ? (ja ? g.venue.ja || g.venue.en : g.venue.en) : '',
+        name: showName(g.show, g.date) || g.show, venue: g.venue ? (ja ? g.venue.ja || g.venue.en : g.venue.en) : '',
         main: '<div class="me"><div class="eb dim">' + esc(HT.main + ' · ' + HT.notYet) + '</div><div class="phs" style="margin-top:7px"><span class="ph" style="width:85%;height:13px"></span><span class="ph" style="width:50%"></span></div></div>',
         rest: '<div class="lb">' + HT.alsoOn + '</div>' + phRow() + phRow() + phRow() + sq });
     }

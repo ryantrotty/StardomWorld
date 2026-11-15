@@ -3618,6 +3618,10 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun matchTypesJson(): String = this@MainActivity.rosterMatchTypes()
 
+        // English show names (2.78.2, assets/shownames.js): the roster file's "showWords" {"Japanese": "English"}.
+        @android.webkit.JavascriptInterface
+        fun showWordsJson(): String = this@MainActivity.rosterData()?.optJSONObject("showWords")?.toString() ?: ""
+
         // Every build (2.47.0): the match types with the Titles & tournaments group, for the app-drawn wrestler page's tabs.
         @android.webkit.JavascriptInterface
         fun wrestlerTabsJson(): String = this@MainActivity.rosterMatchTypes(true)
@@ -11240,6 +11244,7 @@ class MainActivity : Activity() {
         if (scopeLogOn()) view.evaluateJavascript(assetText("indexpanel.js"), null)   // StarScope logging: your build (2.76.0)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
         // StarScope cards, Shows and player: every build (2.76.0). They stay out of sight unless scopeOn() says yes.
+        view.evaluateJavascript(assetText("shownames.js"), null)   // English show names (2.78.2), used by the next two
         view.evaluateJavascript(assetText("starcards.js"), null)
         // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
         view.evaluateJavascript(assetText("scopeplayer.js"), null)
