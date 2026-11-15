@@ -94,6 +94,7 @@ class MainActivity : Activity() {
         private const val START_URL = "https://www.stardom-world.com/"
         private const val TRANSITION_MAX_MS = 5000L   // as before 2.70.0: the transition screen never stays longer
         private const val TRANSITION_MIN_MS = 400L    // once up, it stays at least this long
+        private const val APP_COVER_MAX_MS = 2000L    // the plain cover over an app-drawn page never stays longer
         private const val LOGIN_LOGO_FRACTION = 0.26f
         private const val LOGIN_URL =
             "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
@@ -617,6 +618,15 @@ class MainActivity : Activity() {
     private var transitionShownAt = 0L
     private var transitionFadeMs = 500L
     private var navSeq = 0
+    // App-drawn pages (2.70.1): a plain cover in the page colour, held over the site's own page from the moment it would
+    // first show until the app's page is drawn on top of it. Not the transition screen: no wand, no Up next strip.
+    private var appCover: View? = null
+    private var appCoverSeq = -1
+    private val hideAppCoverRunnable = Runnable {
+        val v = appCover ?: return@Runnable
+        if (v.visibility != View.VISIBLE) return@Runnable
+        v.animate().alpha(0f).setDuration(120L).withEndAction { v.visibility = View.GONE }.start()
+    }
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -2075,6 +2085,21 @@ class MainActivity : Activity() {
             )
         )
 
+        // Plain cover for app-drawn pages (2.70.1), directly above the page and below everything else.
+        appCover = View(this).apply {
+            setBackgroundColor(0xFF0B1118.toInt())
+            isFocusable = false
+            isClickable = false
+            visibility = View.GONE
+        }
+        root.addView(
+            appCover,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+
         // Wand cursor, drawn above the page.
         val cursorPx = (CURSOR_DP * density).toInt()
         cursorView = ImageView(this).apply {
@@ -2257,6 +2282,13 @@ class MainActivity : Activity() {
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
                 super.doUpdateVisitedHistory(view, url, isReload)
                 if (!isReload) metrics.page(url)
+                // The new page is about to replace the old one on screen. For an app-drawn page that would be the site's
+                // own page for a moment: hold the plain cover over it (once per page; later address changes inside the
+                // same page, such as a tab change, don't bring it back).
+                if (isAppDrawnUrl(url) && appCoverSeq != navSeq) {
+                    appCoverSeq = navSeq
+                    showAppCover()
+                }
             }
 
             override fun onPageCommitVisible(view: WebView, url: String?) {
@@ -2637,6 +2669,23 @@ class MainActivity : Activity() {
         if (q.isEmpty()) return false
         if (Regex("(^|&)tvb=").containsMatchIn(q)) return false
         return Regex("(^|&)tv(fav|teams|team|top|wr|ch|scope|recent|faction|era|ev|comm)=").containsMatchIn(q)
+    }
+
+    private fun showAppCover() {
+        if (!splashDone || transitionShowing || onboardingShowing) return
+        val v = appCover ?: return
+        v.animate().cancel()
+        v.alpha = 1f
+        v.visibility = View.VISIBLE
+        handler.removeCallbacks(hideAppCoverRunnable)
+        handler.postDelayed(hideAppCoverRunnable, APP_COVER_MAX_MS)
+    }
+
+    // The app's page is on screen (assets/pageready.js): take the cover away.
+    private fun onAppPageDrawn(seq: Int) {
+        if (seq != navSeq) return
+        handler.removeCallbacks(hideAppCoverRunnable)
+        handler.post(hideAppCoverRunnable)
     }
 
     // The page says its first screenful is ready (assets/pageready.js). Lift the transition screen now, but never before
@@ -3722,6 +3771,11 @@ class MainActivity : Activity() {
         }
 
         // The first screenful of the page is ready (assets/pageready.js): the transition screen can lift (2.70.0).
+        @android.webkit.JavascriptInterface
+        fun appPageDrawn(seq: Int) {
+            handler.post { onAppPageDrawn(seq) }
+        }
+
         @android.webkit.JavascriptInterface
         fun pageReady(seq: Int) {
             handler.post { onTransitionReady(seq) }

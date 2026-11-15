@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.70.1
+
+- App-drawn pages no longer show the site's own page (the Japanese My page, or a search page) for half a second before the app's page appears. Since 2.70.0 they have no transition screen, which uncovered that moment. The app now holds a plain cover in the page colour from the instant the site's page would show until the app's page is drawn over it (2 seconds at most), so the order is: the page you were on, a brief plain dark screen, the app's page. No wand and no Up next strip.
+
 ## 2.70.0
 
 The transition screen between pages (not the app's loading screen) now follows the page instead of a fixed 5 seconds.

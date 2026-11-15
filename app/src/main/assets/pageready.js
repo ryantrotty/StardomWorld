@@ -74,4 +74,20 @@
     finish();
   }
   var tm = setInterval(check, 120);
+
+  // App-drawn pages (2.70.1): they sit on a site address, so the site's own page is underneath until the app's page is
+  // drawn over it. The app holds a plain cover over that moment and takes it away when this reports that the app's page
+  // is on screen: the middle of the screen belongs to an app element (an id starting "tv"). Gives up after 3 s (the app
+  // lifts the cover by itself before then).
+  if (H.appPageDrawn) {
+    var d0 = Date.now(), dm = setInterval(function() {
+      var el = null;
+      try { el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2); } catch (e) {}
+      var hit = el && el.closest ? el.closest('[id^="tv"]') : null;
+      if (hit || Date.now() - d0 > 3000) {
+        clearInterval(dm);
+        if (hit) { try { H.appPageDrawn(seq); } catch (e) {} }
+      }
+    }, 50);
+  }
 })();
