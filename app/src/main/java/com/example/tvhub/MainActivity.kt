@@ -7092,28 +7092,8 @@ class MainActivity : Activity() {
             var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
             var last = tiles.length ? tiles[tiles.length - 1] : null;
             if (last && last.href) lsSet(NEW_KEY, last.href);
-            // every row the site draws on the home page (not the app's own Recently Watched / Favorites rows) with its View All address
-            var list = [];
-            Array.prototype.forEach.call(rows, function(row) {
-              var wrap = row.parentNode;
-              if (!wrap || wrap.id) return;
-              var h2 = wrap.querySelector('h2');
-              var title = h2 ? (h2.textContent || '').replace(/\s+/g, ' ').trim() : '';
-              var t2 = row.querySelectorAll('a.tv-card.notranslate');
-              var va = t2.length ? t2[t2.length - 1] : null;
-              if (title && va && va.href) list.push([title, va.href]);
-            });
-            if (list.length) {
-              // keep an English and a Japanese name per row: the page shows whichever language it is in when it is read
-              var prev = {};
-              try { (JSON.parse(lsGet(HOME_ROWS_KEY) || '[]') || []).forEach(function(r) { prev[r[1]] = r; }); } catch (e) {}
-              lsSet(HOME_ROWS_KEY, JSON.stringify(list.map(function(r) {
-                var pr = prev[r[1]], en = null, ja = null;
-                if (pr) { var pj = pr[2] || pr[0]; if (hasJa(pr[0])) ja = pr[0]; else { en = pr[0]; if (hasJa(pj)) ja = pj; } }
-                if (hasJa(r[0])) ja = r[0]; else en = r[0];
-                return [en || ja, r[1], ja || en];
-              })));
-            }
+            // The menu's Home list is saved by the home page itself from every site row (2.77.0), since the page now only
+            // draws the first one; nothing more to note here.
             return true;
           }
           if (isHome()) {
@@ -10240,6 +10220,24 @@ class MainActivity : Activity() {
             });
           }
 
+          var HOME_ROWS_SHOWN = 1;
+          // Every site row on the home page, for the menu's Home list (tvHomeRowsV1): an English and a Japanese name per
+          // row (the page shows whichever language it is in when it is read) and its View All address.
+          function saveHomeRowList(rows) {
+            try {
+              var list = (rows || []).filter(function(r) { return r.title && r.viewAll; }).map(function(r) { return [r.title.replace(/\s+/g, ' ').trim(), r.viewAll]; });
+              if (!list.length) return;
+              var JA = /[\u3040-\u30ff\u3400-\u9fff]/, prev = {};
+              try { (JSON.parse(localStorage.getItem('tvHomeRowsV1') || '[]') || []).forEach(function(r) { if (r && r[1]) prev[r[1]] = r; }); } catch (e) {}
+              localStorage.setItem('tvHomeRowsV1', JSON.stringify(list.map(function(r) {
+                var pr = prev[r[1]], en = null, ja = null;
+                if (pr) { var pj = pr[2] || pr[0]; if (JA.test(pr[0])) ja = pr[0]; else { en = pr[0]; if (JA.test(pj)) ja = pj; } }
+                if (JA.test(r[0])) ja = r[0]; else en = r[0];
+                return [en || ja, r[1], ja || en];
+              })));
+            } catch (e) {}
+          }
+
           function extractAllHomeRows() {
             var sections = document.querySelectorAll('.box-section, section, [class*="box-section"]');
             var result = [];
@@ -10502,6 +10500,11 @@ class MainActivity : Activity() {
 
             var heroData = extractHeroBanner();
             var allRowsData = extractAllHomeRows();
+            // 2.77.0: the menu's Home list keeps every row the site's home page has (title and View All address, read
+            // from this same page: no extra request), but the home page itself only draws the first row (New). The other
+            // rows were a dozen rows of pictures the TV had to load and keep on every visit to the home page.
+            saveHomeRowList(allRowsData);
+            if (allRowsData && allRowsData.length > HOME_ROWS_SHOWN) allRowsData = allRowsData.slice(0, HOME_ROWS_SHOWN);
 
             // Hide original desktop site carousels, news lists, and old hero banners ONLY on home page
             var origContent = document.querySelectorAll('.content-list, .box-section, .main-visual, .slider-inner, .box-main-visual, .container.box-main, .news-wrap, [class*="main-visual"], [class*="slider"]');
@@ -10643,7 +10646,8 @@ class MainActivity : Activity() {
           // Their last-known contents are kept on the device and drawn at once with the page, then refreshed
           // from the site in the background, so they are in place from the first paint on every visit
           // after the first and nothing jumps when the fresh copy arrives.
-          var CACHE_KEY = 'tvHomeRowsV1';
+          // 2.77.0: was 'tvHomeRowsV1', the same name as the menu's Home list, so each overwrote the other.
+          var CACHE_KEY = 'tvHomeAcctV1';
           function readCache() {
             try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
           }

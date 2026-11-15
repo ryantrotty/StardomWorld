@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.77.0
+
+A lighter home page.
+
+- The home page now draws the banner, the live / PPV row, the **New** row, then Recently Watched and Watch Later. The site's other rows (the big shows, years, English Commentary and so on) are no longer drawn there: that was a dozen rows of pictures the TV loaded and kept in memory on every visit to the home page.
+- The menu's **Home** list still has every row the site's home page has, with its View All address, kept up to date on each home page visit. It comes from the same page load, so it costs no request of its own.
+- Fix: the menu's Home list and the saved copy of the home page's account rows were both kept under the same storage name, so each could wipe the other (the Home list then fell back to five fixed rows). They now have their own names.
+
 ## 2.76.0
 
 StarScope 3.0, first steps: reading StarScope no longer needs the private sheet. Nothing changes in your build, and public builds stay as they are until you switch StarScope on for them.
