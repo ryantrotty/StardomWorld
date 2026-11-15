@@ -2656,6 +2656,69 @@ class MainActivity : Activity() {
     // (Stagecrowd, or any outside page a link leads to). Read from the bridge's own thread, hence @Volatile.
     @Volatile private var pageOnSite = false
 
+    // ---- StarScope switches (2.76.0) ---------------------------------------------------------------------------------
+    // One private switch used to cover everything StarScope. It is now three:
+    //   scopeReadOn()  reading StarScope (cards, Shows, the player's fight card and Skip Entrances, the Wrestlers menu's
+    //                  Current | Past | Guests): your build from the sheet; every other build from the published
+    //                  StarScope file, and only once that file says "public": true.
+    //   scopeLogOn()   logging (the logger panel, the video log, the phone link): your build only, for now.
+    //   sheetOn()      private sync with the sheet (favorites, team lists, Recently Watched): your build only, always.
+    private fun sheetOn(): Boolean = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+    private fun scopeLogOn(): Boolean = BuildConfig.VIDEO_INDEX_DRYRUN && sheetOn()
+    private fun scopeReadOn(): Boolean = sheetOn() || scopeFilePublic()
+
+    // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
+    @Volatile private var scopeCache: org.json.JSONObject? = null
+    @Volatile private var scopeStamp = 0L
+    private fun scopeFile(): org.json.JSONObject? {
+        return try {
+            val f = java.io.File(filesDir, "starscope.json")
+            if (!f.exists() || f.length() == 0L) return null
+            if (f.lastModified() != scopeStamp || scopeCache == null) {
+                scopeCache = org.json.JSONObject(f.readText())
+                scopeStamp = f.lastModified()
+            }
+            scopeCache
+        } catch (_: Exception) { null }
+    }
+    private fun scopeFilePublic(): Boolean {
+        val d = scopeFile() ?: return false
+        return d.optBoolean("public", false) && d.optInt("schema", 0) == 1 && d.optJSONObject("cards") != null
+    }
+
+    // Downloads the StarScope file with the schedule check (when the app comes to the front, at most every six hours),
+    // with the last ETag, so an unchanged file costs almost nothing. Keeps the last good copy on any problem. Your own
+    // build reads the sheet instead and skips this.
+    private fun refreshScopeFile() {
+        if (BuildConfig.STARSCOPE_URL.isEmpty() || sheetOn()) return
+        try {
+            val prefs = getSharedPreferences("starscope", MODE_PRIVATE)
+            val have = java.io.File(filesDir, "starscope.json")
+            val c = java.net.URL(BuildConfig.STARSCOPE_URL).openConnection() as java.net.HttpURLConnection
+            c.connectTimeout = 8000
+            c.readTimeout = 15000
+            val etag = prefs.getString("etag", "") ?: ""
+            if (etag.isNotEmpty() && have.exists()) c.setRequestProperty("If-None-Match", etag)
+            if (c.responseCode == 200) {
+                val body = c.inputStream.bufferedReader().use { it.readText() }
+                val j = org.json.JSONObject(body)
+                if (j.optInt("schema", 0) == 1 && j.optJSONObject("cards") != null) {
+                    val tmp = java.io.File(filesDir, "starscope.json.part")
+                    tmp.writeText(body)
+                    tmp.renameTo(have)
+                    prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
+                }
+            }
+            c.disconnect()
+        } catch (_: Exception) {}
+    }
+
+    // An answer to a page script, the same way the sheet's answers are delivered.
+    private fun pageReply(callback: String, reqId: String, text: String) {
+        val js = "window." + callback + " && window." + callback + "(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
+        runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+    }
+
     // One request to the private sheet whose answer nobody waits for (2.72.0: the "seen again" note).
     private fun sheetPostQuiet(body: org.json.JSONObject) {
         if (BuildConfig.VIDEO_INDEX_URL.isEmpty() || BuildConfig.VIDEO_INDEX_KEY.isEmpty()) return
@@ -3372,6 +3435,7 @@ class MainActivity : Activity() {
                         }
                     } catch (_: Exception) {}
                     refreshRoster()
+                    refreshScopeFile()
                     if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
                 }
                 try { if (BuildConfig.SHOW_POSTERS && (due || !postersChecked)) cacheSchedulePosters() } catch (_: Exception) {}
@@ -3718,8 +3782,20 @@ class MainActivity : Activity() {
 
         // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
         @android.webkit.JavascriptInterface
-        fun starCards(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply")
+        fun starCards(reqId: String, payload: String) {
+            if (sheetOn()) { sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply"); return }
+            // Other builds (2.76.0): the cards come from the published StarScope file; Log next is sheet-only.
+            val action = try { org.json.JSONObject(payload).optString("action") } catch (_: Exception) { "" }
+            val d = scopeFile()
+            val out = if (action == "vi_cards" && d != null && scopeFilePublic()) org.json.JSONObject().put("ok", true).put("map", d.optJSONObject("cards") ?: org.json.JSONObject()).toString()
+                else "{\"ok\":false,\"error\":\"not in this build\"}"
+            pageReply("__tvStarCardsReply", reqId, out)
+        }
+
+        // StarScope is readable in this build (2.76.0): yours, from the sheet; any other, once the published file is
+        // switched on for public builds.
+        @android.webkit.JavascriptInterface
+        fun scopeOn(): Boolean = this@MainActivity.scopeReadOn()
 
         // StarScope on the phone (2.68.0, private builds, assets/scopelink.js): the video page's play / pause / seek notes
         // go to the sheet's playback tab, so a tap on the phone logger can be turned into a place in the video.
@@ -3729,8 +3805,12 @@ class MainActivity : Activity() {
 
         // The Wrestlers menu (2.64.0, private builds): every wrestler's status from the sheet, replies to __tvRosterReply.
         @android.webkit.JavascriptInterface
-        fun starRoster(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_roster"), "__tvRosterReply")
+        fun starRoster(reqId: String, payload: String) {
+            if (sheetOn()) { sheetCall(reqId, payload, setOf("vi_roster"), "__tvRosterReply"); return }
+            // Other builds (2.76.0): Current, Past and Guests from the published StarScope file.
+            val r = if (scopeFilePublic()) scopeFile()?.optJSONObject("roster") else null
+            pageReply("__tvRosterReply", reqId, if (r != null) org.json.JSONObject(r.toString()).put("ok", true).toString() else "{\"ok\":false,\"error\":\"not in this build\"}")
+        }
 
         // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
         @android.webkit.JavascriptInterface
@@ -6052,6 +6132,18 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *, #tv-sm-shelf, #tv-sm-shelf *{-webkit-tap-highlight-color:transparent !important;}',
             '#tv-sm-shelf .tv-sm-fi:hover, #tv-sm .tv-sm-item:hover, #tv-sm .tv-sm-item:hover *{opacity:1 !important;filter:none !important;mix-blend-mode:normal !important;}',
             '#tv-sm-shelf .tv-sm-fi:focus{background:#172029;border-color:#F4C242;color:#ffffff !important;font-weight:700;box-shadow:none !important;}',
+            // Home shelf (2.78.0)
+            '#tv-sm-shelf .tv-hs-top{margin:0 0 12px 0;}',
+            '#tv-sm-shelf .tv-hs-top .tv-sm-fi{font-size:19px;padding:9px 12px;}',
+            '#tv-sm-shelf .tv-hs-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;}',
+            '#tv-sm-shelf .tv-hs-h{color:#F4C242;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-hs-v{display:flex;align-items:center;gap:12px;padding:6px;margin:0 0 6px 0;}',
+            '#tv-sm-shelf .tv-hs-im{flex:0 0 112px;width:112px;height:63px;border-radius:6px;background:#172029 center/cover no-repeat;}',
+            '#tv-sm-shelf .tv-hs-tt{min-width:0;font-size:14px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:normal;overflow-wrap:break-word;}',
+            '#tv-sm-shelf .tv-sm-fi.tv-hs-all{font-size:14px;padding:5px 8px;color:#9aa6b4 !important;}',
+            '#tv-sm-shelf .tv-hs-empty{font-size:14px;color:#9aa6b4;padding:6px 2px 10px 2px;}',
+            '#tv-sm-shelf .tv-hs-rowsh{margin-top:18px;}',
+            '#tv-sm-shelf .tv-hs-rows{column-count:3;column-gap:8px;}',
             '#tv-sm .tv-sch-pill{font-style:normal;margin-left:10px;background:#F4C242;color:#111;font-size:12px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;vertical-align:middle;white-space:nowrap;}',
             '#tv-sm-shelf, #tv-sm-shelf *{word-break:normal !important;overflow-wrap:normal !important;word-wrap:normal !important;hyphens:none !important;-webkit-hyphens:none !important;}',
             '#tv-sm-shelf .tv-sch-wrap{display:flex;align-items:stretch;}',
@@ -6442,7 +6534,7 @@ class MainActivity : Activity() {
           var ROSTER_KEY = 'tvRosterV1', rosterAsk = 0;
           function rosterSaved() { try { var r = JSON.parse(localStorage.getItem(ROSTER_KEY) || 'null'); return r && r.talent && r.talent.length ? r : null; } catch (e) { return null; } }
           function rosterCheck() {
-            try { if (!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.starRoster)) return; } catch (e) { return; }
+            try { if (!(AndroidHost.scopeOn && AndroidHost.scopeOn() && AndroidHost.starRoster)) return; } catch (e) { return; }
             if (Date.now() - rosterAsk < 60000) return;
             rosterAsk = Date.now();
             try { AndroidHost.starRoster('r1', JSON.stringify({ action: 'vi_roster' })); } catch (e) {}
@@ -6526,6 +6618,54 @@ class MainActivity : Activity() {
               h += '</div>';
             }
             return h + '</div>';
+          }
+          // ---- Home shelf (2.78.0): the first three videos of New, Recently Watched and Watch Later, then every row the
+          // site's home page has. All from what the TV already keeps: New and the row list from the last home page
+          // visit, Recently Watched from the sheet's list (your build) or the home page's copy, Watch Later from My
+          // Favorites. Opening the shelf asks nothing of the site.
+          function hsItems(kind) {
+            var out = [];
+            try {
+              if (kind === 'new') out = JSON.parse(lsGet('tvHomeNewV1') || '[]') || [];
+              else if (kind === 'later') out = ((JSON.parse(lsGet('tvFavV1') || '{}') || {}).later || []).map(function(x) { return { href: x.href, title: x.title, bg: x.bg || '' }; });
+              else if (kind === 'recent') {
+                var rs = JSON.parse(lsGet('tvRecentSheetV1') || 'null');
+                if (rs && rs.rows && window.__tvRecent && window.__tvRecent.on) {
+                  var ja = isJa();
+                  out = rs.rows.map(function(r) { return { href: BASE + '/contents/' + r.id, title: (ja ? (r.tj || r.te) : (r.te || r.tj)) || '', bg: r.th || '' }; });
+                } else {
+                  var hc = JSON.parse(lsGet('tvHomeAcctV1') || '{}') || {};
+                  out = (hc.recent || []).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; });
+                }
+              }
+            } catch (e) { out = []; }
+            return out.filter(function(x) { return x && x.href; }).slice(0, 3);
+          }
+          function hsCol(title, kind, allPath, empty) {
+            var list = hsItems(kind), h = '<div class="tv-hs-col"><div class="tv-shl-t tv-hs-h">' + esc(title) + '</div>';
+            if (!list.length) h += '<div class="tv-hs-empty">' + esc(empty) + '</div>';
+            list.forEach(function(it) {
+              h += '<a class="tv-sm-fi tv-hs-v" tabindex="0" data-go="' + esc(relHref(it.href)) + '" href="' + esc(absUrl(it.href)) + '">' +
+                '<span class="tv-hs-im" style="' + (it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '') + '"></span>' +
+                '<span class="tv-hs-tt">' + esc(it.title || 'Stardom World Video') + '</span></a>';
+            });
+            if (allPath) h += '<a class="tv-sm-fi tv-hs-all" tabindex="0" data-go="' + esc(allPath) + '" href="' + esc(absUrl(allPath)) + '">' + esc(T('View all', 'すべて見る')) + '</a>';
+            return h + '</div>';
+          }
+          function relHref(h) { try { var u = new URL(h, BASE); return u.pathname + u.search; } catch (e) { return h; } }
+          function homeShelfHtml() {
+            // your build: refresh the sheet's Recently Watched list in the background for the next opening (at most every 10 min)
+            try { if (window.__tvRecent && window.__tvRecent.on) window.__tvRecent.get(function() {}, 600000); } catch (e) {}
+            var rows = homeRows(), newAll = lsGet(NEW_KEY) || '/';
+            var h = '<div class="tv-hs-top">' + fiHtml(T('Main page', 'メインページ'), '/') + '</div>';
+            h += '<div class="tv-hs-cols">' +
+              hsCol(T('NEW', '新着'), 'new', relHref(newAll), T('Open the main page once to fill this in.', 'メインページを一度開くと表示されます。')) +
+              hsCol(T('RECENTLY WATCHED', '最近視聴した動画'), 'recent', '/mypage?tvrecent=1', T('Nothing watched yet.', 'まだありません。')) +
+              hsCol(T('WATCH LATER', 'あとで見る'), 'later', '/mypage?tvfav=later', T('Nothing saved yet.', 'まだありません。')) +
+              '</div>';
+            var siteRows = rows.filter(function(r) { return hrefPath(r[1]) !== hrefPath(newAll); });
+            if (siteRows.length) h += '<div class="tv-shl-t tv-hs-rowsh">' + esc(T('VIDEO ROWS ON THE SITE', 'サイトの動画一覧')) + '</div><div class="tv-hs-rows">' + rowsHtml(siteRows) + '</div>';
+            return h;
           }
           function fiHtml(label, path) {
             return '<a class="tv-sm-fi" tabindex="0" data-go="' + esc(path) + '" href="' + esc(absUrl(path)) + '">' + esc(label) + '</a>';
@@ -6719,6 +6859,10 @@ class MainActivity : Activity() {
             else if (key === 'favs') {
               w = 1000;
               try { h = window.__tvFav ? window.__tvFav.shelfHtml() : ''; } catch (e) { h = ''; }
+            }
+            else if (key === 'home') {
+              w = 1100;
+              h = homeShelfHtml();
             }
             else {
               var lists = { home: [T('HOME', 'ホーム'), homeList()], champs: [T('CHAMPIONSHIPS', '王座'), CHAMPS], favs: [T('MY FAVORITES', 'お気に入り'), FAVS], community: [T('COMMUNITY', 'みんなの動画'), COMMUNITY], acct: [T('ACCOUNT', 'アカウント'), null] };
@@ -7012,28 +7156,8 @@ class MainActivity : Activity() {
             var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
             var last = tiles.length ? tiles[tiles.length - 1] : null;
             if (last && last.href) lsSet(NEW_KEY, last.href);
-            // every row the site draws on the home page (not the app's own Recently Watched / Favorites rows) with its View All address
-            var list = [];
-            Array.prototype.forEach.call(rows, function(row) {
-              var wrap = row.parentNode;
-              if (!wrap || wrap.id) return;
-              var h2 = wrap.querySelector('h2');
-              var title = h2 ? (h2.textContent || '').replace(/\s+/g, ' ').trim() : '';
-              var t2 = row.querySelectorAll('a.tv-card.notranslate');
-              var va = t2.length ? t2[t2.length - 1] : null;
-              if (title && va && va.href) list.push([title, va.href]);
-            });
-            if (list.length) {
-              // keep an English and a Japanese name per row: the page shows whichever language it is in when it is read
-              var prev = {};
-              try { (JSON.parse(lsGet(HOME_ROWS_KEY) || '[]') || []).forEach(function(r) { prev[r[1]] = r; }); } catch (e) {}
-              lsSet(HOME_ROWS_KEY, JSON.stringify(list.map(function(r) {
-                var pr = prev[r[1]], en = null, ja = null;
-                if (pr) { var pj = pr[2] || pr[0]; if (hasJa(pr[0])) ja = pr[0]; else { en = pr[0]; if (hasJa(pj)) ja = pj; } }
-                if (hasJa(r[0])) ja = r[0]; else en = r[0];
-                return [en || ja, r[1], ja || en];
-              })));
-            }
+            // The menu's Home list is saved by the home page itself from every site row (2.77.0), since the page now only
+            // draws the first one; nothing more to note here.
             return true;
           }
           if (isHome()) {
@@ -10160,6 +10284,24 @@ class MainActivity : Activity() {
             });
           }
 
+          var HOME_ROWS_SHOWN = 1;
+          // Every site row on the home page, for the menu's Home list (tvHomeRowsV1): an English and a Japanese name per
+          // row (the page shows whichever language it is in when it is read) and its View All address.
+          function saveHomeRowList(rows) {
+            try {
+              var list = (rows || []).filter(function(r) { return r.title && r.viewAll; }).map(function(r) { return [r.title.replace(/\s+/g, ' ').trim(), r.viewAll]; });
+              if (!list.length) return;
+              var JA = /[\u3040-\u30ff\u3400-\u9fff]/, prev = {};
+              try { (JSON.parse(localStorage.getItem('tvHomeRowsV1') || '[]') || []).forEach(function(r) { if (r && r[1]) prev[r[1]] = r; }); } catch (e) {}
+              localStorage.setItem('tvHomeRowsV1', JSON.stringify(list.map(function(r) {
+                var pr = prev[r[1]], en = null, ja = null;
+                if (pr) { var pj = pr[2] || pr[0]; if (JA.test(pr[0])) ja = pr[0]; else { en = pr[0]; if (JA.test(pj)) ja = pj; } }
+                if (JA.test(r[0])) ja = r[0]; else en = r[0];
+                return [en || ja, r[1], ja || en];
+              })));
+            } catch (e) {}
+          }
+
           function extractAllHomeRows() {
             var sections = document.querySelectorAll('.box-section, section, [class*="box-section"]');
             var result = [];
@@ -10422,6 +10564,15 @@ class MainActivity : Activity() {
 
             var heroData = extractHeroBanner();
             var allRowsData = extractAllHomeRows();
+            // 2.77.0: the menu's Home list keeps every row the site's home page has (title and View All address, read
+            // from this same page: no extra request), but the home page itself only draws the first row (New). The other
+            // rows were a dozen rows of pictures the TV had to load and keep on every visit to the home page.
+            saveHomeRowList(allRowsData);
+            // the first three New videos, for the menu's Home shelf (2.78.0)
+            try {
+              if (allRowsData && allRowsData[0] && allRowsData[0].items) localStorage.setItem('tvHomeNewV1', JSON.stringify(allRowsData[0].items.slice(0, 3).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; })));
+            } catch (e) {}
+            if (allRowsData && allRowsData.length > HOME_ROWS_SHOWN) allRowsData = allRowsData.slice(0, HOME_ROWS_SHOWN);
 
             // Hide original desktop site carousels, news lists, and old hero banners ONLY on home page
             var origContent = document.querySelectorAll('.content-list, .box-section, .main-visual, .slider-inner, .box-main-visual, .container.box-main, .news-wrap, [class*="main-visual"], [class*="slider"]');
@@ -10563,7 +10714,8 @@ class MainActivity : Activity() {
           // Their last-known contents are kept on the device and drawn at once with the page, then refreshed
           // from the site in the background, so they are in place from the first paint on every visit
           // after the first and nothing jumps when the fresh copy arrives.
-          var CACHE_KEY = 'tvHomeRowsV1';
+          // 2.77.0: was 'tvHomeRowsV1', the same name as the menu's Home list, so each overwrote the other.
+          var CACHE_KEY = 'tvHomeAcctV1';
           function readCache() {
             try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
           }
@@ -11076,11 +11228,12 @@ class MainActivity : Activity() {
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
         // First, so its key handler runs before every other one on the page.
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
+        if (scopeLogOn()) view.evaluateJavascript(assetText("indexpanel.js"), null)   // StarScope logging: your build (2.76.0)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
+        // StarScope cards, Shows and player: every build (2.76.0). They stay out of sight unless scopeOn() says yes.
+        view.evaluateJavascript(assetText("starcards.js"), null)
         // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("scopeplayer.js"), null)
+        view.evaluateJavascript(assetText("scopeplayer.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
@@ -11096,7 +11249,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("scopelink.js"), null)
+        if (scopeLogOn()) view.evaluateJavascript(assetText("scopelink.js"), null)
         view.evaluateJavascript(assetText("baricons.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
@@ -11452,8 +11605,7 @@ class MainActivity : Activity() {
     // 8 s before the bell), 2 Bell to bell (also Up next at the end mark). Kept on this TV.
     private var bellMode = -1
 
-    private fun scopeOn(): Boolean =
-        BuildConfig.VIDEO_INDEX_DRYRUN && BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+    private fun scopeOn(): Boolean = scopeReadOn()
 
     private fun barIdList(): List<String> =
         if (scopeOn()) BAR_IDS.flatMap { if (it == "next") listOf(it, "bell") else listOf(it) } else BAR_IDS

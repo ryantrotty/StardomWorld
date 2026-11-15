@@ -41,6 +41,11 @@
  *                                                              (id, titles, thumbnail, when), at most 100. Read only, no lock.
  *   vi_seen   {id}                                             a video opened again whose page facts haven't changed (2.72.0): its
  *                                                              last_seen and times_seen are brought up to date, nothing else
+ *   vi_public {}                                               the StarScope file as it would be published (2.76.0), for checking
+ *
+ * Publishing StarScope (2.76.0, see docs/STARSCOPE_PUBLIC.md): publishStarscope() writes starscope.json to a GitHub
+ * repository (script properties GH_TOKEN, GH_REPO, optional GH_BRANCH and GH_PATH); setupPublishTrigger() runs it once
+ * a day. STARSCOPE_PUBLIC = true in the script properties is what makes public builds show StarScope.
  *   vi_suggest {}                                              StarScope's Log next tab (2.67.0): videos watched but not logged,
  *                                                              by show (set), with views, last watched and the venue's names
  *
@@ -78,6 +83,7 @@ function doPost(e) {
   if (body.action === 'vi_cards') return out(viCards());
   if (body.action === 'vi_suggest') return out(viSuggest());
   if (body.action === 'vi_recent') return out(viRecent(body));
+  if (body.action === 'vi_public') return out(viPublicFile());
   if (body.action === 'vi_seen') return out(withLock(function() { return viSeen(body); }));
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
@@ -817,6 +823,54 @@ function viSuggest() {
     return { set: g.set, show: g.show, date: date, venueRaw: g.venueRaw, venue: venue(g.venueRaw), videos: g.videos };
   });
   return { ok: true, sets: out };
+}
+
+// ---- Publishing StarScope (2.76.0) -------------------------------------------------------------------------------
+// The file public builds read StarScope from: the same cards your build gets (names, event, round, match number, show,
+// venue, bell and end times, your average rating; never a result) and the wrestler list with current / past / guest.
+// Nothing from your watch history, favorites, playback notes, proposals or devices goes in.
+function viPublicFile() {
+  var props = PropertiesService.getScriptProperties();
+  var cards = viCards(), roster = viRoster();
+  return {
+    schema: 1,
+    at: new Date().toISOString(),
+    public: String(props.getProperty('STARSCOPE_PUBLIC') || '').toLowerCase() === 'true',
+    cards: cards.map || {},
+    roster: { talent: roster.talent || [], merged: roster.merged || [] }
+  };
+}
+
+// Writes starscope.json to GitHub, only when its contents changed (the time stamp aside). Run it from the editor
+// once to check, then let setupPublishTrigger() run it daily.
+function publishStarscope() {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty('GH_TOKEN'), repo = props.getProperty('GH_REPO');
+  if (!token || !repo) throw new Error('Set GH_TOKEN and GH_REPO in Project Settings > Script properties first.');
+  var branch = props.getProperty('GH_BRANCH') || 'main', path = props.getProperty('GH_PATH') || 'starscope.json';
+  var file = viPublicFile();
+  var same = JSON.stringify({ p: file.public, c: file.cards, r: file.roster });
+  var hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, same, Utilities.Charset.UTF_8));
+  if (props.getProperty('PUBLISHED_HASH') === hash) return 'unchanged';
+  var api = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path).replace(/%2F/g, '/');
+  var head = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  var cur = UrlFetchApp.fetch(api + '?ref=' + encodeURIComponent(branch), { headers: head, muteHttpExceptions: true });
+  var sha = cur.getResponseCode() === 200 ? JSON.parse(cur.getContentText()).sha : null;
+  var body = { message: 'StarScope ' + file.at.slice(0, 10) + ': ' + Object.keys(file.cards).length + ' videos', branch: branch,
+    content: Utilities.base64Encode(JSON.stringify(file), Utilities.Charset.UTF_8) };
+  if (sha) body.sha = sha;
+  var res = UrlFetchApp.fetch(api, { method: 'put', headers: head, contentType: 'application/json', payload: JSON.stringify(body), muteHttpExceptions: true });
+  var code = res.getResponseCode();
+  if (code !== 200 && code !== 201) throw new Error('GitHub answered ' + code + ': ' + res.getContentText().slice(0, 300));
+  props.setProperty('PUBLISHED_HASH', hash);
+  return 'published ' + Object.keys(file.cards).length + ' videos';
+}
+
+// Run once from the editor: publishStarscope() every day between 4 and 5 am (the script's time zone).
+function setupPublishTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function(t) { if (t.getHandlerFunction() === 'publishStarscope') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('publishStarscope').timeBased().everyDays(1).atHour(4).create();
+  return 'daily publish set';
 }
 
 // Recently Watched (2.72.0): the newest rows of "videos" by last_seen. Read only, no lock.

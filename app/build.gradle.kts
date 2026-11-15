@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 503
-        versionName = "2.75.0"
+        versionCode = 506
+        versionName = "2.78.0"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
             ?: "https://stardom-world.com"
@@ -48,6 +48,11 @@ android {
         val rosterUrl = (project.findProperty("tvhub.rosterUrl") as String?)
             ?: "https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json"
         buildConfigField("String", "ROSTER_URL", "\"$rosterUrl\"")
+        // The published StarScope file (docs/STARSCOPE_PUBLIC.md): what builds without the private sheet read StarScope
+        // from. Shown only once the file says "public": true.
+        val starscopeUrl = (project.findProperty("tvhub.starscopeUrl") as String?)
+            ?: "https://raw.githubusercontent.com/ryantrotty/starscope-data/main/starscope.json"
+        buildConfigField("String", "STARSCOPE_URL", "\"$starscopeUrl\"")
         // Usage metrics (PostHog, see docs/USAGE_METRICS.md). Project key from branding-private/posthog.properties
         // (git-ignored, your builds only) or the tvhub.posthogKey Gradle property (all builds). Empty = metrics off.
         val phProps = Properties().apply {

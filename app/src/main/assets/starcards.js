@@ -5,7 +5,10 @@
   // alone. Reads one list from the private sheet at most every 30 minutes, and nothing from the video site.
   if (window.__tvStarCards) return;
   var H = window.AndroidHost;
-  if (!H || !H.starCards || !H.videoIndexOn || !H.videoIndexOn()) return;
+  // 2.76.0: StarScope reading is its own switch (AndroidHost.scopeOn): your build reads the sheet, other builds the
+  // published StarScope file once it is switched on for them. Logging and Log next stay with the sheet.
+  if (!H || !H.starCards || !H.scopeOn || !H.scopeOn()) return;
+  var SHEET = false; try { SHEET = !!(H.videoIndexOn && H.videoIndexOn()); } catch (e) {}
   window.__tvStarCards = true;
   var KEY = 'tvVixCardsV4', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -160,7 +163,7 @@
     var list = homeList(), f = home.f, t = home.tab, ppl = {};
     list.forEach(function(x) { people(x.v).forEach(function(n) { ppl[n] = 1; }); });
     var h = '<div class="hd"><span class="bar"></span>' + TEL.replace('width="30" height="30"', 'width="40" height="40"') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tg">' + HT.tag + '</span><span class="ct">' + (t === 'shows' || t === 'next' ? '' : list.length + ' ' + HT.matches + ' · ' + Object.keys(ppl).length + ' ' + HT.wrestlers) + '</span></div>';
-    h += '<div class="row">' + chipH('Trecent', HT.recent, t === 'recent', ' style="border-radius:22px"') + chipH('Ttop', HT.top, t === 'top', ' style="border-radius:22px"') + chipH('Tall', HT.all, t === 'all', ' style="border-radius:22px"') + chipH('Tshows', HT.shows, t === 'shows', ' style="border-radius:22px"') + chipH('Tnext', nextLabel(), t === 'next', ' style="border-radius:22px"') + '</div>';
+    h += '<div class="row">' + chipH('Trecent', HT.recent, t === 'recent', ' style="border-radius:22px"') + chipH('Ttop', HT.top, t === 'top', ' style="border-radius:22px"') + chipH('Tall', HT.all, t === 'all', ' style="border-radius:22px"') + chipH('Tshows', HT.shows, t === 'shows', ' style="border-radius:22px"') + (SHEET ? chipH('Tnext', nextLabel(), t === 'next', ' style="border-radius:22px"') : '') + '</div>';
     if (t === 'shows') return h + showsHtml() + (home.pop ? popHtml(list) : '');
     if (t === 'next') return h + nextHtml();
     var shown;
@@ -352,6 +355,7 @@
     if (sugAsked) return;
     sugAsked = true;
     if (sug && Date.now() - (sug.t || 0) < SAGE) return;
+    if (!SHEET) return;   // Log next comes from your own watch history: sheet builds only
     try { H.starCards('s1', JSON.stringify({ action: 'vi_suggest' })); } catch (e) {}
   }
   function gotSuggest(r) {

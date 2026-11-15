@@ -2,6 +2,28 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.78.0
+
+- **Home shelf in the menu:** Main page on top, then three columns with the first three videos of **New**, **Recently Watched** and **Watch Later** (picture and title, plus View all), then **Video rows on the site**: every row the site's home page has, in three columns. Opening it asks nothing of the site: New and the row list are kept from the last home page visit, Recently Watched from the sheet (your build) or the home page's copy, Watch Later from My Favorites.
+- Recently Watched stays on the home page as before (banner, live / PPV row, New, Recently Watched, Watch Later).
+
+## 2.77.0
+
+A lighter home page.
+
+- The home page now draws the banner, the live / PPV row, the **New** row, then Recently Watched and Watch Later. The site's other rows (the big shows, years, English Commentary and so on) are no longer drawn there: that was a dozen rows of pictures the TV loaded and kept in memory on every visit to the home page.
+- The menu's **Home** list still has every row the site's home page has, with its View All address, kept up to date on each home page visit. It comes from the same page load, so it costs no request of its own.
+- Fix: the menu's Home list and the saved copy of the home page's account rows were both kept under the same storage name, so each could wipe the other (the Home list then fell back to five fixed rows). They now have their own names.
+
+## 2.76.0
+
+StarScope 3.0, first steps: reading StarScope no longer needs the private sheet. Nothing changes in your build, and public builds stay as they are until you switch StarScope on for them.
+
+- **Three switches instead of one** (`docs/STARSCOPE_PUBLIC.md`): reading StarScope (cards, Shows, the player's fight card, card rail and Skip Entrances, Wrestlers Current / Past / Guests), logging (the logger, the phone link, Log next), and private sync (favorites, team lists, Recently Watched, the video log). Your build has all three, from the sheet. Other builds can now have reading.
+- **The published StarScope file.** Builds without the sheet download `starscope.json` from GitHub with the schedule check (at most every six hours, with ETag; the last good copy is kept) and show StarScope from it, but only when the file says `"public": true`. StarScope's scripts are now in every build and stay out of sight until then. Log next stays in your build only, since it comes from your watch history.
+- **Apps Script:** `publishStarscope()` writes the file to a GitHub repository (only when something changed), `setupPublishTrigger()` runs it daily, and `vi_public` shows the file without publishing it. The file holds the cards and the Wrestlers list, never a result, and nothing from your watch history, favorites or devices. Setup: create the `starscope-data` repository, a token limited to it, and three script properties, as in `docs/STARSCOPE_PUBLIC.md`. Then paste the script and publish a new version.
+- README: the privacy note mentions the StarScope download.
+
 ## 2.75.0
 
 - **Long lists (windowed scroll):** every card now knows which page of the list it came from. Once more than four pages are loaded, the pictures of cards more than two pages away from the one in view are let go: the card keeps its place, size and title, as a light placeholder, and its picture comes back as soon as it is near again. A long scroll no longer piles up hundreds of pictures in the TV's memory. A **PAGE chip** at the top right shows the page in view from page 2 on (grey "PAGE", gold number; hidden while the menu is open).

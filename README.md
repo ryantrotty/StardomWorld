@@ -86,6 +86,8 @@ The app sends **anonymous usage stats and error reports** to [PostHog](https://p
 - which app pages are opened and for how long, the app version, the TV model and the app language
 - app crashes and errors in the app's own page scripts
 
+The app also downloads a public StarScope match index (who is in each logged video) from GitHub, at most every six hours. That download carries no account or viewing details.
+
 It does **not** send your Stardom World account, email, sign-in or payment details, or anything you type, other than the words of a search. Each TV gets a random id, so visits can be counted without knowing who you are. Nothing is sent to Stardom World or Stagecrowd.
 
 To switch it off, open the menu and go to **Account > Anonymous usage stats** and press OK. It stays off on that TV until you switch it back on.
