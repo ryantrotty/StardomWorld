@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.77.0
+
+A lighter home page.
+
+- The home page now draws the banner, the live / PPV row, the **New** row, then Recently Watched and Watch Later. The site's other rows (the big shows, years, English Commentary and so on) are no longer drawn there: that was a dozen rows of pictures the TV loaded and kept in memory on every visit to the home page.
+- The menu's **Home** list still has every row the site's home page has, with its View All address, kept up to date on each home page visit. It comes from the same page load, so it costs no request of its own.
+- Fix: the menu's Home list and the saved copy of the home page's account rows were both kept under the same storage name, so each could wipe the other (the Home list then fell back to five fixed rows). They now have their own names.
+
+Built on main (2.75.0), separately from the StarScope branch (2.76.0); whichever is merged second takes the other's version number into account.
+
 ## 2.75.0
 
 - **Long lists (windowed scroll):** every card now knows which page of the list it came from. Once more than four pages are loaded, the pictures of cards more than two pages away from the one in view are let go: the card keeps its place, size and title, as a light placeholder, and its picture comes back as soon as it is near again. A long scroll no longer piles up hundreds of pictures in the TV's memory. A **PAGE chip** at the top right shows the page in view from page 2 on (grey "PAGE", gold number; hidden while the menu is open).

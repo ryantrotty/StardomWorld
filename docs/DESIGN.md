@@ -282,3 +282,5 @@ Home live row (2.75.0): the next-live / live and PPV tiles get their own row dir
 
 Long lists, windowed scroll (2.75.0): PAGE chip fixed top 18 px / right 24 px, #11171E fill, 1 px #2A323C edge, fully rounded, 13/800 letter-spaced, "PAGE" in #9AA6B4 and the number in gold #F4C242; not focusable; shown from page 2, hidden while the menu is open. Cards more than two pages from the page in view lose their pictures (light placeholders) once more than four pages are loaded.
 
+Home page rows (2.77.0): banner, live / PPV row, New, Recently Watched, Watch Later. The site's other home rows are listed in the menu's Home list only.
+
