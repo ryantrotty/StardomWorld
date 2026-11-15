@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.74.0
+
+The app's layout timers rest when the page can't be seen. Nothing changes on screen.
+
+- While a video plays full screen, or the app is in the background, these stop doing their work: the page-wide layout pass, the home grid and banner refresh, the banner rotation, the live and Up next tiles, the search-form sweep, and the category tab filter. They pick up again within a second when the page is back. The player's own timers (auto next, controls, stall check, keep-awake, StarScope) are not touched.
+- The page-wide layout pass ran every 0.3 s on every page for as long as it was open. Now it runs every 0.3 s for the first 8 seconds while the page settles, then whenever the page changes (at most once a frame), with a check every second as a safety net.
+- The player-focus check (every 0.15 s) no longer runs while the app is in the background.
+
 ## 2.73.0
 
 Less work for the TV on every page load. Nothing changes on screen.

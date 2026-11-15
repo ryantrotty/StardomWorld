@@ -2034,7 +2034,26 @@ class MainActivity : Activity() {
 
                     applyDomCustomizations();
                     if (!window.__tvDomTimer) {
-                      window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
+                      // 2.74.0: every 300 ms for the first 8 s of a page, while it settles; then whenever the page
+                      // changes (at most once a frame) plus every 1 s as a safety net. Nothing while the page can't be
+                      // seen (window.__tvRest: background or full screen video).
+                      var domT0 = Date.now(), domQueued = false;
+                      var domTick = function() { if (window.__tvRest && window.__tvRest()) return; applyDomCustomizations(); };
+                      window.__tvDomTimer = setInterval(function() {
+                        if (Date.now() - domT0 > 8000) {
+                          clearInterval(window.__tvDomTimer);
+                          window.__tvDomTimer = setInterval(domTick, 1000);
+                          try {
+                            new MutationObserver(function() {
+                              if (domQueued) return;
+                              domQueued = true;
+                              requestAnimationFrame(function() { domQueued = false; domTick(); });
+                            }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+                          } catch (e) {}
+                          return;
+                        }
+                        domTick();
+                      }, 300);
                     }
               } catch(e) {}
             })();
@@ -2422,6 +2441,7 @@ class MainActivity : Activity() {
                     .setInterpolator(AccelerateDecelerateInterpolator())
                     .start()
                 refreshCursorVisibility()
+                webView.evaluateJavascript("window.__tvFs=true;", null)   // the page's layout timers rest (2.74.0)
                 scheduleFullScreenResizeNudges()
                 updateScopeCard()
                 if (ccMode == 1 || ccMode == 2) ccStart()
@@ -4271,7 +4291,7 @@ class MainActivity : Activity() {
               try { window.AndroidHost.setPlayerFocused(inPlayer); } catch (e) {}
             }
           }
-          setInterval(check, 150);
+          setInterval(function() { if (!document.hidden) check(); }, 150);   // 2.74.0: not while in the background
           window.addEventListener('blur', check);
           window.addEventListener('focus', check);
 
@@ -4909,7 +4929,7 @@ class MainActivity : Activity() {
           }
           sweep();
           new MutationObserver(sweep).observe(document.documentElement, { childList: true, subtree: true });
-          setInterval(sweep, 1000);
+          setInterval(function() { if (!(window.__tvRest && window.__tvRest())) sweep(); }, 1000);
         })();
     """.trimIndent()
 
@@ -5625,7 +5645,7 @@ class MainActivity : Activity() {
             return true;
           }
           function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); ensurePpvTile(); }
-          setInterval(liveTick, 1500);
+          setInterval(function() { if (!(window.__tvRest && window.__tvRest())) liveTick(); }, 1500);
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword
           // search with the type remembered ("tvmt"), and the filter bar's script tells similar titles apart.
@@ -9471,7 +9491,7 @@ class MainActivity : Activity() {
     var nst = document.createElement('style');
     nst.textContent = '.content-list-item:not([data-tv-mt-in]):not([data-tv-mt-out]){visibility:hidden !important;}';
     (document.head || document.documentElement).appendChild(nst);
-    narrowList(); setInterval(narrowList, 700); loadAlts();
+    narrowList(); setInterval(function() { if (!(window.__tvRest && window.__tvRest())) narrowList(); }, 700); loadAlts();
     try {
       var nq = false;
       new MutationObserver(function() { if (nq) return; nq = true; requestAnimationFrame(function() { nq = false; narrowList(); }); })
@@ -10206,6 +10226,7 @@ class MainActivity : Activity() {
             if (found.slides.length > 1) {
               window.__tvHeroTimer = setInterval(function() {
                 if (Date.now() < (window.__tvHeroPausedUntil || 0)) return;
+                if (window.__tvRest && window.__tvRest()) return;
                 if (!isHomePage()) return;
                 showHeroSlide((window.__tvHeroIdx || 0) + 1);
               }, 5000);
@@ -10759,7 +10780,7 @@ class MainActivity : Activity() {
           } else {
             renderCustomTvGrid();
           }
-          setInterval(function() { renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
+          setInterval(function() { if (window.__tvRest && window.__tvRest()) return; renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
         })();
     """.trimIndent()
 
@@ -10858,6 +10879,9 @@ class MainActivity : Activity() {
     private fun injectPageScripts(view: WebView) {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         view.evaluateJavascript(assetText("keepawake.js"), null)
+        // Rest check for the app's layout timers (2.74.0): window.__tvRest() is true while the page can't be seen (the app
+        // is in the background, or a video is full screen over it), and those timers skip their work then.
+        view.evaluateJavascript("if(!window.__tvRest){window.__tvRest=function(){return document.hidden||window.__tvFs===true;};}", null)
         // Before every script that asks the site for a page: the shared request gate (assets/sitegate.js, 2.69.0).
         if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("sitegate.js"), null)
         // The page-ready report for the transition screen (2.70.0). The page keeps the number of the visit it belongs to.
@@ -12408,6 +12432,7 @@ class MainActivity : Activity() {
         val view = customView ?: return
         handler.removeCallbacks(fsStallCheck)
         webView.visibility = View.VISIBLE
+        webView.evaluateJavascript("window.__tvFs=false;", null)   // the page's layout timers start again (2.74.0)
         root.removeView(view)
         customView = null
         customCallback?.onCustomViewHidden()
