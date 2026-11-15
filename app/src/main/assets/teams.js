@@ -495,7 +495,7 @@
     if (since < GAP_MS) { setTimeout(function() { fetchPage(q, page, cb, single); }, GAP_MS - since); return; }
     lsSet(LAST_KEY, String(Date.now()));
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + '&activetab=contents' + (one ? '&q%5Btype%5D=single' : '') + (page > 1 ? '&page=' + page : '');
-    fetch(url, { credentials: 'include' }).then(function(res) {
+    (window.__tvFetch || fetch)(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { lsSet(BLOCK_KEY, String(Date.now() + 10 * 60000)); throw 'blocked (HTTP ' + res.status + ')'; }
       if (!res.ok) throw 'HTTP ' + res.status;
       return res.text();

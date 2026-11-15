@@ -189,7 +189,7 @@
   }
   function fetchPage(q, page, cb) {
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(q) + SINGLE + (page > 1 ? '&page=' + page : '');
-    fetch(url, { credentials: 'include' }).then(function(res) {
+    (window.__tvFetch || fetch)(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { lsSet(BLOCK_KEY, String(Date.now() + 10 * 60000)); throw 'blocked (HTTP ' + res.status + ')'; }
       if (!res.ok) throw 'HTTP ' + res.status;
       if (res.redirected && /login|sign_in|signin/.test(res.url)) throw 'login needed';

@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.69.0
+
+One shared gate for every request the app's own scripts make to Stardom World (`assets/sitegate.js`). Nothing changes on screen.
+
+- All of these now go through it: faction pages, championship pages, tag team pages, the extra searches behind category tabs, the next page of a long list, the menu's Top 10 and the Recently Watched read. One request at a time, at least 1.2 seconds apart, also across page changes.
+- When the site answers 403, 429 or 503, every one of them stops for 10 minutes. Before, only faction, championship and tag team pages did; long lists and category tabs carried on.
+- Long lists: a failed load of the next page now waits before trying again (10 seconds, doubling up to 5 minutes) instead of trying every second, and an error page is no longer read as the end of the list.
+- Category tabs: a refusal ends the extra searches for that visit.
+
 ## 2.68.10
 
 Safety settings of the built-in browser; nothing changes on screen.

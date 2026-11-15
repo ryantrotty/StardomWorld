@@ -1244,6 +1244,9 @@ class MainActivity : Activity() {
           window.__tvInfiniteScroll = true;
 
           var loading = false, lastLoad = 0, lastKey = 0;
+          // 2.69.0: a failed load waits before the next try (10 s, doubling up to 5 min) instead of trying again every
+          // second, and nothing is asked for while the site's pause is on (assets/sitegate.js).
+          var fails = 0, retryAt = 0;
           // While the filter bar narrows the list by title (window.__tvNarrowing), cards it removes leave the page short,
           // which used to trigger the next page, and the next, without end (a request every second, cards flashing at
           // the end). Then a page is only loaded after a key press, one page per press.
@@ -1258,6 +1261,8 @@ class MainActivity : Activity() {
 
           function checkAndLoadNextPage() {
             if (loading) return;
+            if (Date.now() < retryAt) return;
+            if (window.__tvSiteGate && window.__tvSiteGate.blockedFor()) return;
 
             var scrollBottom = window.innerHeight + window.scrollY;
             var pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
@@ -1272,9 +1277,14 @@ class MainActivity : Activity() {
             loading = true;
             lastLoad = Date.now();
 
-            fetch(nextUrl)
-              .then(function(res) { return res.text(); })
+            (window.__tvFetch || fetch)(nextUrl)
+              .then(function(res) {
+                // An error page is not a page of results: keep the list as it is and try again later.
+                if (!res.ok) throw 'http';
+                return res.text();
+              })
               .then(function(html) {
+                fails = 0;
                 var parser = new DOMParser();
                 var doc = parser.parseFromString(html, 'text/html');
 
@@ -1321,6 +1331,8 @@ class MainActivity : Activity() {
               })
               .catch(function(err) {
                 loading = false;
+                fails++;
+                retryAt = Date.now() + Math.min(300000, 10000 * Math.pow(2, fails - 1));
               });
           }
 
@@ -7668,7 +7680,7 @@ class MainActivity : Activity() {
 
   function fetchPage(term, page, cb) {
     var url = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(term) + (page > 1 ? '&page=' + page : '');
-    fetch(url, { credentials: 'include' }).then(function(res) {
+    (window.__tvFetch || fetch)(url, { credentials: 'include' }).then(function(res) {
       if (res.status === 429 || res.status === 403 || res.status === 503) { blockNow(10); throw 'blocked'; }
       if (!res.ok) throw 'http';
       if (res.redirected && /login|sign_in|signin/.test(res.url)) throw 'login';
@@ -9114,7 +9126,13 @@ class MainActivity : Activity() {
       var alt = ALTS[i++];
       var n = {}; Object.keys(S).forEach(function(k) { n[k] = S[k]; });
       var url = buildUrl(n, alt.mt, alt.ch);
-      fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(function(html) {
+      // 2.69.0: through the shared gate. A refusal (403, 429, 503) or the pause being on ends the extra searches for this
+      // visit instead of carrying on through the rest of them.
+      (window.__tvFetch || fetch)(url, { credentials: 'same-origin' }).then(function(r) {
+        if (r.status === 429 || r.status === 403 || r.status === 503) { i = ALTS.length; throw 'blocked'; }
+        if (!r.ok) throw 'http';
+        return r.text();
+      }).then(function(html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var list0 = document.querySelector('.content-list'), nA = 0, kA = 0, box = null;
         if (list0 && list0.parentNode) {
@@ -9140,7 +9158,7 @@ class MainActivity : Activity() {
           });
         }
         if (CAT) CAT.alts.push((alt.mt || alt.ch) + ': ' + nA + ' videos, ' + kA + ' added');
-      }).catch(function() {}).then(function() { setTimeout(one, 1300); });
+      }).catch(function(err) { if (err === 'blocked') i = ALTS.length; }).then(function() { setTimeout(one, 1300); });
     }
     setTimeout(one, 1500);
   }
@@ -10206,7 +10224,7 @@ class MainActivity : Activity() {
             if (window.__tvRecentLoading) return;
             window.__tvRecentLoading = true;
 
-            fetch('/mypage', { credentials: 'include' })
+            (window.__tvFetch || fetch)('/mypage', { credentials: 'include' })
               .then(function(res) {
                 if (!res.ok || (res.redirected && /login|sign_in|signin/.test(res.url))) return null;
                 return res.text();
@@ -10522,6 +10540,8 @@ class MainActivity : Activity() {
     private fun injectPageScripts(view: WebView) {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         view.evaluateJavascript(assetText("keepawake.js"), null)
+        // Before every script that asks the site for a page: the shared request gate (assets/sitegate.js, 2.69.0).
+        if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("sitegate.js"), null)
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)
             view.evaluateJavascript(assetText("ppv_host.js"), null)
