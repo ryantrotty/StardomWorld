@@ -1528,10 +1528,22 @@ class MainActivity : Activity() {
         }
     }
 
+    // The styles script is built once per language and kept (2.73.0): building it re-read the logo, re-encoded it and
+    // re-encoded 28 KB of CSS on every injection.
+    private var tvStylesJs = ""
+    private var tvStylesLang = ""
     private fun injectCustomTvStyles(view: WebView) {
+        val lang = getSavedLanguage()
+        if (tvStylesJs.isEmpty() || tvStylesLang != lang) {
+            tvStylesJs = buildCustomTvStylesJs(lang)
+            tvStylesLang = lang
+        }
+        view.evaluateJavascript(tvStylesJs, null)
+    }
+
+    private fun buildCustomTvStylesJs(activeLang: String): String {
         val logoUri = getResourceBase64(R.drawable.header_logo)
         val encodedCss = java.net.URLEncoder.encode(TV_RAW_CSS, "UTF-8").replace("+", "%20")
-        val activeLang = getSavedLanguage()
 
         val js = """
             (function(){
@@ -2028,7 +2040,7 @@ class MainActivity : Activity() {
             })();
         """.trimIndent()
 
-        view.evaluateJavascript(js, null)
+        return js
     }
 
     private fun viewportJs(): String {
@@ -2306,7 +2318,13 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView, url: String?) {
                 view.evaluateJavascript("document.documentElement.style.opacity = '1';", null)
-                injectPageScripts(view)
+                // The scripts already went in when the page first showed (onPageCommitVisible), and each one guards
+                // against running twice, so sending them all again only made the TV read about 1 MB of script a second
+                // time (2.73.0). Ask the page first; inject only if it doesn't have them (the first-show event can be
+                // skipped, for instance on a page served from cache or a load that replaced another).
+                view.evaluateJavascript("window.__tvInjectedAll === true") { had ->
+                    if (had != "true" && !rendererDead) injectPageScripts(view)
+                }
                 CookieManager.getInstance().flush()
                 // A shell page has no site header for the sign-in check to read. If the app starts on one (after a
                 // page-process recovery), carry on as signed in: that is where the person was a moment ago.
@@ -2825,7 +2843,12 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- schedule
 
     // The schedule list: the copy downloaded by refreshScheduleAsync() or the one bundled in assets, whichever is newer.
-    private fun assetText(name: String): String = try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+    // Asset scripts are read from the APK once and kept (2.73.0): every page load used to read about 335 KB of them
+    // again, twice. Only used on the main thread.
+    private val assetCache = HashMap<String, String>()
+    private fun assetText(name: String): String = assetCache.getOrPut(name) {
+        try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+    }
 
     private fun scheduleText(): String = withLearnedWatch(scheduleTextRaw())
 
@@ -10847,6 +10870,7 @@ class MainActivity : Activity() {
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)
             view.evaluateJavascript(assetText("ppv_host.js"), null)
+            view.evaluateJavascript("window.__tvInjectedAll = true;", null)
             return
         }
         // On the home page, the site's own banner and rows (which the app replaces with its own grid) are
@@ -10905,6 +10929,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript(playerControlsJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
+        // Every script above is in this page now (2.73.0): onPageFinished then skips the second round.
+        view.evaluateJavascript("window.__tvInjectedAll = true;", null)
     }
 
     // ------------------------------------------------------- player controls auto-hide

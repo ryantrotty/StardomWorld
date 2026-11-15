@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.73.0
+
+Less work for the TV on every page load. Nothing changes on screen.
+
+- The app's page scripts (about 1 MB in all) went into every page twice: when the page first showed and again when it finished loading. Each script already ignored the second copy, but the TV still had to read it. Now the second round only happens if the page doesn't have them yet (for instance when the first-show step was skipped).
+- The script files are read from the app once and kept, instead of being read again (twice) on every page.
+- The app's style script is built once (per language) instead of re-reading and re-encoding the logo and 28 KB of styles on every page.
+
 ## 2.72.1
 
 - Tag team pages (private builds): videos from the team's saved list in the sheet open again, and the Menu button offers them for Favorites, Watch Later and playlists again. The sheet keeps only each video's number, title and picture, so those cards had an empty link: OK reloaded the team page and Menu found no video. The address is now built from the video's number.
