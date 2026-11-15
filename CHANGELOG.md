@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.78.1
+
+- **Fix: Recently Watched in the menu's Home shelf fell behind.** The shelf showed the sheet's list as last read (from the last home page visit), so videos watched since then were missing until the home page was opened again. Now each video page you open goes first on the TV's own list at once (kept beside the sheet's copy for a day, until the sheet has it), and the shelf, the home row and the Recently Watched page all read the two together. If the sheet's fresh list arrives while the shelf is open, the column is redrawn (unless it has focus). No new calls to the site or the sheet.
+- **StarScope video cards:** no match number (Match x/y) under the names any more, everywhere the cards appear. Show cards, the card rail's running-order badge and the player's title bar keep theirs.
+- **Phone logger, "Load failed" on Save:** the save had gone through, only the answer was lost on the way back. When that happens the page now reads the match back from the sheet and shows Saved if it's there with the same people; otherwise it says to tap Save again (safe to repeat). Copy `scripts/starscope_phone.html` to `starscope/index.html` on `gh-pages` (and the Apps Script `phone` file) for it to take effect; the Apps Script itself is unchanged.
+
 ## 2.78.0
 
 - **Home shelf in the menu:** Main page on top, then three columns with the first three videos of **New**, **Recently Watched** and **Watch Later** (picture and title, plus View all), then **Video rows on the site**: every row the site's home page has, in three columns. Opening it asks nothing of the site: New and the row list are kept from the last home page visit, Recently Watched from the sheet (your build) or the home page's copy, Watch Later from My Favorites.

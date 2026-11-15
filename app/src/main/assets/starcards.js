@@ -34,7 +34,7 @@
   }
   function block(v) {
     var sides = (ja && v.sj && v.sj.length === v.s.length ? v.sj : v.s), foot = (ja ? v.fj : v.f).slice();
-    if (v.n !== '' && v.n != null) foot.push((ja ? '第' : 'Match ') + v.n + (v.t ? '/' + v.t : '') + (ja ? '試合' : ''));
+    // 2.78.1: no match number on video cards (show cards and the player keep theirs).
     var lines, tn = ja ? (v.tnj || v.tn) : v.tn, big = sides.length > 2 || sides.some(function(s) { return s.length > 4; });
     if (!big) lines = sides.map(function(s, i) { return (i ? 'vs ' : '') + esc(names(s)); }).join('<br>');
     else {

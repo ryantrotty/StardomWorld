@@ -6629,10 +6629,10 @@ class MainActivity : Activity() {
               if (kind === 'new') out = JSON.parse(lsGet('tvHomeNewV1') || '[]') || [];
               else if (kind === 'later') out = ((JSON.parse(lsGet('tvFavV1') || '{}') || {}).later || []).map(function(x) { return { href: x.href, title: x.title, bg: x.bg || '' }; });
               else if (kind === 'recent') {
-                var rs = JSON.parse(lsGet('tvRecentSheetV1') || 'null');
-                if (rs && rs.rows && window.__tvRecent && window.__tvRecent.on) {
-                  var ja = isJa();
-                  out = rs.rows.map(function(r) { return { href: BASE + '/contents/' + r.id, title: (ja ? (r.tj || r.te) : (r.te || r.tj)) || '', bg: r.th || '' }; });
+                // your build: the sheet's list with the videos opened since in front (assets/recentsheet.js, 2.78.1)
+                var rl = window.__tvRecent && window.__tvRecent.cached ? window.__tvRecent.cached() : null;
+                if (rl) {
+                  out = rl.map(function(x) { return { href: x.href, title: x.title, bg: x.bg || '' }; });
                 } else {
                   var hc = JSON.parse(lsGet('tvHomeAcctV1') || '{}') || {};
                   out = (hc.recent || []).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; });
@@ -6642,7 +6642,7 @@ class MainActivity : Activity() {
             return out.filter(function(x) { return x && x.href; }).slice(0, 3);
           }
           function hsCol(title, kind, allPath, empty) {
-            var list = hsItems(kind), h = '<div class="tv-hs-col"><div class="tv-shl-t tv-hs-h">' + esc(title) + '</div>';
+            var list = hsItems(kind), h = '<div class="tv-hs-col" data-hs="' + kind + '"><div class="tv-shl-t tv-hs-h">' + esc(title) + '</div>';
             if (!list.length) h += '<div class="tv-hs-empty">' + esc(empty) + '</div>';
             list.forEach(function(it) {
               h += '<a class="tv-sm-fi tv-hs-v" tabindex="0" data-go="' + esc(relHref(it.href)) + '" href="' + esc(absUrl(it.href)) + '">' +
@@ -6655,7 +6655,16 @@ class MainActivity : Activity() {
           function relHref(h) { try { var u = new URL(h, BASE); return u.pathname + u.search; } catch (e) { return h; } }
           function homeShelfHtml() {
             // your build: refresh the sheet's Recently Watched list in the background for the next opening (at most every 10 min)
-            try { if (window.__tvRecent && window.__tvRecent.on) window.__tvRecent.get(function() {}, 600000); } catch (e) {}
+            // 2.78.1: when the answer comes back while the shelf is still open, the column is redrawn (not while it has focus).
+            try {
+              if (window.__tvRecent && window.__tvRecent.on) window.__tvRecent.get(function(list) {
+                if (!list) return;
+                var col = document.querySelector('#tv-sm-shelf .tv-hs-col[data-hs="recent"]');
+                if (!col || col.contains(document.activeElement)) return;
+                var fresh = hsCol(T('RECENTLY WATCHED', '最近視聴した動画'), 'recent', '/mypage?tvrecent=1', T('Nothing watched yet.', 'まだありません。'));
+                if (col.outerHTML !== fresh) col.outerHTML = fresh;
+              }, 600000);
+            } catch (e) {}
             var rows = homeRows(), newAll = lsGet(NEW_KEY) || '/';
             var h = '<div class="tv-hs-top">' + fiHtml(T('Main page', 'メインページ'), '/') + '</div>';
             h += '<div class="tv-hs-cols">' +
