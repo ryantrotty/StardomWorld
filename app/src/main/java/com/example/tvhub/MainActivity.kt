@@ -1312,6 +1312,9 @@ class MainActivity : Activity() {
 
                 if (container && newContainer) {
                   var newItems = Array.from(newContainer.children);
+                  // which page these came from (2.75.0), for the page chip and the light placeholders
+                  var pgNo = pageOf(nextUrl) || (lastPg + 1);
+                  lastPg = Math.max(lastPg, pgNo);
                   newItems.forEach(function(item) {
                     var itemLink = item.querySelector('a[href*="/contents/"], a[href*="/set/"]') || item.querySelector('a[href]');
                     if (itemLink && itemLink.href) {
@@ -1328,8 +1331,10 @@ class MainActivity : Activity() {
                         }
                       }
                     }
+                    item.setAttribute('data-tv-pg', String(pgNo));
                     container.appendChild(item);
                   });
+                  winSoon();
                 }
 
                 var oldPagination = document.querySelector('.pagination, .p-pagination, .pager');
@@ -1354,6 +1359,104 @@ class MainActivity : Activity() {
                 retryAt = Date.now() + Math.min(300000, 10000 * Math.pow(2, fails - 1));
               });
           }
+
+          // ---- Windowed scroll (2.75.0) -----------------------------------------------------------------------------
+          // A long list used to keep every picture it had ever loaded, which is what runs a TV out of memory. Each card
+          // now knows which page it came from. Once more than four pages are in the list, the pictures of cards more
+          // than two pages away from the one in view are let go (the card keeps its place, size and text: a light
+          // placeholder), and come back as soon as they are near again. A PAGE chip at the top right shows which page
+          // is in view, from page 2 on.
+          var FIRST_PG = pageOf(location.href) || 1, lastPg = FIRST_PG, BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+          function pageOf(u) { var m = /[?&]page=(\d+)/.exec(u || ''); return m ? parseInt(m[1], 10) : 0; }
+          function listBox() { return document.querySelector('.content-list, [class*="content-list"]'); }
+          function tagFirst() {
+            var c = listBox();
+            if (!c) return;
+            Array.prototype.forEach.call(c.children, function(it) { if (!it.hasAttribute('data-tv-pg')) it.setAttribute('data-tv-pg', String(FIRST_PG)); });
+          }
+          function letGo(it) {
+            if (it.__tvLight) return;
+            it.__tvLight = true;
+            Array.prototype.forEach.call(it.querySelectorAll('[style*="background-image"]'), function(el) {
+              var bg = el.style.backgroundImage;
+              if (!bg || bg === 'none') return;
+              el.setAttribute('data-tv-bg', bg);
+              el.style.backgroundImage = 'none';
+            });
+            Array.prototype.forEach.call(it.querySelectorAll('img'), function(im) {
+              if (!im.src || im.src === BLANK) return;
+              if (im.offsetHeight) im.style.height = im.offsetHeight + 'px';
+              im.setAttribute('data-tv-src', im.src);
+              if (im.srcset) { im.setAttribute('data-tv-srcset', im.srcset); im.removeAttribute('srcset'); }
+              im.src = BLANK;
+            });
+          }
+          function bringBack(it) {
+            if (!it.__tvLight) return;
+            it.__tvLight = false;
+            Array.prototype.forEach.call(it.querySelectorAll('[data-tv-bg]'), function(el) {
+              el.style.backgroundImage = el.getAttribute('data-tv-bg');
+              el.removeAttribute('data-tv-bg');
+            });
+            Array.prototype.forEach.call(it.querySelectorAll('img[data-tv-src]'), function(im) {
+              var ss = im.getAttribute('data-tv-srcset');
+              if (ss) im.setAttribute('srcset', ss);
+              im.src = im.getAttribute('data-tv-src');
+              im.removeAttribute('data-tv-src');
+              im.removeAttribute('data-tv-srcset');
+              im.style.height = '';
+            });
+          }
+          // the page in view: the focused card's, else the first card on screen
+          function pageInView() {
+            var ae = document.activeElement, it = ae && ae.closest ? ae.closest('[data-tv-pg]') : null;
+            if (!it) {
+              var c = listBox();
+              if (!c) return FIRST_PG;
+              var kids = c.children;
+              for (var i = 0; i < kids.length; i++) {
+                var r = kids[i].getBoundingClientRect();
+                if (r.bottom > 0 && r.height > 0) { it = kids[i]; break; }
+              }
+            }
+            return it ? (parseInt(it.getAttribute('data-tv-pg'), 10) || FIRST_PG) : FIRST_PG;
+          }
+          var chip = null;
+          function paintChip(p) {
+            if (p <= 1 || document.documentElement.classList.contains('tv-sm-open')) { if (chip) chip.style.display = 'none'; return; }
+            if (!chip) {
+              chip = document.createElement('div');
+              chip.id = 'tv-pg-chip';
+              chip.className = 'notranslate';
+              chip.setAttribute('translate', 'no');
+              chip.style.cssText = 'position:fixed; top:18px; right:24px; z-index:99500; background:#11171E; border:1px solid #2A323C; border-radius:999px; padding:7px 14px; font:800 13px Arial,Helvetica,sans-serif; letter-spacing:1px; color:#9AA6B4; pointer-events:none;';
+              document.body.appendChild(chip);
+            }
+            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+            chip.innerHTML = (ja ? 'ページ ' : 'PAGE ') + '<span style="color:#F4C242;">' + p + '</span>';
+            chip.style.display = 'block';
+          }
+          function windowNow() {
+            if (window.__tvRest && window.__tvRest()) return;
+            var c = listBox();
+            if (!c) return;
+            tagFirst();
+            var p = pageInView();
+            paintChip(p);
+            if (lastPg - FIRST_PG < 4) return;   // a short list keeps everything
+            Array.prototype.forEach.call(c.children, function(it) {
+              var pg = parseInt(it.getAttribute('data-tv-pg'), 10) || FIRST_PG;
+              if (Math.abs(pg - p) > 2) letGo(it); else bringBack(it);
+            });
+          }
+          var winQueued = false;
+          function winSoon() {
+            if (winQueued) return;
+            winQueued = true;
+            setTimeout(function() { winQueued = false; windowNow(); }, 150);
+          }
+          document.addEventListener('focusin', winSoon, true);
+          window.addEventListener('scroll', winSoon, { passive: true });
 
           hidePagination();
           window.addEventListener('scroll', checkAndLoadNextPage, { passive: true });
@@ -1528,10 +1631,22 @@ class MainActivity : Activity() {
         }
     }
 
+    // The styles script is built once per language and kept (2.73.0): building it re-read the logo, re-encoded it and
+    // re-encoded 28 KB of CSS on every injection.
+    private var tvStylesJs = ""
+    private var tvStylesLang = ""
     private fun injectCustomTvStyles(view: WebView) {
+        val lang = getSavedLanguage()
+        if (tvStylesJs.isEmpty() || tvStylesLang != lang) {
+            tvStylesJs = buildCustomTvStylesJs(lang)
+            tvStylesLang = lang
+        }
+        view.evaluateJavascript(tvStylesJs, null)
+    }
+
+    private fun buildCustomTvStylesJs(activeLang: String): String {
         val logoUri = getResourceBase64(R.drawable.header_logo)
         val encodedCss = java.net.URLEncoder.encode(TV_RAW_CSS, "UTF-8").replace("+", "%20")
-        val activeLang = getSavedLanguage()
 
         val js = """
             (function(){
@@ -2022,13 +2137,32 @@ class MainActivity : Activity() {
 
                     applyDomCustomizations();
                     if (!window.__tvDomTimer) {
-                      window.__tvDomTimer = setInterval(applyDomCustomizations, 300);
+                      // 2.74.0: every 300 ms for the first 8 s of a page, while it settles; then whenever the page
+                      // changes (at most once a frame) plus every 1 s as a safety net. Nothing while the page can't be
+                      // seen (window.__tvRest: background or full screen video).
+                      var domT0 = Date.now(), domQueued = false;
+                      var domTick = function() { if (window.__tvRest && window.__tvRest()) return; applyDomCustomizations(); };
+                      window.__tvDomTimer = setInterval(function() {
+                        if (Date.now() - domT0 > 8000) {
+                          clearInterval(window.__tvDomTimer);
+                          window.__tvDomTimer = setInterval(domTick, 1000);
+                          try {
+                            new MutationObserver(function() {
+                              if (domQueued) return;
+                              domQueued = true;
+                              requestAnimationFrame(function() { domQueued = false; domTick(); });
+                            }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+                          } catch (e) {}
+                          return;
+                        }
+                        domTick();
+                      }, 300);
                     }
               } catch(e) {}
             })();
         """.trimIndent()
 
-        view.evaluateJavascript(js, null)
+        return js
     }
 
     private fun viewportJs(): String {
@@ -2306,7 +2440,13 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView, url: String?) {
                 view.evaluateJavascript("document.documentElement.style.opacity = '1';", null)
-                injectPageScripts(view)
+                // The scripts already went in when the page first showed (onPageCommitVisible), and each one guards
+                // against running twice, so sending them all again only made the TV read about 1 MB of script a second
+                // time (2.73.0). Ask the page first; inject only if it doesn't have them (the first-show event can be
+                // skipped, for instance on a page served from cache or a load that replaced another).
+                view.evaluateJavascript("window.__tvInjectedAll === true") { had ->
+                    if (had != "true" && !rendererDead) injectPageScripts(view)
+                }
                 CookieManager.getInstance().flush()
                 // A shell page has no site header for the sign-in check to read. If the app starts on one (after a
                 // page-process recovery), carry on as signed in: that is where the person was a moment ago.
@@ -2404,6 +2544,7 @@ class MainActivity : Activity() {
                     .setInterpolator(AccelerateDecelerateInterpolator())
                     .start()
                 refreshCursorVisibility()
+                webView.evaluateJavascript("window.__tvFs=true;", null)   // the page's layout timers rest (2.74.0)
                 scheduleFullScreenResizeNudges()
                 updateScopeCard()
                 if (ccMode == 1 || ccMode == 2) ccStart()
@@ -2825,7 +2966,12 @@ class MainActivity : Activity() {
     // ---------------------------------------------------------------- schedule
 
     // The schedule list: the copy downloaded by refreshScheduleAsync() or the one bundled in assets, whichever is newer.
-    private fun assetText(name: String): String = try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+    // Asset scripts are read from the APK once and kept (2.73.0): every page load used to read about 335 KB of them
+    // again, twice. Only used on the main thread.
+    private val assetCache = HashMap<String, String>()
+    private fun assetText(name: String): String = assetCache.getOrPut(name) {
+        try { assets.open(name).bufferedReader().use { it.readText() } } catch (_: Exception) { "" }
+    }
 
     private fun scheduleText(): String = withLearnedWatch(scheduleTextRaw())
 
@@ -4248,7 +4394,7 @@ class MainActivity : Activity() {
               try { window.AndroidHost.setPlayerFocused(inPlayer); } catch (e) {}
             }
           }
-          setInterval(check, 150);
+          setInterval(function() { if (!document.hidden) check(); }, 150);   // 2.74.0: not while in the background
           window.addEventListener('blur', check);
           window.addEventListener('focus', check);
 
@@ -4886,7 +5032,7 @@ class MainActivity : Activity() {
           }
           sweep();
           new MutationObserver(sweep).observe(document.documentElement, { childList: true, subtree: true });
-          setInterval(sweep, 1000);
+          setInterval(function() { if (!(window.__tvRest && window.__tvRest())) sweep(); }, 1000);
         })();
     """.trimIndent()
 
@@ -5388,12 +5534,37 @@ class MainActivity : Activity() {
           setTimeout(schedTick, 4000);
           setInterval(schedTick, 20000);
           // Home page: the next show is the first tile of the first row (the app's own row, so the tile shares its look).
+          // Home page (2.75.0): the next-live / live tile and the PPV tile sit on a row of their own under the banner, with
+          // no heading; the first row of videos starts on the next line with only its videos. The row is a .tv-grid-row,
+          // so Up/Down treat it like any other row. It is taken away whenever it has no tile left, so it never leaves a gap.
+          function contentRow() { return document.querySelector('#tv-test-grid .tv-grid-row:not(#tv-live-row)'); }
+          function liveRow(make) {
+            var r = document.getElementById('tv-live-row');
+            if (r || !make) return r;
+            var first = contentRow();
+            if (!first || !first.parentElement || !first.parentElement.parentNode) return null;
+            var wrap = document.createElement('div');
+            wrap.id = 'tv-live-wrap';
+            wrap.style.cssText = 'margin-bottom:35px;';
+            r = document.createElement('div');
+            r.id = 'tv-live-row';
+            r.className = 'tv-grid-row';
+            r.style.cssText = 'display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px; align-items:flex-start;';
+            wrap.appendChild(r);
+            first.parentElement.parentNode.insertBefore(wrap, first.parentElement);
+            return r;
+          }
+          function liveRowTidy() {
+            var r = document.getElementById('tv-live-row');
+            if (r && !r.querySelector('a.tv-card')) { var w = r.parentNode; if (w && w.parentNode) w.parentNode.removeChild(w); }
+          }
           function ensureHomeTile() {
             if (!isHome()) return;
-            var row = document.querySelector('#tv-test-grid .tv-grid-row');
-            if (!row || document.getElementById('tv-next-live')) return;
+            if (!contentRow() || document.getElementById('tv-next-live')) return;
             var up = schedUpcoming().filter(function(e) { return !e.ppv; })[0];   // a pay-per-view show has its own tile
             if (!up) return;
+            var row = liveRow(true);
+            if (!row) return;
             var p = posterFor(up), a = document.createElement('a');
             a.id = 'tv-next-live';
             a.className = 'tv-card';
@@ -5436,9 +5607,10 @@ class MainActivity : Activity() {
           }
           function ensurePpvTile() {
             var a = document.getElementById('tv-ppv-home');
-            var row = isHome() ? document.querySelector('#tv-test-grid .tv-grid-row') : null;
-            var e = row ? ppvHomeEvent() : null;
-            if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); return; }
+            var e = isHome() && contentRow() ? ppvHomeEvent() : null;
+            if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); liveRowTidy(); return; }
+            var row = liveRow(true);
+            if (!row) return;
             var st = ppvState(e), p = posterFor(e), key = e.id + ':' + st + ':' + (p ? 1 : 0) + ':' + (ppvBought(e.id) ? 1 : 0);
             var anchor = document.getElementById('tv-live-card') || document.getElementById('tv-next-live');
             if (a && a.__k === key && a.parentNode === row) {
@@ -5560,14 +5732,17 @@ class MainActivity : Activity() {
             if (va) va.style.height = (on && ref && ref.offsetHeight) ? ref.offsetHeight + 'px' : '';
           }
           function liveRevert(a, row) {
-            if (a.__card && row) row.insertBefore(a.__card, a.nextSibling);
+            // the site's own card goes back to the front of the row it came from (2.75.0: the tile is on its own row)
+            var home = a.__cardRow || row;
+            if (a.__card && home && !a.__card.parentNode) home.insertBefore(a.__card, home.firstChild);
             if (a.parentNode) a.parentNode.removeChild(a);
-            if (row) { row.style.alignItems = ''; liveFixViewAll(row, false); }
+            if (home) { home.style.alignItems = ''; liveFixViewAll(home, false); }
+            liveRowTidy();
           }
           // Returns true while the combined tile is on screen (the plain next-live tile then stays away).
           function ensureLiveCard() {
             if (!isHome()) return false;
-            var row = document.querySelector('#tv-test-grid .tv-grid-row');
+            var row = contentRow();
             if (!row) return false;
             var a = document.getElementById('tv-live-card');
             var up = schedUpcoming()[0];
@@ -5592,17 +5767,18 @@ class MainActivity : Activity() {
               try { lsSet('tvLiveCardV1', a.__id); lsSet('tvLiveCardEvV1', JSON.stringify({ id: a.__id, ev: up.id })); } catch (x) {}
               var old = document.getElementById('tv-next-live');
               if (old && old.parentNode) old.parentNode.removeChild(old);
+              var lr = liveRow(true);
+              if (!lr) return false;
+              a.__cardRow = row;
               row.removeChild(card);
-              row.insertBefore(a, row.firstChild);
-              row.style.alignItems = 'flex-start';
+              lr.insertBefore(a, lr.firstChild);
               a.__k = '';
             }
             var k = liveRender(a, up, a.__id, a.__bg);
-            liveFixViewAll(row, true);
             return true;
           }
           function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); ensurePpvTile(); }
-          setInterval(liveTick, 1500);
+          setInterval(function() { if (!(window.__tvRest && window.__tvRest())) liveTick(); }, 1500);
           function absUrl(p) { return /^https?:/.test(p) ? p : (BASE + p); }
           // Match types: the same grouped list as the filter bar (assets/match_types.json). Choosing one opens a keyword
           // search with the type remembered ("tvmt"), and the filter bar's script tells similar titles apart.
@@ -6831,7 +7007,7 @@ class MainActivity : Activity() {
           function rememberNewHref() {
             var grid = document.getElementById('tv-test-grid');
             if (!grid) return false;
-            var rows = grid.querySelectorAll('.tv-grid-row');
+            var rows = grid.querySelectorAll('.tv-grid-row:not(#tv-live-row)');
             if (!rows.length) return false;
             var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
             var last = tiles.length ? tiles[tiles.length - 1] : null;
@@ -7116,14 +7292,35 @@ class MainActivity : Activity() {
             return true;
           }
 
+          // The site's own "Related Videos" heading above the rows (2.75.0). The page-wide pass only looked at heading
+          // tags with that exact text, and on some video pages (with The card row) this one slipped through. Any short
+          // label near the rows that reads Related videos / content in English or Japanese is put away; the rows keep
+          // their own headings.
+          var REL_RE = /^(related\s+(videos?|contents?)|関連(動画|コンテンツ|作品)(一覧)?)$/i;
+          function hideRelatedHeads() {
+            var sec = document.querySelector('.box-related-content');
+            if (!sec) return;
+            var scope = (sec.parentElement && sec.parentElement.parentElement) || sec.parentElement || document.body;
+            Array.prototype.forEach.call(scope.querySelectorAll('h1, h2, h3, h4, h5, h6, p, div, span, strong, b'), function(el) {
+              if (el.closest('.tv-related-row') || el.children.length > 3 || el.style.display === 'none') return;
+              var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+              if (t.length < 30 && REL_RE.test(t)) el.style.setProperty('display', 'none', 'important');
+            });
+          }
+
           var started = Date.now();
           var timer = setInterval(function() {
             var secs = Array.from(document.querySelectorAll('.box-related-content')).filter(function(s) { return !s.classList.contains('tv-related-done'); });
             var elapsed = Date.now() - started;
+            hideRelatedHeads();
             // The first carousel is reversed and re-initialised by another script within about 4 seconds; wait for it.
             if (!window.__tvReverseCarouselDone && elapsed < 4600) return;
             secs.forEach(function(s) { build(s); });
-            if (elapsed > 12000) clearInterval(timer);
+            if (elapsed > 12000) {
+              clearInterval(timer);
+              // the translator can redraw the label later: look again every 3 s while the page is in view
+              setInterval(function() { if (!(window.__tvRest && window.__tvRest())) hideRelatedHeads(); }, 3000);
+            }
           }, 500);
         })();
     """.trimIndent()
@@ -9448,7 +9645,7 @@ class MainActivity : Activity() {
     var nst = document.createElement('style');
     nst.textContent = '.content-list-item:not([data-tv-mt-in]):not([data-tv-mt-out]){visibility:hidden !important;}';
     (document.head || document.documentElement).appendChild(nst);
-    narrowList(); setInterval(narrowList, 700); loadAlts();
+    narrowList(); setInterval(function() { if (!(window.__tvRest && window.__tvRest())) narrowList(); }, 700); loadAlts();
     try {
       var nq = false;
       new MutationObserver(function() { if (nq) return; nq = true; requestAnimationFrame(function() { nq = false; narrowList(); }); })
@@ -10183,6 +10380,7 @@ class MainActivity : Activity() {
             if (found.slides.length > 1) {
               window.__tvHeroTimer = setInterval(function() {
                 if (Date.now() < (window.__tvHeroPausedUntil || 0)) return;
+                if (window.__tvRest && window.__tvRest()) return;
                 if (!isHomePage()) return;
                 showHeroSlide((window.__tvHeroIdx || 0) + 1);
               }, 5000);
@@ -10424,7 +10622,7 @@ class MainActivity : Activity() {
               existing.dataset.tvSig = html;
               return;
             }
-            var first = document.querySelector('#tv-test-grid .tv-grid-row');
+            var first = document.querySelector('#tv-test-grid .tv-grid-row:not(#tv-live-row)');
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
             // Row order under the first row: Recently Watched, Favorites.
@@ -10736,7 +10934,7 @@ class MainActivity : Activity() {
           } else {
             renderCustomTvGrid();
           }
-          setInterval(function() { renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
+          setInterval(function() { if (window.__tvRest && window.__tvRest()) return; renderCustomTvGrid(); updateHero(); styleSubPageTextBoxes(); sanitizeSubPageTitles(); }, 1000);
         })();
     """.trimIndent()
 
@@ -10835,6 +11033,9 @@ class MainActivity : Activity() {
     private fun injectPageScripts(view: WebView) {
         if (metrics.enabled) view.evaluateJavascript(errorHookJs, null)
         view.evaluateJavascript(assetText("keepawake.js"), null)
+        // Rest check for the app's layout timers (2.74.0): window.__tvRest() is true while the page can't be seen (the app
+        // is in the background, or a video is full screen over it), and those timers skip their work then.
+        view.evaluateJavascript("if(!window.__tvRest){window.__tvRest=function(){return document.hidden||window.__tvFs===true;};}", null)
         // Before every script that asks the site for a page: the shared request gate (assets/sitegate.js, 2.69.0).
         if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("sitegate.js"), null)
         // The page-ready report for the transition screen (2.70.0). The page keeps the number of the visit it belongs to.
@@ -10847,6 +11048,7 @@ class MainActivity : Activity() {
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)
             view.evaluateJavascript(assetText("ppv_host.js"), null)
+            view.evaluateJavascript("window.__tvInjectedAll = true;", null)
             return
         }
         // On the home page, the site's own banner and rows (which the app replaces with its own grid) are
@@ -10905,6 +11107,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript(playerControlsJs, null)
         injectCustomTvStyles(view)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
+        // Every script above is in this page now (2.73.0): onPageFinished then skips the second round.
+        view.evaluateJavascript("window.__tvInjectedAll = true;", null)
     }
 
     // ------------------------------------------------------- player controls auto-hide
@@ -12382,6 +12586,7 @@ class MainActivity : Activity() {
         val view = customView ?: return
         handler.removeCallbacks(fsStallCheck)
         webView.visibility = View.VISIBLE
+        webView.evaluateJavascript("window.__tvFs=false;", null)   // the page's layout timers start again (2.74.0)
         root.removeView(view)
         customView = null
         customCallback?.onCustomViewHidden()

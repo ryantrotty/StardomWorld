@@ -67,9 +67,17 @@ For full setup instructions and image specifications, see [docs/PRIVATE_BRANDING
 
 ## How it works
 
-Everything is in `app/src/main/java/com/example/tvhub/MainActivity.kt`: a WebView plus injected CSS and JavaScript
-that restyle the pages, rebuild the home grid, drive the focus ring and handle the player and remote keys. The site
-can change at any time, so things may break; please open an issue when they do.
+The app is a WebView that opens the site and reshapes it for a TV remote:
+
+- `app/src/main/java/com/example/tvhub/MainActivity.kt`: the WebView, the remote keys, the full screen player
+  controls, and most of the injected CSS and JavaScript (the home grid, side menu, filters, focus ring).
+- `app/src/main/assets/*.js`: larger page scripts kept as separate files (My Favorites, tag teams, wrestler pages,
+  championships, Community, the request gate and others), injected the same way.
+- `app/src/main/assets/*.json`: bundled data (factions, championships, eras, match types, schedule). The roster and
+  daily files are downloaded from this repo's data branches so they can change without a new APK.
+- `docs/`: how each part works, and `docs/DESIGN.md`, the design reference.
+
+The site can change at any time, so things may break; please open an issue when they do.
 
 ## Privacy
 

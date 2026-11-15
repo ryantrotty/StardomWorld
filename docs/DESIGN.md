@@ -277,3 +277,8 @@ Wrestlers menu tabs (2.64.0): Current, Past and Guests in the existing rounded t
 Transition screen between pages (2.70.0): not shown for app-drawn pages; for site pages it lifts when the page reports its first screenful ready (`assets/pageready.js`), at least 0.4 s after it went up, with a 0.3 s fade; 5 s stays the limit (0.5 s fade then). Its look (navy #0B1118, wand animation, Up next strip) is unchanged. The launch splash is separate and unchanged.
 
 App-drawn page cover (2.70.1): while the site's own page is underneath and the app's page isn't drawn yet, a plain #0B1118 cover (no wand, no strip) is held over the page; it goes with a 0.12 s fade once the app's page is on screen, 2 s at most.
+
+Home live row (2.75.0): the next-live / live and PPV tiles get their own row directly under the hero banner, no h2, same row spacing (35 px below, 24 px gap); the first video row follows with its heading. Removed when empty.
+
+Long lists, windowed scroll (2.75.0): PAGE chip fixed top 18 px / right 24 px, #11171E fill, 1 px #2A323C edge, fully rounded, 13/800 letter-spaced, "PAGE" in #9AA6B4 and the number in gold #F4C242; not focusable; shown from page 2, hidden while the menu is open. Cards more than two pages from the page in view lose their pictures (light placeholders) once more than four pages are loaded.
+

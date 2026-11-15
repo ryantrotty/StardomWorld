@@ -2,6 +2,35 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.75.0
+
+- **Long lists (windowed scroll):** every card now knows which page of the list it came from. Once more than four pages are loaded, the pictures of cards more than two pages away from the one in view are let go: the card keeps its place, size and title, as a light placeholder, and its picture comes back as soon as it is near again. A long scroll no longer piles up hundreds of pictures in the TV's memory. A **PAGE chip** at the top right shows the page in view from page 2 on (grey "PAGE", gold number; hidden while the menu is open).
+- **Home page:** the next-live / live tile and the PPV tile (or the next two live shows) now sit on a row of their own under the banner, with no heading. The first row of videos starts on the next line with only its videos and its heading. Up and Down move through it like any other row. The row disappears when there is no tile to show. Tile sizes are unchanged.
+- **Video pages:** the site's own "Related Videos" label no longer shows above the rows under the player (it slipped through on pages with The card row).
+
+## 2.74.1
+
+Housekeeping, nothing changes in the app.
+
+- A Python cache file that had been committed by mistake is removed, and such files are now ignored.
+- README: "How it works" describes the app as it is now (asset scripts, bundled and downloaded data, docs), not a single file.
+
+## 2.74.0
+
+The app's layout timers rest when the page can't be seen. Nothing changes on screen.
+
+- While a video plays full screen, or the app is in the background, these stop doing their work: the page-wide layout pass, the home grid and banner refresh, the banner rotation, the live and Up next tiles, the search-form sweep, and the category tab filter. They pick up again within a second when the page is back. The player's own timers (auto next, controls, stall check, keep-awake, StarScope) are not touched.
+- The page-wide layout pass ran every 0.3 s on every page for as long as it was open. Now it runs every 0.3 s for the first 8 seconds while the page settles, then whenever the page changes (at most once a frame), with a check every second as a safety net.
+- The player-focus check (every 0.15 s) no longer runs while the app is in the background.
+
+## 2.73.0
+
+Less work for the TV on every page load. Nothing changes on screen.
+
+- The app's page scripts (about 1 MB in all) went into every page twice: when the page first showed and again when it finished loading. Each script already ignored the second copy, but the TV still had to read it. Now the second round only happens if the page doesn't have them yet (for instance when the first-show step was skipped).
+- The script files are read from the app once and kept, instead of being read again (twice) on every page.
+- The app's style script is built once (per language) instead of re-reading and re-encoding the logo and 28 KB of styles on every page.
+
 ## 2.72.1
 
 - Tag team pages (private builds): videos from the team's saved list in the sheet open again, and the Menu button offers them for Favorites, Watch Later and playlists again. The sheet keeps only each video's number, title and picture, so those cards had an empty link: OK reloaded the team page and Menu found no video. The address is now built from the video's number.
