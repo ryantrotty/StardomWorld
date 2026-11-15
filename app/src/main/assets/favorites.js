@@ -269,8 +269,13 @@
     if (og) bg = og.getAttribute('content') || '';
     return { id: m[2], href: location.origin + location.pathname, title: t || 'Stardom World Video', bg: bg, card: null };
   }
-  function siteFav(id) {
-    var $ = window.jQuery || window.$;
+  function siteFav(id, viaShell) {
+    var $ = viaShell || window.jQuery || window.$;
+    // App page shell (2.71.0): the site's scripts aren't on this page; borrow the site's own call (sitegate.js).
+    if ((!$ || !$.apiCall) && !viaShell && window.__tvShell && window.__tvSiteApi) {
+      window.__tvSiteApi(function(q) { if (q) siteFav(id, q); else toast('Favorites API not available'); });
+      return;
+    }
     if (!$ || !$.apiCall) { toast('Favorites API not available'); return; }
     $.apiCall({ url: '/user_api/contents/' + id + '/favorites', type: 'POST' }).done(function() { toast('♥ Added to Favorites!'); })
       .fail(function(x) {

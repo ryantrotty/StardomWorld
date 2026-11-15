@@ -39,4 +39,33 @@
     waiting: function() { return queue.length + (busy ? 1 : 0); }
   };
   window.__tvFetch = function(url, opts) { return window.__tvSiteGate.fetch(url, opts); };
+
+  // The site's own favorites call ($.apiCall) lives in the site's scripts. On an app page shell (2.71.0) those aren't
+  // loaded, so when a video is added to the site's Favorites from such a page, the site's My page is opened once in a
+  // hidden frame and its copy is used: the call is the site's real one, sign-in and all. The frame is kept for two
+  // minutes in case of another, then removed. cb(the site's $, or null when it can't be had).
+  window.__tvSiteApi = function(cb) {
+    var jq = window.jQuery || window.$;
+    if (jq && jq.apiCall) { cb(jq); return; }
+    if (!window.__tvShell || !document.body) { cb(null); return; }
+    var fr = window.__tvApiFrame;
+    if (!fr || !fr.isConnected) {
+      fr = document.createElement('iframe');
+      fr.src = '/mypage';
+      fr.setAttribute('aria-hidden', 'true');
+      fr.tabIndex = -1;
+      fr.style.cssText = 'position:absolute;left:-9999px;top:0;width:1280px;height:900px;border:0;visibility:hidden;';
+      document.body.appendChild(fr);
+      window.__tvApiFrame = fr;
+    }
+    clearTimeout(window.__tvApiFrameT);
+    window.__tvApiFrameT = setTimeout(function() { try { fr.parentNode.removeChild(fr); } catch (e) {} window.__tvApiFrame = null; }, 120000);
+    var n = 0, tm = setInterval(function() {
+      n++;
+      var q = null;
+      try { var w = fr.contentWindow; q = w && (w.jQuery || w.$); } catch (e) {}
+      if (q && q.apiCall) { clearInterval(tm); cb(q); }
+      else if (n > 40) { clearInterval(tm); cb(null); }
+    }, 250);
+  };
 })();

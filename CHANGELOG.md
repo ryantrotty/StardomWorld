@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.71.0
+
+App page shell: six kinds of app-drawn page no longer load the site's My page underneath.
+
+- Tag Teams, team pages, wrestler pages, Top Rated, championship pages and StarScope used to open `/mypage?tv...`, download the site's My page and draw over it. The app now answers those addresses itself with an empty dark page. The address is the same, so sign-in, saved data and Back work as before. One fewer request to the site per page, the page opens without waiting for the site, and there is no site page to flash.
+- The shell includes the site's own style sheets and its own page translator, taken from the last real site page (`assets/shelllearn.js`), so the app's pages look the same and Japanese video titles are still turned into English. On a first launch, until a site page has been seen, the real My page is used as before.
+- Side menu on these pages: the account name and its links are the ones remembered from the last real site page. A plain link opens its address; anything else (such as Log out) opens the site's My page, where it can be chosen.
+- Adding a video to the site's Favorites from one of these pages opens the site's My page once in a hidden frame and uses the site's own call from it.
+- Not changed, still on the real page (with the 2.70.1 cover): My Favorites and Recently Watched (they read the viewing history from My page), Community (it reads the site's search results), faction pages, Eras and Events.
+- `SHELL_ON` and `SHELL_TRANSLATE` in MainActivity switch the shell, or its translator, off.
+
 ## 2.70.1
 
 - App-drawn pages no longer show the site's own page (the Japanese My page, or a search page) for half a second before the app's page appears. Since 2.70.0 they have no transition screen, which uncovered that moment. The app now holds a plain cover in the page colour from the instant the site's page would show until the app's page is drawn over it (2 seconds at most), so the order is: the page you were on, a brief plain dark screen, the app's page. No wand and no Up next strip.

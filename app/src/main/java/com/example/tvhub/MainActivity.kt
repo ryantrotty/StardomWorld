@@ -95,6 +95,8 @@ class MainActivity : Activity() {
         private const val TRANSITION_MAX_MS = 5000L   // as before 2.70.0: the transition screen never stays longer
         private const val TRANSITION_MIN_MS = 400L    // once up, it stays at least this long
         private const val APP_COVER_MAX_MS = 2000L    // the plain cover over an app-drawn page never stays longer
+        private const val SHELL_ON = true             // app page shell (2.71.0); false = app pages load the site's My page again
+        private const val SHELL_TRANSLATE = true      // the shell includes the site's own page translator, as the site's pages do
         private const val LOGIN_LOGO_FRACTION = 0.26f
         private const val LOGIN_URL =
             "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
@@ -2208,6 +2210,13 @@ class MainActivity : Activity() {
         authPending = true
         handler.postDelayed(authTimeoutRunnable, 10000L)
 
+        // App page shell: what was learned on earlier runs, plus the two values only the app knows.
+        shellLogo = getResourceBase64(R.drawable.header_logo)
+        shellViewport = (resources.displayMetrics.widthPixels / (LAYOUT_WIDTH * density)).let {
+            "width=$LAYOUT_WIDTH, initial-scale=$it, minimum-scale=$it, maximum-scale=$it, user-scalable=no"
+        }
+        loadShellPrefs()
+
         with(webView.settings) {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -2299,7 +2308,24 @@ class MainActivity : Activity() {
                 view.evaluateJavascript("document.documentElement.style.opacity = '1';", null)
                 injectPageScripts(view)
                 CookieManager.getInstance().flush()
+                // A shell page has no site header for the sign-in check to read. If the app starts on one (after a
+                // page-process recovery), carry on as signed in: that is where the person was a moment ago.
+                if (authPending && isShellUrl(url)) onAuthReported(false, "/mypage")
                 onPageReady()
+            }
+
+            // App page shell (2.71.0): the app answers these addresses itself, so the site's My page is never asked for.
+            // Runs off the main thread; reads only @Volatile values. Anything unexpected falls back to the real page.
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): android.webkit.WebResourceResponse? {
+                return try {
+                    if (!request.isForMainFrame || request.method != "GET" || !isShellUrl(request.url.toString())) return null
+                    val html = shellHtml() ?: return null
+                    android.webkit.WebResourceResponse(
+                        "text/html", "utf-8", 200, "OK",
+                        mapOf("Cache-Control" to "no-store"),
+                        java.io.ByteArrayInputStream(html.toByteArray(Charsets.UTF_8))
+                    )
+                } catch (_: Exception) { null }
             }
 
             // Android ended the page's process (usually the TV ran low on memory) or it crashed. Unhandled, that closes
@@ -2406,6 +2432,79 @@ class MainActivity : Activity() {
     }
 
     private var rendererDead = false
+
+    // ---- App page shell (2.71.0) -----------------------------------------------------------------------------------
+    // Tag Teams, team pages, wrestler pages, Top Rated, championship pages and StarScope are drawn entirely by the app,
+    // but each sat on the site's My page (/mypage?tv...=), which was downloaded every time and showed for a moment.
+    // For those addresses the app now hands the browser an empty page of its own. The address is unchanged, so the
+    // sign-in, saved data and Back all work as before, and the site is not asked for anything.
+    // The shell carries the site's own style sheets and its own page translator, learned from real site pages
+    // (assets/shelllearn.js). Until those are known (first launch), the real page is used as before.
+    @Volatile private var shellCss: List<String> = emptyList()
+    @Volatile private var shellTrSrc = ""
+    @Volatile private var shellTrInit = ""
+    @Volatile private var shellLogo = ""
+    @Volatile private var shellViewport = ""
+
+    private fun loadShellPrefs() {
+        try {
+            val o = org.json.JSONObject(getSharedPreferences("shell", MODE_PRIVATE).getString("site", "") ?: "")
+            applyShellInfo(o)
+        } catch (_: Exception) {}
+    }
+
+    // Keeps only what is safe to write into a page: https style sheet addresses, the translator's https address, and
+    // the translator's start-up lines when they can sit inside a script tag unchanged.
+    private fun applyShellInfo(o: org.json.JSONObject): Boolean {
+        val css = ArrayList<String>()
+        val arr = o.optJSONArray("css") ?: return false
+        for (i in 0 until minOf(arr.length(), 12)) {
+            val h = arr.optString(i)
+            if (h.startsWith("https://") && h.length < 600 && !h.contains('"') && !h.contains('<') && !h.contains('>')) css.add(h)
+        }
+        if (css.isEmpty()) return false
+        var src = o.optString("trSrc")
+        var init = o.optString("trInit")
+        if (!src.startsWith("https://") || src.length > 600 || src.contains('"') || src.contains('<') || src.contains('>')) src = ""
+        if (init.length > 4000 || init.contains("</script", ignoreCase = true) || init.contains("<!--")) init = ""
+        if (src.isEmpty() || init.isEmpty()) { src = ""; init = "" }
+        shellCss = css
+        shellTrSrc = src
+        shellTrInit = init
+        return true
+    }
+
+    private fun isShellUrl(url: String?): Boolean {
+        if (!SHELL_ON || url == null || !isSiteHost(url)) return false
+        val u = try { android.net.Uri.parse(url) } catch (_: Exception) { return false }
+        if (u.path != "/mypage") return false
+        val q = u.encodedQuery ?: return false
+        if (Regex("(^|&)tvb=").containsMatchIn(q)) return false
+        return Regex("(^|&)tv(teams|team|top|wr|ch|scope)=").containsMatchIn(q)
+    }
+
+    private fun htmlAttr(v: String): String = v.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+
+    // The empty page. Japanese as its language, like the site's pages, so the translator treats it the same way.
+    private fun shellHtml(): String? {
+        val css = shellCss
+        if (css.isEmpty()) return null
+        val sb = StringBuilder(4096)
+        sb.append("<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"utf-8\"><title>Stardom World</title>")
+        if (shellViewport.isNotEmpty()) sb.append("<meta name=\"viewport\" content=\"").append(htmlAttr(shellViewport)).append("\">")
+        sb.append("<style>html,body{margin:0;background:#0B1118;color:#fff;}</style>")
+        for (h in css) sb.append("<link rel=\"stylesheet\" href=\"").append(htmlAttr(h)).append("\">")
+        sb.append("<style>html,body{background:#0B1118 !important;}</style>")
+        sb.append("<script>window.__tvShell=true;</script></head><body data-tv-shell=\"1\">")
+        // The header logo, where the menu looks for it (hidden; the menu draws its own copy).
+        if (shellLogo.isNotEmpty()) sb.append("<div style=\"display:none\"><h1><a href=\"/\"><img alt=\"\" src=\"").append(shellLogo).append("\"></a></h1></div>")
+        if (SHELL_TRANSLATE && shellTrSrc.isNotEmpty() && shellTrInit.isNotEmpty()) {
+            sb.append("<div id=\"google_translate_element\"></div><script>").append(shellTrInit).append("</script>")
+            sb.append("<script src=\"").append(htmlAttr(shellTrSrc)).append("\"></script>")
+        }
+        sb.append("</body></html>")
+        return sb.toString()
+    }
 
     // Whether the page now showing is a Stardom World page. The app's bridge (AndroidHost) is visible to whatever page
     // is open, so the calls that reach the private sheet check this first (2.68.10) and answer nothing anywhere else
@@ -3771,6 +3870,17 @@ class MainActivity : Activity() {
         }
 
         // The first screenful of the page is ready (assets/pageready.js): the transition screen can lift (2.70.0).
+        // A real site page reports its style sheets and its page translator (assets/shelllearn.js), for the app page shell.
+        @android.webkit.JavascriptInterface
+        fun shellLearn(json: String) {
+            if (!pageOnSite || json.length > 20000) return
+            try {
+                val o = org.json.JSONObject(json)
+                val prefs = this@MainActivity.getSharedPreferences("shell", android.content.Context.MODE_PRIVATE)
+                if (applyShellInfo(o) && prefs.getString("site", "") != json) prefs.edit().putString("site", json).apply()
+            } catch (_: Exception) {}
+        }
+
         @android.webkit.JavascriptInterface
         fun appPageDrawn(seq: Int) {
             handler.post { onAppPageDrawn(seq) }
@@ -4657,7 +4767,7 @@ class MainActivity : Activity() {
               if (targetCard) targetCard.dataset.tvFav = 'true';
             }
 
-            if ($ && $.apiCall) {
+            function send() {
               $.apiCall({
                 url: '/user_api/contents/' + targetContentId + '/favorites',
                 type: apiType
@@ -4686,6 +4796,12 @@ class MainActivity : Activity() {
                   host(newFavState ? '♥ Added to Favorites!' : 'Removed from Favorites');
                 }
               });
+            }
+            if ($ && $.apiCall) {
+              send();
+            } else if (window.__tvShell && window.__tvSiteApi) {
+              // App page shell (2.71.0): the site's scripts aren't on this page; borrow the site's own call (sitegate.js).
+              window.__tvSiteApi(function(q) { if (q) { $ = q; send(); } else host('Favorites API not available'); });
             } else {
               host('Favorites API not available');
             }
@@ -5853,7 +5969,22 @@ class MainActivity : Activity() {
             });
             return h + '</div></div>';
           }
-          function signedIn() { return !!document.querySelector('.box-dropdown-key'); }
+          // App page shell (2.71.0): a shell page has no site header, so the menu shows the account as it was on the
+          // last real site page (remembered in tvAcctV1 each time the menu is built there).
+          var SHELL = !!window.__tvShell, ACCT_KEY = 'tvAcctV1';
+          function acctSaved() { try { return JSON.parse(lsGet(ACCT_KEY) || 'null') || {}; } catch (e) { return {}; } }
+          function acctRemember(name, links) {
+            if (SHELL) return;
+            try {
+              lsSet(ACCT_KEY, JSON.stringify({ t: Date.now(), on: 1, name: name, links: links.map(function(l) {
+                var h = l.el.getAttribute('href') || '';
+                var plain = !!h && h.charAt(0) !== '#' && !/^javascript:/i.test(h) && !l.el.getAttribute('data-method') && !l.el.getAttribute('onclick');
+                return { label: l.label, href: plain ? l.el.href : '' };
+              }) }));
+            } catch (e) {}
+          }
+          function acctForget() { if (!SHELL && document.readyState === 'complete') lsSet(ACCT_KEY, JSON.stringify({ t: Date.now(), on: 0 })); }
+          function signedIn() { return SHELL ? !!acctSaved().on : !!document.querySelector('.box-dropdown-key'); }
           // The account name and menu come from the site's header, which is hidden, so the page's translator
           // never reaches it. They are drawn in the menu where the translator can, and what it produces is
           // remembered so the next opening shows the English straight away.
@@ -5881,6 +6012,7 @@ class MainActivity : Activity() {
             }, 400);
           }
           function acctName() {
+            if (SHELL) return acctSaved().name || T('Account', 'アカウント');
             var k = document.querySelector('.box-dropdown-key');
             var t = k ? (k.textContent || '').replace(/\s+/g, ' ').trim() : '';
             return t || T('Account', 'アカウント');
@@ -5888,6 +6020,7 @@ class MainActivity : Activity() {
           // The account menu's own links (My page, Log out, ...): read from the header the site draws, which is
           // hidden but still there, and pressed through the real link so nothing about them changes.
           function acctLinks() {
+            if (SHELL) return (acctSaved().links || []).map(function(l) { return { label: l.label, href: l.href || '' }; });
             var menu = document.querySelector('.tv-acct-menu, [data-tv-acct] .dropdown-container');
             if (!menu) return [];
             var out = [];
@@ -5926,11 +6059,13 @@ class MainActivity : Activity() {
               var links = acctLinks();
               window.__tvMenuAcct = links;
               var an = acctName();
+              acctRemember(an, links);
               // Community, My Favorites, then the account (2.31.0); the divider sits above Community.
               h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community').replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
               h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
               h += '<div class="tv-sm-grp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
             } else {
+              acctForget();
               h += '<div class="tv-sm-grp tv-sm-acctgrp"><a class="tv-sm-item tv-sm-acct" tabindex="0" data-go="/login" href="' + BASE + '/login"><span class="tv-sm-acl">' + PERSON + '<span>' + esc(T('Log in', 'ログイン')) + '</span></span></a></div>';
             }
             h += '</div>';
@@ -6516,7 +6651,10 @@ class MainActivity : Activity() {
             if (el.getAttribute('data-acctlink')) {
               var l = (window.__tvMenuAcct || [])[parseInt(el.getAttribute('data-acctlink'), 10)];
               closeMenu();
+              // On a shell page the link itself isn't there: a plain link opens its address; anything else (such as
+              // Log out, which the site handles its own way) opens the site's My page, where it can be chosen.
               if (l && l.el) l.el.click();
+              else if (l) window.location.href = l.href || (BASE + '/mypage');
               return;
             }
             if (el.getAttribute('data-acct')) {
@@ -10640,6 +10778,7 @@ class MainActivity : Activity() {
         if (!isPpvFlow(view.url)) {
             view.evaluateJavascript("if(window.__tvNavSeq==null)window.__tvNavSeq=" + navSeq + ";", null)
             view.evaluateJavascript(assetText("pageready.js"), null)
+            view.evaluateJavascript(assetText("shelllearn.js"), null)
         }
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)
