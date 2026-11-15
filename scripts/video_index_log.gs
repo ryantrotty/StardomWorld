@@ -668,14 +668,16 @@ function viCards() {
     return sides.filter(Boolean);
   }
   // The kind of match, for the card (2.62.1): gauntlets, battle royals, rumbles, handicaps and multi-team
-  // matches say so ("6-team gauntlet · 3 per team"). Same rules as kindOf in assets/indexpanel.js.
+  // matches say so ("6-team gauntlet · 3 per team"). Same rules as kind() in assets/indexpanel.js.
   function kind(s, lang, st) {
     st = st || [];
     var sizes = s.map(function(x) { return x.length; }), size = Math.max.apply(null, sizes.concat([0])), n = s.length, all = sizes.reduce(function(a, b) { return a + b; }, 0), J = lang === 'ja';
     if (st.indexOf('gauntlet') >= 0) return n > 2 && size > 1 ? (J ? n + 'チーム・ガントレット（' + size + '人）' : n + '-team gauntlet · ' + size + ' per team') : (J ? all + '人ガントレット' : all + '-wrestler gauntlet');
     if (st.indexOf('royal') >= 0) return J ? all + '人バトルロイヤル' : all + '-woman battle royal';
     if (st.indexOf('rumble') >= 0) return J ? all + '人ランブル' : all + '-woman rumble';
-    if (n > 2) return size > 1 ? (J ? n + 'チーム（各' + size + '人）' : n + ' teams of ' + size) : (J ? n + 'WAY' : n + '-way match');
+    // 3- and 4-way matches use the names in the match type list (match_types.json, 2.67.1): 3-Way Battle, 3-Way Tag Battle, 3-Way Trios.
+    if (n > 2 && n < 5 && size < 4 && sizes.every(function(x) { return x === size; })) return J ? n + 'WAY' + ['バトル', 'タッグバトル', 'トリオバトル'][size - 1] : n + '-Way ' + ['Battle', 'Tag Battle', 'Trios'][size - 1];
+    if (n > 2) return size > 1 ? (J ? n + 'チーム（各' + size + '人）' : n + ' teams of ' + size) : (J ? n + 'WAY' : n + '-Way');
     if (n === 2 && sizes[0] !== sizes[1]) return J ? sizes[0] + '対' + sizes[1] + 'ハンディキャップ' : sizes[0] + '-on-' + sizes[1] + ' handicap';
     if (size === 1) return J ? 'シングルマッチ' : 'Singles match';
     if (size === 2) return J ? 'タッグマッチ' : 'Tag team match';

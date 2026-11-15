@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.67.1
+
+- StarScope cards: 3- and 4-way matches now use the same names as the match type list. Three teams of two is "3-Way Tag Battle" (was "3 teams of 2"); also 3-Way Battle, 3-Way Trios, 4-Way Battle, 4-Way Tag Battle, 4-Way Trios (3WAYタッグバトル etc. in Japanese). Five or more sides say "5-Way", and sides of different sizes or more than three per side keep "N teams of N". Same on the StarScope results, the logger's Card tab and the Apps Script cards.
+- Apps Script: kind() changed. Paste the script and publish a new version for the StarScope results to pick it up.
+
 ## 2.67.0
 
 - StarScope Log next (private builds): a fifth tab on the StarScope page, "Log next · N", listing the shows you've watched but not finished logging, from the sheet's video log. Shows you've started logging come first, then the most matches watched, the most plays and the most recently watched. Dai Zero Time matches and backstage comment clips don't count, and fully logged shows never appear.
