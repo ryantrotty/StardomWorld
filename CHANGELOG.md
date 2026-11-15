@@ -2,6 +2,55 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.7
+
+- StarScope cards: 3- and 4-way matches now use the same names as the match type list. Three teams of two is "3-Way Tag Battle" (was "3 teams of 2"); also 3-Way Battle, 3-Way Trios, 4-Way Battle, 4-Way Tag Battle, 4-Way Trios (3WAYタッグバトル etc. in Japanese). Five or more sides say "5-Way", and sides of different sizes or more than three per side keep "N teams of N". Same on the StarScope results, the logger's Card tab and the Apps Script cards.
+- Same fix as 2.67.1, but built on the StarScope phone branch (2.68.6), so the phone logger keeps working. 2.67.1 was based on main, which doesn't have the phone link yet.
+- Apps Script: kind() changed. Paste the script from this branch and publish a new version.
+
+## 2.68.6
+
+- StarScope phone logger now covers what the TV's logger does:
+  - Competitors: tap a name for Pick the right name, Propose new, Move to side N or a new side, Remove. Each side gets Team (two or more people; worked out from the members like the TV, or picked, or proposed) and Faction (picked or proposed). Entry and elimination order, folded under the sides.
+  - Match: venue (picked or proposed; a site spelling matched by hand is remembered), date with Day / Month / Year − and + and Back to the page date, as well as match number, title, competition, round, block and stipulation.
+  - Finish: the result by name ("Momo Watanabe wins", a team's name when it has one) instead of Side 1 / Side 2, how it ended, and who got the fall (which sets the winner, as on the TV). Moments folded, the ones that give the result away only after Show result. The rating shows the average and how many ratings.
+  - Name picker: wrestlers on this show and the ones you picked lately come first, everyone else as you type.
+- Bell and Finish buttons each fill half the row.
+- Not on the phone: the TV's Preview and Confirm screens and Save and next match (the TV decides what plays next; the phone follows it after a save).
+- Copy scripts/starscope_phone.html to the gh-pages branch (done for this version); no Apps Script change.
+
+## 2.68.5
+
+- StarScope home screen icon fills its tile: larger icons (180, 192, 512 and 1024 px) and a web app manifest on the GitHub Pages copy, so iOS no longer shrinks it onto a white square. Remove the old icon and add it again to pick this up.
+
+## 2.68.4
+
+- StarScope phone logger now lives on GitHub Pages too (gh-pages branch, starscope/index.html, the same file as scripts/starscope_phone.html), with the telescope home screen icon. It talks to the sheet in the background the way the TV does, so Google's "Sorry, unable to open the file at this time" page can't appear, and it opens full screen from the home screen.
+- The phone link is pasted once and kept on the phone; ?reset to paste a new one. The page holds no link and no key.
+- Apps Script: a new pb_now action (what the TV is playing), for the Pages logger. Paste the script and publish a new version. The Apps Script page (?p=phone&k=…) still works as before.
+
+## 2.68.3
+
+- docs/STARSCOPE_PHONE.md: add the launcher to the home screen before pasting the link (afterwards it opens the logger straight away). No app changes.
+
+## 2.68.2
+
+- StarScope launcher for the iPhone home screen (telescope icon instead of a letter): a small page on the gh-pages branch, served by GitHub Pages at /starscope/. It holds no link and no key: you paste the phone link once, it stays on that phone, and the icon opens the logger from then on. ?reset to change the link. No app changes.
+
+## 2.68.1
+
+- StarScope phone page: no longer drifts around when dragged. The scale is fixed (no pinch zoom), the page only scrolls up and down, and the Match number row wraps instead of running past the screen edge.
+- Browser tab icon: the StarScope telescope (scripts/starscope_icon.png, read from main once merged). iPhone home screen icons can't be set from an Apps Script page, so the home screen still shows a letter.
+- Apps Script: paste the script and publish a new version (the phone HTML file changed too).
+
+## 2.68.0
+
+- StarScope on the phone (private builds): log the match the TV is playing from your iPhone. A web page served by the sheet's own Apps Script (no app to install): add it to your home screen. It shows what's on the TV and where it is, the competitors (names from the library, a search picker, Propose new), match number, title, competition, round, block, stipulation, the result (hidden until Show result) and your rating. Save sends the same thing the TV's logger saves.
+- Bell and Finish are taps. The TV now sends the sheet a short note whenever playback changes (the page opening, play, pause, a seek or skip, buffering, speed, the end, leaving the page), with its clock time and the video position. The phone turns a tap into a place in the video from the last note before it, about 3 seconds after the tap so late notes are in. −1 s / +1 s to nudge.
+- Notes only go out when something changes (quick skips go as one), never while the video just plays on, and only to the sheet. The new "playback" tab keeps the current video and the one before it; older notes are wiped when a new video starts.
+- Ratings from the phone count as the TV's (same device), so they don't add a second vote. Finish, moments and the fall saved on the TV are kept when the phone saves.
+- Apps Script: paste the script, add an HTML file named "phone" with scripts/starscope_phone.html, and publish a new version. See docs/STARSCOPE_PHONE.md for the phone link.
+
 ## 2.67.0
 
 - StarScope Log next (private builds): a fifth tab on the StarScope page, "Log next · N", listing the shows you've watched but not finished logging, from the sheet's video log. Shows you've started logging come first, then the most matches watched, the most plays and the most recently watched. Dai Zero Time matches and backstage comment clips don't count, and fully logged shows never appear.

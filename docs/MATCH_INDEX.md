@@ -13,6 +13,7 @@ Paste the whole of `scripts/video_index_log.gs` into the sheet's Apps Script, th
 - `talent`, `teams`, `factions`, `shows`, `venues`, `aliases`, `lists`: the approved library.
 - `ratings`: one star rating (1 to 5) per match per device (2.62.0); the logger shows the device's own and the average.
 - `proposals`: suggested additions. `changes`: edit history.
+- `playback`: the TV's play / pause / seek notes for the phone logger (2.68.0, `docs/STARSCOPE_PHONE.md`). Only the last two videos are kept.
 
 ## Rules
 
