@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.10
+
+Safety settings of the built-in browser; nothing changes on screen.
+
+- Certificate problems are no longer waved through on a real TV or Firestick: the page is not loaded. Before, only the PPV site was protected, so on an untrusted network the Stardom World sign-in could be read. The Android Studio emulator still proceeds (not on the PPV site). A TV whose date is badly wrong will now show the browser's error page until its clock is fixed.
+- An https page can still show http pictures but can no longer run http scripts.
+- Pages can only be granted protected video playback, never the camera or microphone (the PPV site already had this rule).
+- Private builds: requests to the private sheet (video log, favorites sync, StarScope, the phone link) are only accepted while a Stardom World page is showing, not from Stagecrowd or an outside page.
+- The browser can no longer read files on the TV (the app's own bundled pages are unaffected).
+
 ## 2.68.9
 
 - The app no longer closes when the TV ends the page's process (usually low memory, for example after a very long list). It rebuilds itself and reopens the page that was showing; a second failure within a minute opens the home page, a third closes the app. Each time is sent as an error report ("PageProcessGone") with the page name, in builds with usage stats on.

@@ -2171,8 +2171,10 @@ class MainActivity : Activity() {
             mediaPlaybackRequiresUserGesture = false
             useWideViewPort = true
             loadWithOverviewMode = true
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            allowFileAccess = true
+            // As a desktop browser does (2.68.10): an https page may still show http pictures, but not run http scripts.
+            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+            // The app's own bundled pages (file:///android_asset/...) don't need this; nothing else on the TV should be readable.
+            allowFileAccess = false
             // Present as Desktop Chrome so the site serves its 1440px desktop grid layout.
             userAgentString = DESKTOP_USER_AGENT
         }
@@ -2201,6 +2203,7 @@ class MainActivity : Activity() {
                 indexPanelOpen = false
                 showScopeCard("")
                 if (isPpvHost(url)) ppvSession = true else if (isSiteHost(url)) ppvSession = false
+                pageOnSite = isSiteHost(url)
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
@@ -2259,8 +2262,10 @@ class MainActivity : Activity() {
                 handler: SslErrorHandler,
                 error: SslError
             ) {
-                // Never wave through certificate problems on the PPV site (sign-in and payment); elsewhere proceed (e.g. emulator without CAs).
-                if (isPpvFlow(error.url)) handler.cancel() else handler.proceed()
+                // A certificate problem is never waved through on a real TV (2.68.10): the connection carries the account's
+                // sign-in. Only the Android Studio emulator, which can lack up-to-date certificates, still proceeds, and
+                // never on the PPV site (sign-in and payment).
+                if (isEmulator() && !isPpvFlow(error.url)) handler.proceed() else handler.cancel()
             }
         }
 
@@ -2272,7 +2277,9 @@ class MainActivity : Activity() {
                         val ok = request.resources.filter { it == android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }.toTypedArray()
                         if (ok.isNotEmpty()) request.grant(ok) else request.deny()
                     } else {
-                        request.grant(request.resources)
+                        // Same rule everywhere (2.68.10): protected video playback only, never camera, microphone or the like.
+                        val ok = request.resources.filter { it == android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }.toTypedArray()
+                        if (ok.isNotEmpty()) request.grant(ok) else request.deny()
                     }
                 }
             }
@@ -2346,6 +2353,19 @@ class MainActivity : Activity() {
     }
 
     private var rendererDead = false
+
+    // Whether the page now showing is a Stardom World page. The app's bridge (AndroidHost) is visible to whatever page
+    // is open, so the calls that reach the private sheet check this first (2.68.10) and answer nothing anywhere else
+    // (Stagecrowd, or any outside page a link leads to). Read from the bridge's own thread, hence @Volatile.
+    @Volatile private var pageOnSite = false
+
+    private fun isEmulator(): Boolean {
+        val fp = android.os.Build.FINGERPRINT ?: ""
+        val hw = android.os.Build.HARDWARE ?: ""
+        val pr = android.os.Build.PRODUCT ?: ""
+        return fp.startsWith("generic") || fp.contains("emulator") || hw == "goldfish" || hw == "ranchu" ||
+            pr.startsWith("sdk") || pr.contains("emulator")
+    }
 
     // The page's process is gone and its WebView can't be used again: report it, drop the dead WebView and rebuild
     // the screen. The first time within a minute it reopens the page that was showing; the second time the home page;
@@ -3243,7 +3263,7 @@ class MainActivity : Activity() {
 
         @android.webkit.JavascriptInterface
         fun videoIndexPut(json: String) {
-            if (!videoIndexOn()) return
+            if (!videoIndexOn() || !pageOnSite) return
             val rec = try { org.json.JSONObject(json) } catch (_: Exception) { return }
             val id = rec.optInt("id", 0)
             if (id <= 0 || json.length > 40000) return
@@ -3345,6 +3365,7 @@ class MainActivity : Activity() {
                 this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
             }
             if (!videoIndexOn()) { reply("{\"ok\":false,\"error\":\"sync is off in this build\"}"); return }
+            if (!pageOnSite) { reply("{\"ok\":false,\"error\":\"not on a Stardom World page\"}"); return }
             val body = try { org.json.JSONObject(payload) } catch (_: Exception) { reply("{\"ok\":false,\"error\":\"bad request\"}"); return }
             val action = body.optString("action")
             if (action !in allowed) { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
