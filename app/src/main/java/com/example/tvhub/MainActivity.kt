@@ -2656,6 +2656,69 @@ class MainActivity : Activity() {
     // (Stagecrowd, or any outside page a link leads to). Read from the bridge's own thread, hence @Volatile.
     @Volatile private var pageOnSite = false
 
+    // ---- StarScope switches (2.76.0) ---------------------------------------------------------------------------------
+    // One private switch used to cover everything StarScope. It is now three:
+    //   scopeReadOn()  reading StarScope (cards, Shows, the player's fight card and Skip Entrances, the Wrestlers menu's
+    //                  Current | Past | Guests): your build from the sheet; every other build from the published
+    //                  StarScope file, and only once that file says "public": true.
+    //   scopeLogOn()   logging (the logger panel, the video log, the phone link): your build only, for now.
+    //   sheetOn()      private sync with the sheet (favorites, team lists, Recently Watched): your build only, always.
+    private fun sheetOn(): Boolean = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+    private fun scopeLogOn(): Boolean = BuildConfig.VIDEO_INDEX_DRYRUN && sheetOn()
+    private fun scopeReadOn(): Boolean = sheetOn() || scopeFilePublic()
+
+    // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
+    @Volatile private var scopeCache: org.json.JSONObject? = null
+    @Volatile private var scopeStamp = 0L
+    private fun scopeFile(): org.json.JSONObject? {
+        return try {
+            val f = java.io.File(filesDir, "starscope.json")
+            if (!f.exists() || f.length() == 0L) return null
+            if (f.lastModified() != scopeStamp || scopeCache == null) {
+                scopeCache = org.json.JSONObject(f.readText())
+                scopeStamp = f.lastModified()
+            }
+            scopeCache
+        } catch (_: Exception) { null }
+    }
+    private fun scopeFilePublic(): Boolean {
+        val d = scopeFile() ?: return false
+        return d.optBoolean("public", false) && d.optInt("schema", 0) == 1 && d.optJSONObject("cards") != null
+    }
+
+    // Downloads the StarScope file with the schedule check (when the app comes to the front, at most every six hours),
+    // with the last ETag, so an unchanged file costs almost nothing. Keeps the last good copy on any problem. Your own
+    // build reads the sheet instead and skips this.
+    private fun refreshScopeFile() {
+        if (BuildConfig.STARSCOPE_URL.isEmpty() || sheetOn()) return
+        try {
+            val prefs = getSharedPreferences("starscope", MODE_PRIVATE)
+            val have = java.io.File(filesDir, "starscope.json")
+            val c = java.net.URL(BuildConfig.STARSCOPE_URL).openConnection() as java.net.HttpURLConnection
+            c.connectTimeout = 8000
+            c.readTimeout = 15000
+            val etag = prefs.getString("etag", "") ?: ""
+            if (etag.isNotEmpty() && have.exists()) c.setRequestProperty("If-None-Match", etag)
+            if (c.responseCode == 200) {
+                val body = c.inputStream.bufferedReader().use { it.readText() }
+                val j = org.json.JSONObject(body)
+                if (j.optInt("schema", 0) == 1 && j.optJSONObject("cards") != null) {
+                    val tmp = java.io.File(filesDir, "starscope.json.part")
+                    tmp.writeText(body)
+                    tmp.renameTo(have)
+                    prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
+                }
+            }
+            c.disconnect()
+        } catch (_: Exception) {}
+    }
+
+    // An answer to a page script, the same way the sheet's answers are delivered.
+    private fun pageReply(callback: String, reqId: String, text: String) {
+        val js = "window." + callback + " && window." + callback + "(" + org.json.JSONObject.quote(reqId) + "," + org.json.JSONObject.quote(text) + ")"
+        runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+    }
+
     // One request to the private sheet whose answer nobody waits for (2.72.0: the "seen again" note).
     private fun sheetPostQuiet(body: org.json.JSONObject) {
         if (BuildConfig.VIDEO_INDEX_URL.isEmpty() || BuildConfig.VIDEO_INDEX_KEY.isEmpty()) return
@@ -3372,6 +3435,7 @@ class MainActivity : Activity() {
                         }
                     } catch (_: Exception) {}
                     refreshRoster()
+                    refreshScopeFile()
                     if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
                 }
                 try { if (BuildConfig.SHOW_POSTERS && (due || !postersChecked)) cacheSchedulePosters() } catch (_: Exception) {}
@@ -3718,8 +3782,20 @@ class MainActivity : Activity() {
 
         // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
         @android.webkit.JavascriptInterface
-        fun starCards(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply")
+        fun starCards(reqId: String, payload: String) {
+            if (sheetOn()) { sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply"); return }
+            // Other builds (2.76.0): the cards come from the published StarScope file; Log next is sheet-only.
+            val action = try { org.json.JSONObject(payload).optString("action") } catch (_: Exception) { "" }
+            val d = scopeFile()
+            val out = if (action == "vi_cards" && d != null && scopeFilePublic()) org.json.JSONObject().put("ok", true).put("map", d.optJSONObject("cards") ?: org.json.JSONObject()).toString()
+                else "{\"ok\":false,\"error\":\"not in this build\"}"
+            pageReply("__tvStarCardsReply", reqId, out)
+        }
+
+        // StarScope is readable in this build (2.76.0): yours, from the sheet; any other, once the published file is
+        // switched on for public builds.
+        @android.webkit.JavascriptInterface
+        fun scopeOn(): Boolean = this@MainActivity.scopeReadOn()
 
         // StarScope on the phone (2.68.0, private builds, assets/scopelink.js): the video page's play / pause / seek notes
         // go to the sheet's playback tab, so a tap on the phone logger can be turned into a place in the video.
@@ -3729,8 +3805,12 @@ class MainActivity : Activity() {
 
         // The Wrestlers menu (2.64.0, private builds): every wrestler's status from the sheet, replies to __tvRosterReply.
         @android.webkit.JavascriptInterface
-        fun starRoster(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_roster"), "__tvRosterReply")
+        fun starRoster(reqId: String, payload: String) {
+            if (sheetOn()) { sheetCall(reqId, payload, setOf("vi_roster"), "__tvRosterReply"); return }
+            // Other builds (2.76.0): Current, Past and Guests from the published StarScope file.
+            val r = if (scopeFilePublic()) scopeFile()?.optJSONObject("roster") else null
+            pageReply("__tvRosterReply", reqId, if (r != null) org.json.JSONObject(r.toString()).put("ok", true).toString() else "{\"ok\":false,\"error\":\"not in this build\"}")
+        }
 
         // The panel tells the app when it is up, so Back closes it and the remote's keys all go to it.
         @android.webkit.JavascriptInterface
@@ -6442,7 +6522,7 @@ class MainActivity : Activity() {
           var ROSTER_KEY = 'tvRosterV1', rosterAsk = 0;
           function rosterSaved() { try { var r = JSON.parse(localStorage.getItem(ROSTER_KEY) || 'null'); return r && r.talent && r.talent.length ? r : null; } catch (e) { return null; } }
           function rosterCheck() {
-            try { if (!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.starRoster)) return; } catch (e) { return; }
+            try { if (!(AndroidHost.scopeOn && AndroidHost.scopeOn() && AndroidHost.starRoster)) return; } catch (e) { return; }
             if (Date.now() - rosterAsk < 60000) return;
             rosterAsk = Date.now();
             try { AndroidHost.starRoster('r1', JSON.stringify({ action: 'vi_roster' })); } catch (e) {}
@@ -11076,11 +11156,12 @@ class MainActivity : Activity() {
         view.evaluateJavascript(reverseFirstCarouselJs, null)
         view.evaluateJavascript(pageFullyLoadedJs, null)
         // First, so its key handler runs before every other one on the page.
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("indexpanel.js"), null)
+        if (scopeLogOn()) view.evaluateJavascript(assetText("indexpanel.js"), null)   // StarScope logging: your build (2.76.0)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("starcards.js"), null)
+        // StarScope cards, Shows and player: every build (2.76.0). They stay out of sight unless scopeOn() says yes.
+        view.evaluateJavascript(assetText("starcards.js"), null)
         // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("scopeplayer.js"), null)
+        view.evaluateJavascript(assetText("scopeplayer.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
@@ -11096,7 +11177,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(relatedRowJs, null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
-        if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("scopelink.js"), null)
+        if (scopeLogOn()) view.evaluateJavascript(assetText("scopelink.js"), null)
         view.evaluateJavascript(assetText("baricons.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
@@ -11452,8 +11533,7 @@ class MainActivity : Activity() {
     // 8 s before the bell), 2 Bell to bell (also Up next at the end mark). Kept on this TV.
     private var bellMode = -1
 
-    private fun scopeOn(): Boolean =
-        BuildConfig.VIDEO_INDEX_DRYRUN && BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+    private fun scopeOn(): Boolean = scopeReadOn()
 
     private fun barIdList(): List<String> =
         if (scopeOn()) BAR_IDS.flatMap { if (it == "next") listOf(it, "bell") else listOf(it) } else BAR_IDS
