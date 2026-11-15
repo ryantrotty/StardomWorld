@@ -1312,6 +1312,9 @@ class MainActivity : Activity() {
 
                 if (container && newContainer) {
                   var newItems = Array.from(newContainer.children);
+                  // which page these came from (2.75.0), for the page chip and the light placeholders
+                  var pgNo = pageOf(nextUrl) || (lastPg + 1);
+                  lastPg = Math.max(lastPg, pgNo);
                   newItems.forEach(function(item) {
                     var itemLink = item.querySelector('a[href*="/contents/"], a[href*="/set/"]') || item.querySelector('a[href]');
                     if (itemLink && itemLink.href) {
@@ -1328,8 +1331,10 @@ class MainActivity : Activity() {
                         }
                       }
                     }
+                    item.setAttribute('data-tv-pg', String(pgNo));
                     container.appendChild(item);
                   });
+                  winSoon();
                 }
 
                 var oldPagination = document.querySelector('.pagination, .p-pagination, .pager');
@@ -1354,6 +1359,104 @@ class MainActivity : Activity() {
                 retryAt = Date.now() + Math.min(300000, 10000 * Math.pow(2, fails - 1));
               });
           }
+
+          // ---- Windowed scroll (2.75.0) -----------------------------------------------------------------------------
+          // A long list used to keep every picture it had ever loaded, which is what runs a TV out of memory. Each card
+          // now knows which page it came from. Once more than four pages are in the list, the pictures of cards more
+          // than two pages away from the one in view are let go (the card keeps its place, size and text: a light
+          // placeholder), and come back as soon as they are near again. A PAGE chip at the top right shows which page
+          // is in view, from page 2 on.
+          var FIRST_PG = pageOf(location.href) || 1, lastPg = FIRST_PG, BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+          function pageOf(u) { var m = /[?&]page=(\d+)/.exec(u || ''); return m ? parseInt(m[1], 10) : 0; }
+          function listBox() { return document.querySelector('.content-list, [class*="content-list"]'); }
+          function tagFirst() {
+            var c = listBox();
+            if (!c) return;
+            Array.prototype.forEach.call(c.children, function(it) { if (!it.hasAttribute('data-tv-pg')) it.setAttribute('data-tv-pg', String(FIRST_PG)); });
+          }
+          function letGo(it) {
+            if (it.__tvLight) return;
+            it.__tvLight = true;
+            Array.prototype.forEach.call(it.querySelectorAll('[style*="background-image"]'), function(el) {
+              var bg = el.style.backgroundImage;
+              if (!bg || bg === 'none') return;
+              el.setAttribute('data-tv-bg', bg);
+              el.style.backgroundImage = 'none';
+            });
+            Array.prototype.forEach.call(it.querySelectorAll('img'), function(im) {
+              if (!im.src || im.src === BLANK) return;
+              if (im.offsetHeight) im.style.height = im.offsetHeight + 'px';
+              im.setAttribute('data-tv-src', im.src);
+              if (im.srcset) { im.setAttribute('data-tv-srcset', im.srcset); im.removeAttribute('srcset'); }
+              im.src = BLANK;
+            });
+          }
+          function bringBack(it) {
+            if (!it.__tvLight) return;
+            it.__tvLight = false;
+            Array.prototype.forEach.call(it.querySelectorAll('[data-tv-bg]'), function(el) {
+              el.style.backgroundImage = el.getAttribute('data-tv-bg');
+              el.removeAttribute('data-tv-bg');
+            });
+            Array.prototype.forEach.call(it.querySelectorAll('img[data-tv-src]'), function(im) {
+              var ss = im.getAttribute('data-tv-srcset');
+              if (ss) im.setAttribute('srcset', ss);
+              im.src = im.getAttribute('data-tv-src');
+              im.removeAttribute('data-tv-src');
+              im.removeAttribute('data-tv-srcset');
+              im.style.height = '';
+            });
+          }
+          // the page in view: the focused card's, else the first card on screen
+          function pageInView() {
+            var ae = document.activeElement, it = ae && ae.closest ? ae.closest('[data-tv-pg]') : null;
+            if (!it) {
+              var c = listBox();
+              if (!c) return FIRST_PG;
+              var kids = c.children;
+              for (var i = 0; i < kids.length; i++) {
+                var r = kids[i].getBoundingClientRect();
+                if (r.bottom > 0 && r.height > 0) { it = kids[i]; break; }
+              }
+            }
+            return it ? (parseInt(it.getAttribute('data-tv-pg'), 10) || FIRST_PG) : FIRST_PG;
+          }
+          var chip = null;
+          function paintChip(p) {
+            if (p <= 1 || document.documentElement.classList.contains('tv-sm-open')) { if (chip) chip.style.display = 'none'; return; }
+            if (!chip) {
+              chip = document.createElement('div');
+              chip.id = 'tv-pg-chip';
+              chip.className = 'notranslate';
+              chip.setAttribute('translate', 'no');
+              chip.style.cssText = 'position:fixed; top:18px; right:24px; z-index:99500; background:#11171E; border:1px solid #2A323C; border-radius:999px; padding:7px 14px; font:800 13px Arial,Helvetica,sans-serif; letter-spacing:1px; color:#9AA6B4; pointer-events:none;';
+              document.body.appendChild(chip);
+            }
+            var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+            chip.innerHTML = (ja ? 'ページ ' : 'PAGE ') + '<span style="color:#F4C242;">' + p + '</span>';
+            chip.style.display = 'block';
+          }
+          function windowNow() {
+            if (window.__tvRest && window.__tvRest()) return;
+            var c = listBox();
+            if (!c) return;
+            tagFirst();
+            var p = pageInView();
+            paintChip(p);
+            if (lastPg - FIRST_PG < 4) return;   // a short list keeps everything
+            Array.prototype.forEach.call(c.children, function(it) {
+              var pg = parseInt(it.getAttribute('data-tv-pg'), 10) || FIRST_PG;
+              if (Math.abs(pg - p) > 2) letGo(it); else bringBack(it);
+            });
+          }
+          var winQueued = false;
+          function winSoon() {
+            if (winQueued) return;
+            winQueued = true;
+            setTimeout(function() { winQueued = false; windowNow(); }, 150);
+          }
+          document.addEventListener('focusin', winSoon, true);
+          window.addEventListener('scroll', winSoon, { passive: true });
 
           hidePagination();
           window.addEventListener('scroll', checkAndLoadNextPage, { passive: true });
@@ -5431,12 +5534,37 @@ class MainActivity : Activity() {
           setTimeout(schedTick, 4000);
           setInterval(schedTick, 20000);
           // Home page: the next show is the first tile of the first row (the app's own row, so the tile shares its look).
+          // Home page (2.75.0): the next-live / live tile and the PPV tile sit on a row of their own under the banner, with
+          // no heading; the first row of videos starts on the next line with only its videos. The row is a .tv-grid-row,
+          // so Up/Down treat it like any other row. It is taken away whenever it has no tile left, so it never leaves a gap.
+          function contentRow() { return document.querySelector('#tv-test-grid .tv-grid-row:not(#tv-live-row)'); }
+          function liveRow(make) {
+            var r = document.getElementById('tv-live-row');
+            if (r || !make) return r;
+            var first = contentRow();
+            if (!first || !first.parentElement || !first.parentElement.parentNode) return null;
+            var wrap = document.createElement('div');
+            wrap.id = 'tv-live-wrap';
+            wrap.style.cssText = 'margin-bottom:35px;';
+            r = document.createElement('div');
+            r.id = 'tv-live-row';
+            r.className = 'tv-grid-row';
+            r.style.cssText = 'display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px; align-items:flex-start;';
+            wrap.appendChild(r);
+            first.parentElement.parentNode.insertBefore(wrap, first.parentElement);
+            return r;
+          }
+          function liveRowTidy() {
+            var r = document.getElementById('tv-live-row');
+            if (r && !r.querySelector('a.tv-card')) { var w = r.parentNode; if (w && w.parentNode) w.parentNode.removeChild(w); }
+          }
           function ensureHomeTile() {
             if (!isHome()) return;
-            var row = document.querySelector('#tv-test-grid .tv-grid-row');
-            if (!row || document.getElementById('tv-next-live')) return;
+            if (!contentRow() || document.getElementById('tv-next-live')) return;
             var up = schedUpcoming().filter(function(e) { return !e.ppv; })[0];   // a pay-per-view show has its own tile
             if (!up) return;
+            var row = liveRow(true);
+            if (!row) return;
             var p = posterFor(up), a = document.createElement('a');
             a.id = 'tv-next-live';
             a.className = 'tv-card';
@@ -5479,9 +5607,10 @@ class MainActivity : Activity() {
           }
           function ensurePpvTile() {
             var a = document.getElementById('tv-ppv-home');
-            var row = isHome() ? document.querySelector('#tv-test-grid .tv-grid-row') : null;
-            var e = row ? ppvHomeEvent() : null;
-            if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); return; }
+            var e = isHome() && contentRow() ? ppvHomeEvent() : null;
+            if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); liveRowTidy(); return; }
+            var row = liveRow(true);
+            if (!row) return;
             var st = ppvState(e), p = posterFor(e), key = e.id + ':' + st + ':' + (p ? 1 : 0) + ':' + (ppvBought(e.id) ? 1 : 0);
             var anchor = document.getElementById('tv-live-card') || document.getElementById('tv-next-live');
             if (a && a.__k === key && a.parentNode === row) {
@@ -5603,14 +5732,17 @@ class MainActivity : Activity() {
             if (va) va.style.height = (on && ref && ref.offsetHeight) ? ref.offsetHeight + 'px' : '';
           }
           function liveRevert(a, row) {
-            if (a.__card && row) row.insertBefore(a.__card, a.nextSibling);
+            // the site's own card goes back to the front of the row it came from (2.75.0: the tile is on its own row)
+            var home = a.__cardRow || row;
+            if (a.__card && home && !a.__card.parentNode) home.insertBefore(a.__card, home.firstChild);
             if (a.parentNode) a.parentNode.removeChild(a);
-            if (row) { row.style.alignItems = ''; liveFixViewAll(row, false); }
+            if (home) { home.style.alignItems = ''; liveFixViewAll(home, false); }
+            liveRowTidy();
           }
           // Returns true while the combined tile is on screen (the plain next-live tile then stays away).
           function ensureLiveCard() {
             if (!isHome()) return false;
-            var row = document.querySelector('#tv-test-grid .tv-grid-row');
+            var row = contentRow();
             if (!row) return false;
             var a = document.getElementById('tv-live-card');
             var up = schedUpcoming()[0];
@@ -5635,13 +5767,14 @@ class MainActivity : Activity() {
               try { lsSet('tvLiveCardV1', a.__id); lsSet('tvLiveCardEvV1', JSON.stringify({ id: a.__id, ev: up.id })); } catch (x) {}
               var old = document.getElementById('tv-next-live');
               if (old && old.parentNode) old.parentNode.removeChild(old);
+              var lr = liveRow(true);
+              if (!lr) return false;
+              a.__cardRow = row;
               row.removeChild(card);
-              row.insertBefore(a, row.firstChild);
-              row.style.alignItems = 'flex-start';
+              lr.insertBefore(a, lr.firstChild);
               a.__k = '';
             }
             var k = liveRender(a, up, a.__id, a.__bg);
-            liveFixViewAll(row, true);
             return true;
           }
           function liveTick() { if (!ensureLiveCard()) ensureHomeTile(); ensurePpvTile(); }
@@ -6874,7 +7007,7 @@ class MainActivity : Activity() {
           function rememberNewHref() {
             var grid = document.getElementById('tv-test-grid');
             if (!grid) return false;
-            var rows = grid.querySelectorAll('.tv-grid-row');
+            var rows = grid.querySelectorAll('.tv-grid-row:not(#tv-live-row)');
             if (!rows.length) return false;
             var tiles = rows[0].querySelectorAll('a.tv-card.notranslate');
             var last = tiles.length ? tiles[tiles.length - 1] : null;
@@ -7159,14 +7292,35 @@ class MainActivity : Activity() {
             return true;
           }
 
+          // The site's own "Related Videos" heading above the rows (2.75.0). The page-wide pass only looked at heading
+          // tags with that exact text, and on some video pages (with The card row) this one slipped through. Any short
+          // label near the rows that reads Related videos / content in English or Japanese is put away; the rows keep
+          // their own headings.
+          var REL_RE = /^(related\s+(videos?|contents?)|関連(動画|コンテンツ|作品)(一覧)?)$/i;
+          function hideRelatedHeads() {
+            var sec = document.querySelector('.box-related-content');
+            if (!sec) return;
+            var scope = (sec.parentElement && sec.parentElement.parentElement) || sec.parentElement || document.body;
+            Array.prototype.forEach.call(scope.querySelectorAll('h1, h2, h3, h4, h5, h6, p, div, span, strong, b'), function(el) {
+              if (el.closest('.tv-related-row') || el.children.length > 3 || el.style.display === 'none') return;
+              var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+              if (t.length < 30 && REL_RE.test(t)) el.style.setProperty('display', 'none', 'important');
+            });
+          }
+
           var started = Date.now();
           var timer = setInterval(function() {
             var secs = Array.from(document.querySelectorAll('.box-related-content')).filter(function(s) { return !s.classList.contains('tv-related-done'); });
             var elapsed = Date.now() - started;
+            hideRelatedHeads();
             // The first carousel is reversed and re-initialised by another script within about 4 seconds; wait for it.
             if (!window.__tvReverseCarouselDone && elapsed < 4600) return;
             secs.forEach(function(s) { build(s); });
-            if (elapsed > 12000) clearInterval(timer);
+            if (elapsed > 12000) {
+              clearInterval(timer);
+              // the translator can redraw the label later: look again every 3 s while the page is in view
+              setInterval(function() { if (!(window.__tvRest && window.__tvRest())) hideRelatedHeads(); }, 3000);
+            }
           }, 500);
         })();
     """.trimIndent()
@@ -10468,7 +10622,7 @@ class MainActivity : Activity() {
               existing.dataset.tvSig = html;
               return;
             }
-            var first = document.querySelector('#tv-test-grid .tv-grid-row');
+            var first = document.querySelector('#tv-test-grid .tv-grid-row:not(#tv-live-row)');
             if (!first || !first.parentElement || !first.parentElement.parentNode) return;
             var firstWrap = first.parentElement;
             // Row order under the first row: Recently Watched, Favorites.

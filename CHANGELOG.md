@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.75.0
+
+- **Long lists (windowed scroll):** every card now knows which page of the list it came from. Once more than four pages are loaded, the pictures of cards more than two pages away from the one in view are let go: the card keeps its place, size and title, as a light placeholder, and its picture comes back as soon as it is near again. A long scroll no longer piles up hundreds of pictures in the TV's memory. A **PAGE chip** at the top right shows the page in view from page 2 on (grey "PAGE", gold number; hidden while the menu is open).
+- **Home page:** the next-live / live tile and the PPV tile (or the next two live shows) now sit on a row of their own under the banner, with no heading. The first row of videos starts on the next line with only its videos and its heading. Up and Down move through it like any other row. The row disappears when there is no tile to show. Tile sizes are unchanged.
+- **Video pages:** the site's own "Related Videos" label no longer shows above the rows under the player (it slipped through on pages with The card row).
+
 ## 2.74.1
 
 Housekeeping, nothing changes in the app.
