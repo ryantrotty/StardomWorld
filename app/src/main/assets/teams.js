@@ -845,7 +845,11 @@
   }
   function cardHtml(it) {
     var d = dateOfTitle(it.t);
-    return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(it.h) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
+    // Matches saved in the private sheet's team lists (and those waiting on the TV) keep only the video's number,
+    // title and picture, not its address: build the address from the number (2.72.1). Without it the card's link was
+    // empty, so OK reloaded the team page and the Menu button found no video to offer.
+    var href = it.h || (/^\d{1,9}$/.test(String(it.id)) ? absUrl('/contents/' + it.id) : '');
+    return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(href) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
   }
   // One row of video cards: its grid, its More tile and the count beside its heading.
   function paintRow(box, st, list, done, ran, active, moreAttr, msgs) {

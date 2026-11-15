@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.72.1
+
+- Tag team pages (private builds): videos from the team's saved list in the sheet open again, and the Menu button offers them for Favorites, Watch Later and playlists again. The sheet keeps only each video's number, title and picture, so those cards had an empty link: OK reloaded the team page and Menu found no video. The address is now built from the video's number.
+- The Favorites pop-up from a team page video shows the match title alone (it took every word on the card, badges and date included).
+
 ## 2.72.0
 
 Recently Watched from the private sheet, and fixes from the 2.70.1 TV test.

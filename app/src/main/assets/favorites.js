@@ -250,7 +250,7 @@
       }
       if (bg.indexOf('data:') === 0) bg = '';
       if (bg) bg = absUrl(bg);
-      var tEl = box.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box, .tv-rc-t, .tv-fp-tt');
+      var tEl = box.querySelector('h3, h4, .ttl-xs, .content-title, .content-info-box, .tv-rc-t, .tv-fp-tt, .tt-card > .tt');
       var title = clean(tEl ? tEl.textContent : (link.getAttribute('title') || link.getAttribute('aria-label') || box.textContent)) || 'Stardom World Video';
       return { id: m[1], href: href, title: title, bg: bg, card: box };
     }
