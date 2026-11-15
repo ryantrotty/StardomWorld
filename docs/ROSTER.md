@@ -64,7 +64,7 @@ The site's search also returns older videos a wrestler isn't in. In the private 
 }
 ```
 
-Keys are schedule event ids. `{}` marks the show as PPV: the home page gives it the PPV tile (with its poster in your build) as **ON SALE SOON / Not on Stagecrowd yet** until it has a `page` or `url`. Fields given replace the schedule's own (same names as the `ppv` entries in `schedule.json`). `false` takes a PPV mark off, for example one the daily file got wrong.
+Keys are schedule event ids, or a Japan-time date such as `"2027-02-11"` for a show not on the schedule yet (it applies to the Stardom show(s) that day once they appear; an id key wins over a date key). `{}` marks the show as PPV: the home page gives it the PPV tile (with its poster in your build) as **ON SALE SOON / Not on Stagecrowd yet** until it has a `page` or `url`. Fields given replace the schedule's own (same names as the `ppv` entries in `schedule.json`). `false` takes a PPV mark off, for example one the daily file got wrong.
 
 ## Tag League
 

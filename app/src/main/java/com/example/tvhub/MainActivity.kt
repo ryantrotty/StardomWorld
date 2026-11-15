@@ -3040,6 +3040,8 @@ class MainActivity : Activity() {
 
     // The roster file's "ppv" section (2.79.0) marks shows as PPV without a new build, before Stagecrowd lists them:
     //   "ppv": { "20261129-hamamatsu": {}, "<id>": { "page": "...", "url": "...", "sale_start": "..." }, "<id>": false }
+    // A key can also be a Japan-time date, "2027-02-11" (2.79.1), for a show not on the schedule yet: it marks the
+    // Stardom show(s) that day once they appear. An event id key wins over a date key.
     // {} marks the show as PPV (shown as "not on sale yet" until it has a page or url); fields given replace the ones
     // in the schedule; false takes a wrong PPV mark off.
     private fun withRosterPpv(text: String): String {
@@ -3051,8 +3053,9 @@ class MainActivity : Activity() {
             for (i in 0 until a.length()) {
                 val e = a.getJSONObject(i)
                 val id = e.optString("id")
-                if (!r.has(id)) continue
-                val v = r.get(id)
+                val day = e.optString("start").take(10)
+                val key = if (r.has(id)) id else if (day.length == 10 && e.optBoolean("own", true) && r.has(day)) day else continue
+                val v = r.get(key)
                 if (v == false) { e.remove("ppv"); continue }
                 val o = v as? org.json.JSONObject ?: continue
                 val p = e.optJSONObject("ppv") ?: org.json.JSONObject().also { e.put("ppv", it) }

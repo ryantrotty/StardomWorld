@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.79.1
+
+- **Roster file `ppv` by date:** a key can now be a Japan-time date (`"2027-02-11": {}`) as well as an event id, so a PPV show can be marked before it is on the schedule. It applies to the Stardom show(s) on that day once they appear; an event id key wins over a date key.
+
 ## 2.79.0
 
 Home page live row: two tiles, and PPV shows before Stagecrowd lists them.
