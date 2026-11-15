@@ -202,6 +202,24 @@ class Metrics(context: Context) {
         enqueue("\$exception", props, now)
     }
 
+    /**
+     * Android ended the page's process (usually low memory) or it crashed, and the app rebuilt itself (2.68.9).
+     * Sent as an error report with the page that was open, so it shows how often this happens and where.
+     */
+    fun rendererGone(crashed: Boolean) {
+        if (!enabled) return
+        val ex = JSONObject().apply {
+            put("type", "PageProcessGone")
+            put("value", if (crashed) "The page process crashed" else "The page process was ended by Android (low memory)")
+            put("mechanism", JSONObject().put("handled", true).put("synthetic", true).put("type", "generic"))
+        }
+        val props = baseProps(curUrl ?: "", curHost ?: "", curPath ?: "")
+        props.put("\$exception_list", JSONArray().put(ex))
+        props.put("\$exception_level", "error")
+        props.put("error_source", "page process")
+        enqueue("\$exception", props, System.currentTimeMillis())
+    }
+
     private class JsFrame(val fn: String, val file: String, val line: Int, val col: Int)
 
     // Chrome stack lines: "    at name (file:line:col)" or "    at file:line:col". Newest call first.

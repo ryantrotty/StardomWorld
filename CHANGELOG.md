@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.9
+
+- The app no longer closes when the TV ends the page's process (usually low memory, for example after a very long list). It rebuilds itself and reopens the page that was showing; a second failure within a minute opens the home page, a third closes the app. Each time is sent as an error report ("PageProcessGone") with the page name, in builds with usage stats on.
+- Leaving the app (Home, another app, TV off) now pauses the page: its video, its timers and, in private builds, the favorites sync checks. Everything carries on when the app is opened again. An overlay drawn over the app, such as a voice assistant, changes nothing.
+
 ## 2.68.8
 
 - Translated captions are private builds only again. In public builds the captions button now only switches the player's own captions on and off (it says so when a video has none), and no build without the private branding folder calls the translator, for captions or for Japanese Home row titles. The switch for this existed but nothing checked it. Private builds are unchanged: Off, English, 日本語.

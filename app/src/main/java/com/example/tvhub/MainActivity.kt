@@ -87,6 +87,10 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        // Page-process recovery (2.68.9): kept here so they survive the rebuild of the screen.
+        private var rendererGoneAt = 0L
+        private var rendererGoneCount = 0
+        private var resumeUrl: String? = null
         private const val START_URL = "https://www.stardom-world.com/"
         private const val LOGIN_LOGO_FRACTION = 0.26f
         private const val LOGIN_URL =
@@ -2242,6 +2246,13 @@ class MainActivity : Activity() {
                 onPageReady()
             }
 
+            // Android ended the page's process (usually the TV ran low on memory) or it crashed. Unhandled, that closes
+            // the whole app; handled, the app rebuilds itself and reopens the page it was on.
+            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                recoverFromRendererGone(detail.didCrash())
+                return true
+            }
+
             @SuppressLint("WebViewClientOnReceivedSslError")
             override fun onReceivedSslError(
                 view: WebView,
@@ -2326,7 +2337,35 @@ class MainActivity : Activity() {
         }
 
         startPlayerDebug()
-        webView.loadUrl(START_URL)
+        // After a page-process recovery: back to the page that was open (a Stardom World page only), else the home page.
+        val resume = resumeUrl
+        resumeUrl = null
+        // Timers are paused while the app is out of sight (onStop); make sure a fresh start never inherits that.
+        webView.resumeTimers()
+        webView.loadUrl(resume ?: START_URL)
+    }
+
+    private var rendererDead = false
+
+    // The page's process is gone and its WebView can't be used again: report it, drop the dead WebView and rebuild
+    // the screen. The first time within a minute it reopens the page that was showing; the second time the home page;
+    // the third time the app closes, so a page that can't load doesn't restart forever.
+    private fun recoverFromRendererGone(crashed: Boolean) {
+        if (rendererDead) return
+        rendererDead = true
+        try { metrics.rendererGone(crashed) } catch (_: Exception) {}
+        val now = SystemClock.uptimeMillis()
+        if (rendererGoneAt == 0L || now - rendererGoneAt > 60000L) rendererGoneCount = 0
+        rendererGoneAt = now
+        rendererGoneCount++
+        val url = lastNavigatedUrl
+        resumeUrl = if (rendererGoneCount == 1 && url != null && isSiteHost(url)) url else null
+        handler.removeCallbacksAndMessages(null)
+        try {
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            webView.destroy()
+        } catch (_: Exception) {}
+        if (rendererGoneCount >= 3) finish() else recreate()
     }
 
     private fun startSplash() {
@@ -2890,6 +2929,22 @@ class MainActivity : Activity() {
     override fun onPause() {
         metrics.pause()
         super.onPause()
+    }
+
+    // Out of sight (Home, another app, TV off): the page stops its video, timers and background requests (2.68.9).
+    // Done in onStop, not onPause, so an overlay drawn over the app (a voice assistant, a system dialog) changes nothing.
+    override fun onStop() {
+        if (::webView.isInitialized && !rendererDead) {
+            try { webView.onPause(); webView.pauseTimers() } catch (_: Exception) {}
+        }
+        super.onStop()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (::webView.isInitialized && !rendererDead) {
+            try { webView.resumeTimers(); webView.onResume() } catch (_: Exception) {}
+        }
     }
 
     private fun refreshScheduleAsync() {
