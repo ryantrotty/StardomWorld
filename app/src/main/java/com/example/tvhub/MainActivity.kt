@@ -3649,6 +3649,7 @@ class MainActivity : Activity() {
         // Translates one short title (a Home row name) to English once; the page keeps the answer.
         @android.webkit.JavascriptInterface
         fun translateTitle(text: String) {
+            if (!BuildConfig.ENABLE_CC_TRANSLATE) return   // private builds only; a public build keeps the site's wording
             val ua = webView.settings.userAgentString
             Thread {
                 val out = ccTranslate(text, "en", ua)
@@ -11196,6 +11197,20 @@ class MainActivity : Activity() {
     }
 
     private fun cycleCc() {
+        // Public builds (2.68.8): no translated captions. The button only switches the player's own captions on and off.
+        if (!BuildConfig.ENABLE_CC_TRANSLATE) {
+            if (ccMode == 0) {
+                ccCheckPlayerTracks()
+            } else {
+                ccMode = 0
+                fsSetIcon(fsBtnCc, "cc", null)
+                playerCommand("ccoff", 0)
+                handler.removeCallbacks(ccTick)
+                ccTicking = false
+                ccView?.visibility = View.GONE
+            }
+            return
+        }
         ccMode = when (ccMode) { 0 -> 1; 1 -> 2; 2 -> 0; else -> 1 }
         fsSetIcon(fsBtnCc, "cc", null)
         // The player's own captions always go off: ours replace them (and are shown or hidden below).
@@ -11272,6 +11287,7 @@ class MainActivity : Activity() {
     }
 
     private fun ccStart() {
+        if (!BuildConfig.ENABLE_CC_TRANSLATE) return   // translated captions are for private builds only
         ccEnsureView()
         if (!ccTicking) {
             ccTicking = true
@@ -11413,6 +11429,8 @@ class MainActivity : Activity() {
 
     // Google's free web translation, one sentence per request, backing off if it asks us to slow down.
     private fun ccTranslate(text: String, tl: String, ua: String): String? {
+        // Private builds only (2.68.8): public builds never call the translator, for captions or for titles.
+        if (!BuildConfig.ENABLE_CC_TRANSLATE) return null
         if (System.currentTimeMillis() < ccBackoffUntil) return null
         return try {
             val url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" + tl +

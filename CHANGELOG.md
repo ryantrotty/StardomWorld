@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.68.8
+
+- Translated captions are private builds only again. In public builds the captions button now only switches the player's own captions on and off (it says so when a video has none), and no build without the private branding folder calls the translator, for captions or for Japanese Home row titles. The switch for this existed but nothing checked it. Private builds are unchanged: Off, English, 日本語.
+
 ## 2.68.7
 
 - StarScope cards: 3- and 4-way matches now use the same names as the match type list. Three teams of two is "3-Way Tag Battle" (was "3 teams of 2"); also 3-Way Battle, 3-Way Trios, 4-Way Battle, 4-Way Tag Battle, 4-Way Trios (3WAYタッグバトル etc. in Japanese). Five or more sides say "5-Way", and sides of different sizes or more than three per side keep "N teams of N". Same on the StarScope results, the logger's Card tab and the Apps Script cards.
