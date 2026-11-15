@@ -271,8 +271,9 @@
   }
   function siteFav(id, viaShell) {
     var $ = viaShell || window.jQuery || window.$;
-    // App page shell (2.71.0): the site's scripts aren't on this page; borrow the site's own call (sitegate.js).
-    if ((!$ || !$.apiCall) && !viaShell && window.__tvShell && window.__tvSiteApi) {
+    // The site's favorites call isn't on this page (an app page shell, or My page, which never had it): borrow the
+    // site's own call from a page that has it (sitegate.js, 2.72.0).
+    if ((!$ || !$.apiCall) && !viaShell && window.__tvSiteApi) {
       window.__tvSiteApi(function(q) { if (q) siteFav(id, q); else toast('Favorites API not available'); });
       return;
     }
@@ -950,7 +951,17 @@
   document.addEventListener('focusin', function() { if (document.getElementById('tv-fp')) hint(); }, true);
 
   render(false);
-  if (MODE === 'home') {
+  // Builds with the private sheet (2.72.0): the Recently Watched row comes from the sheet, not from My page.
+  if (MODE === 'home' && window.__tvRecent && window.__tvRecent.on) {
+    window.__tvRecent.get(function(list) {
+      if (list) {
+        hist = list.map(function(x) { return { href: x.href, title: x.title, bg: x.bg }; }); histDone = true;
+        if (hist.length) lsSet('tvFavHistN', String(hist.length));
+        render(true);
+      } else if (!window.__tvRecent.realPage()) domHistory();
+    }, 30000);
+  } else if (MODE === 'home') domHistory();
+  function domHistory() {
     var tries = 0, last = -1;
     var tm = setInterval(function() {
       tries++;

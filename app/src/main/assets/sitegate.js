@@ -40,32 +40,45 @@
   };
   window.__tvFetch = function(url, opts) { return window.__tvSiteGate.fetch(url, opts); };
 
-  // The site's own favorites call ($.apiCall) lives in the site's scripts. On an app page shell (2.71.0) those aren't
-  // loaded, so when a video is added to the site's Favorites from such a page, the site's My page is opened once in a
-  // hidden frame and its copy is used: the call is the site's real one, sign-in and all. The frame is kept for two
-  // minutes in case of another, then removed. cb(the site's $, or null when it can't be had).
+  // The site's own favorites call ($.apiCall) lives in the site's scripts on its video list pages. My page doesn't
+  // have it (which is why adding a favorite from a tag team page failed up to 2.71.0), and an app page shell has no
+  // site scripts at all. So, when it is missing, a small site search page (one that finds nothing) is opened once in
+  // a hidden frame and its copy is used: the call is the site's real one, sign-in and all. If that page doesn't have
+  // it either, the home page is tried. The frame is kept for two minutes in case of another, then removed.
+  // cb(the site's $, or null when it can't be had).
+  var API_PAGES = ['/contents/search?q%5Bkeyword%5D=tvapiprobe&activetab=contents', '/'];
   window.__tvSiteApi = function(cb) {
     var jq = window.jQuery || window.$;
     if (jq && jq.apiCall) { cb(jq); return; }
-    if (!window.__tvShell || !document.body) { cb(null); return; }
-    var fr = window.__tvApiFrame;
-    if (!fr || !fr.isConnected) {
-      fr = document.createElement('iframe');
-      fr.src = '/mypage';
+    if (!document.body) { cb(null); return; }
+    function frameApi(fr) { try { var w = fr.contentWindow, q = w && (w.jQuery || w.$); return q && q.apiCall ? q : null; } catch (e) { return null; } }
+    function keep(fr) {
+      clearTimeout(window.__tvApiFrameT);
+      window.__tvApiFrameT = setTimeout(function() { try { fr.parentNode.removeChild(fr); } catch (e) {} window.__tvApiFrame = null; }, 120000);
+    }
+    var old = window.__tvApiFrame;
+    if (old && old.isConnected) { var q0 = frameApi(old); if (q0) { keep(old); cb(q0); return; } }
+    function tryPage(i) {
+      if (i >= API_PAGES.length) { cb(null); return; }
+      if (window.__tvApiFrame) { try { window.__tvApiFrame.parentNode.removeChild(window.__tvApiFrame); } catch (e) {} }
+      var fr = document.createElement('iframe');
+      fr.src = API_PAGES[i];
       fr.setAttribute('aria-hidden', 'true');
       fr.tabIndex = -1;
       fr.style.cssText = 'position:absolute;left:-9999px;top:0;width:1280px;height:900px;border:0;visibility:hidden;';
       document.body.appendChild(fr);
       window.__tvApiFrame = fr;
+      keep(fr);
+      var loaded = false, n = 0;
+      fr.addEventListener('load', function() { loaded = true; });
+      var tm = setInterval(function() {
+        n++;
+        var q = frameApi(fr);
+        if (q) { clearInterval(tm); cb(q); }
+        // the page has loaded and had 1.5 s to set itself up, or 10 s have gone by: try the next page
+        else if ((loaded && n > 6) || n > 40) { clearInterval(tm); tryPage(i + 1); }
+      }, 250);
     }
-    clearTimeout(window.__tvApiFrameT);
-    window.__tvApiFrameT = setTimeout(function() { try { fr.parentNode.removeChild(fr); } catch (e) {} window.__tvApiFrame = null; }, 120000);
-    var n = 0, tm = setInterval(function() {
-      n++;
-      var q = null;
-      try { var w = fr.contentWindow; q = w && (w.jQuery || w.$); } catch (e) {}
-      if (q && q.apiCall) { clearInterval(tm); cb(q); }
-      else if (n > 40) { clearInterval(tm); cb(null); }
-    }, 250);
+    tryPage(0);
   };
 })();

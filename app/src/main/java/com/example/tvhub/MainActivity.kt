@@ -94,7 +94,7 @@ class MainActivity : Activity() {
         private const val START_URL = "https://www.stardom-world.com/"
         private const val TRANSITION_MAX_MS = 5000L   // as before 2.70.0: the transition screen never stays longer
         private const val TRANSITION_MIN_MS = 400L    // once up, it stays at least this long
-        private const val APP_COVER_MAX_MS = 2000L    // the plain cover over an app-drawn page never stays longer
+        private const val APP_COVER_MAX_MS = 6000L    // the plain cover over an app-drawn page never stays longer (2 s until 2.72.0: too short on a slow TV)
         private const val SHELL_ON = true             // app page shell (2.71.0); false = app pages load the site's My page again
         private const val SHELL_TRANSLATE = true      // the shell includes the site's own page translator, as the site's pages do
         private const val LOGIN_LOGO_FRACTION = 0.26f
@@ -2479,8 +2479,12 @@ class MainActivity : Activity() {
         val u = try { android.net.Uri.parse(url) } catch (_: Exception) { return false }
         if (u.path != "/mypage") return false
         val q = u.encodedQuery ?: return false
-        if (Regex("(^|&)tvb=").containsMatchIn(q)) return false
-        return Regex("(^|&)tv(teams|team|top|wr|ch|scope)=").containsMatchIn(q)
+        if (Regex("(^|&)tv(b|real)=").containsMatchIn(q)) return false
+        if (Regex("(^|&)tv(teams|team|top|wr|ch|scope)=").containsMatchIn(q)) return true
+        // My Favorites and Recently Watched (2.72.0): only builds with the private sheet, where the viewing history
+        // comes from the sheet. Public builds read it from the site's My page, so they keep the real page.
+        val sheet = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+        return sheet && Regex("(^|&)tv(fav|recent)=").containsMatchIn(q)
     }
 
     private fun htmlAttr(v: String): String = v.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
@@ -2510,6 +2514,26 @@ class MainActivity : Activity() {
     // is open, so the calls that reach the private sheet check this first (2.68.10) and answer nothing anywhere else
     // (Stagecrowd, or any outside page a link leads to). Read from the bridge's own thread, hence @Volatile.
     @Volatile private var pageOnSite = false
+
+    // One request to the private sheet whose answer nobody waits for (2.72.0: the "seen again" note).
+    private fun sheetPostQuiet(body: org.json.JSONObject) {
+        if (BuildConfig.VIDEO_INDEX_URL.isEmpty() || BuildConfig.VIDEO_INDEX_KEY.isEmpty()) return
+        Thread {
+            try {
+                body.put("key", BuildConfig.VIDEO_INDEX_KEY)
+                val c = java.net.URL(BuildConfig.VIDEO_INDEX_URL).openConnection() as java.net.HttpURLConnection
+                c.requestMethod = "POST"
+                c.doOutput = true
+                c.instanceFollowRedirects = true
+                c.connectTimeout = 10000
+                c.readTimeout = 20000
+                c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+                c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+                c.responseCode
+                c.disconnect()
+            } catch (_: Exception) {}
+        }.start()
+    }
 
     private fun isEmulator(): Boolean {
         val fp = android.os.Build.FINGERPRINT ?: ""
@@ -3469,7 +3493,16 @@ class MainActivity : Activity() {
                 val js = "window.__tvVixStatus && window.__tvVixStatus(" + id + "," + org.json.JSONObject.quote(text) + ")"
                 this@MainActivity.runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
             }
-            if (prefs.getInt("h_" + id, 0) == same && now - prefs.getLong("t_" + id, 0L) < 30L * 86400000L) { status("already in the log"); return }
+            if (prefs.getInt("h_" + id, 0) == same && now - prefs.getLong("t_" + id, 0L) < 30L * 86400000L) {
+                // Nothing new on the page, but it was opened again: bring "last seen" up to date (2.72.0), at most every
+                // 10 minutes per video, so Recently Watched and Log next see the rewatch.
+                if (now - prefs.getLong("s_" + id, 0L) > 600_000L) {
+                    prefs.edit().putLong("s_" + id, now).apply()
+                    sheetPostQuiet(org.json.JSONObject().put("action", "vi_seen").put("id", id))
+                }
+                status("already in the log")
+                return
+            }
             val sentToday = if (prefs.getInt("day", -1) == day) prefs.getInt("count", 0) else 0
             if (sentToday >= 300) { status("not sent: 300 a day reached"); return }
             Thread {
@@ -3501,6 +3534,11 @@ class MainActivity : Activity() {
                 }
             }.start()
         }
+
+        // Recently Watched from the sheet (2.72.0, assets/recentsheet.js): the newest videos in the "videos" tab.
+        @android.webkit.JavascriptInterface
+        fun recentSync(reqId: String, payload: String) =
+            sheetCall(reqId, payload, setOf("vi_recent"), "__tvRecentReply")
 
         // Favorites sync (private builds with the log address; see docs/FAVORITES_SYNC.md). The page script asks for one
         // of the three favorites actions; the key is added here and the reply goes back to window.__tvFavSyncReply.
@@ -4799,7 +4837,7 @@ class MainActivity : Activity() {
             }
             if ($ && $.apiCall) {
               send();
-            } else if (window.__tvShell && window.__tvSiteApi) {
+            } else if (window.__tvSiteApi) {
               // App page shell (2.71.0): the site's scripts aren't on this page; borrow the site's own call (sitegate.js).
               window.__tvSiteApi(function(q) { if (q) { $ = q; send(); } else host('Favorites API not available'); });
             } else {
@@ -8428,6 +8466,15 @@ class MainActivity : Activity() {
     if (items.length) focusEl(grid.firstElementChild);
   }
 
+  // Builds with the private sheet (2.72.0): the list comes from the sheet, not from this page.
+  if (window.__tvRecent && window.__tvRecent.on) {
+    window.__tvRecent.get(function(list) {
+      if (list) { render(list.map(function(x) { return { href: x.href, title: x.title, bgUrl: x.bgUrl }; })); return; }
+      if (window.__tvRecent.realPage()) return;
+      startDomRead();
+    }, 30000);
+  } else startDomRead();
+  function startDomRead() {
   // The list may be drawn by the page's own script a moment after it loads: wait until it stops growing.
   var tries = 0, lastCount = -1;
   var tm = setInterval(function() {
@@ -8441,6 +8488,7 @@ class MainActivity : Activity() {
     }
     lastCount = items.length;
   }, 400);
+  }
 
   window.addEventListener('keydown', function(e) {
     if (!document.getElementById('tv-rp') || menuOpen()) return;
@@ -10455,6 +10503,21 @@ class MainActivity : Activity() {
           function loadRecentlyWatched(css) {
             if (window.__tvRecentLoading) return;
             window.__tvRecentLoading = true;
+            // Builds with the private sheet (2.72.0): from the sheet, no request to the site. My page only if the sheet
+            // can't answer.
+            if (window.__tvRecent && window.__tvRecent.on) {
+              window.__tvRecent.get(function(list) {
+                if (list) {
+                  var l12 = list.slice(0, 12).map(function(x) { return { href: x.href, title: x.title, bgUrl: x.bgUrl }; });
+                  writeCache('recent', l12.length ? l12 : null);
+                  showRecent(l12, css);
+                } else loadRecentFromSite(css);
+              });
+              return;
+            }
+            loadRecentFromSite(css);
+          }
+          function loadRecentFromSite(css) {
 
             (window.__tvFetch || fetch)('/mypage', { credentials: 'include' })
               .then(function(res) {
@@ -10779,6 +10842,7 @@ class MainActivity : Activity() {
             view.evaluateJavascript("if(window.__tvNavSeq==null)window.__tvNavSeq=" + navSeq + ";", null)
             view.evaluateJavascript(assetText("pageready.js"), null)
             view.evaluateJavascript(assetText("shelllearn.js"), null)
+            view.evaluateJavascript(assetText("recentsheet.js"), null)
         }
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)

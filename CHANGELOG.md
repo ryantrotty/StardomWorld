@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.72.0
+
+Recently Watched from the private sheet, and fixes from the 2.70.1 TV test.
+
+- **Recently Watched from the sheet (private builds).** The Recently Watched page, the Recently Watched row on My Favorites and the home page row now read the sheet's `videos` tab (newest first) instead of downloading the site's My page: one fewer request to the site on every home page and My Favorites visit. The list now covers what was opened in your private build, not what was watched on a phone or computer. A video opened again with nothing new on its page now updates its "last seen" in the sheet (at most every 10 minutes per video), so rewatches move to the front; before, a video was only written again after 30 days. Public builds read My page as before.
+- **My Favorites and Recently Watched use the app page shell (private builds),** so the site's My page no longer shows behind them, and they use less memory. On the TV test, opening a video from My Tag Teams ran the TV out of memory (error report "PageProcessGone"), and the 2.68.9 recovery reopened the page you were on; that was the video "returning" to the team page.
+- **Adding a video to the site's Favorites works from tag team pages, wrestler pages, My Favorites and the other app pages.** The site's favorites call isn't on My page, so it failed there. When it is missing, the app now opens a small site search page once in a hidden frame and uses the call from it.
+- **Public builds:** the plain cover over My Favorites and Recently Watched now stays up to 6 seconds (was 2), until the app's page is drawn, so the site's My page no longer shows on a slow TV.
+- **If the sheet can't answer** (no connection, or the script not updated yet), these pages fall back to the site's My page as before.
+- **Apps Script:** new `vi_recent` and `vi_seen` actions. Paste `scripts/video_index_log.gs` into the sheet's Apps Script and publish a new version (Deploy > Manage deployments > Edit > Version: New version). Until then the app uses My page.
+
 ## 2.71.0
 
 App page shell: six kinds of app-drawn page no longer load the site's My page underneath.
