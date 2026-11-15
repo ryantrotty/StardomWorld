@@ -2,6 +2,23 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.79.2
+
+Includes 2.79.1 (live row second tile, early PPV shows, roster `ppv` section) and 2.78.1 (Home shelf Recently Watched, no match number on StarScope video cards, phone Save check).
+
+- **English show names in StarScope** (player title bar, Shows cards, Log next): the site names shows in Japanese only, and leaving out the Japanese in English mode gave names like "16 in MATSUYAMA-EHIME". Now a show on the schedule (same date; the city decides when there are two that day) takes the schedule's English name: the full one on the player ("The 16th Goddesses of Stardom Tag League Tournament in Matsuyama-Ehime"), the short one on cards ("Tag League Matsuyama-Ehime"). Older shows have the usual Japanese words turned into English first (第16回 → 16th, ゴッデス・オブ・スターダム → Goddesses of Stardom, タッグリーグ戦 → Tag League, レッドスターズ → Red Stars, venues and cities, full-width letters), then whatever is still Japanese is left out. The roster file's new `showWords` section adds or changes words with no new build (`docs/ROSTER.md`). Japanese mode is unchanged. No new requests.
+
+## 2.79.1
+
+- **Roster file `ppv` by date:** a key can now be a Japan-time date (`"2027-02-11": {}`) as well as an event id, so a PPV show can be marked before it is on the schedule. It applies to the Stardom show(s) on that day once they appear; an event id key wins over a date key.
+
+## 2.79.0
+
+Home page live row: two tiles, and PPV shows before Stagecrowd lists them.
+
+- **Second tile:** when there is no PPV show to show, the slot beside the next-live tile now shows the live show after it (gold, same size and look, labelled **AFTER THAT · in …**). It steps aside as soon as a PPV tile has something to show.
+- **PPV shows can be marked early.** A show marked as PPV but with no Stagecrowd page yet gets the PPV tile with its poster, **PPV · ON SALE SOON** and "Not on Stagecrowd yet". Its details page keeps the reminder and the playback test / sign-in steps; Buy and Watch appear once its page is known. A show with a known sale start now says "Sale opens …" instead of the sale end.
+- **Roster file `ppv` section** (`docs/ROSTER.md`): mark a show as PPV, fill in its Stagecrowd details, or take a wrong mark off, with no new build. The daily file's own `ppv` entries still work the same and are merged first.
 ## 2.78.1
 
 - **Fix: Recently Watched in the menu's Home shelf fell behind.** The shelf showed the sheet's list as last read (from the last home page visit), so videos watched since then were missing until the home page was opened again. Now each video page you open goes first on the TV's own list at once (kept beside the sheet's copy for a day, until the sheet has it), and the shelf, the home row and the Recently Watched page all read the two together. If the sheet's fresh list arrives while the shelf is open, the column is redrawn (unless it has focus). No new calls to the site or the sheet.

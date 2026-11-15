@@ -54,6 +54,18 @@ Each key is a match type id from `assets/match_types.json`; its fields replace t
 
 The site's search also returns older videos a wrestler isn't in. In the private build's category tabs (wrestler and tag team pages), a video dated before the wrestler's debut is left out; an undated one is judged by a year in its title, then by the upload time in its picture's address. On a team page the later debut of the two counts. Names are as the app shows them (case doesn't matter). These add to and override `debuts` in `assets/match_types.json`.
 
+## PPV shows
+
+```json
+"ppv": {
+  "20261129-hamamatsu": {},
+  "20261229-ryogoku": { "page": "https://intl.stagecrowd.live/s/scint/group/detail/i10500", "url": "https://intl.stagecrowd.live/1234567890/", "price": 3300, "total": 3520, "sale_start": "2026-12-01T12:00:00+09:00", "sale_end": "2026-12-29T19:00:00+09:00", "replay_end": "2027-01-12T23:59:00+09:00" },
+  "20261210-korakuen": false
+}
+```
+
+Keys are schedule event ids, or a Japan-time date such as `"2027-02-11"` for a show not on the schedule yet (it applies to the Stardom show(s) that day once they appear; an id key wins over a date key). `{}` marks the show as PPV: the home page gives it the PPV tile (with its poster in your build) as **ON SALE SOON / Not on Stagecrowd yet** until it has a `page` or `url`. Fields given replace the schedule's own (same names as the `ppv` entries in `schedule.json`). `false` takes a PPV mark off, for example one the daily file got wrong.
+
 ## Tag League
 
 ```json
@@ -87,3 +99,11 @@ The site's search also returns older videos a wrestler isn't in. In the private 
 - Use the app's spellings (`assets/factions.json`), e.g. Sakura Aya, Hanako, Waka Tsukiyama, Fuwa Chan. Teams match on their two members, ignoring case and order.
 
 The All Tag Teams page shows which roster file the TV is using, under the team count.
+
+## Show words (English show names, 2.79.2)
+
+```json
+"showWords": { "ドリームクイーンダム": "Dream Queendom", "大会": "" }
+```
+
+StarScope names a show in English from the schedule when the show is on it. For older shows, Japanese words in the site's show name are swapped for English ones (longest first), then anything still Japanese is left out. These entries add to and override the built-in list in `assets/shownames.js`; an empty value removes the word. Japanese mode always shows the site's own name.
