@@ -1,19 +1,16 @@
 {
- "generated": "2026-11-14T06:33:19Z",
+ "generated": "2026-11-15T06:33:46Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-14T06:30:26Z",
-  "finished": "2026-11-14T06:33:19Z",
-  "requests": 37,
+  "started": "2026-11-15T06:30:09Z",
+  "finished": "2026-11-15T06:33:46Z",
+  "requests": 40,
   "schedule": {
    "ok": true,
-   "events": 42,
+   "events": 44,
    "changed": [
-    "20261114-cmll",
-    "20261115-cmll",
-    "20261116-cmll",
-    "20261117-cmll",
-    "20261204-ryukyu"
+    "20261126-lll",
+    "20261203-battleclubpro"
    ],
    "error": ""
   },
@@ -23,37 +20,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-13T06:33:18Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "kawaii": {
      "read": false,
@@ -75,14 +72,10 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: new event 20261114-cmll takes its Japanese venue string: メキシコ・アレナ・メヒコ",
-    "schedule: new event 20261114-cmll title translated from Japanese: [Participation from another organization] CMLL",
-    "schedule: new event 20261115-cmll takes its Japanese venue string: メキシコ・アレナ・コリセオ",
-    "schedule: new event 20261115-cmll title translated from Japanese: [Participation from another organization] CMLL",
-    "schedule: new event 20261116-cmll takes its Japanese venue string: メキシコ・アレナ・メヒコ",
-    "schedule: new event 20261116-cmll title translated from Japanese: [Participation from another organization] CMLL",
-    "schedule: new event 20261117-cmll takes its Japanese venue string: メキシコ・アレナ・メヒコ",
-    "schedule: new event 20261117-cmll title translated from Japanese: [Participation from another organization] CMLL＆新日本プロレス「Lucha Kingdom」",
+    "schedule: new event 20261126-lll takes its Japanese title (no English title available): 【海外遠征】Lucha Libre & Laughs",
+    "schedule: new event 20261126-lll takes its Japanese venue string: The Oriental Theater",
+    "schedule: new event 20261203-battleclubpro takes its Japanese title (no English title available): 【海外遠征】Battle Club Pro",
+    "schedule: new event 20261203-battleclubpro takes its Japanese venue string: The Brooklyn Monarch",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
@@ -91,7 +84,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-14T06:32:29Z",
+  "updated": "2026-11-15T06:31:53Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -135,7 +128,9 @@
    "20261115-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261115_JST_CMLL_%E7%8F%BE%E5%9C%B01114.jpg",
    "20261116-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261116_JST_CMLL_%E7%8F%BE%E5%9C%B01115.jpg",
    "20261117-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261117_JST_CMLL_LuchaKingdom_%E7%8F%BE%E5%9C%B01116.jpg",
-   "20261204-ryukyu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/1204poi_anne.jpg"
+   "20261204-ryukyu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/1204poi_anne.jpg",
+   "20261126-lll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261126_JST_LLL_%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC_%E7%8F%BE%E5%9C%B01125.jpg",
+   "20261203-battleclubpro": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261203_JST_BCP_%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC_%E7%8F%BE%E5%9C%B01202.jpg"
   },
   "ppv_seen": {},
   "events": [
@@ -1295,6 +1290,16 @@
     "venue": "Korakuen Hall, Tokyo"
    },
    {
+    "id": "20261126-lll",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261126_lll/",
+    "poster": "20261126-lll",
+    "title": "【海外遠征】Lucha Libre & Laughs",
+    "short": "【海外遠征】Lucha Libre & Laughs",
+    "start": "2026-11-26T20:00:00+09:00",
+    "venue": "The Oriental Theater"
+   },
+   {
     "id": "20261128-okazaki",
     "title": "The 16th Goddess of Stardom Tag Team League Tournament in OKAZAKI, commemorating the 80th anniversary of the Okazaki City Sports Association",
     "short": "Tag League Okazaki",
@@ -1461,6 +1466,16 @@
     "short": "[Participation from another organization] Chi Chi Dream House",
     "start": "2026-12-01T19:00:00+09:00",
     "venue": "東京・新木場1stRING"
+   },
+   {
+    "id": "20261203-battleclubpro",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261203_battleclubpro/",
+    "poster": "20261203-battleclubpro",
+    "title": "【海外遠征】Battle Club Pro",
+    "short": "【海外遠征】Battle Club Pro",
+    "start": "2026-12-03T20:00:00+09:00",
+    "venue": "The Brooklyn Monarch"
    },
    {
     "id": "20261204-ryukyu",
