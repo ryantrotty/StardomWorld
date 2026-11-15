@@ -92,6 +92,8 @@ class MainActivity : Activity() {
         private var rendererGoneCount = 0
         private var resumeUrl: String? = null
         private const val START_URL = "https://www.stardom-world.com/"
+        private const val TRANSITION_MAX_MS = 5000L   // as before 2.70.0: the transition screen never stays longer
+        private const val TRANSITION_MIN_MS = 400L    // once up, it stays at least this long
         private const val LOGIN_LOGO_FRACTION = 0.26f
         private const val LOGIN_URL =
             "https://www.stardom-world.com/login?redirect_to=https%3A%2F%2Fwww.stardom-world.com%2Flogin"
@@ -610,6 +612,11 @@ class MainActivity : Activity() {
     private lateinit var transitionView: TransitionOverlayView
     private var transitionStrip: android.widget.LinearLayout? = null
     private var transitionShowing = false
+    // Transition screen between pages (2.70.0): when it went up, how long its fade is, and a counter that goes up with
+    // every new page so a "ready" report from the page before is ignored.
+    private var transitionShownAt = 0L
+    private var transitionFadeMs = 500L
+    private var navSeq = 0
     private var lastNavigatedUrl: String? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -2219,7 +2226,9 @@ class MainActivity : Activity() {
                 updatePpvBar(url)
                 if (url != null && url != lastNavigatedUrl) {
                     lastNavigatedUrl = url
-                    showPageTransitionOverlay()
+                    navSeq++
+                    // A page the app draws itself covers the screen as soon as it starts: no transition screen (2.70.0).
+                    if (!isAppDrawnUrl(url)) showPageTransitionOverlay()
                 }
                 url?.let {
                     val path = android.net.Uri.parse(it).path ?: ""
@@ -2602,6 +2611,8 @@ class MainActivity : Activity() {
     private fun showPageTransitionOverlay() {
         if (!splashDone || transitionShowing || onboardingShowing) return
         transitionShowing = true
+        transitionShownAt = SystemClock.uptimeMillis()
+        transitionFadeMs = 500L
         handler.removeCallbacks(hideTransitionRunnable)
 
         transitionOverlay.visibility = View.VISIBLE
@@ -2613,7 +2624,30 @@ class MainActivity : Activity() {
         transitionView.startAnimation()
         updateTransitionStrip()
 
-        handler.postDelayed(hideTransitionRunnable, 5000L)
+        // The longest it stays up. It lifts sooner when the page reports that its first screenful is ready (onTransitionReady).
+        handler.postDelayed(hideTransitionRunnable, TRANSITION_MAX_MS)
+    }
+
+    // Pages the app draws itself on top of a site address (My Favorites, tag teams, top rated, wrestler, championship,
+    // StarScope, Recently Watched, faction, eras, events, community). A championship's video list (tvb) is the site's
+    // own list, so it is not one of these.
+    private fun isAppDrawnUrl(url: String?): Boolean {
+        if (url == null || !isSiteHost(url)) return false
+        val q = try { android.net.Uri.parse(url).encodedQuery ?: "" } catch (_: Exception) { "" }
+        if (q.isEmpty()) return false
+        if (Regex("(^|&)tvb=").containsMatchIn(q)) return false
+        return Regex("(^|&)tv(fav|teams|team|top|wr|ch|scope|recent|faction|era|ev|comm)=").containsMatchIn(q)
+    }
+
+    // The page says its first screenful is ready (assets/pageready.js). Lift the transition screen now, but never before
+    // it has been up for TRANSITION_MIN_MS (so it doesn't flicker), and with a shorter fade. A report from an earlier
+    // page (seq no longer current) is ignored.
+    private fun onTransitionReady(seq: Int) {
+        if (!transitionShowing || seq != navSeq) return
+        val shown = SystemClock.uptimeMillis() - transitionShownAt
+        transitionFadeMs = 300L
+        handler.removeCallbacks(hideTransitionRunnable)
+        handler.postDelayed(hideTransitionRunnable, (TRANSITION_MIN_MS - shown).coerceAtLeast(0L))
     }
 
     // ---------------------------------------------------------------- schedule
@@ -3173,7 +3207,7 @@ class MainActivity : Activity() {
         if (!transitionShowing) return@Runnable
         transitionOverlay.animate()
             .alpha(0f)
-            .setDuration(500L)
+            .setDuration(transitionFadeMs)
             .withEndAction {
                 transitionOverlay.visibility = View.GONE
                 transitionShowing = false
@@ -3685,6 +3719,12 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun barAction(id: String) {
             handler.post { this@MainActivity.barAction(id) }
+        }
+
+        // The first screenful of the page is ready (assets/pageready.js): the transition screen can lift (2.70.0).
+        @android.webkit.JavascriptInterface
+        fun pageReady(seq: Int) {
+            handler.post { onTransitionReady(seq) }
         }
 
         @android.webkit.JavascriptInterface
@@ -10542,6 +10582,11 @@ class MainActivity : Activity() {
         view.evaluateJavascript(assetText("keepawake.js"), null)
         // Before every script that asks the site for a page: the shared request gate (assets/sitegate.js, 2.69.0).
         if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("sitegate.js"), null)
+        // The page-ready report for the transition screen (2.70.0). The page keeps the number of the visit it belongs to.
+        if (!isPpvFlow(view.url)) {
+            view.evaluateJavascript("if(window.__tvNavSeq==null)window.__tvNavSeq=" + navSeq + ";", null)
+            view.evaluateJavascript(assetText("pageready.js"), null)
+        }
         if (isPpvFlow(view.url)) {
             view.evaluateJavascript(assetText("baricons.js"), null)
             view.evaluateJavascript(assetText("ppv_host.js"), null)

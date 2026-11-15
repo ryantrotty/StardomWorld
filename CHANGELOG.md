@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.70.0
+
+The transition screen between pages (not the app's loading screen) now follows the page instead of a fixed 5 seconds.
+
+- Pages the app draws itself get no transition screen at all: My Favorites, Tag Teams and team pages, Top Rated, wrestler pages, championship pages, StarScope, Recently Watched, faction pages, Eras, Events and Community.
+- Every other page: the screen lifts as soon as the first screenful is ready (`assets/pageready.js`): content in, the app's styles on, the English translation applied, the layout still for 350 ms, and the pictures in view loaded (it waits at most 2.5 s for pictures). A page that loads quickly, such as one opened before, shows it only briefly: at least 0.4 s, with a 0.3 s fade.
+- It never stays longer than before: 5 seconds is still the limit, and PPV pages keep the fixed 5 seconds.
+- A set page that jumps to its first match keeps the screen up through the jump.
+
 ## 2.69.0
 
 One shared gate for every request the app's own scripts make to Stardom World (`assets/sitegate.js`). Nothing changes on screen.
