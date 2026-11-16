@@ -1,56 +1,53 @@
 {
- "generated": "2026-11-15T06:33:46Z",
+ "generated": "2026-11-16T06:33:26Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-15T06:30:09Z",
-  "finished": "2026-11-15T06:33:46Z",
-  "requests": 40,
+  "started": "2026-11-16T06:29:06Z",
+  "finished": "2026-11-16T06:33:26Z",
+  "requests": 43,
   "schedule": {
    "ok": true,
    "events": 44,
-   "changed": [
-    "20261126-lll",
-    "20261203-battleclubpro"
-   ],
+   "changed": [],
    "error": ""
   },
   "lineage": {
    "ok": false,
    "titles": {
     "world": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the Japanese official page."
     },
     "wonder": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the Japanese official page."
     },
     "future": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the Japanese official page."
     },
     "artist": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 37 (Thekla, Julia Hart, Skye Blue) and all 1 defences confirmed against the Japanese official page."
     },
     "goddess": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 37 (AZM, Miyu Amasaki) and all 3 defences confirmed against the Japanese official page."
     },
     "highspeed": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the Japanese official page."
     },
     "newblood": {
-     "read": false,
+     "read": true,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Reign 6 (Kikyo Furusawa, Rian) and all 0 defences confirmed against the Japanese official page."
     },
     "kawaii": {
      "read": false,
@@ -72,10 +69,6 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: new event 20261126-lll takes its Japanese title (no English title available): 【海外遠征】Lucha Libre & Laughs",
-    "schedule: new event 20261126-lll takes its Japanese venue string: The Oriental Theater",
-    "schedule: new event 20261203-battleclubpro takes its Japanese title (no English title available): 【海外遠征】Battle Club Pro",
-    "schedule: new event 20261203-battleclubpro takes its Japanese venue string: The Brooklyn Monarch",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
@@ -84,7 +77,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-15T06:31:53Z",
+  "updated": "2026-11-16T06:30:44Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -97,9 +90,9 @@
    "20261111-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
    "20261114-matsuyama": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/2026.11.14%E6%84%9B%E5%AA%9B%E3%83%BB%E6%9D%BE%E5%B1%B1%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.png",
    "20261115-kochi": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/2026.11.15%E9%AB%98%E7%9F%A5%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.png",
-   "20261118-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261118-korakuen": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/tag2026zen_fix.jpg",
    "20261120-njpw": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261120_njpw_visual.jpg",
-   "20261121-akita": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261121-akita": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/tag2026zen_fix.jpg",
    "20261122-fukushima": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.22%E7%A6%8F%E5%B3%B6%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
    "20261123-koriyama": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.23%E9%83%A1%E5%B1%B1%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
    "20261126-ppp": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/download-1.jpg",
