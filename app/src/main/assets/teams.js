@@ -418,6 +418,15 @@
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(leagueCount(Y) + ' teams', leagueCount(Y) + 'チーム')) + '</div>';
     if (PTS && LP.updated) h += '<div class="tt-roster">' + esc(T('Points as of ' + fmtD(LP.updated), fmtD(LP.updated) + '時点の勝ち点')) + '</div>';
+    // points check (2.80.1, stays on screen): what the page was given, so a missing number can be traced from a photo
+    (function() {
+      var lpAll = CFG.leaguePoints, yrs = lpAll ? Object.keys(lpAll).filter(function(k) { return k.charAt(0) !== '_'; }) : [];
+      var got = PTS ? Object.keys(PTS).length : 0, want = leagueCount(Y), hit = 0;
+      if (PTS) L.blocks.forEach(function(bl) { (bl.teams || []).forEach(function(m) { if (PTS[pairKey(m)] != null) hit++; }); });
+      h += '<div class="tt-roster">' + esc('Points check 2.80.1 · page year ' + Y.year + ' · points years in file: ' + (lpAll ? (yrs.join(', ') || 'none') : 'no leaguePoints') +
+        ' · this year: ' + (LP ? (LP.source || '?') + ', ' + (LP.updated || 'no date') + ', ' + got + ' entries, ' + hit + ' of ' + want + ' matched' : 'none') +
+        ' · settings keys: ' + Object.keys(CFG).join(', ')) + '</div>';
+    })();
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-lg-row') || scroller.querySelector('.tt-chip'));
   }
