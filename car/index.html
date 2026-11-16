@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B1118">
+<title>Stardom Car</title>
+<link rel="icon" type="image/png" href="../starscope/icon-32.png">
+<!-- Stardom in the car (car 0.1.0). A touch home page for the Tesla browser: Recently Watched and Watch Later rows
+     from the private sheet (the same phone link as the StarScope logger, POSTs vi_recent and fav_since, no cookies),
+     and a video page that shows stardom-world.com's own page in a frame cropped to the player, so the rows under the
+     player are hidden. No calls to stardom-world.com other than the pages and thumbnails the person opens.
+     Full screen in the car: open youtube.com/redirect?q=<this page> and tap Go to site. -->
+<style>
+  :root{--navy:#0B1118;--panel:#0F151C;--card:#161F2A;--line:#2A323C;--gold:#F4C242;--orange:#FFB347;--ink:#1A1A1A;--t1:#fff;--t2:#C9D2DC;--t3:#9AA6B4;--bad:#FF7A66}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--navy);color:var(--t1);font-family:Arial,Helvetica,sans-serif;overscroll-behavior:none}
+  button{appearance:none;font:700 18px Arial;color:var(--t1);background:var(--card);border:2px solid var(--line);border-radius:10px;min-height:52px;padding:8px 18px;cursor:pointer}
+  button:active{border-color:var(--gold)}
+  button.on{background:var(--orange);border-color:var(--orange);color:var(--ink)}
+  input{width:100%;height:56px;background:var(--panel);color:#fff;border:2px solid var(--line);border-radius:16px;font:700 18px Arial;padding:0 14px;outline:none}
+  input:focus{border-color:var(--gold)}
+  #home{padding:0 0 40px}
+  .top{display:flex;align-items:center;gap:12px;padding:18px 32px 8px}
+  .brand{font:900 26px Arial;letter-spacing:.06em}
+  .brand span{color:var(--gold)}
+  .top .sp{flex:1}
+  .msg{color:var(--t3);font:600 15px Arial;padding:0 32px;min-height:20px}
+  .msg.bad{color:var(--bad)}
+  h2{display:flex;align-items:center;gap:12px;font:700 22px Arial;margin:22px 32px 12px}
+  h2:before{content:'';width:8px;height:26px;background:var(--gold);border-radius:2px}
+  .row{display:flex;gap:24px;overflow-x:auto;padding:6px 32px 14px;scroll-snap-type:x proximity;scrollbar-width:none}
+  .row::-webkit-scrollbar{display:none}
+  .card{flex:0 0 calc(25% - 18px);min-width:240px;scroll-snap-align:start;background:#1a1a1a;border-radius:8px;overflow:hidden;cursor:pointer;outline:none}
+  .card:active{outline:3px solid var(--gold);outline-offset:2px}
+  .thumb{aspect-ratio:16/9;background:var(--card) center/cover no-repeat}
+  .ct{font:700 15px Arial;line-height:1.3;padding:10px 12px 12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .empty{color:var(--t3);font:600 16px Arial;padding:6px 32px}
+  .box{max-width:760px;margin:30px auto;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:24px}
+  .box p{color:var(--t2);font:16px/1.45 Arial;margin:0 0 14px}
+  .box .t3{color:var(--t3);font:14px/1.4 Arial;margin-top:12px}
+  /* video page */
+  #play{position:fixed;inset:0;background:#000;display:none}
+  #bar{position:absolute;left:0;right:0;top:0;height:64px;background:var(--navy);display:flex;align-items:center;gap:10px;padding:0 14px;z-index:2}
+  #bar button{min-height:48px;padding:6px 14px;font-size:17px}
+  #ttl{flex:1;min-width:0;font:700 17px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #dbg{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:2px solid var(--line);color:var(--t2);font:13px Arial;padding:6px 14px;z-index:2;white-space:pre-wrap}
+  #crop{position:absolute;left:0;right:0;overflow:hidden;background:#000}
+  #frame{position:absolute;left:0;width:100%;border:0;background:#000}
+</style>
+</head>
+<body>
+<div id="home"></div>
+<div id="play">
+  <div id="bar">
+    <button type="button" id="back">&#8592; Home</button>
+    <div id="ttl"></div>
+    <button type="button" id="up" title="Move the window up the page">Crop &#9650;</button>
+    <button type="button" id="dn" title="Move the window down the page">Crop &#9660;</button>
+    <button type="button" id="sh" title="Shorter window">&#8722;</button>
+    <button type="button" id="ta" title="Taller window">+</button>
+    <button type="button" id="whole">Whole page</button>
+    <button type="button" id="site">Open on site</button>
+  </div>
+  <div id="crop"><iframe id="frame" allow="fullscreen; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+  <div id="dbg"></div>
+</div>
+<script>
+(function() {
+  var VERSION = 'car 0.1.0';
+  var SITE = 'https://www.stardom-world.com';
+  var LINK_KEY = 'starscopeLink', CROP_KEY = 'carCropV1', CACHE_KEY = 'carRowsV1';
+  var LINK_OK = /^https:\/\/script\.google\.com\/[^\s]*\/exec\?(?=[^\s]*\bp=phone\b)(?=[^\s]*\bk=[^&\s]+)[^\s]*$/;
+  var EXEC = '', K = '', rows = { recent: [], later: [] }, cur = null, whole = false, loadedAt = '';
+  var BAR = 64, DBG = 30;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return JSON.parse(lsGet(k) || 'null'); } catch (e) { return null; } }
+  function setLink(v) {
+    if (!LINK_OK.test(v || '')) return false;
+    EXEC = v.split('?')[0];
+    K = decodeURIComponent((/[?&]k=([^&]+)/.exec(v) || [])[1] || '');
+    return !!K;
+  }
+  function say(t, bad) { var m = $('msg'); if (m) { m.textContent = t || ''; m.className = 'msg' + (bad ? ' bad' : ''); } }
+  function post(body) {
+    body.key = K;
+    // text/plain keeps it a simple request (no CORS preflight); no cookies, as on the phone logger.
+    return fetch(EXEC, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, credentials: 'omit', redirect: 'follow' })
+      .then(function(r) { return r.text(); })
+      .then(function(t) {
+        var j; try { j = JSON.parse(t); } catch (e) { throw new Error('The sheet answered oddly.'); }
+        if (j && j.ok === false) throw new Error(j.error === 'bad key' ? 'The key in your link is wrong (Setup to paste it again).' : (j.error || 'error'));
+        return j;
+      });
+  }
+  function hhmmss() { var d = new Date(); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(function(n) { return ('0' + n).slice(-2); }).join(':'); }
+
+  // ---- a link handed over in the address (#link=...), e.g. shared from the phone to the car; kept, then wiped from the address
+  (function() {
+    var m = /[#&]link=([^&]+)/.exec(location.hash || '');
+    if (m) {
+      var v = decodeURIComponent(m[1]);
+      if (setLink(v)) lsSet(LINK_KEY, v);
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    }
+  })();
+
+  // ---- home
+  function cardHtml(v, i, list) {
+    return '<div class="card" data-list="' + list + '" data-i="' + i + '"><div class="thumb"' + (v.th ? ' style="background-image:url(\'' + esc(v.th) + '\')"' : '') +
+      '></div><div class="ct">' + esc(v.title) + '</div></div>';
+  }
+  function rowHtml(name, list, items, none) {
+    return '<h2>' + name + '</h2>' + (items.length ? '<div class="row">' + items.map(function(v, i) { return cardHtml(v, i, list); }).join('') + '</div>'
+      : '<div class="empty">' + none + '</div>');
+  }
+  function renderHome() {
+    $('home').innerHTML = '<div class="top"><div class="brand">&#9733; STARDOM <span>CAR</span></div><div class="sp"></div>' +
+      '<button type="button" id="refresh">Refresh</button><button type="button" id="sitehome">Site home</button><button type="button" id="setup">Setup</button></div>' +
+      '<div class="msg" id="msg"></div>' +
+      rowHtml('Recently Watched', 'recent', rows.recent, 'Nothing yet.') +
+      rowHtml('Watch Later', 'later', rows.later, 'Nothing in Watch Later.');
+    $('refresh').onclick = fetchRows;
+    $('sitehome').onclick = function() { openVideo({ id: '', title: 'Stardom World', href: SITE + '/' }); };
+    $('setup').onclick = renderSetup;
+    Array.prototype.forEach.call(document.querySelectorAll('.card'), function(c) {
+      c.onclick = function() { openVideo(rows[c.getAttribute('data-list')][+c.getAttribute('data-i')]); };
+    });
+  }
+  function fetchRows() {
+    say('Loading from your sheet…');
+    var a = post({ action: 'vi_recent', limit: 40 }).then(function(j) {
+      rows.recent = (j.rows || []).map(function(r) { return { id: r.id, title: r.te || r.tj || 'Stardom World Video', th: r.th || '', href: SITE + '/contents/' + r.id }; });
+    });
+    var b = post({ action: 'fav_since', since: 0 }).then(function(j) {
+      var L = [];
+      (j.rows || []).forEach(function(r) {
+        if (r.deleted || !/^later:/.test(r.key) || !r.value) return;
+        var v = r.value, id = String(v.id || (/\/contents\/(\d+)/.exec(v.href || '') || [])[1] || '');
+        if (!/^\d{1,9}$/.test(id)) return;
+        L.push({ id: id, title: v.title || 'Stardom World Video', th: v.bg || '', href: SITE + '/contents/' + id, i: Number(v.i) || 0 });
+      });
+      L.sort(function(x, y) { return x.i - y.i; });
+      rows.later = L;
+    });
+    Promise.all([a, b]).then(function() {
+      lsSet(CACHE_KEY, JSON.stringify(rows));
+      renderHome(); say('Updated ' + hhmmss() + ' · ' + VERSION);
+    }).catch(function(e) { renderHome(); say('Sheet: ' + (e && e.message || e), true); });
+  }
+
+  // ---- setup: paste the StarScope phone link once; from a phone, send it to the car
+  function carUrl(withLink) {
+    var u = location.origin + location.pathname;
+    return withLink && lsGet(LINK_KEY) ? u + '#link=' + encodeURIComponent(lsGet(LINK_KEY)) : u;
+  }
+  function fullUrl(withLink) { return 'https://www.youtube.com/redirect?q=' + encodeURIComponent(carUrl(withLink)); }
+  function renderSetup() {
+    var have = !!lsGet(LINK_KEY);
+    $('home').innerHTML = '<div class="box"><div class="brand" style="margin-bottom:14px">&#9733; STARDOM <span>CAR</span></div>' +
+      '<p>Paste your StarScope phone link (the one ending <b>?p=phone&amp;k=…</b>). It stays in this browser only.</p>' +
+      '<input id="lnk" type="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?p=phone&k=…">' +
+      '<div style="height:12px"></div><button type="button" id="save" class="on" style="width:100%">Save</button>' +
+      '<div class="t3" id="lnkmsg"></div>' +
+      (have ? '<div style="height:22px"></div><p>On your phone: send this page to the car with the link already in it, then share it to the car from the Tesla app (or copy it).</p>' +
+        '<button type="button" id="send" style="width:100%">Send to car</button><div class="t3" id="sendmsg"></div>' +
+        '<div style="height:12px"></div><button type="button" id="done" style="width:100%">Back to home</button>' : '') +
+      '<div class="t3">Full screen in the car: open <b>' + esc(fullUrl(false).replace('https://www.', '')) + '</b> and tap Go to site.</div></div>';
+    $('save').onclick = function() {
+      var v = $('lnk').value.trim();
+      if (!setLink(v)) { $('lnkmsg').textContent = 'That doesn’t look like the phone link. It should start https://script.google.com/ and end with ?p=phone&k=…'; return; }
+      lsSet(LINK_KEY, v); start();
+    };
+    if (have) {
+      $('done').onclick = start;
+      $('send').onclick = function() {
+        var u = fullUrl(true);
+        if (navigator.share) { navigator.share({ title: 'Stardom Car', url: u }).catch(function() {}); return; }
+        try { navigator.clipboard.writeText(u); $('sendmsg').textContent = 'Copied.'; } catch (e) { $('sendmsg').textContent = u; }
+      };
+    }
+  }
+
+  // ---- video page: the site's own page in a frame, cropped to the player
+  function crop() { var c = load(CROP_KEY) || {}; return { top: Number(c.top) || 0, h: Number(c.h) || 0 }; }
+  function saveCrop(c) { lsSet(CROP_KEY, JSON.stringify(c)); }
+  function layout() {
+    var c = crop(), avail = window.innerHeight - BAR - DBG, fr = $('frame'), box = $('crop');
+    var h = whole ? avail : Math.max(120, Math.min(avail, c.h || avail));
+    box.style.top = (BAR + Math.max(0, Math.floor((avail - h) / 2))) + 'px';
+    box.style.height = h + 'px';
+    fr.style.top = (whole ? 0 : -c.top) + 'px';
+    fr.style.height = (whole ? avail : c.top + h) + 'px';
+    $('whole').className = whole ? 'on' : '';
+    $('dbg').textContent = VERSION + ' · ' + (whole ? 'whole page (scrolls)' : 'cropped: page from ' + c.top + ' px, window ' + h + ' px') +
+      ' · screen ' + window.innerWidth + '×' + window.innerHeight + ' · frame loaded ' + (loadedAt || '…') +
+      ' · if the frame says it refused to connect, the site blocks frames: use Open on site';
+  }
+  function setFrame() {
+    var fr = $('frame');
+    fr.setAttribute('scrolling', whole ? 'yes' : 'no');
+    loadedAt = '';
+    fr.onload = function() { loadedAt = hhmmss(); layout(); };
+    fr.src = cur.href;
+    layout();
+  }
+  function openVideo(v) {
+    if (!v) return;
+    cur = v; whole = !v.id;   // the site home opens as a whole page (sign-in, browsing); videos open cropped
+    $('ttl').textContent = v.title || '';
+    $('home').style.display = 'none'; $('play').style.display = 'block';
+    setFrame();
+  }
+  function nudge(dt, dh) {
+    var c = crop(), avail = window.innerHeight - BAR - DBG;
+    c.top = Math.max(0, c.top + dt);
+    c.h = Math.max(120, Math.min(avail, (c.h || avail) + dh));
+    saveCrop(c); if (whole) { whole = false; setFrame(); } else layout();
+  }
+  $('back').onclick = function() { $('frame').src = 'about:blank'; $('play').style.display = 'none'; $('home').style.display = ''; cur = null; };
+  $('up').onclick = function() { nudge(-20, 0); };
+  $('dn').onclick = function() { nudge(20, 0); };
+  $('sh').onclick = function() { nudge(0, -20); };
+  $('ta').onclick = function() { nudge(0, 20); };
+  $('whole').onclick = function() { whole = !whole; setFrame(); };
+  $('site').onclick = function() { if (cur) location.href = cur.href; };
+  window.addEventListener('resize', function() { if (cur) layout(); });
+
+  function start() {
+    if (!setLink(lsGet(LINK_KEY) || '')) { renderSetup(); return; }
+    var c = load(CACHE_KEY);
+    if (c && c.recent) rows = c;
+    renderHome();
+    fetchRows();
+  }
+  start();
+})();
+</script>
+</body>
+</html>
