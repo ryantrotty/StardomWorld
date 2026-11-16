@@ -3068,6 +3068,23 @@ class MainActivity : Activity() {
             val tl = base.optJSONObject("tagLeague") ?: org.json.JSONObject()
             rj?.optJSONObject("tagLeague")?.let { r -> val ks = r.keys(); while (ks.hasNext()) { val k = ks.next(); r.optJSONObject(k)?.let { tl.put(k, it) } } }
             base.put("tagLeague", tl)
+            // Tag League points (docs/LEAGUE_POINTS.md): the bundled years, then the daily file's league.tag.<year>
+            // (written by Muse), a year replaced whole when its "updated" date is the same or newer.
+            try {
+                val lp = base.optJSONObject("leaguePoints") ?: org.json.JSONObject()
+                val dt = dailyData()?.optJSONObject("league")?.optJSONObject("tag")
+                if (dt != null) {
+                    val ks = dt.keys()
+                    while (ks.hasNext()) {
+                        val k = ks.next()
+                        val d = dt.optJSONObject(k) ?: continue
+                        if (d.optJSONArray("points") == null || d.optString("updated").isEmpty()) continue
+                        val have = lp.optJSONObject(k)?.optString("updated") ?: ""
+                        if (d.optString("updated") >= have) lp.put(k, d)
+                    }
+                }
+                base.put("leaguePoints", lp)
+            } catch (_: Exception) {}
             val tt = rj?.optJSONObject("tagTeams") ?: org.json.JSONObject()
             val updated = rj?.optString("updated") ?: ""
             if (rj == null) { base.put("roster", org.json.JSONObject().put("state", "none")); return base.toString() }

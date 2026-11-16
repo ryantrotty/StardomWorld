@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.79.0
+
+- **Tag League points:** the Tag League page shows each team's total points at the right of its row, sorted highest first in each block, with "Points as of <date>" under the team count. No numbers (and the old order) when the year has none.
+- The points come with the daily file (`league.tag.<year>`, written by Muse like the schedule; see `docs/LEAGUE_POINTS.md`), so the app asks no site for them. The app has the totals after night 6 (15 Nov 2026) built in; the daily file's copy is used once it is as new or newer.
+
 ## 2.78.0
 
 - **Home shelf in the menu:** Main page on top, then three columns with the first three videos of **New**, **Recently Watched** and **Watch Later** (picture and title, plus View all), then **Video rows on the site**: every row the site's home page has, in three columns. Opening it asks nothing of the site: New and the row list are kept from the last home page visit, Recently Watched from the sheet (your build) or the home page's copy, Watch Later from My Favorites.
