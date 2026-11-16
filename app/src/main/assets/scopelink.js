@@ -3,7 +3,7 @@
   // On a video page, sends the sheet a short note whenever playback changes: the page opening, play, pause, a seek or
   // skip, buffering, a speed change, the end, and leaving the page. Each note has this TV's clock time and the video
   // position, so a Bell or Finish tap on the phone can be turned into a place in the video. Nothing is drawn on the TV,
-  // nothing is sent while the video just plays on, and it never talks to the video site.
+  // only a once-a-minute "still playing" note while the video just plays on; it never talks to the video site.
   if (window.__tvScopeLink) return;
   var M = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
   var H = window.AndroidHost;
@@ -35,14 +35,35 @@
     try { var r = window.__tvVixRec; if (r) { o.title = r.title_en || r.title_ja || ''; o.date = r.date || ''; } } catch (e2) {}
     return o;
   }
+  // 2.79.3: a send that fails (the sheet busy, a network blip) is kept and tried again, oldest notes first, so a note
+  // is no longer lost. Only one send is out at a time; notes made meanwhile wait and go with the retry.
+  var inflight = null, tries = 0, RETRY = [3000, 6000, 12000, 20000, 30000];
   function flush() {
     clearTimeout(timer); timer = 0;
-    if (!queue.length) return;
-    var events = queue.splice(0, 60);
-    try { H.scopeLink('p' + (++seq), JSON.stringify({ action: 'pb_put', video: VID, set: SET, events: events, info: info() })); } catch (e) {}
+    if (inflight || !queue.length) return;
+    var id = 'p' + (++seq);
+    inflight = { id: id, events: queue.splice(0, 60) };
+    try { H.scopeLink(id, JSON.stringify({ action: 'pb_put', video: VID, set: SET, events: inflight.events, info: info() })); }
+    catch (e) { failed(); }
   }
-  // Replies are only kept for a look in the console; a lost note is covered by the next one or the drift check.
-  window.__tvScopeLinkReply = function(id, text) { window.__tvScopeLinkLast = text; };
+  function failed() {
+    if (!inflight) return;
+    queue = inflight.events.concat(queue).slice(-60);
+    inflight = null;
+    var wait = RETRY[Math.min(tries++, RETRY.length - 1)];
+    clearTimeout(timer);
+    timer = setTimeout(flush, wait);
+  }
+  // Replies are kept for a look in the console (__tvScopeLinkLast); a reply that isn't ok sends the notes again.
+  window.__tvScopeLinkReply = function(id, text) {
+    window.__tvScopeLinkLast = text;
+    if (!inflight || inflight.id !== id) return;
+    var ok = false;
+    try { ok = !!JSON.parse(text).ok; } catch (e) {}
+    if (!ok && /no good events|bad video|bad events|sync is off|bad action/.test(text)) ok = true;   // can never succeed: drop, don't loop
+    if (ok) { inflight = null; tries = 0; if (queue.length) { clearTimeout(timer); timer = setTimeout(flush, 300); } }
+    else failed();
+  };
 
   function frame() { return document.querySelector('iframe[src*="vimeo.com"], iframe[src*="player"]'); }
   function post(f, o) { try { f.contentWindow.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
@@ -85,8 +106,22 @@
     note('open');
   }, 500);
 
+  // Still playing (2.79.3): a "sync" note once a minute while the video plays on, so the phone can tell a TV that has
+  // gone quiet (left the video without its stop note getting through) from one that is just playing.
+  var BEAT = 60000;
+  setInterval(function() {
+    if (!opened || !playing()) return;
+    var now = Date.now();
+    if (now - base.ts < BEAT - 1000) return;
+    lastSync = now;
+    note('sync', predicted(now));
+  }, 5000);
+
   // Leaving the page (another video, Back, the app closing): the phone shows the TV as stopped.
-  function bye() { if (!opened || window.__tvScopeLinkBye) return; window.__tvScopeLinkBye = true; paused = true; note('stop'); flush(); }
+  function bye() { if (!opened || window.__tvScopeLinkBye) return; window.__tvScopeLinkBye = true; paused = true; note('stop');
+    // the page is going: anything still waiting on a reply goes with the stop note, now
+    if (inflight) { queue = inflight.events.concat(queue).slice(-60); inflight = null; }
+    flush(); }
   window.addEventListener('pagehide', bye);
   window.addEventListener('beforeunload', bye);
 })();
