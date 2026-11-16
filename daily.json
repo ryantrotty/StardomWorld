@@ -1,10 +1,10 @@
 {
- "generated": "2026-11-16T06:33:26Z",
+ "generated": "2026-11-16T20:07:12Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-16T06:29:06Z",
-  "finished": "2026-11-16T06:33:26Z",
-  "requests": 43,
+  "started": "2026-11-16T20:02:56Z",
+  "finished": "2026-11-16T20:07:12Z",
+  "requests": 56,
   "schedule": {
    "ok": true,
    "events": 44,
@@ -72,6 +72,12 @@
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
+  },
+  "league": {
+   "ok": true,
+   "updated": "2026-11-15",
+   "source": "official",
+   "note": ""
   },
   "blocks": [],
   "errors": []
@@ -7839,6 +7845,142 @@
         "note": "Stardom American Dream 2026"
        }
       ]
+     }
+    ]
+   }
+  }
+ },
+ "league": {
+  "tag": {
+   "2026": {
+    "updated": "2026-11-15",
+    "source": "official",
+    "points": [
+     {
+      "team": [
+       "Suzu Suzuki",
+       "Rina Yamashita"
+      ],
+      "pts": 5
+     },
+     {
+      "team": [
+       "Natsupoi",
+       "Rian"
+      ],
+      "pts": 2
+     },
+     {
+      "team": [
+       "Ranna Yagami",
+       "Akira Kurogane"
+      ],
+      "pts": 3
+     },
+     {
+      "team": [
+       "Hina",
+       "Lady C"
+      ],
+      "pts": 4
+     },
+     {
+      "team": [
+       "Hazuki",
+       "Koguma"
+      ],
+      "pts": 7
+     },
+     {
+      "team": [
+       "Dark Silueta",
+       "Valkyria"
+      ],
+      "pts": 1
+     },
+     {
+      "team": [
+       "Konami",
+       "Rina"
+      ],
+      "pts": 7
+     },
+     {
+      "team": [
+       "Natsuko Tora",
+       "Ruaka"
+      ],
+      "pts": 3
+     },
+     {
+      "team": [
+       "Saya Iida",
+       "Utami Hayashishita"
+      ],
+      "pts": 6
+     },
+     {
+      "team": [
+       "Sakura Aya",
+       "Sayaka Kurara"
+      ],
+      "pts": 8
+     },
+     {
+      "team": [
+       "Saori Anou",
+       "Fuwa Chan"
+      ],
+      "pts": 5
+     },
+     {
+      "team": [
+       "Yuna Mizumori",
+       "Anne Kanaya"
+      ],
+      "pts": 2
+     },
+     {
+      "team": [
+       "Maika",
+       "Hanako"
+      ],
+      "pts": 4
+     },
+     {
+      "team": [
+       "Hanan",
+       "Waka Tsukiyama"
+      ],
+      "pts": 2
+     },
+     {
+      "team": [
+       "Mei Seira",
+       "Ema Maishima"
+      ],
+      "pts": 2
+     },
+     {
+      "team": [
+       "Kikyo Furusawa",
+       "Kiyoka Kotatsu"
+      ],
+      "pts": 4
+     },
+     {
+      "team": [
+       "Starlight Kid",
+       "Maki Itoh"
+      ],
+      "pts": 7
+     },
+     {
+      "team": [
+       "Momo Watanabe",
+       "Saya Kamitani"
+      ],
+      "pts": 6
      }
     ]
    }
