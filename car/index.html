@@ -68,9 +68,9 @@
 </div>
 <script>
 (function() {
-  var VERSION = 'car 0.1.0';
+  var VERSION = 'car 0.1.1';
   var SITE = 'https://www.stardom-world.com';
-  var LINK_KEY = 'starscopeLink', CROP_KEY = 'carCropV1', CACHE_KEY = 'carRowsV1';
+  var LINK_KEY = 'starscopeLink', CROP_KEY = 'carCropV1', CACHE_KEY = 'carRowsV1', SKIP_KEY = 'carSkipV1';
   var LINK_OK = /^https:\/\/script\.google\.com\/[^\s]*\/exec\?(?=[^\s]*\bp=phone\b)(?=[^\s]*\bk=[^&\s]+)[^\s]*$/;
   var EXEC = '', K = '', rows = { recent: [], later: [] }, cur = null, whole = false, loadedAt = '';
   var BAR = 64, DBG = 30;
@@ -125,7 +125,7 @@
       '<div class="msg" id="msg"></div>' +
       rowHtml('Recently Watched', 'recent', rows.recent, 'Nothing yet.') +
       rowHtml('Watch Later', 'later', rows.later, 'Nothing in Watch Later.');
-    $('refresh').onclick = fetchRows;
+    $('refresh').onclick = function() { if (K) fetchRows(); else renderSetup(); };
     $('sitehome').onclick = function() { openVideo({ id: '', title: 'Stardom World', href: SITE + '/' }); };
     $('setup').onclick = renderSetup;
     Array.prototype.forEach.call(document.querySelectorAll('.card'), function(c) {
@@ -167,6 +167,7 @@
       '<input id="lnk" type="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?p=phone&k=…">' +
       '<div style="height:12px"></div><button type="button" id="save" class="on" style="width:100%">Save</button>' +
       '<div class="t3" id="lnkmsg"></div>' +
+      '<div style="height:12px"></div><button type="button" id="skip" style="width:100%">Skip for now (no rows, just the site)</button>' +
       (have ? '<div style="height:22px"></div><p>On your phone: send this page to the car with the link already in it, then share it to the car from the Tesla app (or copy it).</p>' +
         '<button type="button" id="send" style="width:100%">Send to car</button><div class="t3" id="sendmsg"></div>' +
         '<div style="height:12px"></div><button type="button" id="done" style="width:100%">Back to home</button>' : '') +
@@ -176,6 +177,7 @@
       if (!setLink(v)) { $('lnkmsg').textContent = 'That doesn’t look like the phone link. It should start https://script.google.com/ and end with ?p=phone&k=…'; return; }
       lsSet(LINK_KEY, v); start();
     };
+    $('skip').onclick = function() { lsSet(SKIP_KEY, '1'); start(); };
     if (have) {
       $('done').onclick = start;
       $('send').onclick = function() {
@@ -199,11 +201,10 @@
     $('whole').className = whole ? 'on' : '';
     $('dbg').textContent = VERSION + ' · ' + (whole ? 'whole page (scrolls)' : 'cropped: page from ' + c.top + ' px, window ' + h + ' px') +
       ' · screen ' + window.innerWidth + '×' + window.innerHeight + ' · frame loaded ' + (loadedAt || '…') +
-      ' · if the frame says it refused to connect, the site blocks frames: use Open on site';
+      ' · if the frame says it refused to connect, the site blocks frames: use Open on site · Crop buttons keep the page you opened in the frame';
   }
   function setFrame() {
     var fr = $('frame');
-    fr.setAttribute('scrolling', whole ? 'yes' : 'no');
     loadedAt = '';
     fr.onload = function() { loadedAt = hhmmss(); layout(); };
     fr.src = cur.href;
@@ -220,19 +221,22 @@
     var c = crop(), avail = window.innerHeight - BAR - DBG;
     c.top = Math.max(0, c.top + dt);
     c.h = Math.max(120, Math.min(avail, (c.h || avail) + dh));
-    saveCrop(c); if (whole) { whole = false; setFrame(); } else layout();
+    saveCrop(c); whole = false; layout();
   }
   $('back').onclick = function() { $('frame').src = 'about:blank'; $('play').style.display = 'none'; $('home').style.display = ''; cur = null; };
   $('up').onclick = function() { nudge(-20, 0); };
   $('dn').onclick = function() { nudge(20, 0); };
   $('sh').onclick = function() { nudge(0, -20); };
   $('ta').onclick = function() { nudge(0, 20); };
-  $('whole').onclick = function() { whole = !whole; setFrame(); };
+  $('whole').onclick = function() { whole = !whole; layout(); };
   $('site').onclick = function() { if (cur) location.href = cur.href; };
   window.addEventListener('resize', function() { if (cur) layout(); });
 
   function start() {
-    if (!setLink(lsGet(LINK_KEY) || '')) { renderSetup(); return; }
+    if (!setLink(lsGet(LINK_KEY) || '')) {
+      if (!lsGet(SKIP_KEY)) { renderSetup(); return; }
+      renderHome(); say('Not connected to your sheet, so no rows yet (Setup). Site home works. · ' + VERSION); return;
+    }
     var c = load(CACHE_KEY);
     if (c && c.recent) rows = c;
     renderHome();
