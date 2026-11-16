@@ -34,6 +34,8 @@
   function showName(x) {
     var n = String((x && x.sh) || '');
     if (ja) return n;
+    // English name from the schedule or the word list (assets/shownames.js, 2.78.2), the long one
+    if (window.__tvShowName) return window.__tvShowName.en(n, x.sd || x.d, false);
     n = n.replace(/[〜～~][^〜～~]*[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f][^〜～~]*[〜～~]/g, ' ')
       .replace(/[\u3000-\u303f\u3040-\u30ff\u3400-\u9fff\uff00-\uffef]+/g, ' ')
       .replace(/\s+/g, ' ').replace(/[\s·\-–:]+$/, '').trim();

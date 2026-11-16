@@ -7,5 +7,28 @@
  },
  "extra": [
   { "name": "Spark Rush", "members": ["Takumi Iroha", "Sareee"], "since": "2024-03-01", "faction": "" }
- ]
+ ],
+ "leaguePoints": {
+  "_note": "Tag League points built into the app (docs/LEAGUE_POINTS.md). The daily file's league.tag.<year> replaces a year when its updated date is the same or newer. team = the pair exactly as in the roster file's tagLeague blocks.",
+  "2026": { "updated": "2026-11-15", "source": "solowrestling", "points": [
+    { "team": ["Suzu Suzuki", "Rina Yamashita"], "pts": 5 },
+    { "team": ["Natsupoi", "Rian"], "pts": 2 },
+    { "team": ["Ranna Yagami", "Akira Kurogane"], "pts": 3 },
+    { "team": ["Hina", "Lady C"], "pts": 4 },
+    { "team": ["Hazuki", "Koguma"], "pts": 7 },
+    { "team": ["Dark Silueta", "Valkyria"], "pts": 1 },
+    { "team": ["Konami", "Rina"], "pts": 7 },
+    { "team": ["Natsuko Tora", "Ruaka"], "pts": 3 },
+    { "team": ["Saya Iida", "Utami Hayashishita"], "pts": 6 },
+    { "team": ["Sakura Aya", "Sayaka Kurara"], "pts": 8 },
+    { "team": ["Saori Anou", "Fuwa Chan"], "pts": 5 },
+    { "team": ["Yuna Mizumori", "Anne Kanaya"], "pts": 2 },
+    { "team": ["Maika", "Hanako"], "pts": 4 },
+    { "team": ["Hanan", "Waka Tsukiyama"], "pts": 2 },
+    { "team": ["Mei Seira", "Ema Maishima"], "pts": 2 },
+    { "team": ["Kikyo Furusawa", "Kiyoka Kotatsu"], "pts": 4 },
+    { "team": ["Starlight Kid", "Maki Itoh"], "pts": 7 },
+    { "team": ["Momo Watanabe", "Saya Kamitani"], "pts": 6 }
+  ] }
+ }
 }

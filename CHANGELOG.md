@@ -2,6 +2,52 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.80.3
+
+- Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.
+
+## 2.80.2
+
+- Tag League page: the Points check line is gone again (the points showed once the build was cleaned), and a team on 1 point reads "1 pt".
+
+## 2.80.1
+
+- Tag League page: a "Points check" line under the team count (stays on screen) shows which points years the page was given, this year's source and date, and how many teams matched, to find out why the points don't show on the TV.
+
+## 2.80.0
+
+Built on 2.79.3, so it includes everything up to there.
+
+- **Tag League points:** the Tag League page shows each team's total points at the right of its row, sorted highest first in each block, with "Points as of <date>" under the team count. No numbers (and the old order) when the year has none.
+- The points come with the daily file (`league.tag.<year>`, written by Muse like the schedule; see `docs/LEAGUE_POINTS.md`), so the app asks no site for them. The app has the totals after night 6 (15 Nov 2026) built in; the daily file's copy is used once it is as new or newer.
+
+## 2.79.3
+
+- **Phone logger no longer runs a timer on a video you've left.** The TV's playback notes to the sheet were sent once and never retried, so when the sheet was busy (a video opening sends several sheet calls at once) the note was lost: the phone then never heard that you left a video or started the next one, and kept counting on the old one. Now a note that doesn't get through is kept and sent again (after 3, 6, 12, 20, then every 30 s), one send at a time, and leaving a video sends anything still waiting along with the stop note. While a video plays on, the TV also sends a short "still playing" note once a minute. The phone (`scripts/starscope_phone.html`, also on the Pages site) shows **No word from the TV** after 2½ minutes without a note while it thought the video was playing, stops the timer at the last known place, and won't place a Bell or Finish tap in that state. Nothing changes on the TV screen. Both TVs need this build. No new requests to the video site; about one small sheet call a minute while a video plays.
+
+## 2.79.2
+
+Includes 2.79.1 (live row second tile, early PPV shows, roster `ppv` section) and 2.78.1 (Home shelf Recently Watched, no match number on StarScope video cards, phone Save check).
+
+- **English show names in StarScope** (player title bar, Shows cards, Log next): the site names shows in Japanese only, and leaving out the Japanese in English mode gave names like "16 in MATSUYAMA-EHIME". Now a show on the schedule (same date; the city decides when there are two that day) takes the schedule's English name: the full one on the player ("The 16th Goddesses of Stardom Tag League Tournament in Matsuyama-Ehime"), the short one on cards ("Tag League Matsuyama-Ehime"). Older shows have the usual Japanese words turned into English first (第16回 → 16th, ゴッデス・オブ・スターダム → Goddesses of Stardom, タッグリーグ戦 → Tag League, レッドスターズ → Red Stars, venues and cities, full-width letters), then whatever is still Japanese is left out. The roster file's new `showWords` section adds or changes words with no new build (`docs/ROSTER.md`). Japanese mode is unchanged. No new requests.
+
+## 2.79.1
+
+- **Roster file `ppv` by date:** a key can now be a Japan-time date (`"2027-02-11": {}`) as well as an event id, so a PPV show can be marked before it is on the schedule. It applies to the Stardom show(s) on that day once they appear; an event id key wins over a date key.
+
+## 2.79.0
+
+Home page live row: two tiles, and PPV shows before Stagecrowd lists them.
+
+- **Second tile:** when there is no PPV show to show, the slot beside the next-live tile now shows the live show after it (gold, same size and look, labelled **AFTER THAT · in …**). It steps aside as soon as a PPV tile has something to show.
+- **PPV shows can be marked early.** A show marked as PPV but with no Stagecrowd page yet gets the PPV tile with its poster, **PPV · ON SALE SOON** and "Not on Stagecrowd yet". Its details page keeps the reminder and the playback test / sign-in steps; Buy and Watch appear once its page is known. A show with a known sale start now says "Sale opens …" instead of the sale end.
+- **Roster file `ppv` section** (`docs/ROSTER.md`): mark a show as PPV, fill in its Stagecrowd details, or take a wrong mark off, with no new build. The daily file's own `ppv` entries still work the same and are merged first.
+## 2.78.1
+
+- **Fix: Recently Watched in the menu's Home shelf fell behind.** The shelf showed the sheet's list as last read (from the last home page visit), so videos watched since then were missing until the home page was opened again. Now each video page you open goes first on the TV's own list at once (kept beside the sheet's copy for a day, until the sheet has it), and the shelf, the home row and the Recently Watched page all read the two together. If the sheet's fresh list arrives while the shelf is open, the column is redrawn (unless it has focus). No new calls to the site or the sheet.
+- **StarScope video cards:** no match number (Match x/y) under the names any more, everywhere the cards appear. Show cards, the card rail's running-order badge and the player's title bar keep theirs.
+- **Phone logger, "Load failed" on Save:** the save had gone through, only the answer was lost on the way back. When that happens the page now reads the match back from the sheet and shows Saved if it's there with the same people; otherwise it says to tap Save again (safe to repeat). Copy `scripts/starscope_phone.html` to `starscope/index.html` on `gh-pages` (and the Apps Script `phone` file) for it to take effect; the Apps Script itself is unchanged.
+
 ## 2.78.0
 
 - **Home shelf in the menu:** Main page on top, then three columns with the first three videos of **New**, **Recently Watched** and **Watch Later** (picture and title, plus View all), then **Video rows on the site**: every row the site's home page has, in three columns. Opening it asks nothing of the site: New and the row list are kept from the last home page visit, Recently Watched from the sheet (your build) or the home page's copy, Watch Later from My Favorites.

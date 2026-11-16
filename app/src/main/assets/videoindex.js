@@ -181,6 +181,8 @@
     if (!rec) rec = { id: +M[2], set: M[1] ? +M[1] : null, no: null, date: null, title_en: '', title_ja: '', sides_en: [], teams_en: [], notes_en: [], sides_ja: [], teams_ja: [], notes_ja: [], shows: [], tags: [], access: [], thumb: '', lines: [], read: new Date().toISOString(), note: 'no video information block found on this page' };
     store(rec);
     window.__tvVixRec = rec;
+    // Recently Watched (2.78.1): this video goes first on the TV's own list right away, before the sheet has it.
+    try { if (window.__tvRecent && window.__tvRecent.saw) window.__tvRecent.saw(rec); } catch (e) {}
     // Log (private builds with a log address): hand the record to the app, which sends it with its own key.
     // A page with nothing read (no title and no description) is not sent. No panel is shown; the last result is
     // kept on the TV (localStorage tvVideoIndexLast) in case a send needs looking into.

@@ -168,6 +168,7 @@ Tag League (2.41.0, assets/teams.js, data in the roster file's `tagLeague`):
 - Shelf: "Tag League <year>" bar under All Tag Teams (wings 22, 19/700, grey line with count, blocks, dates); entrants of the newest year get wings 16 at the right edge of their item.
 - All Tag Teams: Tag League chip after NEW BLOOD (14 px further along, wings 16, opens the Tag League page); rows get a TAG LEAGUE tag in the tag style with wings 14 (×n for several years).
 - Tag League page: wings 44 and the title (30/900), grey line with dates and last winners, year chips on the right (newest left). Two columns, one per block, each with a section header (gold bar, 15/800 name, grey count) and rows 50 high (#161F2A, radius 8, the two wrestlers' circles at 38 px overlapping by 10 (photo in private builds, else 13/900 initials on a 2 px dashed #3B4656 circle) (2.45.0), 17/700 name, 13/600 grey members, tags; look A focus). Winners: gold-filled tag. Exception (2.45.1): a block's section header takes the block's colour on its bar and name, blue #4DA6FF for Blue Goddesses and red #FF5A6A for Red Goddesses (the only uses of these two colours; never a focus cue).
+- Tag League points (2.80.0): when the year has points (docs/LEAGUE_POINTS.md), each row ends with the total, 20/800 white, then " pts" 13/700 grey, right-aligned in 64 px; "–" for a team with no number. Rows sort by points, highest first, within each block. "Points as of <date>" in the roster-line style (13/700 grey) under the team count, staying on screen.
 - Team page: wings 24 after the team name; "· Red Goddesses, Tag League 2026" on the line under it. TAG LEAGUE MATCHES row (section header with wings 24 instead of the gold bar) above TAG MATCHES, same cards and More tile; shown for entrants or once a Tag League match is found.
 
 Tag team page (2.28.2): no Title Matches section; Titles Held is followed by Tag Matches.
@@ -223,7 +224,7 @@ Index panel transparency (2.50.0): dim layer 28% black, panel #0F151C at 68%, si
 
 Index panel bell (2.52.0): first button in the tab row, first focus, gold outline bell icon, standard panel button and focus.
 
-StarScope video cards (2.55.0, private builds, assets/starcards.js; from 2.55.1 for the StarScope filtered results only, not normal pages): below the picture, no overlay on it. Event 12/800 gold uppercase with 1 px spacing; names 18/800, each later side on a new line beginning vs; a 1 px #2A323C rule; a 13/600 #C9D2DC line with block, round and Match x/y, with the date 13/700 gold on the right. Cards keep their focus look. No results.
+StarScope video cards (2.55.0, private builds, assets/starcards.js; from 2.55.1 for the StarScope filtered results only, not normal pages): below the picture, no overlay on it. Event 12/800 gold uppercase with 1 px spacing; names 18/800, each later side on a new line beginning vs; a 1 px #2A323C rule; a 13/600 #C9D2DC line with block and round (no match number from 2.78.1), with the date 13/700 gold on the right. Cards keep their focus look. No results.
 
 StarScope filter (2.56.0, private builds): icon-only telescope at the end of the wrestler and tag team quick filter rows, in that row's chip style, shown only when there are results. Results page `/mypage?tvscope=w|t`: navy, 30/900 heading with the telescope, four-across StarScope cards, look C focus, newest first.
 
@@ -279,6 +280,7 @@ Transition screen between pages (2.70.0): not shown for app-drawn pages; for sit
 App-drawn page cover (2.70.1): while the site's own page is underneath and the app's page isn't drawn yet, a plain #0B1118 cover (no wand, no strip) is held over the page; it goes with a 0.12 s fade once the app's page is on screen, 2 s at most.
 
 Home live row (2.75.0): the next-live / live and PPV tiles get their own row directly under the hero banner, no h2, same row spacing (35 px below, 24 px gap); the first video row follows with its heading. Removed when empty.
+Home live row slots (2.79.0): slot 1 is the live card or NEXT LIVE tile; slot 2 is the PPV tile (purple) when there is one, otherwise a second gold next-live tile labelled AFTER THAT (`#tv-next-live-2`, same size and look as slot 1). A PPV show not yet on Stagecrowd shows PPV · ON SALE SOON with "Not on Stagecrowd yet".
 
 Long lists, windowed scroll (2.75.0): PAGE chip fixed top 18 px / right 24 px, #11171E fill, 1 px #2A323C edge, fully rounded, 13/800 letter-spaced, "PAGE" in #9AA6B4 and the number in gold #F4C242; not focusable; shown from page 2, hidden while the menu is open. Cards more than two pages from the page in view lose their pictures (light placeholders) once more than four pages are loaded.
 

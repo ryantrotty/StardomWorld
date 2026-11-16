@@ -268,6 +268,8 @@
     '#tv-tt .tt-lg-row .a{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;}',
     '#tv-tt .tt-lg-row .b{font-size:13px;font-weight:600;color:#9AA6B4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;}',
     '#tv-tt .tt-lg-row.tt-fav .a::before{content:"\\2605  ";color:#F4C242;}',
+    '#tv-tt .tt-lg-pts{flex:none;min-width:64px;text-align:right;font-size:20px;font-weight:800;color:#fff;}',
+    '#tv-tt .tt-lg-pts small{font-size:13px;font-weight:700;color:#9AA6B4;}',
     '#tv-tt .tt-sec .tt-wings{flex:none;}',
     '#tv-tt .tt-h1 .tt-wings{margin-left:12px;vertical-align:-2px;}',
     '#tv-tt .tt-sec{display:flex;align-items:center;gap:10px;margin:26px 0 10px 0;}',
@@ -378,11 +380,23 @@
     if (!Y) { scroller.innerHTML = '<div class="tt-head"><div class="tt-bar"></div><div class="tt-h1">' + esc(T('Tag League', 'タッグリーグ')) + '</div></div><div class="tt-msg">' + esc(T('No Tag League in the roster file yet.', '名簿ファイルにタッグリーグがありません。')) + '</div>'; return; }
     var L = Y.L, byKey = {};
     build().forEach(function(t) { byKey[pairKey(t.members)] = t; });
+    // points for this year (docs/LEAGUE_POINTS.md): bundled, or the daily file's when as new or newer; none = no numbers
+    var LP = (CFG.leaguePoints || {})[Y.year] || null, PTS = null;
+    if (LP && LP.points && LP.points.length) {
+      PTS = {};
+      LP.points.forEach(function(p) { if (p && p.team && p.team.length === 2 && typeof p.pts === 'number') PTS[pairKey(p.team)] = p.pts; });
+    }
     var h = '<div class="tt-lg-head">' + wings(44, '#F4C242', '#0B1118') + '<div style="min-width:0"><div class="tt-h1">' + esc(isJa() && L.ja ? L.ja : (L.name || T('Tag League ' + Y.year, 'タッグリーグ ' + Y.year))) + '</div>' +
       '<div class="tt-note">' + esc([L.dates || '', L.winners ? T(L.winners, L.winnersJa || L.winners) : ''].filter(Boolean).join(' · ')) + '</div></div>' +
       '<div class="tt-chips">' + LEAGUES.map(function(x) { return '<a class="tt-chip' + (x === Y ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(leaguePath(x.year))) + '">' + x.year + '</a>'; }).join('') + '</div></div>';
     h += '<div class="tt-lg-cols">' + L.blocks.map(function(bl) {
-      var rows = (bl.teams || []).map(function(m) {
+      var order = (bl.teams || []).slice();
+      // highest points first within the block; equal points keep the roster order, teams without a number go last
+      if (PTS) order = order.map(function(m, i) { return { m: m, i: i, p: PTS[pairKey(m)] }; }).sort(function(a, b) {
+        var pa = a.p == null ? -1 : a.p, pb = b.p == null ? -1 : b.p;
+        return pb - pa || a.i - b.i;
+      }).map(function(x) { return x.m; });
+      var rows = order.map(function(m) {
         var t = byKey[pairKey(m)];
         if (!t) return '';
         var win = !!(L.winnerTeam && pairKey(L.winnerTeam) === pairKey(m));
@@ -395,13 +409,15 @@
         }).join('');
         return '<a class="tt-lg-row' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="tt-lg-av">' + av + '</span><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.name ? t.members.join(' & ') : '') + '</span>' +
           (win ? '<span class="tt-tag ch">' + esc(T('WINNERS', '優勝')) + '</span>' : '') +
-          (prev ? '<span class="tt-tag ch">' + esc(T(L.prevWinners.year + ' WINNERS', L.prevWinners.year + '年優勝')) + '</span>' : '') + tags(t, true) + '</a>';
+          (prev ? '<span class="tt-tag ch">' + esc(T(L.prevWinners.year + ' WINNERS', L.prevWinners.year + '年優勝')) + '</span>' : '') + tags(t, true) +
+          (PTS ? '<span class="tt-lg-pts">' + (PTS[pairKey(m)] != null ? PTS[pairKey(m)] + '<small>' + esc(T(PTS[pairKey(m)] === 1 ? ' pt' : ' pts', '点')) + '</small>' : '\u2013') + '</span>' : '') + '</a>';
       }).join('');
       // the block's own colour on its bar and name: Blue Goddesses blue, Red Goddesses red (design exception, 2.45.1)
       var bc = /blue|\u30d6\u30eb\u30fc/i.test((bl.name || '') + (bl.ja || '')) ? '#4DA6FF' : /red|\u30ec\u30c3\u30c9/i.test((bl.name || '') + (bl.ja || '')) ? '#FF5A6A' : '';
       return '<div class="tt-lg-col"><div class="tt-sec" style="margin:14px 0 4px 0"><i' + (bc ? ' style="background:' + bc + '"' : '') + '></i><b' + (bc ? ' style="color:' + bc + '"' : '') + '>' + esc(isJa() && bl.ja ? bl.ja : bl.name) + '</b><span>' + esc(T((bl.teams || []).length + ' teams', (bl.teams || []).length + 'チーム')) + '</span></div>' + rows + '</div>';
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(leagueCount(Y) + ' teams', leagueCount(Y) + 'チーム')) + '</div>';
+    if (PTS && LP.updated) h += '<div class="tt-roster">' + esc(T('Points as of ' + fmtD(LP.updated), fmtD(LP.updated) + '時点の勝ち点')) + '</div>';
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-lg-row') || scroller.querySelector('.tt-chip'));
   }

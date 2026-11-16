@@ -176,11 +176,15 @@
     ((now && now.videos) || []).forEach(function(v) { v.events.forEach(function(e) { out.push({ video: v.video, ts: e[0], ev: e[1], pos: e[2], playing: e[3], rate: e[4] }); }); });
     return out.sort(function(a, b) { return a.ts - b.ts; });
   }
+  var QUIET = 150000;
   function at(ts) {
     var last = null;
     allEvents().forEach(function(e) { if (e.ts <= ts) last = e; });
     if (!last) return null;
-    return { video: last.video, pos: last.pos + (last.playing ? (ts - last.ts) / 1000 * last.rate : 0), playing: !!last.playing, ev: last.ev };
+    // 2.79.3: a playing TV sends a note at least once a minute; after QUIET with none, it has gone quiet (left the video
+    // without its stop note getting through), so the time shows where the last note left it instead of running on.
+    var quiet = !!last.playing && ts - last.ts > QUIET, upto = quiet ? last.ts : ts;
+    return { video: last.video, pos: last.pos + (last.playing ? (upto - last.ts) / 1000 * last.rate : 0), playing: !!last.playing && !quiet, ev: last.ev, quiet: quiet };
   }
   function current() { return now && now.videos && now.videos[0]; }
 
@@ -202,7 +206,7 @@
   function drawLive() {
     var c = current(), p = c ? at(Date.now()) : null, el = $('live');
     if (!c || !p) { el.innerHTML = '<span class="dot"></span>Nothing on the TV yet'; return; }
-    var word = p.ev === 'stop' ? 'Left the video' : (p.playing ? 'Playing' : (p.ev === 'buffer' ? 'Loading' : 'Paused'));
+    var word = p.quiet ? 'No word from the TV' : p.ev === 'stop' ? 'Left the video' : (p.playing ? 'Playing' : (p.ev === 'buffer' ? 'Loading' : 'Paused'));
     el.innerHTML = '<span class="dot' + (p.playing ? ' on' : '') + '"></span>' + word + ' <b>' + mmss(p.pos) + '</b>';
   }
   setInterval(drawLive, 1000);
@@ -498,6 +502,7 @@
         delete pending[k];
         if (form !== f) return;
         if (!p) say('The TV hasn\'t sent anything yet. Is the video playing?', true);
+        else if (p.quiet) say('No word from the TV for a few minutes, so that tap can\'t be placed. Is a video playing on it?', true);
         else if (String(p.video) !== String(f.video)) say('At that tap the TV was on a different video.', true);
         else { touch(); f.marks[k] = Math.round(p.pos); store(markKey(f.video), f.marks); say((k === 'bell' ? 'Bell' : 'Finish') + ' at ' + mmss(p.pos) + (p.playing ? '' : ' (the video was paused)')); }
         render();
@@ -670,17 +675,33 @@
     run('phoneSave', { video: String(f.video), version: f.rec.version || 'jp', rating: f.rating || 0, aliases: f.aliases, participants: parts, tags: tags, marks: f.marks, venueAliases: f.venueAliases,
       match: { show_id: show ? show.id : (f.set || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: f.venue, date: f.date, date_manual: f.dateManual,
         card_total: f.cardTotal || '', card_no: f.cardNo, is_dark: f.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } })
+    .catch(function(e) {
+      // 2.78.1: "Load failed" can mean the answer was lost on the way back while the save itself went through (Apps
+      // Script answers through a second address). Read the match back: if this video was saved in the last minutes
+      // with the same people, it counts as saved. Saving again is safe either way (the same rows are replaced).
+      if (!(e instanceof TypeError)) throw e;
+      $('save').textContent = 'Checking…';
+      return new Promise(function(ok) { setTimeout(ok, 2500); }).then(function() {
+        return run('phoneGet', String(f.video), show ? String(show.id) : '');
+      }).then(function(g) {
+        var v = g && (g.videos || []).filter(function(x) { return String(x.video_id) === String(f.video); })[0];
+        var got = g && (g.participants || []).map(function(p) { return p.talent_id; }).sort().join(' ');
+        var sent = parts.map(function(p) { return p.talent_id; }).sort().join(' ');
+        if (v && Date.now() - Date.parse(v.updated) < 5 * 60000 && got === sent) return { ok: true, level: level, linked: false, checked: true };
+        throw e;
+      }, function() { throw e; });
+    })
     .then(function(res) {
       busy = false;
       if (!res.ok) { $('save').textContent = 'Not saved'; say(String(res.error || 'not saved'), true); return; }
       f.aliases = []; f.venueAliases = []; f.dirty = false; f.savedLevel = res.level || level;
       try { localStorage.removeItem(markKey(f.video)); } catch (e) {}
       $('save').textContent = res.linked ? 'Linked' : 'Saved';
-      say(res.linked ? 'Linked as another version of the same match.' : 'Saved to StarScope.');
+      say(res.linked ? 'Linked as another version of the same match.' : res.checked ? 'Saved to StarScope (the answer was slow; checked in the sheet).' : 'Saved to StarScope.');
       setTimeout(function() { $('save').textContent = 'Save'; }, 2500);
       // The TV may have moved on while you were logging: follow it now.
       var c = current(); if (c && c.video !== f.video) setTimeout(function() { openVideo(c); }, 1200);
-    }).catch(function(e) { busy = false; $('save').textContent = 'Not saved'; say(String(e && e.message || e), true); });
+    }).catch(function(e) { busy = false; $('save').textContent = 'Not saved'; say((e instanceof TypeError ? 'No answer from the sheet. Tap Save again (it is safe to repeat). ' : '') + String(e && e.message || e), true); });
   });
 
   // ---- start: on Pages, the link first (pasted once, kept on this phone); then the library from the phone straight
