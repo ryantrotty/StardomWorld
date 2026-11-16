@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.80.2
+
+- Tag League page: the Points check line is gone again (the points showed once the build was cleaned), and a team on 1 point reads "1 pt".
+
 ## 2.80.1
 
 - Tag League page: a "Points check" line under the team count (stays on screen) shows which points years the page was given, this year's source and date, and how many teams matched, to find out why the points don't show on the TV.

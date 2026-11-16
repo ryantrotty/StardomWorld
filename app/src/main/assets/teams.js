@@ -410,7 +410,7 @@
         return '<a class="tt-lg-row' + (isFav(t.id) ? ' tt-fav' : '') + '" tabindex="0" data-favt="' + esc(t.id) + '" href="' + esc(absUrl(teamPath(t))) + '"><span class="tt-lg-av">' + av + '</span><span class="a notranslate" translate="no">' + esc(t.display) + '</span><span class="b notranslate" translate="no">' + esc(t.name ? t.members.join(' & ') : '') + '</span>' +
           (win ? '<span class="tt-tag ch">' + esc(T('WINNERS', '優勝')) + '</span>' : '') +
           (prev ? '<span class="tt-tag ch">' + esc(T(L.prevWinners.year + ' WINNERS', L.prevWinners.year + '年優勝')) + '</span>' : '') + tags(t, true) +
-          (PTS ? '<span class="tt-lg-pts">' + (PTS[pairKey(m)] != null ? PTS[pairKey(m)] + '<small>' + esc(T(' pts', '点')) + '</small>' : '\u2013') + '</span>' : '') + '</a>';
+          (PTS ? '<span class="tt-lg-pts">' + (PTS[pairKey(m)] != null ? PTS[pairKey(m)] + '<small>' + esc(T(PTS[pairKey(m)] === 1 ? ' pt' : ' pts', '点')) + '</small>' : '\u2013') + '</span>' : '') + '</a>';
       }).join('');
       // the block's own colour on its bar and name: Blue Goddesses blue, Red Goddesses red (design exception, 2.45.1)
       var bc = /blue|\u30d6\u30eb\u30fc/i.test((bl.name || '') + (bl.ja || '')) ? '#4DA6FF' : /red|\u30ec\u30c3\u30c9/i.test((bl.name || '') + (bl.ja || '')) ? '#FF5A6A' : '';
@@ -418,15 +418,6 @@
     }).join('') + '</div>';
     h += '<div class="tt-count">' + esc(T(leagueCount(Y) + ' teams', leagueCount(Y) + 'チーム')) + '</div>';
     if (PTS && LP.updated) h += '<div class="tt-roster">' + esc(T('Points as of ' + fmtD(LP.updated), fmtD(LP.updated) + '時点の勝ち点')) + '</div>';
-    // points check (2.80.1, stays on screen): what the page was given, so a missing number can be traced from a photo
-    (function() {
-      var lpAll = CFG.leaguePoints, yrs = lpAll ? Object.keys(lpAll).filter(function(k) { return k.charAt(0) !== '_'; }) : [];
-      var got = PTS ? Object.keys(PTS).length : 0, want = leagueCount(Y), hit = 0;
-      if (PTS) L.blocks.forEach(function(bl) { (bl.teams || []).forEach(function(m) { if (PTS[pairKey(m)] != null) hit++; }); });
-      h += '<div class="tt-roster">' + esc('Points check 2.80.1 · page year ' + Y.year + ' · points years in file: ' + (lpAll ? (yrs.join(', ') || 'none') : 'no leaguePoints') +
-        ' · this year: ' + (LP ? (LP.source || '?') + ', ' + (LP.updated || 'no date') + ', ' + got + ' entries, ' + hit + ' of ' + want + ' matched' : 'none') +
-        ' · settings keys: ' + Object.keys(CFG).join(', ')) + '</div>';
-    })();
     scroller.innerHTML = h;
     focusEl((focusSel && scroller.querySelector(focusSel)) || scroller.querySelector('.tt-lg-row') || scroller.querySelector('.tt-chip'));
   }
