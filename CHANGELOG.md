@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.80.3
+
+- Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.
+
 ## 2.80.2
 
 - Tag League page: the Points check line is gone again (the points showed once the build was cleaned), and a team on 1 point reads "1 pt".
