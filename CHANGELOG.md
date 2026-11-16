@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.80.0
+
+Built on 2.79.3, so it includes everything up to there.
+
+- **Tag League points:** the Tag League page shows each team's total points at the right of its row, sorted highest first in each block, with "Points as of <date>" under the team count. No numbers (and the old order) when the year has none.
+- The points come with the daily file (`league.tag.<year>`, written by Muse like the schedule; see `docs/LEAGUE_POINTS.md`), so the app asks no site for them. The app has the totals after night 6 (15 Nov 2026) built in; the daily file's copy is used once it is as new or newer.
+
 ## 2.79.3
 
 - **Phone logger no longer runs a timer on a video you've left.** The TV's playback notes to the sheet were sent once and never retried, so when the sheet was busy (a video opening sends several sheet calls at once) the note was lost: the phone then never heard that you left a video or started the next one, and kept counting on the old one. Now a note that doesn't get through is kept and sent again (after 3, 6, 12, 20, then every 30 s), one send at a time, and leaving a video sends anything still waiting along with the stop note. While a video plays on, the TV also sends a short "still playing" note once a minute. The phone (`scripts/starscope_phone.html`, also on the Pages site) shows **No word from the TV** after 2½ minutes without a note while it thought the video was playing, stops the timer at the last known place, and won't place a Bell or Finish tap in that state. Nothing changes on the TV screen. Both TVs need this build. No new requests to the video site; about one small sheet call a minute while a video plays.
