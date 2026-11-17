@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.80.4
+
+- **Signing in lands on Home again.** The site now sends you to its own My page ("Artist of Stardom", payment history and so on) after signing in, where it used to stay on the login page; the app only moved on from the login page, so it stopped there. Landing on the bare My page while signing in now goes to Home too. Version code 528, past 527 on feature/starscope-log-a-show.
+
 ## 2.80.3
 
 - Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.

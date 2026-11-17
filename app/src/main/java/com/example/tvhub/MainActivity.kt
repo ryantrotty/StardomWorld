@@ -2961,7 +2961,9 @@ class MainActivity : Activity() {
         awaitingLogin = false
         showLoginLogo(false)
         closeOnboarding()
-        if (path.startsWith("/login")) {
+        // The site used to stay on /login after signing in (our redirect_to); it now sends you to its My page
+        // (2.80.4). Either way, the app's home is where signing in should land.
+        if (path.startsWith("/login") || path == "/mypage" || path == "/mypage/") {
             showPageTransitionOverlay()
             webView.loadUrl(START_URL)
         }
