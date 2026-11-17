@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.6
+
+Built on 2.84.5.
+
+- **Pictures for card-check matches come back without reopening each show.** 2.84.4 only filled a missing picture when you opened that show in card check again. Card check keeps every show page it has read on the TV, pictures included, so now, whenever the StarScope list loads, any logged match with no picture gets it from those saved pages, sent to the sheet in one call; at most once an hour, and nothing is asked of the site. Shows card-checked on another TV fill in from that TV.
+
 ## 2.84.5
 
 Built on 2.84.4.

@@ -715,6 +715,33 @@
   function apply() { if (!map) return; if (scopeKind === 'check') return; if (scopeKind === 'recent' || scopeKind === 'top' || scopeKind === 'all' || scopeKind === 'shows' || scopeKind === 'next' || scopeKind === 'log') renderHome(); else if (scopeKind) renderScope(); else addButtons(); }
   var timer = 0;
   function soon() { if (timer) return; timer = setTimeout(function() { timer = 0; apply(); }, 350); }   // not a debounce: a page that keeps changing must still get its button
+  // Pictures for card-check matches saved without one (2.84.6): card check keeps each show page it read on this TV
+  // (tvCcSet<set>), pictures included. Once the list is in, any logged match with no picture gets it from there, sent
+  // to the sheet in one call (vi_thumbs); at most once an hour, and nothing is asked of the site.
+  function fillThumbs() {
+    if (!SHEET || !map || !H.indexSync) return;
+    var last = 0; try { last = Number(localStorage.getItem('tvCcThumbFill') || 0); } catch (e) {}
+    if (Date.now() - last < 3600000) return;
+    var items = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!/^tvCcSet\d+$/.test(k || '')) continue;
+        var c = JSON.parse(localStorage.getItem(k) || 'null');
+        ((c && c.videos) || []).forEach(function(v) { var m = map[v.id]; if (m && !m.th && v.th && items.length < 40) items.push({ video: v.id, thumb: v.th }); });
+      }
+    } catch (e) {}
+    try { localStorage.setItem('tvCcThumbFill', String(Date.now())); } catch (e) {}
+    if (!items.length) return;
+    var prev = window.__tvIndexReply;
+    window.__tvIndexReply = function(id, text) {
+      if (id !== 'sct1') { if (prev) prev(id, text); return; }
+      window.__tvIndexReply = prev;
+      var r = null; try { r = JSON.parse(text); } catch (e) {}
+      if (r && r.ok && r.filled) { try { localStorage.removeItem(KEY); H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+    };
+    try { H.indexSync('sct1', JSON.stringify({ action: 'vi_thumbs', items: items })); } catch (e) { window.__tvIndexReply = prev; }
+  }
   window.__tvStarCardsReply = function(id, text) {
     var r; try { r = JSON.parse(text); } catch (e) { return; }
     if (id === 's1') { if (r && r.ok) gotSuggest(r); return; }
@@ -723,7 +750,9 @@
     try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), map: map })); } catch (e) {}
     try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
     soon();
+    setTimeout(fillThumbs, 3000);
   };
+  if (map) setTimeout(fillThumbs, 5000);
   var fresh = 0;
   try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}, ids = Object.keys(saved.map || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
   if (Date.now() - fresh > AGE) { try { H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
