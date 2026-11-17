@@ -108,7 +108,21 @@
       show = s; lsSet(SET_KEY, s); start();
     }).catch(function(e) { err = T.notRead + ' (' + (e && e.message || e) + ')'; render(); });
   }
+  // Logged matches of this show that have no picture yet (saved before 2.84.4): their pictures from the show page we
+  // already read, sent once. Nothing more is asked of the site.
+  function fillThumbs() {
+    var map = cardsMap(), items = show.videos.filter(function(v) { var c = map[v.id]; return c && !c.th && v.th; }).map(function(v) { return { video: v.id, thumb: v.th }; });
+    if (!items.length || !window.AndroidHost || !AndroidHost.indexSync) return;
+    var prev = window.__tvIndexReply;
+    window.__tvIndexReply = function(id, text) {
+      if (id !== 'cct1') { if (prev) prev(id, text); return; }
+      window.__tvIndexReply = prev;
+      try { var r = JSON.parse(text); if (r.ok && r.filled && AndroidHost.starCards) AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {}
+    };
+    try { AndroidHost.indexSync('cct1', JSON.stringify({ action: 'vi_thumbs', items: items })); } catch (e) { window.__tvIndexReply = prev; }
+  }
   function start() {
+    setTimeout(fillThumbs, 4000);
     // Open on the first match not logged yet.
     var map = cardsMap();
     cur = 0;

@@ -3827,7 +3827,7 @@ class MainActivity : Activity() {
         // sheet. Replies go to __tvIndexReply. Runs only when the panel is opened; it never calls the video site.
         @android.webkit.JavascriptInterface
         fun indexSync(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose"), "__tvIndexReply")
+            sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose", "vi_thumbs"), "__tvIndexReply")
 
         // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
         @android.webkit.JavascriptInterface

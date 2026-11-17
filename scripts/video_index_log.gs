@@ -31,7 +31,9 @@
  *   vi_lib     {}                                              approved names and lists; applies approved proposals first
  *   vi_get     {video}                                         the match this video belongs to, and who else is on that show
  *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides;
- *                                                              source "thumb" (2.83.0): from StarScope card check, not watched
+ *                                                              source "thumb" (2.83.0): from StarScope card check, not watched;
+ *                                                              thumb, site_text (2.84.4): its picture and page text, kept in match_videos
+ *   vi_thumbs  {items: [{video, thumb}]}                        (2.84.4) pictures for card-check matches saved without one
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
  *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
@@ -93,6 +95,7 @@ function doPost(e) {
   // makes a save wait (a save that waits more than 25 s answers "busy").
   if (body.action === 'vi_lib' && !viRows('proposals').some(function(p) { return p.status === 'approved'; })) return out(viAction(body));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
+  if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -341,7 +344,9 @@ function dbgExport() {
 // Raw captures stay in "videos". These tabs hold reviewed data; every id is permanent and nothing is deleted.
 var VI = {
   matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set', 'card_total'],
-  match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated'],
+  // thumb and site_text (2.84.4): a match logged with card check has no row in "videos" (it was never opened), so its
+  // picture and the page's text (for the StarScope button) are kept here.
+  match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
   shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note'],
@@ -356,9 +361,16 @@ var VI = {
   // One star rating (1 to 5) per match per device: your own, and the average of everyone's (2.62.0).
   ratings: ['match_id', 'device', 'stars', 'updated']
 };
+var VI_HEAD_OK = {};
 function viSheet(name) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(name);
-  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(VI[name]); sh.setFrozenRows(1); }
+  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(VI[name]); sh.setFrozenRows(1); VI_HEAD_OK[name] = 1; }
+  // A tab made before a column was added gets the new column's heading (once per run).
+  if (!VI_HEAD_OK[name]) {
+    VI_HEAD_OK[name] = 1;
+    var n = VI[name].length, have = sh.getLastColumn();
+    if (have < n) sh.getRange(1, have + 1, 1, n - have).setValues([VI[name].slice(have)]);
+  }
   return sh;
 }
 function viCell(v) { return v instanceof Date ? Utilities.formatDate(v, 'UTC', 'yyyy-MM-dd') : v; }
@@ -622,9 +634,16 @@ function viSave(b) {
     }
   }
   var marks = b.marks || {}, sec = function(v) { return v === '' || v == null || !(Number(v) >= 0) ? '' : Math.floor(Number(v)); };
+  var thumb = /^https:\/\/www\.stardom-world\.com\//.test(String(b.thumb || '')) ? String(b.thumb).slice(0, 500) : '';
+  var siteText = String(b.site_text || '').slice(0, 3000);
   var vids = viRows('match_videos').filter(function(v) { return String(v.video_id) === video; });
-  if (vids.length) viSet('match_videos', vids[0]._row, { match_id: id, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), updated: now });
-  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now }]);
+  if (vids.length) {
+    var vf = { match_id: id, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), updated: now };
+    if (thumb && !vids[0].thumb) vf.thumb = thumb;
+    if (siteText && !vids[0].site_text) vf.site_text = siteText;
+    viSet('match_videos', vids[0]._row, vf);
+  }
+  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now, thumb: thumb, site_text: siteText }]);
 
   // Tags: only values in the lists tab (and known wrestlers for the fall) are kept; this match's old tags are replaced.
   if (Array.isArray(b.tags)) {
@@ -796,7 +815,7 @@ function viCards() {
       // Card check (2.83.0): 1 when the match was logged from its thumbnail and line-up (not watched yet).
       tb: String(m.source) === 'thumb' ? 1 : 0
     };
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return { ok: true, map: map };
 }
@@ -1052,4 +1071,14 @@ function phonePropose(k, body) {
   body.owner = true;     // the owner's phone, like the private build: the addition goes in at once
   body.device = 'phone';
   return withLock(function() { return viAction(body); });
+}
+
+// Card check (2.84.4): pictures for matches logged before card check sent them. {items: [{video, thumb}]}: fills
+// match_videos.thumb where it is empty. Only site addresses are kept.
+function viThumbs(b) {
+  var items = Array.isArray(b.items) ? b.items.slice(0, 40) : [], want = {};
+  items.forEach(function(x) { var v = String(x && x.video || ''), t = String(x && x.thumb || ''); if (/^\d{1,9}$/.test(v) && /^https:\/\/www\.stardom-world\.com\//.test(t)) want[v] = t.slice(0, 500); });
+  var n = 0;
+  viRows('match_videos').forEach(function(r) { var t = want[String(r.video_id)]; if (t && !r.thumb) { viSet('match_videos', r._row, { thumb: t }); n++; } });
+  return { ok: true, filled: n };
 }

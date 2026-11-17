@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.4
+
+Built on 2.84.3. Needs the new sheet script (deploy a new version).
+
+- **Pictures for shows logged with card check.** StarScope takes a match's picture from the sheet's "videos" tab, which only has videos you have opened; a match logged with card check was never opened, so its card and its show's poster had none. Card check now saves the picture with the match (new `thumb` column in match_videos, its heading added by the script), and StarScope uses it when "videos" has nothing.
+- **Matches already logged without one** get theirs the next time you open their show in card check: the pictures come from the show page card check has already read, sent to the sheet in one call (`vi_thumbs`), so nothing more is asked of the site.
+- **The StarScope button** (only what the site would miss) now also knows what the page of a card-check match says (new `site_text` column), so those matches aren't shown as missed when their names are in the site's text.
+
 ## 2.84.3
 
 Built on 2.84.2.
