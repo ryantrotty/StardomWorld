@@ -10602,9 +10602,35 @@ class MainActivity : Activity() {
             });
           }
 
+          // 2.84.5: the site's own banner is read until its slides have stayed the same for 3 checks in a row (or for 30 s
+          // at most); then its slider is stopped and taken off the page, with its pictures, and the page is no longer
+          // searched every second. Our banner keeps the slides it read.
+          function stopSiteHero(sources) {
+            sources.forEach(function(el) {
+              try {
+                var jq = window.jQuery;
+                if (jq) {
+                  jq(el).find('.slick-initialized').addBack('.slick-initialized').each(function() { try { jq(this).slick('slickPause'); jq(this).slick('unslick'); } catch (e) {} });
+                  jq(el).find('.owl-carousel').addBack('.owl-carousel').each(function() { try { jq(this).trigger('stop.owl.autoplay'); } catch (e) {} });
+                }
+                Array.prototype.forEach.call([el].concat(Array.prototype.slice.call(el.querySelectorAll('.swiper, .swiper-container'))), function(sw) {
+                  try { if (sw.swiper) { if (sw.swiper.autoplay) sw.swiper.autoplay.stop(); sw.swiper.destroy(true, true); } } catch (e) {}
+                });
+                if (el.parentNode) el.parentNode.removeChild(el);
+              } catch (e) {}
+            });
+          }
           function updateHero() {
-            if (!isHomePage()) return;
+            if (!isHomePage() || window.__tvHeroDone) return;
             var found = collectHeroSlides();
+            window.__tvHeroTicks = (window.__tvHeroTicks || 0) + 1;
+            var sig0 = found.slides.map(function(x) { return x.bgUrl; }).join('|');
+            window.__tvHeroSame = found.slides.length && sig0 === window.__tvHeroSig ? (window.__tvHeroSame || 0) + 1 : 0;
+            if (window.__tvHeroSame >= 3 || window.__tvHeroTicks >= 30) {
+              window.__tvHeroDone = true;
+              stopSiteHero(found.sources);
+              return;
+            }
 
             // Hide the site's original hero (wherever it ended up) every tick
             found.sources.forEach(function(el) {

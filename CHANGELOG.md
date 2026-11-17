@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.5
+
+Built on 2.84.4.
+
+- **Home is lighter while it sits there.** The site's own banner slider was hidden but kept running underneath, rotating out of sight and holding every one of its pictures, and the home page was searched every second, for as long as it was open, for that banner's slides. Now the slides are read until they have stayed the same for three checks in a row (30 s at most); then the site's slider is stopped (slick, Swiper or Owl, whichever it is) and taken off the page with its pictures, and the search stops. Our banner keeps rotating the slides it read, every 5 s, as before.
+
 ## 2.84.4
 
 Built on 2.84.3. Needs the new sheet script (deploy a new version).
