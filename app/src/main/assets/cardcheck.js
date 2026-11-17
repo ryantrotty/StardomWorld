@@ -1,0 +1,397 @@
+(function(){
+  // StarScope card check (2.83.0, private builds with StarScope logging): /mypage?tvscope=check&set=<set id>.
+  // Log a show's card from its thumbnails and line-ups, without playing anything. The show page is read once (one
+  // request, kept for a day); each match's own page is read one at a time as you reach it, at least 2 s apart, and
+  // kept for the visit. Nothing is sent to the sheet's watch history: reading a page here is not watching it.
+  // Confirm saves the match through the logger (assets/indexpanel.js) as a "thumb" entry: people and sides, no bell
+  // times. Edit details and Add result open the logger itself for that match.
+  if (window.__tvCardCheck) return;
+  if (location.pathname !== '/mypage') return;
+  var Q = null; try { Q = new URLSearchParams(location.search); } catch (e) { return; }
+  if (!Q || Q.get('tvscope') !== 'check') return;
+  var SET = String(Q.get('set') || '').replace(/\D/g, '');
+  if (!SET || !window.AndroidHost || !AndroidHost.indexSync) return;
+  window.__tvCardCheck = true;
+
+  var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+  var T = ja ? {
+    head: 'カードチェック', loading: '大会ページを読み込み中…', notRead: 'このページを読めませんでした', retry: 'もう一度',
+    match: '第', of: '試合 / 全', matchEn: '', reading: '試合ページを読み込み中…', waiting: '順番に読み込みます',
+    people: '選手', side: 'サイド', show: '大会', matchInfo: '試合', date: '日付', venue: '会場', place: '試合順', kind: '試合形式',
+    sugg: 'タイトルからの候補', none: 'なし', unknown: '未登録',
+    confirm: '確認して次へ ▼', edit: '詳細を編集', result: '結果と評価を追加', watch: 'この試合を見る', skip: 'スキップ ▼', next: '次の試合 ▼',
+    loggedThumb: 'サムネイルから登録済み', loggedWatched: '視聴して登録済み', savedNow: '登録しました',
+    watched: '視聴済み', plays: '回再生', last: '最終', notLogged: '未登録', notWatched: '未視聴',
+    hintMove: '前の試合 / 次の試合', hintPress: '選ぶ', hintBack: '戻る',
+    doneHead: '大会の登録が完了', doneSub: 'すべての試合がSTARSCOPEに入りました', dThumb: 'サムネイルと出場選手から登録', dWatched: '視聴して登録済み（変更なし）',
+    dBell: 'ゴングの時間は視聴時に追加できます（次に登録 › ゴング未記録）', nextShow: '次の大会へ', logShows: '大会を登録', shows: '大会一覧', stay: 'このまま見る',
+    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）'
+  } : {
+    head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
+    match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
+    people: 'People', side: 'Side', show: 'Show', matchInfo: 'Match', date: 'Date', venue: 'Venue', place: 'Match order', kind: 'Match type',
+    sugg: 'Suggested from the title', none: 'None', unknown: 'not in the library',
+    confirm: 'Confirm & next ▼', edit: 'Edit details', result: 'Add result & rating', watch: 'Watch this match', skip: 'Skip ▼', next: 'Next match ▼',
+    loggedThumb: 'Logged from thumbnail', loggedWatched: 'Logged while watching', savedNow: 'Logged',
+    watched: 'Watched', plays: 'plays', last: 'last', notLogged: 'not logged', notWatched: 'Not watched',
+    hintMove: 'Previous / next match', hintPress: 'Choose', hintBack: 'Back',
+    doneHead: 'Show logged', doneSub: 'All matches on this card are in StarScope', dThumb: 'logged from thumbnails and line-ups', dWatched: 'already logged while watching, left as it was',
+    dBell: "Bell times are added when you watch; they're in Log next.", nextShow: 'Next show to log', logShows: 'Log a show', shows: 'Shows', stay: 'Stay here',
+    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)'
+  };
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var GAP = 2000, SET_KEY = 'tvCcSet' + SET, SET_AGE = 86400000, REC_KEY = 'tvCcRec';
+  var TEL = '<svg width="34" height="34" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 13 L45 9 L45 31 L33 27 Z" fill="#fff"/></g><path d="M22 27 L14 46 M24 27 L24 46 M26 27 L34 46" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M52 2 L53.6 6.4 L58 8 L53.6 9.6 L52 14 L50.4 9.6 L46 8 L50.4 6.4 Z" fill="#F4C242"/></svg>';
+
+  function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function ssGet(k) { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function ssSet(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function dateText(d) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || '');
+    if (!m) return '';
+    if (ja) return m[1] + '年' + (+m[2]) + '月' + (+m[3]) + '日';
+    var w = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
+    return DAY[w] + ' ' + (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1];
+  }
+  function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : (ja ? (d.getMonth() + 1) + '月' + d.getDate() + '日' : d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear()); }
+  function isComment(t) { return /コメント|comments?\b/i.test(t) && !/試合|マッチ|match|commentary/i.test(t); }
+  function showName(n, date) { return (!ja && window.__tvShowName) ? window.__tvShowName.en(n, date, false) : n; }
+
+  // ---- what the TV already knows: the StarScope list (logged, and how) and Log next's watch history
+  // The logger clears the TV's copy when it saves; the last one read stays here until the new list arrives.
+  var lastMap = null;
+  function cardsMap() { var c = lsGet('tvVixCardsV4'); if (c && c.map) lastMap = c.map; return lastMap || {}; }
+  var prevUpdate = window.__tvScopeUpdate;
+  window.__tvScopeUpdate = function() { try { if (prevUpdate) prevUpdate(); } catch (e) {} if (show && !window.__tvIndexIsOpen) render(); };
+  function watchInfo() {
+    var s = lsGet('tvVixSuggestV1'), out = {};
+    ((s && s.sets) || []).forEach(function(g) { if (String(g.set) === SET) (g.videos || []).forEach(function(v) { out[String(v.id)] = v; }); });
+    return out;
+  }
+
+  // ---- state
+  var show = null;          // { name, date, venue, line, videos: [{ id, t, th }] }
+  var cur = 0, recs = {}, saved = {}, err = '', root = null, focusKey = 'confirm', reading = null, lastFetch = 0, queue = [], pumpTimer = 0;
+  var kitReady = false;
+
+  // ---- the show page: one request
+  function readSetHtml(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var og = doc.querySelector('meta[property="og:title"]'), line = og ? String(og.getAttribute('content') || '').replace(/\s*\|\s*Stardom World\s*$/i, '').trim() : '';
+    if (!line) { var h = doc.querySelector('h1, h2'); line = h ? h.textContent.replace(/\s+/g, ' ').trim() : ''; }
+    var seen = {}, vids = [];
+    Array.prototype.forEach.call(doc.querySelectorAll('a[href*="/set/' + SET + '/contents/"]'), function(a) {
+      var m = /\/contents\/(\d+)/.exec(a.getAttribute('href') || '');
+      if (!m) return;
+      var art = a.closest('article') || a.parentElement, v = seen[m[1]];
+      if (!v) { v = seen[m[1]] = { id: m[1], t: '', th: '' }; vids.push(v); }
+      if (!v.th) { var bg = art && art.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || ''); if (mm) v.th = mm[1]; }
+      if (!v.t) { var h3 = art && art.querySelector('h3, .ttl-xs'); v.t = (h3 ? h3.textContent : a.textContent || '').replace(/\s+/g, ' ').trim(); }
+    });
+    vids = vids.filter(function(v) { return !isComment(v.t); });
+    var so = window.__tvSetOrder, ord = so ? so.forSet(SET, vids.map(function(v) { return { id: Number(v.id), t: v.t }; })) : null;
+    if (ord && ord.flip) vids.reverse();
+    var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+SET, line, null) : { show: line, date: null, venue: null };
+    return { line: line, name: sl.show || line, date: sl.date || '', venue: sl.venue || '', videos: vids, t: Date.now() };
+  }
+  function loadSet() {
+    var c = lsGet(SET_KEY);
+    if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) { show = c; start(); return; }
+    render();
+    fetch('/set/' + SET, { credentials: 'include' }).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
+      lastFetch = Date.now();
+      var s = readSetHtml(html);
+      if (!s.videos.length) throw new Error('no matches on the page');
+      show = s; lsSet(SET_KEY, s); start();
+    }).catch(function(e) { err = T.notRead + ' (' + (e && e.message || e) + ')'; render(); });
+  }
+  function start() {
+    // Open on the first match not logged yet.
+    var map = cardsMap();
+    cur = 0;
+    for (var i = 0; i < show.videos.length; i++) if (!map[show.videos[i].id]) { cur = i; break; }
+    if (window.__tvIndexKit) window.__tvIndexKit.lib(function(ok) { kitReady = ok; render(); });
+    render(); want(cur);
+  }
+
+  // ---- match pages: one at a time, at least 2 s apart, only the one on screen and the one after it
+  function want(i) {
+    var v = show && show.videos[i];
+    if (!v || recs[v.id]) { if (v && i === cur) want(cur + 1); return; }
+    var c = ssGet(REC_KEY + v.id);
+    if (c) { recs[v.id] = c; if (i === cur) { render(); want(cur + 1); } return; }
+    if (queue.indexOf(v.id) < 0) queue.push(v.id);
+    pump();
+  }
+  function pump() {
+    if (reading || !queue.length) return;
+    // Only what is still needed: the match on screen first, then the next one.
+    var need = [show.videos[cur], show.videos[cur + 1]].filter(Boolean).map(function(v) { return v.id; });
+    queue = queue.filter(function(id) { return need.indexOf(id) >= 0 && !recs[id]; });
+    if (!queue.length) return;
+    var id = need.filter(function(x) { return queue.indexOf(x) >= 0; })[0];
+    var wait = lastFetch + GAP - Date.now();
+    if (wait > 0) { if (!pumpTimer) pumpTimer = setTimeout(function() { pumpTimer = 0; pump(); }, wait); return; }
+    reading = id; queue.splice(queue.indexOf(id), 1);
+    lastFetch = Date.now();
+    fetch('/set/' + SET + '/contents/' + id, { credentials: 'include' }).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var rec = window.__tvVixRead ? window.__tvVixRead(doc, id, SET) : null;
+      if (!rec) throw new Error('nothing read');
+      recs[id] = rec; ssSet(REC_KEY + id, rec);
+    }).catch(function(e) { recs[id] = { failed: String(e && e.message || e) }; }).then(function() {
+      reading = null;
+      if (show.videos[cur] && show.videos[cur].id === id) render();
+      want(cur + 1);
+      pump();
+    });
+  }
+
+  // ---- what is shown for one match
+  function status(v) {
+    if (saved[v.id]) return { k: 'saved', label: T.savedNow };
+    var c = cardsMap()[v.id];
+    if (c) return c.x && c.x.tb ? { k: 'thumb', label: T.loggedThumb, card: c } : { k: 'watched', label: T.loggedWatched, card: c };
+    return null;
+  }
+  // The match as the site names it (Tag Team Match, 5★STAR GP Red Stars B Block…), in the page's language.
+  function kindOf(rec) { return (ja ? rec.title_ja || rec.title_en : rec.title_en || rec.title_ja) || ''; }
+  function peopleHtml(rec) {
+    var useEn = rec.sides_en && rec.sides_en.length >= 2, A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : [];
+    if (A.length < 2) return '<div class="nl">' + esc(T.noLineup) + '</div>';
+    var kit = kitReady && window.__tvIndexKit, h = '';
+    A.forEach(function(names, i) {
+      if (i) h += '<div class="vs">VS</div>';
+      h += '<div class="sd">';
+      names.forEach(function(raw, j) {
+        var other = B[i] && B[i].length === names.length ? B[i][j] : '';
+        var id = kit ? (kit.resolve(raw) || kit.resolve(other)) : '';
+        var shown = id ? kit.nameOf(id) : raw, sub = ja ? '' : (other || '');
+        h += '<div class="pp' + (id || !kit ? '' : ' bad') + '"><span class="mk">' + (id ? '✓' : (kit ? '?' : '·')) + '</span><span class="pn">' + esc(shown) + (sub && sub !== shown ? '<small>' + esc(sub) + '</small>' : '') +
+          (!id && kit ? '<small class="w">' + esc(T.unknown) + '</small>' : '') + '</span></div>';
+      });
+      h += '</div>';
+    });
+    return h;
+  }
+  function row(label, value, cls) { return '<div class="rw"><span class="lb">' + esc(label) + '</span><span class="vl' + (cls ? ' ' + cls : '') + '">' + value + '</span></div>'; }
+  function matchHtml(rec, i) {
+    var total = show.videos.length, kit = kitReady && window.__tvIndexKit;
+    var text = [rec.title_en, rec.title_ja, rec.h1].filter(Boolean).join(' ');
+    var sug = kit ? kit.suggest(text) : [];
+    var h = row(T.place, esc(ja ? T.match + (i + 1) + T.of + total + '試合' : T.match + (i + 1) + T.of + total));
+    h += row(T.kind, esc(kindOf(rec) || '–'));
+    h += row(T.sugg, sug.length ? sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') : '<span class="dim">' + esc(T.none) + '</span>');
+    return h;
+  }
+  function showHtml(rec) {
+    var kit = kitReady && window.__tvIndexKit, s0 = rec && rec.shows && rec.shows[0];
+    var raw = (s0 && s0.venue) || show.venue || '', ven = kit && raw ? kit.venue(raw) : null;
+    var date = (rec && rec.date) || show.date || '';
+    return row(T.date, esc(dateText(date) || '–')) + row(T.venue, ven ? esc(ven.name) + (raw && !ja ? ' <span class="dim">· ' + esc(raw) + '</span>' : '') : (raw ? '? ' + esc(raw) : '–'), ven ? '' : (raw ? 'bad' : ''));
+  }
+  function watchLine(v, st) {
+    var w = watchInfo()[v.id];
+    if (w) return '<div class="wl on">' + esc(T.watched + ' ' + shortDate(w.last) + ' · ' + (w.views || 1) + ' ' + T.plays + (st ? '' : ' · ' + T.notLogged)) + '</div>';
+    if (st && st.k === 'watched') return '<div class="wl on">' + esc(T.loggedWatched) + '</div>';
+    return '<div class="wl">' + esc(T.notWatched) + '</div>';
+  }
+  function squares() {
+    return '<div class="sq">' + show.videos.map(function(v, i) {
+      var st = status(v), c = st ? (st.k === 'watched' ? 'w' : 't') : '';
+      return '<span class="' + c + (i === cur ? ' cur' : '') + '">' + (i + 1) + '</span>';
+    }).join('') + '</div>';
+  }
+  function btn(k, label, on) { return '<button type="button" class="b' + (on ? ' on' : '') + '" data-k="' + k + '">' + esc(label) + '</button>'; }
+
+  var CSS = '#tvcc{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#fff;display:flex}' +
+    '#tvcc .st{position:relative;flex:0 0 52%;height:100%;overflow:hidden}' +
+    '#tvcc .tk{position:absolute;left:48px;right:24px;top:0;transition:transform .25s ease}' +
+    '#tvcc .it{margin-bottom:26px;opacity:.38;transition:opacity .2s}#tvcc .it.cur{opacity:1}' +
+    '#tvcc .im{width:100%;aspect-ratio:16/9;border-radius:12px;background:#161F2A center/cover no-repeat;border:1px solid #2A323C}' +
+    '#tvcc .it .tt{display:flex;align-items:center;gap:12px;margin-top:12px;font:900 24px Arial}#tvcc .it .sb{font:600 16px Arial;color:#C9D2DC;margin-top:6px;line-height:1.5}' +
+    '#tvcc .chp{font:800 11px Arial;letter-spacing:1px;text-transform:uppercase;border-radius:20px;padding:3px 9px;white-space:nowrap}' +
+    '#tvcc .chp.t,#tvcc .chp.saved{background:#2A2410;color:#F4C242;border:1px solid #6B5A22}#tvcc .chp.w{background:#12261B;color:#7FD3A0;border:1px solid #2E9E5B}#tvcc .chp.r{color:#9AA6B4;border:1px dashed #3B4656}' +
+    '#tvcc .pn{flex:1 1 0;min-width:0;padding:22px 48px 70px 8px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}' +
+    '#tvcc .hd{display:flex;align-items:center;gap:12px}#tvcc .wm{font:900 18px Arial;letter-spacing:.06em}#tvcc .wm b{color:#F4C242}#tvcc .hh{font:800 13px Arial;letter-spacing:1px;color:#F4C242}' +
+    '#tvcc .sq{margin-left:auto;display:flex;gap:6px}#tvcc .sq span{width:30px;height:22px;border-radius:4px;border:1px dashed #3B4656;color:#5A6472;font:800 11px Arial;display:flex;align-items:center;justify-content:center;box-sizing:border-box}' +
+    '#tvcc .sq span.t{background:#2A2410;border:1px solid #6B5A22;color:#F4C242}#tvcc .sq span.w{background:#12261B;border:1px solid #2E9E5B;color:#7FD3A0}#tvcc .sq span.cur{border:2px solid #fff;color:#fff}' +
+    '#tvcc .sh{font:600 15px Arial;color:#9AA6B4}' +
+    '#tvcc .box{background:#0F151C;border:1px solid #2A323C;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden;flex:1 1 auto}' +
+    '#tvcc .wl{font:600 14px Arial;color:#9AA6B4;border:1px solid #2A323C;border-radius:10px;padding:7px 12px}#tvcc .wl.on{color:#7FD3A0;background:#12261B;border-color:#2E9E5B}' +
+    '#tvcc .gl{font:800 12px Arial;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4;margin-top:4px}' +
+    '#tvcc .sd{display:flex;flex-direction:column;gap:5px}#tvcc .vs{align-self:center;font:900 13px Arial;letter-spacing:2px;color:#F4C242}' +
+    '#tvcc .pp{display:flex;align-items:center;gap:10px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:5px 10px;min-height:40px;box-sizing:border-box}' +
+    '#tvcc .pp.bad{border-color:#FFB347;background:#2A1C10}#tvcc .pp .mk{width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:900 13px Arial;background:#12261B;color:#7FD3A0;flex:none}' +
+    '#tvcc .pp.bad .mk{background:#2A1C10;color:#FFB347;border:1px solid #FFB347}#tvcc .pp .pn{padding:0;display:block;font:700 17px Arial}#tvcc .pp small{display:block;font:600 12px Arial;color:#9AA6B4}#tvcc .pp small.w{color:#FFB347}' +
+    '#tvcc .rw{display:flex;align-items:center;gap:12px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:6px 12px;min-height:38px;box-sizing:border-box}' +
+    '#tvcc .rw .lb{flex:0 0 150px;font:800 11px Arial;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4}#tvcc .rw .vl{flex:1 1 0;font:700 16px Arial;min-width:0}#tvcc .rw .vl.bad{color:#FFB347}' +
+    '#tvcc .sg{display:inline-block;margin:0 6px 0 0;padding:2px 8px;border-radius:20px;border:1px solid #6B5A22;background:#2A2410;color:#F4C242;font:800 12px Arial}#tvcc .dim{color:#9AA6B4;font-weight:600}' +
+    '#tvcc .nl{font:600 15px Arial;color:#9AA6B4;padding:8px 0}' +
+    '#tvcc .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}#tvcc .cols>div{display:flex;flex-direction:column;gap:6px;min-width:0}' +
+    '#tvcc .bt{display:flex;flex-wrap:wrap;gap:10px}' +
+    '#tvcc .b{appearance:none;height:48px;padding:0 18px;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#C9D2DC;font:700 17px Arial;outline:none!important;box-shadow:none!important}' +
+    '#tvcc .b.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A}#tvcc .b:focus{border-color:#F4C242!important;color:#fff}#tvcc .b.on:focus{color:#1A1A1A}' +
+    '#tvcc .ld{font:700 16px Arial;color:#9AA6B4;padding:12px 0}#tvcc .er{font:700 16px Arial;color:#FF7A66;padding:12px 0}' +
+    '#tvcc .hn{position:fixed;left:0;right:0;bottom:0;height:52px;display:flex;align-items:center;gap:26px;padding:0 48px;background:rgba(11,17,24,.96);border-top:1px solid #2A323C;font:600 15px Arial;color:#C9D2DC}' +
+    '#tvcc .hn i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;margin-right:8px;border-radius:6px;border:1px solid #3B4656;background:#161F2A;color:#fff;font:800 13px Arial}' +
+    '#tvcc .dn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,17,24,.82)}' +
+    '#tvcc .dp{width:780px;background:#0F151C;border:2px solid #F4C242;border-radius:16px;padding:32px 40px;display:flex;flex-direction:column;gap:14px}' +
+    '#tvcc .dp .t1{font:900 30px Arial}#tvcc .dp .t2{font:600 17px Arial;color:#C9D2DC}#tvcc .dp .ln{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid #2A323C;background:#161F2A;border-radius:12px;font:600 17px Arial;color:#C9D2DC}' +
+    '#tvcc .dp .ln b{font:900 26px Arial;width:36px;text-align:center}';
+
+  function ensure() {
+    if (root) return;
+    var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
+    root = document.createElement('div'); root.id = 'tvcc'; root.className = 'notranslate'; root.setAttribute('translate', 'no');
+    document.body.appendChild(root);
+  }
+  var doneOpen = false;
+  function render() {
+    if (!document.body) return;
+    ensure();
+    var keep = document.activeElement && root.contains(document.activeElement) ? document.activeElement.getAttribute('data-k') : null;
+    if (keep) focusKey = keep;
+    // Waiting on Skip while the match page was read: once it has been, Confirm is the one to press.
+    var wasReady = !!root.querySelector('[data-k="confirm"]');
+    if (!show) {
+      root.innerHTML = '<div class="pn" style="padding:40px 48px"><div class="hd">' + TEL + '<span class="wm">STAR<b>SCOPE</b></span><span class="hh">' + T.head + '</span></div>' +
+        (err ? '<div class="er">' + esc(err) + '</div><div class="bt">' + btn('retry', T.retry, true) + '</div>' : '<div class="ld">' + esc(T.loading) + '</div>') + '</div>';
+      focus(); return;
+    }
+    var v = show.videos[cur], rec = recs[v.id], st = status(v);
+    // Left: the thumbnails, large, one after another; the current one in full, its neighbours dimmed.
+    var h = '<div class="st"><div class="tk">';
+    show.videos.forEach(function(x, i) {
+      if (i < cur - 1 || i > cur + 1) return;
+      var s = status(x), r = recs[x.id], chip = s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : (s.k === 'saved' ? 'saved' : 't')) + '">' + esc(s.label) + '</span>' : (r && !r.failed ? '' : (i === cur ? '<span class="chp r">' + esc(r && r.failed ? T.notRead : T.reading) + '</span>' : ''));
+      var title = (r && !r.failed && (ja ? r.title_ja || r.title_en : r.title_en || r.title_ja)) || x.t;
+      var line = '';
+      if (i === cur && r && !r.failed) {
+        var en = (r.sides_en || []).map(function(sd) { return sd.join(' & '); }).join(' vs '), jp = (r.sides_ja || []).map(function(sd) { return sd.join('&'); }).join(' vs ');
+        line = [ja ? jp || en : en || jp, ja ? '' : jp].filter(Boolean).map(esc).join('<br>');
+      }
+      h += '<div class="it' + (i === cur ? ' cur' : '') + '" data-i="' + i + '"><div class="im"' + (x.th ? ' style="background-image:url(\'' + esc(x.th) + '\')"' : '') + '></div>' +
+        '<div class="tt">' + esc(ja ? T.match + (i + 1) + '試合' : T.match + (i + 1)) + ' · ' + esc(title) + chip + '</div>' + (line ? '<div class="sb">' + line + '</div>' : '') + '</div>';
+    });
+    h += '</div></div>';
+    // Right: the show, what's known about this match, and what to do with it.
+    var name = showName(show.name, show.date);
+    h += '<div class="pn"><div class="hd">' + TEL + '<span class="wm">STAR<b>SCOPE</b></span><span class="hh">' + T.head + '</span>' + squares() + '</div>';
+    h += '<div class="sh">' + esc([name, dateText(show.date)].filter(Boolean).join(' · ')) + '</div>';
+    h += '<div class="box">' + watchLine(v, st);
+    if (st && st.card && window.__tvStarCard) {
+      h += '<div class="gl">' + esc(st.label) + '</div><div style="background:#1A1A1A;border-radius:8px;padding:11px 14px 13px">' + window.__tvStarCard.html(st.card) + '</div>';
+    } else if (!rec || rec.failed) {
+      h += '<div class="' + (rec && rec.failed ? 'er' : 'ld') + '">' + esc(rec && rec.failed ? T.notRead + ' (' + rec.failed + ')' : T.reading) + '</div>';
+    } else {
+      h += '<div class="gl">' + esc(T.people) + '</div>' + peopleHtml(rec);
+      h += '<div class="cols"><div><div class="gl">' + esc(T.matchInfo) + '</div>' + matchHtml(rec, cur) + '</div><div><div class="gl">' + esc(T.show) + '</div>' + showHtml(rec) + '</div></div>';
+    }
+    h += '</div><div class="bt">';
+    var ready = rec && !rec.failed;
+    if (st) h += btn('nextm', T.next, true) + (ready || st.card ? btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch);
+    else h += (ready ? btn('confirm', T.confirm, true) + btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch) + btn('skip', T.skip, !ready);
+    h += '</div></div>';
+    if (ready && !st && !wasReady && (focusKey === 'skip' || focusKey === 'watch')) focusKey = 'confirm';
+    h += '<div class="hn"><span><i>▲ ▼</i>' + esc(T.hintMove) + '</span><span><i>OK</i>' + esc(T.hintPress) + '</span><span><i>BACK</i>' + esc(T.hintBack) + '</span></div>';
+    if (doneOpen) h += doneHtml();
+    root.innerHTML = h;
+    place();
+    focus();
+  }
+  // The current thumbnail sits at the same height whichever match it is.
+  function place() {
+    var tk = root.querySelector('.tk'), it = root.querySelector('.it.cur');
+    if (!tk || !it) return;
+    var top = it.offsetTop, y = Math.max(0, top) - Math.round((root.clientHeight - 52) * 0.14);
+    tk.style.transform = 'translateY(' + (-y) + 'px)';
+  }
+  function focus() {
+    if (window.__tvIndexIsOpen) return;
+    var scope = doneOpen ? root.querySelector('.dp') : root;
+    var el = scope && (scope.querySelector('[data-k="' + focusKey + '"]') || scope.querySelector('.b.on') || scope.querySelector('.b'));
+    if (el) el.focus({ preventScroll: true });
+  }
+
+  function doneHtml() {
+    var n = { t: 0, w: 0 };
+    show.videos.forEach(function(v) { var s = status(v); if (s) n[s.k === 'watched' ? 'w' : 't']++; });
+    return '<div class="dn"><div class="dp"><div class="t1">' + esc(T.doneHead) + '</div><div class="t2">' + esc(showName(show.name, show.date) + ' · ' + T.doneSub) + '</div>' +
+      (n.t ? '<div class="ln"><b style="color:#F4C242">' + n.t + '</b>' + esc(T.dThumb) + '</div>' : '') +
+      (n.w ? '<div class="ln"><b style="color:#7FD3A0">' + n.w + '</b>' + esc(T.dWatched) + '</div>' : '') +
+      '<div class="t2" style="font-size:15px">' + esc(T.dBell) + '</div>' +
+      '<div class="bt">' + btn('nextshow', T.nextShow, true) + btn('logshows', T.logShows) + btn('stay', T.stay) + '</div></div></div>';
+  }
+  function allLogged() { return show.videos.every(function(v) { return !!status(v); }); }
+
+  function go(i) {
+    if (!show || i < 0 || i >= show.videos.length) return;
+    cur = i; focusKey = status(show.videos[cur]) ? 'nextm' : 'confirm';
+    render(); want(cur);
+  }
+  function nextUnlogged(from) {
+    for (var i = from + 1; i < show.videos.length; i++) if (!status(show.videos[i])) return i;
+    return Math.min(from + 1, show.videos.length - 1);
+  }
+  function openPanel(tab, quick) {
+    var v = show.videos[cur], rec = recs[v.id];
+    if (!window.__tvIndexOpen) return;
+    if (!rec || rec.failed) {   // a logged match whose page hasn't been read: the panel still has the sheet's copy
+      rec = { id: Number(v.id), set: Number(SET), title_en: v.t, title_ja: '', sides_en: [], sides_ja: [], shows: [], lines: [], thumb: v.th, date: show.date };
+    }
+    if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(SET), show: show.name, venue: show.venue, date: show.date }];
+    if (!rec.date) rec.date = show.date;
+    if (!rec.thumb) rec.thumb = v.th;
+    var at = cur;
+    window.__tvIndexOpen({ set: SET, video: v.id, rec: rec, place: { no: cur + 1, total: show.videos.length }, thumb: true, tab: tab, quick: !!quick,
+      done: function(res) {
+        if (res && res.ok) {
+          saved[v.id] = 1;
+          if (window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+          if (allLogged()) { doneOpen = true; focusKey = 'nextshow'; render(); return; }
+          if (quick && cur === at) { go(nextUnlogged(at)); return; }
+        }
+        focusKey = quick ? 'confirm' : (tab === 'finish' ? 'result' : 'edit'); render();
+      } });
+  }
+  function nextShowHref() {
+    var s = lsGet('tvVixSuggestV1'), map = cardsMap(), best = null;
+    ((s && s.sets) || []).forEach(function(g) {
+      if (String(g.set) === SET || best) return;
+      if ((g.videos || []).some(function(v) { return !v.comment && !map[String(v.id)]; })) best = g.set;
+    });
+    return best ? '/mypage?tvscope=check&set=' + best : '/mypage?tvscope=log';
+  }
+  function press(k) {
+    if (k === 'retry') { err = ''; loadSet(); return; }
+    if (k === 'confirm') return openPanel('card', true);
+    if (k === 'edit') return openPanel('card', false);
+    if (k === 'result') return openPanel('finish', false);
+    if (k === 'watch') { location.href = '/contents/' + show.videos[cur].id; return; }
+    if (k === 'skip' || k === 'nextm') { go(Math.min(cur + 1, show.videos.length - 1)); return; }
+    if (k === 'nextshow') { location.href = nextShowHref(); return; }
+    if (k === 'logshows') { location.href = '/mypage?tvscope=log'; return; }
+    if (k === 'stay') { doneOpen = false; focusKey = 'nextm'; render(); return; }
+  }
+  window.addEventListener('keydown', function(e) {
+    if (e.defaultPrevented || !root || window.__tvIndexIsOpen) return;
+    if (document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;
+    var c = e.keyCode, a = document.activeElement;
+    if (c === 13 || c === 23) { if (a && root.contains(a) && a.getAttribute('data-k')) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) press(a.getAttribute('data-k')); } return; }
+    if (c !== 37 && c !== 38 && c !== 39 && c !== 40) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (!show) { focus(); return; }
+    if (!doneOpen && (c === 38 || c === 40)) { go(cur + (c === 40 ? 1 : -1)); return; }
+    var scope = doneOpen ? root.querySelector('.dp') : root, bs = Array.prototype.slice.call(scope.querySelectorAll('.b')), i = bs.indexOf(a);
+    if (i < 0) { focus(); return; }
+    if (c === 39 && bs[i + 1]) bs[i + 1].focus({ preventScroll: true });
+    else if (c === 37) { if (bs[i - 1]) bs[i - 1].focus({ preventScroll: true }); else if (!doneOpen && window.__tvOpenMenu) window.__tvOpenMenu(); }
+  }, true);
+
+  function boot() { ensure(); loadSet(); }
+  if (document.body) boot(); else document.addEventListener('DOMContentLoaded', boot);
+})();

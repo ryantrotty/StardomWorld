@@ -30,7 +30,8 @@
  * Match index (2.45.0, same key; see docs/MATCH_INDEX.md): the curated tabs behind the private build's Index panel.
  *   vi_lib     {}                                              approved names and lists; applies approved proposals first
  *   vi_get     {video}                                         the match this video belongs to, and who else is on that show
- *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides
+ *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides;
+ *                                                              source "thumb" (2.83.0): from StarScope card check, not watched
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
  *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
@@ -558,6 +559,9 @@ function viSave(b) {
   if (Object.keys(sideSet).length < 2) return { ok: false, error: 'a match needs two sides' };
   var version = /^(jp|en|digest|full)$/.test(b.version || '') ? b.version : 'jp';
   var now = new Date().toISOString(), device = String(b.device || '').slice(0, 40);
+  // StarScope card check (2.83.0) saves with source "thumb": logged from the thumbnail and line-up, not watched.
+  // A match already logged while watching keeps "panel"; watching and saving a thumb match makes it "panel".
+  var src = b.source === 'thumb' ? 'thumb' : 'panel';
   var resultType = /^(win|draw|nc)$/.test(m.result_type || '') ? m.result_type : '';
   var winner = resultType === 'win' && sideSet[m.winner_side] ? Number(m.winner_side) : '';
   if (resultType === 'win' && !winner) resultType = '';
@@ -594,7 +598,7 @@ function viSave(b) {
 
   var level = Math.max(1, Math.min(3, Number(m.level) || 1));
   var fields = { show_id: m.show_id == null ? '' : m.show_id, date: date, card_no: m.card_no == null ? '' : m.card_no, is_dark: m.is_dark ? 'TRUE' : 'FALSE',
-    card_total: Number(m.card_total) > 0 ? Number(m.card_total) : '', result_type: resultType, winner_side: winner, level: level, status: pending ? 'needs_name' : 'reviewed', source: 'panel', device: device, updated: now };
+    card_total: Number(m.card_total) > 0 ? Number(m.card_total) : '', result_type: resultType, winner_side: winner, level: level, status: pending ? 'needs_name' : 'reviewed', source: src, device: device, updated: now };
   if (fresh) {
     fields.date_set = m.date_manual ? 'manual' : '';
     var row = { match_id: id }; Object.keys(fields).forEach(function(k) { row[k] = fields[k]; });
@@ -602,6 +606,7 @@ function viSave(b) {
   } else {
     var old = viRows('matches').filter(function(x) { return x.match_id === id; })[0];
     if (old) {
+      if (src === 'thumb' && old.source && old.source !== 'thumb') fields.source = old.source;
       if (Number(old.level) > level) { fields.level = old.level; level = Number(old.level); }
       // A re-save from outside the set keeps the match's place on the card.
       if (fields.card_no === '' && old.card_no !== '') fields.card_no = old.card_no;
@@ -616,7 +621,7 @@ function viSave(b) {
   var marks = b.marks || {}, sec = function(v) { return v === '' || v == null || !(Number(v) >= 0) ? '' : Math.floor(Number(v)); };
   var vids = viRows('match_videos').filter(function(v) { return String(v.video_id) === video; });
   if (vids.length) viSet('match_videos', vids[0]._row, { match_id: id, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), updated: now });
-  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: 'panel', updated: now }]);
+  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now }]);
 
   // Tags: only values in the lists tab (and known wrestlers for the fall) are kept; this match's old tags are replaced.
   if (Array.isArray(b.tags)) {
@@ -784,7 +789,9 @@ function viCards() {
       r: rt ? Math.round(rt.s / rt.n * 10) / 10 : 0, rc: rt ? rt.n : 0,
       // For the StarScope Shows page (2.66.0): the match, its round and the special rules, to pick a show's highlights.
       m: String(v.match_id), rd: t.round || [], st: (t.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && (t.title || []).indexOf(x) < 0; }),
-      dk: String(m.is_dark).toUpperCase() === 'TRUE'
+      dk: String(m.is_dark).toUpperCase() === 'TRUE',
+      // Card check (2.83.0): 1 when the match was logged from its thumbnail and line-up (not watched yet).
+      tb: String(m.source) === 'thumb' ? 1 : 0
     };
     map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || '', p: people(p, (seen[String(v.video_id)] || {}).text || '') };
   });

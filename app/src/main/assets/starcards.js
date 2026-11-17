@@ -120,8 +120,10 @@
   // ---- The StarScope page (2.63.0, private builds): /mypage?tvscope=recent | top | all. Drawn by the app from the
   // index's own list (the same one list the cards use), so the filters only ever offer what has been logged.
   var MIN_RATINGS = 1;   // one TV for now; raise to 3 when StarScope goes public, so one rating can't top the list
-  var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし', noNums: '試合番号未登録', next: '次に登録', wNot: '試合視聴済み・未登録', watched: '試合視聴', plays: '回再生', lastW: '最終視聴', notYet: '未登録', nextIntro: '見たけれど登録が終わっていない大会です。登録を始めた大会が先、次に多く見た順。', kLogged: '登録済み', kWatched: '視聴済み', kNot: '未視聴', loadingN: '読み込み中…', noneNext: '見た大会はすべて登録済みです。' }
-    : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered', noNums: 'no match numbers yet', next: 'Log next', wNot: 'watched, not logged', watched: 'watched', plays: 'plays', lastW: 'last watched', notYet: 'not logged yet', nextIntro: "Shows you've watched but not finished logging. Shows you've started come first, then the most watched.", kLogged: 'Logged', kWatched: 'Watched', kNot: 'Not seen', loadingN: 'Loading…', noneNext: "Every show you've watched is logged." };
+  var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし', noNums: '試合番号未登録', next: '次に登録', wNot: '試合視聴済み・未登録', watched: '試合視聴', plays: '回再生', lastW: '最終視聴', notYet: '未登録', nextIntro: '見たけれど登録が終わっていない大会です。登録を始めた大会が先、次に多く見た順。', kLogged: '登録済み', kWatched: '視聴済み', kNot: '未視聴', loadingN: '読み込み中…', noneNext: '見た大会はすべて登録済みです。',
+    log: '大会を登録', lNext: '視聴済み・未登録', lStarted: '登録途中', ly: '年', lIntro: 'サムネイルと出場選手から大会のカードを登録します。試合は再生しません。', lMore: '次のページの大会を読み込み中…', lEnd: 'この年の大会はこれですべてです。', lNone: '該当する大会はありません', lErr: '読み込めませんでした', lTry: 'もう一度', lSite: 'サイトの大会' }
+    : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered', noNums: 'no match numbers yet', next: 'Log next', wNot: 'watched, not logged', watched: 'watched', plays: 'plays', lastW: 'last watched', notYet: 'not logged yet', nextIntro: "Shows you've watched but not finished logging. Shows you've started come first, then the most watched.", kLogged: 'Logged', kWatched: 'Watched', kNot: 'Not seen', loadingN: 'Loading…', noneNext: "Every show you've watched is logged.",
+    log: 'Log a show', lNext: 'Watched, not logged', lStarted: 'Started', ly: 'Year', lIntro: "Log a show's card from its thumbnails and line-ups, without playing anything.", lMore: 'Loading the next page of shows…', lEnd: "That's every show for this year.", lNone: 'No shows to log here.', lErr: "Couldn't load this page.", lTry: 'Try again', lSite: 'From the site' };
   var home = null;   // { tab, f: filters, more, pop, focus }
   function homeList() { return Object.keys(map || {}).map(function(id) { return { id: id, v: map[id] }; }).filter(function(x) { return x.v && x.v.x; }); }
   function people(v) { var o = []; (v.s || []).forEach(function(sd) { sd.forEach(function(n) { if (o.indexOf(n) < 0) o.push(n); }); }); return o; }
@@ -162,10 +164,11 @@
   function homeHtml() {
     var list = homeList(), f = home.f, t = home.tab, ppl = {};
     list.forEach(function(x) { people(x.v).forEach(function(n) { ppl[n] = 1; }); });
-    var h = '<div class="hd"><span class="bar"></span>' + TEL.replace('width="30" height="30"', 'width="40" height="40"') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tg">' + HT.tag + '</span><span class="ct">' + (t === 'shows' || t === 'next' ? '' : list.length + ' ' + HT.matches + ' · ' + Object.keys(ppl).length + ' ' + HT.wrestlers) + '</span></div>';
-    h += '<div class="row">' + chipH('Trecent', HT.recent, t === 'recent', ' style="border-radius:22px"') + chipH('Ttop', HT.top, t === 'top', ' style="border-radius:22px"') + chipH('Tall', HT.all, t === 'all', ' style="border-radius:22px"') + chipH('Tshows', HT.shows, t === 'shows', ' style="border-radius:22px"') + (SHEET ? chipH('Tnext', nextLabel(), t === 'next', ' style="border-radius:22px"') : '') + '</div>';
+    var h = '<div class="hd"><span class="bar"></span>' + TEL.replace('width="30" height="30"', 'width="40" height="40"') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tg">' + HT.tag + '</span><span class="ct">' + (t === 'shows' || t === 'next' || t === 'log' ? '' : list.length + ' ' + HT.matches + ' · ' + Object.keys(ppl).length + ' ' + HT.wrestlers) + '</span></div>';
+    h += '<div class="row">' + chipH('Trecent', HT.recent, t === 'recent', ' style="border-radius:22px"') + chipH('Ttop', HT.top, t === 'top', ' style="border-radius:22px"') + chipH('Tall', HT.all, t === 'all', ' style="border-radius:22px"') + chipH('Tshows', HT.shows, t === 'shows', ' style="border-radius:22px"') + (SHEET ? chipH('Tnext', nextLabel(), t === 'next', ' style="border-radius:22px"') : '') + (logOn() ? chipH('Tlog', HT.log, t === 'log', ' style="border-radius:22px"') : '') + '</div>';
     if (t === 'shows') return h + showsHtml() + (home.pop ? popHtml(list) : '');
     if (t === 'next') return h + nextHtml();
+    if (t === 'log') return h + logHtml() + (home.pop ? popHtml(list) : '');
     var shown;
     if (t === 'all') {
       var prim = [['', HT.all0], ['singles', HT.singles], ['tag', HT.tagm], ['multi', HT.multi], ['title', HT.title], ['tour', HT.tour]].filter(function(p) {
@@ -308,9 +311,9 @@
       '<div class="bd"><div><div class="nm">' + esc(o.name) + '</div>' + (o.venue ? '<div class="vn">' + ico('pin', 14, '#C9D2DC') + esc(o.venue) + '</div>' : '') + '</div>' +
       o.main + o.rest + '</div></a>';
   }
-  function showCard(s) {
+  function showCard(s, href) {
     var v = s.top.v;
-    return cardHtml({ href: '/contents/' + esc(s.first.id), th: s.top.v.th, date: s.date, count: countText(s), complete: s.complete, name: s.name, venue: s.venue,
+    return cardHtml({ href: href || '/contents/' + esc(s.first.id), th: s.top.v.th, date: s.date, count: countText(s), complete: s.complete, name: s.name, venue: s.venue,
       main: '<div class="me"><div class="eb' + (s.isMain ? '' : ' dim') + '">' + esc(mainLabel(s)) + '</div><div class="t">' + esc(oneLine(v)) + '</div><div class="s">' + esc(eventLine(v)) + '</div></div>',
       rest: (s.hl.length ? '<div class="lb">' + HT.alsoOn + '</div>' + s.hl.map(hlRow).join('') : '') + pips(s) });
   }
@@ -394,16 +397,16 @@
     return '<div class="hl">' + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B4656" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>' +
       '<div class="phs"><span class="ph" style="width:55%"></span><span class="ph" style="width:80%"></span></div></div>';
   }
-  function nextCard(e) {
+  function nextCard(e, href0) {
     var s = e.s, g = e.g, wt = {}, hasZero = false;
     e.vids.forEach(function(v) { if (v.zero) hasZero = true; else if (v.no != null && v.no > 0) wt[v.no] = true; });
     var seen = '<div class="seen">' + ico('eye', 16) + '<span><b>' + esc(s ? e.w + ' ' + HT.wNot : e.w + ' ' + HT.watched + ' · ' + e.views + ' ' + HT.plays) + '</b> · ' + esc(HT.lastW + ' ' + shortDate(e.last)) + '</span></div>';
-    var href = '/contents/' + esc(e.first.id), card;
+    var href = href0 || '/contents/' + esc(e.first.id), card, auto = !href0;
     if (s) {
       var free = Math.min(3 - s.hl.length, e.w);
       var hl = (s.hl.length || free > 0 ? '<div class="lb">' + HT.alsoOn + '</div>' : '') + s.hl.map(hlRow).join('');
       for (var i = 0; i < free; i++) hl += phRow();
-      card = cardHtml({ href: href, auto: true, th: s.top.v.th, date: s.date, count: countText(s), complete: false, name: s.name, venue: s.venue,
+      card = cardHtml({ href: href, auto: auto, th: s.top.v.th, date: s.date, count: countText(s), complete: false, name: s.name, venue: s.venue,
         main: '<div class="me"><div class="eb' + (s.isMain ? '' : ' dim') + '">' + esc(mainLabel(s)) + '</div><div class="t">' + esc(oneLine(s.top.v)) + '</div><div class="s">' + esc(eventLine(s.top.v)) + '</div></div>',
         rest: hl + pips(s, wt) });
     } else {
@@ -413,7 +416,7 @@
         for (var n = 1; n <= Math.min(top, 14); n++) sq += '<span class="pip ' + (wt[n] ? 'wt' : 'off') + '">' + n + '</span>';
         sq = '<div class="pips">' + sq + '</div>';
       } else sq = '<div class="pips"><span class="nn">' + esc(e.w + ' ' + HT.watched + ' · ' + HT.noNums) + '</span></div>';
-      card = cardHtml({ href: href, auto: true, th: e.first.th, date: g.date, count: top ? '0/' + top : '0 ' + HT.logged, complete: false,
+      card = cardHtml({ href: href, auto: auto, th: e.first.th, date: g.date, count: top ? '0/' + top : '0 ' + HT.logged, complete: false,
         name: showName(g.show, g.date) || g.show, venue: g.venue ? (ja ? g.venue.ja || g.venue.en : g.venue.en) : '',
         main: '<div class="me"><div class="eb dim">' + esc(HT.main + ' · ' + HT.notYet) + '</div><div class="phs" style="margin-top:7px"><span class="ph" style="width:85%;height:13px"></span><span class="ph" style="width:50%"></span></div></div>',
         rest: '<div class="lb">' + HT.alsoOn + '</div>' + phRow() + phRow() + phRow() + sq });
@@ -428,6 +431,94 @@
     return h + '<div class="sgr">' + list.map(nextCard).join('') + '</div>';
   }
 
+  // ---- Log a show (2.83.0, builds with StarScope logging): shows to log with card check (assets/cardcheck.js).
+  // Watched, not logged: Log next's list (your watch history, nothing from the site). Started: shows with some
+  // matches logged. Year: the site's own list of that year's shows, read a page at a time, the next page only when
+  // the last row has focus; each page is kept for a day. Only the show list is read here, never a match page.
+  function logOn() { return SHEET && !!window.__tvIndexKit; }
+  function checkHref(set) { return '/mypage?tvscope=check&set=' + encodeURIComponent(set); }
+  var YCAT = null;
+  function yearCats() {
+    if (YCAT) return YCAT;
+    try { YCAT = ((JSON.parse(H.matchTypesJson()) || {}).siteCategories || {}).years || {}; } catch (e) { YCAT = {}; }
+    return YCAT;
+  }
+  var YKEY = 'tvCcYearV1_', YAGE = 86400000, yl = null;
+  function yearLoad(y, retry) {
+    if (!y) return;
+    if (!yl || yl.y !== y) {
+      var c = null; try { c = JSON.parse(localStorage.getItem(YKEY + y) || 'null'); } catch (e) {}
+      yl = c && Date.now() - (c.t || 0) < YAGE ? { y: y, items: c.items || [], page: c.page || 0, done: !!c.done, t: c.t } : { y: y, items: [], page: 0, done: false, t: Date.now() };
+      yl.busy = false; yl.err = '';
+    }
+    if (retry) yl.err = '';
+    if (!yl.page && !yl.busy) yearPage();
+  }
+  function yearPage() {
+    if (!yl || yl.busy || yl.done || yl.err) return;
+    var cat = yearCats()[yl.y], n = yl.page + 1, mine = yl;
+    if (!cat) { yl.done = true; return; }
+    yl.busy = true;
+    fetch('/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(cat) + '&q%5Btype%5D=set&activetab=contents&page=' + n, { credentials: 'include' })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function(html) {
+        if (yl !== mine) return;
+        var doc = new DOMParser().parseFromString(html, 'text/html'), seen = {}, got = 0;
+        mine.items.forEach(function(x) { seen[x.set] = 1; });
+        Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item, article'), function(it) {
+          var a = it.querySelector('a[href*="/set/"]'), m = a && /\/set\/(\d+)/.exec(a.getAttribute('href') || '');
+          if (!m || seen[m[1]] || /\/contents\//.test(a.getAttribute('href'))) return;
+          seen[m[1]] = 1; got++;
+          var bg = it.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || '');
+          var tEl = it.querySelector('h3, h4, .ttl-xs, .content-title'), name = String((tEl || a).textContent || '').replace(/\s+/g, ' ').trim();
+          mine.items.push({ set: m[1], name: name, th: mm ? mm[1] : '' });
+        });
+        mine.page = n;
+        if (!got) mine.done = true;
+        try { localStorage.setItem(YKEY + mine.y, JSON.stringify({ t: mine.t || Date.now(), items: mine.items, page: mine.page, done: mine.done })); } catch (e) {}
+      })
+      .catch(function(e) { mine.err = String(e && e.message || e); })
+      .then(function() {
+        mine.busy = false;
+        if (homeEl && home && home.tab === 'log' && home.lf === 'year') { var ae = document.activeElement, k = ae && ae.getAttribute && ae.getAttribute('data-k'); homeRender(k || 'd:ly'); }
+      });
+  }
+  // The next page loads when a card in the last row gets focus.
+  function yearMore(e) {
+    if (!home || home.tab !== 'log' || home.lf !== 'year' || !yl || yl.busy || yl.done || yl.err) return;
+    var cards = Array.prototype.slice.call(homeEl.querySelectorAll('.sgr .sc')), last = cards[cards.length - 1];
+    if (!last || cards.indexOf(e.target) < 0) return;
+    if (e.target.getBoundingClientRect().top >= last.getBoundingClientRect().top - 4) yearPage();
+  }
+  function yearCard(x) {
+    var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yl.y) : { show: x.name, date: '', venue: '' };
+    var logged = showsList().filter(function(s) { return s.sid === String(x.set); })[0];
+    return cardHtml({ href: checkHref(x.set), th: x.th, date: sl.date || '', count: logged ? countText(logged) : '0 ' + HT.logged, complete: !!(logged && logged.complete),
+      name: showName(sl.show || x.name, sl.date) || x.name, venue: sl.venue || '',
+      main: '<div class="me"><div class="eb dim">' + esc(HT.lSite) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
+  }
+  function logHtml() {
+    var lf = home.lf || 'next', nn = nextList().length;
+    var h = '<div class="row">' + chipH('lf:next', HT.lNext + (nn ? ' · ' + nn : ''), lf === 'next') + chipH('lf:started', HT.lStarted, lf === 'started') +
+      chipH('d:ly', HT.ly + (home.ly ? ': ' + esc(home.ly) : '') + ' ▾', lf === 'year') + '<span class="intro" style="margin-left:auto">' + esc(HT.lIntro) + '</span></div>';
+    var cards = [];
+    if (lf === 'next') {
+      if (!sug) return h + '<div class="rs">' + HT.loadingN + '</div>';
+      cards = nextList().map(function(e) { return nextCard(e, checkHref(e.g.set)); });
+    } else if (lf === 'started') {
+      cards = showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); }).map(function(s) { return showCard(s, checkHref(s.sid)); });
+    } else {
+      if (!yl || yl.y !== home.ly) yearLoad(home.ly);
+      cards = yl ? yl.items.map(yearCard) : [];
+      var tail = yl && yl.err ? '<div class="rs" style="color:#FF7A66">' + esc(HT.lErr + ' (' + yl.err + ')') + '</div><div class="row">' + chipH('ltry', HT.lTry, false) + '</div>'
+        : (yl && !yl.done ? '<div class="rs">' + esc(HT.lMore) + '</div>' : (cards.length ? '<div class="rs">' + esc(HT.lEnd) + '</div>' : ''));
+      if (!cards.length && yl && yl.done) return h + '<div class="rs">' + HT.lNone + '</div>';
+      return h + '<div class="sgr">' + cards.join('') + '</div>' + tail;
+    }
+    if (!cards.length) return h + '<div class="rs">' + HT.lNone + '</div>';
+    return h + '<div class="sgr">' + cards.join('') + '</div>';
+  }
+
   function showOptions(key) {
     var count = {};
     showsList().forEach(function(s) { var val = key === 'sy' ? String(s.date).slice(0, 4) : s.venue; if (val) count[val] = (count[val] || 0) + 1; });
@@ -440,9 +531,10 @@
     var key = home.pop, f = home.f, opts;
     if (key === 'ss') opts = [['date', HT.sDate], ['old', HT.sOld], ['most', HT.sMost]].map(function(o) { return { v: o[0], label: o[1] }; });
     else if (key === 'sy' || key === 'sv') opts = [{ v: '', label: HT.any }].concat(showOptions(key));
+    else if (key === 'ly') opts = Object.keys(yearCats()).sort(function(a, b) { return b.localeCompare(a); }).map(function(y) { return { v: y, label: y }; });
     else if (key === 'sort') opts = [['date', HT.sDate], ['old', HT.sOld], ['added', HT.sAdded], ['top', HT.sTop]].map(function(o) { return { v: o[0], label: o[1] }; });
     else opts = [{ v: '', label: HT.any }].concat(options(key, list, f).map(function(o) { return { v: o.v, label: (key === 'r' ? '★' + o.v + '+' : o.v) + ' · ' + o.n }; }));
-    var cur = key === 'sort' ? (f.sort || 'date') : key === 'ss' ? (f.ss || 'date') : (f[key] || '');
+    var cur = key === 'sort' ? (f.sort || 'date') : key === 'ss' ? (f.ss || 'date') : key === 'ly' ? (home.ly || '') : (f[key] || '');
     return '<div class="ov"><div class="pp"><div class="ph">' + (HT[key] || HT.sort) + '</div><div class="pg">' + opts.map(function(o, i) {
       return chipH('o' + i, esc(o.label), String(o.v) === String(cur), ' data-v="' + esc(o.v) + '"');
     }).join('') + '</div></div></div>';
@@ -527,11 +619,12 @@
       document.body.appendChild(homeEl);
       window.addEventListener('keydown', homeKey, true);
       homeEl.addEventListener('focusin', loadPictures);
+      homeEl.addEventListener('focusin', yearMore);
     }
     homeEl.innerHTML = homeHtml();
     var el = homeEl.querySelector('[data-k="' + (keep || '') + '"]') || (home.pop ? homeEl.querySelector('.pp .ch.on') || homeEl.querySelector('.pp .ch') : homeEl.querySelector('.ch.on'));
     if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); }
-    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab); } catch (e) {}
+    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '')); } catch (e) {}
     loadPictures();
   }
   function openPop(key) {
@@ -558,10 +651,13 @@
     if ((m = /^k:(.*)$/.exec(k))) { home.f.k = m[1]; homeRender(k); return; }
     if (k === 'more') { home.more = !home.more; homeRender(k); return; }
     if ((m = /^tog:(\w+)$/.exec(k))) { home.f[m[1]] = !home.f[m[1]]; homeRender(k); return; }
+    if ((m = /^lf:(\w+)$/.exec(k))) { home.lf = m[1]; homeRender(k); return; }
+    if (k === 'ltry') { yearLoad(home.ly, true); return; }
     if ((m = /^d:(\w+)$/.exec(k))) { openPop(m[1]); return; }
     if (/^o\d+$/.test(k)) {
       var v = el.getAttribute('data-v'), key = home.pop;
-      if (key === 'sort') home.f.sort = v; else home.f[key] = key === 'r' ? (+v || 0) : v;
+      if (key === 'ly') { home.lf = 'year'; home.ly = v; yearLoad(v); }
+      else if (key === 'sort') home.f.sort = v; else home.f[key] = key === 'r' ? (+v || 0) : v;
       closePop(); return;
     }
   }
@@ -594,16 +690,29 @@
     if (scopeDone || !map || !document.body) return;
     scopeDone = true;
     askSuggest();
-    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null };
+    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: 'next', ly: '' };
+    var qy = Q.get('y');
+    if (scopeKind === 'log' && qy && yearCats()[qy]) { home.lf = 'year'; home.ly = qy; yearLoad(qy); }
     homeRender('T' + scopeKind);
   }
   // For the Community menu: the newest StarScope matches, drawn as the same cards.
   window.__tvScope = {
     newest: function(n) { return homeList().sort(sorter('added')).slice(0, n || 3); },
-    card: function(x) { return block(x.v); }
+    card: function(x) { return block(x.v); },
+    // For the StarScope menu (2.83.0): shows to log with card check, from Log next's list (kept on the TV).
+    logOn: function() { return logOn(); },
+    toLog: function() {
+      return nextList().map(function(e) {
+        var s = e.s, g = e.g;
+        return { set: String(g.set), href: checkHref(g.set), th: (s && s.top.v.th) || e.first.th || '', name: s ? s.name : (showName(g.show, g.date) || g.show),
+          date: s ? s.date : g.date, venue: s ? s.venue : (g.venue ? (ja ? g.venue.ja || g.venue.en : g.venue.en) : ''), watched: e.w, logged: s ? s.list.length : 0, total: s && s.total };
+      });
+    },
+    years: function() { return Object.keys(yearCats()).sort(function(a, b) { return b.localeCompare(a); }); }
   };
 
-  function apply() { if (!map) return; if (scopeKind === 'recent' || scopeKind === 'top' || scopeKind === 'all' || scopeKind === 'shows' || scopeKind === 'next') renderHome(); else if (scopeKind) renderScope(); else addButtons(); }
+  // check: StarScope card check's own page (assets/cardcheck.js) draws itself.
+  function apply() { if (!map) return; if (scopeKind === 'check') return; if (scopeKind === 'recent' || scopeKind === 'top' || scopeKind === 'all' || scopeKind === 'shows' || scopeKind === 'next' || scopeKind === 'log') renderHome(); else if (scopeKind) renderScope(); else addButtons(); }
   var timer = 0;
   function soon() { if (timer) return; timer = setTimeout(function() { timer = 0; apply(); }, 350); }   // not a debounce: a page that keeps changing must still get its button
   window.__tvStarCardsReply = function(id, text) {

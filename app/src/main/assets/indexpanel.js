@@ -4,9 +4,13 @@
   // press of OK confirms it. Only talks to the sheet (AndroidHost.indexSync), never to the video site, and only when opened.
   if (window.__tvIndexPanel) return;
   var U = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
-  if (!U || !window.AndroidHost || !AndroidHost.indexSync) return;
+  if (!window.AndroidHost || !AndroidHost.indexSync) return;
+  // 2.83.0: the panel also opens away from a video page, for one match of StarScope card check (assets/cardcheck.js):
+  // CX is that match (set, video, the page facts read for it, its place on the card, what to do once saved). U then
+  // holds its ids, as it would on the video page.
+  var PAGE = U, CX = null;
   window.__tvIndexPanel = true;
-  var LIB_KEY = 'tvVixLibV3', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', MARK_KEY = 'tvVixMarks' + U[2];
+  var LIB_KEY = 'tvVixLibV3', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', MARK_KEY = U ? 'tvVixMarks' + U[2] : '';
   var BELL = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-6px;margin-right:8px"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/><path d="M2.5 7.5A10 10 0 0 1 5.5 3M21.5 7.5A10 10 0 0 0 18.5 3"/></svg>';
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '保存', notSaved: '保存できませんでした', linkedShort: 'リンクしました', next: '保存して次の試合', close: '閉じる',
@@ -124,7 +128,8 @@
 
   // Where this video sits in its set, in show order (the carousel is already in that order). Comment clips don't count.
   function setPlace() {
-    if (!U[1]) return null;
+    if (CX) return CX.place || null;
+    if (!U || !U[1]) return null;
     var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];
     if (!c) return null;
     var ids = [], seen = {};
@@ -141,7 +146,8 @@
   // For the phone logger's playback notes (assets/scopelink.js, 2.68.0): where this video sits on the show's card.
   window.__tvVixPlace = setPlace;
   function setNext() {
-    if (!U[1]) return null;
+    if (CX) return null;   // card check moves to the next match itself
+    if (!U || !U[1]) return null;
     var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];
     if (!c) return null;
     var out = [], seen = {};
@@ -158,7 +164,7 @@
   function render() {
     ensure();
     var h = '<div class="p"><div style="display:flex;align-items:center;gap:12px"><span style="line-height:0"><svg width="34" height="34" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></span><span style="font:900 24px Arial;letter-spacing:.06em">STAR<span style="color:#F4C242">SCOPE</span></span><span style="font:600 14px Arial;color:#C9D2DC;margin-left:6px">' + T.tagline + '</span></div><div style="height:14px"></div>';
-    h += '<div class="tabs">' + chip('bell', BELL + bellLabel(), '') + (state ? TABS.map(function(t) { return chip('T' + t, tabLabel(t), state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
+    h += '<div class="tabs">' + (CX ? '' : chip('bell', BELL + bellLabel(), '')) + (state ? TABS.map(function(t) { return chip('T' + t, tabLabel(t), state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
     if (state && state.tab !== 'people') h += '<div class="body">' + tabHtml() + '</div>';
     else h += '<div class="sides">';
     if (state && state.tab === 'people') {
@@ -715,7 +721,7 @@
     var show = rec.shows && rec.shows[0];
     var place = setPlace();
     busy = true; saveBtn(T.saving, true);
-    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
+    call({ action: 'vi_save', video: U[2], source: CX && CX.thumb ? 'thumb' : '', version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: state.cardTotal || '', card_no: state.cardNo, is_dark: state.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
@@ -724,6 +730,8 @@
       try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV4'); } catch (e) {}
       saveBtn(res.linked ? T.linkedShort : T.saved);
       if (statusText && !statusBad) say('');   // the button says it now, not the line under it
+      // Card check: back to the card check page, which moves on.
+      if (CX) { var cx = CX; setTimeout(function() { if (window.__tvIndexIsOpen && CX === cx) { cx.saved = res; close(); } }, cx.quick ? 350 : 700); return; }
       // Once the sheet has it, the logger closes by itself (2.62.2), after a moment so "Saved" is seen.
       if (!nextHref) setTimeout(function() { if (window.__tvIndexIsOpen && layer === 'main') close(); }, 700);
       if (nextHref) { try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (e) {} location.href = nextHref; }
@@ -764,18 +772,27 @@
     if (!state.sides.length) state.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
     state.okText = showAny ? T.loaded : (page.length ? T.ready : T.noMatch);
     nameStatus();
-    lastFocus = 'bell';
+    lastFocus = CX ? 'save' : 'bell';
+    if (CX && CX.tab && CX.tab !== 'card') { state.tab = CX.tab; state.touched[CX.tab] = 1; if (CX.tab === 'finish') state.resOpen = true; lastFocus = CX.tab === 'people' ? 'p0_0' : 'save'; }
+    // Confirm & next on card check: straight to saving when every name is known; otherwise the People step shows
+    // which names to settle.
+    if (CX && CX.quick) {
+      if (stepDone('people')) { render(); save(null); return; }
+      state.tab = 'people'; lastFocus = 'p0_0';
+    }
     render();
   }
 
-  function open() {
+  function open(cx) {
     if (window.__tvIndexIsOpen) return;
+    if (cx && cx.video) { CX = cx; U = [null, String(cx.set || ''), String(cx.video)]; MARK_KEY = 'tvVixMarks' + U[2]; }
+    else if (!PAGE) return;
     window.__tvIndexIsOpen = true;
     if (window.__tvFsCancel) window.__tvFsCancel();
     try { AndroidHost.indexPanel(true); } catch (e) {}
-    rec = window.__tvVixRec || null;
+    rec = CX ? CX.rec || null : window.__tvVixRec || null;
     marks = load(MARK_KEY) || { bell: '', end: '' };
-    state = null; layer = 'main'; lastFocus = 'bell'; say(T.loading); ensure(); root.style.display = 'flex'; render();
+    state = null; layer = 'main'; lastFocus = CX ? 'save' : 'bell'; say(T.loading); ensure(); root.style.display = 'flex'; render();
     var cached = load(LIB_KEY);
     function withLib() {
       var show = rec && rec.shows && rec.shows[0];
@@ -809,9 +826,36 @@
     window.__tvIndexIsOpen = false;
     try { AndroidHost.indexPanel(false); } catch (e) {}
     if (root) { root.style.display = 'none'; root.innerHTML = ''; }
+    if (CX) {
+      var cx = CX; CX = null; U = PAGE; MARK_KEY = U ? 'tvVixMarks' + U[2] : '';
+      if (cx.done) cx.done(cx.saved || null);
+      return;
+    }
     if (window.__tvFocusBar) window.__tvFocusBar('index');
   }
   window.__tvIndexOpen = open;
+  // For card check's summary (2.83.0): the same library and name matching the panel uses, without opening it.
+  window.__tvIndexKit = {
+    lib: function(done) {
+      var cached = load(LIB_KEY);
+      if (cached && cached.lib) { if (!lib) setLib(cached.lib); done(true); if (Date.now() - (cached.t || 0) < 600000) return; done = function() {}; }
+      call({ action: 'vi_lib' }, function(r) { if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); } done(!!lib); });
+    },
+    resolve: function(raw) { return lib ? resolve(raw) : ''; },
+    nameOf: function(id) { return lib ? nameOf(id) : id; },
+    venue: function(raw) { if (!lib) return null; var id = matchVenue(raw), v = id && venueById(id); return v ? { id: id, name: lab(v) } : null; },
+    // What the panel would pre-pick from the titles: [{group, label}], titles and tournaments first.
+    suggest: function(text) {
+      if (!lib) return [];
+      var out = [];
+      SUGGEST.forEach(function(g) {
+        if (g === 'moment') return;
+        if (g === 'title' && (!/championship|選手権/i.test(text) || /挑戦者決定|next\s*challenger/i.test(text))) return;
+        listOf(g).forEach(function(x) { if (!x.k) return; var hit = false; try { hit = new RegExp(x.k, 'i').test(text); } catch (e) {} if (hit) out.push({ group: g, label: lab(x) }); });
+      });
+      return out;
+    }
+  };
   // Back: out of the pop-up first, then the panel.
   window.__tvIndexBack = function() {
     if (layer !== 'main') { layer = 'main'; pick = null; render(); } else close();
@@ -834,7 +878,7 @@
   // "Save and next match": the next page opens the panel once it has read its video.
   var auto = false;
   try { auto = sessionStorage.getItem(AUTO_KEY) === '1'; if (auto) sessionStorage.removeItem(AUTO_KEY); } catch (e) {}
-  if (auto) {
+  if (auto && PAGE) {
     var tries = 0, t = setInterval(function() {
       if (window.__tvVixRec || ++tries > 50) { clearInterval(t); open(); }
     }, 500);

@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.83.0
+
+StarScope card check (private builds with StarScope logging), the StarScope menu group, and Community in Matches. Built on main (2.80.3); the 2.81.0 and 2.82.0 script branches (reading the site from the sheet script) are not used: the site blocks the script.
+
+- **Card check** (`assets/cardcheck.js`, new page `/mypage?tvscope=check&set=<id>`): log a show's card from its thumbnails and line-ups without playing anything. The show page is read once (kept a day); each match page is read one at a time as you reach it, plus the next one, at least 2 s apart. Nothing goes to the sheet's watch history. Left: the thumbnails large, ▲ ▼ moves between matches. Right: the watched line (from Log next's history), the people (✓ when the name is in the library, ? when not), match order, the site's match type, what the title suggests, and the show's date and venue. **Confirm & next** saves straight away when every name is known, otherwise the logger opens on People. **Edit details** and **Add result & rating** open the logger (Card / Finish) for that match; **Watch this match** opens the video page (no set page). A finished show gets a summary with Next show to log.
+- **Logger** (`assets/indexpanel.js`): can open for a card-check match (no bell button, no Save-and-next), and saves those as `source: "thumb"`. On video pages nothing changes. `__tvIndexKit` gives card check the same library and name matching.
+- **Video page reader** (`assets/videoindex.js`): set up on every page so card check can read fetched match pages (`__tvVixRead`); a video page's own reading and sending are unchanged.
+- **StarScope page, Log a show tab**: Watched, not logged (Log next's list), Started (shows with some matches logged) and Year (the site's own show list for that year, a page at a time: the next page only when the last row has focus, each page kept a day). Every card opens card check.
+- **Menu**: StarScope takes Community's place above My Favorites. Its flyout keeps the StarScope band from the Community flyout, then Log a show: up to four watched shows still to log, All shows to log, and By year (the four newest years, Earlier). The Community group is gone: **Most watched** and **Most favorited** are links in the Matches flyout beside Top rated (no Top 10 list or pictures, so opening the menu asks nothing of the site). Match types are unchanged.
+- **Sheet script** (`scripts/video_index_log.gs`): `vi_save` takes `source: "thumb"`; a match already logged while watching keeps `panel`, and watching and saving a thumb match makes it `panel`. StarScope cards carry `x.tb` (1 for a thumb entry).
+
 ## 2.80.3
 
 - Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.
