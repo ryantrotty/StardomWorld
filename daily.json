@@ -1,10 +1,10 @@
 {
- "generated": "2026-11-16T20:07:12Z",
+ "generated": "2026-11-17T06:31:59Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-16T20:02:56Z",
-  "finished": "2026-11-16T20:07:12Z",
-  "requests": 56,
+  "started": "2026-11-17T06:28:57Z",
+  "finished": "2026-11-17T06:31:59Z",
+  "requests": 36,
   "schedule": {
    "ok": true,
    "events": 44,
@@ -15,39 +15,39 @@
    "ok": false,
    "titles": {
     "world": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 22 (Suzu Suzuki) and all 3 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "wonder": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 26 (Hanan) and all 5 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "future": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 14 (Ranna Yagami) and all 11 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "artist": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 37 (Thekla, Julia Hart, Skye Blue) and all 1 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "goddess": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 37 (AZM, Miyu Amasaki) and all 3 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "highspeed": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 28 (Yuna Mizumori) and all 6 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "newblood": {
-     "read": true,
+     "read": false,
      "changed": false,
-     "note": "Reign 6 (Kikyo Furusawa, Rian) and all 0 defences confirmed against the Japanese official page."
+     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
     },
     "kawaii": {
      "read": false,
@@ -56,8 +56,8 @@
     },
     "iwgp": {
      "read": true,
-     "changed": false,
-     "note": "Reign 6 (Syuri) and all 5 defences confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
+     "changed": true,
+     "note": "Reign 6 (Syuri) now 6 defences per Wikipedia (was 5); the 6th defence's details are not stated on the Wikipedia page, so defCount set to 6 and the 5 listed defences kept. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     },
     "strong": {
      "read": true,
@@ -65,7 +65,9 @@
      "note": "Reign 8 (Alex Windsor) and all 1 defences confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     }
    },
-   "changed": [],
+   "changed": [
+    "iwgp: Reign 6 (Syuri) now 6 defences per Wikipedia (was 5); the 6th defence's details are not stated on the Wikipedia page, so defCount set to 6 and the 5 listed defences kept. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
+   ],
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
@@ -74,10 +76,10 @@
    ]
   },
   "league": {
-   "ok": true,
+   "ok": false,
    "updated": "2026-11-15",
    "source": "official",
-   "note": ""
+   "note": "Skipped: no league show finished since 2026-11-15; league unchanged."
   },
   "blocks": [],
   "errors": []
@@ -7584,7 +7586,8 @@
         "venue": "EBARA WAVE Arena Ota, Tokyo",
         "note": "Stardom 5STAR Grand Prix 2026"
        }
-      ]
+      ],
+      "defCount": 6
      }
     ]
    },
