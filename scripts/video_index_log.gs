@@ -49,6 +49,11 @@
  *   vi_suggest {}                                              StarScope's Log next tab (2.67.0): videos watched but not logged,
  *                                                              by show (set), with views, last watched and the venue's names
  *
+ * Set page probe (2.81.0, StarScope thumbnail confirm):
+ *   vi_probe_set {set, category}                               fetches a set page, a category's set list, the set's first video
+ *                                                              page and its thumbnail; writes one debug row per fetch (page "probe").
+ *                                                              probeSetPage() does the same from the editor (set 8539, category 51).
+ *
  * StarScope on the phone (2.68.0, see docs/STARSCOPE_PHONE.md):
  *   pb_put {video, set, events: [{ts, ev, pos, playing, rate}], info}  the TV's play / pause / seek record ("playback" tab);
  *                                                              only the current video and the one before it are kept
@@ -88,6 +93,7 @@ function doPost(e) {
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
   if (body.action === 'pb_now') return out(pbNow_());
+  if (body.action === 'vi_probe_set') return out(probeSetPage(body.set, body.category));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -1042,4 +1048,162 @@ function phonePropose(k, body) {
   body.owner = true;     // the owner's phone, like the private build: the addition goes in at once
   body.device = 'phone';
   return withLock(function() { return viAction(body); });
+}
+
+// ---- Set page probe (2.81.0, StarScope thumbnail confirm; see the project's plan doc) ---------------------------------
+// Run probeSetPage() from the editor (or POST vi_probe_set {set, category}). It fetches one set page, one category
+// listing of sets, the set's first video page and that video's thumbnail, and writes what it found to the debug tab
+// (page = "probe", one row per fetch), so the thumbnail confirm mode can be built on what the pages really hold.
+// Read only on the site: 4 requests per run. Nothing else in the sheet changes.
+var PROBE_SITE = 'https://www.stardom-world.com';
+function probeSetPage(setId, categoryId) {
+  setId = String(setId || '8539').replace(/\D/g, '');
+  categoryId = String(categoryId || '51').replace(/\D/g, '');
+  var rows = [];
+  var set = probeFetch_(PROBE_SITE + '/set/' + setId);
+  var setRec = probeDescribe_(set);
+  rows.push(['set ' + setId, set.url, setRec]);
+
+  var listUrl = PROBE_SITE + '/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + categoryId + '&q%5Btype%5D=set&activetab=contents&page=1';
+  var list = probeFetch_(listUrl);
+  rows.push(['category ' + categoryId + ' sets', list.url, probeDescribe_(list)]);
+
+  var first = (setRec.contents || [])[0];
+  if (first) {
+    var vurl = /^https?:/.test(first.href) ? first.href : PROBE_SITE + first.href;
+    var vid = probeFetch_(vurl);
+    var vrec = probeDescribe_(vid);
+    vrec.video = probeVideo_(vid.html);
+    rows.push(['video ' + first.id, vid.url, vrec]);
+    var th = vrec.video.og_image || first.img || '';
+    if (th) rows.push(['thumbnail', th, probeThumb_(th)]);
+  } else {
+    rows.push(['video', '', { note: 'no /contents/ links on the set page, so no video page was fetched' }]);
+  }
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(25000)) return { ok: false, error: 'busy', busy: true };
+  try {
+    rows.forEach(function(r) { dbgPut({ device: 'script', page: 'probe', subject: r[0], tab: 'thumbconfirm', url: r[1], record: r[2] }); });
+  } finally { lock.releaseLock(); }
+  return { ok: true, rows: rows.length, summary: rows.map(function(r) { return r[0] + ': ' + (r[2].status || '') + ' ' + ((r[2].contents || []).length) + ' videos, ' + ((r[2].sets || []).length) + ' sets'; }) };
+}
+
+function probeFetch_(url) {
+  var res, t0 = Date.now();
+  try {
+    res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36', 'Accept-Language': 'ja,en;q=0.8' } });
+  } catch (e) { return { url: url, status: 0, error: String(e), html: '', ms: Date.now() - t0 }; }
+  return { url: url, status: res.getResponseCode(), html: res.getContentText('UTF-8'), ms: Date.now() - t0,
+    type: String(res.getHeaders()['Content-Type'] || '') };
+}
+
+function probeText_(s) {
+  return String(s || '').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
+    .replace(/[ \t\r\f\v]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
+}
+function probeMeta_(html, prop) {
+  var m = new RegExp('<meta[^>]+(?:property|name)="' + prop + '"[^>]*content="([^"]*)"', 'i').exec(html)
+    || new RegExp('<meta[^>]+content="([^"]*)"[^>]*(?:property|name)="' + prop + '"', 'i').exec(html);
+  return m ? probeText_(m[1]) : '';
+}
+
+// What a page holds: video links (with the text and image inside each), set links, page numbers, headings,
+// the most used class names and signs of data loaded by the page's own scripts.
+function probeDescribe_(p) {
+  var html = p.html || '', rec = { status: p.status, ms: p.ms, type: p.type, bytes: html.length, error: p.error || undefined };
+  if (!html) return rec;
+  rec.title = probeText_((/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html) || [])[1]);
+  rec.og_title = probeMeta_(html, 'og:title');
+  rec.og_image = probeMeta_(html, 'og:image');
+  rec.description = probeMeta_(html, 'description').slice(0, 500);
+  rec.headings = [];
+  html.replace(/<(h[1-4])\b[^>]*>([\s\S]*?)<\/\1>/gi, function(_, h, inner) { if (rec.headings.length < 15) rec.headings.push(h + ': ' + probeText_(inner).slice(0, 200)); });
+
+  var seen = {}, first = -1;
+  rec.contents = [];
+  var re = /<a\b([^>]*?)href="([^"]*\/contents\/(\d+)[^"]*)"([^>]*)>([\s\S]*?)<\/a>/gi, m;
+  while ((m = re.exec(html))) {
+    if (first < 0) first = m.index;
+    var id = m[3], inner = m[5], img = /<img\b([^>]*)>/i.exec(inner), imgAttrs = img ? img[1] : '';
+    var src = (/(?:data-src|data-original|data-lazy|src)="([^"]+)"/i.exec(imgAttrs) || [])[1] || '';
+    var bg = (/background-image:\s*url\(['"]?([^'")]+)/i.exec(inner + m[1] + m[4]) || [])[1] || '';
+    var text = probeText_(inner).slice(0, 400);
+    if (seen[id]) { var o = seen[id]; if (!o.text && text) o.text = text; if (!o.img && (src || bg)) o.img = src || bg; continue; }
+    if (rec.contents.length >= 40) { seen[id] = { id: id }; continue; }
+    seen[id] = { id: id, href: m[2], text: text, img: src || bg };
+    if (rec.contents.length < 3) seen[id].img_attrs = imgAttrs.slice(0, 300);   // enough to see how images load
+    rec.contents.push(seen[id]);
+  }
+  rec.contents_total = Object.keys(seen).length;
+
+  var setSeen = {};
+  rec.sets = [];
+  var rs = /<a\b[^>]*href="([^"]*\/set\/(\d+)[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+  while ((m = rs.exec(html))) {
+    if (/\/contents\//.test(m[1]) || setSeen[m[2]] || rec.sets.length >= 40) continue;
+    var si = /<img\b[^>]*(?:data-src|src)="([^"]+)"/i.exec(m[3]);
+    setSeen[m[2]] = 1;
+    rec.sets.push({ id: m[2], href: m[1], text: probeText_(m[3]).slice(0, 300), img: si ? si[1] : '' });
+  }
+
+  var pages = {};
+  html.replace(/[?&](?:amp;)?page=(\d+)/g, function(_, n) { pages[n] = 1; });
+  rec.pages = Object.keys(pages).map(Number).sort(function(a, b) { return a - b; });
+
+  var cls = {};
+  html.replace(/class="([^"]+)"/g, function(_, c) { c.split(/\s+/).forEach(function(k) { if (k) cls[k] = (cls[k] || 0) + 1; }); });
+  rec.classes = Object.keys(cls).sort(function(a, b) { return cls[b] - cls[a]; }).slice(0, 60).map(function(k) { return k + ' ' + cls[k]; });
+
+  rec.signs = {
+    next_data: /__NEXT_DATA__/.test(html), nuxt: /__NUXT__/.test(html), inertia: /data-page="/.test(html), livewire: /wire:|livewire/i.test(html),
+    json_scripts: (html.match(/<script[^>]+type="application\/(?:ld\+)?json"/gi) || []).length,
+    api_paths: (html.match(/["'](\/api\/[^"']{1,80})["']/g) || []).slice(0, 10),
+    accordion: /accordion-box/.test(html), content_ttl: /content-ttl-wrap/.test(html)
+  };
+  // The page around its first video link, to write the parser against.
+  if (first >= 0) rec.html_near_first_video = html.slice(Math.max(0, first - 1500), first + 3500);
+  else rec.html_body_start = html.slice(Math.max(0, html.search(/<body/i)), Math.max(0, html.search(/<body/i)) + 5000);
+  return rec;
+}
+
+// A video page read the way the TV's videoindex.js reads it: heading, description lines, tags, set links.
+function probeVideo_(html) {
+  html = html || '';
+  var out = { og_image: probeMeta_(html, 'og:image') };
+  var i = html.indexOf('content-ttl-wrap');
+  if (i < 0) { out.note = 'no content-ttl-wrap block in the HTML'; return out; }
+  var part = html.slice(i, i + 30000);
+  out.h1 = probeText_((/<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(part) || [])[1]);
+  var w = part.indexOf('wswg-wrap');
+  if (w >= 0) {
+    var block = part.slice(w, w + 12000);
+    if (block.indexOf('tag-wrap') > 0) block = block.slice(0, block.indexOf('tag-wrap')).replace(/<[^>]*$/, '');
+    block = block.replace(/<\/(p|div|li)>/gi, '\n');
+    out.lines = probeText_(block.replace(/^[^>]*>/, '')).split('\n').map(function(s) { return s.trim(); }).filter(String).slice(0, 40);
+  } else out.lines_note = 'no wswg-wrap block';
+  var t = html.indexOf('tag-wrap');
+  if (t >= 0) {
+    out.tags = [];
+    html.slice(t, t + 8000).replace(/<(a|span)\b[^>]*>([\s\S]*?)<\/\1>/gi, function(_, x, inner) { var s = probeText_(inner); if (s && out.tags.indexOf(s) < 0 && out.tags.length < 40) out.tags.push(s); });
+  }
+  out.sets = [];
+  var ab = html.indexOf('accordion-box');
+  if (ab >= 0) html.slice(ab, ab + 20000).replace(/<a\b[^>]*href="[^"]*\/set\/(\d+)[^"]*"[^>]*>([\s\S]*?)<\/a>/gi, function(_, id, inner) { if (out.sets.length < 10) out.sets.push(id + ' ' + probeText_(inner).slice(0, 200)); });
+  return out;
+}
+
+// Will the phone be able to show the thumbnail? Fetched twice: with no referrer, and as if from the GitHub Pages logger.
+function probeThumb_(url) {
+  function one(head) {
+    try {
+      var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true, headers: head });
+      var h = r.getHeaders();
+      return { status: r.getResponseCode(), type: String(h['Content-Type'] || ''), bytes: r.getBlob().getBytes().length,
+        cors: String(h['Access-Control-Allow-Origin'] || ''), cache: String(h['Cache-Control'] || '') };
+    } catch (e) { return { error: String(e) }; }
+  }
+  return { plain: one({}), from_pages: one({ Referer: 'https://ryantrotty.github.io/' }) };
 }

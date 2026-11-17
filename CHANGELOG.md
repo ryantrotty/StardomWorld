@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.81.0
+
+- **Set page probe (StarScope thumbnail confirm, step 1).** The sheet script gets `probeSetPage()` (run it from the Apps Script editor; it checks set 8539 and the 2026 category, 51) and a matching `vi_probe_set {set, category}` action. It fetches a set page, the category's list of sets, the set's first video page and that video's thumbnail, and writes one row per fetch to the **debug** tab (page `probe`): the video links with the text and image inside each, set links, page numbers, headings, the most used class names, signs of data loaded by the page's own scripts, the video page read the way the TV reads it (heading, description lines, tags), and whether the thumbnail loads with no referrer and as if from the GitHub Pages logger. Four requests to the video site per run; nothing else in the sheet changes. Nothing changes in the app.
+
 ## 2.80.3
 
 - Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.
