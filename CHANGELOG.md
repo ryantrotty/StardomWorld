@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.3
+
+Built on 2.84.2.
+
+- **"busy" when saving.** A save waits up to 25 s for the sheet's lock and then answers "busy". Every time the logger opened it also re-read the name library, and that read took the same lock, so in card check (an open and a save for each match) the two often met. Now: the script only locks a library read when there are approved proposals to apply (`scripts/video_index_log.gs`, needs the new deployment); in card check the logger re-reads the library at most every 10 minutes; and a "busy" save tries again by itself, up to three times (after 3, 6 and 9 s), saying so under the buttons.
+- **Preview in card check's panel.** Its two cards now sit side by side at half width with the list under them, and Down from the tabs / Up from the buttons scroll any tab that has nothing to select and doesn't fit (also in the logger on a video page).
+
 ## 2.84.2
 
 Built on 2.84.1.

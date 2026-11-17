@@ -89,6 +89,9 @@ function doPost(e) {
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
   if (body.action === 'pb_now') return out(pbNow_());
+  // 2.84.3: reading the library only takes the lock when there are approved proposals to apply first, so it never
+  // makes a save wait (a save that waits more than 25 s answers "busy").
+  if (body.action === 'vi_lib' && !viRows('proposals').some(function(p) { return p.status === 'approved'; })) return out(viAction(body));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));

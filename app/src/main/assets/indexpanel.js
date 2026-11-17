@@ -111,7 +111,10 @@
       // Inside card check's right panel (2.84.0): no layer over the page, a solid panel that fills its place.
       '#tvx.emb{position:relative;inset:auto;z-index:auto;background:none;padding:0;display:block;height:100%}',
       '#tvx.emb .p{width:100%;max-width:none;height:100%;max-height:none;background:#0F151C;border-color:#2A323C;box-sizing:border-box}',
-      '#tvx.emb .sides{flex-wrap:wrap}#tvx.emb .c{min-width:200px}'
+      '#tvx.emb .sides{flex-wrap:wrap}#tvx.emb .c{min-width:200px}',
+      // Preview in the panel: the two cards side by side at half width, the list under them tighter.
+      '#tvx.emb .body [style*="width:330px"]{width:calc(50% - 14px)!important}#tvx.emb .body [style*="height:186px"]{height:auto!important;aspect-ratio:16/9}',
+      '#tvx.emb .body [style*="min-width:220px"]{min-width:0!important;width:100%}#tvx.emb .body [style*="margin:8px 0"]{margin:3px 0!important;font-size:15px!important}'
     ].join('\n');
     document.head.appendChild(st);
     root = document.createElement('div');
@@ -612,6 +615,13 @@
       return;
     }
     if (line.cols) { var c2 = line.cols[col], n2 = idx + (down ? 1 : -1); if (c2[n2]) { go(c2[n2]); return; } }
+    // A tab with nothing to pick (Preview) can be taller than its space: Down from the tabs and Up from the buttons
+    // scroll it first (2.84.3).
+    var body = layer === 'main' && root.querySelector('.body');
+    if (body && !body.querySelector('.tvx-f') && body.scrollHeight > body.clientHeight + 4) {
+      if (down && a.closest('.tabs') && body.scrollTop + body.clientHeight < body.scrollHeight - 4) { body.scrollTop += 180; return; }
+      if (!down && a.closest('.row') && body.scrollTop > 0) { body.scrollTop -= 180; return; }
+    }
     go(enter(lines[li + (down ? 1 : -1)], down, x));
   }
 
@@ -743,6 +753,14 @@
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: state.cardTotal || '', card_no: state.cardNo, is_dark: state.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
+      // The sheet was busy with another save (2.84.3): try again by itself, up to three times, a few seconds apart.
+      if (!res.ok && res.busy && (state.busyTries || 0) < 3) {
+        state.busyTries = (state.busyTries || 0) + 1;
+        saveBtn(T.saving, true); say(ja ? 'シートが使用中です。もう一度保存します…' : 'The sheet is busy; saving again…');
+        setTimeout(function() { if (window.__tvIndexIsOpen) save(nextHref); }, 3000 * state.busyTries);
+        return;
+      }
+      state.busyTries = 0;
       if (!res.ok) { saveBtn(T.notSaved); say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
       try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV4'); } catch (e) {}
@@ -825,6 +843,7 @@
     // The last copy opens the panel at once; a fresh one comes in behind it, so sheet changes show without waiting.
     if (cached && cached.lib) {
       setLib(cached.lib); withLib();
+      if (CX && Date.now() - (cached.t || 0) < 600000) return;   // card check: one copy every 10 minutes is enough (2.84.3)
       call({ action: 'vi_lib' }, function(r) {
         if (!r.ok) return;
         store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r);
