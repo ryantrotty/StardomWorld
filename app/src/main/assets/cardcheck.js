@@ -25,7 +25,7 @@
     hintMove: '前の試合 / 次の試合', hintPress: '選ぶ', hintBack: '戻る',
     doneHead: '大会の登録が完了', doneSub: 'すべての試合がSTARSCOPEに入りました', dThumb: 'サムネイルと出場選手から登録', dWatched: '視聴して登録済み（変更なし）',
     dBell: 'ゴングの時間は視聴時に追加できます（次に登録 › ゴング未記録）', nextShow: '次の大会へ', logShows: '大会を登録', shows: '大会一覧', stay: 'このまま見る',
-    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）'
+    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…'
   } : {
     head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
     match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
@@ -37,7 +37,7 @@
     hintMove: 'Previous / next match', hintPress: 'Choose', hintBack: 'Back',
     doneHead: 'Show logged', doneSub: 'All matches on this card are in StarScope', dThumb: 'logged from thumbnails and line-ups', dWatched: 'already logged while watching, left as it was',
     dBell: "Bell times are added when you watch; they're in Log next.", nextShow: 'Next show to log', logShows: 'Log a show', shows: 'Shows', stay: 'Stay here',
-    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)'
+    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…'
   };
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -75,7 +75,7 @@
   // ---- state
   var show = null;          // { name, date, venue, line, videos: [{ id, t, th }] }
   var cur = 0, recs = {}, saved = {}, err = '', root = null, focusKey = 'confirm', reading = null, lastFetch = 0, queue = [], pumpTimer = 0;
-  var kitReady = false;
+  var kitReady = false, editing = false, savingNow = null;
 
   // ---- the show page: one request
   function readSetHtml(html) {
@@ -235,6 +235,7 @@
     '#tvcc .bt{display:flex;flex-wrap:wrap;gap:10px}' +
     '#tvcc .b{appearance:none;height:48px;padding:0 18px;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#C9D2DC;font:700 17px Arial;outline:none!important;box-shadow:none!important}' +
     '#tvcc .b.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A}#tvcc .b:focus{border-color:#F4C242!important;color:#fff}#tvcc .b.on:focus{color:#1A1A1A}' +
+    '#tvcc .host{flex:1 1 auto;min-height:0}' +
     '#tvcc .ld{font:700 16px Arial;color:#9AA6B4;padding:12px 0}#tvcc .er{font:700 16px Arial;color:#FF7A66;padding:12px 0}' +
     '#tvcc .hn{position:fixed;left:0;right:0;bottom:0;height:52px;display:flex;align-items:center;gap:26px;padding:0 48px;background:rgba(11,17,24,.96);border-top:1px solid #2A323C;font:600 15px Arial;color:#C9D2DC}' +
     '#tvcc .hn i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;margin-right:8px;border-radius:6px;border:1px solid #3B4656;background:#161F2A;color:#fff;font:800 13px Arial}' +
@@ -250,8 +251,10 @@
     document.body.appendChild(root);
   }
   var doneOpen = false;
-  function render() {
+  function render(force) {
     if (!document.body) return;
+    // While the logger sits in the right panel, nothing here is redrawn under it.
+    if (editing && window.__tvIndexIsOpen && !force) return;
     ensure();
     var keep = document.activeElement && root.contains(document.activeElement) ? document.activeElement.getAttribute('data-k') : null;
     if (keep) focusKey = keep;
@@ -282,6 +285,12 @@
     var name = showName(show.name, show.date);
     h += '<div class="pn"><div class="hd">' + TEL + '<span class="wm">STAR<b>SCOPE</b></span><span class="hh">' + T.head + '</span>' + squares() + '</div>';
     h += '<div class="sh">' + esc([name, dateText(show.date)].filter(Boolean).join(' · ')) + '</div>';
+    if (editing) {
+      // The logger's own tabs, here in the right panel (2.84.0); the thumbnail stays where it is.
+      root.innerHTML = h + '<div id="tvcc-host" class="host"></div></div><div class="hn"><span><i>BACK</i>' + esc(T.hintBack) + '</span></div>';
+      place();
+      return;
+    }
     h += '<div class="box">' + watchLine(v, st);
     if (st && st.card && window.__tvStarCard) {
       h += '<div class="gl">' + esc(st.label) + '</div><div style="background:#1A1A1A;border-radius:8px;padding:11px 14px 13px">' + window.__tvStarCard.html(st.card) + '</div>';
@@ -294,7 +303,7 @@
     h += '</div><div class="bt">';
     var ready = rec && !rec.failed;
     if (st) h += btn('nextm', T.next, true) + (ready || st.card ? btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch);
-    else h += (ready ? btn('confirm', T.confirm, true) + btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch) + btn('skip', T.skip, !ready);
+    else h += (ready ? btn('confirm', savingNow === v.id ? T.saving : T.confirm, true) + btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch) + btn('skip', T.skip, !ready);
     h += '</div></div>';
     if (ready && !st && !wasReady && (focusKey === 'skip' || focusKey === 'watch')) focusKey = 'confirm';
     h += '<div class="hn"><span><i>▲ ▼</i>' + esc(T.hintMove) + '</span><span><i>OK</i>' + esc(T.hintPress) + '</span><span><i>BACK</i>' + esc(T.hintBack) + '</span></div>';
@@ -347,8 +356,11 @@
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
     var at = cur;
+    if (quick) { savingNow = v.id; render(); }
     window.__tvIndexOpen({ set: SET, video: v.id, rec: rec, place: { no: cur + 1, total: show.videos.length }, thumb: true, tab: tab, quick: !!quick,
+      host: function() { editing = true; render(true); return root.querySelector('#tvcc-host'); },
       done: function(res) {
+        editing = false; savingNow = null;
         if (res && res.ok) {
           saved[v.id] = 1;
           if (window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }

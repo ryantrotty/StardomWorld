@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.0
+
+Built on 2.83.0 (card check). Version code 529, past 528 on fix/login-lands-on-mypage.
+
+- **Card check without the overlay.** Confirm & next saves without showing the logger: the button reads Saving…, then the next match comes up. Edit details and Add result & rating open the logger's tabs (Preview, Competitors, Match, Finish, Confirm) inside card check's right panel, as a solid panel, with the large thumbnail still on the left; Back closes them. A name not in the library on Confirm opens Competitors there too, and a save that fails shows the panel with the reason.
+- The logger on a video page is unchanged (it still floats over the player).
+
 ## 2.83.0
 
 StarScope card check (private builds with StarScope logging), the StarScope menu group, and Community in Matches. Built on main (2.80.3); the 2.81.0 and 2.82.0 script branches (reading the site from the sheet script) are not used: the site blocks the script.

@@ -107,7 +107,11 @@
       '#tvx .ltr{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0}',
       '#tvx .ltr button{min-width:36px;min-height:38px;padding:2px 4px;text-align:center;font-size:15px}',
       '#tvx .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;overflow:auto;padding:3px;align-content:start;flex:1 1 auto}',
-      '#tvx .grid small{display:block;font:600 12px Arial;color:#9AA6B4}'
+      '#tvx .grid small{display:block;font:600 12px Arial;color:#9AA6B4}',
+      // Inside card check's right panel (2.84.0): no layer over the page, a solid panel that fills its place.
+      '#tvx.emb{position:relative;inset:auto;z-index:auto;background:none;padding:0;display:block;height:100%}',
+      '#tvx.emb .p{width:100%;max-width:none;height:100%;max-height:none;background:#0F151C;border-color:#2A323C;box-sizing:border-box}',
+      '#tvx.emb .sides{flex-wrap:wrap}#tvx.emb .c{min-width:200px}'
     ].join('\n');
     document.head.appendChild(st);
     root = document.createElement('div');
@@ -115,6 +119,20 @@
     document.body.appendChild(root);
   }
 
+  // Card check (2.84.0): the panel sits in card check's own right panel instead of over the page; a quick Confirm
+  // saves without showing it at all.
+  function place() {
+    if (!root) return;
+    var host = CX && CX.hostEl;
+    if (host) { if (root.parentNode !== host) host.appendChild(root); root.classList.add('emb'); }
+    else { if (root.parentNode !== document.body) document.body.appendChild(root); root.classList.remove('emb'); }
+  }
+  function reveal() {
+    if (!CX) return;
+    if (!CX.hostEl && CX.host) CX.hostEl = CX.host();
+    place();
+    root.style.display = CX.hostEl ? 'block' : 'flex';
+  }
   // The Save button says how the save went (2.60.2): Saving…, Saved (or Linked), Not saved; back to Save after 3 s.
   var saveLabel = '', saveTimer = 0;
   function saveBtn(text, keep) {
@@ -597,7 +615,7 @@
     go(enter(lines[li + (down ? 1 : -1)], down, x));
   }
 
-  function say(text, bad) { statusText = text; statusBad = !!bad; var s = root && root.querySelector('.s'); if (s) { s.textContent = text; s.className = 's' + (bad ? ' bad' : ''); } }
+  function say(text, bad) { if (bad && CX && root && root.style.display === 'none') reveal(); statusText = text; statusBad = !!bad; var s = root && root.querySelector('.s'); if (s) { s.textContent = text; s.className = 's' + (bad ? ' bad' : ''); } }
 
   function remember(id) { var L = (load(RECENT_KEY) || []).filter(function(x) { return x !== id; }); L.unshift(id); store(RECENT_KEY, L.slice(0, 16)); }
 
@@ -778,7 +796,7 @@
     // which names to settle.
     if (CX && CX.quick) {
       if (stepDone('people')) { render(); save(null); return; }
-      state.tab = 'people'; lastFocus = 'p0_0';
+      state.tab = 'people'; lastFocus = 'p0_0'; CX.quick = false; reveal();
     }
     render();
   }
@@ -792,7 +810,9 @@
     try { AndroidHost.indexPanel(true); } catch (e) {}
     rec = CX ? CX.rec || null : window.__tvVixRec || null;
     marks = load(MARK_KEY) || { bell: '', end: '' };
-    state = null; layer = 'main'; lastFocus = CX ? 'save' : 'bell'; say(T.loading); ensure(); root.style.display = 'flex'; render();
+    state = null; layer = 'main'; lastFocus = CX ? 'save' : 'bell'; say(T.loading); ensure();
+    if (CX && CX.quick) { place(); root.style.display = 'none'; } else if (CX) reveal(); else { place(); root.style.display = 'flex'; }
+    render();
     var cached = load(LIB_KEY);
     function withLib() {
       var show = rec && rec.shows && rec.shows[0];
@@ -825,7 +845,7 @@
   function close() {
     window.__tvIndexIsOpen = false;
     try { AndroidHost.indexPanel(false); } catch (e) {}
-    if (root) { root.style.display = 'none'; root.innerHTML = ''; }
+    if (root) { root.style.display = 'none'; root.innerHTML = ''; root.classList.remove('emb'); if (root.parentNode !== document.body) document.body.appendChild(root); }
     if (CX) {
       var cx = CX; CX = null; U = PAGE; MARK_KEY = U ? 'tvVixMarks' + U[2] : '';
       if (cx.done) cx.done(cx.saved || null);
