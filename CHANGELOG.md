@@ -2,6 +2,19 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.82.0
+
+Built on 2.81.0 (the set page probe), so it includes it.
+
+- **Card check, sheet script side (StarScope thumbnail confirm, step 2).** Three new actions for logging a show's card from its thumbnails and line-ups, away from the TV; nothing on the phone uses them yet.
+  - `vi_sets {category, page}`: a category's show sets (e.g. 51 = 2026) with show name, date, Japanese venue and thumbnail, and for sets already opened, how many of their videos are logged. One site request per listing page, kept for 24 h.
+  - `vi_set {set}`: the set's videos in the site's order (id, title, thumbnail), plus the show's date and venue (English from the venues tab where it matches). Read from the site once and kept in a new **sets** tab; `refresh` reads it again.
+  - `vi_video {set, video}`: one video page's heading, description line-up (both languages), set box and tags, read from the site once and kept in the set's row. Each video comes back with `logged` (thumb or watched) when it's already in the index.
+- Site requests are made **one at a time**, at least 2 s apart, and never while the sheet is locked; nothing is fetched up front for the whole set.
+- The same three calls for the phone page (`phoneSets`, `phoneSet`, `phoneVideo`, with the key).
+- The probe's video page reader now stops the description at the set box, so the show line isn't read as part of the line-up.
+- Parsing is written ahead of the probe's results and will be adjusted once the probe has run on the real pages. Nothing changes in the app.
+
 ## 2.81.0
 
 - **Set page probe (StarScope thumbnail confirm, step 1).** The sheet script gets `probeSetPage()` (run it from the Apps Script editor; it checks set 8539 and the 2026 category, 51) and a matching `vi_probe_set {set, category}` action. It fetches a set page, the category's list of sets, the set's first video page and that video's thumbnail, and writes one row per fetch to the **debug** tab (page `probe`): the video links with the text and image inside each, set links, page numbers, headings, the most used class names, signs of data loaded by the page's own scripts, the video page read the way the TV reads it (heading, description lines, tags), and whether the thumbnail loads with no referrer and as if from the GitHub Pages logger. Four requests to the video site per run; nothing else in the sheet changes. Nothing changes in the app.

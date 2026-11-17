@@ -54,6 +54,16 @@
  *                                                              page and its thumbnail; writes one debug row per fetch (page "probe").
  *                                                              probeSetPage() does the same from the editor (set 8539, category 51).
  *
+ * Card check (2.82.0, StarScope thumbnail confirm; logging a show's card from its thumbnails and line-ups, no TV):
+ *   vi_sets  {category, page}                                  a category's list of show sets (one site request, kept 24 h),
+ *                                                              each with how many of its videos are logged
+ *   vi_set   {set, refresh}                                    a set's videos in the site's order (title, thumbnail), date and
+ *                                                              venue; read from the site once, then from the "sets" tab
+ *   vi_video {set, video}                                      one video page's heading, line-up lines, set box and tags; read
+ *                                                              from the site once (one request), then from the "sets" tab
+ *   Site requests are made one at a time, at least 2 s apart, and never while holding the sheet's lock.
+ *   phoneSets / phoneSet / phoneVideo                          the same for the phone page (google.script.run), with the key
+ *
  * StarScope on the phone (2.68.0, see docs/STARSCOPE_PHONE.md):
  *   pb_put {video, set, events: [{ts, ev, pos, playing, rate}], info}  the TV's play / pause / seek record ("playback" tab);
  *                                                              only the current video and the one before it are kept
@@ -93,6 +103,9 @@ function doPost(e) {
   if (body.action === 'vi_roster') return out(viRoster());
   if (body.action === 'pb_put') return out(withLock(function() { return pbPut(body); }));
   if (body.action === 'pb_now') return out(pbNow_());
+  if (body.action === 'vi_sets') return out(ccSets(body));
+  if (body.action === 'vi_set') return out(ccSet(body));
+  if (body.action === 'vi_video') return out(ccVideo(body));
   if (body.action === 'vi_probe_set') return out(probeSetPage(body.set, body.category));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
@@ -356,7 +369,10 @@ var VI = {
   proposals: ['proposal_id', 'time', 'type', 'value', 'entity_id', 'video_id', 'match_id', 'device', 'status', 'decided', 'note'],
   changes: ['time', 'match_id', 'tab', 'field', 'old', 'new', 'source', 'device'],
   // One star rating (1 to 5) per match per device: your own, and the average of everyone's (2.62.0).
-  ratings: ['match_id', 'device', 'stars', 'updated']
+  ratings: ['match_id', 'device', 'stars', 'updated'],
+  // Card check (2.82.0): one row per show set read from the site. videos is JSON, in the site's order:
+  // [{id, t, img, h1, lines, box, tags, at}]; h1 / lines / box / tags arrive one video at a time (vi_video).
+  sets: ['set_id', 'category', 'title', 'date', 'venue_ja', 'videos', 'fetched', 'updated']
 };
 function viSheet(name) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(name);
@@ -1180,7 +1196,10 @@ function probeVideo_(html) {
   var w = part.indexOf('wswg-wrap');
   if (w >= 0) {
     var block = part.slice(w, w + 12000);
-    if (block.indexOf('tag-wrap') > 0) block = block.slice(0, block.indexOf('tag-wrap')).replace(/<[^>]*$/, '');
+    ['tag-wrap', 'accordion-box', 'content-status-box'].forEach(function(stop) {   // the description ends where these begin
+      var at = block.indexOf(stop);
+      if (at > 0) block = block.slice(0, at).replace(/<[^>]*$/, '');
+    });
     block = block.replace(/<\/(p|div|li)>/gi, '\n');
     out.lines = probeText_(block.replace(/^[^>]*>/, '')).split('\n').map(function(s) { return s.trim(); }).filter(String).slice(0, 40);
   } else out.lines_note = 'no wswg-wrap block';
@@ -1207,3 +1226,170 @@ function probeThumb_(url) {
   }
   return { plain: one({}), from_pages: one({ Referer: 'https://ryantrotty.github.io/' }) };
 }
+
+// ---- Card check (2.82.0) -----------------------------------------------------------------------------------------
+// Logging a show's card from its thumbnails and video descriptions, away from the TV (see the project's "StarScope
+// thumbnail confirm plan"). The script reads the site's public pages (no sign-in) and keeps what it read in the
+// "sets" tab, so each page is requested once. The phone asks for one video at a time; this side also keeps site
+// requests at least 2 s apart. The page parsing below is written ahead of the probe's results (2.81.0) and is to be
+// checked against them.
+var CC_GAP_MS = 2000;
+
+// One site request, waiting first if the last one was under 2 s ago. Never called while holding the lock.
+function ccFetch_(url) {
+  var cache = CacheService.getScriptCache(), last = Number(cache.get('cc_last') || 0), wait = last + CC_GAP_MS - Date.now();
+  if (wait > 0) Utilities.sleep(Math.min(wait, CC_GAP_MS));
+  cache.put('cc_last', String(Date.now()), 60);
+  var p = probeFetch_(url);
+  if (p.status !== 200 || !p.html) throw new Error('site answered ' + (p.status || p.error || 'nothing') + ' for ' + url);
+  return p.html;
+}
+
+// "5・2『STARDOM GW TOUR 2026 in KOCHI』高知・セリーズ（CHRES）体育館" -> show, date, venue (as videoindex.js reads it).
+function ccShowLine_(text, yearHint) {
+  var t = String(text || '').replace(/\s+/g, ' ').trim(), r = { show: '', date: '', venue: '' };
+  var d = /^\s*(?:【[^】]*】\s*)?(\d{1,2})\s*[・.\/]\s*(\d{1,2})\s*(.*)$/.exec(t);
+  if (!d) { r.show = t; return r; }
+  var rest = d[3], q = /『([^』]+)』\s*(.*)$/.exec(rest);
+  if (q) { r.show = q[1].trim(); r.venue = q[2].replace(/[（(]\d{4}\/\d{1,2}\/\d{1,2}[）)]\s*$/, '').trim(); } else r.show = rest.trim();
+  var full = /[（(](\d{4})\/(\d{1,2})\/(\d{1,2})[）)]/.exec(rest);
+  var y = full ? full[1] : (yearHint || ((/(20\d{2}|19\d{2})/.exec(rest) || [])[1]));
+  if (y) r.date = y + '-' + ('0' + d[1]).slice(-2) + '-' + ('0' + d[2]).slice(-2);
+  return r;
+}
+
+function ccYear_(category) {
+  var c = Number(category);
+  return c >= 51 && c <= 60 ? String(2026 - (51 - c)) : '';   // 51 = 2026; other year categories to be confirmed by the probe
+}
+
+// What's logged for each video: 'thumb' (from card check) or 'watched' (from the TV or phone logger).
+function ccLogged_() {
+  var src = {}, out = {};
+  viRows('matches').forEach(function(m) { src[String(m.match_id)] = String(m.source || ''); });
+  viRows('match_videos').forEach(function(v) { out[String(v.video_id)] = src[String(v.match_id)] === 'thumb' ? 'thumb' : 'watched'; });
+  return out;
+}
+
+function ccSetRow_(setId) {
+  var hit = viRows('sets').filter(function(r) { return String(r.set_id) === String(setId); });
+  if (!hit.length) return null;
+  var r = hit[hit.length - 1];
+  try { r.videos = JSON.parse(r.videos || '[]'); } catch (e) { r.videos = []; }
+  return r;
+}
+
+function ccWriteSet_(row) {
+  var json = JSON.stringify(row.videos || []);
+  if (json.length > MAX_CELL) {   // a very long set: drop tags first, then description lines past the first 8
+    (row.videos || []).forEach(function(v) { delete v.tags; if (v.lines) v.lines = v.lines.slice(0, 8); });
+    json = JSON.stringify(row.videos).slice(0, MAX_CELL);
+  }
+  var fields = { set_id: row.set_id, category: row.category || '', title: row.title || '', date: row.date || '', venue_ja: row.venue_ja || '',
+    videos: json, fetched: row.fetched || '', updated: new Date().toISOString() };
+  var old = viRows('sets').filter(function(r) { return String(r.set_id) === String(row.set_id); });
+  if (old.length) viSet('sets', old[old.length - 1]._row, fields);
+  else viAppend('sets', [fields]);
+}
+
+// vi_sets {category, page}: the category's show sets, from the site's search page for sets.
+function ccSets(b) {
+  var cat = String(b.category || '').replace(/\D/g, ''), page = Math.max(1, Math.min(200, Number(b.page) || 1));
+  if (!cat) return { ok: false, error: 'no category' };
+  var cache = CacheService.getScriptCache(), ck = 'cc_sets_' + cat + '_' + page, list = null;
+  try { list = JSON.parse(cache.get(ck) || 'null'); } catch (e) { list = null; }
+  if (!list) {
+    var html;
+    try { html = ccFetch_(PROBE_SITE + '/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + cat + '&q%5Btype%5D=set&activetab=contents&page=' + page); }
+    catch (e) { return { ok: false, error: String(e.message || e) }; }
+    var d = probeDescribe_({ status: 200, html: html });
+    list = { sets: d.sets.map(function(x) {
+      var sl = ccShowLine_(x.text, ccYear_(cat));
+      return { id: x.id, name: x.text, show: sl.show, date: sl.date, venue: sl.venue, img: x.img };
+    }), pages: d.pages };
+    try { cache.put(ck, JSON.stringify(list), 86400); } catch (e) {}
+  }
+  var logged = ccLogged_(), stored = {};
+  viRows('sets').forEach(function(r) { var v = []; try { v = JSON.parse(r.videos || '[]'); } catch (e) {} stored[String(r.set_id)] = v; });
+  list.sets.forEach(function(s) {
+    var v = stored[String(s.id)];
+    if (!v) return;
+    s.videos = v.length;
+    s.logged = v.filter(function(x) { return logged[String(x.id)]; }).length;
+  });
+  return { ok: true, category: cat, page: page, pages: list.pages, sets: list.sets };
+}
+
+// vi_set {set, refresh}: the set's videos in the site's order, read from the site once.
+function ccSet(b) {
+  var setId = String(b.set || '').replace(/\D/g, '');
+  if (!setId) return { ok: false, error: 'no set' };
+  var row = b.refresh ? null : ccSetRow_(setId);
+  if (!row) {
+    var html;
+    try { html = ccFetch_(PROBE_SITE + '/set/' + setId); } catch (e) { return { ok: false, error: String(e.message || e) }; }
+    var d = probeDescribe_({ status: 200, html: html }), old = ccSetRow_(setId), kept = {};
+    (old && old.videos || []).forEach(function(v) { kept[String(v.id)] = v; });
+    var head = d.og_title || (d.headings[0] || '').replace(/^h\d: /, '') || d.title;
+    var sl = ccShowLine_(head, '');
+    row = { set_id: setId, category: b.category || (old && old.category) || '', title: head,
+      date: sl.date || (old && old.date) || '', venue_ja: sl.venue || (old && old.venue_ja) || '', fetched: new Date().toISOString(),
+      videos: d.contents.filter(function(v) { return v.href; }).map(function(v) {
+        var k = kept[String(v.id)] || {};
+        return { id: v.id, t: v.text, img: v.img, h1: k.h1, lines: k.lines, box: k.box, tags: k.tags, at: k.at };
+      }) };
+    if (!row.videos.length) return { ok: false, error: 'no videos found on the set page', title: head };
+    var w = withLock(function() { ccWriteSet_(row); return { ok: true }; });
+    if (!w.ok) return w;
+  }
+  var logged = ccLogged_();
+  row.videos.forEach(function(v) { v.logged = logged[String(v.id)] || ''; });
+  return { ok: true, set: setId, title: row.title, date: row.date, venue_ja: row.venue_ja, venue: ccVenue_(row.venue_ja),
+    fetched: row.fetched, videos: row.videos };
+}
+
+// vi_video {set, video}: one video page, read from the site once, kept in the set's row.
+function ccVideo(b) {
+  var setId = String(b.set || '').replace(/\D/g, ''), vid = String(b.video || '').replace(/\D/g, '');
+  if (!setId || !vid) return { ok: false, error: 'no set or video' };
+  var row = ccSetRow_(setId);
+  if (!row) return { ok: false, error: 'open the set first' };
+  var v = row.videos.filter(function(x) { return String(x.id) === vid; })[0];
+  if (!v) return { ok: false, error: 'video not in this set' };
+  if (!v.at || b.refresh) {
+    var html;
+    try { html = ccFetch_(PROBE_SITE + '/set/' + setId + '/contents/' + vid); } catch (e) { return { ok: false, error: String(e.message || e) }; }
+    var pv = probeVideo_(html);
+    v.h1 = pv.h1 || ''; v.lines = pv.lines || []; v.tags = pv.tags || []; v.at = new Date().toISOString();
+    v.box = (pv.sets || []).filter(function(x) { return x.indexOf(setId + ' ') === 0; }).map(function(x) { return x.slice(setId.length + 1); })[0] || (pv.sets || [])[0] || '';
+    if (!v.img && pv.og_image) v.img = pv.og_image;
+    // The set box gives the show line with the venue: fill the set's date and venue if the set page didn't.
+    var sl = ccShowLine_(v.box, (/(20\d{2})[\/年]/.exec(v.lines.join(' ') + ' ' + v.h1) || [])[1] || '');
+    if (!row.date && sl.date) row.date = sl.date;
+    if (!row.venue_ja && sl.venue) row.venue_ja = sl.venue;
+    var w = withLock(function() {
+      var fresh = ccSetRow_(setId) || row;   // another card may have been saved meanwhile: merge into the newest copy
+      fresh.videos.forEach(function(x, i) { if (String(x.id) === vid) fresh.videos[i] = v; });
+      if (!fresh.date) fresh.date = row.date;
+      if (!fresh.venue_ja) fresh.venue_ja = row.venue_ja;
+      ccWriteSet_(fresh);
+      return { ok: true };
+    });
+    if (!w.ok) return w;
+  }
+  return { ok: true, set: setId, video: vid, logged: ccLogged_()[vid] || '', date: row.date, venue_ja: row.venue_ja, venue: ccVenue_(row.venue_ja),
+    h1: v.h1, lines: v.lines, box: v.box, tags: v.tags, t: v.t, img: v.img, at: v.at };
+}
+
+// The venue's English name from the venues tab, matched by its Japanese name (as Log next does).
+function ccVenue_(raw) {
+  raw = String(raw || '');
+  if (!raw) return null;
+  var hit = viRows('venues').filter(function(x) { return x.name_ja && raw.indexOf(x.name_ja) >= 0; })[0];
+  return hit ? { id: hit.venue_id, en: hit.name_en, ja: hit.name_ja } : null;
+}
+
+// The phone page's calls (google.script.run), with the key it was opened with.
+function phoneSets(k, category, page) { phoneKey_(k); return ccSets({ category: category, page: page }); }
+function phoneSet(k, set, refresh) { phoneKey_(k); return ccSet({ set: set, refresh: !!refresh }); }
+function phoneVideo(k, set, video) { phoneKey_(k); return ccVideo({ set: set, video: video }); }
