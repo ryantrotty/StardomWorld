@@ -68,7 +68,7 @@
 </div>
 <script>
 (function() {
-  var VERSION = 'car 0.1.1';
+  var VERSION = 'car 0.2.0';
   var SITE = 'https://www.stardom-world.com';
   var LINK_KEY = 'starscopeLink', CROP_KEY = 'carCropV1', CACHE_KEY = 'carRowsV1', SKIP_KEY = 'carSkipV1';
   var LINK_OK = /^https:\/\/script\.google\.com\/[^\s]*\/exec\?(?=[^\s]*\bp=phone\b)(?=[^\s]*\bk=[^&\s]+)[^\s]*$/;
@@ -210,8 +210,11 @@
     fr.src = cur.href;
     layout();
   }
+  // 0.2.0: videos open as the site's own page in this tab. In the car the site's sign-in doesn't reach a page shown
+  // inside a frame (its cookies aren't sent there), so the cropped frame below is no longer used.
   function openVideo(v) {
     if (!v) return;
+    if (v.href) { location.href = v.href; return; }
     cur = v; whole = !v.id;   // the site home opens as a whole page (sign-in, browsing); videos open cropped
     $('ttl').textContent = v.title || '';
     $('home').style.display = 'none'; $('play').style.display = 'block';
