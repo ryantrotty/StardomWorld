@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.1
+
+Built on 2.84.0.
+
+- **Card check venue.** The summary showed "? 高知・[CHRES] セリーズ体育館" while the logger showed Kochi Cerise Gymnasium: the site writes this show's venue as 高知・［CHRES］セリーズ体育館 but the venues tab has 高知・セリーズ（CHRES）体育館, so the straight match failed; the logger only had it because the show's venue was already saved. The summary now takes the venue the sheet already has for the show (from any logged match of it), and failing that matches with the bracketed part left out on both sides.
+- **No more words split across lines** in card check (DATE showing "20 / 26", "THE T / ITLE"): the label column is narrower in the Match and Show boxes, values stay on one line (the venue may wrap), and "Suggested from the title" is now "Suggested".
+
 ## 2.84.0
 
 Built on 2.83.0 (card check). Version code 529, past 528 on fix/login-lands-on-mypage.

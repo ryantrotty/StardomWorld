@@ -863,7 +863,18 @@
     },
     resolve: function(raw) { return lib ? resolve(raw) : ''; },
     nameOf: function(id) { return lib ? nameOf(id) : id; },
-    venue: function(raw) { if (!lib) return null; var id = matchVenue(raw), v = id && venueById(id); return v ? { id: id, name: lab(v) } : null; },
+    // The site writes some venues two ways, 高知・セリーズ（CHRES）体育館 and 高知・［CHRES］セリーズ体育館: failing a straight
+    // match, the bracketed part is left out on both sides (2.84.1, card check only).
+    venue: function(raw) {
+      if (!lib) return null;
+      var id = matchVenue(raw);
+      if (!id) {
+        var bare = function(x) { return norm(String(x || '').replace(/[（(［\[【][^）)］\]】]*[）)］\]】]/g, '')); }, b = bare(raw);
+        if (b) (lib.venues || []).some(function(v) { if ([v.ja, v.en].some(function(x) { var n = bare(x); return n && b.indexOf(n) >= 0; })) { id = v.id; return true; } return false; });
+      }
+      var v = id && venueById(id);
+      return v ? { id: id, name: lab(v) } : null;
+    },
     // What the panel would pre-pick from the titles: [{group, label}], titles and tournaments first.
     suggest: function(text) {
       if (!lib) return [];

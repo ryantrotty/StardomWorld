@@ -30,7 +30,7 @@
     head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
     match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
     people: 'People', side: 'Side', show: 'Show', matchInfo: 'Match', date: 'Date', venue: 'Venue', place: 'Match order', kind: 'Match type',
-    sugg: 'Suggested from the title', none: 'None', unknown: 'not in the library',
+    sugg: 'Suggested', none: 'None', unknown: 'not in the library',
     confirm: 'Confirm & next ▼', edit: 'Edit details', result: 'Add result & rating', watch: 'Watch this match', skip: 'Skip ▼', next: 'Next match ▼',
     loggedThumb: 'Logged from thumbnail', loggedWatched: 'Logged while watching', savedNow: 'Logged',
     watched: 'Watched', plays: 'plays', last: 'last', notLogged: 'not logged', notWatched: 'Not watched',
@@ -187,11 +187,18 @@
     h += row(T.sugg, sug.length ? sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') : '<span class="dim">' + esc(T.none) + '</span>');
     return h;
   }
+  // The show's venue as the sheet already has it: from a match of this show that is logged (2.84.1).
+  function savedVenue() {
+    var map = cardsMap(), out = null;
+    Object.keys(map).some(function(id) { var c = map[id]; if (String(c.sid) === SET && (c.vn || c.vnj)) { out = ja ? (c.vnj || c.vn) : (c.vn || c.vnj); return true; } return false; });
+    return out;
+  }
   function showHtml(rec) {
     var kit = kitReady && window.__tvIndexKit, s0 = rec && rec.shows && rec.shows[0];
-    var raw = (s0 && s0.venue) || show.venue || '', ven = kit && raw ? kit.venue(raw) : null;
+    var raw = (s0 && s0.venue) || show.venue || '', sv = savedVenue();
+    var ven = sv ? { name: sv } : (kit && raw ? kit.venue(raw) : null);
     var date = (rec && rec.date) || show.date || '';
-    return row(T.date, esc(dateText(date) || '–')) + row(T.venue, ven ? esc(ven.name) + (raw && !ja ? ' <span class="dim">· ' + esc(raw) + '</span>' : '') : (raw ? '? ' + esc(raw) : '–'), ven ? '' : (raw ? 'bad' : ''));
+    return row(T.date, esc(dateText(date) || '–')) + row(T.venue, ven ? esc(ven.name) : (raw ? '? ' + esc(raw) : '–'), 'wrap' + (ven ? '' : (raw ? ' bad' : '')));
   }
   function watchLine(v, st) {
     var w = watchInfo()[v.id];
@@ -228,6 +235,7 @@
     '#tvcc .pp.bad{border-color:#FFB347;background:#2A1C10}#tvcc .pp .mk{width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:900 13px Arial;background:#12261B;color:#7FD3A0;flex:none}' +
     '#tvcc .pp.bad .mk{background:#2A1C10;color:#FFB347;border:1px solid #FFB347}#tvcc .pp .pn{padding:0;display:block;font:700 17px Arial}#tvcc .pp small{display:block;font:600 12px Arial;color:#9AA6B4}#tvcc .pp small.w{color:#FFB347}' +
     '#tvcc .rw{display:flex;align-items:center;gap:12px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:6px 12px;min-height:38px;box-sizing:border-box}' +
+    '#tvcc,#tvcc *{word-break:normal!important;overflow-wrap:normal!important}#tvcc .cols .rw .lb{flex-basis:96px}#tvcc .cols .rw .vl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tvcc .cols .rw .vl.wrap{white-space:normal}' +
     '#tvcc .rw .lb{flex:0 0 150px;font:800 11px Arial;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4}#tvcc .rw .vl{flex:1 1 0;font:700 16px Arial;min-width:0}#tvcc .rw .vl.bad{color:#FFB347}' +
     '#tvcc .sg{display:inline-block;margin:0 6px 0 0;padding:2px 8px;border-radius:20px;border:1px solid #6B5A22;background:#2A2410;color:#F4C242;font:800 12px Arial}#tvcc .dim{color:#9AA6B4;font-weight:600}' +
     '#tvcc .nl{font:600 15px Arial;color:#9AA6B4;padding:8px 0}' +
