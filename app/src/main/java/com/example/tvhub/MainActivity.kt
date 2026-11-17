@@ -2528,6 +2528,7 @@ class MainActivity : Activity() {
                 // The stall watchdog reads the Stardom player's play state; Stagecrowd pages have none, so it would
                 // mistake a playing show for a stuck one and leave full screen after 25 seconds.
                 if (!isPpvFlow(webView.url)) handler.postDelayed(fsStallCheck, 10000)
+                startPageWatchdog()
                 // Fire TV: GONE collapses the page to 0x0, which shrinks the video layout; keep its size.
                 webView.visibility = if (isFireTv()) View.INVISIBLE else View.GONE
                 view.alpha = 0f
@@ -2750,10 +2751,68 @@ class MainActivity : Activity() {
     // The page's process is gone and its WebView can't be used again: report it, drop the dead WebView and rebuild
     // the screen. The first time within a minute it reopens the page that was showing; the second time the home page;
     // the third time the app closes, so a page that can't load doesn't restart forever.
+    // ---- Frozen page watchdog (2.80.4) ------------------------------------------------------------------------------
+    // The page's process can stop answering without ending: the full-screen video goes black and Back can't bring the
+    // page back, because the page itself is stuck. Android only tells the app when the process ends, so while a video
+    // is in full screen the app asks the page for a one-character answer every 5 s. No answer for 20 s counts as
+    // frozen: it's reported (with the TV's free memory) and the page process is ended, so the usual recovery rebuilds
+    // the app and reopens the video page, as if Android had ended it. Never runs while the app is out of sight.
+    private val FROZEN_AFTER_MS = 20000L
+    private var pingSentAt = 0L        // 0 = the last ping was answered
+    private var pingRunning = false
+    private var frozenKill = false     // the app ended the page itself: don't also report it as PageProcessGone
+
+    private val pageWatchdog: Runnable = object : Runnable {
+        override fun run() {
+            if (!pingRunning || rendererDead || customView == null) { pingRunning = false; pingSentAt = 0L; return }
+            val now = SystemClock.uptimeMillis()
+            if (pingSentAt != 0L) {
+                if (now - pingSentAt >= FROZEN_AFTER_MS) { pageFrozen(now - pingSentAt); return }
+            } else {
+                pingSentAt = now
+                try { webView.evaluateJavascript("1") { pingSentAt = 0L } } catch (_: Exception) {}
+            }
+            handler.postDelayed(this, 5000)
+        }
+    }
+
+    private fun startPageWatchdog() {
+        if (pingRunning) return
+        pingRunning = true
+        pingSentAt = 0L
+        handler.removeCallbacks(pageWatchdog)
+        handler.postDelayed(pageWatchdog, 5000)
+    }
+
+    private fun stopPageWatchdog() {
+        pingRunning = false
+        pingSentAt = 0L
+        handler.removeCallbacks(pageWatchdog)
+    }
+
+    private fun pageFrozen(quietMs: Long) {
+        stopPageWatchdog()
+        if (rendererDead) return
+        try {
+            val am = getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager
+            val mi = android.app.ActivityManager.MemoryInfo()
+            am.getMemoryInfo(mi)
+            metrics.pageFrozen(quietMs, customView != null, mi.availMem / 1048576L, mi.totalMem / 1048576L, mi.lowMemory)
+        } catch (_: Exception) {}
+        frozenKill = true
+        // Android 10+: end the page process, which runs onRenderProcessGone and the normal recovery. Older Android
+        // (or if it refuses): run the same recovery directly.
+        val ended = try {
+            Build.VERSION.SDK_INT >= 29 && webView.webViewRenderProcess?.terminate() == true
+        } catch (_: Exception) { false }
+        if (!ended) recoverFromRendererGone(false)
+    }
+
     private fun recoverFromRendererGone(crashed: Boolean) {
         if (rendererDead) return
         rendererDead = true
-        try { metrics.rendererGone(crashed) } catch (_: Exception) {}
+        stopPageWatchdog()
+        if (!frozenKill) try { metrics.rendererGone(crashed) } catch (_: Exception) {}
         val now = SystemClock.uptimeMillis()
         if (rendererGoneAt == 0L || now - rendererGoneAt > 60000L) rendererGoneCount = 0
         rendererGoneAt = now
@@ -3426,6 +3485,7 @@ class MainActivity : Activity() {
     // Out of sight (Home, another app, TV off): the page stops its video, timers and background requests (2.68.9).
     // Done in onStop, not onPause, so an overlay drawn over the app (a voice assistant, a system dialog) changes nothing.
     override fun onStop() {
+        stopPageWatchdog()
         if (::webView.isInitialized && !rendererDead) {
             try { webView.onPause(); webView.pauseTimers() } catch (_: Exception) {}
         }
@@ -3436,6 +3496,7 @@ class MainActivity : Activity() {
         super.onStart()
         if (::webView.isInitialized && !rendererDead) {
             try { webView.resumeTimers(); webView.onResume() } catch (_: Exception) {}
+            if (customView != null) startPageWatchdog()
         }
     }
 
@@ -12820,6 +12881,7 @@ class MainActivity : Activity() {
     private fun hideCustomView() {
         val view = customView ?: return
         handler.removeCallbacks(fsStallCheck)
+        stopPageWatchdog()
         webView.visibility = View.VISIBLE
         webView.evaluateJavascript("window.__tvFs=false;", null)   // the page's layout timers start again (2.74.0)
         root.removeView(view)

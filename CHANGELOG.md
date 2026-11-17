@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.80.4
+
+- **Black screen during a full-screen video now recovers by itself.** On 16 Nov the picture went black mid-video and Back did nothing, and nothing was reported: the page's process had frozen without ending, and Android only tells the app when it ends. While a video is in full screen the app now checks every 5 s that the page still answers. After 20 s of silence it reports a `PageFrozen` error to PostHog (how long it was quiet, plus the TV's free and total memory, to confirm whether low memory is behind it), ends the page process, and the usual recovery reopens the video page, as when Android ends it for low memory. Three in a minute still closes the app, as before. Nothing changes on screen; no new requests to the video site.
+
 ## 2.80.3
 
 - Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.

@@ -220,6 +220,31 @@ class Metrics(context: Context) {
         enqueue("\$exception", props, System.currentTimeMillis())
     }
 
+    /**
+     * The page stopped answering (2.80.4): the screen goes black and the remote does nothing, but Android never says
+     * the page process ended, so nothing else reports it. Sent with how long it went quiet, whether a video was in
+     * full screen, and the TV's free memory at that moment, then sent straight away (the app reloads right after).
+     */
+    fun pageFrozen(quietMs: Long, fullScreen: Boolean, availMb: Long, totalMb: Long, lowMem: Boolean) {
+        if (!enabled) return
+        val ex = JSONObject().apply {
+            put("type", "PageFrozen")
+            put("value", "The page stopped answering for " + (quietMs / 1000) + " s" + (if (fullScreen) " (full screen video)" else ""))
+            put("mechanism", JSONObject().put("handled", true).put("synthetic", true).put("type", "generic"))
+        }
+        val props = baseProps(curUrl ?: "", curHost ?: "", curPath ?: "")
+        props.put("\$exception_list", JSONArray().put(ex))
+        props.put("\$exception_level", "error")
+        props.put("error_source", "page frozen")
+        props.put("frozen_ms", quietMs)
+        props.put("full_screen", fullScreen)
+        props.put("mem_avail_mb", availMb)
+        props.put("mem_total_mb", totalMb)
+        props.put("mem_low", lowMem)
+        enqueue("\$exception", props, System.currentTimeMillis())
+        try { flush() } catch (_: Exception) {}
+    }
+
     private class JsFrame(val fn: String, val file: String, val line: Int, val col: Int)
 
     // Chrome stack lines: "    at name (file:line:col)" or "    at file:line:col". Newest call first.
