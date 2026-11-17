@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.7
+
+Built on 2.84.6. Sheet script only; nothing changes in the app.
+
+- **`repairThumbSources()`** (run once from the Apps Script editor): card check saves made before the 2.83.0 script was deployed were marked "panel", as if logged while watching. It marks a match "thumb" when none of its videos was ever opened on a TV (no row in "videos") and none has a bell or end time; anything opened or timed is left as it is. Each change goes in "changes" (source "repair"), and it says how many it marked. Running it again changes nothing more.
+
 ## 2.84.6
 
 Built on 2.84.5.

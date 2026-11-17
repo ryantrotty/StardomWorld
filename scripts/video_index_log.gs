@@ -1082,3 +1082,31 @@ function viThumbs(b) {
   viRows('match_videos').forEach(function(r) { var t = want[String(r.video_id)]; if (t && !r.thumb) { viSet('match_videos', r._row, { thumb: t }); n++; } });
   return { ok: true, filled: n };
 }
+
+// One-off repair (2.84.7): card check saves made before the 2.83.0 script was deployed were marked "panel" (logged
+// while watching). A match is set to "thumb" when none of its videos was ever opened on a TV (no row in "videos") and
+// none has a bell or end time; anything opened or timed stays "panel". Each change is noted in "changes". Run it from
+// the editor; running it again changes nothing more.
+function repairThumbSources() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(25000)) return 'busy: try again in a moment';
+  try {
+    var opened = {}, vsh = sheet(), vn = vsh.getLastRow();
+    if (vn > 1) vsh.getRange(2, 1, vn - 1, 1).getValues().forEach(function(r) { opened[String(r[0])] = 1; });
+    var byMatch = {};
+    viRows('match_videos').forEach(function(v) { (byMatch[v.match_id] = byMatch[v.match_id] || []).push(v); });
+    var now = new Date().toISOString(), log = [], n = 0;
+    viRows('matches').forEach(function(m) {
+      var vids = byMatch[m.match_id] || [];
+      if (m.source === 'thumb' || !vids.length) return;
+      var unseen = vids.every(function(v) { return !opened[String(v.video_id)] && v.bell_sec === '' && v.end_sec === ''; });
+      if (!unseen) return;
+      viSet('matches', m._row, { source: 'thumb' });
+      vids.forEach(function(v) { if (v.source !== 'thumb') viSet('match_videos', v._row, { source: 'thumb' }); });
+      log.push({ time: now, match_id: m.match_id, tab: 'matches', field: 'source', old: m.source, 'new': 'thumb', source: 'repair', device: 'script' });
+      n++;
+    });
+    viAppend('changes', log);
+    return 'marked ' + n + ' matches as thumb';
+  } finally { lock.releaseLock(); }
+}
