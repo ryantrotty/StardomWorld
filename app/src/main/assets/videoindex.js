@@ -30,7 +30,7 @@
     if ((m = D_JA.exec(s))) return iso(m[1], m[2], m[3]);
     return enDate(s);
   }
-  var LEAD = /^\s*[◆◇■□●○★☆▼▽▶►・]+\s*/;
+  var LEAD = /^\s*[◆◇■□●○◦•★☆▼▽▶►・]+\s*/;   // ◦ • (2.84.2): older titles start with these too
   function num(s) { s = half(s).replace(LEAD, ''); if (D_YMD.test(s) || D_MDY.test(s)) return null; var m = /^\s*(\d{1,2})\s*[、,.．]\s*/.exec(s); return m ? +m[1] : null; }
   var ENG_MARK = /^\s*【\s*(?:English\s*Commentary|ENG)\s*】\s*/i;
   function cleanTitle(s) { return half(s).replace(ENG_MARK, '').replace(LEAD, '').replace(D_YMD, '').replace(D_MDY, '').replace(/^\s*\d{1,2}\s*[、,.．]\s*/, '').trim(); }

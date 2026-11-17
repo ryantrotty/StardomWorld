@@ -25,7 +25,7 @@
     hintMove: '前の試合 / 次の試合', hintPress: '選ぶ', hintBack: '戻る',
     doneHead: '大会の登録が完了', doneSub: 'すべての試合がSTARSCOPEに入りました', dThumb: 'サムネイルと出場選手から登録', dWatched: '視聴して登録済み（変更なし）',
     dBell: 'ゴングの時間は視聴時に追加できます（次に登録 › ゴング未記録）', nextShow: '次の大会へ', logShows: '大会を登録', shows: '大会一覧', stay: 'このまま見る',
-    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…'
+    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…', siteT: 'サイトの題名'
   } : {
     head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
     match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
@@ -37,7 +37,7 @@
     hintMove: 'Previous / next match', hintPress: 'Choose', hintBack: 'Back',
     doneHead: 'Show logged', doneSub: 'All matches on this card are in StarScope', dThumb: 'logged from thumbnails and line-ups', dWatched: 'already logged while watching, left as it was',
     dBell: "Bell times are added when you watch; they're in Log next.", nextShow: 'Next show to log', logShows: 'Log a show', shows: 'Shows', stay: 'Stay here',
-    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…'
+    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…', siteT: 'Site title'
   };
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -157,8 +157,21 @@
     if (c) return c.x && c.x.tb ? { k: 'thumb', label: T.loggedThumb, card: c } : { k: 'watched', label: T.loggedWatched, card: c };
     return null;
   }
-  // The match as the site names it (Tag Team Match, 5★STAR GP Red Stars B Block…), in the page's language.
-  function kindOf(rec) { return (ja ? rec.title_ja || rec.title_en : rec.title_en || rec.title_ja) || ''; }
+  // The site's own title for the match, as written (only shown, never saved).
+  function siteTitle(rec) { return (ja ? rec.title_ja || rec.title_en : rec.title_en || rec.title_ja) || ''; }
+  // The match type StarScope gives it from the people, by the logger's rules (kind() in assets/indexpanel.js) without
+  // the stipulations: Singles match, Tag team match, 3-Way Battle… (2.84.2: this row showed the site's title).
+  function kindOf(rec) {
+    var s = rec.sides_en && rec.sides_en.length >= 2 ? rec.sides_en : (rec.sides_ja || []);
+    if (s.length < 2) return '';
+    var sizes = s.map(function(x) { return x.length; }), size = Math.max.apply(null, sizes), n = s.length;
+    if (n > 2 && n < 5 && size < 4 && sizes.every(function(x) { return x === size; })) return ja ? n + 'WAY' + ['バトル', 'タッグバトル', 'トリオバトル'][size - 1] : n + '-Way ' + ['Battle', 'Tag Battle', 'Trios'][size - 1];
+    if (n > 2) return size > 1 ? (ja ? n + 'チーム（各' + size + '人）' : n + ' teams of ' + size) : (ja ? n + 'WAY' : n + '-Way');
+    if (sizes[0] !== sizes[1]) return ja ? sizes[0] + '対' + sizes[1] + 'ハンディキャップ' : sizes[0] + '-on-' + sizes[1] + ' handicap';
+    if (size <= 1) return ja ? 'シングルマッチ' : 'Singles match';
+    if (size === 2) return ja ? 'タッグマッチ' : 'Tag team match';
+    return ja ? (size * 2) + '人タッグ' : (size * 2) + '-person tag';
+  }
   function peopleHtml(rec) {
     var useEn = rec.sides_en && rec.sides_en.length >= 2, A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : [];
     if (A.length < 2) return '<div class="nl">' + esc(T.noLineup) + '</div>';
@@ -184,7 +197,8 @@
     var sug = kit ? kit.suggest(text) : [];
     var h = row(T.place, esc(ja ? T.match + (i + 1) + T.of + total + '試合' : T.match + (i + 1) + T.of + total));
     h += row(T.kind, esc(kindOf(rec) || '–'));
-    h += row(T.sugg, sug.length ? sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') : '<span class="dim">' + esc(T.none) + '</span>');
+    h += row(T.sugg, sug.length ? sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') : '<span class="dim">' + esc(T.none) + '</span>', 'wrap');
+    if (siteTitle(rec)) h += row(T.siteT, '<span class="dim">' + esc(siteTitle(rec)) + '</span>', 'wrap');
     return h;
   }
   // The show's venue as the sheet already has it: from a match of this show that is logged (2.84.1).
@@ -237,7 +251,7 @@
     '#tvcc .rw{display:flex;align-items:center;gap:12px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:6px 12px;min-height:38px;box-sizing:border-box}' +
     '#tvcc,#tvcc *{word-break:normal!important;overflow-wrap:normal!important}#tvcc .cols .rw .lb{flex-basis:96px}#tvcc .cols .rw .vl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tvcc .cols .rw .vl.wrap{white-space:normal}' +
     '#tvcc .rw .lb{flex:0 0 150px;font:800 11px Arial;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4}#tvcc .rw .vl{flex:1 1 0;font:700 16px Arial;min-width:0}#tvcc .rw .vl.bad{color:#FFB347}' +
-    '#tvcc .sg{display:inline-block;margin:0 6px 0 0;padding:2px 8px;border-radius:20px;border:1px solid #6B5A22;background:#2A2410;color:#F4C242;font:800 12px Arial}#tvcc .dim{color:#9AA6B4;font-weight:600}' +
+    '#tvcc .sg{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:20px;border:1px solid #6B5A22;background:#2A2410;color:#F4C242;font:800 12px Arial}#tvcc .dim{color:#9AA6B4;font-weight:600}' +
     '#tvcc .nl{font:600 15px Arial;color:#9AA6B4;padding:8px 0}' +
     '#tvcc .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}#tvcc .cols>div{display:flex;flex-direction:column;gap:6px;min-width:0}' +
     '#tvcc .bt{display:flex;flex-wrap:wrap;gap:10px}' +

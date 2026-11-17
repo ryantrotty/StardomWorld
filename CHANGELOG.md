@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.84.2
+
+Built on 2.84.1.
+
+- **Card check's Match type** showed the site's own title for the match ("◦Prologue Fight 1 - High Speed Championship Match"), which is only read, never saved, so it wasn't in Edit details to change. It now shows the type StarScope gives the match from its people, by the logger's rules: Singles match, Tag team match, 3-Way Battle and so on. The site's title is still there, on its own greyed **Site title** row, and the Suggested row wraps instead of cutting off.
+- Titles that start with ◦ or • lose that mark, like the ◆ ● ○ marks already were.
+
 ## 2.84.1
 
 Built on 2.84.0.
