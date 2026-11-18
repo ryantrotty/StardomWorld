@@ -44,8 +44,10 @@
   function multiLines(sides, tn) {
     var per = sides.length <= 3, sep = ja ? '&' : ' & ';
     function fits(L, max) { return per ? L.every(function(x, i) { return wide((i ? 'vs ' : '') + x) <= max; }) : wide(L.join(' vs ')) <= max * 4; }
-    var A = sides.map(function(sd, i) { return tn && tn[i] ? tn[i] : sd.join(sep); });
-    var D = sides.map(function(sd, i) { return tn && tn[i] ? tn[i] : sd.map(last).join(sep); });
+    // A team or faction name stands for a side of two or more only: a lone wrestler keeps her own name (2.86.0).
+    function grp(sd, i) { return tn && tn[i] && sd.length >= 2 ? tn[i] : ''; }
+    var A = sides.map(function(sd, i) { return grp(sd, i) || sd.join(sep); });
+    var D = sides.map(function(sd, i) { return grp(sd, i) || sd.map(last).join(sep); });
     var pick = fits(A, 27) ? { L: A, sm: false } : fits(A, 33) ? { L: A, sm: true } : fits(D, 27) ? { L: D, sm: false } : { L: D, sm: true };
     var html = per ? pick.L.map(function(x, i) { return '<span class="ln">' + (i ? 'vs ' : '') + esc(x) + '</span>'; }).join('') : esc(pick.L.join(' vs '));
     return { html: html, sm: pick.sm };

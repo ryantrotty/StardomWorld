@@ -25,7 +25,7 @@
     hintMove: '前の試合 / 次の試合', hintPress: '選ぶ', hintBack: '戻る',
     doneHead: '大会の登録が完了', doneSub: 'すべての試合がSTARSCOPEに入りました', dThumb: 'サムネイルと出場選手から登録', dWatched: '視聴して登録済み（変更なし）',
     dBell: 'ゴングの時間は視聴時に追加できます（次に登録 › ゴング未記録）', nextShow: '次の大会へ', logShows: '大会を登録', shows: '大会一覧', stay: 'このまま見る',
-    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…', siteT: 'サイトの題名'
+    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…', siteT: 'サイトの題名', team: 'タッグチーム', faction: 'ユニット'
   } : {
     head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
     match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
@@ -37,7 +37,7 @@
     hintMove: 'Previous / next match', hintPress: 'Choose', hintBack: 'Back',
     doneHead: 'Show logged', doneSub: 'All matches on this card are in StarScope', dThumb: 'logged from thumbnails and line-ups', dWatched: 'already logged while watching, left as it was',
     dBell: "Bell times are added when you watch; they're in Log next.", nextShow: 'Next show to log', logShows: 'Log a show', shows: 'Shows', stay: 'Stay here',
-    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…', siteT: 'Site title'
+    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…', siteT: 'Site title', team: 'Team', faction: 'Faction'
   };
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -189,10 +189,13 @@
   function peopleHtml(rec) {
     var useEn = rec.sides_en && rec.sides_en.length >= 2, A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : [];
     if (A.length < 2) return '<div class="nl">' + esc(T.noLineup) + '</div>';
-    var kit = kitReady && window.__tvIndexKit, h = '';
+    var kit = kitReady && window.__tvIndexKit, h = '', date = rec.date || show.date;
     A.forEach(function(names, i) {
       if (i) h += '<div class="vs">VS</div>';
-      h += '<div class="sd">';
+      // The side's team or faction as the logger will pre-fill it (2.86.0).
+      var ids = kit ? names.map(function(raw, j) { var o = B[i] && B[i].length === names.length ? B[i][j] : ''; return kit.resolve(raw) || kit.resolve(o); }) : [];
+      var grp = kit && kit.side ? kit.side(ids, date) : null;
+      h += '<div class="sd">' + (grp ? '<div class="fg">' + esc((grp.kind === 'team' ? T.team : T.faction) + ' · ' + grp.name) + '</div>' : '');
       names.forEach(function(raw, j) {
         var other = B[i] && B[i].length === names.length ? B[i][j] : '';
         var id = kit ? (kit.resolve(raw) || kit.resolve(other)) : '';
@@ -258,6 +261,7 @@
     '#tvcc .box{background:#0F151C;border:1px solid #2A323C;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden;flex:1 1 auto}' +
     '#tvcc .wl{font:600 14px Arial;color:#9AA6B4;border:1px solid #2A323C;border-radius:10px;padding:7px 12px}#tvcc .wl.on{color:#7FD3A0;background:#12261B;border-color:#2E9E5B}' +
     '#tvcc .gl{font:800 12px Arial;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4;margin-top:4px}' +
+    '#tvcc .fg{font:800 12px Arial;letter-spacing:1px;text-transform:uppercase;color:#F4C242}' +
     '#tvcc .sd{display:flex;flex-direction:column;gap:5px}#tvcc .vs{align-self:center;font:900 13px Arial;letter-spacing:2px;color:#F4C242}' +
     '#tvcc .pp{display:flex;align-items:center;gap:10px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:5px 10px;min-height:40px;box-sizing:border-box}' +
     '#tvcc .pp.bad{border-color:#FFB347;background:#2A1C10}#tvcc .pp .mk{width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:900 13px Arial;background:#12261B;color:#7FD3A0;flex:none}' +

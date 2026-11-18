@@ -42,7 +42,7 @@
   };
 
   function setLib(l) {
-    lib = l; nameMap = {}; byId = {};
+    lib = l; nameMap = {}; byId = {}; FAC = null;
     (l.talent || []).forEach(function(t) { byId[t.id] = t; [t.en, t.ja, t.s].forEach(function(n) { if (n) nameMap[norm(n)] = t.id; }); });
     var merged = {}; (l.merged || []).forEach(function(m) { merged[m[0]] = m[1]; });
     (l.aliases || []).forEach(function(a) { var id = a[1]; while (merged[id]) id = merged[id]; if (byId[id]) nameMap[a[0]] = id; });
@@ -724,9 +724,36 @@
     return t ? t.id : '';
   }
   function factionFor(s) {
-    if (!s.team) return '';
-    var n = norm(s.team), f = (lib.factions || []).filter(function(x) { return norm(x.en) === n || norm(x.ja) === n; })[0];
-    return f ? f.id : '';
+    if (s.team) {
+      var n = norm(s.team), f = (lib.factions || []).filter(function(x) { return norm(x.en) === n || norm(x.ja) === n; })[0];
+      if (f) return f.id;
+    }
+    return factionByMembers(s.people.map(function(p) { return p.id; }), state && state.date);
+  }
+  // Faction from its members (2.86.0): a side of two or more, every one of them in the library and all members of one
+  // faction in the factions file (the roster's, with its updates) at the match's date (founded to disbanded, by year),
+  // gets that faction pre-filled. Only when exactly one faction fits; the faction must also be in the sheet's
+  // factions tab (matched by name). A side whose line-up names its faction, "(STARS)", keeps that.
+  var FAC = null;
+  function facIndex() {
+    if (FAC) return FAC;
+    FAC = [];
+    var d = null; try { d = JSON.parse(AndroidHost.factionsJson()); } catch (e) { d = null; }
+    ((d && d.factions) || []).forEach(function(f) {
+      if (f.home === false || !f.members || !f.members.length) return;
+      var sh = (lib.factions || []).filter(function(x) { return x.id === f.id || norm(x.en) === norm(f.name) || (x.ja && norm(x.ja) === norm(f.name)); })[0];
+      if (!sh) return;
+      var ids = {};
+      f.members.forEach(function(m) { var id = resolve(m.name) || resolve(m.search) || (m.ja ? resolve(m.ja) : ''); if (id) ids[id] = 1; });
+      FAC.push({ id: sh.id, ids: ids, from: Number(f.founded) || 0, to: Number(f.disbanded) || 0 });
+    });
+    return FAC;
+  }
+  function factionByMembers(ids, date) {
+    if (!lib || ids.length < 2 || ids.some(function(x) { return !x; })) return '';
+    var y = Number(String(date || '').slice(0, 4)) || new Date().getFullYear();
+    var hits = facIndex().filter(function(f) { return ids.every(function(id) { return f.ids[id]; }) && (!f.from || y >= f.from) && (!f.to || y <= f.to); });
+    return hits.length === 1 ? hits[0].id : '';
   }
   function save(nextHref) {
     if (busy) return;
@@ -884,6 +911,14 @@
       call({ action: 'vi_lib' }, function(r) { if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); } done(!!lib); });
     },
     resolve: function(raw) { return lib ? resolve(raw) : ''; },
+    // What a side's Team / Faction would be pre-filled with (2.86.0): {kind, name}, or null. Same rules as the panel.
+    side: function(ids, date) {
+      if (!lib || ids.length < 2 || ids.some(function(x) { return !x; })) return null;
+      var key = ids.slice().sort().join('|'), t = (lib.teams || []).filter(function(x) { return x.m.length && x.m.slice().sort().join('|') === key; })[0];
+      if (t) return { kind: 'team', name: t.en };
+      var fid = factionByMembers(ids, date), f = fid && (lib.factions || []).filter(function(x) { return x.id === fid; })[0];
+      return f ? { kind: 'faction', name: ja && f.ja ? f.ja : f.en } : null;
+    },
     nameOf: function(id) { return lib ? nameOf(id) : id; },
     // The site writes some venues two ways, 高知・セリーズ（CHRES）体育館 and 高知・［CHRES］セリーズ体育館: failing a straight
     // match, the bracketed part is left out on both sides (2.84.1, card check only).

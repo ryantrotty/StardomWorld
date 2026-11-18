@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.86.0
+
+- **Faction pre-filled from its members.** In the logger (and so in card check's Confirm & next), a side of two or more gets its Faction filled in when every wrestler on it is in the library and all of them are members of one faction in the factions file (the roster's, with its remote updates) at the match's date: the faction's founded to disbanded years, so a 2021 match can get Oedo Tai or Queen's Quest and a 2026 one H.A.T.E. or STARS. Only when exactly one faction fits, and only factions that are also in the sheet's factions tab (matched by name). A line-up that names its faction, "(STARS)", still wins; a side with a tag team (exact members in the teams tab) shows the team, as before; a match already saved keeps what was saved.
+- **Card check shows it** above each side in its summary: "FACTION · STARS" or "TEAM · …", exactly what will be saved.
+- **Multi-person cards:** a team or faction name stands for a side of two or more only; a lone wrestler on a side keeps her own name.
+
 ## 2.85.0
 
 Built on 2.84.7. Needs the new sheet script (deploy a new version) for team names on multi-person cards.
