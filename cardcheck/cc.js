@@ -170,7 +170,7 @@
           map = m; lsSet(CARDS_KEY, { s: r.now || c.s, f: c.f || 0, map: m });
         } else { map = r.map; lsSet(CARDS_KEY, { s: r.now || '', f: Date.now(), map: map }); }
         draw();
-      } else if (!Object.keys(map).length) note('StarScope list: ' + (r && r.error || 'no reply'), true);
+      } else if (!Object.keys(map).length && !flash) note('StarScope list: ' + (r && r.error || 'no reply'), true);
       if (cardsAgain) { cardsAgain = false; setTimeout(function() { cards(); }, 300); }
     });
   }
@@ -516,7 +516,7 @@
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
-        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (flashBad ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
+        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + '</div>' : '') + (flashBad ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
         (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? fixHtml() : '');
     }
     root.innerHTML = h; root.scrollTop = y;
@@ -556,7 +556,7 @@
       setupVals = { u: (root.querySelector('#ccp-link') || {}).value || '', k: (root.querySelector('#ccp-key') || {}).value || '' };
       var c = parseLink(setupVals.u, setupVals.k);
       if (c.err) { note(c.err, true); return; }
-      cfg = c; oldCfg = null; setupVals = { u: '', k: '' }; lsSet(CFG_KEY, c); flash = ''; start(); return;
+      cfg = c; oldCfg = null; setupVals = { u: '', k: '' }; lsSet(CFG_KEY, c); flash = ''; diag = ''; start(); return;
     }
     // A link pasted wrong (2.91.1): back to the setup box, any time, from ⚙ or from the error.
     if (d.relink) { oldCfg = cfg || oldCfg; setupVals = { u: oldCfg ? oldCfg.u : '', k: '' }; cfg = null; flash = ''; draw(); return; }
@@ -586,6 +586,23 @@
   });
   root.addEventListener('scroll', function() { clearTimeout(root.__s); root.__s = setTimeout(saveState, 400); }, { passive: true });
 
+  // What the sheet sees (2.91.3), kept on screen: the script's version, whether CARDCHECK_KEY is there, how the key
+  // typed here compares with it. Keys themselves are never shown or sent back.
+  var diag = '';
+  function diagnose() {
+    fetch(cfg.u, { method: 'POST', body: JSON.stringify({ action: 'cc_ping', key: cfg.k }) })
+      .then(function(r) { return r.text(); })
+      .then(function(t) {
+        var r = null; try { r = JSON.parse(t); } catch (e) {}
+        if (!r) { diag = 'The address answered, but not as the sheet script (' + t.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) + '). Check the address.'; }
+        else if (!r.script) diag = 'The sheet is running an older script (no setup check): the new version isn\'t deployed at this address. ' + (r.error ? '(' + r.error + ')' : '');
+        else diag = 'Script ' + r.script + ' · CARDCHECK_KEY ' + (r.ccSet ? 'found (' + r.ccLen + ' characters)' : 'NOT found') + ' · key typed here: ' + r.sentLen + ' characters · ' +
+          ({ exact: 'matches', spaces: 'matches apart from spaces (fixed now)', 'case': 'differs only in capitals', main: 'is the main key, not the card check key', no: 'doesn\'t match' })[r.match] +
+          (r.similar && r.similar.length ? ' · properties named like it: ' + r.similar.join(', ') : '');
+        draw();
+      })
+      .catch(function(e) { diag = 'Couldn\'t reach the address (' + (e && e.message || e) + ')'; draw(); });
+  }
   var booted = null;
   function start() {
     draw();
@@ -594,7 +611,7 @@
       // The link checked first (2.91.1): a wrong key says so, with the way to change it.
       post({ action: 'vi_lib' }, function(t) {
         var r = null; try { r = JSON.parse(t); } catch (e) {}
-        if (!r || !r.ok) { kitReady = false; note('The sheet said: ' + (r && r.error || 'no reply') + '. Check the card check link.', true); return; }
+        if (!r || !r.ok) { kitReady = false; note('The sheet said: ' + (r && r.error || 'no reply') + '. Check the card check link.', true); diagnose(); return; }
         window.__tvIndexKit.lib(function(ok) { kitReady = ok; flash = ''; draw(); });
       });
       cards();
