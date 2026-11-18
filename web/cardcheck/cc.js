@@ -13,7 +13,25 @@
   var VER = (/[?&]v=([^&]+)/.exec(me) || [])[1] || String(Date.now());
   var ROSTER = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json';
   var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear_', SET_KEY = 'ccPhoneSet', REC_KEY = 'ccPhoneRec';
-  var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null;
+  var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null, report = '';
+  // 2.91.5: the page the phone was sent, as text to copy and paste (the phone gets the site's mobile layout, which the
+  // reader doesn't know yet): its size and title, then the first article cards and anything that looks like a link to a
+  // video (data attributes, onclick), tags and attributes only, query strings left out.
+  function pageReport(label, html, doc) {
+    var clean = function(x) { return String(x || '').replace(/\?[^"'\s>]*/g, '?…'); };
+    var shape = function(el) { return clean(el.outerHTML.replace(/>[^<]+</g, function(m) { return m.length > 40 ? '>' + m.slice(1, 30).replace(/\s+/g, ' ') + '…<' : m.replace(/\s+/g, ' '); })).slice(0, 1500); };
+    var out = [label, 'size ' + html.length + ' · title ' + doc.title + ' · ' + navigator.userAgent];
+    Array.prototype.slice.call(doc.querySelectorAll('article'), 0, 3).forEach(function(a, i) { out.push('--- article ' + (i + 1) + '\n' + shape(a)); });
+    var hints = [];
+    Array.prototype.forEach.call(doc.querySelectorAll('*'), function(el) {
+      if (hints.length >= 12) return;
+      Array.prototype.forEach.call(el.attributes || [], function(at) { if (hints.length < 12 && /contents|set\/\d|video/i.test(at.value) && at.name !== 'class') hints.push(el.tagName.toLowerCase() + '[' + at.name + '="' + clean(at.value).slice(0, 120) + '"]'); });
+    });
+    out.push('--- attributes naming contents / set / video\n' + (hints.join('\n') || 'none'));
+    var sc = Array.prototype.filter.call(doc.querySelectorAll('script:not([src])'), function(x) { return /contents|set_id|video/i.test(x.textContent); }).slice(0, 2);
+    sc.forEach(function(x, i) { out.push('--- inline script ' + (i + 1) + '\n' + clean(x.textContent.replace(/\s+/g, ' ')).slice(0, 1200)); });
+    return out.join('\n');
+  }
 
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -212,7 +230,7 @@
   var yl = null;
   function yearOpen(y) {
     var c = lsGet(YEAR_KEY + y);
-    yl = c && Date.now() - (c.t || 0) < YEAR_AGE ? { y: y, items: c.items || [], page: c.page || 0, done: !!c.done, t: c.t } : { y: y, items: [], page: 0, done: false, t: Date.now() };
+    yl = c && Date.now() - (c.t || 0) < YEAR_AGE && (c.items || []).length ? { y: y, items: c.items || [], page: c.page || 0, done: !!c.done, t: c.t } : { y: y, items: [], page: 0, done: false, t: Date.now() };
     yl.busy = false; yl.err = '';
     if (!yl.page) yearPage();
   }
@@ -234,6 +252,7 @@
           mine.items.push({ set: m[1], name: name, th: mm ? mm[1] : '' });
         });
         mine.page = n; if (!got) mine.done = true;
+        if (!got && n === 1) { report = pageReport('Year list ' + mine.y + ' page 1', html, doc); diag = 'The ' + mine.y + ' list page was read (' + html.length + ' characters) but no show links were found in it.'; flash = 'Couldn\'t find the shows on the site\'s list.'; flashBad = true; flashKey = false; }
         lsSet(YEAR_KEY + mine.y, { t: mine.t, items: mine.items, page: mine.page, done: mine.done });
       })
       .catch(function(e) { mine.err = String(e && e.message || e); })
@@ -309,7 +328,7 @@
       fetch('/set/' + set, { credentials: 'include' }).then(function(r) { got = r.url + ' · HTTP ' + r.status; if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
         var s = readSetHtml(html, String(set));
         // What the phone was sent, kept on screen (2.91.4), so a different page layout can be seen and read.
-        if (!s.videos.length) { var L = lastSetLook || {}; diag = 'Show ' + set + ': ' + got + ' · ' + (L.len || 0) + ' characters · "' + String(L.title || '').slice(0, 60) + '" · ' + (L.articles || 0) + ' article cards · ' + (L.setLinks || 0) + ' match links · ' + (L.scripts || 0) + ' scripts · video links: ' + ((L.contentLinks || []).join(' ') || 'none'); throw new Error('no matches on the page'); }
+        if (!s.videos.length) { report = pageReport('Show page /set/' + set, html, new DOMParser().parseFromString(html, 'text/html')); var L = lastSetLook || {}; diag = 'Show ' + set + ': ' + got + ' · ' + (L.len || 0) + ' characters · "' + String(L.title || '').slice(0, 60) + '" · ' + (L.articles || 0) + ' article cards · ' + (L.setLinks || 0) + ' match links · ' + (L.scripts || 0) + ' scripts · video links: ' + ((L.contentLinks || []).join(' ') || 'none'); throw new Error('no matches on the page'); }
         if (S.set !== String(set)) return;
         show = s; lsSet(SET_KEY + set, s); draw();
       }).catch(function(e) { if (S.set === String(set)) note('Couldn\'t read the show page (' + (e && e.message || e) + ')', true); });
@@ -532,7 +551,7 @@
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
-        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
+        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
         (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? fixHtml() : '');
     }
     root.innerHTML = h; root.scrollTop = y;
@@ -575,6 +594,14 @@
       cfg = c; oldCfg = null; setupVals = { u: '', k: '' }; lsSet(CFG_KEY, c); flash = ''; diag = ''; start(); return;
     }
     // A link pasted wrong (2.91.1): back to the setup box, any time, from ⚙ or from the error.
+    if (d.copyrep) {
+      var done = function() { b.textContent = 'Copied: paste it to Claude'; };
+      var ta = document.createElement('textarea'); ta.value = report; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; root.appendChild(ta);
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(report).then(done, function() { ta.select(); document.execCommand('copy'); done(); });
+      else { ta.select(); document.execCommand('copy'); done(); }
+      setTimeout(function() { ta.remove(); }, 500);
+      return;
+    }
     if (d.relink) { oldCfg = cfg || oldCfg; setupVals = { u: oldCfg ? oldCfg.u : '', k: '' }; cfg = null; flash = ''; draw(); return; }
     if (d.unrelink) { cfg = oldCfg; oldCfg = null; flash = ''; draw(); return; }
     if (d.closeall) { saveState(); root.style.display = 'none'; document.documentElement.style.overflow = ''; return; }

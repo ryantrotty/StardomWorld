@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.5
+
+- **iPhone card check: Copy page report.** The iPhone is sent the site's mobile layout, with no links to the matches (show 6962: 10 article cards, no video links; the desktop page has 24). When a show page or a year's list can't be read, a **Copy page report** button copies what the phone received as text (size, title, user agent, the first article cards as tags and attributes, attributes and inline scripts that name contents / set / video; query strings left out), to paste to Claude so the mobile layout can be read.
+- A year whose list came back empty is read again next time instead of being kept for a day.
+
 ## 2.91.4
 
 - **iPhone card check: show pages the phone is sent differently.** When a show page doesn't link its matches as `/set/<id>/contents/<video>`, the videos are read from the page's own article cards (related rows left out). When still nothing is found, what the phone received stays on screen: the address it ended on, the HTTP status, size, title, article cards, match links, scripts and the first video links.
