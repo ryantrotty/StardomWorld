@@ -62,8 +62,8 @@
     '#ccp .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}#ccp .chip{flex:none;height:36px;padding:0 14px;border-radius:20px;border:1px solid #2A323C;background:#161F2A;color:#C9D2DC;font-weight:700}',
     '#ccp .chip.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A}',
     '#ccp .sc{display:flex;gap:12px;align-items:center;background:#161F2A;border:1px solid #2A323C;border-radius:12px;padding:8px;margin-bottom:10px;width:100%;text-align:left;color:#fff}',
-    '#ccp .sc .im{flex:none;width:128px;aspect-ratio:16/9;border-radius:8px;background:#0F151C center/cover no-repeat}#ccp .sc .nm{font-weight:700;font-size:15px;line-height:1.25}#ccp .sc .sb{font-size:13px;color:#9AA6B4;margin-top:4px}',
-    '#ccp .cnt{display:inline-block;margin-top:6px;font:800 11px system-ui;letter-spacing:1px;text-transform:uppercase;color:#F4C242}#ccp .cnt.done{color:#7FD3A0}',
+    '#ccp .sc .im{flex:none;width:128px;aspect-ratio:16/9;border-radius:8px;background:#0F151C center/cover no-repeat}#ccp .sc .nm{display:block;font-weight:700;font-size:15px;line-height:1.25}#ccp .sc .sb{display:block;font-size:13px;color:#9AA6B4;margin-top:4px}',
+    '#ccp .cnt{display:inline-block;margin-top:6px;font:800 11px system-ui;letter-spacing:1px;text-transform:uppercase;color:#F4C242}#ccp .cnt.done{color:#7FD3A0}#ccp .cnt.none{color:#9AA6B4;font-weight:700}',
     '#ccp .card{background:#0F151C;border:1px solid #2A323C;border-radius:14px;margin-bottom:16px;overflow:hidden}',
     '#ccp .card .pic{width:100%;aspect-ratio:16/9;background:#161F2A center/cover no-repeat}#ccp .card .bd{padding:12px 14px;display:flex;flex-direction:column;gap:8px}',
     '#ccp .hd{display:flex;align-items:center;gap:8px;font-weight:900;font-size:17px}#ccp .hd .t{flex:1;min-width:0}',
@@ -261,9 +261,11 @@
   function showTile(x, from) {
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, from.slice(1) || null) : { show: x.name, date: x.date || '' };
     var sc = lsGet(SET_KEY + x.set), c = setCount(x.set, sc && sc.videos), date = sl.date || x.date || '';
-    var label = c.tot ? c.n + '/' + c.tot + (c.done ? ' · logged' : '') : c.n + ' logged';
+    // 2.91.9: the state in words, so "0 logged" no longer reads like a logged tag.
+    var label = c.done ? '✓ All ' + c.tot + ' logged' : !c.n ? 'Not started' : c.tot ? c.n + ' of ' + c.tot + ' logged' : c.n + ' logged';
+    var cls2 = c.done ? ' done' : !c.n ? ' none' : '';
     return '<button class="sc" data-go="' + esc(x.set) + '" data-from="' + esc(from) + '"><span class="im"' + (x.th ? ' style="background-image:url(\'' + esc(x.th) + '\')"' : '') + '></span><span><span class="nm">' +
-      esc(showName(sl.show || x.name, date) || x.name) + '</span><span class="sb">' + esc([dateText(date), sl.venue || x.venue || ''].filter(Boolean).join(' · ')) + '</span><span class="cnt' + (c.done ? ' done' : '') + '">' + esc(label) + '</span></span></button>';
+      esc(showName(sl.show || x.name, date) || x.name) + '</span><span class="sb">' + esc([dateText(date), sl.venue || x.venue || ''].filter(Boolean).join(' · ')) + '</span><span class="cnt' + cls2 + '">' + esc(label) + '</span></span></button>';
   }
   function homeHtml() {
     var h = '<div class="chips"><button class="chip' + (S.tab === 'started' ? ' on' : '') + '" data-tab="started">Started</button>';
@@ -274,7 +276,10 @@
       h += L.length ? L.map(function(g) { return showTile(g, 'started'); }).join('') : '<div class="ld">' + (Object.keys(map).length ? 'Nothing started and unfinished. Pick a year.' : 'Loading the StarScope list…') + '</div>';
     } else {
       if (!yl || yl.y !== S.year) yearOpen(S.year);
-      h += yl.items.map(function(x) { return showTile(x, 'y' + S.year); }).join('');
+      // Newest show first by its date (the site lists them by when each was put up).
+      var dOf = function(x) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, S.year) : null; return (sl && sl.date) || ''; };
+      h += yl.items.map(function(x, i) { return { x: x, d: dOf(x), i: i }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; })
+        .map(function(o) { return showTile(o.x, 'y' + S.year); }).join('');
       if (yl.err) h += '<div class="er">Couldn\'t read the list (' + esc(yl.err) + ')</div><button class="b on" data-more="1">Try again</button>';
       else if (yl.busy) h += '<div class="ld">Reading the site\'s list…</div>';
       else if (!yl.done) h += '<button class="b wide" data-more="1">Load more shows</button>';
@@ -506,7 +511,11 @@
   // Next show: the next one in the list you came from (a year: the next older one not fully logged; Started: the next).
   function nextShow() {
     var list = [];
-    if (/^y\d{4}$/.test(S.from)) { var c = lsGet(YEAR_KEY + S.from.slice(1)); list = (c && c.items || []).map(function(x) { return { set: x.set, name: x.name }; }); }
+    if (/^y\d{4}$/.test(S.from)) {
+      var c = lsGet(YEAR_KEY + S.from.slice(1)), yy = S.from.slice(1);
+      list = (c && c.items || []).map(function(x, i) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yy) : null; return { set: x.set, name: x.name, d: (sl && sl.date) || '', i: i }; })
+        .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
+    }
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
     var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
     var nx = rest[0];
