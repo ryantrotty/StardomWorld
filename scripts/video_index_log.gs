@@ -33,6 +33,7 @@
  *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides;
  *                                                              source "thumb" (2.83.0): from StarScope card check, not watched;
  *                                                              thumb, site_text (2.84.4): its picture and page text, kept in match_videos
+ *   vi_translate {text}                                        (2.87.0) Japanese to English (Google's translator), for the logger
  *   vi_thumbs  {items: [{video, thumb}]}                        (2.84.4) pictures for card-check matches saved without one
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
  *                                                              from the owner's private build it is applied at once
@@ -95,6 +96,7 @@ function doPost(e) {
   // makes a save wait (a save that waits more than 25 s answers "busy").
   if (body.action === 'vi_lib' && !viRows('proposals').some(function(p) { return p.status === 'approved'; })) return out(viAction(body));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
+  if (body.action === 'vi_translate') return out(viTranslate(body));
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
@@ -425,8 +427,11 @@ function viApplyApproved() {
       viAppend('lists', [{ list: p.entity_id, value_id: made1, label_en: p.value, active: 'TRUE' }]);
     } else if (p.type === 'new_venue') {
       var ja = /[^\x00-\x7F]/.test(p.value);
+      // 2.87.0: an English name proposed for a venue the site writes in Japanese carries that Japanese (entity_id), kept as
+      // name_ja so the site's spelling matches it from then on.
+      var jaRaw = !ja && /[^\x00-\x7F]/.test(String(p.entity_id || '')) ? String(p.entity_id) : '';
       made1 = viSlug(p.value) || ('v' + p.proposal_id);
-      viAppend('venues', [{ venue_id: made1, name_en: ja ? '' : p.value, name_ja: ja ? p.value : '', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      viAppend('venues', [{ venue_id: made1, name_en: ja ? '' : p.value, name_ja: ja ? p.value : jaRaw, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_faction') {
       made1 = p.entity_id || viSlug(p.value);
       viAppend('factions', [{ faction_id: made1, name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
@@ -1111,4 +1116,18 @@ function repairThumbSources() {
     viAppend('changes', log);
     return 'marked ' + n + ' matches as thumb';
   } finally { lock.releaseLock(); }
+}
+
+// Japanese to English for the logger's Translate buttons (2.87.0): Google's translator, kept for 6 hours per text.
+function viTranslate(b) {
+  var text = String(b.text || '').slice(0, 300);
+  if (!text) return { ok: false, error: 'no text' };
+  var cache = CacheService.getScriptCache(), key = 'tr_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, text, Utilities.Charset.UTF_8));
+  var hit = cache.get(key);
+  if (hit) return { ok: true, text: hit };
+  try {
+    var en = LanguageApp.translate(text, 'ja', 'en');
+    cache.put(key, en, 21600);
+    return { ok: true, text: en };
+  } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
 }

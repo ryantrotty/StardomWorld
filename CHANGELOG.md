@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.87.0
+
+- **Translate a Japanese venue.** When a match's venue isn't in the library and the site writes it in Japanese, the logger's Match tab shows **Translate & add** beside it: Google's translator (through the sheet script, new action `vi_translate`) puts an English name in the box to check or edit, and Send adds the venue. The proposal box for a new venue also has a **Translate to English** button. The new venue keeps both names: the English one you sent and the site's Japanese spelling, so later shows at that venue match it on their own.
+- **Confirm all at the end of the card.** In card check, ▼ past the last match opens the end of the card: every match with its state (ready, logged, needs a look, not read yet) and **Confirm all (N)**, which saves the ready ones one after another, reading any unread match pages first (still one at a time, 2 s apart). A match whose names aren't all known is skipped and marked; Stop ends the run. A warning shows when the show's venue isn't in the library yet. When every match is logged, the Show logged panel opens as before.
+- Sheet script: `vi_translate`, and a new venue proposed in English with the site's Japanese name keeps that name as `name_ja`. **Redeploy the script.**
+
 ## 2.86.0
 
 - **Faction pre-filled from its members.** In the logger (and so in card check's Confirm & next), a side of two or more gets its Faction filled in when every wrestler on it is in the library and all of them are members of one faction in the factions file (the roster's, with its remote updates) at the match's date: the faction's founded to disbanded years, so a 2021 match can get Oedo Tai or Queen's Quest and a 2026 one H.A.T.E. or STARS. Only when exactly one faction fits, and only factions that are also in the sheet's factions tab (matched by name). A line-up that names its faction, "(STARS)", still wins; a side with a tag team (exact members in the teams tab) shows the team, as before; a match already saved keeps what was saved.

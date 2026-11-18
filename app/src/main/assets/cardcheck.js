@@ -25,7 +25,10 @@
     hintMove: '前の試合 / 次の試合', hintPress: '選ぶ', hintBack: '戻る',
     doneHead: '大会の登録が完了', doneSub: 'すべての試合がSTARSCOPEに入りました', dThumb: 'サムネイルと出場選手から登録', dWatched: '視聴して登録済み（変更なし）',
     dBell: 'ゴングの時間は視聴時に追加できます（次に登録 › ゴング未記録）', nextShow: '次の大会へ', logShows: '大会を登録', shows: '大会一覧', stay: 'このまま見る',
-    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…', siteT: 'サイトの題名', team: 'タッグチーム', faction: 'ユニット'
+    noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…', siteT: 'サイトの題名', team: 'タッグチーム', faction: 'ユニット',
+    endHead: 'カードの最後', endSub: '各試合を確認したら、まとめて登録できます。', eReady: '登録できます', eLogged: '登録済み', eAttn: '確認が必要', eUnread: '未読込（登録時に読み込み）',
+    allBtn: 'すべて登録', allRun: '登録中', stop: '止める', first: '確認が必要な試合へ', back: '最初の試合へ', endNext: 'カードの最後へ ▼',
+    vWarn: '会場がライブラリにありません。試合の「詳細を編集」で「翻訳して追加」を使ってください。', skipped: '確認が必要なためスキップ'
   } : {
     head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
     match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
@@ -37,7 +40,10 @@
     hintMove: 'Previous / next match', hintPress: 'Choose', hintBack: 'Back',
     doneHead: 'Show logged', doneSub: 'All matches on this card are in StarScope', dThumb: 'logged from thumbnails and line-ups', dWatched: 'already logged while watching, left as it was',
     dBell: "Bell times are added when you watch; they're in Log next.", nextShow: 'Next show to log', logShows: 'Log a show', shows: 'Shows', stay: 'Stay here',
-    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…', siteT: 'Site title', team: 'Team', faction: 'Faction'
+    noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…', siteT: 'Site title', team: 'Team', faction: 'Faction',
+    endHead: 'End of the card', endSub: "Checked them all? Confirm the ready ones in one go.", eReady: 'ready', eLogged: 'logged', eAttn: 'needs a look', eUnread: 'not read yet (read as it is confirmed)',
+    allBtn: 'Confirm all', allRun: 'Confirming', stop: 'Stop', first: 'Go to the first that needs a look', back: 'Back to match 1', endNext: 'End of the card ▼',
+    vWarn: "The venue isn't in the library yet. Edit details on any match and use Translate & add.", skipped: 'skipped, needs a look'
   };
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -149,19 +155,32 @@
     var id = need.filter(function(x) { return queue.indexOf(x) >= 0; })[0];
     var wait = lastFetch + GAP - Date.now();
     if (wait > 0) { if (!pumpTimer) pumpTimer = setTimeout(function() { pumpTimer = 0; pump(); }, wait); return; }
-    reading = id; queue.splice(queue.indexOf(id), 1);
+    queue.splice(queue.indexOf(id), 1);
+    fetchRec(id, function() {
+      if (show.videos[cur] && show.videos[cur].id === id) render();
+      want(cur + 1);
+      pump();
+    });
+  }
+  function fetchRec(id, done) {
+    reading = id;
     lastFetch = Date.now();
     fetch('/set/' + SET + '/contents/' + id, { credentials: 'include' }).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
       var doc = new DOMParser().parseFromString(html, 'text/html');
       var rec = window.__tvVixRead ? window.__tvVixRead(doc, id, SET) : null;
       if (!rec) throw new Error('nothing read');
       recs[id] = rec; ssSet(REC_KEY + id, rec);
-    }).catch(function(e) { recs[id] = { failed: String(e && e.message || e) }; }).then(function() {
-      reading = null;
-      if (show.videos[cur] && show.videos[cur].id === id) render();
-      want(cur + 1);
-      pump();
-    });
+    }).catch(function(e) { recs[id] = { failed: String(e && e.message || e) }; }).then(function() { reading = null; done(); });
+  }
+  // One match page for Confirm all (2.87.0): the same one-at-a-time rule, 2 s apart.
+  function readRec(id, done) {
+    if (recs[id]) { done(); return; }
+    var c = ssGet(REC_KEY + id);
+    if (c) { recs[id] = c; done(); return; }
+    if (reading) { setTimeout(function() { readRec(id, done); }, 400); return; }
+    var wait = lastFetch + GAP - Date.now();
+    if (wait > 0) { setTimeout(function() { readRec(id, done); }, wait); return; }
+    fetchRec(id, done);
   }
 
   // ---- what is shown for one match
@@ -282,7 +301,11 @@
     '#tvcc .dn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,17,24,.82)}' +
     '#tvcc .dp{width:780px;background:#0F151C;border:2px solid #F4C242;border-radius:16px;padding:32px 40px;display:flex;flex-direction:column;gap:14px}' +
     '#tvcc .dp .t1{font:900 30px Arial}#tvcc .dp .t2{font:600 17px Arial;color:#C9D2DC}#tvcc .dp .ln{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid #2A323C;background:#161F2A;border-radius:12px;font:600 17px Arial;color:#C9D2DC}' +
-    '#tvcc .dp .ln b{font:900 26px Arial;width:36px;text-align:center}';
+    '#tvcc .dp .ln b{font:900 26px Arial;width:36px;text-align:center}' +
+    '#tvcc .t2e{font:600 15px Arial;color:#C9D2DC}#tvcc .wl.vw{color:#FFB347;border-color:#FFB347;background:#2A1C10}' +
+    '#tvcc .el{display:flex;flex-direction:column;gap:5px;overflow:hidden;min-height:0}#tvcc .er2{display:flex;align-items:center;gap:12px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:5px 12px;min-height:36px;box-sizing:border-box}' +
+    '#tvcc .er2.now{border-color:#F4C242}#tvcc .er2 b{flex:0 0 26px;font:900 15px Arial;color:#9AA6B4}#tvcc .er2 .tl{flex:1 1 0;min-width:0;font:700 15px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#tvcc .chp.at{background:#2A1C10;color:#FFB347;border:1px solid #FFB347}';
 
   function ensure() {
     if (root) return;
@@ -305,6 +328,7 @@
         (err ? '<div class="er">' + esc(err) + '</div><div class="bt">' + btn('retry', T.retry, true) + '</div>' : '<div class="ld">' + esc(T.loading) + '</div>') + '</div>';
       focus(); return;
     }
+    if (cur >= show.videos.length) { cur = show.videos.length; root.innerHTML = endHtml(); place(); focus(); return; }
     var v = show.videos[cur], rec = recs[v.id], st = status(v);
     // Left: the thumbnails, large, one after another; the current one in full, its neighbours dimmed.
     var h = '<div class="st"><div class="tk">';
@@ -342,8 +366,8 @@
     }
     h += '</div><div class="bt">';
     var ready = rec && !rec.failed;
-    if (st) h += btn('nextm', T.next, true) + (ready || st.card ? btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch);
-    else h += (ready ? btn('confirm', savingNow === v.id ? T.saving : T.confirm, true) + btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch) + btn('skip', T.skip, !ready);
+    if (st) h += btn('nextm', cur === show.videos.length - 1 ? T.endNext : T.next, true) + (ready || st.card ? btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch);
+    else h += (ready ? btn('confirm', savingNow === v.id ? T.saving : T.confirm, true) + btn('edit', T.edit) + btn('result', T.result) : '') + btn('watch', T.watch) + btn('skip', cur === show.videos.length - 1 ? T.endNext : T.skip, !ready);
     h += '</div></div>';
     if (ready && !st && !wasReady && (focusKey === 'skip' || focusKey === 'watch')) focusKey = 'confirm';
     h += '<div class="hn"><span><i>▲ ▼</i>' + esc(T.hintMove) + '</span><span><i>OK</i>' + esc(T.hintPress) + '</span><span><i>BACK</i>' + esc(T.hintBack) + '</span></div>';
@@ -366,6 +390,99 @@
     if (el) el.focus({ preventScroll: true });
   }
 
+  // ---- the end of the card (2.87.0): ▼ past the last match. Each match's state, and Confirm all for the ready ones.
+  // Ready: its page is read and every name is in the library. Needs a look: its page couldn't be read, no line-up, or
+  // a name that isn't known (Confirm would stop on the People step). Not read yet: read when Confirm all reaches it.
+  function cls(i) {
+    var v = show.videos[i], r = recs[v.id];
+    if (status(v)) return 'logged';
+    if (!r) return 'unread';
+    if (r.failed) return 'attn';
+    var useEn = r.sides_en && r.sides_en.length >= 2, A = useEn ? r.sides_en : (r.sides_ja || []), B = useEn ? (r.sides_ja || []) : [];
+    if (A.length < 2) return 'attn';
+    var kit = kitReady && window.__tvIndexKit;
+    if (!kit) return 'unread';
+    var bad = A.some(function(names, si) { return names.some(function(raw, j) { var o = B[si] && B[si].length === names.length ? B[si][j] : ''; return !(kit.resolve(raw) || kit.resolve(o)); }); });
+    return bad ? 'attn' : 'ready';
+  }
+  function venueOk() {
+    if (savedVenue()) return true;
+    var kit = kitReady && window.__tvIndexKit, raw = show.venue || '';
+    show.videos.some(function(v) { var r = recs[v.id], s0 = r && r.shows && r.shows[0]; if (s0 && s0.venue) { raw = s0.venue; return true; } return false; });
+    return !raw || !kit || !!kit.venue(raw);
+  }
+  var batch = null;
+  function endHtml() {
+    var n = { ready: 0, logged: 0, attn: 0, unread: 0 }, rows = '';
+    show.videos.forEach(function(v, i) {
+      var k = cls(i), r = recs[v.id], st = status(v), skip = batch && batch.skipped.indexOf(i) >= 0 || (lastRun && lastRun.indexOf(i) >= 0);
+      n[k]++;
+      var title = (r && !r.failed && (ja ? r.title_ja || r.title_en : r.title_en || r.title_ja)) || v.t;
+      var chip = st ? '<span class="chp ' + (st.k === 'watched' ? 'w' : (st.k === 'saved' ? 'saved' : 't')) + '">' + esc(st.label) + '</span>'
+        : k === 'ready' ? '<span class="chp w">' + esc(T.eReady) + '</span>' : k === 'attn' ? '<span class="chp at">' + esc(skip ? T.skipped : T.eAttn) + '</span>' : '<span class="chp r">' + esc(T.eUnread) + '</span>';
+      rows += '<div class="er2' + (batch && batch.at === i ? ' now' : '') + '"><b>' + (i + 1) + '</b><span class="tl">' + esc(title) + '</span>' + chip + '</div>';
+    });
+    var todo = n.ready + n.unread;
+    var h = '<div class="st"><div class="tk"></div></div><div class="pn"><div class="hd">' + TEL + '<span class="wm">STAR<b>SCOPE</b></span><span class="hh">' + T.head + '</span>' + squares() + '</div>';
+    h += '<div class="sh">' + esc([showName(show.name, show.date), dateText(show.date)].filter(Boolean).join(' · ')) + '</div>';
+    h += '<div class="box"><div class="gl">' + esc(T.endHead) + '</div><div class="t2e">' + esc(T.endSub) + '</div>' + (venueOk() ? '' : '<div class="wl vw">' + esc(T.vWarn) + '</div>') + '<div class="el">' + rows + '</div></div><div class="bt">';
+    if (batch) h += btn('allrun', T.allRun + ' ' + Math.min(batch.done + 1, batch.list.length) + T.of + batch.list.length + '…', true) + btn('stop', T.stop);
+    else {
+      if (todo) h += btn('confirmall', T.allBtn + ' (' + todo + ')', true);
+      if (n.attn) h += btn('firstattn', T.first, !todo);
+      h += btn('back', T.back, !todo && !n.attn);
+    }
+    h += '</div></div><div class="hn"><span><i>▲</i>' + esc(T.hintMove) + '</span><span><i>OK</i>' + esc(T.hintPress) + '</span><span><i>BACK</i>' + esc(T.hintBack) + '</span></div>';
+    if (doneOpen) h += doneHtml();
+    return h;
+  }
+  var lastRun = null;
+  function confirmAll() {
+    var list = [];
+    show.videos.forEach(function(v, i) { var k = cls(i); if (k === 'ready' || k === 'unread') list.push(i); });
+    if (!list.length) return;
+    batch = { list: list, done: 0, skipped: [], saved: 0, at: -1, stop: false };
+    focusKey = 'stop'; render(); step();
+  }
+  function step() {
+    var b = batch;
+    if (!b) return;
+    if (b.stop || b.done >= b.list.length) { endAll(); return; }
+    var idx = b.list[b.done], v = show.videos[idx];
+    b.at = idx;
+    if (status(v)) { b.done++; step(); return; }
+    if (!recs[v.id] || (!kitReady && !b.libTried)) {
+      render();
+      readRec(v.id, function() {
+        if (batch !== b) return;
+        if (!kitReady && !b.libTried && window.__tvIndexKit) { b.libTried = true; window.__tvIndexKit.lib(function(ok) { kitReady = ok; step(); }); return; }
+        step();
+      });
+      return;
+    }
+    if (cls(idx) !== 'ready') { b.skipped.push(idx); b.done++; render(); step(); return; }
+    render();
+    openPanel('card', true, idx, function(res) {
+      if (batch !== b) return;
+      if (res && res.ok) b.saved++; else b.skipped.push(idx);
+      b.done++; render();
+      setTimeout(step, 300);
+    });
+  }
+  function endAll() {
+    var b = batch; batch = null;
+    if (!b) return;
+    lastRun = b.skipped.slice();
+    if (b.saved && window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+    if (allLogged()) { doneOpen = true; focusKey = 'nextshow'; }
+    else focusKey = lastRun.length ? 'firstattn' : 'confirmall';
+    render();
+  }
+  function firstAttn() {
+    for (var i = 0; i < show.videos.length; i++) if (cls(i) === 'attn') return i;
+    return 0;
+  }
+
   function doneHtml() {
     var n = { t: 0, w: 0 };
     show.videos.forEach(function(v) { var s = status(v); if (s) n[s.k === 'watched' ? 'w' : 't']++; });
@@ -378,16 +495,20 @@
   function allLogged() { return show.videos.every(function(v) { return !!status(v); }); }
 
   function go(i) {
-    if (!show || i < 0 || i >= show.videos.length) return;
-    cur = i; focusKey = status(show.videos[cur]) ? 'nextm' : 'confirm';
+    if (!show || i < 0 || i > show.videos.length || batch) return;
+    cur = i;
+    if (i === show.videos.length) { focusKey = 'confirmall'; render(); return; }
+    focusKey = status(show.videos[cur]) ? 'nextm' : 'confirm';
     render(); want(cur);
   }
   function nextUnlogged(from) {
     for (var i = from + 1; i < show.videos.length; i++) if (!status(show.videos[i])) return i;
-    return Math.min(from + 1, show.videos.length - 1);
+    return Math.min(from + 1, show.videos.length);   // past the last match: the end of the card (2.87.0)
   }
-  function openPanel(tab, quick) {
-    var v = show.videos[cur], rec = recs[v.id];
+  // idx and after (2.87.0): Confirm all saves match idx and hands the result to after(). If the logger has to show
+  // itself (a name it can't place), Confirm all stops there and that match is put on screen.
+  function openPanel(tab, quick, idx, after) {
+    var at = idx == null ? cur : idx, v = show.videos[at], rec = recs[v.id], shown = false;
     if (!window.__tvIndexOpen) return;
     if (!rec || rec.failed) {   // a logged match whose page hasn't been read: the panel still has the sheet's copy
       rec = { id: Number(v.id), set: Number(SET), title_en: v.t, title_ja: '', sides_en: [], sides_ja: [], shows: [], lines: [], thumb: v.th, date: show.date };
@@ -395,14 +516,14 @@
     if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(SET), show: show.name, venue: show.venue, date: show.date }];
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
-    var at = cur;
     if (quick) { savingNow = v.id; render(); }
-    window.__tvIndexOpen({ set: SET, video: v.id, rec: rec, place: { no: cur + 1, total: show.videos.length }, thumb: true, tab: tab, quick: !!quick,
-      host: function() { editing = true; render(true); return root.querySelector('#tvcc-host'); },
+    window.__tvIndexOpen({ set: SET, video: v.id, rec: rec, place: { no: at + 1, total: show.videos.length }, thumb: true, tab: tab, quick: !!quick,
+      host: function() { if (after) { batch = null; cur = at; shown = true; } editing = true; render(true); return root.querySelector('#tvcc-host'); },
       done: function(res) {
         editing = false; savingNow = null;
+        if (res && res.ok) saved[v.id] = 1;
+        if (after && !shown) { after(res); return; }
         if (res && res.ok) {
-          saved[v.id] = 1;
           if (window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
           if (allLogged()) { doneOpen = true; focusKey = 'nextshow'; render(); return; }
           if (quick && cur === at) { go(nextUnlogged(at)); return; }
@@ -461,10 +582,14 @@
     if (k === 'edit') return openPanel('card', false);
     if (k === 'result') return openPanel('finish', false);
     if (k === 'watch') { location.href = '/contents/' + show.videos[cur].id; return; }
-    if (k === 'skip' || k === 'nextm') { go(Math.min(cur + 1, show.videos.length - 1)); return; }
+    if (k === 'skip' || k === 'nextm') { go(Math.min(cur + 1, show.videos.length)); return; }
+    if (k === 'confirmall') { confirmAll(); return; }
+    if (k === 'stop') { if (batch) batch.stop = true; return; }
+    if (k === 'firstattn') { lastRun = null; go(firstAttn()); return; }
+    if (k === 'back') { go(0); return; }
     if (k === 'nextshow') { location.href = nextTarget().href; return; }
     if (k === 'logshows') { location.href = '/mypage?tvscope=log'; return; }
-    if (k === 'stay') { doneOpen = false; focusKey = 'nextm'; render(); return; }
+    if (k === 'stay') { doneOpen = false; focusKey = cur >= show.videos.length ? 'back' : 'nextm'; render(); return; }
   }
   window.addEventListener('keydown', function(e) {
     if (e.defaultPrevented || !root || window.__tvIndexIsOpen) return;
