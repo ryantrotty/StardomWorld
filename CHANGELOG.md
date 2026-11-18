@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.1
+
+- **Fix (iPhone card check): a wrong card check link could not be changed.** The link is now checked with the sheet as card check starts; a wrong one says what the sheet answered ("bad key", …) with **Change the card check link**, and the ⚙ button at the top opens the setup box at any time (Cancel keeps the old link).
+
 ## 2.91.0
 
 - **Card check on the iPhone** (Safari bookmark; docs/CARDCHECK_PHONE.md). Tap the bookmark on any stardom-world.com page and card check opens over it as its own app: Started or a year's shows (Load more shows reads the next page only when tapped), a show's card as a feed of thumbnails, the Venue line (set once per show), people with ✓ / ?, Confirm and Confirm all, then Next for the next show in the list. It reads the site's pages from the phone, one at a time, 2 s apart, only for the cards you scroll to.

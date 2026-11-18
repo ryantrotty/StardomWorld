@@ -73,7 +73,7 @@
   (document.head || document.documentElement).appendChild(st);
 
   // ---- settings: the card check link, pasted once (script address + key)
-  var cfg = lsGet(CFG_KEY);
+  var cfg = lsGet(CFG_KEY), oldCfg = null;
   function parseLink(t) {
     t = String(t || '').trim();
     var m = /^(https:\/\/script\.google(?:usercontent)?\.com\/[^\s?#]+)\?(?:.*&)?(?:cc|k)=([^&\s#]+)/.exec(t);
@@ -510,8 +510,8 @@
     if (!cfg) h = setupHtml();
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
-      h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
-        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' : '') +
+      h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
+        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (flashBad ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
         (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? fixHtml() : '');
     }
     root.innerHTML = h; root.scrollTop = y;
@@ -538,7 +538,7 @@
     return '<div class="pad" style="padding-top:calc(env(safe-area-inset-top) + 24px)"><div class="wm" style="font-size:22px;margin-bottom:10px">STAR<b>SCOPE</b> card check</div>' +
       '<div style="color:#C9D2DC;margin-bottom:14px">Paste your card check link once: the sheet\'s web app address with <b>?cc=</b> and the card check key. It stays in Safari on this phone.</div>' +
       '<input class="tx" id="ccp-link" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec?cc=…">' +
-      (flash ? '<div class="msg er" style="margin-top:8px">' + esc(flash) + '</div>' : '') + '<div class="bt" style="margin-top:12px"><button class="b on wide" data-setup="1">Save</button><button class="b" data-closeall="1">Close</button></div></div>';
+      (flash ? '<div class="msg er" style="margin-top:8px">' + esc(flash) + '</div>' : '') + '<div class="bt" style="margin-top:12px"><button class="b on wide" data-setup="1">Save</button>' + (oldCfg ? '<button class="b" data-unrelink="1">Cancel</button>' : '<button class="b" data-closeall="1">Close</button>') + '</div></div>';
   }
 
   // ---- taps
@@ -548,9 +548,12 @@
     if (b.tagName === 'A') { saveState(); return; }   // Watch: the site's own page; the bookmark brings card check back here
     if (d.setup) {
       var c = parseLink((root.querySelector('#ccp-link') || {}).value);
-      if (!c) { note('That doesn\'t look like the card check link.', true); return; }
-      cfg = c; lsSet(CFG_KEY, c); flash = ''; start(); return;
+      if (!c) { note('That doesn\'t look like the card check link: the address ending /exec, then ?cc= and the key.', true); return; }
+      cfg = c; oldCfg = null; lsSet(CFG_KEY, c); flash = ''; start(); return;
     }
+    // A link pasted wrong (2.91.1): back to the setup box, any time, from ⚙ or from the error.
+    if (d.relink) { oldCfg = cfg || oldCfg; cfg = null; flash = ''; draw(); return; }
+    if (d.unrelink) { cfg = oldCfg; oldCfg = null; flash = ''; draw(); return; }
     if (d.closeall) { saveState(); root.style.display = 'none'; document.documentElement.style.overflow = ''; return; }
     if (d.home) { S.screen = 'home'; show = null; flash = ''; saveState(); draw(); root.scrollTop = 0; return; }
     if (d.tab) { S.tab = 'started'; saveState(); draw(); return; }
@@ -576,10 +579,17 @@
   });
   root.addEventListener('scroll', function() { clearTimeout(root.__s); root.__s = setTimeout(saveState, 400); }, { passive: true });
 
+  var booted = null;
   function start() {
     draw();
-    boot().then(function() {
-      window.__tvIndexKit.lib(function(ok) { kitReady = ok; if (!ok) note('Couldn\'t load the library from the sheet. Check the card check link.', true); draw(); });
+    booted = booted || boot();
+    booted.then(function() {
+      // The link checked first (2.91.1): a wrong key says so, with the way to change it.
+      post({ action: 'vi_lib' }, function(t) {
+        var r = null; try { r = JSON.parse(t); } catch (e) {}
+        if (!r || !r.ok) { kitReady = false; note('The sheet said: ' + (r && r.error || 'no reply') + '. Check the card check link.', true); return; }
+        window.__tvIndexKit.lib(function(ok) { kitReady = ok; flash = ''; draw(); });
+      });
       cards();
       if (S.screen === 'show' && S.set) { var y0 = (lsGet(STATE_KEY) || {}).y || 0; openShow(S.set, S.from); setTimeout(function() { root.scrollTop = y0; }, 300); }
       else draw();
