@@ -1,10 +1,10 @@
 {
- "generated": "2026-11-17T06:31:59Z",
+ "generated": "2026-11-18T06:31:58Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-17T06:28:57Z",
-  "finished": "2026-11-17T06:31:59Z",
-  "requests": 36,
+  "started": "2026-11-18T06:28:57Z",
+  "finished": "2026-11-18T06:31:58Z",
+  "requests": 35,
   "schedule": {
    "ok": true,
    "events": 44,
@@ -17,37 +17,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-16T20:07:12Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "kawaii": {
      "read": false,
@@ -56,8 +56,8 @@
     },
     "iwgp": {
      "read": true,
-     "changed": true,
-     "note": "Reign 6 (Syuri) now 6 defences per Wikipedia (was 5); the 6th defence's details are not stated on the Wikipedia page, so defCount set to 6 and the 5 listed defences kept. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
+     "changed": false,
+     "note": "Reign 6 (Syuri) and all 6 defences (defCount 6, 5 listed) confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     },
     "strong": {
      "read": true,
@@ -65,9 +65,7 @@
      "note": "Reign 8 (Alex Windsor) and all 1 defences confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     }
    },
-   "changed": [
-    "iwgp: Reign 6 (Syuri) now 6 defences per Wikipedia (was 5); the 6th defence's details are not stated on the Wikipedia page, so defCount set to 6 and the 5 listed defences kept. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
-   ],
+   "changed": [],
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
