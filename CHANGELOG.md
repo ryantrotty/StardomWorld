@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.6
+
+- **iPhone card check reads shows from the site's own match list.** The mobile show page has no match links; it loads them from `/user_api/set/<id>/contents` (seen in the page report). Card check now asks that list once (all matches, `size=60`), and each entry's description already holds the line-up in both languages, so the matches are read from it with the TV's reader and no match page is opened: two requests per show (the show page and its list) instead of one per match.
+- The year lists on the phone still need the mobile list's address: the page report on an empty year will show it.
+
 ## 2.91.5
 
 - **iPhone card check: Copy page report.** The iPhone is sent the site's mobile layout, with no links to the matches (show 6962: 10 article cards, no video links; the desktop page has 24). When a show page or a year's list can't be read, a **Copy page report** button copies what the phone received as text (size, title, user agent, the first article cards as tags and attributes, attributes and inline scripts that name contents / set / video; query strings left out), to paste to Claude so the mobile layout can be read.
