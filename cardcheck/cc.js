@@ -12,7 +12,7 @@
   var BASE = me ? me.replace(/[^\/]*$/, '') : 'https://ryantrotty.github.io/StardomWorld/cardcheck/';
   var VER = (/[?&]v=([^&]+)/.exec(me) || [])[1] || String(Date.now());
   var ROSTER = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json';
-  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec2_';   // 2.91.7: new names, so lists read wrongly before are dropped
+  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear2_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec2_';   // 2.91.7: new names, so lists read wrongly before are dropped
   var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null, report = '';
   // 2.91.5: the page the phone was sent, as text to copy and paste (the phone gets the site's mobile layout, which the
   // reader doesn't know yet): its size and title, then the first article cards and anything that looks like a link to a
@@ -161,7 +161,7 @@
   }
   function boot() {
     host();
-    try { for (var i = localStorage.length - 1; i >= 0; i--) { var k = localStorage.key(i); if (/^ccPhoneSet\d/.test(k || '')) localStorage.removeItem(k); } } catch (e) {}   // lists kept before 2.91.7
+    try { for (var i = localStorage.length - 1; i >= 0; i--) { var k = localStorage.key(i); if (/^ccPhoneSet\d|^ccPhoneYear_/.test(k || '')) localStorage.removeItem(k); } } catch (e) {}   // lists kept before 2.91.7
     var roster = getJson(ROSTER).catch(function() { return null; });
     return Promise.all([getJson(BASE + 'factions.json?v=' + VER), getJson(BASE + 'match_types.json?v=' + VER), roster]).then(function(a) {
       FACT = JSON.stringify(mergeFactions(a[0], a[2]));
@@ -239,22 +239,21 @@
     var cat = 0; try { cat = ((JSON.parse(MT).siteCategories || {}).years || {})[yl.y]; } catch (e) {}
     if (!yl || yl.busy || yl.done || !cat) { if (yl && !cat) yl.done = true; return; }
     var mine = yl, n = yl.page + 1; yl.busy = true; yl.err = ''; draw();
-    fetch('/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(cat) + '&q%5Btype%5D=set&activetab=contents&page=' + n, { credentials: 'include' })
-      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-      .then(function(html) {
-        var doc = new DOMParser().parseFromString(html, 'text/html'), seen = {}, got = 0;
+    // 2.91.8: the site's own list of a year's shows, as its mobile search page reads it (/user_api/contents with
+    // search[type]=set and search[category_ids][]), 20 a page, newest first.
+    fetch('/user_api/contents?size=20&search%5Btype%5D=set&search%5Bcategory_ids%5D%5B%5D=' + encodeURIComponent(cat) + '&sort=di_s&order=d&page=' + n, { credentials: 'include', headers: { Accept: 'application/json' } })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); mine.total = Number(r.headers.get('x-total-count')) || mine.total || 0; return r.json(); })
+      .then(function(list) {
+        var seen = {}, got = 0;
         mine.items.forEach(function(x) { seen[x.set] = 1; });
-        Array.prototype.forEach.call(doc.querySelectorAll('.content-list-item, article'), function(it) {
-          var a = it.querySelector('a[href*="/set/"]'), m = a && /\/set\/(\d+)/.exec(a.getAttribute('href') || '');
-          if (!m || seen[m[1]] || /\/contents\//.test(a.getAttribute('href'))) return;
-          seen[m[1]] = 1; got++;
-          var bg = it.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || '');
-          var tEl = it.querySelector('h3, h4, .ttl-xs, .content-title'), name = String((tEl || a).textContent || '').replace(/\s+/g, ' ').trim();
-          mine.items.push({ set: m[1], name: name, th: mm ? mm[1] : '' });
+        (Array.isArray(list) ? list : []).forEach(function(x) {
+          if (!x || x.type !== 'set' || seen[x.id]) return;
+          seen[x.id] = 1; got++;
+          mine.items.push({ set: String(x.id), name: String(x.display_name || '').replace(/\s+/g, ' ').trim(), th: (x.thumbnails && (x.thumbnails.lg || x.thumbnails.md)) || '' });
         });
-        mine.page = n; if (!got) mine.done = true;
-        if (!got && n === 1) { report = pageReport('Year list ' + mine.y + ' page 1', html, doc); diag = 'The ' + mine.y + ' list page was read (' + html.length + ' characters) but no show links were found in it.'; flash = 'Couldn\'t find the shows on the site\'s list.'; flashBad = true; flashKey = false; }
-        lsSet(YEAR_KEY + mine.y, { t: mine.t, items: mine.items, page: mine.page, done: mine.done });
+        mine.page = n;
+        if (!got || (Array.isArray(list) && list.length < 20) || (mine.total && mine.items.length >= mine.total)) mine.done = true;
+        lsSet(YEAR_KEY + mine.y, { t: mine.t, items: mine.items, page: mine.page, done: mine.done, total: mine.total });
       })
       .catch(function(e) { mine.err = String(e && e.message || e); })
       .then(function() { mine.busy = false; draw(); });
