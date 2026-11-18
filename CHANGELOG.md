@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.92.2
+
+- Sheet script, Ask Gemini: when no model answers, the error lists every model tried and why (not found / no quota), and the Gemini models the key can call, to put in `GEMINI_MODEL`. **Redeploy the script.**
+
 ## 2.92.1
 
 - **iPhone card check, AI answers: line-ups for matches the site gave none.** Older shows' descriptions often carry no line-up the reader understands, so most matches had no names and the answer had nothing to fill. Each such match now gets "Match N line-up → …" from the answer (by its place on the card when the answer has as many matches as the site), and every wrestler in it the library doesn't know is offered as a new wrestler. Applied: new wrestlers first, then the line-ups (kept on the phone for Confirm), so a confirmed match saves with them.

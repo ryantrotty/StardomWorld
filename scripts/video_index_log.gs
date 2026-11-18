@@ -1219,12 +1219,19 @@ function viAi(b) {
     var code = res.getResponseCode(), j = null;
     try { j = JSON.parse(res.getContentText()); } catch (e) {}
     // 2.92.1: a model this key has no quota for (429) or doesn't know (404): the next one.
-    if (code === 404 || code === 429) { last = models[i] + ': ' + (code === 404 ? 'not found' : 'no quota (' + String((j && j.error && j.error.message) || '').slice(0, 160) + ')'); continue; }
+    if (code === 404 || code === 429) { last += (last ? ' · ' : '') + models[i] + ': ' + (code === 404 ? 'not found' : 'no quota'); continue; }
     if (code !== 200 || !j) return { ok: false, error: 'Gemini ' + code + ': ' + String((j && j.error && j.error.message) || res.getContentText()).slice(0, 300) };
     var c = (j.candidates || [])[0] || {}, text = ((c.content && c.content.parts) || []).map(function(p) { return p.text || ''; }).join('');
     var src = (((c.groundingMetadata || {}).groundingChunks) || []).map(function(g) { return g.web ? { title: String(g.web.title || '').slice(0, 120), uri: g.web.uri } : null; }).filter(Boolean).slice(0, 8);
     if (!text) return { ok: false, error: 'Gemini gave no text (' + (c.finishReason || 'no reason') + ')' };
     return { ok: true, text: text, model: models[i], sources: src };
   }
-  return { ok: false, error: 'no Gemini model answered (' + last + ')' };
+  // 2.92.2: every model tried and why, and the models this key can call, so the right one can go in GEMINI_MODEL.
+  var have = '';
+  try {
+    var lm = JSON.parse(UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key }, muteHttpExceptions: true }).getContentText());
+    have = (lm.models || []).filter(function(m) { return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0 && /gemini/i.test(m.name); })
+      .map(function(m) { return String(m.name).replace(/^models\//, ''); }).filter(function(n) { return !/embedding|tts|image|audio|live|vision/i.test(n); }).slice(0, 20).join(', ');
+  } catch (e) {}
+  return { ok: false, error: 'no Gemini model answered (' + last + ')' + (have ? '. Models this key can call: ' + have + '. Put one in GEMINI_MODEL.' : '') };
 }
