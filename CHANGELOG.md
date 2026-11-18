@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.93.0
+
+- **iPhone card check: the card's order.**
+  - The show header says which match is match 1 and how the order was set; **⇅ Reverse order** turns the card round (kept with the show on the phone).
+  - The AI answer checks the order by the wrestlers: each match with two or more known wrestlers (logged ones by their saved names) is found in the answer. Same order: "✓ The answer has the matches in this order." Reversed or shuffled: "Reverse the card" / "Put the matches in the answer's order" to approve; line-ups from the answer then follow that order.
+  - The prompt asks the AI to check the running order (opener 1, main event last; the site sometimes lists a show backwards) and lists logged matches with their names.
+  - A logged match whose saved number no longer fits its place shows "Saved as match N" and **Save as match M**; Confirm all re-saves them. The logger takes card check's place for the match number when asked to (`reorder`).
+
 ## 2.92.3
 
 - Sheet script, Ask Gemini: each model that doesn't answer is reported with Google's own message (a "not found" came back for a model the key can call). Models tried after `GEMINI_MODEL`: `gemini-2.5-flash`, `gemini-flash-latest`, `gemini-3.5-flash`, `gemini-2.5-flash-lite`. **Redeploy the script.**

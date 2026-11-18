@@ -853,6 +853,7 @@
     // Match number on the card (2.62.3): what was saved, else the show's video list, else the page's own number.
     var pl0 = setPlace(), sn = showAny ? saved.match.card_no : '', st = showAny ? saved.match.card_total : '';
     state.cardNo = sn !== '' && sn != null ? Number(sn) : (pl0 ? pl0.no : (rec && rec.no != null ? rec.no : ''));
+    if (CX && CX.reorder && pl0) state.cardNo = pl0.no;   // 2.93.0: card check put the card in a new order; its place wins
     state.cardTotal = st !== '' && st != null ? Number(st) : (pl0 ? pl0.total : '');
     if (showAny && saved.match.result_type) state.result = { type: saved.match.result_type, side: Number(saved.match.winner_side) || 0 };
     if (!state.sides.length) state.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
