@@ -89,6 +89,7 @@
     '#ccp .shw{background:#0F151C;border:1px solid #2A323C;border-radius:12px;padding:12px;margin-bottom:12px}#ccp .shw .n1{font:900 18px system-ui;color:#fff;line-height:1.25}#ccp .shw .n2{font-size:13px;color:#9AA6B4;margin-top:3px}#ccp .shw .d{font:700 14px system-ui;color:#F4C242;margin-top:6px}',
     '#ccp textarea.tx{height:150px;padding:10px;font:13px ui-monospace,Menlo,monospace}#ccp .sug{display:flex;gap:10px;align-items:flex-start;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:10px;margin-top:8px;width:100%;text-align:left;color:#fff}',
     '#ccp .sug .bx{flex:none;width:24px;height:24px;border-radius:6px;border:2px solid #3B4656;display:flex;align-items:center;justify-content:center;font:900 14px system-ui;color:#1A1A1A}#ccp .sug.on .bx{background:#FFB347;border-color:#FFB347}#ccp .sug small{display:block;color:#9AA6B4;font-size:12px;margin-top:2px}#ccp .src{font-size:12px;color:#9AA6B4;margin-top:8px;word-break:break-all}',
+    '#ccp .ven.in{background:none;border:0;padding:0;margin:0 0 6px}#ccp .er2[data-row]{cursor:pointer}#ccp .er2.open b{color:#F4C242}#ccp .end{margin-bottom:6px}',
     '#ccp .er2{display:flex;align-items:center;gap:10px;font-size:14px}#ccp .er2 b{flex:0 0 22px;color:#9AA6B4}#ccp .er2 span.x{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
   ].join('');
   (document.head || document.documentElement).appendChild(st);
@@ -318,7 +319,7 @@
   }
   function openShow(set, from) {
     S.screen = 'show'; S.set = String(set); S.from = from || S.from || 'started';
-    show = null; recs = {}; attn = {}; readQ = []; diag = ''; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
+    show = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
     saveState(); draw(); root.scrollTop = 0;
     var c = lsGet(SET_KEY + set);
     if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) { show = c; draw(); return; }
@@ -388,6 +389,7 @@
     });
   }
   function status(v) {
+    if (sending[v.id]) return { k: 'saved', label: 'Saving to the sheet…' };
     if (saved[v.id]) return { k: 'saved', label: 'Logged' };
     var c = map[v.id];
     if (c) return c.x && c.x.tb ? { k: 'thumb', label: 'Logged from thumbnail' } : { k: 'watched', label: 'Logged while watching' };
@@ -436,6 +438,7 @@
     var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
     var h = '<div class="card" data-v="' + esc(v.id) + '"><div class="pic"' + (v.th ? ' style="background-image:url(\'' + esc(v.th) + '\')"' : '') + '></div><div class="bd">' +
       '<div class="hd"><span class="t">Match ' + (i + 1) + ' of ' + show.videos.length + '</span>' + chip + '</div><div style="font-weight:700;color:#C9D2DC">' + esc(title) + '</div>';
+    if (sendFail[v.id]) h += '<div class="er">The sheet turned this down: ' + esc(sendFail[v.id]) + '</div>';
     if (r && r.failed) h += '<div class="er">Couldn\'t read this page (' + esc(r.failed) + ')</div>';
     else if (r) {
       var K = kit(), sug = K ? K.suggest([r.title_en, r.title_ja, r.h1].filter(Boolean).join(' ')) : [];
@@ -462,7 +465,7 @@
     return m ? { name: m.name, how: 'matched in the library' } : null;
   }
   function venueHtml() {
-    var now = venueNow(), raw = rawVenue(), K = kit(), h = '<div class="ven"><div class="gl">Venue</div>';
+    var now = venueNow(), raw = rawVenue(), K = kit(), h = '<div class="ven in">';
     if (vs.mode === 'edit') {
       h += '<input class="tx" id="ccp-vin" type="text" autocomplete="off" placeholder="Type a venue name" value="' + esc(vs.text) + '">' + (raw ? '<div class="sub">' + esc(raw) + '</div>' : '') + '<div id="ccp-vl">' + venueList() + '</div><div class="bt"><button class="b" data-vx="1">Cancel</button></div>';
     } else if (now) h += '<div><span class="vv">' + esc(now.name) + '</span> <span class="vk">✓ ' + esc(now.how) + '</span></div><div class="bt"><button class="b" data-vchg="1">Change</button></div>';
@@ -496,15 +499,23 @@
       window.__tvIndexKit.reload(function() { venueSet(r.id, name); });
     });
   }
+  // 2.94.0: the card at the top: the venue first, then each match with its state (tap one to see its card); Confirm all
+  // and Next. Only matches that need a look (and any tapped open) are shown as cards; when all are ready, none are, so
+  // no picture is loaded.
+  var openCards = {}, showAllCards = false;
+  function needsCard(v) { var k = cls(v); return k === 'attn' || k === 'renumber' || !!sendFail[v.id] || !!openCards[v.id] || showAllCards; }
   function endHtml() {
-    var n = { ready: 0, unread: 0, attn: 0, logged: 0, renumber: 0 }, rows = '';
+    var n = { ready: 0, unread: 0, attn: 0, logged: 0, renumber: 0 }, rows = '', now = venueNow();
+    rows += '<div class="er2 vrow"><b>📍</b><span class="x">' + esc(now ? now.name : (rawVenue() ? '? ' + rawVenue() : 'Venue not read')) + '</span><span class="chp ' + (now ? 'w' : 'a') + '">' + (now ? 'venue ✓' : 'venue needs a look') + '</span></div>';
+    if (!now || vs.mode === 'edit' || vs.busy || vs.err || vs.msg) rows += venueHtml();
+    else rows += '<div class="bt" style="margin:-2px 0 4px"><button class="b" data-vchg="1">Change venue</button></div>';
     show.videos.forEach(function(v, i) {
-      var k = cls(v), r = recs[v.id]; n[k]++;
+      var k = cls(v), r = recs[v.id]; n[k] = (n[k] || 0) + 1;
       var lab = k === 'renumber' ? 'logged as ' + map[v.id].n + ', save as ' + (i + 1) : k === 'logged' ? 'logged' : k === 'ready' ? 'ready' : k === 'attn' ? 'needs a look' : 'not read yet';
-      rows += '<div class="er2"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
+      rows += '<div class="er2' + (needsCard(v) ? ' open' : '') + '" data-row="' + esc(v.id) + '"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
     });
     var todo = n.ready + n.unread + n.renumber, nx = nextShow();
-    var h = '<div class="end"><div class="hd">End of the card</div>' + rows + '<div class="bt">';
+    var h = '<div class="end"><div class="hd">The card<span style="flex:1"></span><button class="b" style="height:36px;font-size:13px" data-allcards="1">' + (showAllCards ? 'Hide cards' : 'Show all cards') + '</button></div>' + rows + '<div class="bt">';
     if (batch) h += '<button class="b on wide" disabled>Confirming ' + Math.min(batch.done + 1, batch.list.length) + ' of ' + batch.list.length + '…</button><button class="b" data-stop="1">Stop</button>';
     else if (todo) h += '<button class="b on wide" data-all="1">Confirm all (' + todo + ')</button>';
     h += '</div>' + (nx ? '<button class="b' + (todo || batch ? '' : ' on') + ' wide" data-go="' + esc(nx.set) + '" data-from="' + esc(S.from) + '">Next: ' + esc(nx.name) + '</button>' : '') + '</div>';
@@ -512,7 +523,8 @@
   }
   function showHtml() {
     if (!show) return '<div class="ld">Reading the show page…</div>';
-    return showHead() + venueHtml() + show.videos.map(cardHtml).join('') + endHtml();
+    var cardsH = show.videos.map(function(v, i) { return needsCard(v) ? cardHtml(v, i) : ''; }).join('');
+    return showHead() + endHtml() + (cardsH ? '<div class="gl" style="margin:14px 0 8px">' + (showAllCards ? 'Every match' : 'To look at') + '</div>' + cardsH : '');
   }
   // ---- the show at the top (2.92.0), and help from an AI for what the site doesn't say
   function showHead() {
@@ -763,6 +775,42 @@
   }
 
   // ---- saving: the TV's logger, without its screen (Confirm & next's quick save)
+  // 2.94.0: Confirm and Confirm all build each match's save on the phone (the logger's collect: no read of the sheet) and
+  // send the card as one request (vi_save_many) in the background; card check moves on at once. A match being sent shows
+  // "Saving to the sheet…"; one the sheet turns down goes back to "needs a look" with its reason.
+  var sending = {}, sendFail = {};
+  function showVenueId() {
+    var mine = lsGet('ccPhoneVen' + S.set); if (mine && mine.id) return mine.id;
+    var K = kit(), raw = rawVenue(), m = K && raw ? K.venue(raw) : null;
+    return m ? m.id : '';
+  }
+  function collectOne(id, done) {
+    var i = show.videos.map(function(v) { return v.id; }).indexOf(id), v = show.videos[i], rec = recs[id];
+    if (!v || !rec || rec.failed || !window.__tvIndexOpen) { done(null); return; }
+    if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(show.set), show: show.name, venue: show.venue, date: show.date }];
+    if (!rec.date) rec.date = show.date;
+    if (!rec.thumb) rec.thumb = v.th;
+    var shown = false;
+    window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, collect: true, venue: showVenueId(),
+      host: function() { shown = true; attn[id] = 1; setTimeout(function() { if (window.__tvIndexBack) window.__tvIndexBack(); }, 0); var d = document.createElement('div'); d.style.display = 'none'; document.body.appendChild(d); return d; },
+      done: function(res) { done(!shown && res && res.collected ? res.collected : null); } });
+  }
+  function sendCard(bodies, tries) {
+    var ids = bodies.map(function(x) { return String(x.video); });
+    ids.forEach(function(id) { sending[id] = 1; delete sendFail[id]; });
+    draw();
+    post({ action: 'vi_save_many', items: bodies }, function(t) {
+      var r = null; try { r = JSON.parse(t); } catch (e) {}
+      if (r && !r.ok && r.busy && (tries || 0) < 3) { setTimeout(function() { sendCard(bodies, (tries || 0) + 1); }, 4000 * ((tries || 0) + 1)); return; }   // the sheet was busy: again
+      ids.forEach(function(id) { delete sending[id]; });
+      if (!r || !r.ok) { ids.forEach(function(id) { sendFail[id] = String(r && r.error || 'no reply'); }); note('Not saved: ' + (r && r.error || 'no reply') + '. Confirm again to retry.', true); return; }
+      var bad = 0;
+      // a name or side the sheet won't take needs a look; anything else stays ready to confirm again
+      (r.results || []).forEach(function(x) { if (x.ok) saved[x.video] = 1; else { bad++; sendFail[x.video] = x.error || 'not saved'; if (/library|side/i.test(x.error || '')) attn[x.video] = 1; } });
+      note(r.saved + ' saved to the sheet' + (bad ? ', ' + bad + ' turned down (see the match)' : '') + '.', !!bad);
+      cards();
+    });
+  }
   function confirmOne(id, done) {
     var i = show.videos.map(function(v) { return v.id; }).indexOf(id), v = show.videos[i], rec = recs[id], re = v && cls(v) === 'renumber';
     if (re && (!rec || rec.failed)) rec = { id: Number(id), set: Number(show.set), title_en: v.t, title_ja: '', sides_en: [], sides_ja: [], shows: [], lines: [], thumb: v.th, date: show.date };
@@ -783,15 +831,16 @@
   }
   function step() {
     var b = batch; if (!b) return;
-    if (b.stop || b.done >= b.list.length) { batch = null; if (b.saved) cards(); draw(); return; }
+    b.bodies = b.bodies || [];
+    if (b.stop || b.done >= b.list.length) { batch = null; if (b.bodies.length) sendCard(b.bodies); else if (b.saved) cards(); draw(); return; }
     var id = b.list[b.done], v = show.videos.filter(function(x) { return x.id === id; })[0];
     b.at = id;
     var re = v && cls(v) === 'renumber';
     if (!v || (status(v) && !re)) { b.done++; step(); return; }
     if (!re && !recs[id]) { want(id); draw(); setTimeout(function() { if (batch === b) step(); }, 700); return; }
     if (!re && cls(v) !== 'ready') { b.done++; draw(); step(); return; }
-    draw();
-    confirmOne(id, function(ok) { if (batch !== b) return; if (ok) b.saved++; b.done++; draw(); setTimeout(step, 300); });
+    if (re) { draw(); confirmOne(id, function(ok) { if (batch !== b) return; if (ok) b.saved++; b.done++; draw(); setTimeout(step, 300); }); return; }   // a new number: as before, reading the match first
+    collectOne(id, function(body) { if (batch !== b) return; if (body) b.bodies.push(body); b.done++; setTimeout(step, 0); });
   }
 
   // ---- fixing a name: a wrestler from the library (the site's spelling becomes her alias), or a new one
@@ -842,6 +891,7 @@
   var io = null;
   function watchCards() {
     if (!show || S.screen !== 'show') return;
+    show.videos.forEach(function(v) { if (!recs[v.id] && !status(v) && !needsCard(v)) want(v.id); });   // 2.94.0: no card on screen to ask for it
     if (!io && 'IntersectionObserver' in window) io = new IntersectionObserver(function(es) {
       es.forEach(function(e) {
         if (!e.isIntersecting) return;
@@ -861,7 +911,7 @@
 
   // ---- taps
   root.addEventListener('click', function(e) {
-    var b = e.target.closest('button, a'); if (!b || !root.contains(b)) return;
+    var b = e.target.closest('button, a, [data-row]'); if (!b || !root.contains(b)) return;
     var d = b.dataset;
     if (b.tagName === 'A') { saveState(); return; }   // Watch: the site's own page; the bookmark brings card check back here
     if (d.setup) {
@@ -901,6 +951,8 @@
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
     if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, q: d.raw, err: '', busy: false }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
+    if (d.row && show) { openCards[d.row] = !openCards[d.row]; draw(); if (openCards[d.row]) setTimeout(function() { var c = root.querySelector('.card[data-v="' + d.row + '"]'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80); return; }
+    if (d.allcards) { showAllCards = !showAllCards; draw(); return; }
     if (d.rev && show) { setOrder(show.videos.slice().reverse(), show.orderBy === 'reversed by you' ? 'as listed' : 'reversed by you'); return; }
     if (d.aicopy) { copyText(aiPrompt(), b, 'Copied: paste it into Gemini'); return; }
     if (d.aipaste) { sheetOpen = { ai: 1, text: '', sug: null }; draw(); return; }

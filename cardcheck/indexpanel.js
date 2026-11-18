@@ -795,7 +795,8 @@
     var show = rec.shows && rec.shows[0];
     var place = setPlace();
     busy = true; saveBtn(T.saving, true);
-    call({ action: 'vi_save', video: U[2], set: U[1] || (show ? String(show.id) : ''), source: CX && CX.thumb ? 'thumb' : '',
+    var send = CX && CX.collect ? function(body) { busy = false; var cx = CX; body.keep = true; cx.saved = { ok: true, collected: body }; close(); } : null;
+    (send || function(body, f) { call(body, f); })({ action: 'vi_save', video: U[2], set: U[1] || (show ? String(show.id) : ''), source: CX && CX.thumb ? 'thumb' : '',
       // Card check (2.84.4): the picture and the page's text, since the match was never opened ("videos" has no row).
       thumb: CX ? rec.thumb || '' : '', site_text: CX ? [rec.title_en, rec.title_ja, (rec.lines || []).join(' ')].filter(Boolean).join(' ') : '', version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: state.cardTotal || '', card_no: state.cardNo, is_dark: state.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
@@ -885,7 +886,10 @@
     var cached = load(LIB_KEY);
     function withLib() {
       var show = rec && rec.shows && rec.shows[0];
-      call({ action: 'vi_get', video: U[2], show: show ? String(show.id) : '' }, function(r) {
+      // 2.94.0: card check's collect: the save is built from the page and the library alone, with no read of the sheet
+      // (the sheet keeps what an already-logged match has; see viSave's keep). The show's venue comes from card check.
+      var get = CX && CX.collect ? function(b, f) { f({ ok: true, found: false, onShow: [], show: CX.venue ? { venue_id: CX.venue } : null }); } : call;
+      get({ action: 'vi_get', video: U[2], show: show ? String(show.id) : '' }, function(r) {
         if (!r.ok) statusText = '';
         begin(r.ok ? r : null);
         if (!r.ok) say(String(r.error), true);
