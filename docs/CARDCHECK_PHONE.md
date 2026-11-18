@@ -15,7 +15,7 @@ Setup steps for the phone are on the page itself: `https://ryantrotty.github.io/
 
 ## The card check key
 
-`CARDCHECK_KEY` in the script properties. It allows only `vi_lib`, `vi_get`, `vi_save`, `vi_propose`, `vi_cards`, `vi_suggest`, `vi_thumbs`, `vi_translate` and `vi_show_venue`: no exports, favorites, watch history, playback notes or debug. The phone keeps it in Safari's storage for stardom-world.com (pasted once as the link `…/exec?cc=<key>`); change it in the script properties at any time.
+`CARDCHECK_KEY` in the script properties. It allows only `vi_lib`, `vi_get`, `vi_save`, `vi_propose`, `vi_cards`, `vi_suggest`, `vi_thumbs`, `vi_translate` and `vi_show_venue`: no exports, favorites, watch history, playback notes or debug. The phone keeps it in Safari's storage for stardom-world.com (entered once: the web app address, where the phone logger's link works as it is, and the key; ⚙ changes them); change it in the script properties at any time.
 
 ## Publishing
 

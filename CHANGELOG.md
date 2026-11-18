@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.2
+
+- **Fix (iPhone card check): setup.** The link box went empty after an error, so what was pasted couldn't be checked. Setup is now two boxes, kept as typed: the web app address (the phone logger's link works as it is; anything after `/exec` is left out) and the card check key. ⚙ reopens them with the address filled in.
+
 ## 2.91.1
 
 - **Fix (iPhone card check): a wrong card check link could not be changed.** The link is now checked with the sheet as card check starts; a wrong one says what the sheet answered ("bad key", …) with **Change the card check link**, and the ⚙ button at the top opens the setup box at any time (Cancel keeps the old link).

@@ -73,11 +73,16 @@
   (document.head || document.documentElement).appendChild(st);
 
   // ---- settings: the card check link, pasted once (script address + key)
-  var cfg = lsGet(CFG_KEY), oldCfg = null;
-  function parseLink(t) {
-    t = String(t || '').trim();
-    var m = /^(https:\/\/script\.google(?:usercontent)?\.com\/[^\s?#]+)\?(?:.*&)?(?:cc|k)=([^&\s#]+)/.exec(t);
-    return m ? { u: m[1], k: decodeURIComponent(m[2]) } : null;
+  var cfg = lsGet(CFG_KEY), oldCfg = null, setupVals = { u: '', k: '' };
+  // 2.91.2: two boxes, the web app address and the key. The address can be pasted with anything after /exec (the
+  // phone logger's link, say): only up to /exec is kept. A whole card check link (…/exec?cc=…) in the first box works too.
+  function parseLink(addr, key) {
+    addr = String(addr || '').replace(/\s+/g, ''); key = String(key || '').trim();
+    var m = /(https:\/\/script\.google\.com\/(?:a\/[^\/]+\/)?macros\/s\/[A-Za-z0-9_-]+\/exec)/.exec(addr);
+    if (!m) return { err: 'The address should look like https://script.google.com/macros/s/…/exec' };
+    if (!key) { var k = /[?&]cc=([^&#]+)/.exec(addr); if (k) key = decodeURIComponent(k[1]); }
+    if (!key) return { err: 'Paste the card check key (CARDCHECK_KEY) in the second box.' };
+    return { u: m[1], k: key };
   }
 
   // ---- the bridge the TV's scripts expect (AndroidHost), answered here
@@ -536,8 +541,9 @@
   }
   function setupHtml() {
     return '<div class="pad" style="padding-top:calc(env(safe-area-inset-top) + 24px)"><div class="wm" style="font-size:22px;margin-bottom:10px">STAR<b>SCOPE</b> card check</div>' +
-      '<div style="color:#C9D2DC;margin-bottom:14px">Paste your card check link once: the sheet\'s web app address with <b>?cc=</b> and the card check key. It stays in Safari on this phone.</div>' +
-      '<input class="tx" id="ccp-link" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec?cc=…">' +
+      '<div style="color:#C9D2DC;margin-bottom:14px">Once: the sheet\'s web app address (the phone logger\'s link works; everything after <b>/exec</b> is left out) and the card check key. Both stay in Safari on this phone.</div>' +
+      '<div class="gl" style="margin-bottom:6px">Web app address</div><input class="tx" id="ccp-link" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec" value="' + esc(setupVals.u) + '">' +
+      '<div class="gl" style="margin:12px 0 6px">Card check key</div><input class="tx" id="ccp-key" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="CARDCHECK_KEY from the script properties" value="' + esc(setupVals.k) + '">' +
       (flash ? '<div class="msg er" style="margin-top:8px">' + esc(flash) + '</div>' : '') + '<div class="bt" style="margin-top:12px"><button class="b on wide" data-setup="1">Save</button>' + (oldCfg ? '<button class="b" data-unrelink="1">Cancel</button>' : '<button class="b" data-closeall="1">Close</button>') + '</div></div>';
   }
 
@@ -547,12 +553,13 @@
     var d = b.dataset;
     if (b.tagName === 'A') { saveState(); return; }   // Watch: the site's own page; the bookmark brings card check back here
     if (d.setup) {
-      var c = parseLink((root.querySelector('#ccp-link') || {}).value);
-      if (!c) { note('That doesn\'t look like the card check link: the address ending /exec, then ?cc= and the key.', true); return; }
-      cfg = c; oldCfg = null; lsSet(CFG_KEY, c); flash = ''; start(); return;
+      setupVals = { u: (root.querySelector('#ccp-link') || {}).value || '', k: (root.querySelector('#ccp-key') || {}).value || '' };
+      var c = parseLink(setupVals.u, setupVals.k);
+      if (c.err) { note(c.err, true); return; }
+      cfg = c; oldCfg = null; setupVals = { u: '', k: '' }; lsSet(CFG_KEY, c); flash = ''; start(); return;
     }
     // A link pasted wrong (2.91.1): back to the setup box, any time, from ⚙ or from the error.
-    if (d.relink) { oldCfg = cfg || oldCfg; cfg = null; flash = ''; draw(); return; }
+    if (d.relink) { oldCfg = cfg || oldCfg; setupVals = { u: oldCfg ? oldCfg.u : '', k: '' }; cfg = null; flash = ''; draw(); return; }
     if (d.unrelink) { cfg = oldCfg; oldCfg = null; flash = ''; draw(); return; }
     if (d.closeall) { saveState(); root.style.display = 'none'; document.documentElement.style.overflow = ''; return; }
     if (d.home) { S.screen = 'home'; show = null; flash = ''; saveState(); draw(); root.scrollTop = 0; return; }
