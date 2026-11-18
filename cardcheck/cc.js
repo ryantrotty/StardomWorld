@@ -66,7 +66,7 @@
     '#ccp .cnt{display:inline-block;margin-top:6px;font:800 11px system-ui;letter-spacing:1px;text-transform:uppercase;color:#F4C242}#ccp .cnt.done{color:#7FD3A0}#ccp .cnt.none{color:#9AA6B4;font-weight:700}',
     '#ccp .card{background:#0F151C;border:1px solid #2A323C;border-radius:14px;margin-bottom:16px;overflow:hidden}',
     '#ccp .card .pic{width:100%;aspect-ratio:16/9;background:#161F2A center/cover no-repeat}#ccp .card .bd{padding:12px 14px;display:flex;flex-direction:column;gap:8px}',
-    '#ccp .hd{display:flex;align-items:center;gap:8px;font-weight:900;font-size:17px}#ccp .hd .t{flex:1;min-width:0}',
+    '#ccp .hd{display:flex;align-items:center;gap:8px;font-weight:900;font-size:17px;color:#fff}#ccp .card .hd .t{color:#fff}#ccp .hd .t{flex:1;min-width:0}',
     '#ccp .chp{flex:none;font:800 10px system-ui;letter-spacing:1px;text-transform:uppercase;border-radius:20px;padding:4px 8px;white-space:nowrap}',
     '#ccp .chp.t{background:#2A2410;color:#F4C242;border:1px solid #6B5A22}#ccp .chp.w{background:#12261B;color:#7FD3A0;border:1px solid #2E9E5B}#ccp .chp.r{color:#9AA6B4;border:1px dashed #3B4656}#ccp .chp.a{background:#2A1C10;color:#FFB347;border:1px solid #FFB347}',
     '#ccp .gl{font:800 11px system-ui;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4}#ccp .fg{font:800 11px system-ui;letter-spacing:1px;text-transform:uppercase;color:#F4C242}',
@@ -86,6 +86,9 @@
     '#ccp .sheet{position:fixed;left:0;right:0;bottom:0;max-height:80%;overflow:auto;z-index:10;background:#0F151C;border-top:2px solid #F4C242;border-radius:16px 16px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom) + 18px)}',
     '#ccp .shade{position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.55)}',
     '#ccp .end{background:#0F151C;border:2px solid #F4C242;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}',
+    '#ccp .shw{background:#0F151C;border:1px solid #2A323C;border-radius:12px;padding:12px;margin-bottom:12px}#ccp .shw .n1{font:900 18px system-ui;color:#fff;line-height:1.25}#ccp .shw .n2{font-size:13px;color:#9AA6B4;margin-top:3px}#ccp .shw .d{font:700 14px system-ui;color:#F4C242;margin-top:6px}',
+    '#ccp textarea.tx{height:150px;padding:10px;font:13px ui-monospace,Menlo,monospace}#ccp .sug{display:flex;gap:10px;align-items:flex-start;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:10px;margin-top:8px;width:100%;text-align:left;color:#fff}',
+    '#ccp .sug .bx{flex:none;width:24px;height:24px;border-radius:6px;border:2px solid #3B4656;display:flex;align-items:center;justify-content:center;font:900 14px system-ui;color:#1A1A1A}#ccp .sug.on .bx{background:#FFB347;border-color:#FFB347}#ccp .sug small{display:block;color:#9AA6B4;font-size:12px;margin-top:2px}#ccp .src{font-size:12px;color:#9AA6B4;margin-top:8px;word-break:break-all}',
     '#ccp .er2{display:flex;align-items:center;gap:10px;font-size:14px}#ccp .er2 b{flex:0 0 22px;color:#9AA6B4}#ccp .er2 span.x{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
   ].join('');
   (document.head || document.documentElement).appendChild(st);
@@ -506,7 +509,169 @@
   }
   function showHtml() {
     if (!show) return '<div class="ld">Reading the show page…</div>';
-    return venueHtml() + show.videos.map(cardHtml).join('') + endHtml();
+    return showHead() + venueHtml() + show.videos.map(cardHtml).join('') + endHtml();
+  }
+  // ---- the show at the top (2.92.0), and help from an AI for what the site doesn't say
+  function showHead() {
+    var en = showName(show.name, show.date), date = show.date || '', unknown = 0;
+    show.videos.forEach(function(v) { if (cls(v) === 'attn') unknown++; });
+    return '<div class="shw"><div class="n1">' + esc(en || show.line) + '</div>' + (show.line && show.line !== en ? '<div class="n2">' + esc(show.line) + '</div>' : '') +
+      '<div class="d">' + esc(dateText(date) || 'Date not read') + '</div>' +
+      '<div class="bt"><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">Ask Gemini</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+  }
+  function personText(raw, other) { return other && other !== raw ? raw + ' (' + other + ')' : raw; }
+  function aiPrompt() {
+    var K = kit(), lines = [], ven = venueNow(), raw = rawVenue();
+    show.videos.forEach(function(v, i) {
+      var r = recs[v.id], title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
+      if (!r || r.failed) { lines.push((i + 1) + '. ' + title + ' (line-up not read)'); return; }
+      var sd = sides(r);
+      var txt = sd.A.map(function(names, si) {
+        return names.map(function(rw, j) {
+          var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : '', id = K ? (K.resolve(rw) || K.resolve(o)) : '';
+          return id ? K.nameOf(id) : '?' + personText(rw, o);
+        }).join(' & ');
+      }).join(' vs ');
+      lines.push((i + 1) + '. ' + title + ': ' + (txt || '(no line-up)'));
+    });
+    return [
+      'I am logging a STARDOM (Japanese women\'s pro wrestling) show and need its card checked against reliable sources (the STARDOM official site, Cagematch, Wikipedia, news reports). Please search before answering.',
+      '',
+      'Show: ' + (show.line || show.name) + (showName(show.name, show.date) !== show.line ? ' (' + showName(show.name, show.date) + ')' : ''),
+      'Date: ' + (show.date || 'unknown'),
+      'Venue: ' + (ven ? ven.name : (raw ? raw + ' (not confirmed)' : 'unknown')),
+      '',
+      'The card as the video site lists it, in order. Names starting with ? are ones I could not identify; please focus on those, on the venue if it is unknown, and on anything that looks wrong:',
+      lines.join('\n'),
+      '',
+      'Answer with only this JSON (no other text). Use null for anything you are not sure of; do not guess. "no" is the match\'s place on the card. Give every wrestler\'s English and Japanese name as used at the time of the show.',
+      '```json',
+      '{"show": "", "date": "YYYY-MM-DD", "venue": {"en": "", "ja": ""}, "matches": [{"no": 1, "type": "", "title": null, "tournament": null, "round": null, "sides": [[{"en": "", "ja": ""}], [{"en": "", "ja": ""}]]}]}',
+      '```'
+    ].join('\n');
+  }
+  function copyText(t, btn, label) {
+    var done = function() { if (btn) btn.textContent = label; };
+    var ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; root.appendChild(ta);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function() { ta.select(); document.execCommand('copy'); done(); });
+    else { ta.select(); document.execCommand('copy'); done(); }
+    setTimeout(function() { ta.remove(); }, 500);
+  }
+  // The answer, read: suggestions to approve. Names the site gave that the library doesn't know, paired with the AI's
+  // people on the same side of the same match (matched by the wrestlers both already agree on); the venue.
+  function aiRead(text) {
+    var a = String(text || ''), i = a.indexOf('{'), j = a.lastIndexOf('}'), data = null;
+    if (i >= 0 && j > i) { try { data = JSON.parse(a.slice(i, j + 1)); } catch (e) {} }
+    if (!data || !Array.isArray(data.matches)) return { err: 'No card found in the answer. It should hold the JSON block the prompt asks for.' };
+    var K = kit(), out = [], norm = function(x) { return String(x || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-]+/g, ''); };
+    var aiId = function(p) { return p ? (K.resolve(p.en || '') || K.resolve(p.ja || '')) : ''; };
+    var used = {};
+    show.videos.forEach(function(v, vi) {
+      var r = recs[v.id]; if (!r || r.failed || status(v)) return;
+      var sd = sides(r), mine = sd.A.map(function(names, si) { return names.map(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : ''; return { raw: rw, other: o, id: K.resolve(rw) || K.resolve(o) }; }); });
+      if (!mine.some(function(sd2) { return sd2.some(function(p) { return !p.id; }); })) return;
+      // the AI's match: the most wrestlers in common, else the same place on the card
+      var best = null, bs = -1;
+      data.matches.forEach(function(m, mi) {
+        if (used[mi] || !Array.isArray(m.sides)) return;
+        var ids = {}; m.sides.forEach(function(x) { (x || []).forEach(function(p) { var id = aiId(p); if (id) ids[id] = 1; }); });
+        var sc = 0; mine.forEach(function(x) { x.forEach(function(p) { if (p.id && ids[p.id]) sc += 2; }); });
+        if (Number(m.no) === vi + 1) sc += 1;
+        if (sc > bs) { bs = sc; best = mi; }
+      });
+      if (best == null || bs < 1) return;
+      used[best] = 1;
+      var am = data.matches[best], aSides = am.sides.map(function(x) { return (x || []).filter(Boolean); }), takenSide = {};
+      mine.forEach(function(myS, si) {
+        var unk = myS.filter(function(p) { return !p.id; }); if (!unk.length) return;
+        var known = {}; myS.forEach(function(p) { if (p.id) known[p.id] = 1; });
+        var pick = -1, ps = -1;
+        aSides.forEach(function(as, ai) {
+          if (takenSide[ai]) return;
+          var sc = as.filter(function(p) { return known[aiId(p)]; }).length * 2 + (as.length === myS.length ? 1 : 0) + (ai === si ? 0.5 : 0);
+          if (sc > ps) { ps = sc; pick = ai; }
+        });
+        if (pick < 0) return;
+        takenSide[pick] = 1;
+        var pool = aSides[pick].filter(function(p) { var id = aiId(p); return !(id && known[id]); }), left = pool.slice();
+        unk.forEach(function(u) {
+          // the same spelling first, then in order
+          var at = -1; left.forEach(function(p, k) { if (at < 0 && [p.en, p.ja].some(function(x) { return x && (norm(x) === norm(u.raw) || norm(x) === norm(u.other)); })) at = k; });
+          if (at < 0) at = left.length ? 0 : -1;
+          if (at < 0) return;
+          var p = left.splice(at, 1)[0], id = aiId(p), nm = p.en || p.ja;
+          if (!nm) return;
+          out.push(id ? { k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: u.other, id: id, name: K.nameOf(id), on: true }
+            : { k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', on: true });
+        });
+      });
+    });
+    // the venue, when the show hasn't one
+    var vv = data.venue || {}, now = venueNow();
+    if (!now && (vv.en || vv.ja)) {
+      var m2 = (vv.ja && K.venue(vv.ja)) || (vv.en && K.venue(vv.en));
+      out.unshift(m2 ? { k: 'venue', id: m2.id, name: m2.name, on: true } : { k: 'venueNew', en: vv.en || vv.ja, ja: vv.ja || '', on: true });
+    }
+    var note = data.date && show.date && data.date !== show.date ? 'The answer gives the date as ' + data.date + ' (the site: ' + show.date + ').' : '';
+    return { list: out, note: note };
+  }
+  function aiHtml() {
+    var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">AI answer</div>';
+    if (a.busy) h += '<div class="ld">' + esc(a.busy) + '</div>';
+    if (!a.sug) {
+      h += '<textarea class="tx" id="ccp-ai" placeholder="Paste the AI\'s answer here">' + esc(a.text || '') + '</textarea><div class="bt"><button class="b on wide" data-airead="1">Read answer</button><button class="b" data-close="1">Cancel</button></div>';
+    } else if (!a.sug.length) {
+      h += '<div class="ld">Nothing to fill in from this answer: no unknown names it could place' + (venueNow() ? '' : ' and no venue') + '.</div><div class="bt"><button class="b" data-close="1">Close</button></div>';
+    } else {
+      if (a.note) h += '<div class="msg er">' + esc(a.note) + '</div>';
+      h += '<div class="gl">Tap to leave any out, then Apply</div>';
+      a.sug.forEach(function(x, i) {
+        var t = x.k === 'alias' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
+          x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
+        var sub = x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
+      });
+      var n = a.sug.filter(function(x) { return x.on; }).length;
+      h += '<div class="bt"><button class="b on wide" data-aiapply="1"' + (n && !a.busy ? '' : ' disabled') + '>Apply ' + n + '</button><button class="b" data-close="1">Cancel</button></div>';
+    }
+    if (a.err) h += '<div class="msg er">' + esc(a.err) + '</div>';
+    if (a.sources && a.sources.length) h += '<div class="src">Sources: ' + a.sources.map(function(x) { return esc(x.title || x.uri); }).join(' · ') + '</div>';
+    return h + '</div>';
+  }
+  // One at a time: venue, new wrestlers (then her other spelling), spellings for wrestlers already known.
+  function aiApply() {
+    var a = sheetOpen, todo = a.sug.filter(function(x) { return x.on; }), done = 0, fail = [];
+    var next = function() {
+      if (!todo.length) {
+        a.busy = ''; a.err = fail.length ? 'Not saved: ' + fail.join('; ') : '';
+        window.__tvIndexKit.reload(function() { if (!fail.length) { sheetOpen = null; note('Applied ' + done + ' from the AI answer.', false); } else draw(); attn = {}; draw(); });
+        return;
+      }
+      var x = todo.shift(); a.busy = 'Saving ' + (done + 1) + '…'; draw();
+      var after = function(t) { var r = null; try { r = JSON.parse(t); } catch (e) {} if (r && r.ok) done++; else fail.push((x.raw || x.name || x.en) + ': ' + (r && r.error || 'no reply')); return r; };
+      if (x.k === 'alias') {
+        post({ action: 'vi_propose', type: 'new_alias', value: x.raw, entity_id: x.id, video: x.v }, function(t) {
+          after(t);
+          if (x.other && x.other !== x.raw) post({ action: 'vi_propose', type: 'new_alias', value: x.other, entity_id: x.id, video: x.v }, function() { next(); }); else next();
+        });
+      } else if (x.k === 'new') {
+        post({ action: 'vi_propose', type: 'new_talent', value: x.en || x.ja, entity_id: '', video: x.v }, function(t) {
+          var r = after(t), id = r && r.ok && r.id;
+          var spell = [x.raw, x.other, x.ja].filter(function(s2, k, all) { return s2 && s2 !== (x.en || x.ja) && all.indexOf(s2) === k; });
+          var go = function() { if (!id || !spell.length) { next(); return; } post({ action: 'vi_propose', type: 'new_alias', value: spell.shift(), entity_id: id, video: x.v }, go); };
+          go();
+        });
+      } else if (x.k === 'venue') {
+        post({ action: 'vi_show_venue', show: S.set, venue: x.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t) { if (after(t) && JSON.parse(t).ok) lsSet('ccPhoneVen' + S.set, { id: x.id, name: x.name }); next(); });
+      } else {
+        post({ action: 'vi_propose', type: 'new_venue', value: x.en, entity_id: x.ja || (hasJa(rawVenue()) ? rawVenue() : ''), video: show.videos[0] ? show.videos[0].id : '' }, function(t) {
+          var r = after(t);
+          if (!r || !r.ok || !r.id) { next(); return; }
+          window.__tvIndexKit.reload(function() { post({ action: 'vi_show_venue', show: S.set, venue: r.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t2) { var r2 = null; try { r2 = JSON.parse(t2); } catch (e) {} if (r2 && r2.ok) lsSet('ccPhoneVen' + S.set, { id: r.id, name: x.en }); next(); }); });
+        });
+      }
+    };
+    next();
   }
   // Next show: the next one in the list you came from (a year: the next older one not fully logged; Started: the next).
   function nextShow() {
@@ -582,14 +747,14 @@
   function draw() { if (drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
   function paint() {
     var ae = document.activeElement;
-    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin')) return;   // typing: the lists under the box update by themselves
+    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
     var y = root.scrollTop, h;
     if (!cfg) h = setupHtml();
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
         (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
-        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? fixHtml() : '');
+        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : fixHtml()) : '');
     }
     root.innerHTML = h; root.scrollTop = y;
     var vin = root.querySelector('#ccp-vin');
@@ -661,6 +826,24 @@
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
     if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, q: d.raw, err: '', busy: false }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
+    if (d.aicopy) { copyText(aiPrompt(), b, 'Copied: paste it into Gemini'); return; }
+    if (d.aipaste) { sheetOpen = { ai: 1, text: '', sug: null }; draw(); return; }
+    if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.err = ''; } draw(); return; }
+    if (d.aitog && sheetOpen && sheetOpen.sug) { var it = sheetOpen.sug[+d.aitog]; it.on = !it.on; draw(); return; }
+    if (d.aiapply && sheetOpen) { aiApply(); return; }
+    if (d.aiask) {
+      sheetOpen = { ai: 1, text: '', sug: null, busy: 'Asking Gemini (it searches first; this can take half a minute)…' }; draw();
+      post({ action: 'vi_ai', prompt: aiPrompt() }, function(t) {
+        var r = null; try { r = JSON.parse(t); } catch (e) {}
+        if (!sheetOpen || !sheetOpen.ai) return;
+        sheetOpen.busy = '';
+        if (!r || !r.ok) { sheetOpen.err = 'Gemini: ' + (r && r.error || 'no reply'); draw(); return; }
+        sheetOpen.text = r.text; sheetOpen.sources = r.sources || [];
+        var rd = aiRead(r.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; }
+        draw();
+      });
+      return;
+    }
     if (d.pick && sheetOpen) { var f = sheetOpen; fixSave({ action: 'vi_propose', type: 'new_alias', value: f.raw, entity_id: d.pick, video: f.v }); return; }
     if (d.newp && sheetOpen) { var g = sheetOpen; fixSave({ action: 'vi_propose', type: 'new_talent', value: g.raw, entity_id: '', video: g.v }); return; }
   });
