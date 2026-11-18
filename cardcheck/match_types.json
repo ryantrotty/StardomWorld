@@ -1,0 +1,380 @@
+{
+ "_note": "Match types for the filter bar and the menu. search = the word sent to the site's keyword search; all = patterns the title must contain; none = patterns it must not contain; alts = other spellings searched once more and merged in. Tag team: Goddesses of Stardom Tag League matches are titled \"Red/Blue Goddess Official Match\" (レッド/ブルーゴッデス公式戦) with no \"tag\" in the title, so the tag rule also takes those. Titles & tournaments (private builds only, \"private\": true): the categories behind the wrestler and tag team page tabs. Each can be changed without a new APK from the roster file (\"matchTypes\": {\"<id>\": {fields to replace}}). factionSearch: other search words for members of that faction (STARS members: the faction name would match every STARS video). tagBelt / triosBelt: title patterns that mark a tag or trios title match (team pages keep tag belts only).",
+ "groups": [
+  {
+   "name": "Singles & tags",
+   "ja": "シングル・タッグ",
+   "items": [
+    {
+     "id": "single",
+     "name": "Single match",
+     "ja": "シングルマッチ",
+     "search": "Single Match"
+    },
+    {
+     "id": "tag",
+     "name": "Tag team",
+     "ja": "タッグマッチ",
+     "search": "Tag Team",
+     "all": [
+      "tag|タッグ|goddess\\s*official|ゴッデス公式"
+     ],
+     "none": [
+      "(?:\\d+|six|eight|ten|twelve|fourteen)[\\s\\-‐]*(?:person|man|men|woman|women)",
+      "\\d+\\s*人",
+      "(?:[2-6]|two|three|four|five|six)[\\s\\-‐]*way",
+      "trios?|トリオ",
+      "gauntlet|ガントレット",
+      "battle\\s*royal|バトルロイヤル",
+      "rumble|ランブル"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "3-Way",
+   "ja": "3WAY",
+   "items": [
+    {
+     "id": "way3",
+     "name": "3-Way Battle",
+     "ja": "3WAYバトル",
+     "search": "3-Way",
+     "all": [
+      "(?:3|three|３)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "none": [
+      "tag|タッグ",
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way3tag",
+     "name": "3-Way Tag Battle",
+     "ja": "3WAYタッグバトル",
+     "search": "3-Way",
+     "all": [
+      "(?:3|three|３)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "tag|タッグ"
+     ],
+     "none": [
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way3trio",
+     "name": "3-Way Trios",
+     "ja": "3WAYトリオバトル",
+     "search": "3-Way",
+     "all": [
+      "(?:3|three|３)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "trio|トリオ"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "4-Way",
+   "ja": "4WAY",
+   "items": [
+    {
+     "id": "way4",
+     "name": "4-Way Battle",
+     "ja": "4WAYバトル",
+     "search": "4-Way",
+     "all": [
+      "(?:4|four|４)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "none": [
+      "tag|タッグ",
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way4tag",
+     "name": "4-Way Tag Battle",
+     "ja": "4WAYタッグバトル",
+     "search": "4-Way",
+     "all": [
+      "(?:4|four|４)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "tag|タッグ"
+     ],
+     "none": [
+      "trio|トリオ"
+     ]
+    },
+    {
+     "id": "way4trio",
+     "name": "4-Way Trios",
+     "ja": "4WAYトリオバトル",
+     "search": "4-Way",
+     "all": [
+      "(?:4|four|４)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)",
+      "trio|トリオ"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "5-Way & 6-Way",
+   "ja": "5WAY・6WAY",
+   "items": [
+    {
+     "id": "way5",
+     "name": "5-Way",
+     "ja": "5WAY",
+     "search": "5-Way",
+     "all": [
+      "(?:5|five|５)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "alts": [
+      "5Way",
+      "Five Way"
+     ]
+    },
+    {
+     "id": "way6",
+     "name": "6-Way",
+     "ja": "6WAY",
+     "search": "6-Way",
+     "all": [
+      "(?:6|six|６)[\\s\\-‐]*(?:way|ウェイ|ウェー|ウエイ)"
+     ],
+     "alts": [
+      "6Way",
+      "Six Way"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Multi-person",
+   "ja": "多人数",
+   "items": [
+    {
+     "id": "six",
+     "name": "6-person",
+     "ja": "6人タッグ",
+     "search": "6-person"
+    },
+    {
+     "id": "eight",
+     "name": "8-person",
+     "ja": "8人タッグ",
+     "search": "8-person",
+     "all": [
+      "8[\\s\\-‐]*(?:person|man|men)|8人"
+     ],
+     "alts": [
+      "8-man"
+     ]
+    },
+    {
+     "id": "ten",
+     "name": "10-person",
+     "ja": "10人タッグ",
+     "search": "10-person",
+     "all": [
+      "10[\\s\\-‐]*(?:person|man|men)|10人"
+     ],
+     "alts": [
+      "10-man"
+     ]
+    },
+    {
+     "id": "twelve",
+     "name": "12-person",
+     "ja": "12人タッグ",
+     "search": "12-person",
+     "all": [
+      "12[\\s\\-‐]*(?:person|man|men)|12人"
+     ],
+     "alts": [
+      "12-man"
+     ]
+    },
+    {
+     "id": "fourteen",
+     "name": "14-person",
+     "ja": "14人タッグ",
+     "search": "14-person",
+     "all": [
+      "14[\\s\\-‐]*(?:person|man|men)|14人"
+     ],
+     "alts": [
+      "14-man"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Special rules",
+   "ja": "特殊ルール",
+   "items": [
+    {
+     "id": "royal",
+     "name": "Battle royal",
+     "ja": "バトルロイヤル",
+     "search": "Battle Royal"
+    },
+    {
+     "id": "cage",
+     "name": "Cage match",
+     "ja": "ケージマッチ",
+     "search": "Cage Match"
+    },
+    {
+     "id": "gauntlet",
+     "name": "Gauntlet",
+     "ja": "ガントレット",
+     "search": "Gauntlet"
+    },
+    {
+     "id": "highspeed",
+     "name": "High Speed",
+     "ja": "ハイスピード",
+     "search": "High Speed",
+     "all": [
+      "high[\\s\\-‐]*speed|ハイスピード"
+     ]
+    },
+    {
+     "id": "ladder",
+     "name": "Ladder",
+     "ja": "ラダーマッチ",
+     "search": "Ladder"
+    },
+    {
+     "id": "rumble",
+     "name": "Rumble",
+     "ja": "ランブル",
+     "search": "Rumble"
+    },
+    {
+     "id": "handicap",
+     "name": "Handicap",
+     "ja": "ハンディキャップマッチ",
+     "search": "Handicap",
+     "all": [
+      "handicap|ハンディキャップ|ハンデ"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Titles & tournaments",
+   "ja": "王座戦・トーナメント",
+   "private": true,
+   "items": [
+    {
+     "id": "champ",
+     "name": "Championship",
+     "ja": "王座戦",
+     "search": "Championship",
+     "all": [
+      "championship|選手権|title\\s*match|タイトルマッチ"
+     ],
+     "none": [
+      "次期挑戦|挑戦者決定|挑戦チーム決定|next\\s*challenger|contender",
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d",
+      "cinderella|シンデレラ|5\\s*★?\\s*star\\s*gp"
+     ],
+     "tagBelt": [
+      "goddess(?:es)?\\s*of\\s*stardom|ゴッデス・オブ・スターダム|new\\s*blood\\s*tag|NEW\\s*BLOOD\\s*タッグ"
+     ],
+     "triosBelt": [
+      "artist\\s*of\\s*stardom|アーティスト・オブ・スターダム"
+     ],
+     "pages": [
+      "wrestler",
+      "team"
+     ]
+    },
+    {
+     "id": "stargp",
+     "name": "5★STAR GP",
+     "ja": "5★STAR GP",
+     "search": "STARS",
+     "alts": [
+      "5★STAR"
+     ],
+     "factionSearch": {
+      "stars": {
+       "search": "BLUE STARS",
+       "alts": [
+        "RED STARS",
+        "5★STAR"
+       ]
+      }
+     },
+     "all": [
+      "5\\s*[★☆*]?\\s*star|star\\s*gp|(?:blue|red)[\\s\\-]*stars|ブルースターズ|レッドスターズ"
+     ],
+     "pages": [
+      "wrestler"
+     ],
+     "none": [
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d",
+      "cinderella",
+      "スペシャル(?:シングル)?マッチ|special\\s*(?:single\\s*)?match"
+     ]
+    },
+    {
+     "id": "cinderella",
+     "name": "Cinderella Tournament",
+     "ja": "シンデレラ・トーナメント",
+     "search": "Cinderella",
+     "all": [
+      "cinderella\\s*tournament|シンデレラ[・\\s]*トーナメント"
+     ],
+     "pages": [
+      "wrestler"
+     ],
+     "none": [
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
+     ]
+    },
+    {
+     "id": "tagleague",
+     "name": "Tag League",
+     "ja": "タッグリーグ",
+     "search": "Goddess",
+     "all": [
+      "goddess|ゴッデス",
+      "official|公式|代表|決勝|優勝|tournament|league|リーグ"
+     ],
+     "none": [
+      "championship|選手権",
+      "^\\s*\\d{4}/\\d{1,2}/\\d{1,2}_|day-?\\s*\\d"
+     ],
+     "pages": [
+      "wrestler",
+      "team"
+     ]
+    }
+   ]
+  }
+ ],
+ "debuts": { "_note": "Debut dates (YYYY-MM-DD). Private builds leave out category-tab videos dated before a wrestler's debut. The roster file's debuts add to these.", "Rian": "2024-03-30" },
+  "siteCategories": {
+  "_note": "Private builds: the site's search category ids (q[category_id]); one per search. years: the Year filter uses these instead of the year as a word.",
+  "years": {
+   "2026": 51,
+   "2025": 40,
+   "2024": 28,
+   "2023": 27,
+   "2022": 25,
+   "2021": 24,
+   "2020": 22,
+   "2019": 1,
+   "2018": 2,
+   "2017": 14,
+   "2016": 17,
+   "2015": 13,
+   "2014": 20,
+   "2013": 7,
+   "2012": 6,
+   "2011": 3
+  }
+ }
+}

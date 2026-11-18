@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>StarScope card check · setup</title>
+<style>
+  body{margin:0;background:#0B1118;color:#fff;font:16px -apple-system,system-ui,Arial,sans-serif;padding:24px 18px 60px;line-height:1.45}
+  h1{font-size:22px;letter-spacing:.06em;margin:0 0 6px}h1 b{color:#F4C242}
+  h2{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4;margin:26px 0 8px}
+  ol{padding-left:20px}li{margin-bottom:8px;color:#C9D2DC}code,textarea{font:13px ui-monospace,Menlo,monospace}
+  textarea{width:100%;box-sizing:border-box;height:92px;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#fff;padding:10px}
+  button{height:46px;padding:0 18px;border-radius:10px;border:1px solid #FFB347;background:#FFB347;color:#1A1A1A;font:700 16px system-ui;margin-top:10px}
+  .n{color:#9AA6B4;font-size:14px}
+</style>
+</head>
+<body>
+<h1>STAR<b>SCOPE</b> card check</h1>
+<div class="n">Log shows from their thumbnails and line-ups on the iPhone. Runs on stardom-world.com in Safari from a bookmark.</div>
+
+<h2>1 · The bookmark (once)</h2>
+<ol>
+  <li>Tap <b>Copy</b> below.</li>
+  <li>In Safari, open any page and tap <b>Share › Add Bookmark</b>. Name it <b>Card check</b> and save it to Favorites.</li>
+  <li>Open <b>Bookmarks</b>, tap <b>Edit</b>, tap the <b>Card check</b> bookmark, clear its address and paste. Tap <b>Done</b>.</li>
+</ol>
+<textarea id="bm" readonly>javascript:(function(){var s=document.createElement('script');s.src='https://ryantrotty.github.io/StardomWorld/cardcheck/cc.js?v='+Date.now();document.body.appendChild(s)})()</textarea>
+<button id="cp">Copy</button> <span id="ok" class="n"></span>
+
+<h2>2 · The card check link (once)</h2>
+<ol>
+  <li>In the sheet's Apps Script: <b>Project Settings › Script properties › Add</b>, name <code>CARDCHECK_KEY</code>, value: a long random password of your own. It can only log matches (no exports, favorites or watch history), and you can change it any time.</li>
+  <li>Your link is the web app address (ending <code>/exec</code>) followed by <code>?cc=</code> and that key.</li>
+  <li>Open <b>www.stardom-world.com</b> in Safari, tap the <b>Card check</b> bookmark and paste the link when it asks. It's kept in Safari on this phone; if Safari ever forgets it, paste it again.</li>
+</ol>
+
+<h2>3 · Using it</h2>
+<ol>
+  <li>On any stardom-world.com page, tap <b>Card check</b>. It opens over the page: <b>Started</b> or a year, then a show.</li>
+  <li>Scroll through the thumbnails. Fix a name with <b>?</b>, set the venue once at the top, then <b>Confirm all</b> at the end, and <b>Next</b> for the next show.</li>
+  <li>If Safari reloads the tab, tap the bookmark again: it reopens where you were.</li>
+</ol>
+<script>
+document.getElementById('cp').onclick = function() {
+  var t = document.getElementById('bm');
+  var done = function() { document.getElementById('ok').textContent = 'Copied'; };
+  if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(done, function() { t.select(); document.execCommand('copy'); done(); });
+  else { t.select(); document.execCommand('copy'); done(); }
+};
+</script>
+</body>
+</html>
