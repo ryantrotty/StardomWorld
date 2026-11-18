@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.8
+
+- **iPhone card check: year lists.** The mobile search page reads its shows from `/user_api/contents` with `search[type]=set`, `search[category_ids][]=<year>`, `sort=di_s`, `order=d` (from the page report). The year chips now read that list, 20 shows a page, newest first; **Load more shows** reads the next page. Years kept empty on the phone before are dropped.
+
 ## 2.91.7
 
 - **Fix (iPhone card check): every match "Couldn't read this page (HTTP 404)".** 2.91.4's fallback took video cards from elsewhere on the mobile show page (the site's newest videos, not the show's matches) and then asked for them as the show's match pages. It's gone: a show page without match links is always read from the show's own list (2.91.6). Show lists the phone kept from before are dropped.
