@@ -394,9 +394,12 @@
     return null;
   }
   function sides(r) { var useEn = r.sides_en && r.sides_en.length >= 2; return { A: useEn ? r.sides_en : (r.sides_ja || []), B: useEn ? (r.sides_ja || []) : [] }; }
+  function placeOf(v) { return show ? show.videos.indexOf(v) + 1 : 0; }
+  // 2.93.0: a logged match whose saved number isn't its place on the card as it now stands: re-saved by Confirm all.
+  function misplaced(v) { var c = map[v.id]; return !!(c && !saved[v.id] && c.n !== '' && c.n != null && Number(c.n) > 0 && Number(c.n) !== placeOf(v)); }
   function cls(v) {
     var r = recs[v.id];
-    if (status(v)) return 'logged';
+    if (status(v)) return misplaced(v) ? 'renumber' : 'logged';
     if (!r) return 'unread';
     if (r.failed || attn[v.id]) return 'attn';
     var s = sides(r), K = kit();
@@ -430,7 +433,7 @@
   }
   function cardHtml(v, i) {
     var r = recs[v.id], s = status(v), k = cls(v), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
-    var chip = s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
+    var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
     var h = '<div class="card" data-v="' + esc(v.id) + '"><div class="pic"' + (v.th ? ' style="background-image:url(\'' + esc(v.th) + '\')"' : '') + '></div><div class="bd">' +
       '<div class="hd"><span class="t">Match ' + (i + 1) + ' of ' + show.videos.length + '</span>' + chip + '</div><div style="font-weight:700;color:#C9D2DC">' + esc(title) + '</div>';
     if (r && r.failed) h += '<div class="er">Couldn\'t read this page (' + esc(r.failed) + ')</div>';
@@ -441,7 +444,7 @@
         (sug.length ? '<div class="rw"><span class="lb">Suggested</span><span class="vl">' + sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') + '</span></div>' : '');
     }
     h += '<div class="bt">';
-    if (!s && k === 'ready') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : 'Confirm') + '</button>';
+    if ((!s && k === 'ready') || k === 'renumber') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : k === 'renumber' ? 'Save as match ' + placeOf(v) : 'Confirm') + '</button>';
     h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a></div></div></div>';
     return h;
   }
@@ -494,13 +497,13 @@
     });
   }
   function endHtml() {
-    var n = { ready: 0, unread: 0, attn: 0, logged: 0 }, rows = '';
+    var n = { ready: 0, unread: 0, attn: 0, logged: 0, renumber: 0 }, rows = '';
     show.videos.forEach(function(v, i) {
       var k = cls(v), r = recs[v.id]; n[k]++;
-      var lab = k === 'logged' ? 'logged' : k === 'ready' ? 'ready' : k === 'attn' ? 'needs a look' : 'not read yet';
-      rows += '<div class="er2"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' ? 'a' : 'r') + '">' + lab + '</span></div>';
+      var lab = k === 'renumber' ? 'logged as ' + map[v.id].n + ', save as ' + (i + 1) : k === 'logged' ? 'logged' : k === 'ready' ? 'ready' : k === 'attn' ? 'needs a look' : 'not read yet';
+      rows += '<div class="er2"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
     });
-    var todo = n.ready + n.unread, nx = nextShow();
+    var todo = n.ready + n.unread + n.renumber, nx = nextShow();
     var h = '<div class="end"><div class="hd">End of the card</div>' + rows + '<div class="bt">';
     if (batch) h += '<button class="b on wide" disabled>Confirming ' + Math.min(batch.done + 1, batch.list.length) + ' of ' + batch.list.length + '…</button><button class="b" data-stop="1">Stop</button>';
     else if (todo) h += '<button class="b on wide" data-all="1">Confirm all (' + todo + ')</button>';
@@ -517,13 +520,23 @@
     show.videos.forEach(function(v) { if (cls(v) === 'attn') unknown++; });
     return '<div class="shw"><div class="n1">' + esc(en || show.line) + '</div>' + (show.line && show.line !== en ? '<div class="n2">' + esc(show.line) + '</div>' : '') +
       '<div class="d">' + esc(dateText(date) || 'Date not read') + '</div>' +
-      '<div class="bt"><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">Ask Gemini</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+      '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' +
+      '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">Ask Gemini</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+  }
+  function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String((r && !r.failed && (r.title_en || r.title_ja)) || v.t).slice(0, 40) + '"' : '–'; }
+  // The card in a new order (2.93.0): reversed, or as an AI answer has it. Kept with the show on the phone; logged
+  // matches whose saved number no longer fits are marked to re-save.
+  function setOrder(vids, why) {
+    show.videos = vids; show.orderBy = why; lsSet(SET_KEY + show.set, show);
+    draw();
   }
   function personText(raw, other) { return other && other !== raw ? raw + ' (' + other + ')' : raw; }
   function aiPrompt() {
     var K = kit(), lines = [], ven = venueNow(), raw = rawVenue();
     show.videos.forEach(function(v, i) {
       var r = recs[v.id], title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
+      var c = map[v.id];
+      if ((!r || r.failed) && c && c.s) { lines.push((i + 1) + '. ' + title + ': ' + c.s.map(function(x) { return x.join(' & '); }).join(' vs ') + ' (logged)'); return; }
       if (!r || r.failed) { lines.push((i + 1) + '. ' + title + ' (line-up not read)'); return; }
       var sd = sides(r);
       var txt = sd.A.map(function(names, si) {
@@ -541,7 +554,7 @@
       'Date: ' + (show.date || 'unknown'),
       'Venue: ' + (ven ? ven.name : (raw ? raw + ' (not confirmed)' : 'unknown')),
       '',
-      'The card as the video site lists it, in order. Names starting with ? are ones I could not identify; please focus on those, on the venue if it is unknown, and on anything that looks wrong:',
+      'The card as the video site lists it. The site sometimes lists a show backwards (main event first), so please check the running order: "no" in your answer must be the match\'s real place on the card, opener = 1, main event last. Names starting with ? are ones I could not identify; please focus on those, on the venue if it is unknown, and on anything that looks wrong:',
       lines.join('\n'),
       '',
       'Answer with only this JSON (no other text). Use null for anything you are not sure of; do not guess. "no" is the match\'s place on the card. Give every wrestler\'s English and Japanese name as used at the time of the show.',
@@ -566,6 +579,31 @@
     var K = kit(), out = [], norm = function(x) { return String(x || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-]+/g, ''); };
     var aiId = function(p) { return p ? (K.resolve(p.en || '') || K.resolve(p.ja || '')) : ''; };
     var used = {}, newSeen = {}, same = data.matches.length === show.videos.length;
+    // 2.93.0: the card's order, checked by the wrestlers: each match the library knows two or more people in is found
+    // in the answer; if the answer has them reversed or shuffled, its order is offered (and line-ups below follow it).
+    var at = {}, pairs = [];
+    show.videos.forEach(function(v, vi) {
+      var r = recs[v.id], ids = {}, c = map[v.id];
+      if (r && !r.failed) { var sd = sides(r); sd.A.forEach(function(names, si) { names.forEach(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : '', id = K.resolve(rw) || K.resolve(o); if (id) ids[id] = 1; }); }); }
+      else if (c && c.s) (c.s || []).forEach(function(x, si) { x.forEach(function(nm, k) { var id = K.resolve(nm) || K.resolve(((c.sj || [])[si] || [])[k]); if (id) ids[id] = 1; }); });   // logged: its saved names
+      if (Object.keys(ids).length < 2) return;
+      var best = -1, bs = 0;
+      data.matches.forEach(function(m, mi) { var sc = 0; (m.sides || []).forEach(function(x) { (x || []).forEach(function(p) { if (ids[aiId(p)]) sc++; }); }); if (sc > bs) { bs = sc; best = mi; } });
+      if (best >= 0 && bs >= 2) { at[v.id] = best; pairs.push([vi, best]); }
+    });
+    var place = function(mi) { var m = data.matches[mi]; return Number(m.no) > 0 ? Number(m.no) : mi + 1; };
+    var orderNote = '', reorder = null;
+    if (pairs.length >= 2) {
+      var ident = pairs.every(function(p) { return place(p[1]) === p[0] + 1; });
+      var rev = pairs.every(function(p) { return place(p[1]) === show.videos.length - p[0]; });
+      if (ident) orderNote = 'The answer has the matches in this order.';
+      else {
+        var key = {}; show.videos.forEach(function(v, vi) { key[v.id] = at[v.id] != null ? place(at[v.id]) : (rev ? show.videos.length - vi : vi + 1); });
+        reorder = show.videos.slice().sort(function(x, y) { return key[x.id] - key[y.id]; });
+        out.unshift({ k: 'order', vids: reorder.map(function(v) { return v.id; }), why: rev ? 'reversed (the answer)' : 'as the answer has it', text: rev ? 'Reverse the card: the answer has these matches the other way round' : 'Put the matches in the answer\'s order', on: true });
+      }
+    }
+    var cardPos = function(vi) { if (!reorder) return vi; var id = show.videos[vi].id; return reorder.map(function(v) { return v.id; }).indexOf(id); };
     var addNew = function(p, v, no) {
       var key = norm(p.en || p.ja); if (!key || newSeen[key] || aiId(p)) return;
       newSeen[key] = 1;
@@ -577,7 +615,8 @@
       var r = recs[v.id]; if (status(v)) return;
       if (r && !r.failed && sides(r).A.length >= 2) return;
       var mi = -1;
-      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && (Number(m.no) === vi + 1 || (same && k === vi))) mi = k; });
+      var cp = cardPos(vi);
+      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && (Number(m.no) === cp + 1 || (same && k === cp))) mi = k; });
       var am = mi >= 0 ? data.matches[mi] : null;
       if (!am || !Array.isArray(am.sides) || am.sides.length < 2) return;
       used[mi] = 1;
@@ -634,7 +673,7 @@
       out.unshift(m2 ? { k: 'venue', id: m2.id, name: m2.name, on: true } : { k: 'venueNew', en: vv.en || vv.ja, ja: vv.ja || '', on: true });
     }
     var note = data.date && show.date && data.date !== show.date ? 'The answer gives the date as ' + data.date + ' (the site: ' + show.date + ').' : '';
-    return { list: out, note: note };
+    return { list: out, note: note, info: orderNote };
   }
   function aiHtml() {
     var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">AI answer</div>';
@@ -642,14 +681,15 @@
     if (!a.sug) {
       h += '<textarea class="tx" id="ccp-ai" placeholder="Paste the AI\'s answer here">' + esc(a.text || '') + '</textarea><div class="bt"><button class="b on wide" data-airead="1">Read answer</button><button class="b" data-close="1">Cancel</button></div>';
     } else if (!a.sug.length) {
-      h += '<div class="ld">Nothing to fill in from this answer: no unknown names it could place' + (venueNow() ? '' : ' and no venue') + '.</div><div class="bt"><button class="b" data-close="1">Close</button></div>';
+      h += (a.info ? '<div class="msg">✓ ' + esc(a.info) + '</div>' : '') + '<div class="ld">Nothing to fill in from this answer: no unknown names it could place' + (venueNow() ? '' : ' and no venue') + '.</div><div class="bt"><button class="b" data-close="1">Close</button></div>';
     } else {
       if (a.note) h += '<div class="msg er">' + esc(a.note) + '</div>';
+      if (a.info) h += '<div class="msg">✓ ' + esc(a.info) + '</div>';
       h += '<div class="gl">Tap to leave any out, then Apply</div>';
       a.sug.forEach(function(x, i) {
-        var t = x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
+        var t = x.k === 'order' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
           x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
-        var sub = x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        var sub = x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
         h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
       });
       var n = a.sug.filter(function(x) { return x.on; }).length;
@@ -661,7 +701,7 @@
   }
   // One at a time: venue, new wrestlers (then her other spelling), spellings for wrestlers already known.
   function aiApply() {
-    var a = sheetOpen, rank = { venue: 0, venueNew: 0, 'new': 1, alias: 2, lineup: 3 }, done = 0, fail = [];
+    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, lineup: 3 }, done = 0, fail = [];
     var todo = a.sug.filter(function(x) { return x.on; }).sort(function(x, y) { return rank[x.k] - rank[y.k]; });
     var next = function() {
       if (!todo.length) {
@@ -671,6 +711,12 @@
       }
       var x = todo.shift(); a.busy = 'Saving ' + (done + 1) + '…'; draw();
       var after = function(t) { var r = null; try { r = JSON.parse(t); } catch (e) {} if (r && r.ok) done++; else fail.push((x.raw || x.name || x.en) + ': ' + (r && r.error || 'no reply')); return r; };
+      if (x.k === 'order') {
+        var byId = {}; show.videos.forEach(function(v) { byId[v.id] = v; });
+        var nv = x.vids.map(function(id) { return byId[id]; }).filter(Boolean);
+        if (nv.length === show.videos.length) { setOrder(nv, x.why); done++; }
+        next(); return;
+      }
       if (x.k === 'lineup') {
         var v = show.videos.filter(function(y) { return y.id === x.v; })[0], r = recs[x.v] && !recs[x.v].failed ? recs[x.v] : { id: Number(x.v), set: Number(show.set), title_en: v ? v.t : '', title_ja: '', shows: [], lines: [], thumb: v ? v.th : '', date: show.date };
         r.sides_en = x.en; r.sides_ja = x.ja; r.fromAi = 1; recs[x.v] = r; ssSet(REC_KEY + x.v, r); delete attn[x.v]; done++;
@@ -718,19 +764,20 @@
 
   // ---- saving: the TV's logger, without its screen (Confirm & next's quick save)
   function confirmOne(id, done) {
-    var i = show.videos.map(function(v) { return v.id; }).indexOf(id), v = show.videos[i], rec = recs[id];
+    var i = show.videos.map(function(v) { return v.id; }).indexOf(id), v = show.videos[i], rec = recs[id], re = v && cls(v) === 'renumber';
+    if (re && (!rec || rec.failed)) rec = { id: Number(id), set: Number(show.set), title_en: v.t, title_ja: '', sides_en: [], sides_ja: [], shows: [], lines: [], thumb: v.th, date: show.date };
     if (!v || !rec || rec.failed || !window.__tvIndexOpen) { done(false); return; }
     if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(show.set), show: show.name, venue: show.venue, date: show.date }];
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
     var shown = false;
-    window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true,
+    window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, reorder: !!re,
       // The logger wants to show itself (a name it can't place): not on the phone; the match is marked to look at.
       host: function() { shown = true; attn[id] = 1; setTimeout(function() { if (window.__tvIndexBack) window.__tvIndexBack(); }, 0); var d = document.createElement('div'); d.style.display = 'none'; document.body.appendChild(d); return d; },
-      done: function(res) { var ok = !shown && res && res.ok; if (ok) saved[id] = 1; done(ok); } });
+      done: function(res) { var ok = !shown && res && res.ok; if (ok) { saved[id] = 1; if (map[id]) map[id].n = i + 1; } done(ok); } });
   }
   function confirmAll() {
-    var list = show.videos.filter(function(v) { var k = cls(v); return k === 'ready' || k === 'unread'; }).map(function(v) { return v.id; });
+    var list = show.videos.filter(function(v) { var k = cls(v); return k === 'ready' || k === 'unread' || k === 'renumber'; }).map(function(v) { return v.id; });
     if (!list.length) return;
     batch = { list: list, done: 0, at: null, stop: false, saved: 0 }; draw(); step();
   }
@@ -739,9 +786,10 @@
     if (b.stop || b.done >= b.list.length) { batch = null; if (b.saved) cards(); draw(); return; }
     var id = b.list[b.done], v = show.videos.filter(function(x) { return x.id === id; })[0];
     b.at = id;
-    if (!v || status(v)) { b.done++; step(); return; }
-    if (!recs[id]) { want(id); draw(); setTimeout(function() { if (batch === b) step(); }, 700); return; }
-    if (cls(v) !== 'ready') { b.done++; draw(); step(); return; }
+    var re = v && cls(v) === 'renumber';
+    if (!v || (status(v) && !re)) { b.done++; step(); return; }
+    if (!re && !recs[id]) { want(id); draw(); setTimeout(function() { if (batch === b) step(); }, 700); return; }
+    if (!re && cls(v) !== 'ready') { b.done++; draw(); step(); return; }
     draw();
     confirmOne(id, function(ok) { if (batch !== b) return; if (ok) b.saved++; b.done++; draw(); setTimeout(step, 300); });
   }
@@ -853,9 +901,10 @@
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
     if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, q: d.raw, err: '', busy: false }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
+    if (d.rev && show) { setOrder(show.videos.slice().reverse(), show.orderBy === 'reversed by you' ? 'as listed' : 'reversed by you'); return; }
     if (d.aicopy) { copyText(aiPrompt(), b, 'Copied: paste it into Gemini'); return; }
     if (d.aipaste) { sheetOpen = { ai: 1, text: '', sug: null }; draw(); return; }
-    if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.err = ''; } draw(); return; }
+    if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }
     if (d.aitog && sheetOpen && sheetOpen.sug) { var it = sheetOpen.sug[+d.aitog]; it.on = !it.on; draw(); return; }
     if (d.aiapply && sheetOpen) { aiApply(); return; }
     if (d.aiask) {
@@ -866,7 +915,7 @@
         sheetOpen.busy = '';
         if (!r || !r.ok) { sheetOpen.err = 'Gemini: ' + (r && r.error || 'no reply'); draw(); return; }
         sheetOpen.text = r.text; sheetOpen.sources = r.sources || [];
-        var rd = aiRead(r.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; }
+        var rd = aiRead(r.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; }
         draw();
       });
       return;
