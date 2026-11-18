@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.9
+
+- **iPhone card check, show lists:** each show's state in words: "Not started" (grey), "3 of 10 logged" (gold), "✓ All 10 logged" (green); "0 logged" read like a logged tag. The date and venue sit on their own line under the name. A year's shows run newest first by show date (the site lists them by when each was put up), and Next follows the same order.
+
 ## 2.91.8
 
 - **iPhone card check: year lists.** The mobile search page reads its shows from `/user_api/contents` with `search[type]=set`, `search[category_ids][]=<year>`, `sort=di_s`, `order=d` (from the page report). The year chips now read that list, 20 shows a page, newest first; **Load more shows** reads the next page. Years kept empty on the phone before are dropped.
