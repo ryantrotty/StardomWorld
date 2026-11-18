@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.88.0
+
+- **StarScope list: only what changed, one request at a time.** The TV used to ask the sheet for the whole StarScope list whenever its copy was 30 minutes old, and again after every save in card check, so a 10-match show rebuilt and sent the whole list 10 times; a slow or failing list was asked for again on every page.
+  - The TV keeps the sheet's time of its last copy and asks only for what changed after it (matches saved or rated since, and the rest of their shows); the answer is merged into the copy it has, and cards the sheet no longer has are dropped. The whole list once a day, or when there's no copy.
+  - After a save, card check asks for just those changes. Confirm all asks once at the end.
+  - One request at a time across pages: while one is out, nothing else asks; a save made meanwhile asks once the answer is in.
+  - After a failure, a pause before the next try (30 s, doubling up to 10 minutes). Try again on the error screen skips it.
+- Sheet script: `vi_cards {since}`. **Redeploy the script.** An older script still works with this build (it just sends the whole list).
+
 ## 2.87.1
 
 - **Fix: StarScope pages blank, StarScope filter button gone (since the 2.85.0 sheet script).** The sheet's card list read the teams and factions tabs again for every match with more than four wrestlers (every 6- and 8-person tag, since 2.85.0's multi-person names), four reads per match. With more shows logged, the list took longer than the app's 30 s wait, so no cards came and every StarScope page stayed blank. The tabs are now read once per list. **Redeploy the script** (this fixes 2.86.0 too, no new build needed).

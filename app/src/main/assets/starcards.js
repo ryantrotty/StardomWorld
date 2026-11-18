@@ -769,7 +769,7 @@
       if (id !== 'sct1') { if (prev) prev(id, text); return; }
       window.__tvIndexReply = prev;
       var r = null; try { r = JSON.parse(text); } catch (e) {}
-      if (r && r.ok && r.filled) { try { localStorage.removeItem(KEY); H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+      if (r && r.ok && r.filled) ask({ full: true });   // pictures aren't dated, so the whole list
     };
     try { H.indexSync('sct1', JSON.stringify({ action: 'vi_thumbs', items: items })); } catch (e) { window.__tvIndexReply = prev; }
   }
@@ -783,24 +783,69 @@
       '<div style="font:600 17px Arial;color:#FF7A66;margin-bottom:22px">' + esc(why) + '</div>' +
       '<button type="button" id="tvsc-retry" style="height:48px;padding:0 22px;border-radius:10px;border:2px solid #FFB347;background:#FFB347;color:#1A1A1A;font:700 17px Arial;outline:none">' + esc(ja ? 'もう一度' : 'Try again') + '</button>';
     var b = d.querySelector('#tvsc-retry');
-    b.onclick = function() { b.textContent = ja ? '読み込み中…' : 'Loading…'; try { H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} };
+    b.onclick = function() { b.textContent = ja ? '読み込み中…' : 'Loading…'; ask({ now: true }); };
     b.focus();
   }
+  // ---- Asking the sheet for the list (2.88.0)
+  //  - One request at a time, across pages: a request in flight is noted on the TV (tvVixCardsAsk) and nothing else asks
+  //    for 45 s unless it has answered. A save made meanwhile asks again once the answer is in.
+  //  - After a failure, a pause before the next try: 30 s, then 1, 2, 4 … up to 10 minutes (tvVixCardsFail). Try again
+  //    on the error screen skips the pause.
+  //  - Only what changed: the TV keeps the sheet's time of its last copy (s) and asks for what changed after it; the
+  //    answer is merged in. The whole list once a day, or when there's no copy.
+  var ASK_KEY = 'tvVixCardsAsk', FAIL_KEY = 'tvVixCardsFail', FULL_AGE = 86400000, asking = false, again = false;
+  function lsJ(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function lsPut(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function kept() { var c = lsJ(KEY); return c && c.map ? c : null; }
+  function ask(o) {
+    o = o || {};
+    if (asking) { again = true; return; }
+    var lk = lsJ(ASK_KEY);
+    if (lk && Date.now() - lk.t < 45000 && !o.now) { again = true; setTimeout(function() { if (again && !asking) { again = false; ask(); } }, 45000 - (Date.now() - lk.t) + 500); return; }
+    var fl = lsJ(FAIL_KEY);
+    if (fl && !o.now) { var pause = Math.min(30000 * Math.pow(2, fl.n - 1), 600000); if (Date.now() - fl.t < pause) return; }
+    var c = kept(), body = { action: 'vi_cards' };
+    if (c && c.s && !o.full && Date.now() - (c.f || 0) < FULL_AGE) body.since = c.s;
+    asking = true; lsPut(ASK_KEY, { t: Date.now() });
+    try { H.starCards('c1', JSON.stringify(body)); } catch (e) { asking = false; lsPut(ASK_KEY, null); }
+  }
+  window.__tvCardsRefresh = function() { ask(); };   // card check, after a save
   window.__tvStarCardsReply = function(id, text) {
-    var r; try { r = JSON.parse(text); } catch (e) { return; }
+    var r; try { r = JSON.parse(text); } catch (e) { r = null; }
     if (id === 's1') { if (r && r.ok) gotSuggest(r); return; }
-    if (!r || !r.ok || !r.map) { if (!map) loadFailed(r && r.error ? String(r.error) : 'no reply'); return; }
+    if (id !== 'c1') return;
+    asking = false; lsPut(ASK_KEY, null);
+    if (!r || !r.ok || !r.map) {
+      var fl = lsJ(FAIL_KEY) || { n: 0 }; lsPut(FAIL_KEY, { t: Date.now(), n: Math.min((fl.n || 0) + 1, 6) });
+      if (!map) loadFailed(r && r.error ? String(r.error) : 'no reply');
+      return;
+    }
+    lsPut(FAIL_KEY, null);
     var fail = document.getElementById('tvsc-fail'); if (fail) fail.remove();
-    map = r.map;
-    try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), map: map })); } catch (e) {}
-    try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
-    soon();
+    var c = kept(), got = 0;
+    if (r.since && c && c.map) {
+      // Changes only: merged into the copy this TV has; cards the sheet no longer has go.
+      var m = c.map;
+      Object.keys(r.map).forEach(function(k) { m[k] = r.map[k]; got++; });
+      if (r.all) { var keep = {}; r.all.forEach(function(k) { keep[k] = 1; }); Object.keys(m).forEach(function(k) { if (!keep[k]) { delete m[k]; got++; } }); }
+      map = m;
+      c = { t: Date.now(), s: r.now || c.s, f: c.f || 0, map: m };
+    } else {
+      map = r.map; got = 1;
+      c = { t: Date.now(), s: r.now || '', f: Date.now(), map: map };
+    }
+    lsPut(KEY, c);
+    if (got) {
+      try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
+      soon();
+    }
     setTimeout(fillThumbs, 3000);
+    if (again) { again = false; setTimeout(ask, 300); }
   };
   if (map) setTimeout(fillThumbs, 5000);
   var fresh = 0;
-  try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}, ids = Object.keys(saved.map || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
-  if (Date.now() - fresh > AGE) { try { H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+  try { var saved = kept(), ids = Object.keys((saved && saved.map) || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
+  if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();

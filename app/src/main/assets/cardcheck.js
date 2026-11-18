@@ -123,7 +123,7 @@
     window.__tvIndexReply = function(id, text) {
       if (id !== 'cct1') { if (prev) prev(id, text); return; }
       window.__tvIndexReply = prev;
-      try { var r = JSON.parse(text); if (r.ok && r.filled && AndroidHost.starCards) AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {}
+      try { var r = JSON.parse(text); if (r.ok && r.filled) cardsRefresh(); } catch (e) {}
     };
     try { AndroidHost.indexSync('cct1', JSON.stringify({ action: 'vi_thumbs', items: items })); } catch (e) { window.__tvIndexReply = prev; }
   }
@@ -184,6 +184,11 @@
   }
 
   // ---- what is shown for one match
+  // The StarScope list after a save (2.88.0): only what changed, one request at a time (assets/starcards.js).
+  function cardsRefresh() {
+    if (window.__tvCardsRefresh) { window.__tvCardsRefresh(); return; }
+    if (window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+  }
   function status(v) {
     if (saved[v.id]) return { k: 'saved', label: T.savedNow };
     var c = cardsMap()[v.id];
@@ -473,7 +478,7 @@
     var b = batch; batch = null;
     if (!b) return;
     lastRun = b.skipped.slice();
-    if (b.saved && window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+    if (b.saved) cardsRefresh();
     if (allLogged()) { doneOpen = true; focusKey = 'nextshow'; }
     else focusKey = lastRun.length ? 'firstattn' : 'confirmall';
     render();
@@ -524,7 +529,7 @@
         if (res && res.ok) saved[v.id] = 1;
         if (after && !shown) { after(res); return; }
         if (res && res.ok) {
-          if (window.AndroidHost && AndroidHost.starCards) { try { AndroidHost.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} }
+          cardsRefresh();
           if (allLogged()) { doneOpen = true; focusKey = 'nextshow'; render(); return; }
           if (quick && cur === at) { go(nextUnlogged(at)); return; }
         }

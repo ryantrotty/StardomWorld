@@ -38,7 +38,8 @@
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
  *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
- *   vi_cards   {}                                              one entry per logged video for the StarScope cards and player:
+ *   vi_cards   {since?}                                        one entry per logged video for the StarScope cards and player
+ *                                                              (2.88.0: with since, only what changed after it, plus `all` and `now`):
  *                                                              names, event, match number, show, venue, bell and end times (2.65.0),
  *                                                              match id, round and special rules for the Shows page (2.66.0)
  *   vi_recent {limit}                                          Recently Watched (2.72.0): the newest videos in "videos" by last_seen
@@ -84,7 +85,7 @@ function doPost(e) {
   if (body.action === 'dbg_export') return out(dbgExport());
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
-  if (body.action === 'vi_cards') return out(viCards());
+  if (body.action === 'vi_cards') return out(viCards(body));
   if (body.action === 'vi_suggest') return out(viSuggest());
   if (body.action === 'vi_recent') return out(viRecent(body));
   if (body.action === 'vi_public') return out(viPublicFile());
@@ -702,7 +703,12 @@ function viSave(b) {
 }
 
 // What the private build's video cards show: names, event, block, round, match number, date. Never the result.
-function viCards() {
+// 2.88.0: {since} answers with only the cards that changed after that time (the reply's `now` from the TV's last
+// copy): matches saved or rated since, and every match of a show one of them belongs to (a venue set on one match is
+// the whole show's). `all` lists every video that has a card, so the TV drops the ones that are gone. Without since,
+// or when the TV's copy is a day old, the whole list, as before.
+function viCards(b) {
+  var since = b && b.since ? String(b.since) : '', now = new Date().toISOString();
   var label = {}, names = {}, parts = {}, tags = {}, m2 = {};
   viRows('lists').forEach(function(l) { label[l.list + '/' + l.value_id] = { en: l.label_en, ja: l.label_ja || l.label_en }; });
   viRows('talent').forEach(function(t) { names[t.talent_id] = { en: t.name_en, ja: t.name_ja || t.name_en }; });
@@ -803,10 +809,22 @@ function viCards() {
   var shw = {}, ven = {};
   viRows('venues').forEach(function(x) { ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en }; });
   viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, v: ven[x.venue_id] || null }; });
-  var map = {};
-  viRows('match_videos').forEach(function(v) {
+  var map = {}, all = [], mvRows = viRows('match_videos'), hot = null, hotShow = {};
+  if (since) {
+    hot = {};
+    // A time the sheet turned into a date shows only its day: that day counts as changed (more sent, nothing missed).
+    var newer = function(t) { t = String(t || ''); return t.length === 10 ? t >= since.slice(0, 10) : t > since; };
+    var touch = function(id, t) { if (newer(t) && m2[id]) { hot[id] = 1; if (m2[id].show_id) hotShow[String(m2[id].show_id)] = 1; } };
+    Object.keys(m2).forEach(function(id) { touch(id, m2[id].updated); });
+    mvRows.forEach(function(v) { touch(v.match_id, v.updated); });
+    viRows('ratings').forEach(function(r) { touch(r.match_id, r.updated); });
+    Object.keys(parts).forEach(function(id) { parts[id].forEach(function(x) { touch(id, x.updated); }); });
+  }
+  mvRows.forEach(function(v) {
     var m = m2[v.match_id], p = parts[v.match_id];
     if (!m || !p || !p.length) return;
+    all.push(String(v.video_id));
+    if (hot && !hot[v.match_id] && !hotShow[String(m.show_id || '')]) return;
     var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
     var sizes = en.map(function(x) { return x.length; }), rt = rate[v.match_id], groups = {};
     p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
@@ -826,7 +844,7 @@ function viCards() {
     var mu = multi(en, t.stipulation);
     map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
-  return { ok: true, map: map };
+  return since ? { ok: true, map: map, now: now, since: since, all: all } : { ok: true, map: map, now: now, full: true };
 }
 
 // StarScope Log next (2.67.0): every video the private build has read ("videos") that has no match_videos row, grouped
