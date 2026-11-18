@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.4
+
+- **iPhone card check: show pages the phone is sent differently.** When a show page doesn't link its matches as `/set/<id>/contents/<video>`, the videos are read from the page's own article cards (related rows left out). When still nothing is found, what the phone received stays on screen: the address it ended on, the HTTP status, size, title, article cards, match links, scripts and the first video links.
+- "Change the card check link" only shows for key problems, not for every error.
+
 ## 2.91.3
 
 - **iPhone card check: setup check on screen.** When the sheet turns the key down, card check asks the script (`cc_ping`, answered without a key) and shows what it sees, kept on screen: the script version running at that address, whether `CARDCHECK_KEY` is found and its length, the length of the key typed on the phone, and whether they match (exactly, apart from spaces, apart from capitals, or it's the main key). Neither key is ever shown or sent back.

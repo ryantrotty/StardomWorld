@@ -13,7 +13,7 @@
   var VER = (/[?&]v=([^&]+)/.exec(me) || [])[1] || String(Date.now());
   var ROSTER = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json';
   var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear_', SET_KEY = 'ccPhoneSet', REC_KEY = 'ccPhoneRec';
-  var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000;
+  var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null;
 
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -170,7 +170,7 @@
           map = m; lsSet(CARDS_KEY, { s: r.now || c.s, f: c.f || 0, map: m });
         } else { map = r.map; lsSet(CARDS_KEY, { s: r.now || '', f: Date.now(), map: map }); }
         draw();
-      } else if (!Object.keys(map).length && !flash) note('StarScope list: ' + (r && r.error || 'no reply'), true);
+      } else if (!Object.keys(map).length && !flash) note('StarScope list: ' + (r && r.error || 'no reply'), true, /key/i.test(r && r.error || ''));
       if (cardsAgain) { cardsAgain = false; setTimeout(function() { cards(); }, 300); }
     });
   }
@@ -181,7 +181,8 @@
   var kitReady = false, show = null, recs = {}, saved = {}, attn = {}, reading = null, lastFetch = 0, readQ = [], sheetOpen = null, flash = '', flashBad = false, batch = null;
   var vs = { mode: 'view', text: '', busy: '', msg: '', err: '' };
   function kit() { return kitReady && window.__tvIndexKit; }
-  function note(t, bad) { flash = t; flashBad = !!bad; draw(); }
+  var flashKey = false;
+  function note(t, bad, keyIssue) { flash = t; flashBad = !!bad; flashKey = !!keyIssue; draw(); }
 
   // ---- Log a show: shows started, and the site's list of a year's shows (a page at a time, the next when you ask)
   function setCount(set, vids) {
@@ -277,6 +278,19 @@
       if (!v.th) { var bg = art && art.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || ''); if (mm) v.th = mm[1]; }
       if (!v.t) { var h3 = art && art.querySelector('h3, .ttl-xs'); v.t = (h3 ? h3.textContent : a.textContent || '').replace(/\s+/g, ' ').trim(); }
     });
+    // 2.91.4: a page that doesn't link its matches as /set/<id>/contents/<video> (the phone can be sent another layout):
+    // the videos in the page's own article cards, outside the related rows.
+    if (!vids.length) Array.prototype.forEach.call(doc.querySelectorAll('article a[href*="/contents/"]'), function(a) {
+      var m = /\/contents\/(\d+)(?:[?#\/]|$)/.exec(a.getAttribute('href') || '');
+      if (!m || seen[m[1]] || a.closest('.related, [class*="related"], [class*="recommend"]')) return;
+      var art = a.closest('article'), v = seen[m[1]] = { id: m[1], t: '', th: '' }; vids.push(v);
+      var bg = art && art.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || ''); if (mm) v.th = mm[1];
+      var im = !v.th && art && art.querySelector('img[src], img[data-src]'); if (im) v.th = im.getAttribute('data-src') || im.getAttribute('src');
+      var h3 = art && art.querySelector('h3, h4, .ttl-xs'); v.t = (h3 ? h3.textContent : a.textContent || '').replace(/\s+/g, ' ').trim();
+    });
+    lastSetLook = { title: doc.title, len: html.length, articles: doc.querySelectorAll('article').length, setLinks: doc.querySelectorAll('a[href*="/set/' + set + '/contents/"]').length,
+      contentLinks: Array.prototype.filter.call(doc.querySelectorAll('a[href*="/contents/"]'), function(a) { return /\/contents\/\d+/.test(a.getAttribute('href') || ''); }).slice(0, 4).map(function(a) { return a.getAttribute('href'); }),
+      scripts: doc.querySelectorAll('script[src]').length, found: vids.length };
     vids = vids.filter(function(v) { return !isComment(v.t); });
     var so = window.__tvSetOrder, ord = so ? so.forSet(set, vids.map(function(v) { return { id: Number(v.id), t: v.t }; })) : null;
     if (ord && ord.flip) vids.reverse();
@@ -285,15 +299,17 @@
   }
   function openShow(set, from) {
     S.screen = 'show'; S.set = String(set); S.from = from || S.from || 'started';
-    show = null; recs = {}; attn = {}; readQ = []; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
+    show = null; recs = {}; attn = {}; readQ = []; diag = ''; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
     saveState(); draw(); root.scrollTop = 0;
     var c = lsGet(SET_KEY + set);
     if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) { show = c; draw(); return; }
     var go = function() {
       lastFetch = Date.now();
-      fetch('/set/' + set, { credentials: 'include' }).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
+      var got = '';
+      fetch('/set/' + set, { credentials: 'include' }).then(function(r) { got = r.url + ' · HTTP ' + r.status; if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
         var s = readSetHtml(html, String(set));
-        if (!s.videos.length) throw new Error('no matches on the page');
+        // What the phone was sent, kept on screen (2.91.4), so a different page layout can be seen and read.
+        if (!s.videos.length) { var L = lastSetLook || {}; diag = 'Show ' + set + ': ' + got + ' · ' + (L.len || 0) + ' characters · "' + String(L.title || '').slice(0, 60) + '" · ' + (L.articles || 0) + ' article cards · ' + (L.setLinks || 0) + ' match links · ' + (L.scripts || 0) + ' scripts · video links: ' + ((L.contentLinks || []).join(' ') || 'none'); throw new Error('no matches on the page'); }
         if (S.set !== String(set)) return;
         show = s; lsSet(SET_KEY + set, s); draw();
       }).catch(function(e) { if (S.set === String(set)) note('Couldn\'t read the show page (' + (e && e.message || e) + ')', true); });
@@ -516,7 +532,7 @@
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
-        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + '</div>' : '') + (flashBad ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
+        (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
         (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? fixHtml() : '');
     }
     root.innerHTML = h; root.scrollTop = y;
@@ -611,7 +627,7 @@
       // The link checked first (2.91.1): a wrong key says so, with the way to change it.
       post({ action: 'vi_lib' }, function(t) {
         var r = null; try { r = JSON.parse(t); } catch (e) {}
-        if (!r || !r.ok) { kitReady = false; note('The sheet said: ' + (r && r.error || 'no reply') + '. Check the card check link.', true); diagnose(); return; }
+        if (!r || !r.ok) { kitReady = false; note('The sheet said: ' + (r && r.error || 'no reply') + '. Check the card check link.', true, true); diagnose(); return; }
         window.__tvIndexKit.lib(function(ok) { kitReady = ok; flash = ''; draw(); });
       });
       cards();
