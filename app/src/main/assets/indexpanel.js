@@ -938,6 +938,19 @@
       return f ? { kind: 'faction', name: ja && f.ja ? f.ja : f.en } : null;
     },
     nameOf: function(id) { return lib ? nameOf(id) : id; },
+    // For card check's venue line (2.89.0): venues whose names hold q, best first, and a fresh copy of the library.
+    venues: function(q, n) {
+      if (!lib) return [];
+      var k = norm(q || '');
+      if (!k) return [];
+      var out = [];
+      (lib.venues || []).forEach(function(v) {
+        var a = norm(v.en || ''), b = norm(v.ja || ''), at = Math.min(a.indexOf(k) < 0 ? 99 : a.indexOf(k), b.indexOf(k) < 0 ? 99 : b.indexOf(k));
+        if (at < 99) out.push({ id: v.id, name: lab(v), at: at });
+      });
+      return out.sort(function(x, y) { return x.at - y.at || x.name.length - y.name.length; }).slice(0, n || 6);
+    },
+    reload: function(done) { call({ action: 'vi_lib' }, function(r) { if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); } if (done) done(!!r.ok); }); },
     // The site writes some venues two ways, 高知・セリーズ（CHRES）体育館 and 高知・［CHRES］セリーズ体育館: failing a straight
     // match, the bracketed part is left out on both sides (2.84.1, card check only).
     venue: function(raw) {

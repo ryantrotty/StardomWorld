@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.89.0
+
+- **Venue line in card check: see, set and save the show's venue in one place.** Every match (and the end of the card) shows a Venue line under the show's name: the venue with "✓ set for the show" or "✓ matched in the library", or the site's spelling in orange when it isn't known.
+  - Left from Confirm reaches it. **Translate & add** (Japanese spellings) translates and opens a box with the English name to check or edit; **Pick from list** opens the same box empty; **Change** reopens it on a set venue. As you type, up to four venues from the library are offered ("Use this venue: …"), and "Save as a new venue: …" adds one (with the site's Japanese spelling kept as its Japanese name).
+  - Choosing one saves it **to the show, once**: every match already logged shows it, every match saved after it gets it, and the site's spelling becomes an alias of the venue, so the next show there matches on its own. No match has to be opened or saved again for it.
+  - The end of the card's warning now points to the Venue line.
+- Sheet script: `vi_show_venue`; the shows tab gains an `updated` column (added by itself), so a show's venue reaches the TVs with the changes-only list. **Redeploy the script.**
+- docs/DESIGN.md: card check's venue line and end of the card, with the venue line's smaller buttons as a recorded exception.
+
 ## 2.88.0
 
 - **StarScope list: only what changed, one request at a time.** The TV used to ask the sheet for the whole StarScope list whenever its copy was 30 minutes old, and again after every save in card check, so a 10-match show rebuilt and sent the whole list 10 times; a slow or failing list was asked for again on every page.

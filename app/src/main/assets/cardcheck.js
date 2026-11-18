@@ -28,7 +28,9 @@
     noLineup: '出場選手が読み取れませんでした。詳細を編集で追加できます。', comment: 'コメント映像（対象外）', saving: '保存中…', siteT: 'サイトの題名', team: 'タッグチーム', faction: 'ユニット',
     endHead: 'カードの最後', endSub: '各試合を確認したら、まとめて登録できます。', eReady: '登録できます', eLogged: '登録済み', eAttn: '確認が必要', eUnread: '未読込（登録時に読み込み）',
     allBtn: 'すべて登録', allRun: '登録中', stop: '止める', first: '確認が必要な試合へ', back: '最初の試合へ', endNext: 'カードの最後へ ▼',
-    vWarn: '会場がライブラリにありません。試合の「詳細を編集」で「翻訳して追加」を使ってください。', skipped: '確認が必要なためスキップ'
+    vWarn: '会場がまだ設定されていません。上の会場で設定できます。', skipped: '確認が必要なためスキップ',
+    vHead: '会場', vSet: '大会に設定済み', vLib: 'ライブラリと一致', vNone: 'ライブラリにありません', vTr: '翻訳して追加', vPick: 'リストから選ぶ', vChange: '変更',
+    vSaveNew: '新しい会場として保存', vCancel: 'キャンセル', vTyping: '会場名を入力', vSaving: '保存中…', vSaved: '大会のすべての試合に設定しました', vTrans: '翻訳中…', vUse: 'この会場にする'
   } : {
     head: 'CARD CHECK', loading: 'Reading the show page…', notRead: "Couldn't read this page", retry: 'Try again',
     match: 'Match ', of: ' of ', reading: 'Reading the match page…', waiting: 'Read one at a time',
@@ -43,7 +45,9 @@
     noLineup: 'No line-up could be read. Edit details to add the wrestlers.', comment: 'Comment clip (skipped)', saving: 'Saving…', siteT: 'Site title', team: 'Team', faction: 'Faction',
     endHead: 'End of the card', endSub: "Checked them all? Confirm the ready ones in one go.", eReady: 'ready', eLogged: 'logged', eAttn: 'needs a look', eUnread: 'not read yet (read as it is confirmed)',
     allBtn: 'Confirm all', allRun: 'Confirming', stop: 'Stop', first: 'Go to the first that needs a look', back: 'Back to match 1', endNext: 'End of the card ▼',
-    vWarn: "The venue isn't in the library yet. Edit details on any match and use Translate & add.", skipped: 'skipped, needs a look'
+    vWarn: "The show's venue isn't set yet. Set it in the Venue line above.", skipped: 'skipped, needs a look',
+    vHead: 'Venue', vSet: 'set for the show', vLib: 'matched in the library', vNone: 'not in the library', vTr: 'Translate & add', vPick: 'Pick from list', vChange: 'Change',
+    vSaveNew: 'Save as a new venue', vCancel: 'Cancel', vTyping: 'Type a venue name', vSaving: 'Saving…', vSaved: 'Set for every match on this show', vTrans: 'Translating…', vUse: 'Use this venue'
   };
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -184,6 +188,92 @@
   }
 
   // ---- what is shown for one match
+  // ---- calls to the sheet from card check itself (2.89.0): ids of our own, everything else passed on
+  var mine = {}, seq = 0;
+  (function() {
+    var prev = window.__tvIndexReply;
+    window.__tvIndexReply = function(id, text) {
+      var f = mine[id];
+      if (!f) { if (prev) prev(id, text); return; }
+      delete mine[id];
+      var r; try { r = JSON.parse(text); } catch (e) { r = { ok: false, error: 'bad reply' }; }
+      f(r);
+    };
+  })();
+  function sheet(body, done) {
+    var id = 'ccv' + (++seq);
+    mine[id] = done;
+    try { AndroidHost.indexSync(id, JSON.stringify(body)); } catch (e) { delete mine[id]; done({ ok: false, error: String(e && e.message || e) }); }
+  }
+
+  // ---- the show's venue (2.89.0): one line on every match, set once for the whole show.
+  // Set: saved to the show in the sheet (vi_show_venue), so every logged match shows it and every match saved after it
+  // gets it; the site's spelling becomes the venue's alias, so the next show there needs nothing.
+  var pinFocus = false, VEN_KEY = 'tvCcVen' + SET, vs = { mode: 'view', text: '', busy: '', msg: '', err: '' };
+  function rawVenue() {
+    var raw = show && show.venue || '';
+    if (show) show.videos.some(function(v) { var r = recs[v.id], s0 = r && r.shows && r.shows[0]; if (s0 && s0.venue) { raw = s0.venue; return true; } return false; });
+    return raw;
+  }
+  // {id?, name, how: 'set' | 'lib'} or null
+  function venueNow() {
+    var mineV = lsGet(VEN_KEY);
+    if (mineV && mineV.name) return { id: mineV.id, name: mineV.name, how: 'set' };
+    var sv = savedVenue();
+    if (sv) return { name: sv, how: 'set' };
+    var kit = kitReady && window.__tvIndexKit, raw = rawVenue(), m = kit && raw ? kit.venue(raw) : null;
+    return m ? { id: m.id, name: m.name, how: 'lib' } : null;
+  }
+  function hasJa(t) { return /[\u3000-\u9fff\uff00-\uffef]/.test(String(t || '')); }
+  function venueLine() {
+    var now = venueNow(), raw = rawVenue(), kit = kitReady && window.__tvIndexKit;
+    var h = '<div class="vn' + (vs.mode === 'edit' ? ' ed' : '') + '"><div class="vr"><span class="lb">' + esc(T.vHead) + '</span>';
+    if (vs.mode === 'edit') {
+      h += '<input class="vin" data-k="vin" type="text" autocomplete="off" placeholder="' + esc(T.vTyping) + '" value="' + esc(vs.text) + '">' + btn('vx', T.vCancel) + '</div>';
+      if (raw) h += '<div class="vsub">' + esc(raw) + '</div>';
+      h += '<div class="vlist">' + venueList() + '</div>';
+    } else {
+      h += now ? '<span class="vv">' + esc(now.name) + '</span><span class="vk">✓ ' + esc(now.how === 'set' ? T.vSet : T.vLib) + '</span>' + btn('vchg', T.vChange)
+        : '<span class="vv bad">' + esc(raw ? '? ' + raw : '–') + '</span>' + (kit ? btn('vpk', T.vPick, !hasJa(raw)) + (hasJa(raw) ? btn('vtr', T.vTr, true) : '') : '');
+      h += '</div>';
+    }
+    if (vs.busy || vs.msg || vs.err) h += '<div class="vmsg' + (vs.err ? ' er' : '') + '">' + esc(vs.err || vs.busy || vs.msg) + '</div>';
+    return h + '</div>';
+  }
+  function venueList() {
+    var kit = kitReady && window.__tvIndexKit, list = kit && kit.venues ? kit.venues(vs.text, 4) : [], t = vs.text.trim(), h = '';
+    list.forEach(function(v, i) { h += '<button type="button" class="b vo" data-k="vo' + i + '" data-id="' + esc(v.id) + '" data-nm="' + esc(v.name) + '">' + esc(T.vUse + ': ' + v.name) + '</button>'; });
+    var exact = list.some(function(v) { return v.name.toLowerCase() === t.toLowerCase(); });
+    if (t && !exact) h += btn('vnew', T.vSaveNew + ': ' + t, !list.length);
+    return h;
+  }
+  function venueEdit(text) { vs.mode = 'edit'; vs.text = text || ''; vs.err = ''; vs.msg = ''; focusKey = 'vin'; pinFocus = true; render(); }
+  function venueTranslate() {
+    var raw = rawVenue();
+    vs.busy = T.vTrans; vs.err = ''; render();
+    sheet({ action: 'vi_translate', text: raw }, function(r) { vs.busy = ''; venueEdit(r && r.ok && r.text ? String(r.text) : raw); if (!(r && r.ok)) { vs.err = String(r && r.error || 'translate failed'); render(); } });
+  }
+  function venueSet(id, name) {
+    vs.busy = T.vSaving; vs.err = ''; render();
+    sheet({ action: 'vi_show_venue', show: SET, venue: id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(r) {
+      vs.busy = '';
+      if (!r || !r.ok) { vs.err = String(r && r.error || 'not saved'); render(); return; }
+      lsSet(VEN_KEY, { id: id, name: name, t: Date.now() });
+      vs.mode = 'view'; vs.msg = T.vSaved; pinFocus = true;
+      focusKey = cur >= show.videos.length ? 'confirmall' : (status(show.videos[cur]) ? 'nextm' : 'confirm');
+      if (window.__tvIndexKit && window.__tvIndexKit.reload) window.__tvIndexKit.reload();   // the new alias, for the matches still to save
+      cardsRefresh(); render();
+    });
+  }
+  function venueNew(name) {
+    var raw = rawVenue(), v = show.videos[Math.min(cur, show.videos.length - 1)];
+    vs.busy = T.vSaving; vs.err = ''; render();
+    sheet({ action: 'vi_propose', type: 'new_venue', value: name, entity_id: hasJa(raw) ? raw : '', video: v ? v.id : '' }, function(r) {
+      if (!r || !r.ok || !r.applied || !r.id) { vs.busy = ''; vs.err = String(r && (r.error || (r.ok ? 'saved for approval' : '')) || 'not saved'); render(); return; }
+      var done = function() { venueSet(r.id, name); };
+      if (window.__tvIndexKit && window.__tvIndexKit.reload) window.__tvIndexKit.reload(done); else done();
+    });
+  }
   // The StarScope list after a save (2.88.0): only what changed, one request at a time (assets/starcards.js).
   function cardsRefresh() {
     if (window.__tvCardsRefresh) { window.__tvCardsRefresh(); return; }
@@ -250,8 +340,7 @@
   }
   function showHtml(rec) {
     var kit = kitReady && window.__tvIndexKit, s0 = rec && rec.shows && rec.shows[0];
-    var raw = (s0 && s0.venue) || show.venue || '', sv = savedVenue();
-    var ven = sv ? { name: sv } : (kit && raw ? kit.venue(raw) : null);
+    var raw = (s0 && s0.venue) || show.venue || '', ven = venueNow();
     var date = (rec && rec.date) || show.date || '';
     return row(T.date, esc(dateText(date) || '–')) + row(T.venue, ven ? esc(ven.name) : (raw ? '? ' + esc(raw) : '–'), 'wrap' + (ven ? '' : (raw ? ' bad' : '')));
   }
@@ -310,7 +399,14 @@
     '#tvcc .t2e{font:600 15px Arial;color:#C9D2DC}#tvcc .wl.vw{color:#FFB347;border-color:#FFB347;background:#2A1C10}' +
     '#tvcc .el{display:flex;flex-direction:column;gap:5px;overflow:hidden;min-height:0}#tvcc .er2{display:flex;align-items:center;gap:12px;border:1px solid #2A323C;background:#161F2A;border-radius:10px;padding:5px 12px;min-height:36px;box-sizing:border-box}' +
     '#tvcc .er2.now{border-color:#F4C242}#tvcc .er2 b{flex:0 0 26px;font:900 15px Arial;color:#9AA6B4}#tvcc .er2 .tl{flex:1 1 0;min-width:0;font:700 15px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '#tvcc .chp.at{background:#2A1C10;color:#FFB347;border:1px solid #FFB347}';
+    '#tvcc .chp.at{background:#2A1C10;color:#FFB347;border:1px solid #FFB347}' +
+    '#tvcc .vn{display:flex;flex-direction:column;gap:6px;border:1px solid #2A323C;background:#0F151C;border-radius:12px;padding:8px 12px;flex:none}' +
+    '#tvcc .vn .vr{display:flex;align-items:center;gap:12px;min-width:0}#tvcc .vn .lb{flex:none;font:800 11px Arial;letter-spacing:1px;text-transform:uppercase;color:#9AA6B4}' +
+    '#tvcc .vn .vv{flex:1 1 auto;min-width:0;font:700 17px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tvcc .vn .vv.bad{color:#FFB347}' +
+    '#tvcc .vn .vk{flex:none;font:700 13px Arial;color:#7FD3A0}#tvcc .vn .b{height:40px;font-size:15px;padding:0 14px;flex:none}' +
+    '#tvcc .vin{flex:1 1 auto;min-width:0;height:40px;box-sizing:border-box;border-radius:10px;border:2px solid #2A323C;background:#161F2A;color:#fff;font:700 17px Arial;padding:0 12px;outline:none}#tvcc .vin:focus{border-color:#F4C242}' +
+    '#tvcc .vsub{font:600 13px Arial;color:#9AA6B4}#tvcc .vlist{display:flex;flex-direction:column;gap:6px;align-items:flex-start}#tvcc .vlist .b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '#tvcc .vmsg{font:700 13px Arial;color:#7FD3A0}#tvcc .vmsg.er{color:#FF7A66}';
 
   function ensure() {
     if (root) return;
@@ -323,9 +419,12 @@
     if (!document.body) return;
     // While the logger sits in the right panel, nothing here is redrawn under it.
     if (editing && window.__tvIndexIsOpen && !force) return;
+    // Typing in the venue box: nothing is redrawn under the keyboard (the list below it updates by itself).
+    var ae = document.activeElement; if (!force && ae && ae.classList && ae.classList.contains('vin') && vs.mode === 'edit') return;
     ensure();
     var keep = document.activeElement && root.contains(document.activeElement) ? document.activeElement.getAttribute('data-k') : null;
-    if (keep) focusKey = keep;
+    if (keep && !pinFocus) focusKey = keep;
+    pinFocus = false;
     // Waiting on Skip while the match page was read: once it has been, Confirm is the one to press.
     var wasReady = !!root.querySelector('[data-k="confirm"]');
     if (!show) {
@@ -354,6 +453,7 @@
     var name = showName(show.name, show.date);
     h += '<div class="pn"><div class="hd">' + TEL + '<span class="wm">STAR<b>SCOPE</b></span><span class="hh">' + T.head + '</span>' + squares() + '</div>';
     h += '<div class="sh">' + esc([name, dateText(show.date)].filter(Boolean).join(' · ')) + '</div>';
+    if (!editing) h += venueLine();
     if (editing) {
       // The logger's own tabs, here in the right panel (2.84.0); the thumbnail stays where it is.
       root.innerHTML = h + '<div id="tvcc-host" class="host"></div></div><div class="hn"><span><i>BACK</i>' + esc(T.hintBack) + '</span></div>';
@@ -389,9 +489,11 @@
     tk.style.transform = 'translateY(' + (-y) + 'px)';
   }
   function focus() {
+    var vin = root && root.querySelector('.vin');
+    if (vin) vin.oninput = function() { vs.text = vin.value; var l = root.querySelector('.vlist'); if (l) l.innerHTML = venueList(); };
     if (window.__tvIndexIsOpen) return;
     var scope = doneOpen ? root.querySelector('.dp') : root;
-    var el = scope && (scope.querySelector('[data-k="' + focusKey + '"]') || scope.querySelector('.b.on') || scope.querySelector('.b'));
+    var el = scope && (scope.querySelector('[data-k="' + focusKey + '"]') || scope.querySelector('.bt .b.on') || scope.querySelector('.b.on') || scope.querySelector('.b'));
     if (el) el.focus({ preventScroll: true });
   }
 
@@ -410,12 +512,7 @@
     var bad = A.some(function(names, si) { return names.some(function(raw, j) { var o = B[si] && B[si].length === names.length ? B[si][j] : ''; return !(kit.resolve(raw) || kit.resolve(o)); }); });
     return bad ? 'attn' : 'ready';
   }
-  function venueOk() {
-    if (savedVenue()) return true;
-    var kit = kitReady && window.__tvIndexKit, raw = show.venue || '';
-    show.videos.some(function(v) { var r = recs[v.id], s0 = r && r.shows && r.shows[0]; if (s0 && s0.venue) { raw = s0.venue; return true; } return false; });
-    return !raw || !kit || !!kit.venue(raw);
-  }
+  function venueOk() { return !rawVenue() || !(kitReady && window.__tvIndexKit) || !!venueNow(); }
   var batch = null;
   function endHtml() {
     var n = { ready: 0, logged: 0, attn: 0, unread: 0 }, rows = '';
@@ -430,6 +527,7 @@
     var todo = n.ready + n.unread;
     var h = '<div class="st"><div class="tk"></div></div><div class="pn"><div class="hd">' + TEL + '<span class="wm">STAR<b>SCOPE</b></span><span class="hh">' + T.head + '</span>' + squares() + '</div>';
     h += '<div class="sh">' + esc([showName(show.name, show.date), dateText(show.date)].filter(Boolean).join(' · ')) + '</div>';
+    h += venueLine();
     h += '<div class="box"><div class="gl">' + esc(T.endHead) + '</div><div class="t2e">' + esc(T.endSub) + '</div>' + (venueOk() ? '' : '<div class="wl vw">' + esc(T.vWarn) + '</div>') + '<div class="el">' + rows + '</div></div><div class="bt">';
     if (batch) h += btn('allrun', T.allRun + ' ' + Math.min(batch.done + 1, batch.list.length) + T.of + batch.list.length + '…', true) + btn('stop', T.stop);
     else {
@@ -589,6 +687,11 @@
     if (k === 'watch') { location.href = '/contents/' + show.videos[cur].id; return; }
     if (k === 'skip' || k === 'nextm') { go(Math.min(cur + 1, show.videos.length)); return; }
     if (k === 'confirmall') { confirmAll(); return; }
+    if (k === 'vtr') { venueTranslate(); return; }
+    if (k === 'vpk' || k === 'vchg') { var raw0 = rawVenue(); venueEdit(k === 'vpk' && !hasJa(raw0) ? raw0 : ''); return; }
+    if (k === 'vx') { vs.mode = 'view'; vs.err = ''; pinFocus = true; focusKey = venueNow() ? 'vchg' : (hasJa(rawVenue()) ? 'vtr' : 'vpk'); render(); return; }
+    if (k === 'vnew') { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
+    if (/^vo\d$/.test(k)) { var o = root.querySelector('[data-k="' + k + '"]'); if (o) venueSet(o.getAttribute('data-id'), o.getAttribute('data-nm')); return; }
     if (k === 'stop') { if (batch) batch.stop = true; return; }
     if (k === 'firstattn') { lastRun = null; go(firstAttn()); return; }
     if (k === 'back') { go(0); return; }
@@ -600,12 +703,25 @@
     if (e.defaultPrevented || !root || window.__tvIndexIsOpen) return;
     if (document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;
     var c = e.keyCode, a = document.activeElement;
-    if (c === 13 || c === 23) { if (a && root.contains(a) && a.getAttribute('data-k')) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) press(a.getAttribute('data-k')); } return; }
+    var inVin = a && a.classList && a.classList.contains('vin');
+    if (c === 13 || c === 23) {
+      if (inVin) return;   // the TV keyboard opens on the venue box
+      if (a && root.contains(a) && a.getAttribute('data-k')) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat && !(vs.busy && /^v/.test(a.getAttribute('data-k')))) press(a.getAttribute('data-k')); }
+      return;
+    }
     if (c !== 37 && c !== 38 && c !== 39 && c !== 40) return;
     e.preventDefault(); e.stopImmediatePropagation();
     if (!show) { focus(); return; }
+    // The venue box open: ▲ ▼ move through it (the box, Cancel, the venues, Save as new) instead of changing match.
+    var vn = root.querySelector('.vn.ed');
+    if (vn && a && vn.contains(a) && (c === 38 || c === 40)) {
+      var vf = Array.prototype.slice.call(vn.querySelectorAll('.vin, .b')), vi = vf.indexOf(a), to = vf[vi + (c === 40 ? 1 : -1)];
+      if (a.classList.contains('vin') && c === 40) to = vn.querySelector('.vlist .b') || to;
+      if (to) to.focus({ preventScroll: true });
+      return;
+    }
     if (!doneOpen && (c === 38 || c === 40)) { go(cur + (c === 40 ? 1 : -1)); return; }
-    var scope = doneOpen ? root.querySelector('.dp') : root, bs = Array.prototype.slice.call(scope.querySelectorAll('.b')), i = bs.indexOf(a);
+    var scope = doneOpen ? root.querySelector('.dp') : root, bs = Array.prototype.slice.call(scope.querySelectorAll('.b, .vin')), i = bs.indexOf(a);
     if (i < 0) { focus(); return; }
     if (c === 39 && bs[i + 1]) bs[i + 1].focus({ preventScroll: true });
     else if (c === 37) { if (bs[i - 1]) bs[i - 1].focus({ preventScroll: true }); else if (!doneOpen && window.__tvOpenMenu) window.__tvOpenMenu(); }
