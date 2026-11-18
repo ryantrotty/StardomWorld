@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.92.0
+
+- **iPhone card check: help from an AI for what the site doesn't say** (docs/CARDCHECK_PHONE.md).
+  - A show header at the top: the name in English and as the site writes it, and the date.
+  - **Copy AI prompt:** the show's name, date, venue and card, with unknown names marked, asking for the card from reliable sources as a JSON block. **Paste AI answer** reads it back.
+  - **Ask Gemini:** the same through the sheet script (`vi_ai`), Gemini API with Google Search grounding; the key (`GEMINI_API_KEY`) stays in the script properties. Its sources are listed under the suggestions.
+  - The answer becomes suggestions to approve, each untickable: a library wrestler for an unknown name (the site's spellings become her aliases), a new wrestler (with her Japanese name and the site's spellings), the venue (from the library or new, set for the whole show). Nothing is saved until Apply.
+- Fix: "Match 1 of 9" was drawn in the site's text colour (black) on the phone.
+- Sheet script: `vi_ai` (allowed with the card check key). Add `GEMINI_API_KEY` to the script properties, then **redeploy the script**.
+
 ## 2.91.9
 
 - **iPhone card check, show lists:** each show's state in words: "Not started" (grey), "3 of 10 logged" (gold), "✓ All 10 logged" (green); "0 logged" read like a logged tag. The date and venue sit on their own line under the name. A year's shows run newest first by show date (the site lists them by when each was put up), and Next follows the same order.

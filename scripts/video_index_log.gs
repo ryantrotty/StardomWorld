@@ -35,6 +35,9 @@
  *                                                              thumb, site_text (2.84.4): its picture and page text, kept in match_videos
  *   vi_show_venue {show, venue, raw, name, date}               (2.89.0) a show's venue, set once for the whole show from card check;
  *                                                              the site's spelling becomes the venue's alias
+ *   vi_ai {prompt}                                              (2.92.0) card check's "Ask Gemini": the prompt to the Gemini API
+ *                                                              with Google Search grounding; GEMINI_API_KEY (and optional
+ *                                                              GEMINI_MODEL) in the script properties. Answers {text, model, sources}
  *   vi_translate {text}                                        (2.87.0) Japanese to English (Google's translator), for the logger
  *   vi_thumbs  {items: [{video, thumb}]}                        (2.84.4) pictures for card-check matches saved without one
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
@@ -72,7 +75,7 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
 var MAX_CELL = 45000;
-var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue'];   // a Sheets cell holds 50,000 characters
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
@@ -118,6 +121,7 @@ function doPost(e) {
   if (body.action === 'vi_lib' && !viRows('proposals').some(function(p) { return p.status === 'approved'; })) return out(viAction(body));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'vi_translate') return out(viTranslate(body));
+  if (body.action === 'vi_ai') return out(viAi(body));
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
@@ -1196,4 +1200,30 @@ function viShowVenue(b) {
     alias = true;
   }
   return { ok: true, show: show, venue: vid, alias: alias };
+}
+
+// Card check's "Ask Gemini" (2.92.0): the show's prompt, as the phone wrote it, to the Gemini API with Google Search
+// grounding, so the card is looked up rather than remembered. The key stays here (GEMINI_API_KEY in the script
+// properties); GEMINI_MODEL picks the model, and a model the API doesn't know falls back to the next one.
+function viAi(b) {
+  var props = PropertiesService.getScriptProperties(), key = props.getProperty('GEMINI_API_KEY');
+  if (!key) return { ok: false, error: 'GEMINI_API_KEY is not set in the script properties' };
+  var prompt = String(b.prompt || '').slice(0, 12000);
+  if (!prompt) return { ok: false, error: 'no prompt' };
+  var models = [props.getProperty('GEMINI_MODEL'), 'gemini-3.5-flash', 'gemini-2.5-flash'].filter(String), last = '';
+  for (var i = 0; i < models.length; i++) {
+    var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(models[i]) + ':generateContent', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true, headers: { 'x-goog-api-key': key },
+      payload: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 1 } })
+    });
+    var code = res.getResponseCode(), j = null;
+    try { j = JSON.parse(res.getContentText()); } catch (e) {}
+    if (code === 404) { last = models[i] + ': not found'; continue; }
+    if (code !== 200 || !j) return { ok: false, error: 'Gemini ' + code + ': ' + String((j && j.error && j.error.message) || res.getContentText()).slice(0, 300) };
+    var c = (j.candidates || [])[0] || {}, text = ((c.content && c.content.parts) || []).map(function(p) { return p.text || ''; }).join('');
+    var src = (((c.groundingMetadata || {}).groundingChunks) || []).map(function(g) { return g.web ? { title: String(g.web.title || '').slice(0, 120), uri: g.web.uri } : null; }).filter(Boolean).slice(0, 8);
+    if (!text) return { ok: false, error: 'Gemini gave no text (' + (c.finishReason || 'no reason') + ')' };
+    return { ok: true, text: text, model: models[i], sources: src };
+  }
+  return { ok: false, error: 'no Gemini model answered (' + last + ')' };
 }
