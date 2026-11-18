@@ -12,7 +12,7 @@
   var BASE = me ? me.replace(/[^\/]*$/, '') : 'https://ryantrotty.github.io/StardomWorld/cardcheck/';
   var VER = (/[?&]v=([^&]+)/.exec(me) || [])[1] || String(Date.now());
   var ROSTER = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json';
-  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear_', SET_KEY = 'ccPhoneSet', REC_KEY = 'ccPhoneRec';
+  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec2_';   // 2.91.7: new names, so lists read wrongly before are dropped
   var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null, report = '';
   // 2.91.5: the page the phone was sent, as text to copy and paste (the phone gets the site's mobile layout, which the
   // reader doesn't know yet): its size and title, then the first article cards and anything that looks like a link to a
@@ -161,6 +161,7 @@
   }
   function boot() {
     host();
+    try { for (var i = localStorage.length - 1; i >= 0; i--) { var k = localStorage.key(i); if (/^ccPhoneSet\d/.test(k || '')) localStorage.removeItem(k); } } catch (e) {}   // lists kept before 2.91.7
     var roster = getJson(ROSTER).catch(function() { return null; });
     return Promise.all([getJson(BASE + 'factions.json?v=' + VER), getJson(BASE + 'match_types.json?v=' + VER), roster]).then(function(a) {
       FACT = JSON.stringify(mergeFactions(a[0], a[2]));
@@ -297,16 +298,8 @@
       if (!v.th) { var bg = art && art.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || ''); if (mm) v.th = mm[1]; }
       if (!v.t) { var h3 = art && art.querySelector('h3, .ttl-xs'); v.t = (h3 ? h3.textContent : a.textContent || '').replace(/\s+/g, ' ').trim(); }
     });
-    // 2.91.4: a page that doesn't link its matches as /set/<id>/contents/<video> (the phone can be sent another layout):
-    // the videos in the page's own article cards, outside the related rows.
-    if (!vids.length) Array.prototype.forEach.call(doc.querySelectorAll('article a[href*="/contents/"]'), function(a) {
-      var m = /\/contents\/(\d+)(?:[?#\/]|$)/.exec(a.getAttribute('href') || '');
-      if (!m || seen[m[1]] || a.closest('.related, [class*="related"], [class*="recommend"]')) return;
-      var art = a.closest('article'), v = seen[m[1]] = { id: m[1], t: '', th: '' }; vids.push(v);
-      var bg = art && art.querySelector('[style*="background-image"]'), mm = bg && /url\(['"]?(.*?)['"]?\)/.exec(bg.getAttribute('style') || ''); if (mm) v.th = mm[1];
-      var im = !v.th && art && art.querySelector('img[src], img[data-src]'); if (im) v.th = im.getAttribute('data-src') || im.getAttribute('src');
-      var h3 = art && art.querySelector('h3, h4, .ttl-xs'); v.t = (h3 ? h3.textContent : a.textContent || '').replace(/\s+/g, ' ').trim();
-    });
+    // 2.91.7: no guessing from other cards on the page (2.91.4 picked up the site's newest videos, which aren't this
+    // show's): a page without match links is read from the show's own list (fromApi).
     lastSetLook = { title: doc.title, len: html.length, articles: doc.querySelectorAll('article').length, setLinks: doc.querySelectorAll('a[href*="/set/' + set + '/contents/"]').length,
       contentLinks: Array.prototype.filter.call(doc.querySelectorAll('a[href*="/contents/"]'), function(a) { return /\/contents\/\d+/.test(a.getAttribute('href') || ''); }).slice(0, 4).map(function(a) { return a.getAttribute('href'); }),
       scripts: doc.querySelectorAll('script[src]').length, found: vids.length };
