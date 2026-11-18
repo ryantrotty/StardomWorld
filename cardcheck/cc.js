@@ -324,9 +324,15 @@
     if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) { show = c; draw(); return; }
     var go = function() {
       lastFetch = Date.now();
-      var got = '';
-      fetch('/set/' + set, { credentials: 'include' }).then(function(r) { got = r.url + ' · HTTP ' + r.status; if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(html) {
+      var got = '', html = '';
+      fetch('/set/' + set, { credentials: 'include' }).then(function(r) { got = r.url + ' · HTTP ' + r.status; if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(h0) {
+        html = h0;
         var s = readSetHtml(html, String(set));
+        // 2.91.6: the phone's (mobile) show page loads its matches from the site's own list, /user_api/set/<id>/contents,
+        // which also has each match's line-up: one more request, and no match page needs reading at all.
+        if (!s.videos.length) return fromApi(String(set), s).then(function(s2) { return s2; }, function(e) { got += ' · list: ' + (e && e.message || e); return s; });
+        return s;
+      }).then(function(s) {
         // What the phone was sent, kept on screen (2.91.4), so a different page layout can be seen and read.
         if (!s.videos.length) { report = pageReport('Show page /set/' + set, html, new DOMParser().parseFromString(html, 'text/html')); var L = lastSetLook || {}; diag = 'Show ' + set + ': ' + got + ' · ' + (L.len || 0) + ' characters · "' + String(L.title || '').slice(0, 60) + '" · ' + (L.articles || 0) + ' article cards · ' + (L.setLinks || 0) + ' match links · ' + (L.scripts || 0) + ' scripts · video links: ' + ((L.contentLinks || []).join(' ') || 'none'); throw new Error('no matches on the page'); }
         if (S.set !== String(set)) return;
@@ -336,7 +342,37 @@
     var wait = lastFetch + GAP - Date.now();
     if (wait > 0) setTimeout(go, wait); else go();
   }
-  function want(id) { if (!recs[id] && readQ.indexOf(id) < 0 && !ssGet(REC_KEY + id)) { readQ.push(id); pump(); } else if (!recs[id]) { recs[id] = ssGet(REC_KEY + id); draw(); } }
+  function fromApi(set, s) {
+    return new Promise(function(ok, bad) {
+      var go = function() {
+        lastFetch = Date.now();
+        fetch('/user_api/set/' + set + '/contents?size=60', { credentials: 'include', headers: { Accept: 'application/json' } })
+          .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function(list) {
+            var vids = (Array.isArray(list) ? list : []).filter(function(x) { return x && x.type === 'single' && !isComment(x.display_name); }).map(function(x) {
+              return { id: String(x.id), t: String(x.display_name || '').trim(), th: (x.thumbnails && (x.thumbnails.lg || x.thumbnails.md)) || '', d: String(x.description || '') };
+            });
+            var so = window.__tvSetOrder, ord = so ? so.forSet(set, vids.map(function(v) { return { id: Number(v.id), t: v.t }; })) : null;
+            if (ord && ord.flip) vids.reverse();
+            s.videos = vids; s.api = 1; ok(s);
+          }).catch(bad);
+      };
+      var wait = lastFetch + GAP - Date.now();
+      if (wait > 0) setTimeout(go, wait); else go();
+    });
+  }
+  // A match read from the list's own description (2.91.6): the same reader as a match page, on a page made of the
+  // list's title, description and the show's line. Nothing is asked of the site.
+  function recFromList(v) {
+    if (!v.d || !window.__tvVixRead || !show) return null;
+    var line = show.line || '', br = line.replace(/』\s*/, '』<br>');
+    var html = '<html><head><meta property="og:image" content="' + esc(v.th) + '"></head><body><div class="content-ttl-wrap"><h1>' + esc(v.t) + '</h1><div class="wswg-wrap">' + v.d + '</div></div>' +
+      '<div class="accordion-box"><a href="/set/' + esc(show.set) + '">' + br + '</a></div></body></html>';
+    try { return window.__tvVixRead(new DOMParser().parseFromString(html, 'text/html'), v.id, show.set); } catch (e) { return null; }
+  }
+  function want(id) {
+    var v0 = show && show.videos.filter(function(x) { return x.id === id; })[0];
+    if (!recs[id] && v0 && v0.d) { var r0 = recFromList(v0); if (r0) { recs[id] = r0; draw(); return; } } if (!recs[id] && readQ.indexOf(id) < 0 && !ssGet(REC_KEY + id)) { readQ.push(id); pump(); } else if (!recs[id]) { recs[id] = ssGet(REC_KEY + id); draw(); } }
   function pump() {
     if (reading || !readQ.length || !show) return;
     var wait = lastFetch + GAP - Date.now();
