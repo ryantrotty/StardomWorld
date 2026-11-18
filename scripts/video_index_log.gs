@@ -1210,7 +1210,7 @@ function viAi(b) {
   if (!key) return { ok: false, error: 'GEMINI_API_KEY is not set in the script properties' };
   var prompt = String(b.prompt || '').slice(0, 12000);
   if (!prompt) return { ok: false, error: 'no prompt' };
-  var models = [props.getProperty('GEMINI_MODEL'), 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(function(m, k, all) { return m && all.indexOf(m) === k; }), last = '';
+  var models = [props.getProperty('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-2.5-flash-lite'].filter(function(m, k, all) { return m && all.indexOf(m) === k; }), last = '';
   for (var i = 0; i < models.length; i++) {
     var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(models[i]) + ':generateContent', {
       method: 'post', contentType: 'application/json', muteHttpExceptions: true, headers: { 'x-goog-api-key': key },
@@ -1219,7 +1219,8 @@ function viAi(b) {
     var code = res.getResponseCode(), j = null;
     try { j = JSON.parse(res.getContentText()); } catch (e) {}
     // 2.92.1: a model this key has no quota for (429) or doesn't know (404): the next one.
-    if (code === 404 || code === 429) { last += (last ? ' · ' : '') + models[i] + ': ' + (code === 404 ? 'not found' : 'no quota'); continue; }
+    // 2.92.3: Google's own words for each model that didn't answer (a 404 can be more than an unknown model).
+    if (code === 404 || code === 429) { last += (last ? ' · ' : '') + models[i] + ' ' + code + ': ' + String((j && j.error && j.error.message) || res.getContentText()).replace(/\s+/g, ' ').slice(0, 220); continue; }
     if (code !== 200 || !j) return { ok: false, error: 'Gemini ' + code + ': ' + String((j && j.error && j.error.message) || res.getContentText()).slice(0, 300) };
     var c = (j.candidates || [])[0] || {}, text = ((c.content && c.content.parts) || []).map(function(p) { return p.text || ''; }).join('');
     var src = (((c.groundingMetadata || {}).groundingChunks) || []).map(function(g) { return g.web ? { title: String(g.web.title || '').slice(0, 120), uri: g.web.uri } : null; }).filter(Boolean).slice(0, 8);

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.92.3
+
+- Sheet script, Ask Gemini: each model that doesn't answer is reported with Google's own message (a "not found" came back for a model the key can call). Models tried after `GEMINI_MODEL`: `gemini-2.5-flash`, `gemini-flash-latest`, `gemini-3.5-flash`, `gemini-2.5-flash-lite`. **Redeploy the script.**
+
 ## 2.92.2
 
 - Sheet script, Ask Gemini: when no model answers, the error lists every model tried and why (not found / no quota), and the Gemini models the key can call, to put in `GEMINI_MODEL`. **Redeploy the script.**
