@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.94.0
+
+- **iPhone card check saves a card in one request, in the background.** Confirm / Confirm all no longer save match by match (a read and a save each, plus a list refresh). The logger builds each save on the phone without reading the sheet (collect mode, venue from the Venue line), card check sends the whole card as one `vi_save_many`, shows "Saving to the sheet…" and lets you carry on; the sheet splits it into its tabs. Turned-down matches show the reason; one changes-only list refresh at the end.
+- **Sheet script:** `vi_save_many`; each tab is read once per request and kept in step with its own writes (single saves on the TV get quicker too); a save marked `keep` for a match already logged only links the video (another version) and leaves its people, results and tags alone. **Redeploy the script.**
+- **The card at the top of a show:** venue first, then each match's state, Confirm all and Next. Only matches that need a look are shown as cards (tap a row to open one, or Show all cards); when all are ready, no cards or pictures load.
+
 ## 2.93.0
 
 - **iPhone card check: the card's order.**

@@ -38,6 +38,8 @@
  *   vi_ai {prompt}                                              (2.92.0) card check's "Ask Gemini": the prompt to the Gemini API
  *                                                              with Google Search grounding; GEMINI_API_KEY (and optional
  *                                                              GEMINI_MODEL) in the script properties. Answers {text, model, sources}
+ *   vi_save_many {items: [vi_save bodies]}                     (2.94.0) card check's Confirm / Confirm all: a whole card in one request,
+ *                                                              each tab read once; answers {results: [{video, ok, error, match_id}]}
  *   vi_translate {text}                                        (2.87.0) Japanese to English (Google's translator), for the logger
  *   vi_thumbs  {items: [{video, thumb}]}                        (2.84.4) pictures for card-check matches saved without one
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
@@ -75,7 +77,7 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
 var MAX_CELL = 45000;
-var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai'];   // a Sheets cell holds 50,000 characters
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
@@ -124,6 +126,7 @@ function doPost(e) {
   if (body.action === 'vi_ai') return out(viAi(body));
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
+  if (body.action === 'vi_save_many') return out(withLock(function() { return viSaveMany(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -402,14 +405,20 @@ function viSheet(name) {
   return sh;
 }
 function viCell(v) { return v instanceof Date ? Utilities.formatDate(v, 'UTC', 'yyyy-MM-dd') : v; }
+// 2.94.0: a tab read once per request. Rows added (viAppend) and cells set (viSet) are kept in step with the copy;
+// a deleted row (viForget) makes the next read go back to the sheet. Each request is a fresh run, so nothing outlives it.
+var VI_MEMO = {};
+function viForget(name) { delete VI_MEMO[name]; }
 function viRows(name) {
+  if (VI_MEMO[name]) return VI_MEMO[name];
   var sh = viSheet(name), n = sh.getLastRow(), cols = VI[name];
-  if (n < 2) return [];
-  return sh.getRange(2, 1, n - 1, cols.length).getValues().map(function(v, i) {
+  var rows = n < 2 ? [] : sh.getRange(2, 1, n - 1, cols.length).getValues().map(function(v, i) {
     var o = { _row: i + 2 };
     cols.forEach(function(c, j) { o[c] = viCell(v[j]); });
     return o;
   });
+  VI_MEMO[name] = rows;
+  return rows;
 }
 function viAppend(name, rows) {
   if (!rows.length) return;
@@ -418,6 +427,8 @@ function viAppend(name, rows) {
   sh.getRange(start, 1, rows.length, cols.length).setNumberFormat('@').setValues(rows.map(function(r) {
     return cols.map(function(c) { return r[c] == null ? '' : String(r[c]); });
   }));
+  var memo = VI_MEMO[name];
+  if (memo) rows.forEach(function(r, k) { var o = { _row: start + k }; cols.forEach(function(c) { o[c] = r[c] == null ? '' : String(r[c]); }); memo.push(o); });
 }
 function viTrue(v) { return v === true || String(v).toUpperCase() === 'TRUE' || v === '' ; }
 function viNorm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
@@ -427,6 +438,8 @@ function viSlug(s) { return String(s || '').normalize('NFKC').toLowerCase().repl
 function viSet(name, row, fields) {
   var sh = viSheet(name), cols = VI[name];
   Object.keys(fields).forEach(function(k) { sh.getRange(row, cols.indexOf(k) + 1).setNumberFormat('@').setValue(String(fields[k])); });
+  var memo = VI_MEMO[name], o = memo && memo.filter(function(x) { return x._row === row; })[0];
+  if (o) Object.keys(fields).forEach(function(k) { o[k] = String(fields[k]); });
 }
 
 // A proposal set to "approved" in the sheet goes into the library the next time the library is read, then reads "applied".
@@ -586,7 +599,7 @@ function viRate(id, device, stars, now) {
   var mine = viRows('ratings').filter(function(r) { return r.match_id === id && String(r.device) === device; });
   if (mine.length) {
     if (stars) viSet('ratings', mine[0]._row, { stars: stars, updated: now });
-    else viSheet('ratings').deleteRow(mine[0]._row);
+    else { viSheet('ratings').deleteRow(mine[0]._row); viForget('ratings'); }
   } else if (stars) viAppend('ratings', [{ match_id: id, device: device, stars: stars, updated: now }]);
 }
 
@@ -632,6 +645,15 @@ function viSave(b) {
   var fresh = !id;
   if (fresh) id = 'm' + video;
   rows.forEach(function(r) { r.match_id = id; });
+  // 2.94.0: a save card check built without reading the match first (keep): when the match is already logged, this
+  // video is only linked to it (another version, or the same video again); its people, results and tags stay as they are.
+  if (b.keep && !fresh) {
+    var now0 = new Date().toISOString(), vid0 = viRows('match_videos').filter(function(v) { return String(v.video_id) === video; })[0];
+    var th0 = /^https:\/\/www\.stardom-world\.com\//.test(String(b.thumb || '')) ? String(b.thumb).slice(0, 500) : '', set0 = /^\d{1,9}$/.test(String(b.set || '')) ? String(b.set) : '';
+    if (!vid0) viAppend('match_videos', [{ match_id: id, video_id: video, version: version, source: src, updated: now0, thumb: th0, site_text: String(b.site_text || '').slice(0, 3000), set_id: set0 }]);
+    else if (!vid0.set_id && set0) viSet('match_videos', vid0._row, { set_id: set0, updated: now0 });
+    return { ok: true, match_id: id, linked: linked, kept: true };
+  }
 
   // Old rows out, new rows in, the difference noted in changes.
   var oldParts = viRows('participants').filter(function(p) { return p.match_id === id; });
@@ -639,6 +661,7 @@ function viSave(b) {
   var before = sum(oldParts), after = sum(rows), log = [];
   var psh = viSheet('participants');
   oldParts.map(function(p) { return p._row; }).sort(function(a, c) { return c - a; }).forEach(function(n) { psh.deleteRow(n); });
+  if (oldParts.length) viForget('participants');
   viAppend('participants', rows);
   if (before !== after) log.push({ time: now, match_id: id, tab: 'participants', field: 'sides', old: before, 'new': after, source: 'panel', device: device });
 
@@ -691,6 +714,7 @@ function viSave(b) {
     if (tagSum(oldTags) !== tagSum(newTags)) log.push({ time: now, match_id: id, tab: 'match_tags', field: 'tags', old: tagSum(oldTags), 'new': tagSum(newTags), source: 'panel', device: device });
     var tsh = viSheet('match_tags');
     oldTags.map(function(t) { return t._row; }).sort(function(x, y) { return y - x; }).forEach(function(n) { tsh.deleteRow(n); });
+    if (oldTags.length) viForget('match_tags');
     viAppend('match_tags', newTags);
   }
 
@@ -1235,4 +1259,20 @@ function viAi(b) {
       .map(function(m) { return String(m.name).replace(/^models\//, ''); }).filter(function(n) { return !/embedding|tts|image|audio|live|vision/i.test(n); }).slice(0, 20).join(', ');
   } catch (e) {}
   return { ok: false, error: 'no Gemini model answered (' + last + ')' + (have ? '. Models this key can call: ' + have + '. Put one in GEMINI_MODEL.' : '') };
+}
+
+// A card's matches in one request (2.94.0). Each item is what the logger would have sent for that match (vi_save), built
+// on the phone without reading the sheet first; one item's failure doesn't stop the rest.
+function viSaveMany(b) {
+  var items = Array.isArray(b.items) ? b.items.slice(0, 40) : [];
+  if (!items.length) return { ok: false, error: 'no matches' };
+  var results = items.map(function(it) {
+    var video = String(it && it.video || '');
+    try {
+      it.device = b.device; it.owner = b.owner;
+      var r = viSave(it);
+      return { video: video, ok: !!(r && r.ok), error: r && r.error || '', match_id: r && r.match_id || '', linked: !!(r && r.linked), kept: !!(r && r.kept) };
+    } catch (e) { return { video: video, ok: false, error: String(e && e.message || e) }; }
+  });
+  return { ok: true, results: results, saved: results.filter(function(x) { return x.ok; }).length };
 }

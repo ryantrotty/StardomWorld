@@ -44,3 +44,10 @@ Either way, the answer only makes suggestions, each with a box to untick:
 - the venue, when the show has none: the library's venue, or a new one (English name, Japanese kept), set once for the whole show.
 
 People are paired by match (the most wrestlers in common, else the same place on the card) and by side (the same), then by spelling, else in order. Nothing is saved until **Apply**; a date that differs from the site's is pointed out.
+
+## Saving and the card at the top (2.94.0)
+
+- **One request per card.** Confirm and Confirm all build each match's save on the phone, with the TV's logger in its collect mode (no read of the sheet first; the show's venue comes from the Venue line), and send the card as one `vi_save_many`. The phone shows "Saving to the sheet…" and you can move on at once, to the next show too. A match the sheet turns down shows why; a name or side problem marks it to look at, anything else can be confirmed again. A busy sheet is tried again up to three times.
+- **Already logged:** a collected save carries `keep`: when the video turns out to be another version of a match already logged, the sheet only links it (match_videos, its show page) and leaves the match's people, results and tags as they are. A logged match whose number changed (card order) is still re-saved the old way, reading it first.
+- **The sheet reads each tab once per request** (and keeps the copy in step with what it writes), so single saves are quicker too, on the TV as well.
+- **The card at the top:** the venue (with its editing when it isn't set), then each match with its state, Confirm all and Next. Cards show only for matches that need a look; tap a row to open its card, or Show all cards. When everything is ready no card, and no picture, is shown.
