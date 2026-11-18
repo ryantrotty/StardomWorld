@@ -4,9 +4,13 @@
   // press of OK confirms it. Only talks to the sheet (AndroidHost.indexSync), never to the video site, and only when opened.
   if (window.__tvIndexPanel) return;
   var U = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
-  if (!U || !window.AndroidHost || !AndroidHost.indexSync) return;
+  if (!window.AndroidHost || !AndroidHost.indexSync) return;
+  // 2.83.0: the panel also opens away from a video page, for one match of StarScope card check (assets/cardcheck.js):
+  // CX is that match (set, video, the page facts read for it, its place on the card, what to do once saved). U then
+  // holds its ids, as it would on the video page.
+  var PAGE = U, CX = null;
   window.__tvIndexPanel = true;
-  var LIB_KEY = 'tvVixLibV3', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', MARK_KEY = 'tvVixMarks' + U[2];
+  var LIB_KEY = 'tvVixLibV3', RECENT_KEY = 'tvVixRecentV1', AUTO_KEY = 'tvVixAuto', MARK_KEY = U ? 'tvVixMarks' + U[2] : '';
   var BELL = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4C242" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-6px;margin-right:8px"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/><path d="M2.5 7.5A10 10 0 0 1 5.5 3M21.5 7.5A10 10 0 0 0 18.5 3"/></svg>';
   var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var T = ja ? { head: 'この試合を登録', side: 'サイド', add: '+ 選手を追加', addSide: '+ サイド', save: '保存', notSaved: '保存できませんでした', linkedShort: 'リンクしました', next: '保存して次の試合', close: '閉じる',
@@ -103,7 +107,14 @@
       '#tvx .ltr{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0}',
       '#tvx .ltr button{min-width:36px;min-height:38px;padding:2px 4px;text-align:center;font-size:15px}',
       '#tvx .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;overflow:auto;padding:3px;align-content:start;flex:1 1 auto}',
-      '#tvx .grid small{display:block;font:600 12px Arial;color:#9AA6B4}'
+      '#tvx .grid small{display:block;font:600 12px Arial;color:#9AA6B4}',
+      // Inside card check's right panel (2.84.0): no layer over the page, a solid panel that fills its place.
+      '#tvx.emb{position:relative;inset:auto;z-index:auto;background:none;padding:0;display:block;height:100%}',
+      '#tvx.emb .p{width:100%;max-width:none;height:100%;max-height:none;background:#0F151C;border-color:#2A323C;box-sizing:border-box}',
+      '#tvx.emb .sides{flex-wrap:wrap}#tvx.emb .c{min-width:200px}',
+      // Preview in the panel: the two cards side by side at half width, the list under them tighter.
+      '#tvx.emb .body [style*="width:330px"]{width:calc(50% - 14px)!important}#tvx.emb .body [style*="height:186px"]{height:auto!important;aspect-ratio:16/9}',
+      '#tvx.emb .body [style*="min-width:220px"]{min-width:0!important;width:100%}#tvx.emb .body [style*="margin:8px 0"]{margin:3px 0!important;font-size:15px!important}'
     ].join('\n');
     document.head.appendChild(st);
     root = document.createElement('div');
@@ -111,6 +122,20 @@
     document.body.appendChild(root);
   }
 
+  // Card check (2.84.0): the panel sits in card check's own right panel instead of over the page; a quick Confirm
+  // saves without showing it at all.
+  function place() {
+    if (!root) return;
+    var host = CX && CX.hostEl;
+    if (host) { if (root.parentNode !== host) host.appendChild(root); root.classList.add('emb'); }
+    else { if (root.parentNode !== document.body) document.body.appendChild(root); root.classList.remove('emb'); }
+  }
+  function reveal() {
+    if (!CX) return;
+    if (!CX.hostEl && CX.host) CX.hostEl = CX.host();
+    place();
+    root.style.display = CX.hostEl ? 'block' : 'flex';
+  }
   // The Save button says how the save went (2.60.2): Saving…, Saved (or Linked), Not saved; back to Save after 3 s.
   var saveLabel = '', saveTimer = 0;
   function saveBtn(text, keep) {
@@ -124,7 +149,8 @@
 
   // Where this video sits in its set, in show order (the carousel is already in that order). Comment clips don't count.
   function setPlace() {
-    if (!U[1]) return null;
+    if (CX) return CX.place || null;
+    if (!U || !U[1]) return null;
     var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];
     if (!c) return null;
     var ids = [], seen = {};
@@ -141,7 +167,8 @@
   // For the phone logger's playback notes (assets/scopelink.js, 2.68.0): where this video sits on the show's card.
   window.__tvVixPlace = setPlace;
   function setNext() {
-    if (!U[1]) return null;
+    if (CX) return null;   // card check moves to the next match itself
+    if (!U || !U[1]) return null;
     var c = document.querySelectorAll('.content-list.js-list-slide, .js-list-slide')[0];
     if (!c) return null;
     var out = [], seen = {};
@@ -158,7 +185,7 @@
   function render() {
     ensure();
     var h = '<div class="p"><div style="display:flex;align-items:center;gap:12px"><span style="line-height:0"><svg width="34" height="34" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#fff"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#fff"/><path d="M33 12.5H40V27.5H33Z" fill="#fff"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="#fff" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></span><span style="font:900 24px Arial;letter-spacing:.06em">STAR<span style="color:#F4C242">SCOPE</span></span><span style="font:600 14px Arial;color:#C9D2DC;margin-left:6px">' + T.tagline + '</span></div><div style="height:14px"></div>';
-    h += '<div class="tabs">' + chip('bell', BELL + bellLabel(), '') + (state ? TABS.map(function(t) { return chip('T' + t, tabLabel(t), state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
+    h += '<div class="tabs">' + (CX ? '' : chip('bell', BELL + bellLabel(), '')) + (state ? TABS.map(function(t) { return chip('T' + t, tabLabel(t), state.tab === t ? 'on' : ''); }).join('') : '') + '</div>';
     if (state && state.tab !== 'people') h += '<div class="body">' + tabHtml() + '</div>';
     else h += '<div class="sides">';
     if (state && state.tab === 'people') {
@@ -334,8 +361,9 @@
     function big(s) { return s.length > 2 || (state.tags.stipulation || []).some(function(x) { return /^(gauntlet|royal|rumble)$/.test(x); }); }
     function teamNames(lang) {
       var out = sides.map(function(sd) { var t = (lib.teams || []).filter(function(x) { return x.id === sideTeam(sd); })[0], f = (lib.factions || []).filter(function(x) { return x.id === sideFaction(sd); })[0]; return t ? t.en : (f ? (lang === 'ja' && f.ja ? f.ja : f.en) : ''); });
-      return out.every(Boolean) ? out : null;
+      return out.some(Boolean) ? out : null;   // 2.85.0: per side, '' where a side has none
     }
+    function multi(s) { return big(s) || s.reduce(function(a, x) { return a + x.length; }, 0) > 4; }
     // Same rules as specials() in scripts/video_index_log.gs (2.65.2): the stipulations kind() doesn't already say.
     function specials(lang) {
       var t = state.tags.title || [];
@@ -364,7 +392,7 @@
     }
     var place = state.cardNo !== '' && state.cardNo != null ? { no: state.cardNo, total: state.cardTotal } : null;
     return {
-      v: { s: en, sj: jp, e: event('en', en), ej: event('ja', jp), f: foot('en', en), fj: foot('ja', jp), tn: big(en) ? teamNames('en') : null, tnj: big(en) ? teamNames('ja') : null, n: place ? place.no : '', t: place ? place.total : '', d: state.date || '' },
+      v: { s: en, sj: jp, e: event('en', en), ej: event('ja', jp), f: foot('en', en), fj: foot('ja', jp), tn: multi(en) ? teamNames('en') : null, tnj: multi(en) ? teamNames('ja') : null, n: place ? place.no : '', t: place ? place.total : '', d: state.date || '' },
       have: [
         [T.cardNames, sides.length >= 2 && sides.every(function(s) { return s.people.every(function(p) { return p.id; }); })],
         [T.cardEvent, !!((state.tags.competition || []).length || (state.tags.title || []).length)],
@@ -588,10 +616,17 @@
       return;
     }
     if (line.cols) { var c2 = line.cols[col], n2 = idx + (down ? 1 : -1); if (c2[n2]) { go(c2[n2]); return; } }
+    // A tab with nothing to pick (Preview) can be taller than its space: Down from the tabs and Up from the buttons
+    // scroll it first (2.84.3).
+    var body = layer === 'main' && root.querySelector('.body');
+    if (body && !body.querySelector('.tvx-f') && body.scrollHeight > body.clientHeight + 4) {
+      if (down && a.closest('.tabs') && body.scrollTop + body.clientHeight < body.scrollHeight - 4) { body.scrollTop += 180; return; }
+      if (!down && a.closest('.row') && body.scrollTop > 0) { body.scrollTop -= 180; return; }
+    }
     go(enter(lines[li + (down ? 1 : -1)], down, x));
   }
 
-  function say(text, bad) { statusText = text; statusBad = !!bad; var s = root && root.querySelector('.s'); if (s) { s.textContent = text; s.className = 's' + (bad ? ' bad' : ''); } }
+  function say(text, bad) { if (bad && CX && root && root.style.display === 'none') reveal(); statusText = text; statusBad = !!bad; var s = root && root.querySelector('.s'); if (s) { s.textContent = text; s.className = 's' + (bad ? ' bad' : ''); } }
 
   function remember(id) { var L = (load(RECENT_KEY) || []).filter(function(x) { return x !== id; }); L.unshift(id); store(RECENT_KEY, L.slice(0, 16)); }
 
@@ -715,15 +750,27 @@
     var show = rec.shows && rec.shows[0];
     var place = setPlace();
     busy = true; saveBtn(T.saving, true);
-    call({ action: 'vi_save', video: U[2], version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
+    call({ action: 'vi_save', video: U[2], source: CX && CX.thumb ? 'thumb' : '',
+      // Card check (2.84.4): the picture and the page's text, since the match was never opened ("videos" has no row).
+      thumb: CX ? rec.thumb || '' : '', site_text: CX ? [rec.title_en, rec.title_ja, (rec.lines || []).join(' ')].filter(Boolean).join(' ') : '', version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: state.cardTotal || '', card_no: state.cardNo, is_dark: state.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },
     function(res) {
       busy = false;
+      // The sheet was busy with another save (2.84.3): try again by itself, up to three times, a few seconds apart.
+      if (!res.ok && res.busy && (state.busyTries || 0) < 3) {
+        state.busyTries = (state.busyTries || 0) + 1;
+        saveBtn(T.saving, true); say(ja ? 'シートが使用中です。もう一度保存します…' : 'The sheet is busy; saving again…');
+        setTimeout(function() { if (window.__tvIndexIsOpen) save(nextHref); }, 3000 * state.busyTries);
+        return;
+      }
+      state.busyTries = 0;
       if (!res.ok) { saveBtn(T.notSaved); say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
       try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV4'); } catch (e) {}
       saveBtn(res.linked ? T.linkedShort : T.saved);
       if (statusText && !statusBad) say('');   // the button says it now, not the line under it
+      // Card check: back to the card check page, which moves on.
+      if (CX) { var cx = CX; setTimeout(function() { if (window.__tvIndexIsOpen && CX === cx) { cx.saved = res; close(); } }, cx.quick ? 350 : 700); return; }
       // Once the sheet has it, the logger closes by itself (2.62.2), after a moment so "Saved" is seen.
       if (!nextHref) setTimeout(function() { if (window.__tvIndexIsOpen && layer === 'main') close(); }, 700);
       if (nextHref) { try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (e) {} location.href = nextHref; }
@@ -764,18 +811,29 @@
     if (!state.sides.length) state.sides = [{ role: '', team: '', people: [] }, { role: '', team: '', people: [] }];
     state.okText = showAny ? T.loaded : (page.length ? T.ready : T.noMatch);
     nameStatus();
-    lastFocus = 'bell';
+    lastFocus = CX ? 'save' : 'bell';
+    if (CX && CX.tab && CX.tab !== 'card') { state.tab = CX.tab; state.touched[CX.tab] = 1; if (CX.tab === 'finish') state.resOpen = true; lastFocus = CX.tab === 'people' ? 'p0_0' : 'save'; }
+    // Confirm & next on card check: straight to saving when every name is known; otherwise the People step shows
+    // which names to settle.
+    if (CX && CX.quick) {
+      if (stepDone('people')) { render(); save(null); return; }
+      state.tab = 'people'; lastFocus = 'p0_0'; CX.quick = false; reveal();
+    }
     render();
   }
 
-  function open() {
+  function open(cx) {
     if (window.__tvIndexIsOpen) return;
+    if (cx && cx.video) { CX = cx; U = [null, String(cx.set || ''), String(cx.video)]; MARK_KEY = 'tvVixMarks' + U[2]; }
+    else if (!PAGE) return;
     window.__tvIndexIsOpen = true;
     if (window.__tvFsCancel) window.__tvFsCancel();
     try { AndroidHost.indexPanel(true); } catch (e) {}
-    rec = window.__tvVixRec || null;
+    rec = CX ? CX.rec || null : window.__tvVixRec || null;
     marks = load(MARK_KEY) || { bell: '', end: '' };
-    state = null; layer = 'main'; lastFocus = 'bell'; say(T.loading); ensure(); root.style.display = 'flex'; render();
+    state = null; layer = 'main'; lastFocus = CX ? 'save' : 'bell'; say(T.loading); ensure();
+    if (CX && CX.quick) { place(); root.style.display = 'none'; } else if (CX) reveal(); else { place(); root.style.display = 'flex'; }
+    render();
     var cached = load(LIB_KEY);
     function withLib() {
       var show = rec && rec.shows && rec.shows[0];
@@ -788,6 +846,7 @@
     // The last copy opens the panel at once; a fresh one comes in behind it, so sheet changes show without waiting.
     if (cached && cached.lib) {
       setLib(cached.lib); withLib();
+      if (CX && Date.now() - (cached.t || 0) < 600000) return;   // card check: one copy every 10 minutes is enough (2.84.3)
       call({ action: 'vi_lib' }, function(r) {
         if (!r.ok) return;
         store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r);
@@ -808,10 +867,48 @@
   function close() {
     window.__tvIndexIsOpen = false;
     try { AndroidHost.indexPanel(false); } catch (e) {}
-    if (root) { root.style.display = 'none'; root.innerHTML = ''; }
+    if (root) { root.style.display = 'none'; root.innerHTML = ''; root.classList.remove('emb'); if (root.parentNode !== document.body) document.body.appendChild(root); }
+    if (CX) {
+      var cx = CX; CX = null; U = PAGE; MARK_KEY = U ? 'tvVixMarks' + U[2] : '';
+      if (cx.done) cx.done(cx.saved || null);
+      return;
+    }
     if (window.__tvFocusBar) window.__tvFocusBar('index');
   }
   window.__tvIndexOpen = open;
+  // For card check's summary (2.83.0): the same library and name matching the panel uses, without opening it.
+  window.__tvIndexKit = {
+    lib: function(done) {
+      var cached = load(LIB_KEY);
+      if (cached && cached.lib) { if (!lib) setLib(cached.lib); done(true); if (Date.now() - (cached.t || 0) < 600000) return; done = function() {}; }
+      call({ action: 'vi_lib' }, function(r) { if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); } done(!!lib); });
+    },
+    resolve: function(raw) { return lib ? resolve(raw) : ''; },
+    nameOf: function(id) { return lib ? nameOf(id) : id; },
+    // The site writes some venues two ways, 高知・セリーズ（CHRES）体育館 and 高知・［CHRES］セリーズ体育館: failing a straight
+    // match, the bracketed part is left out on both sides (2.84.1, card check only).
+    venue: function(raw) {
+      if (!lib) return null;
+      var id = matchVenue(raw);
+      if (!id) {
+        var bare = function(x) { return norm(String(x || '').replace(/[（(［\[【][^）)］\]】]*[）)］\]】]/g, '')); }, b = bare(raw);
+        if (b) (lib.venues || []).some(function(v) { if ([v.ja, v.en].some(function(x) { var n = bare(x); return n && b.indexOf(n) >= 0; })) { id = v.id; return true; } return false; });
+      }
+      var v = id && venueById(id);
+      return v ? { id: id, name: lab(v) } : null;
+    },
+    // What the panel would pre-pick from the titles: [{group, label}], titles and tournaments first.
+    suggest: function(text) {
+      if (!lib) return [];
+      var out = [];
+      SUGGEST.forEach(function(g) {
+        if (g === 'moment') return;
+        if (g === 'title' && (!/championship|選手権/i.test(text) || /挑戦者決定|next\s*challenger/i.test(text))) return;
+        listOf(g).forEach(function(x) { if (!x.k) return; var hit = false; try { hit = new RegExp(x.k, 'i').test(text); } catch (e) {} if (hit) out.push({ group: g, label: lab(x) }); });
+      });
+      return out;
+    }
+  };
   // Back: out of the pop-up first, then the panel.
   window.__tvIndexBack = function() {
     if (layer !== 'main') { layer = 'main'; pick = null; render(); } else close();
@@ -834,7 +931,7 @@
   // "Save and next match": the next page opens the panel once it has read its video.
   var auto = false;
   try { auto = sessionStorage.getItem(AUTO_KEY) === '1'; if (auto) sessionStorage.removeItem(AUTO_KEY); } catch (e) {}
-  if (auto) {
+  if (auto && PAGE) {
     var tries = 0, t = setInterval(function() {
       if (window.__tvVixRec || ++tries > 50) { clearInterval(t); open(); }
     }, 500);

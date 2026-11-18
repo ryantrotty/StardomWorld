@@ -2,6 +2,80 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.85.0
+
+Built on 2.84.7. Needs the new sheet script (deploy a new version) for team names on multi-person cards.
+
+- **Card check's Next show follows where you came from.** Opened from a year on Log a show: the next older show of that year that isn't fully logged, newest to oldest, then on into the year before (from the year pages the TV keeps; if it doesn't have the next page yet, that year's list opens). From Watched, not logged or Started: the next show in that list. The button names it: **Next: Tag League in Takasaki · 8 Nov**. Card check addresses now carry `&from=` (next, started, y2026).
+- **StarScope pictures by row, loaded and let go.** On every StarScope page (Recently added, Top rated, All matches, Shows, Log next, Log a show, and a wrestler's or team's StarScope results): the first two rows at once, then always the row after the one with focus and the one before it; a row two or more above the focus drops its pictures and gets them back when it is one row above again. The wrestler/team results page used to load every picture at once.
+- **Wrestler and tag team StarScope results are now every logged match** with that wrestler (or both partners on one side), the same as the StarScope page's wrestler filter; no longer only the ones the site's search would miss.
+- **Multi-person StarScope cards** (more than two sides, or more than four wrestlers) try, in order, until the names fit: each side's team or faction name where it has one and its wrestlers where not; the same in smaller type (15 px); surnames for the sides without a team name (one-word ring names unchanged), normal then smaller; then "…". Up to three sides get a line each. The sheet now gives a team or faction name per side wherever a side has one (it used to give them only when every side had one, and only for 3+ sides); the logger's Preview card follows the same rules.
+
+## 2.84.7
+
+Built on 2.84.6. Sheet script only; nothing changes in the app.
+
+- **`repairThumbSources()`** (run once from the Apps Script editor): card check saves made before the 2.83.0 script was deployed were marked "panel", as if logged while watching. It marks a match "thumb" when none of its videos was ever opened on a TV (no row in "videos") and none has a bell or end time; anything opened or timed is left as it is. Each change goes in "changes" (source "repair"), and it says how many it marked. Running it again changes nothing more.
+
+## 2.84.6
+
+Built on 2.84.5.
+
+- **Pictures for card-check matches come back without reopening each show.** 2.84.4 only filled a missing picture when you opened that show in card check again. Card check keeps every show page it has read on the TV, pictures included, so now, whenever the StarScope list loads, any logged match with no picture gets it from those saved pages, sent to the sheet in one call; at most once an hour, and nothing is asked of the site. Shows card-checked on another TV fill in from that TV.
+
+## 2.84.5
+
+Built on 2.84.4.
+
+- **Home is lighter while it sits there.** The site's own banner slider was hidden but kept running underneath, rotating out of sight and holding every one of its pictures, and the home page was searched every second, for as long as it was open, for that banner's slides. Now the slides are read until they have stayed the same for three checks in a row (30 s at most); then the site's slider is stopped (slick, Swiper or Owl, whichever it is) and taken off the page with its pictures, and the search stops. Our banner keeps rotating the slides it read, every 5 s, as before.
+
+## 2.84.4
+
+Built on 2.84.3. Needs the new sheet script (deploy a new version).
+
+- **Pictures for shows logged with card check.** StarScope takes a match's picture from the sheet's "videos" tab, which only has videos you have opened; a match logged with card check was never opened, so its card and its show's poster had none. Card check now saves the picture with the match (new `thumb` column in match_videos, its heading added by the script), and StarScope uses it when "videos" has nothing.
+- **Matches already logged without one** get theirs the next time you open their show in card check: the pictures come from the show page card check has already read, sent to the sheet in one call (`vi_thumbs`), so nothing more is asked of the site.
+- **The StarScope button** (only what the site would miss) now also knows what the page of a card-check match says (new `site_text` column), so those matches aren't shown as missed when their names are in the site's text.
+
+## 2.84.3
+
+Built on 2.84.2.
+
+- **"busy" when saving.** A save waits up to 25 s for the sheet's lock and then answers "busy". Every time the logger opened it also re-read the name library, and that read took the same lock, so in card check (an open and a save for each match) the two often met. Now: the script only locks a library read when there are approved proposals to apply (`scripts/video_index_log.gs`, needs the new deployment); in card check the logger re-reads the library at most every 10 minutes; and a "busy" save tries again by itself, up to three times (after 3, 6 and 9 s), saying so under the buttons.
+- **Preview in card check's panel.** Its two cards now sit side by side at half width with the list under them, and Down from the tabs / Up from the buttons scroll any tab that has nothing to select and doesn't fit (also in the logger on a video page).
+
+## 2.84.2
+
+Built on 2.84.1.
+
+- **Card check's Match type** showed the site's own title for the match ("◦Prologue Fight 1 - High Speed Championship Match"), which is only read, never saved, so it wasn't in Edit details to change. It now shows the type StarScope gives the match from its people, by the logger's rules: Singles match, Tag team match, 3-Way Battle and so on. The site's title is still there, on its own greyed **Site title** row, and the Suggested row wraps instead of cutting off.
+- Titles that start with ◦ or • lose that mark, like the ◆ ● ○ marks already were.
+
+## 2.84.1
+
+Built on 2.84.0.
+
+- **Card check venue.** The summary showed "? 高知・[CHRES] セリーズ体育館" while the logger showed Kochi Cerise Gymnasium: the site writes this show's venue as 高知・［CHRES］セリーズ体育館 but the venues tab has 高知・セリーズ（CHRES）体育館, so the straight match failed; the logger only had it because the show's venue was already saved. The summary now takes the venue the sheet already has for the show (from any logged match of it), and failing that matches with the bracketed part left out on both sides.
+- **No more words split across lines** in card check (DATE showing "20 / 26", "THE T / ITLE"): the label column is narrower in the Match and Show boxes, values stay on one line (the venue may wrap), and "Suggested from the title" is now "Suggested".
+
+## 2.84.0
+
+Built on 2.83.0 (card check). Version code 529, past 528 on fix/login-lands-on-mypage.
+
+- **Card check without the overlay.** Confirm & next saves without showing the logger: the button reads Saving…, then the next match comes up. Edit details and Add result & rating open the logger's tabs (Preview, Competitors, Match, Finish, Confirm) inside card check's right panel, as a solid panel, with the large thumbnail still on the left; Back closes them. A name not in the library on Confirm opens Competitors there too, and a save that fails shows the panel with the reason.
+- The logger on a video page is unchanged (it still floats over the player).
+
+## 2.83.0
+
+StarScope card check (private builds with StarScope logging), the StarScope menu group, and Community in Matches. Built on main (2.80.3); the 2.81.0 and 2.82.0 script branches (reading the site from the sheet script) are not used: the site blocks the script.
+
+- **Card check** (`assets/cardcheck.js`, new page `/mypage?tvscope=check&set=<id>`): log a show's card from its thumbnails and line-ups without playing anything. The show page is read once (kept a day); each match page is read one at a time as you reach it, plus the next one, at least 2 s apart. Nothing goes to the sheet's watch history. Left: the thumbnails large, ▲ ▼ moves between matches. Right: the watched line (from Log next's history), the people (✓ when the name is in the library, ? when not), match order, the site's match type, what the title suggests, and the show's date and venue. **Confirm & next** saves straight away when every name is known, otherwise the logger opens on People. **Edit details** and **Add result & rating** open the logger (Card / Finish) for that match; **Watch this match** opens the video page (no set page). A finished show gets a summary with Next show to log.
+- **Logger** (`assets/indexpanel.js`): can open for a card-check match (no bell button, no Save-and-next), and saves those as `source: "thumb"`. On video pages nothing changes. `__tvIndexKit` gives card check the same library and name matching.
+- **Video page reader** (`assets/videoindex.js`): set up on every page so card check can read fetched match pages (`__tvVixRead`); a video page's own reading and sending are unchanged.
+- **StarScope page, Log a show tab**: Watched, not logged (Log next's list), Started (shows with some matches logged) and Year (the site's own show list for that year, a page at a time: the next page only when the last row has focus, each page kept a day). Every card opens card check.
+- **Menu**: StarScope takes Community's place above My Favorites. Its flyout keeps the StarScope band from the Community flyout, then Log a show: up to four watched shows still to log, All shows to log, and By year (the four newest years, Earlier). The Community group is gone: **Most watched** and **Most favorited** are links in the Matches flyout beside Top rated (no Top 10 list or pictures, so opening the menu asks nothing of the site). Match types are unchanged.
+- **Sheet script** (`scripts/video_index_log.gs`): `vi_save` takes `source: "thumb"`; a match already logged while watching keeps `panel`, and watching and saving a thumb match makes it `panel`. StarScope cards carry `x.tb` (1 for a thumb entry).
+
 ## 2.80.3
 
 - Version code jumps to 526, past the builds already installed on the TVs (a local build had reached 525), so this branch installs over them. Nothing else changes.

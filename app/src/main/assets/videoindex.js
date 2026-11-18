@@ -6,8 +6,9 @@
   // or viewer details.
   if (window.__tvVideoIndex) return;
   var M = /^\/(?:set\/([0-9]+)\/)?contents\/([0-9]+)/.exec(location.pathname);
-  if (!M) return;
   window.__tvVideoIndex = true;
+  // 2.83.0: the reader below is also used by StarScope card check (assets/cardcheck.js) on video pages it fetches,
+  // so it is set up on every page; the page's own reading and sending only happen on a video page (see "if (!M)").
   var KEY = 'tvVideoIndexDry', MAX = 3000;
 
   function txt(el) { return el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
@@ -29,7 +30,7 @@
     if ((m = D_JA.exec(s))) return iso(m[1], m[2], m[3]);
     return enDate(s);
   }
-  var LEAD = /^\s*[◆◇■□●○★☆▼▽▶►・]+\s*/;
+  var LEAD = /^\s*[◆◇■□●○◦•★☆▼▽▶►・]+\s*/;   // ◦ • (2.84.2): older titles start with these too
   function num(s) { s = half(s).replace(LEAD, ''); if (D_YMD.test(s) || D_MDY.test(s)) return null; var m = /^\s*(\d{1,2})\s*[、,.．]\s*/.exec(s); return m ? +m[1] : null; }
   var ENG_MARK = /^\s*【\s*(?:English\s*Commentary|ENG)\s*】\s*/i;
   function cleanTitle(s) { return half(s).replace(ENG_MARK, '').replace(LEAD, '').replace(D_YMD, '').replace(D_MDY, '').replace(/^\s*\d{1,2}\s*[、,.．]\s*/, '').trim(); }
@@ -102,9 +103,9 @@
     }
     return r;
   }
-  function setsOf(yearHint) {
+  function setsOf(yearHint, doc) {
     var out = [];
-    Array.prototype.forEach.call(document.querySelectorAll('.accordion-box a[href*="/set/"]'), function(a) {
+    Array.prototype.forEach.call((doc || document).querySelectorAll('.accordion-box a[href*="/set/"]'), function(a) {
       var m = /\/set\/([0-9]+)/.exec(a.getAttribute('href') || ''), name = txt(a);
       if (!m || !name) return;
       var r = setOf(+m[1], name, yearHint);
@@ -134,21 +135,22 @@
     };
   }
   window.__tvVixParse = parseText;
-  function read() {
-    var wrap = document.querySelector('.content-ttl-wrap');
+  function read(doc, vid, sid) {
+    doc = doc || document;
+    var wrap = doc.querySelector('.content-ttl-wrap');
     if (!wrap) return null;
     var h1 = txt(wrap.querySelector('h1'));
     var L = lines(wrap.querySelector('.wswg-wrap')), P = parseText(h1, L);
-    var shows = setsOf(P.date ? P.date.slice(0, 4) : null);
+    var shows = setsOf(P.date ? P.date.slice(0, 4) : null, doc);
     var showName = shows.map(function(x) { return x.name; }).join(' ');
     var version = /ダイジェスト|digest/i.test(h1 + ' ' + L.join(' ')) ? 'digest' : (/【\s*(?:English\s*Commentary|ENG)\s*】|\(English\)/i.test(h1 + ' ' + L.join(' ') + ' ' + showName) ? 'en' : 'jp');
-    var og = document.querySelector('meta[property="og:image"]');
+    var og = doc.querySelector('meta[property="og:image"]');
     var tags = [];
-    Array.prototype.forEach.call(document.querySelectorAll('.tag-wrap a, .tag-wrap span'), function(t) { var s = txt(t); if (s && tags.indexOf(s) < 0) tags.push(s); });
+    Array.prototype.forEach.call(doc.querySelectorAll('.tag-wrap a, .tag-wrap span'), function(t) { var s = txt(t); if (s && tags.indexOf(s) < 0) tags.push(s); });
     var access = [];
-    Array.prototype.forEach.call(document.querySelectorAll('.content-ttl-wrap ~ * .tag, .content-status-box .tag'), function(t) { var s = txt(t); if (s && !/display:\s*none/.test(t.getAttribute('style') || '') && access.indexOf(s) < 0) access.push(s); });
+    Array.prototype.forEach.call(doc.querySelectorAll('.content-ttl-wrap ~ * .tag, .content-status-box .tag'), function(t) { var s = txt(t); if (s && !/display:\s*none/.test(t.getAttribute('style') || '') && access.indexOf(s) < 0) access.push(s); });
     return {
-      id: +M[2], set: M[1] ? +M[1] : null, h1: h1, version: version,
+      id: vid != null ? +vid : +M[2], set: sid != null ? (sid ? +sid : null) : (M && M[1] ? +M[1] : null), h1: h1, version: version,
       no: P.no,
       date: P.date || (shows[0] && shows[0].date) || null,
       title_en: P.title_en, title_ja: P.title_ja,
@@ -159,6 +161,10 @@
       lines: L, read: new Date().toISOString()
     };
   }
+  // Card check (2.83.0): the same reading for a video page fetched by the app (a parsed HTML document), with its ids.
+  window.__tvVixRead = function(doc, vid, sid) { return read(doc, vid, sid || ''); };
+  window.__tvVixSetOf = setOf;
+  if (!M) return;
   function store(rec) {
     var all = {};
     try { all = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { all = {}; }

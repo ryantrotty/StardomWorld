@@ -3827,7 +3827,7 @@ class MainActivity : Activity() {
         // sheet. Replies go to __tvIndexReply. Runs only when the panel is opened; it never calls the video site.
         @android.webkit.JavascriptInterface
         fun indexSync(reqId: String, payload: String) =
-            sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose"), "__tvIndexReply")
+            sheetCall(reqId, payload, setOf("vi_lib", "vi_get", "vi_save", "vi_propose", "vi_thumbs"), "__tvIndexReply")
 
         // StarScope video cards (private builds, assets/starcards.js): one list from the sheet, replies to __tvStarCardsReply.
         @android.webkit.JavascriptInterface
@@ -6439,9 +6439,12 @@ class MainActivity : Activity() {
               window.__tvMenuAcct = links;
               var an = acctName();
               acctRemember(an, links);
-              // Community, My Favorites, then the account (2.31.0); the divider sits above Community.
-              h += group(T('Community', 'みんなの動画'), COMMUNITY, 'community').replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
-              h += group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
+              // StarScope, My Favorites, then the account; the divider sits above the first of them. (2.83.0: StarScope
+              // takes Community's place; Community's two charts are links in the Matches flyout.)
+              var scopeGrp = window.__tvScope ? group('StarScope', [[T('Recently added', '新着'), '/mypage?tvscope=recent', '新着']], 'starscope') : '';
+              if (scopeGrp) h += scopeGrp.replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
+              var favGrp = group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
+              h += scopeGrp ? favGrp : favGrp.replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
               h += '<div class="tv-sm-grp"><div class="tv-sm-item tv-sm-acct" tabindex="0" role="button" ' + (shelfMode() ? 'data-shelf="acct"' : 'data-grp="1"') + '><span class="tv-sm-acl">' + PERSON + '<span data-orig="' + esc(an) + '">' + esc(xl(an)) + '</span></span>' + chev() + '</div><div class="tv-sm-subs"></div></div>';
             } else {
               acctForget();
@@ -6843,7 +6846,17 @@ class MainActivity : Activity() {
                   '<a class="tv-sm-fi tv-shl-all tv-shl-all2" tabindex="0" data-go="' + tTy + '" href="' + esc(absUrl(tTy)) + '">' + esc(T('By match type', '試合形式別')) + '</a></div>';
                 // (2.47.0) the era tiles are gone from the shelf: they no longer fit; the Top Rated page still has By era
               }
-              h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-mcols">' + mhtml + '</div>' + topHtml;
+              // Community (2.83.0): its two charts, as links to the Community page, beside Top rated. No Top 10 list and
+              // no pictures here, so opening Matches asks nothing of the site.
+              var cmx = window.__tvComm, commHtml = '';
+              if (cmx) {
+                var cmW = cmx.url({ m: 'pc', w: 'a' }), cmF = cmx.url({ m: 'fc', w: 'a' });
+                commHtml = '<div><div class="tv-shl-t" style="margin-top:14px;">' + esc(T('COMMUNITY', 'みんなの動画')) + '</div>' +
+                  '<div class="tv-shl-g2" style="gap:8px;margin-bottom:8px;"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + esc(cmW) + '" href="' + esc(absUrl(cmW)) + '">' + esc(T('Most watched', '再生数')) + '</a>' +
+                  '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + esc(cmF) + '" href="' + esc(absUrl(cmF)) + '">' + esc(T('Most favorited', 'お気に入り数')) + '</a></div></div>';
+              }
+              h = '<div class="tv-shl-t">' + esc(T('MATCH TYPES', '試合形式')) + '</div><div class="tv-shl-mcols">' + mhtml + '</div>' +
+                (commHtml ? '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;align-items:start;"><div>' + topHtml + '</div>' + commHtml + '</div>' : topHtml);
             } else if (key === 'years') {
               w = 400;
               w = 1000;
@@ -6913,6 +6926,33 @@ class MainActivity : Activity() {
               if (spot) {
                 w = 1000;
                 h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';
+              }
+            }
+            else if (key === 'starscope') {
+              // StarScope (2.83.0): the StarScope band as the Community flyout had it, then Log a show (card check,
+              // builds with StarScope logging): the watched shows still to log, all of them, and the site's shows by year.
+              w = 980;
+              h = scopeBand();
+              var sx = window.__tvScope;
+              if (sx && sx.logOn && sx.logOn()) {
+                var toLog = sx.toLog(), TEL20 = '<svg width="20" height="20" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="#F4C242"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="#F4C242"/><path d="M33 13 L45 9 L45 31 L33 27 Z" fill="#F4C242"/></g></svg>';
+                h += '<div class="tv-shl-t" style="display:flex;align-items:center;gap:8px;">' + TEL20 + esc(T('LOG A SHOW', '大会を登録')) + '<span style="font-weight:600;letter-spacing:0;">· ' + esc(T("confirm a card from its thumbnails, no need to watch", 'サムネイルからカードを登録、再生は不要')) + '</span></div>';
+                if (toLog.length) {
+                  h += '<div class="tv-shl-g2" style="gap:8px 12px;margin-bottom:12px;">';
+                  toLog.slice(0, 4).forEach(function(x) {
+                    var dv = [x.date, x.venue].filter(Boolean).join(' · ');
+                    var stt = x.logged ? T(x.logged + (x.total ? ' of ' + x.total : '') + ' logged · continue', x.logged + (x.total ? '/' + x.total : '') + '試合登録済み・続き') : T(x.watched + ' watched · none logged', x.watched + '試合視聴・未登録');
+                    h += '<a class="tv-sm-fi tv-shl-ft" tabindex="0" data-go="' + esc(x.href) + '" href="' + esc(absUrl(x.href)) + '">' +
+                      (x.th ? '<img class="tv-shl-fi" style="object-fit:cover;" src="' + esc(x.th) + '" alt="">' : '<span class="tv-shl-fi tv-shl-plate"></span>') +
+                      '<span class="tv-shl-fx"><span class="tv-shl-ft1">' + esc(x.name) + '</span><span class="tv-shl-ft2">' + esc(dv) + '</span><span class="tv-shl-ft3">' + esc(stt.toUpperCase()) + '</span></span></a>';
+                  });
+                  h += '</div>';
+                }
+                var allLog = '/mypage?tvscope=log';
+                h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + allLog + '" href="' + esc(absUrl(allLog)) + '">' + esc(toLog.length ? T('All ' + toLog.length + ' shows to log', '登録する大会 ' + toLog.length) : T('Log a show', '大会を登録')) + (toLog.length ? '<span>' + esc(T('watched, not logged', '視聴済み・未登録')) + '</span>' : '') + '</a>' +
+                  '<span style="font:700 13px Arial;letter-spacing:1px;color:#9aa6b4;margin:0 4px 0 10px;">' + esc(T('BY YEAR', '年別')) + '</span>';
+                (sx.years() || []).slice(0, 4).forEach(function(y) { var yp = '/mypage?tvscope=log&y=' + y; h += '<a class="tv-sm-fi tv-ssb-b" tabindex="0" data-go="' + esc(yp) + '" href="' + esc(absUrl(yp)) + '">' + esc(y) + '</a>'; });
+                h += '<a class="tv-sm-fi tv-ssb-b" tabindex="0" data-go="' + allLog + '" href="' + esc(absUrl(allLog)) + '">' + esc(T('Earlier', 'それ以前')) + ' \u203a</a></div>';
               }
             }
             else if (key === 'community') {
@@ -10562,9 +10602,35 @@ class MainActivity : Activity() {
             });
           }
 
+          // 2.84.5: the site's own banner is read until its slides have stayed the same for 3 checks in a row (or for 30 s
+          // at most); then its slider is stopped and taken off the page, with its pictures, and the page is no longer
+          // searched every second. Our banner keeps the slides it read.
+          function stopSiteHero(sources) {
+            sources.forEach(function(el) {
+              try {
+                var jq = window.jQuery;
+                if (jq) {
+                  jq(el).find('.slick-initialized').addBack('.slick-initialized').each(function() { try { jq(this).slick('slickPause'); jq(this).slick('unslick'); } catch (e) {} });
+                  jq(el).find('.owl-carousel').addBack('.owl-carousel').each(function() { try { jq(this).trigger('stop.owl.autoplay'); } catch (e) {} });
+                }
+                Array.prototype.forEach.call([el].concat(Array.prototype.slice.call(el.querySelectorAll('.swiper, .swiper-container'))), function(sw) {
+                  try { if (sw.swiper) { if (sw.swiper.autoplay) sw.swiper.autoplay.stop(); sw.swiper.destroy(true, true); } } catch (e) {}
+                });
+                if (el.parentNode) el.parentNode.removeChild(el);
+              } catch (e) {}
+            });
+          }
           function updateHero() {
-            if (!isHomePage()) return;
+            if (!isHomePage() || window.__tvHeroDone) return;
             var found = collectHeroSlides();
+            window.__tvHeroTicks = (window.__tvHeroTicks || 0) + 1;
+            var sig0 = found.slides.map(function(x) { return x.bgUrl; }).join('|');
+            window.__tvHeroSame = found.slides.length && sig0 === window.__tvHeroSig ? (window.__tvHeroSame || 0) + 1 : 0;
+            if (window.__tvHeroSame >= 3 || window.__tvHeroTicks >= 30) {
+              window.__tvHeroDone = true;
+              stopSiteHero(found.sources);
+              return;
+            }
 
             // Hide the site's original hero (wherever it ended up) every tick
             found.sources.forEach(function(el) {
@@ -11333,6 +11399,9 @@ class MainActivity : Activity() {
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("videoindex.js"), null)
         if (BuildConfig.VIDEO_INDEX_DRYRUN) view.evaluateJavascript(assetText("favsync.js"), null)
         if (scopeLogOn()) view.evaluateJavascript(assetText("scopelink.js"), null)
+        // StarScope card check (2.83.0, assets/cardcheck.js): its own page, /mypage?tvscope=check&set=<id>. After
+        // videoindex.js, whose reader it uses on the match pages it fetches.
+        if (scopeLogOn()) view.evaluateJavascript(assetText("cardcheck.js"), null)
         view.evaluateJavascript(assetText("baricons.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
