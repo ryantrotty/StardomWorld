@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.3
+
+- **iPhone card check: setup check on screen.** When the sheet turns the key down, card check asks the script (`cc_ping`, answered without a key) and shows what it sees, kept on screen: the script version running at that address, whether `CARDCHECK_KEY` is found and its length, the length of the key typed on the phone, and whether they match (exactly, apart from spaces, apart from capitals, or it's the main key). Neither key is ever shown or sent back.
+- Sheet script: keys are compared without surrounding spaces. **Redeploy the script.**
+
 ## 2.91.2
 
 - **Fix (iPhone card check): setup.** The link box went empty after an error, so what was pasted couldn't be checked. Setup is now two boxes, kept as typed: the web app address (the phone logger's link works as it is; anything after `/exec` is left out) and the card check key. ⚙ reopens them with the address filled in.

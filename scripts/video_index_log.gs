@@ -78,6 +78,19 @@ function doPost(e) {
   var body;
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return out({ ok: false, error: 'bad json' }); }
   var props = PropertiesService.getScriptProperties(), key = props.getProperty('KEY'), ccKey = props.getProperty('CARDCHECK_KEY');
+  // 2.91.3: card check's setup check, answered without a key. Says which script is running, whether it can see
+  // CARDCHECK_KEY, and how the key sent compares with it; never either key.
+  if (body.action === 'cc_ping') {
+    var sent = String(body.key || ''), have = String(ccKey || ''), how = 'no';
+    if (have && sent === have) how = 'exact';
+    else if (have && sent.trim() === have.trim()) how = 'spaces';
+    else if (have && sent.trim().toLowerCase() === have.trim().toLowerCase()) how = 'case';
+    else if (key && sent.trim() === String(key).trim()) how = 'main';
+    var names = props.getKeys().filter(function(k) { return /card|check|cc/i.test(k); });
+    return out({ ok: true, script: '2.91.3', ccSet: !!have, ccLen: have.length, sentLen: sent.length, match: how, similar: names });
+  }
+  if (ccKey) ccKey = String(ccKey).trim();
+  if (typeof body.key === 'string') body.key = body.key.trim();
   // 2.91.0: card check on the iPhone (web/cardcheck, a Safari bookmark) uses its own key, CARDCHECK_KEY in the script
   // properties, good for logging only: no export, favorites, watch history, playback notes or debug.
   var cc = !!ccKey && body.key === ccKey;
