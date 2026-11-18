@@ -2,6 +2,41 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.89.0
+
+- **Venue line in card check: see, set and save the show's venue in one place.** Every match (and the end of the card) shows a Venue line under the show's name: the venue with "✓ set for the show" or "✓ matched in the library", or the site's spelling in orange when it isn't known.
+  - Left from Confirm reaches it. **Translate & add** (Japanese spellings) translates and opens a box with the English name to check or edit; **Pick from list** opens the same box empty; **Change** reopens it on a set venue. As you type, up to four venues from the library are offered ("Use this venue: …"), and "Save as a new venue: …" adds one (with the site's Japanese spelling kept as its Japanese name).
+  - Choosing one saves it **to the show, once**: every match already logged shows it, every match saved after it gets it, and the site's spelling becomes an alias of the venue, so the next show there matches on its own. No match has to be opened or saved again for it.
+  - The end of the card's warning now points to the Venue line.
+- Sheet script: `vi_show_venue`; the shows tab gains an `updated` column (added by itself), so a show's venue reaches the TVs with the changes-only list. **Redeploy the script.**
+- docs/DESIGN.md: card check's venue line and end of the card, with the venue line's smaller buttons as a recorded exception.
+
+## 2.88.0
+
+- **StarScope list: only what changed, one request at a time.** The TV used to ask the sheet for the whole StarScope list whenever its copy was 30 minutes old, and again after every save in card check, so a 10-match show rebuilt and sent the whole list 10 times; a slow or failing list was asked for again on every page.
+  - The TV keeps the sheet's time of its last copy and asks only for what changed after it (matches saved or rated since, and the rest of their shows); the answer is merged into the copy it has, and cards the sheet no longer has are dropped. The whole list once a day, or when there's no copy.
+  - After a save, card check asks for just those changes. Confirm all asks once at the end.
+  - One request at a time across pages: while one is out, nothing else asks; a save made meanwhile asks once the answer is in.
+  - After a failure, a pause before the next try (30 s, doubling up to 10 minutes). Try again on the error screen skips it.
+- Sheet script: `vi_cards {since}`. **Redeploy the script.** An older script still works with this build (it just sends the whole list).
+
+## 2.87.1
+
+- **Fix: StarScope pages blank, StarScope filter button gone (since the 2.85.0 sheet script).** The sheet's card list read the teams and factions tabs again for every match with more than four wrestlers (every 6- and 8-person tag, since 2.85.0's multi-person names), four reads per match. With more shows logged, the list took longer than the app's 30 s wait, so no cards came and every StarScope page stayed blank. The tabs are now read once per list. **Redeploy the script** (this fixes 2.86.0 too, no new build needed).
+- A StarScope page whose list doesn't come now says so on screen, with the reason and Try again, instead of staying blank.
+
+## 2.87.0
+
+- **Translate a Japanese venue.** When a match's venue isn't in the library and the site writes it in Japanese, the logger's Match tab shows **Translate & add** beside it: Google's translator (through the sheet script, new action `vi_translate`) puts an English name in the box to check or edit, and Send adds the venue. The proposal box for a new venue also has a **Translate to English** button. The new venue keeps both names: the English one you sent and the site's Japanese spelling, so later shows at that venue match it on their own.
+- **Confirm all at the end of the card.** In card check, ▼ past the last match opens the end of the card: every match with its state (ready, logged, needs a look, not read yet) and **Confirm all (N)**, which saves the ready ones one after another, reading any unread match pages first (still one at a time, 2 s apart). A match whose names aren't all known is skipped and marked; Stop ends the run. A warning shows when the show's venue isn't in the library yet. When every match is logged, the Show logged panel opens as before.
+- Sheet script: `vi_translate`, and a new venue proposed in English with the site's Japanese name keeps that name as `name_ja`. **Redeploy the script.**
+
+## 2.86.0
+
+- **Faction pre-filled from its members.** In the logger (and so in card check's Confirm & next), a side of two or more gets its Faction filled in when every wrestler on it is in the library and all of them are members of one faction in the factions file (the roster's, with its remote updates) at the match's date: the faction's founded to disbanded years, so a 2021 match can get Oedo Tai or Queen's Quest and a 2026 one H.A.T.E. or STARS. Only when exactly one faction fits, and only factions that are also in the sheet's factions tab (matched by name). A line-up that names its faction, "(STARS)", still wins; a side with a tag team (exact members in the teams tab) shows the team, as before; a match already saved keeps what was saved.
+- **Card check shows it** above each side in its summary: "FACTION · STARS" or "TEAM · …", exactly what will be saved.
+- **Multi-person cards:** a team or faction name stands for a side of two or more only; a lone wrestler on a side keeps her own name.
+
 ## 2.85.0
 
 Built on 2.84.7. Needs the new sheet script (deploy a new version) for team names on multi-person cards.

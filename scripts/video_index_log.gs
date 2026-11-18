@@ -33,11 +33,15 @@
  *   vi_save    {video, version, match, participants, aliases}  saves a reviewed match; links duplicates by date and sides;
  *                                                              source "thumb" (2.83.0): from StarScope card check, not watched;
  *                                                              thumb, site_text (2.84.4): its picture and page text, kept in match_videos
+ *   vi_show_venue {show, venue, raw, name, date}               (2.89.0) a show's venue, set once for the whole show from card check;
+ *                                                              the site's spelling becomes the venue's alias
+ *   vi_translate {text}                                        (2.87.0) Japanese to English (Google's translator), for the logger
  *   vi_thumbs  {items: [{video, thumb}]}                        (2.84.4) pictures for card-check matches saved without one
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
  *                                                              from the owner's private build it is applied at once
  *   vi_export  {}                                              compiled index: ids and tags, with results kept apart
- *   vi_cards   {}                                              one entry per logged video for the StarScope cards and player:
+ *   vi_cards   {since?}                                        one entry per logged video for the StarScope cards and player
+ *                                                              (2.88.0: with since, only what changed after it, plus `all` and `now`):
  *                                                              names, event, match number, show, venue, bell and end times (2.65.0),
  *                                                              match id, round and special rules for the Shows page (2.66.0)
  *   vi_recent {limit}                                          Recently Watched (2.72.0): the newest videos in "videos" by last_seen
@@ -83,7 +87,7 @@ function doPost(e) {
   if (body.action === 'dbg_export') return out(dbgExport());
   if (body.action === 'vi_get') return out(viGet(body));
   if (body.action === 'vi_export') return out(viExport());
-  if (body.action === 'vi_cards') return out(viCards());
+  if (body.action === 'vi_cards') return out(viCards(body));
   if (body.action === 'vi_suggest') return out(viSuggest());
   if (body.action === 'vi_recent') return out(viRecent(body));
   if (body.action === 'vi_public') return out(viPublicFile());
@@ -95,7 +99,9 @@ function doPost(e) {
   // makes a save wait (a save that waits more than 25 s answers "busy").
   if (body.action === 'vi_lib' && !viRows('proposals').some(function(p) { return p.status === 'approved'; })) return out(viAction(body));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
+  if (body.action === 'vi_translate') return out(viTranslate(body));
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
+  if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -349,7 +355,7 @@ var VI = {
   match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
-  shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note'],
+  shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note', 'updated'],
   venues: ['venue_id', 'name_en', 'name_ja', 'prefecture', 'active', 'merged_into', 'note'],
   talent: ['talent_id', 'name_en', 'name_ja', 'search', 'status', 'active', 'merged_into', 'note'],
   teams: ['team_id', 'name_en', 'name_ja', 'member_ids', 'active', 'merged_into', 'note'],
@@ -425,8 +431,11 @@ function viApplyApproved() {
       viAppend('lists', [{ list: p.entity_id, value_id: made1, label_en: p.value, active: 'TRUE' }]);
     } else if (p.type === 'new_venue') {
       var ja = /[^\x00-\x7F]/.test(p.value);
+      // 2.87.0: an English name proposed for a venue the site writes in Japanese carries that Japanese (entity_id), kept as
+      // name_ja so the site's spelling matches it from then on.
+      var jaRaw = !ja && /[^\x00-\x7F]/.test(String(p.entity_id || '')) ? String(p.entity_id) : '';
       made1 = viSlug(p.value) || ('v' + p.proposal_id);
-      viAppend('venues', [{ venue_id: made1, name_en: ja ? '' : p.value, name_ja: ja ? p.value : '', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
+      viAppend('venues', [{ venue_id: made1, name_en: ja ? '' : p.value, name_ja: ja ? p.value : jaRaw, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_faction') {
       made1 = p.entity_id || viSlug(p.value);
       viAppend('factions', [{ faction_id: made1, name_en: p.value, active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
@@ -697,7 +706,12 @@ function viSave(b) {
 }
 
 // What the private build's video cards show: names, event, block, round, match number, date. Never the result.
-function viCards() {
+// 2.88.0: {since} answers with only the cards that changed after that time (the reply's `now` from the TV's last
+// copy): matches saved or rated since, and every match of a show one of them belongs to (a venue set on one match is
+// the whole show's). `all` lists every video that has a card, so the TV drops the ones that are gone. Without since,
+// or when the TV's copy is a day old, the whole list, as before.
+function viCards(b) {
+  var since = b && b.since ? String(b.since) : '', now = new Date().toISOString();
   var label = {}, names = {}, parts = {}, tags = {}, m2 = {};
   viRows('lists').forEach(function(l) { label[l.list + '/' + l.value_id] = { en: l.label_en, ja: l.label_ja || l.label_en }; });
   viRows('talent').forEach(function(t) { names[t.talent_id] = { en: t.name_en, ja: t.name_ja || t.name_en }; });
@@ -761,10 +775,13 @@ function viCards() {
     return kind(s, lang, t.stipulation);
   }
   // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
+  // 2.87.1: the teams and factions tabs are read once for the whole list. They were read again for every multi-person
+  // match (four reads each), which since 2.85.0 is every 6- and 8-person tag: the list took longer than the app waits.
+  var TN = { en: {}, ja: {} }, FN = { en: {}, ja: {} };
+  viRows('teams').forEach(function(x) { TN.en[x.team_id] = x.name_en; TN.ja[x.team_id] = x.name_ja || x.name_en; });
+  viRows('factions').forEach(function(x) { FN.en[x.faction_id] = x.name_en; FN.ja[x.faction_id] = x.name_ja || x.name_en; });
   function teamNames(p, lang) {
-    var by = [], tn = {}, fn = {};
-    viRows('teams').forEach(function(x) { tn[x.team_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
-    viRows('factions').forEach(function(x) { fn[x.faction_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
+    var by = [], tn = TN[lang === 'ja' ? 'ja' : 'en'], fn = FN[lang === 'ja' ? 'ja' : 'en'];
     p.forEach(function(x) { var nm = tn[x.team_id] || fn[x.faction_id] || ''; if (!by[x.side_no - 1]) by[x.side_no - 1] = nm; });
     by = by.filter(function(x) { return x !== undefined; });
     // 2.85.0: one name per side where known, '' where not (the cards fall back to the wrestlers for that side).
@@ -790,17 +807,28 @@ function viCards() {
   // For the StarScope page (2.63.0): ratings, and what the filters are built from.
   var rate = {};
   viRows('ratings').forEach(function(r) { if (Number(r.stars) >= 1) { var o = rate[r.match_id] = rate[r.match_id] || { s: 0, n: 0 }; o.s += Number(r.stars); o.n++; } });
-  var tmn = {}, fcn = {};
-  viRows('teams').forEach(function(x) { tmn[x.team_id] = x.name_en; });
-  viRows('factions').forEach(function(x) { fcn[x.faction_id] = x.name_en; });
+  var tmn = TN.en, fcn = FN.en;
   // For the StarScope player (2.65.0): the show's name and venue for the video page's title.
   var shw = {}, ven = {};
   viRows('venues').forEach(function(x) { ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en }; });
   viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, v: ven[x.venue_id] || null }; });
-  var map = {};
-  viRows('match_videos').forEach(function(v) {
+  var map = {}, all = [], mvRows = viRows('match_videos'), hot = null, hotShow = {};
+  if (since) {
+    hot = {};
+    // A time the sheet turned into a date shows only its day: that day counts as changed (more sent, nothing missed).
+    var newer = function(t) { t = String(t || ''); return t.length === 10 ? t >= since.slice(0, 10) : t > since; };
+    var touch = function(id, t) { if (newer(t) && m2[id]) { hot[id] = 1; if (m2[id].show_id) hotShow[String(m2[id].show_id)] = 1; } };
+    Object.keys(m2).forEach(function(id) { touch(id, m2[id].updated); });
+    mvRows.forEach(function(v) { touch(v.match_id, v.updated); });
+    viRows('ratings').forEach(function(r) { touch(r.match_id, r.updated); });
+    Object.keys(parts).forEach(function(id) { parts[id].forEach(function(x) { touch(id, x.updated); }); });
+    viRows('shows').forEach(function(x) { if (newer(x.updated)) hotShow[String(x.show_id)] = 1; });   // a show's venue set (2.89.0)
+  }
+  mvRows.forEach(function(v) {
     var m = m2[v.match_id], p = parts[v.match_id];
     if (!m || !p || !p.length) return;
+    all.push(String(v.video_id));
+    if (hot && !hot[v.match_id] && !hotShow[String(m.show_id || '')]) return;
     var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
     var sizes = en.map(function(x) { return x.length; }), rt = rate[v.match_id], groups = {};
     p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
@@ -817,9 +845,10 @@ function viCards() {
       // Card check (2.83.0): 1 when the match was logged from its thumbnail and line-up (not watched yet).
       tb: String(m.source) === 'thumb' ? 1 : 0
     };
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: multi(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: multi(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    var mu = multi(en, t.stipulation);
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
-  return { ok: true, map: map };
+  return since ? { ok: true, map: map, now: now, since: since, all: all } : { ok: true, map: map, now: now, full: true };
 }
 
 // StarScope Log next (2.67.0): every video the private build has read ("videos") that has no match_videos row, grouped
@@ -1111,4 +1140,38 @@ function repairThumbSources() {
     viAppend('changes', log);
     return 'marked ' + n + ' matches as thumb';
   } finally { lock.releaseLock(); }
+}
+
+// Japanese to English for the logger's Translate buttons (2.87.0): Google's translator, kept for 6 hours per text.
+function viTranslate(b) {
+  var text = String(b.text || '').slice(0, 300);
+  if (!text) return { ok: false, error: 'no text' };
+  var cache = CacheService.getScriptCache(), key = 'tr_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, text, Utilities.Charset.UTF_8));
+  var hit = cache.get(key);
+  if (hit) return { ok: true, text: hit };
+  try {
+    var en = LanguageApp.translate(text, 'ja', 'en');
+    cache.put(key, en, 21600);
+    return { ok: true, text: en };
+  } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+}
+
+// A show's venue from card check (2.89.0): one save for the whole show. Logged matches show it through the shows tab;
+// matches saved after it get it from the show (vi_get). The site's spelling (raw) becomes an alias of the venue, so the
+// next show there matches by itself.
+function viShowVenue(b) {
+  var show = String(b.show || '').replace(/\D/g, ''), vid = String(b.venue || ''), raw = String(b.raw || '').slice(0, 200);
+  if (!show || !vid) return { ok: false, error: 'show and venue needed' };
+  var v = viRows('venues').filter(function(x) { return x.venue_id === vid; })[0];
+  if (!v) return { ok: false, error: 'no such venue' };
+  var now = new Date().toISOString();
+  var row = viRows('shows').filter(function(x) { return String(x.show_id) === show; })[0];
+  if (row) viSet('shows', row._row, { venue_id: vid, venue_raw: row.venue_raw || raw, updated: now });
+  else viAppend('shows', [{ show_id: show, name: String(b.name || '').slice(0, 300), date: String(b.date || ''), venue_id: vid, venue_raw: raw, active: 'TRUE', updated: now }]);
+  var n = viNorm(raw), alias = false;
+  if (n && n !== viNorm(v.name_ja) && n !== viNorm(v.name_en) && !viRows('aliases').some(function(a) { return a.normalized === n; })) {
+    viAppend('aliases', [{ alias: raw, normalized: n, entity_type: 'venue', entity_id: vid, source: 'cardcheck', status: 'approved' }]);
+    alias = true;
+  }
+  return { ok: true, show: show, venue: vid, alias: alias };
 }
