@@ -773,10 +773,24 @@
     };
     try { H.indexSync('sct1', JSON.stringify({ action: 'vi_thumbs', items: items })); } catch (e) { window.__tvIndexReply = prev; }
   }
+  // 2.87.1: a StarScope page whose list didn't come says so and why (it was left blank), and can ask again.
+  function loadFailed(why) {
+    if (!scopeKind || scopeKind === 'check' || !document.body) return;
+    var d = document.getElementById('tvsc-fail');
+    if (!d) { d = document.createElement('div'); d.id = 'tvsc-fail'; d.className = 'notranslate'; d.setAttribute('translate', 'no'); document.body.appendChild(d); }
+    d.style.cssText = 'position:fixed;inset:0;z-index:99000;background:#0B1118;color:#fff;font-family:Arial,Helvetica,sans-serif;padding:48px 64px;box-sizing:border-box';
+    d.innerHTML = '<div style="font:900 26px Arial;margin-bottom:12px">' + esc(ja ? 'STARSCOPEを読み込めませんでした' : "StarScope couldn't load its list") + '</div>' +
+      '<div style="font:600 17px Arial;color:#FF7A66;margin-bottom:22px">' + esc(why) + '</div>' +
+      '<button type="button" id="tvsc-retry" style="height:48px;padding:0 22px;border-radius:10px;border:2px solid #FFB347;background:#FFB347;color:#1A1A1A;font:700 17px Arial;outline:none">' + esc(ja ? 'もう一度' : 'Try again') + '</button>';
+    var b = d.querySelector('#tvsc-retry');
+    b.onclick = function() { b.textContent = ja ? '読み込み中…' : 'Loading…'; try { H.starCards('c1', JSON.stringify({ action: 'vi_cards' })); } catch (e) {} };
+    b.focus();
+  }
   window.__tvStarCardsReply = function(id, text) {
     var r; try { r = JSON.parse(text); } catch (e) { return; }
     if (id === 's1') { if (r && r.ok) gotSuggest(r); return; }
-    if (!r || !r.ok || !r.map) return;
+    if (!r || !r.ok || !r.map) { if (!map) loadFailed(r && r.error ? String(r.error) : 'no reply'); return; }
+    var fail = document.getElementById('tvsc-fail'); if (fail) fail.remove();
     map = r.map;
     try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), map: map })); } catch (e) {}
     try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)

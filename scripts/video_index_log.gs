@@ -766,10 +766,13 @@ function viCards() {
     return kind(s, lang, t.stipulation);
   }
   // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
+  // 2.87.1: the teams and factions tabs are read once for the whole list. They were read again for every multi-person
+  // match (four reads each), which since 2.85.0 is every 6- and 8-person tag: the list took longer than the app waits.
+  var TN = { en: {}, ja: {} }, FN = { en: {}, ja: {} };
+  viRows('teams').forEach(function(x) { TN.en[x.team_id] = x.name_en; TN.ja[x.team_id] = x.name_ja || x.name_en; });
+  viRows('factions').forEach(function(x) { FN.en[x.faction_id] = x.name_en; FN.ja[x.faction_id] = x.name_ja || x.name_en; });
   function teamNames(p, lang) {
-    var by = [], tn = {}, fn = {};
-    viRows('teams').forEach(function(x) { tn[x.team_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
-    viRows('factions').forEach(function(x) { fn[x.faction_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
+    var by = [], tn = TN[lang === 'ja' ? 'ja' : 'en'], fn = FN[lang === 'ja' ? 'ja' : 'en'];
     p.forEach(function(x) { var nm = tn[x.team_id] || fn[x.faction_id] || ''; if (!by[x.side_no - 1]) by[x.side_no - 1] = nm; });
     by = by.filter(function(x) { return x !== undefined; });
     // 2.85.0: one name per side where known, '' where not (the cards fall back to the wrestlers for that side).
@@ -795,9 +798,7 @@ function viCards() {
   // For the StarScope page (2.63.0): ratings, and what the filters are built from.
   var rate = {};
   viRows('ratings').forEach(function(r) { if (Number(r.stars) >= 1) { var o = rate[r.match_id] = rate[r.match_id] || { s: 0, n: 0 }; o.s += Number(r.stars); o.n++; } });
-  var tmn = {}, fcn = {};
-  viRows('teams').forEach(function(x) { tmn[x.team_id] = x.name_en; });
-  viRows('factions').forEach(function(x) { fcn[x.faction_id] = x.name_en; });
+  var tmn = TN.en, fcn = FN.en;
   // For the StarScope player (2.65.0): the show's name and venue for the video page's title.
   var shw = {}, ven = {};
   viRows('venues').forEach(function(x) { ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en }; });
@@ -822,7 +823,8 @@ function viCards() {
       // Card check (2.83.0): 1 when the match was logged from its thumbnail and line-up (not watched yet).
       tb: String(m.source) === 'thumb' ? 1 : 0
     };
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: multi(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: multi(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    var mu = multi(en, t.stipulation);
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return { ok: true, map: map };
 }

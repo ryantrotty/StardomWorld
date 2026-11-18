@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.87.1
+
+- **Fix: StarScope pages blank, StarScope filter button gone (since the 2.85.0 sheet script).** The sheet's card list read the teams and factions tabs again for every match with more than four wrestlers (every 6- and 8-person tag, since 2.85.0's multi-person names), four reads per match. With more shows logged, the list took longer than the app's 30 s wait, so no cards came and every StarScope page stayed blank. The tabs are now read once per list. **Redeploy the script** (this fixes 2.86.0 too, no new build needed).
+- A StarScope page whose list doesn't come now says so on screen, with the reason and Try again, instead of staying blank.
+
 ## 2.87.0
 
 - **Translate a Japanese venue.** When a match's venue isn't in the library and the site writes it in Japanese, the logger's Match tab shows **Translate & add** beside it: Google's translator (through the sheet script, new action `vi_translate`) puts an English name in the box to check or edit, and Send adds the venue. The proposal box for a new venue also has a **Translate to English** button. The new venue keeps both names: the English one you sent and the site's Japanese spelling, so later shows at that venue match it on their own.
