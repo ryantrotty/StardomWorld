@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.90.1
+
+- **Year list shows every show again.** 2.90.0's hiding of fully logged shows is undone: it read further pages of the year by itself, which would add calls to the site as more shows are logged. Fully logged shows are listed and marked complete, as before. The per-page counts (English and Japanese pages) stay.
+
 ## 2.90.0
 
 - **Log a show, by year: English and Japanese pages counted on their own.** A match belongs to the show it was first logged from, so when both the English commentary page and the Japanese page of a show were logged, one of them showed "0 logged". Each show page now counts its own videos: from the page as card check read it, and from the page each video was saved from (new: saves send it, the sheet keeps it in `match_videos.set_id`, the cards carry it as `vs`).

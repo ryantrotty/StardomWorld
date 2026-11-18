@@ -567,9 +567,7 @@
       cards = showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); }).map(function(s) { return showCard(s, checkHref(s.sid, 'started')); });
     } else {
       if (!yl || yl.y !== home.ly) yearLoad(home.ly);
-      // Shows already fully logged are left out (2.90.0); when a page leaves too few, the next one is read by itself.
-      cards = yl ? yl.items.filter(function(x) { return !setState(x.set).complete; }).map(yearCard) : [];
-      if (yl && cards.length < 6 && !yl.done && !yl.busy && !yl.err) setTimeout(yearPage, 1500);   // one page at a time, 1.5 s apart
+      cards = yl ? yl.items.map(yearCard) : [];
       var tail = yl && yl.err ? '<div class="rs" style="color:#FF7A66">' + esc(HT.lErr + ' (' + yl.err + ')') + '</div><div class="row">' + chipH('ltry', HT.lTry, false) + '</div>'
         : (yl && !yl.done ? '<div class="rs">' + esc(HT.lMore) + '</div>' : (cards.length ? '<div class="rs">' + esc(HT.lEnd) + '</div>' : ''));
       if (!cards.length && yl && yl.done) return h + '<div class="rs">' + HT.lNone + '</div>';
