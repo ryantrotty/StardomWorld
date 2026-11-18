@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.7
+
+- **Fix (iPhone card check): every match "Couldn't read this page (HTTP 404)".** 2.91.4's fallback took video cards from elsewhere on the mobile show page (the site's newest videos, not the show's matches) and then asked for them as the show's match pages. It's gone: a show page without match links is always read from the show's own list (2.91.6). Show lists the phone kept from before are dropped.
+
 ## 2.91.6
 
 - **iPhone card check reads shows from the site's own match list.** The mobile show page has no match links; it loads them from `/user_api/set/<id>/contents` (seen in the page report). Card check now asks that list once (all matches, `size=60`), and each entry's description already holds the line-up in both languages, so the matches are read from it with the TV's reader and no match page is opened: two requests per show (the show page and its list) instead of one per match.
