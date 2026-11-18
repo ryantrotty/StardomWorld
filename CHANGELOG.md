@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.92.1
+
+- **iPhone card check, AI answers: line-ups for matches the site gave none.** Older shows' descriptions often carry no line-up the reader understands, so most matches had no names and the answer had nothing to fill. Each such match now gets "Match N line-up → …" from the answer (by its place on the card when the answer has as many matches as the site), and every wrestler in it the library doesn't know is offered as a new wrestler. Applied: new wrestlers first, then the line-ups (kept on the phone for Confirm), so a confirmed match saves with them.
+- Sheet script, Ask Gemini: a model the key has no quota for (429) now falls back to the next model, as one it doesn't know (404) did; `gemini-2.5-flash-lite` is the last try. **Redeploy the script.**
+
 ## 2.92.0
 
 - **iPhone card check: help from an AI for what the site doesn't say** (docs/CARDCHECK_PHONE.md).

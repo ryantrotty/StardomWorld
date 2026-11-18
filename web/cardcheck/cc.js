@@ -565,7 +565,28 @@
     if (!data || !Array.isArray(data.matches)) return { err: 'No card found in the answer. It should hold the JSON block the prompt asks for.' };
     var K = kit(), out = [], norm = function(x) { return String(x || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-]+/g, ''); };
     var aiId = function(p) { return p ? (K.resolve(p.en || '') || K.resolve(p.ja || '')) : ''; };
-    var used = {};
+    var used = {}, newSeen = {}, same = data.matches.length === show.videos.length;
+    var addNew = function(p, v, no) {
+      var key = norm(p.en || p.ja); if (!key || newSeen[key] || aiId(p)) return;
+      newSeen[key] = 1;
+      out.push({ k: 'new', v: v, no: no, raw: p.ja || p.en, other: p.ja && p.en ? p.en : '', en: p.en || '', ja: p.ja || '', on: true });
+    };
+    // 2.92.1: a match the site gave no line-up for takes the answer's, matched by its place on the card (when the
+    // answer has as many matches as the site) and offered as a line-up to approve; its unknown wrestlers as new ones.
+    show.videos.forEach(function(v, vi) {
+      var r = recs[v.id]; if (status(v)) return;
+      if (r && !r.failed && sides(r).A.length >= 2) return;
+      var mi = -1;
+      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && (Number(m.no) === vi + 1 || (same && k === vi))) mi = k; });
+      var am = mi >= 0 ? data.matches[mi] : null;
+      if (!am || !Array.isArray(am.sides) || am.sides.length < 2) return;
+      used[mi] = 1;
+      var aS = am.sides.map(function(x) { return (x || []).filter(function(p) { return p && (p.en || p.ja); }); });
+      if (aS.some(function(x) { return !x.length; })) return;
+      out.push({ k: 'lineup', v: v.id, no: vi + 1, en: aS.map(function(x) { return x.map(function(p) { return p.en || p.ja; }); }), ja: aS.map(function(x) { return x.map(function(p) { return p.ja || p.en; }); }),
+        text: aS.map(function(x) { return x.map(function(p) { var id = aiId(p); return id ? K.nameOf(id) : (p.en || p.ja); }).join(' & '); }).join(' vs '), type: am.type || '', on: true });
+      aS.forEach(function(x) { x.forEach(function(p) { addNew(p, v.id, vi + 1); }); });
+    });
     show.videos.forEach(function(v, vi) {
       var r = recs[v.id]; if (!r || r.failed || status(v)) return;
       var sd = sides(r), mine = sd.A.map(function(names, si) { return names.map(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : ''; return { raw: rw, other: o, id: K.resolve(rw) || K.resolve(o) }; }); });
@@ -576,7 +597,7 @@
         if (used[mi] || !Array.isArray(m.sides)) return;
         var ids = {}; m.sides.forEach(function(x) { (x || []).forEach(function(p) { var id = aiId(p); if (id) ids[id] = 1; }); });
         var sc = 0; mine.forEach(function(x) { x.forEach(function(p) { if (p.id && ids[p.id]) sc += 2; }); });
-        if (Number(m.no) === vi + 1) sc += 1;
+        if (Number(m.no) === vi + 1 || (same && mi === vi)) sc += 1;
         if (sc > bs) { bs = sc; best = mi; }
       });
       if (best == null || bs < 1) return;
@@ -601,8 +622,8 @@
           if (at < 0) return;
           var p = left.splice(at, 1)[0], id = aiId(p), nm = p.en || p.ja;
           if (!nm) return;
-          out.push(id ? { k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: u.other, id: id, name: K.nameOf(id), on: true }
-            : { k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', on: true });
+          if (id) out.push({ k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: u.other, id: id, name: K.nameOf(id), on: true });
+          else if (!newSeen[norm(p.en || p.ja)]) { newSeen[norm(p.en || p.ja)] = 1; out.push({ k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', on: true }); }
         });
       });
     });
@@ -626,9 +647,9 @@
       if (a.note) h += '<div class="msg er">' + esc(a.note) + '</div>';
       h += '<div class="gl">Tap to leave any out, then Apply</div>';
       a.sug.forEach(function(x, i) {
-        var t = x.k === 'alias' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
+        var t = x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
           x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
-        var sub = x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        var sub = x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
         h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
       });
       var n = a.sug.filter(function(x) { return x.on; }).length;
@@ -640,7 +661,8 @@
   }
   // One at a time: venue, new wrestlers (then her other spelling), spellings for wrestlers already known.
   function aiApply() {
-    var a = sheetOpen, todo = a.sug.filter(function(x) { return x.on; }), done = 0, fail = [];
+    var a = sheetOpen, rank = { venue: 0, venueNew: 0, 'new': 1, alias: 2, lineup: 3 }, done = 0, fail = [];
+    var todo = a.sug.filter(function(x) { return x.on; }).sort(function(x, y) { return rank[x.k] - rank[y.k]; });
     var next = function() {
       if (!todo.length) {
         a.busy = ''; a.err = fail.length ? 'Not saved: ' + fail.join('; ') : '';
@@ -649,6 +671,11 @@
       }
       var x = todo.shift(); a.busy = 'Saving ' + (done + 1) + '…'; draw();
       var after = function(t) { var r = null; try { r = JSON.parse(t); } catch (e) {} if (r && r.ok) done++; else fail.push((x.raw || x.name || x.en) + ': ' + (r && r.error || 'no reply')); return r; };
+      if (x.k === 'lineup') {
+        var v = show.videos.filter(function(y) { return y.id === x.v; })[0], r = recs[x.v] && !recs[x.v].failed ? recs[x.v] : { id: Number(x.v), set: Number(show.set), title_en: v ? v.t : '', title_ja: '', shows: [], lines: [], thumb: v ? v.th : '', date: show.date };
+        r.sides_en = x.en; r.sides_ja = x.ja; r.fromAi = 1; recs[x.v] = r; ssSet(REC_KEY + x.v, r); delete attn[x.v]; done++;
+        next(); return;
+      }
       if (x.k === 'alias') {
         post({ action: 'vi_propose', type: 'new_alias', value: x.raw, entity_id: x.id, video: x.v }, function(t) {
           after(t);
