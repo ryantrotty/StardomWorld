@@ -71,13 +71,18 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'sides_en', 'teams_en', 'notes_en', 'sides_ja', 'teams_ja', 'notes_ja',
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
-var MAX_CELL = 45000;   // a Sheets cell holds 50,000 characters
+var MAX_CELL = 45000;
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return out({ ok: false, error: 'bad json' }); }
-  var key = PropertiesService.getScriptProperties().getProperty('KEY');
-  if (!key || body.key !== key) return out({ ok: false, error: 'bad key' });
+  var props = PropertiesService.getScriptProperties(), key = props.getProperty('KEY'), ccKey = props.getProperty('CARDCHECK_KEY');
+  // 2.91.0: card check on the iPhone (web/cardcheck, a Safari bookmark) uses its own key, CARDCHECK_KEY in the script
+  // properties, good for logging only: no export, favorites, watch history, playback notes or debug.
+  var cc = !!ccKey && body.key === ccKey;
+  if ((!key || body.key !== key) && !cc) return out({ ok: false, error: 'bad key' });
+  if (cc && CC_ACTIONS.indexOf(body.action) < 0) return out({ ok: false, error: 'not allowed with the card check key' });
   if (body.action === 'export') return out({ ok: true, cols: COLS, rows: exportRows() });
   // Reads don't wait for the lock. Writes wait up to 25 s, then answer "busy" (the app keeps the change and sends it later)
   // rather than failing with Apps Script's lock timeout error.

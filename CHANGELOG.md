@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.91.0
+
+- **Card check on the iPhone** (Safari bookmark; docs/CARDCHECK_PHONE.md). Tap the bookmark on any stardom-world.com page and card check opens over it as its own app: Started or a year's shows (Load more shows reads the next page only when tapped), a show's card as a feed of thumbnails, the Venue line (set once per show), people with ✓ / ?, Confirm and Confirm all, then Next for the next show in the list. It reads the site's pages from the phone, one at a time, 2 s apart, only for the cards you scroll to.
+  - Fix a name: tap a ? name, search the library and pick her (the site's spelling becomes her alias) or add her as a new wrestler.
+  - Runs the TV's own scripts underneath (match page reader, library, matching, faction pre-fill, the save), published beside it on GitHub Pages (`cardcheck/`, `scripts/publish_cardcheck.sh`).
+- Sheet script: **`CARDCHECK_KEY`**, a second key for logging only (library, get, save, propose, cards, suggest, thumbs, translate, show venue). Add it in the script properties, then **redeploy the script**.
+- Fix (TV): saving in the logger no longer throws away the TV's kept StarScope list. Since 2.88.0 the list is asked for by changes, and a missing copy turned every save in card check into a request for the whole list.
+- Logger kit: wrestler search (`talents`), used by the phone's Fix a name.
+
 ## 2.90.1
 
 - **Year list shows every show again.** 2.90.0's hiding of fully logged shows is undone: it read further pages of the year by itself, which would add calls to the site as more shows are logged. Fully logged shows are listed and marked complete, as before. The per-page counts (English and Japanese pages) stay.

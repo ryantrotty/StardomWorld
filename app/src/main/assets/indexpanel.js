@@ -811,7 +811,9 @@
       state.busyTries = 0;
       if (!res.ok) { saveBtn(T.notSaved); say(String(res.error || 'not saved'), true); return; }
       state.aliases = [];
-      try { localStorage.removeItem(MARK_KEY); localStorage.removeItem('tvVixCardsV4'); } catch (e) {}
+      // 2.91.0: the StarScope list is no longer thrown away here: card check and the 30-minute refresh ask for the
+      // changes (2.88.0), which a missing copy turned into the whole list every time.
+      try { localStorage.removeItem(MARK_KEY); } catch (e) {}
       saveBtn(res.linked ? T.linkedShort : T.saved);
       if (statusText && !statusBad) say('');   // the button says it now, not the line under it
       // Card check: back to the card check page, which moves on.
@@ -949,6 +951,19 @@
         if (at < 99) out.push({ id: v.id, name: lab(v), at: at });
       });
       return out.sort(function(x, y) { return x.at - y.at || x.name.length - y.name.length; }).slice(0, n || 6);
+    },
+    // For card check on the iPhone (2.91.0): wrestlers whose names hold q, best first.
+    talents: function(q, n) {
+      if (!lib) return [];
+      var k = norm(q || '');
+      if (!k) return [];
+      var out = [];
+      (lib.talent || []).forEach(function(t) {
+        var at = 99;
+        [t.en, t.ja, t.s].forEach(function(x) { var i = norm(x || '').indexOf(k); if (i >= 0 && i < at) at = i; });
+        if (at < 99) out.push({ id: t.id, name: nameOf(t.id), other: ja ? t.en : t.ja, at: at });
+      });
+      return out.sort(function(x, y) { return x.at - y.at || x.name.length - y.name.length; }).slice(0, n || 8);
     },
     reload: function(done) { call({ action: 'vi_lib' }, function(r) { if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); } if (done) done(!!r.ok); }); },
     // The site writes some venues two ways, 高知・セリーズ（CHRES）体育館 and 高知・［CHRES］セリーズ体育館: failing a straight
