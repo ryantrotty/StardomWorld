@@ -9,7 +9,7 @@
   if (location.pathname !== '/mypage') return;
   var Q = null; try { Q = new URLSearchParams(location.search); } catch (e) { return; }
   if (!Q || Q.get('tvscope') !== 'check') return;
-  var SET = String(Q.get('set') || '').replace(/\D/g, '');
+  var SET = String(Q.get('set') || '').replace(/\D/g, ''), FROM = String(Q.get('from') || 'next');
   if (!SET || !window.AndroidHost || !AndroidHost.indexSync) return;
   window.__tvCardCheck = true;
 
@@ -369,7 +369,7 @@
       (n.t ? '<div class="ln"><b style="color:#F4C242">' + n.t + '</b>' + esc(T.dThumb) + '</div>' : '') +
       (n.w ? '<div class="ln"><b style="color:#7FD3A0">' + n.w + '</b>' + esc(T.dWatched) + '</div>' : '') +
       '<div class="t2" style="font-size:15px">' + esc(T.dBell) + '</div>' +
-      '<div class="bt">' + btn('nextshow', T.nextShow, true) + btn('logshows', T.logShows) + btn('stay', T.stay) + '</div></div></div>';
+      '<div class="bt">' + btn('nextshow', nextLabel(nextTarget()), true) + btn('logshows', T.logShows) + btn('stay', T.stay) + '</div></div></div>';
   }
   function allLogged() { return show.videos.every(function(v) { return !!status(v); }); }
 
@@ -406,13 +406,50 @@
         focusKey = quick ? 'confirm' : (tab === 'finish' ? 'result' : 'edit'); render();
       } });
   }
-  function nextShowHref() {
-    var s = lsGet('tvVixSuggestV1'), map = cardsMap(), best = null;
-    ((s && s.sets) || []).forEach(function(g) {
-      if (String(g.set) === SET || best) return;
-      if ((g.videos || []).some(function(v) { return !v.comment && !map[String(v.id)]; })) best = g.set;
-    });
-    return best ? '/mypage?tvscope=check&set=' + best : '/mypage?tvscope=log';
+  // Next show (2.85.0) follows the list card check was opened from:
+  //  - a year (y2026): the next older show of that year not fully logged, newest to oldest, from the year's pages the
+  //    TV has kept; past the year's last show, the newest show of the year before;
+  //  - Watched, not logged (next) or Started: the next show in that list.
+  // When the TV doesn't have the next page of a year yet, it opens that year's list on the Log a show tab.
+  function setDone(id) {
+    var c = lsGet('tvCcSet' + id), map = cardsMap();
+    return !!(c && c.videos && c.videos.length && c.videos.every(function(v) { return map[v.id] || saved[v.id]; }));
+  }
+  function yearList(y) {
+    var c = lsGet('tvCcYearV1_' + y);
+    if (!c || !c.items) return null;
+    var items = c.items.map(function(x) {
+      var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, y) : { show: x.name, date: '' };
+      return { set: String(x.set), name: showName(sl.show || x.name, sl.date), date: sl.date || '' };
+    }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
+    return { items: items, done: !!c.done };
+  }
+  function nextTarget() {
+    var m = /^y(\d{4})$/.exec(FROM);
+    if (m) {
+      var y = +m[1];
+      for (var k = 0; k < 2; k++, y--) {
+        var yl = yearList(String(y));
+        if (!yl) return { href: '/mypage?tvscope=log&y=' + y, name: String(y) };
+        var at = k === 0 ? yl.items.map(function(x) { return x.set; }).indexOf(SET) : -1;
+        var nx = yl.items.slice(at + 1).filter(function(x) { return x.set !== SET && !setDone(x.set); })[0];
+        if (nx) return { href: '/mypage?tvscope=check&set=' + nx.set + '&from=y' + y, name: nx.name, date: nx.date };
+        if (!yl.done) return { href: '/mypage?tvscope=log&y=' + y, name: String(y) };
+      }
+      return { href: '/mypage?tvscope=log', name: '' };
+    }
+    var sc = window.__tvScope, list = [];
+    try { list = sc ? (FROM === 'started' ? sc.started() : sc.toLog()) : []; } catch (e) { list = []; }
+    var i = list.map(function(x) { return String(x.set); }).indexOf(SET);
+    var rest = list.slice(i + 1).concat(list.slice(0, Math.max(i, 0))).filter(function(x) { return String(x.set) !== SET; });
+    if (rest[0]) return { href: rest[0].href, name: rest[0].name, date: rest[0].date };
+    return { href: '/mypage?tvscope=log', name: '' };
+  }
+  window.__tvCardCheckNext = function() { return nextTarget(); };   // for checking the rule from the console
+  function nextLabel(t) {
+    if (!t.name) return T.logShows;
+    var d = t.date ? ' · ' + (function(x) { var mm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x); return mm ? (ja ? (+mm[2]) + '月' + (+mm[3]) + '日' : (+mm[3]) + ' ' + MON[+mm[2] - 1]) : ''; })(t.date) : '';
+    return (ja ? '次へ: ' : 'Next: ') + t.name + d;
   }
   function press(k) {
     if (k === 'retry') { err = ''; loadSet(); return; }
@@ -421,7 +458,7 @@
     if (k === 'result') return openPanel('finish', false);
     if (k === 'watch') { location.href = '/contents/' + show.videos[cur].id; return; }
     if (k === 'skip' || k === 'nextm') { go(Math.min(cur + 1, show.videos.length - 1)); return; }
-    if (k === 'nextshow') { location.href = nextShowHref(); return; }
+    if (k === 'nextshow') { location.href = nextTarget().href; return; }
     if (k === 'logshows') { location.href = '/mypage?tvscope=log'; return; }
     if (k === 'stay') { doneOpen = false; focusKey = 'nextm'; render(); return; }
   }

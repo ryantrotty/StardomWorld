@@ -20,6 +20,7 @@
     '.tvsc{font-family:Arial,Helvetica,sans-serif;color:#fff;font-weight:400;}',
     '.tvsc .ev{font-size:12px;font-weight:800;letter-spacing:1px;color:#F4C242;text-transform:uppercase;}',
     '.tvsc .nm{margin-top:7px;padding-bottom:8px;border-bottom:1px solid #2A323C;font-size:18px;font-weight:800;line-height:1.22;word-break:normal !important;overflow-wrap:break-word !important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;}',
+    '.tvsc .nm.sm{font-size:15px;line-height:1.26;}.tvsc .nm .ln{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '.tvsc .ft{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px;font-weight:600;color:#C9D2DC;}',
     '.tvsc .ft b{flex:none;color:#F4C242;font-weight:700;}'
   ].join('');
@@ -32,19 +33,30 @@
     if (ja) return m[1] + '年' + (+m[2]) + '月' + (+m[3]) + '日';
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1];
   }
+  // Multi-person matches (2.85.0): more than two sides, or more than four wrestlers. Rules, in order, until it fits:
+  //  A. each side's team or faction name where it has one, its wrestlers where not;
+  //  B. the same in smaller type;
+  //  D. surnames for the sides without a team name (one-word ring names stay as they are), normal then smaller type;
+  //  then whatever is still too long is cut with "…".
+  // Up to three sides get a line each ("vs" in front of the second and third); more run on, at most four lines.
+  function wide(t) { var n = 0; String(t).split('').forEach(function(c) { n += c.charCodeAt(0) > 0x2e80 ? 1.8 : 1; }); return n; }
+  function last(n) { var p = String(n).trim().split(/\s+/); return p.length > 1 ? p[p.length - 1] : n; }
+  function multiLines(sides, tn) {
+    var per = sides.length <= 3, sep = ja ? '&' : ' & ';
+    function fits(L, max) { return per ? L.every(function(x, i) { return wide((i ? 'vs ' : '') + x) <= max; }) : wide(L.join(' vs ')) <= max * 4; }
+    var A = sides.map(function(sd, i) { return tn && tn[i] ? tn[i] : sd.join(sep); });
+    var D = sides.map(function(sd, i) { return tn && tn[i] ? tn[i] : sd.map(last).join(sep); });
+    var pick = fits(A, 27) ? { L: A, sm: false } : fits(A, 33) ? { L: A, sm: true } : fits(D, 27) ? { L: D, sm: false } : { L: D, sm: true };
+    var html = per ? pick.L.map(function(x, i) { return '<span class="ln">' + (i ? 'vs ' : '') + esc(x) + '</span>'; }).join('') : esc(pick.L.join(' vs '));
+    return { html: html, sm: pick.sm };
+  }
   function block(v) {
     var sides = (ja && v.sj && v.sj.length === v.s.length ? v.sj : v.s), foot = (ja ? v.fj : v.f).slice();
     // 2.78.1: no match number on video cards (show cards and the player keep theirs).
-    var lines, tn = ja ? (v.tnj || v.tn) : v.tn, big = sides.length > 2 || sides.some(function(s) { return s.length > 4; });
-    if (!big) lines = sides.map(function(s, i) { return (i ? 'vs ' : '') + esc(names(s)); }).join('<br>');
-    else {
-      // Big matches (2.62.1): team or faction names when every side has one, otherwise the first wrestler of each side
-      // and how many more, at most four sides then "+N more teams", so the names never run past three lines.
-      var each = sides.map(function(s, i) { return tn && tn[i] ? tn[i] : (s.length > 1 ? s[0] + ' +' + (s.length - 1) : s[0]); });
-      var shown = each.slice(0, 4), rest = each.length - shown.length;
-      lines = esc(shown.join(tn || sides.every(function(s) { return s.length === 1; }) ? ' vs ' : ' · ')) + (rest ? ' · ' + esc(ja ? 'ほか' + rest + (sides.some(function(s) { return s.length > 1; }) ? 'チーム' : '人') : '+' + rest + ' more' + (sides.some(function(s) { return s.length > 1; }) ? ' teams' : '')) : '');
-    }
-    return '<div class="tvsc notranslate" translate="no"><div class="ev">' + esc(ja ? v.ej : v.e) + '</div><div class="nm">' + lines + '</div><div class="ft"><span>' + esc(foot.join(' · ')) + '</span><b>' + esc(dateText(v.d)) + '</b></div></div>';
+    var lines, sm = false, tn = ja ? (v.tnj || v.tn) : v.tn, total = sides.reduce(function(a, s) { return a + s.length; }, 0);
+    if (sides.length <= 2 && total <= 4) lines = sides.map(function(s, i) { return (i ? 'vs ' : '') + esc(names(s)); }).join('<br>');
+    else { var m = multiLines(sides, tn); lines = m.html; sm = m.sm; }
+    return '<div class="tvsc notranslate" translate="no"><div class="ev">' + esc(ja ? v.ej : v.e) + '</div><div class="nm' + (sm ? ' sm' : '') + '">' + lines + '</div><div class="ft"><span>' + esc(foot.join(' · ')) + '</span><b>' + esc(dateText(v.d)) + '</b></div></div>';
   }
   // The logger's Card tab draws its preview with the same card (2.61.0).
   window.__tvStarCard = { html: block };
@@ -53,7 +65,8 @@
   var TEL = '<svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="currentColor" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
   function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
   function hasKey(person, want) { return person[0].some(function(k) { return want.indexOf(k) >= 0; }); }
-  // Only videos the site's search would miss: the wrestler (or, for a team, either partner) is not named in the video's text.
+  // Every logged match with the wrestler (or, for a team, both partners on the same side), the same matches the StarScope
+  // page's wrestler filter finds (2.85.0: no longer only the ones the site's search would miss).
   function results(kind, a, b) {
     if (!map) return [];
     var out = [];
@@ -61,12 +74,12 @@
       var v = map[id], sides = v.p || [], hit = false;
       if (kind === 'w') {
         var want = [norm(a), norm(b)];
-        sides.forEach(function(s) { s.forEach(function(p) { if (p[1] && hasKey(p, want)) hit = true; }); });
+        sides.forEach(function(s) { s.forEach(function(p) { if (hasKey(p, want)) hit = true; }); });
       } else {
         var one = [norm(a)], two = [norm(b)];
         sides.forEach(function(s) {
           var x = s.filter(function(p) { return hasKey(p, one); })[0], y = s.filter(function(p) { return hasKey(p, two); })[0];
-          if (x && y && (x[1] || y[1])) hit = true;
+          if (x && y) hit = true;
         });
       }
       if (hit) out.push({ id: id, v: v });
@@ -88,6 +101,31 @@
       row.appendChild(btn);
     });
   }
+  // Pictures by row (2.85.0), on every StarScope page: the first two rows at once, then always the row after the one
+  // with focus and the one before it; a row two or more above the focus lets its pictures go, and gets them back when
+  // it is one row above again. So a long page never holds, or asks the site for, more than four rows of pictures.
+  function rowPictures(root, sel) {
+    var cards = Array.prototype.slice.call(root.querySelectorAll(sel));
+    if (!cards.length) return;
+    var base = root.getBoundingClientRect().top - root.scrollTop, tops = [];
+    function top(el) { return Math.round(el.getBoundingClientRect().top - base); }
+    cards.forEach(function(c) { var t = top(c); if (tops.indexOf(t) < 0) tops.push(t); });
+    tops.sort(function(a, b) { return a - b; });
+    var ae = document.activeElement, fi = 0;
+    if (ae) { var own = cards.filter(function(c) { return c === ae || c.contains(ae); })[0]; if (own) fi = tops.indexOf(top(own)); }
+    var lo = fi - 1, hi = Math.max(fi + 1, 1);
+    cards.forEach(function(c) {
+      var r = tops.indexOf(top(c));
+      Array.prototype.forEach.call(c.querySelectorAll('.im'), function(im) {
+        if (r >= lo && r <= hi) {
+          var u = im.getAttribute('data-bg');
+          if (u) { im.style.backgroundImage = 'url(\'' + u + '\')'; im.setAttribute('data-u', u); im.removeAttribute('data-bg'); }
+        } else if (r <= fi - 2 && im.getAttribute('data-u') && im.style.backgroundImage) {
+          im.setAttribute('data-bg', im.getAttribute('data-u')); im.style.backgroundImage = '';
+        }
+      });
+    });
+  }
   var Q = null;
   try { Q = new URLSearchParams(location.search); } catch (e) {}
   var scopeKind = Q && location.pathname === '/mypage' ? Q.get('tvscope') : null, scopeDone = false;
@@ -100,10 +138,12 @@
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
     h += '<div class="hd">' + TEL + esc(head) + '</div><div class="gr">';
-    list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im" style="background-image:url(\'' + esc(x.v.th || '') + '\')"></div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
+    list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '></div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
     d.innerHTML = h + '</div>';
     document.body.appendChild(d);
+    d.addEventListener('focusin', function() { rowPictures(d, 'a.c'); });
     var first = d.querySelector('a.c'); if (first) first.focus();
+    rowPictures(d, 'a.c');
     window.addEventListener('keydown', function(e) {
       if (e.defaultPrevented || document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;   // the menu and the video options pop-up handle their own keys
       var c = e.keyCode, step = { 37: -1, 39: 1, 38: -4, 40: 4 }[c], all = Array.prototype.slice.call(d.querySelectorAll('a.c')), i = all.indexOf(document.activeElement);
@@ -436,7 +476,9 @@
   // matches logged. Year: the site's own list of that year's shows, read a page at a time, the next page only when
   // the last row has focus; each page is kept for a day. Only the show list is read here, never a match page.
   function logOn() { return SHEET && !!window.__tvIndexKit; }
-  function checkHref(set) { return '/mypage?tvscope=check&set=' + encodeURIComponent(set); }
+  // from: where card check was opened, so its Next show follows the same list (2.85.0): next (watched, not logged),
+  // started, or y<year>.
+  function checkHref(set, from) { return '/mypage?tvscope=check&set=' + encodeURIComponent(set) + '&from=' + encodeURIComponent(from || 'next'); }
   var YCAT = null;
   function yearCats() {
     if (YCAT) return YCAT;
@@ -493,7 +535,7 @@
   function yearCard(x) {
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yl.y) : { show: x.name, date: '', venue: '' };
     var logged = showsList().filter(function(s) { return s.sid === String(x.set); })[0];
-    return cardHtml({ href: checkHref(x.set), th: x.th, date: sl.date || '', count: logged ? countText(logged) : '0 ' + HT.logged, complete: !!(logged && logged.complete),
+    return cardHtml({ href: checkHref(x.set, 'y' + yl.y), th: x.th, date: sl.date || '', count: logged ? countText(logged) : '0 ' + HT.logged, complete: !!(logged && logged.complete),
       name: showName(sl.show || x.name, sl.date) || x.name, venue: sl.venue || '',
       main: '<div class="me"><div class="eb dim">' + esc(HT.lSite) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
   }
@@ -504,9 +546,9 @@
     var cards = [];
     if (lf === 'next') {
       if (!sug) return h + '<div class="rs">' + HT.loadingN + '</div>';
-      cards = nextList().map(function(e) { return nextCard(e, checkHref(e.g.set)); });
+      cards = nextList().map(function(e) { return nextCard(e, checkHref(e.g.set, 'next')); });
     } else if (lf === 'started') {
-      cards = showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); }).map(function(s) { return showCard(s, checkHref(s.sid)); });
+      cards = showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); }).map(function(s) { return showCard(s, checkHref(s.sid, 'started')); });
     } else {
       if (!yl || yl.y !== home.ly) yearLoad(home.ly);
       cards = yl ? yl.items.map(yearCard) : [];
@@ -593,25 +635,7 @@
   var homeEl = null, prevClose = null;
   // Pictures load a row at a time (2.66.1): the first two rows straight away, then the row below whichever row has
   // focus, so a long page never asks for every thumbnail at once. Rows are the cards' tops on the page.
-  function loadPictures() {
-    if (!homeEl) return;
-    var cards = Array.prototype.slice.call(homeEl.querySelectorAll('.hc, .sc, .fc'));
-    if (!cards.length) return;
-    var base = homeEl.getBoundingClientRect().top - homeEl.scrollTop, tops = [];
-    function top(el) { return Math.round(el.getBoundingClientRect().top - base); }
-    cards.forEach(function(c) { var t = top(c); if (tops.indexOf(t) < 0) tops.push(t); });
-    tops.sort(function(a, b) { return a - b; });
-    var ae = document.activeElement, fi = 0;
-    if (ae && cards.indexOf(ae) >= 0) fi = tops.indexOf(top(ae));
-    var limit = tops[Math.min(Math.max(fi, 0) + 1, tops.length - 1)];
-    cards.forEach(function(c) {
-      if (top(c) > limit) return;
-      var im = c.querySelector('.im[data-bg]');
-      if (!im) return;
-      im.style.backgroundImage = 'url(\'' + im.getAttribute('data-bg') + '\')';
-      im.removeAttribute('data-bg');
-    });
-  }
+  function loadPictures() { if (homeEl) rowPictures(homeEl, '.hc, .sc, .fc'); }
   function homeRender(keep) {
     if (!homeEl) {
       homeEl = document.createElement('div'); homeEl.id = 'tvsh'; homeEl.className = 'notranslate'; homeEl.setAttribute('translate', 'no');
@@ -704,11 +728,16 @@
     toLog: function() {
       return nextList().map(function(e) {
         var s = e.s, g = e.g;
-        return { set: String(g.set), href: checkHref(g.set), th: (s && s.top.v.th) || e.first.th || '', name: s ? s.name : (showName(g.show, g.date) || g.show),
+        return { set: String(g.set), href: checkHref(g.set, 'next'), th: (s && s.top.v.th) || e.first.th || '', name: s ? s.name : (showName(g.show, g.date) || g.show),
           date: s ? s.date : g.date, venue: s ? s.venue : (g.venue ? (ja ? g.venue.ja || g.venue.en : g.venue.en) : ''), watched: e.w, logged: s ? s.list.length : 0, total: s && s.total };
       });
     },
-    years: function() { return Object.keys(yearCats()).sort(function(a, b) { return b.localeCompare(a); }); }
+    years: function() { return Object.keys(yearCats()).sort(function(a, b) { return b.localeCompare(a); }); },
+    // For card check's Next show (2.85.0): shows started and not finished, newest first.
+    started: function() {
+      return showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); })
+        .map(function(s) { return { set: s.sid, href: checkHref(s.sid, 'started'), name: s.name, date: s.date }; });
+    }
   };
 
   // check: StarScope card check's own page (assets/cardcheck.js) draws itself.

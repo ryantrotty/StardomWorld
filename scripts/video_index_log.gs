@@ -762,14 +762,16 @@ function viCards() {
   }
   // Team or faction name per side, when every side has one: big matches show those instead of every wrestler.
   function teamNames(p, lang) {
-    var by = [], ok = true, tn = {}, fn = {};
+    var by = [], tn = {}, fn = {};
     viRows('teams').forEach(function(x) { tn[x.team_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
     viRows('factions').forEach(function(x) { fn[x.faction_id] = lang === 'ja' && x.name_ja ? x.name_ja : x.name_en; });
     p.forEach(function(x) { var nm = tn[x.team_id] || fn[x.faction_id] || ''; if (!by[x.side_no - 1]) by[x.side_no - 1] = nm; });
     by = by.filter(function(x) { return x !== undefined; });
-    by.forEach(function(x) { if (!x) ok = false; });
-    return ok && by.length ? by : null;
+    // 2.85.0: one name per side where known, '' where not (the cards fall back to the wrestlers for that side).
+    return by.some(Boolean) ? by : null;
   }
+  // Multi-person matches (2.85.0): more than two sides, or more than four wrestlers. Their cards use team names.
+  function multi(s, st) { return big(s, st) || s.reduce(function(a, x) { return a + x.length; }, 0) > 4; }
   function foot(t, lang, s) {
     var f = [];
     // A big match under a tournament or title still says what kind it is.
@@ -815,7 +817,7 @@ function viCards() {
       // Card check (2.83.0): 1 when the match was logged from its thumbnail and line-up (not watched yet).
       tb: String(m.source) === 'thumb' ? 1 : 0
     };
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: big(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: big(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: multi(en, t.stipulation) ? teamNames(p, 'en') : null, tnj: multi(en, t.stipulation) ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return { ok: true, map: map };
 }

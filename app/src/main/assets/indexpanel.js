@@ -361,8 +361,9 @@
     function big(s) { return s.length > 2 || (state.tags.stipulation || []).some(function(x) { return /^(gauntlet|royal|rumble)$/.test(x); }); }
     function teamNames(lang) {
       var out = sides.map(function(sd) { var t = (lib.teams || []).filter(function(x) { return x.id === sideTeam(sd); })[0], f = (lib.factions || []).filter(function(x) { return x.id === sideFaction(sd); })[0]; return t ? t.en : (f ? (lang === 'ja' && f.ja ? f.ja : f.en) : ''); });
-      return out.every(Boolean) ? out : null;
+      return out.some(Boolean) ? out : null;   // 2.85.0: per side, '' where a side has none
     }
+    function multi(s) { return big(s) || s.reduce(function(a, x) { return a + x.length; }, 0) > 4; }
     // Same rules as specials() in scripts/video_index_log.gs (2.65.2): the stipulations kind() doesn't already say.
     function specials(lang) {
       var t = state.tags.title || [];
@@ -391,7 +392,7 @@
     }
     var place = state.cardNo !== '' && state.cardNo != null ? { no: state.cardNo, total: state.cardTotal } : null;
     return {
-      v: { s: en, sj: jp, e: event('en', en), ej: event('ja', jp), f: foot('en', en), fj: foot('ja', jp), tn: big(en) ? teamNames('en') : null, tnj: big(en) ? teamNames('ja') : null, n: place ? place.no : '', t: place ? place.total : '', d: state.date || '' },
+      v: { s: en, sj: jp, e: event('en', en), ej: event('ja', jp), f: foot('en', en), fj: foot('ja', jp), tn: multi(en) ? teamNames('en') : null, tnj: multi(en) ? teamNames('ja') : null, n: place ? place.no : '', t: place ? place.total : '', d: state.date || '' },
       have: [
         [T.cardNames, sides.length >= 2 && sides.every(function(s) { return s.people.every(function(p) { return p.id; }); })],
         [T.cardEvent, !!((state.tags.competition || []).length || (state.tags.title || []).length)],

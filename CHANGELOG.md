@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.85.0
+
+Built on 2.84.7. Needs the new sheet script (deploy a new version) for team names on multi-person cards.
+
+- **Card check's Next show follows where you came from.** Opened from a year on Log a show: the next older show of that year that isn't fully logged, newest to oldest, then on into the year before (from the year pages the TV keeps; if it doesn't have the next page yet, that year's list opens). From Watched, not logged or Started: the next show in that list. The button names it: **Next: Tag League in Takasaki · 8 Nov**. Card check addresses now carry `&from=` (next, started, y2026).
+- **StarScope pictures by row, loaded and let go.** On every StarScope page (Recently added, Top rated, All matches, Shows, Log next, Log a show, and a wrestler's or team's StarScope results): the first two rows at once, then always the row after the one with focus and the one before it; a row two or more above the focus drops its pictures and gets them back when it is one row above again. The wrestler/team results page used to load every picture at once.
+- **Wrestler and tag team StarScope results are now every logged match** with that wrestler (or both partners on one side), the same as the StarScope page's wrestler filter; no longer only the ones the site's search would miss.
+- **Multi-person StarScope cards** (more than two sides, or more than four wrestlers) try, in order, until the names fit: each side's team or faction name where it has one and its wrestlers where not; the same in smaller type (15 px); surnames for the sides without a team name (one-word ring names unchanged), normal then smaller; then "…". Up to three sides get a line each. The sheet now gives a team or faction name per side wherever a side has one (it used to give them only when every side had one, and only for 3+ sides); the logger's Preview card follows the same rules.
+
 ## 2.84.7
 
 Built on 2.84.6. Sheet script only; nothing changes in the app.
