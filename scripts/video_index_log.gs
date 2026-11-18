@@ -352,7 +352,7 @@ var VI = {
   matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set', 'card_total'],
   // thumb and site_text (2.84.4): a match logged with card check has no row in "videos" (it was never opened), so its
   // picture and the page's text (for the StarScope button) are kept here.
-  match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text'],
+  match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text', 'set_id'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
   shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note', 'updated'],
@@ -645,14 +645,18 @@ function viSave(b) {
   var marks = b.marks || {}, sec = function(v) { return v === '' || v == null || !(Number(v) >= 0) ? '' : Math.floor(Number(v)); };
   var thumb = /^https:\/\/www\.stardom-world\.com\//.test(String(b.thumb || '')) ? String(b.thumb).slice(0, 500) : '';
   var siteText = String(b.site_text || '').slice(0, 3000);
+  // 2.90.0: the site's show page (set) this video is on. An English commentary video and the Japanese one share the
+  // match, and so its show_id, but sit on two set pages; this tells them apart.
+  var setId = /^\d{1,9}$/.test(String(b.set || '')) ? String(b.set) : '';
   var vids = viRows('match_videos').filter(function(v) { return String(v.video_id) === video; });
   if (vids.length) {
     var vf = { match_id: id, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), updated: now };
     if (thumb && !vids[0].thumb) vf.thumb = thumb;
     if (siteText && !vids[0].site_text) vf.site_text = siteText;
+    if (setId && !vids[0].set_id) vf.set_id = setId;
     viSet('match_videos', vids[0]._row, vf);
   }
-  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now, thumb: thumb, site_text: siteText }]);
+  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now, thumb: thumb, site_text: siteText, set_id: setId }]);
 
   // Tags: only values in the lists tab (and known wrestlers for the fall) are kept; this match's old tags are replaced.
   if (Array.isArray(b.tags)) {
@@ -846,7 +850,7 @@ function viCards(b) {
       tb: String(m.source) === 'thumb' ? 1 : 0
     };
     var mu = multi(en, t.stipulation);
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return since ? { ok: true, map: map, now: now, since: since, all: all } : { ok: true, map: map, now: now, full: true };
 }

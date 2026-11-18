@@ -534,10 +534,24 @@
     if (!last || cards.indexOf(e.target) < 0) return;
     if (e.target.getBoundingClientRect().top >= last.getBoundingClientRect().top - 4) yearPage();
   }
+  // How much of one site show page (set) is logged (2.90.0). A match's show is the set it was first logged from, so the
+  // English commentary page and the Japanese one share their matches: counted here by the page's own videos, from the
+  // set each video was saved from (vs) and from the page as card check read it (tvCcSet<set>), before the match's show.
+  function setState(set) {
+    set = String(set);
+    var c = null; try { c = JSON.parse(localStorage.getItem('tvCcSet' + set) || 'null'); } catch (e) {}
+    var vids = c && c.videos && c.videos.length ? c.videos : null, mine = 0;
+    if (vids) vids.forEach(function(v) { if (map && map[v.id]) mine++; });
+    else Object.keys(map || {}).forEach(function(k) { if (String(map[k].vs || '') === set) mine++; });
+    var s = showsList().filter(function(x) { return x.sid === set; })[0];
+    if (vids && (!s || mine >= s.list.length)) return { count: mine + '/' + vids.length, complete: mine >= vids.length, any: mine > 0 };
+    if (s) return { count: countText(s), complete: !!s.complete, any: true };
+    return { count: mine ? mine + ' ' + HT.logged : '0 ' + HT.logged, complete: false, any: mine > 0 };
+  }
   function yearCard(x) {
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yl.y) : { show: x.name, date: '', venue: '' };
-    var logged = showsList().filter(function(s) { return s.sid === String(x.set); })[0];
-    return cardHtml({ href: checkHref(x.set, 'y' + yl.y), th: x.th, date: sl.date || '', count: logged ? countText(logged) : '0 ' + HT.logged, complete: !!(logged && logged.complete),
+    var st = setState(x.set);
+    return cardHtml({ href: checkHref(x.set, 'y' + yl.y), th: x.th, date: sl.date || '', count: st.count, complete: st.complete,
       name: showName(sl.show || x.name, sl.date) || x.name, venue: sl.venue || '',
       main: '<div class="me"><div class="eb dim">' + esc(HT.lSite) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
   }
@@ -553,7 +567,9 @@
       cards = showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); }).map(function(s) { return showCard(s, checkHref(s.sid, 'started')); });
     } else {
       if (!yl || yl.y !== home.ly) yearLoad(home.ly);
-      cards = yl ? yl.items.map(yearCard) : [];
+      // Shows already fully logged are left out (2.90.0); when a page leaves too few, the next one is read by itself.
+      cards = yl ? yl.items.filter(function(x) { return !setState(x.set).complete; }).map(yearCard) : [];
+      if (yl && cards.length < 6 && !yl.done && !yl.busy && !yl.err) setTimeout(yearPage, 1500);   // one page at a time, 1.5 s apart
       var tail = yl && yl.err ? '<div class="rs" style="color:#FF7A66">' + esc(HT.lErr + ' (' + yl.err + ')') + '</div><div class="row">' + chipH('ltry', HT.lTry, false) + '</div>'
         : (yl && !yl.done ? '<div class="rs">' + esc(HT.lMore) + '</div>' : (cards.length ? '<div class="rs">' + esc(HT.lEnd) + '</div>' : ''));
       if (!cards.length && yl && yl.done) return h + '<div class="rs">' + HT.lNone + '</div>';

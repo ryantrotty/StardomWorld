@@ -795,7 +795,7 @@
     var show = rec.shows && rec.shows[0];
     var place = setPlace();
     busy = true; saveBtn(T.saving, true);
-    call({ action: 'vi_save', video: U[2], source: CX && CX.thumb ? 'thumb' : '',
+    call({ action: 'vi_save', video: U[2], set: U[1] || (show ? String(show.id) : ''), source: CX && CX.thumb ? 'thumb' : '',
       // Card check (2.84.4): the picture and the page's text, since the match was never opened ("videos" has no row).
       thumb: CX ? rec.thumb || '' : '', site_text: CX ? [rec.title_en, rec.title_ja, (rec.lines || []).join(' ')].filter(Boolean).join(' ') : '', version: rec.version || 'jp', rating: state.rating || 0, aliases: state.aliases, participants: parts, tags: tags, marks: marks, venueAliases: state.venueAliases,
       match: { show_id: show ? show.id : (U[1] || ''), show_name: show ? show.show : '', venue: show ? show.venue : '', venue_id: state.venue, date: state.date, date_manual: state.dateManual, card_total: state.cardTotal || '', card_no: state.cardNo, is_dark: state.cardNo === 0 || /ダイゼロ|Dai Zero/i.test(title), result_type: winner || r.type !== 'win' ? r.type : '', winner_side: winner, level: level } },

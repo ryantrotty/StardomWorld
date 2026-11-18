@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.90.0
+
+- **Log a show, by year: English and Japanese pages counted on their own.** A match belongs to the show it was first logged from, so when both the English commentary page and the Japanese page of a show were logged, one of them showed "0 logged". Each show page now counts its own videos: from the page as card check read it, and from the page each video was saved from (new: saves send it, the sheet keeps it in `match_videos.set_id`, the cards carry it as `vs`).
+- **Fully logged shows are left out of the year list.** When a page of the year leaves fewer than six shows, the next page is read by itself, one page at a time, 1.5 s apart.
+- Sheet script: `match_videos.set_id` (added by itself) and `vs` on the cards. **Redeploy the script.**
+
 ## 2.89.0
 
 - **Venue line in card check: see, set and save the show's venue in one place.** Every match (and the end of the card) shows a Venue line under the show's name: the venue with "✓ set for the show" or "✓ matched in the library", or the site's spelling in orange when it isn't known.
