@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.95.0
+
+- **Aliases must read as one name.** The sheet script refuses a spelling as a person's alias when it has a comma, slash, "&", "vs" or a leading number, match words (Match, Tournament, Round, 戦…), more than three words, or another person's name inside it. This stops misread lines like "2, Moneyball Tournament 1st Round Giulia" or "Itsuki Aoki Akira Kurogane" from being saved. Covers proposals (Fix a name, AI suggestions), auto-approved proposals (a refused one is marked rejected with the reason) and aliases sent with a save. **Redeploy the script.**
+- **iPhone card check:** AI suggestions no longer offer such spellings as aliases; Fix a name shows the sheet's reason if one is refused.
+- **TV logger:** picking the right person for a misread billed name no longer sends that name as an alias.
+- Sheet cleanup (data only): two bad aliases removed; duplicate venues merged (Niigata Duo Cerezo → Duo Cerezo, Ryoguku Sumo-Hall → Ryogoku Kokugikan, EBARA WAVE Arena Ota → Ota City General Gymnasium, Aichi Chunichi Hall → Chunichi Hall, Aimesse Yamanashi Hall A → Aimesse Yamanashi) with their shows moved and aliases added.
+
 ## 2.94.0
 
 - **iPhone card check saves a card in one request, in the background.** Confirm / Confirm all no longer save match by match (a read and a save each, plus a list refresh). The logger builds each save on the phone without reading the sheet (collect mode, venue from the Venue line), card check sends the whole card as one `vi_save_many`, shows "Saving to the sheet…" and lets you carry on; the sheet splits it into its tabs. Turned-down matches show the reason; one changes-only list refresh at the end.

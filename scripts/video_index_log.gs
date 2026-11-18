@@ -432,6 +432,24 @@ function viAppend(name, rows) {
 }
 function viTrue(v) { return v === true || String(v).toUpperCase() === 'TRUE' || v === '' ; }
 function viNorm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
+// A spelling only becomes a person's alias when it reads as one name (2.95.0). The reader once took "2, Moneyball
+// Tournament 1st Round Giulia" and "Itsuki Aoki Akira Kurogane" from old descriptions; those are refused now:
+// commas, slashes, "&", "vs", a leading number, match words, more than three words, or someone else's name inside.
+// Returns why it was refused, or '' when it is fine.
+function viAliasBad(raw, id) {
+  var s = String(raw || '').normalize('NFKC').trim();
+  if (!s) return 'empty';
+  if (s.length > 40) return 'too long for one name';
+  if (/[,、;\/&]|\bvs\.?(\s|$)|(^|\s)\d/i.test(s)) return 'looks like more than a name (comma, "&", "vs" or a number)';
+  if (/\b(match|tournament|round|battle|league|final|title|championship|cup)\b|戦|試合|トーナメント/i.test(s)) return 'has match words in it';
+  if (/^[\x00-\x7f★☆]+$/.test(s) && s.split(/\s+/).length > 3) return 'more than three words: likely two names together';
+  var n = viNorm(s), other = '';
+  var look = function(name, owner) { var m = viNorm(name); if (!other && owner && owner !== id && m.length >= 5 && m !== n && n.indexOf(m) >= 0) other = name; };
+  viRows('talent').forEach(function(t) { look(t.name_en, t.talent_id); look(t.name_ja, t.talent_id); });
+  viRows('aliases').forEach(function(a) { if (a.entity_type === 'talent' && a.status !== 'rejected') look(a.alias, a.entity_id); });
+  return other ? 'has another person\'s name in it (' + other + ')' : '';
+}
+
 function viSlug(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
 // Sets a row's cells by column name.
@@ -456,6 +474,8 @@ function viApplyApproved() {
       if (!viRows('talent').some(function(t) { return t.talent_id === id; })) viAppend('talent', [{ talent_id: id, name_en: p.value, search: p.value, status: 'guest', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_alias' && p.entity_id) {
       made1 = p.entity_id;
+      var bad = viAliasBad(p.value, p.entity_id);
+      if (bad) { viSet('proposals', p._row, { status: 'rejected', note: 'not a name: ' + bad }); return; }
       viAppend('aliases', [{ alias: p.value, normalized: viNorm(p.value), entity_type: 'talent', entity_id: p.entity_id, source: 'proposal', status: 'approved' }]);
     } else if (p.type === 'new_team') {
       // entity_id holds the partners, a|b, as the panel sent them.
@@ -520,6 +540,7 @@ function viAction(b) {
   if (b.action === 'vi_propose') {
     var type = String(b.type || ''), value = String(b.value || '').slice(0, 120);
     if (!/^new_(talent|alias|team|faction|option|venue)$/.test(type) || !value) return { ok: false, error: 'bad proposal' };
+    if (type === 'new_alias') { var why = viAliasBad(value, String(b.entity_id || '')); if (why) return { ok: false, error: 'Not saved as an alias: ' + why }; }
     // The owner's private build (the app adds owner, with the key) skips approval: the addition goes in now.
     // Any other sender, as the public build will be, still waits for approval in the sheet.
     var owner = b.owner === true, same = function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value); };
@@ -744,7 +765,7 @@ function viSave(b) {
     var add = [];
     b.aliases.slice(0, 40).forEach(function(a) {
       var n = viNorm(a && a.raw);
-      if (!n || have[n] || !known[a.id]) return;
+      if (!n || have[n] || !known[a.id] || viAliasBad(a.raw, a.id)) return;
       have[n] = 1;
       add.push({ alias: String(a.raw).slice(0, 120), normalized: n, entity_type: 'talent', entity_id: a.id, source: 'panel', status: 'approved' });
     });

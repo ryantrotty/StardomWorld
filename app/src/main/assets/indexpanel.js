@@ -27,6 +27,14 @@
 
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
+  // The sheet refuses spellings that aren't one name (2.95.0): this mirrors its quick checks, so a misread
+  // billed name isn't sent as an alias when you pick the right person.
+  function badAlias(s) {
+    s = String(s || '').normalize('NFKC').trim();
+    return !s || s.length > 40 || /[,、;\/&]|\bvs\.?(\s|$)|(^|\s)\d/i.test(s) ||
+      /\b(match|tournament|round|battle|league|final|title|championship|cup)\b|戦|試合|トーナメント/i.test(s) ||
+      (/^[\x00-\x7f★☆]+$/.test(s) && s.split(/\s+/).length > 3);
+  }
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 
@@ -727,7 +735,7 @@
     if (pick.slot < 0) { S.people.push({ id: id, billed: byId[id].en }); lastFocus = 'a' + pick.side; }
     else {
       var p = S.people[pick.slot];
-      if (!p.id && p.billed && norm(p.billed)) { state.aliases.push({ raw: p.billed, id: id }); nameMap[norm(p.billed)] = id; }
+      if (!p.id && p.billed && norm(p.billed) && !badAlias(p.billed)) { state.aliases.push({ raw: p.billed, id: id }); nameMap[norm(p.billed)] = id; }
       p.id = id; p.billed = byId[id].en; lastFocus = 'p' + pick.side + '_' + pick.slot;   // the saved name follows the pick (a placeholder or a wrong first pick no longer stays in billed_name)
     }
     remember(id); layer = 'main'; pick = null; nameStatus(); render();

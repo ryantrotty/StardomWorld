@@ -673,7 +673,7 @@
           if (at < 0) return;
           var p = left.splice(at, 1)[0], id = aiId(p), nm = p.en || p.ja;
           if (!nm) return;
-          if (id) out.push({ k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: u.other, id: id, name: K.nameOf(id), on: true });
+          if (id && !badAlias(u.raw)) out.push({ k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: badAlias(u.other) ? '' : u.other, id: id, name: K.nameOf(id), on: true });
           else if (!newSeen[norm(p.en || p.ja)]) { newSeen[norm(p.en || p.ja)] = 1; out.push({ k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', on: true }); }
         });
       });
@@ -857,6 +857,15 @@
     h += '<button class="opt" data-newp="1">' + esc(f.raw) + '<small>Add as a new wrestler</small></button>';
     return h;
   }
+  // The sheet refuses spellings that aren't one name (2.95.0): this mirrors its quick checks, so a misread line
+  // isn't offered as an alias in the first place.
+  function badAlias(s) {
+    s = String(s || '').normalize('NFKC').trim();
+    return !s || s.length > 40 || /[,、;\/&]|\bvs\.?(\s|$)|(^|\s)\d/i.test(s) ||
+      /\b(match|tournament|round|battle|league|final|title|championship|cup)\b|戦|試合|トーナメント/i.test(s) ||
+      (/^[\x00-\x7f★☆]+$/.test(s) && s.split(/\s+/).length > 3);
+  }
+
   function fixSave(body) {
     var f = sheetOpen; f.busy = true; f.err = ''; draw();
     post(body, function(t) {
