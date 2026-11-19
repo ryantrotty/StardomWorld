@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.106.1
+
+- **Fix: words split over two lines on StarScope show cards** ("in HACHI / NOHE", "SEND / AI", "MATS / UMOTO"). The site's stylesheet breaks words anywhere (set for Japanese text); the StarScope pages now wrap English between words everywhere (titles, venues, main event, highlights). A single word longer than the line can still break so nothing overflows. Japanese text wraps as before.
+
 ## 2.106.0
 
 - **2025 is a StarScope complete year (your build).** With every 2025 show logged and dated, the built-in complete years are now 2025 and 2026, so 2025 gets what 2026 has had since 2.97.0, with no new requests to the site:

@@ -702,6 +702,9 @@
     }).join('') + '</div></div></div>';
   }
   var HCSS = '#tvsh{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:26px 40px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}' +
+    // 2.106.1: the site's own CSS breaks words anywhere (it is set for Japanese), which split "HACHINOHE" over two lines
+    // on the show cards. Here English wraps between words; a single word longer than the line can still break.
+    '#tvsh,#tvsh *{word-break:normal !important;overflow-wrap:break-word !important;line-break:auto !important}' +
     '#tvsh .hd{display:flex;align-items:center;gap:14px;margin-bottom:16px}#tvsh .bar{width:10px;height:36px;background:#F4C242}#tvsh .wm{font:900 30px Arial;letter-spacing:.06em}#tvsh .wm b{color:#F4C242;font-weight:900}' +
     '#tvsh .tg{font:600 15px Arial;color:#C9D2DC}#tvsh .ct{margin-left:auto;font:700 15px Arial;color:#9AA6B4}' +
     '#tvsh .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}#tvsh .row.sec{padding:10px 12px;border-radius:12px;background:#121922;border:2px solid #2A323C}' +
