@@ -2667,6 +2667,11 @@ class MainActivity : Activity() {
     private fun scopeLogOn(): Boolean = BuildConfig.VIDEO_INDEX_DRYRUN && sheetOn()
     private fun scopeReadOn(): Boolean = sheetOn() || scopeFilePublic()
 
+    private fun scopeCompleteYears(): String {
+        if (!sheetOn()) return "[]"
+        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2026]"
+    }
+
     // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
     @Volatile private var scopeCache: org.json.JSONObject? = null
     @Volatile private var scopeStamp = 0L
@@ -3845,6 +3850,13 @@ class MainActivity : Activity() {
         // switched on for public builds.
         @android.webkit.JavascriptInterface
         fun scopeOn(): Boolean = this@MainActivity.scopeReadOn()
+
+        // StarScope complete years (2.97.0, docs/ROSTER.md "StarScope complete years"): years whose shows are all logged, so
+        // pages limited to them (Tag League, tournament and title tabs, title histories) read the index instead of searching
+        // the site. Your build: [2026] unless the roster file's "starscope": {"completeYears": [...]} says otherwise.
+        // Other builds: none, while StarScope isn't public.
+        @android.webkit.JavascriptInterface
+        fun scopeCompleteJson(): String = this@MainActivity.scopeCompleteYears()
 
         // StarScope on the phone (2.68.0, private builds, assets/scopelink.js): the video page's play / pause / seek notes
         // go to the sheet's playback tab, so a tap on the phone logger can be turned into a place in the video.

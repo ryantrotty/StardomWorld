@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.97.0
+
+- **StarScope complete years (your build).** A year whose every show is logged can stand in for the site's search on pages limited to that year. 2026 is the first; the roster file's `"starscope": {"completeYears": [...]}` changes the list (docs/ROSTER.md). This version adds the groundwork only; the pages that use it follow in the next versions.
+  - A complete year counts up to its latest logged show. Stardom shows on the schedule after that day (not logged yet) are still looked for with the site's search.
+  - The StarScope list now carries each match's tournament, block and title ids and the site's title, so those pages can show the site's normal cards from it. The TV asks for the whole list once to pick them up.
+- Sheet script: `vi_cards` sends `x.cv` (tournament), `x.bk` (block), `x.tv` (title ids), `vt` / `vtj` (the site's title, when the video is in the videos tab). **Redeploy the script** before installing this build.
+
 ## 2.96.5
 
 - **Fix: a show's date from a typo'd month and day.** When the site's show name ends with the full date in brackets, that date is used ("12・26『… GRAND QUEENDOM 2026』Yokohama Arena (2026/04/26)" was read as 26 December). Same reader on the TV and the iPhone; the iPhone also corrects shows it had already kept.

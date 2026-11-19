@@ -63,6 +63,82 @@
   // The logger's Card tab draws its preview with the same card (2.61.0).
   window.__tvStarCard = { html: block };
 
+  // ---- Complete years (2.97.0): StarScope as the source for pages limited to a year whose every show is logged.
+  // AndroidHost.scopeCompleteJson() lists those years ([2026] in your build, none in others). A complete year is covered
+  // up to its latest logged show ("through"); a show after that (one not logged yet) still comes from the site's search.
+  // Pages that use this (Tag League, the tournament and title tabs, title histories) show the site's normal cards; the
+  // index only decides which videos those are, so nothing on screen changes look. Nothing here asks the video site.
+  var CY = null, THRU = null;
+  function completeYears() {
+    if (CY) return CY;
+    CY = [];
+    try { var j = JSON.parse(H.scopeCompleteJson ? H.scopeCompleteJson() : '[]'); if (j && j.length) CY = j.map(String).sort(); } catch (e) { CY = []; }
+    return CY;
+  }
+  function through(y) {
+    if (!THRU) {
+      THRU = {};
+      Object.keys(map || {}).forEach(function(id) { var d = String((map[id] || {}).d || ''); if (d.length === 10) { var k = d.slice(0, 4); if (!THRU[k] || d > THRU[k]) THRU[k] = d; } });
+    }
+    return THRU[String(y)] || '';
+  }
+  // The first day of the run of complete years that ends with the newest one: [2025, 2026] gives 2025-01-01.
+  function coverFrom() {
+    var ys = completeYears(), y = ys.length ? +ys[ys.length - 1] : 0;
+    if (!y || !through(y)) return '';
+    while (ys.indexOf(String(y - 1)) >= 0 && through(y - 1)) y--;
+    return y + '-01-01';
+  }
+  function coverThru() { var ys = completeYears(); return ys.length ? through(ys[ys.length - 1]) : ''; }
+  function covered(d) { d = String(d || '').slice(0, 10); var y = d.slice(0, 4); return d.length === 10 && completeYears().indexOf(y) >= 0 && !!through(y) && d <= through(y); }
+  // Stardom's own shows on the schedule since the last logged one, up to today (Japan time): the shows still to log.
+  function unlogged() {
+    var thru = coverThru(), out = [];
+    if (!thru) return out;
+    var today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    try {
+      ((JSON.parse(H.scheduleJson()) || {}).events || []).forEach(function(e) {
+        var d = String(e.start || '').slice(0, 10);
+        if (e.own !== false && d > thru && d <= today && out.indexOf(d) < 0) out.push(d);
+      });
+    } catch (e) {}
+    return out.sort();
+  }
+  function hasName(v, name) { var k = norm(name); return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); }
+  function together(v, a, b) {
+    var ka = norm(a), kb = norm(b);
+    return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(ka) >= 0; }) && sd.some(function(p) { return p[0].indexOf(kb) >= 0; }); });
+  }
+  // Tournaments by id, with the label as a fallback for a list from an older sheet script.
+  var COMP = { stargp: ['5star-gp', /5\s*★?\s*star/i], cinderella: ['cinderella', /cinderella/i], tagleague: ['tag-league', /tag\s*league|goddess/i] };
+  function inComp(v, key) { var X = v.x || {}, c = COMP[key]; return !!c && (X.cv ? X.cv === c[0] : c[1].test(X.c || '')); }
+  function isTitle(v, id) { var X = v.x || {}; if (id) return (X.tv || []).indexOf(id) >= 0; return !!((X.tv && X.tv.length) || (X.ti && X.ti.length)); }
+  function siteTitle(v) {
+    var t = ja ? (v.vtj || v.vt) : (v.vt || v.vtj);
+    if (t) return t;
+    var d = String(v.d || '').replace(/-/g, '/');
+    return (d ? d + ' ' : '') + (ja ? v.ej : v.e) + ' ' + oneLine(v);
+  }
+  // window.__tvScopeIdx, not __tvScope: that one (further down) belongs to the menus and card check.
+  window.__tvScopeIdx = {
+    years: completeYears, through: through, from: coverFrom, thru: coverThru, covered: covered, unlogged: unlogged,
+    hasName: hasName, together: together, inComp: inComp, isTitle: isTitle,
+    // Every covered match passing test(v), newest first.
+    find: function(test) {
+      var out = [];
+      Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && covered(v.d) && test(v)) out.push({ id: id, v: v }); });
+      return out.sort(function(a, b) { return String(b.v.d).localeCompare(String(a.v.d)) || ((+a.v.n || 0) - (+b.v.n || 0)); });
+    },
+    // A match as the site's search would list it: the shape the team, wrestler and title pages already draw.
+    item: function(x) { return { id: x.id, h: location.origin + '/contents/' + x.id, t: siteTitle(x.v), b: x.v.th || '', d: x.v.d, sc: 1 }; },
+    // How a page limited to wrestlers who started on "start" (a debut or a team's first date) should look for matches:
+    // only: the index has all of it; recent: shows after the last logged one still need the site's newest page.
+    plan: function(start) {
+      var from = coverFrom(), thru = coverThru(), un = unlogged();
+      return { from: from, thru: thru, only: !!(from && start && String(start) >= from), recent: un.length > 0, unlogged: un };
+    }
+  };
+
   // ---- the telescope button on wrestler and tag team pages, and its results
   var TEL = '<svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="currentColor" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
   function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
@@ -849,6 +925,7 @@
       c = { t: Date.now(), s: r.now || '', f: Date.now(), map: map };
     }
     lsPut(KEY, c);
+    THRU = null;
     if (got) {
       try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
       soon();
@@ -859,7 +936,11 @@
   if (map) setTimeout(fillThumbs, 5000);
   var fresh = 0;
   try { var saved = kept(), ids = Object.keys((saved && saved.map) || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
-  if (Date.now() - fresh > AGE) ask();
+  // 2.97.0: once, the whole list, so the copy gets the complete-years fields (tournament, block and title ids, the
+  // site's title) from the updated sheet script. An older script simply doesn't send them; the pages fall back.
+  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '2'; } catch (e) {}
+  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '2'); } catch (e) {} ask({ full: true }); }
+  else if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
