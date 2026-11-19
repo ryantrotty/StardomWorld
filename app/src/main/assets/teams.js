@@ -957,7 +957,7 @@
     var S = SC(), t = TEAM;
     if (!S || !t) return true;
     var lg = tab === 'tl', list = lg ? L.kept : C.kept;
-    var found = S.find(function(v) { return (lg ? S.inComp(v, 'tagleague') : (S.isTitle(v) && v.x.k === 'tag')) && scWith(S, v, t.members); });
+    var found = S.find(function(v) { return (lg ? S.inComp(v, 'tagleague') : (S.isTitle(v) && v.x.k === 'tag')) && (!S.twoOnTwo || S.twoOnTwo(v)) && scWith(S, v, t.members); });   // 2 v 2 only (2.106.2)
     var n = scAdd(list, found, V.seen), P = S.plan(lg ? '' : t.since), ys = S.years(), only, recent;
     if (lg) {
       var lys = t.league.map(function(x) { return String(x.year); });

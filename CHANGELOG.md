@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.106.2
+
+- **Fix: tag team pages list only 2 v 2 matches from StarScope.** The telescope results (and whether the telescope button shows at all) and the index matches on the Tag League and Championship tabs counted any match with both partners on the same side, so 6- and 8-woman tags, 3-way tags and rumbles came in. Now only two sides of two count. Wrestler pages are unchanged.
+
 ## 2.106.1
 
 - **Fix: words split over two lines on StarScope show cards** ("in HACHI / NOHE", "SEND / AI", "MATS / UMOTO"). The site's stylesheet breaks words anywhere (set for Japanese text); the StarScope pages now wrap English between words everywhere (titles, venues, main event, highlights). A single word longer than the line can still break so nothing overflows. Japanese text wraps as before.

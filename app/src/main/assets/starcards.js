@@ -104,6 +104,8 @@
     } catch (e) {}
     return out.sort();
   }
+  // 2.106.2: a straight tag match, two sides of two (tag team pages list only these, not 6- or 8-woman tags or 3-ways).
+  function twoOnTwo(v) { var s = v.p || v.s || []; return s.length === 2 && s[0].length === 2 && s[1].length === 2; }
   function hasName(v, name) { var k = norm(name); return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); }
   function together(v, a, b) {
     var ka = norm(a), kb = norm(b);
@@ -122,7 +124,7 @@
   // window.__tvScopeIdx, not __tvScope: that one (further down) belongs to the menus and card check.
   window.__tvScopeIdx = {
     years: completeYears, through: through, from: coverFrom, thru: coverThru, covered: covered, unlogged: unlogged,
-    hasName: hasName, together: together, inComp: inComp, isTitle: isTitle,
+    hasName: hasName, together: together, twoOnTwo: twoOnTwo, inComp: inComp, isTitle: isTitle,
     // Every covered match passing test(v), newest first.
     find: function(test) {
       var out = [];
@@ -153,7 +155,7 @@
       if (kind === 'w') {
         var want = [norm(a), norm(b)];
         sides.forEach(function(s) { s.forEach(function(p) { if (hasKey(p, want)) hit = true; }); });
-      } else if (!(v.x && v.x.k === 'segment')) {   // a segment isn't a team match (2.96.0)
+      } else if (!(v.x && v.x.k === 'segment') && twoOnTwo(v)) {   // a segment isn't a team match (2.96.0); 2 v 2 only (2.106.2)
         var one = [norm(a)], two = [norm(b)];
         sides.forEach(function(s) {
           var x = s.filter(function(p) { return hasKey(p, one); })[0], y = s.filter(function(p) { return hasKey(p, two); })[0];
