@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.96.1
+
+- **Fix: the match type was read as part of the first name.** A description that puts the title and line-up on one line ("Singles Match Yuna Mizumori vs Anne Kanaya", "シングルマッチ 水森由菜 vs 金屋あんね") is now split after the last match word (Match, Fall, Battle, マッチ, 勝負…), so the first name is just "Yuna Mizumori". Same reader on the TV and the iPhone; the iPhone reads its cards again (old readings dropped).
+- **iPhone card check:** picking the right wrestler for a spelling the sheet won't keep as an alias now uses her for that match anyway (the card can be confirmed); only the alias isn't saved.
+
 ## 2.96.0
 
 - **Segments: non-match moments on the card can be logged.** Types: Retirement, Homecoming, Debut, Return, Award, Announcement (the `segment` list in the sheet's lists tab; add more there). A segment is the people in it plus its type: no sides, no result, never counted in a record.
