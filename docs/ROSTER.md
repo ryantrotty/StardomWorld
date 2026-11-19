@@ -116,6 +116,10 @@ StarScope names a show in English from the schedule when the show is on it. For 
 
 Older videos only have a Japanese title on the site ("6人タッグマッチ", "CMLL日本女子選手権試合"). Card check (TV and iPhone) shows them in English by swapping the usual match-title words (longest first; the show words above are used too), so "6人タッグマッチ" reads "Six-Woman Tag Match". Unlike show names, anything still Japanese stays, so nothing disappears. These entries add to and override the built-in list in `assets/shownames.js`; an empty value removes the word. Only what is shown changes: saves, the line-up reading and the Gemini prompts keep the site's own title. Japanese mode always shows the site's title.
 
+## English show names typed by hand (2.107.0)
+
+Type a show's English name in the sheet's **shows** tab, column **K (`name_en`)**. It wins over the schedule and the show words, everywhere StarScope names a show in English (Shows cards, the player's title, card rows). Leave it empty to keep the automatic name. Japanese mode always shows the site's name. Changing the cell doesn't reach the TV and phone until their next full StarScope list (about once a day); set the row's `updated` (column J) to now to send it with the next list.
+
 ## StarScope complete years (your build)
 
 ```json

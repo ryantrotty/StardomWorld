@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.107.0
+
+- **English show names you type.** The shows tab gets column K, `name_en` (header added). When filled, it's the show's English name everywhere StarScope names a show in English (Shows cards, the player's title, card rows, card check lists), ahead of the schedule and the word list. Empty keeps the automatic name; Japanese mode unchanged.
+  - The sheet script sends it with the StarScope list (cards' `she`, and `ss.ne` for a video from another set); `shownames.js` reads it from the list the TV or phone already keeps (no extra request).
+- Sheet script: **redeploy.** iPhone card check: **published to GitHub Pages** (shownames.js).
+
 ## 2.106.2
 
 - **Fix: tag team pages list only 2 v 2 matches from StarScope.** The telescope results (and whether the telescope button shows at all) and the index matches on the Tag League and Championship tabs counted any match with both partners on the same side, so 6- and 8-woman tags, 3-way tags and rumbles came in. Now only two sides of two count. Wrestler pages are unchanged.
