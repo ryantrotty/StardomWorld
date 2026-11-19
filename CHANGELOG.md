@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.105.0
+
+- **StarScope Shows: each video set is its own show.** A match can carry videos from two sets (Japanese and English commentary). The Shows list used to file every video under the match's show, so an English set linked to the Japanese matches vanished as a show. Now a video published in another set than its match's show is listed under its own set's show (name and venue from that set's row in the shows tab), and the player's title shows that show too. The match itself stays one row in the sheet.
+  - The sheet script adds `ss` (the set's show: name, venue) to such cards.
+  - English sets logged with their own copies of the matches (the 2025 English shows) are unchanged.
+- **Billed names (look-alikes).** A participant with role `billed` is shown under the name as billed (Shin・Saori Anou, Kuro・Saori Anou, Shin・Natsupoi) while linked to the wrestler who played it (Sakura Hirota), so her pages count the match. The logger keeps that mark when the match is saved again; picking another wrestler for that slot clears it.
+- Sheet (19 Nov): X'mas NIGHT 2025 fixed: all 8 matches on the Japanese show (8135) numbered 1 to 8; the English set (8103) linked to all 8 as English versions (two missing links added: 8097, 8100). WAVE NAMI☆1 (6475) dated 1 Jan 2025. Natsu & Saori 10th anniversary rumble: the three look-alikes linked to Sakura Hirota with role `billed`. AWARD 2024 shows moved to 25 and 26 Jan 2025, Yamagata GP 2024 show to 2024-08-25, KOCHI 2025 to 2025-06-27, the 7 English 2025 shows dated with their Japanese twins.
+- Sheet script: **redeploy.** iPhone card check: **published to GitHub Pages** (indexpanel.js).
+
 ## 2.104.0
 
 - **Venue locations.** The venues tab gains `country`, `prefecture_ja`, `city`, `city_ja` and `area` (after `note`), and `prefecture` now holds the English prefecture (or state / province) for every venue. Filled from a Gemini lookup, checked by hand; names kept as the app's own (Gemini's building names weren't used).

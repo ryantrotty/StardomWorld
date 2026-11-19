@@ -336,7 +336,9 @@
   function showsList() {
     var by = {};
     homeList().forEach(function(x) {
-      var sid = String(x.v.sid || '');
+      // 2.105.0: a video from another set than its match's show (English commentary linked to the Japanese match) is
+      // listed under its own set's show, so each set stays its own show here while the match is kept once.
+      var sid = String(x.v.ss && x.v.vs ? x.v.vs : (x.v.sid || ''));
       if (!sid) return;
       var g = by[sid] = by[sid] || { sid: sid, seen: {}, list: [] }, mid = x.v.x.m || x.id;
       // One entry per match (a match can have several videos, e.g. English commentary): keep one with a picture.
@@ -368,7 +370,8 @@
       }).sort(function(a, b) { return (a.sc - b.sc) || (a.n - b.n); });
       var hl = others.filter(function(o) { return o.sc < 9; }).slice(0, 3);
       var first = ns.length ? nums[ns[0]] : top;
-      return { sid: sid, name: showName(v0.sh, date) || v0.sh || '', date: date, venue: (ja ? (v0.vnj || v0.vn) : v0.vn) || '', total: total,
+      var S0 = v0.ss || v0, shName = v0.ss ? v0.ss.n : v0.sh;
+      return { sid: sid, name: showName(shName, date) || shName || '', date: date, venue: (ja ? (S0.vnj || S0.vn) : S0.vn) || '', total: total,
         list: L, nums: nums, top: top, mainN: mainN, isMain: isMain, counted: counted, complete: total != null && counted >= total,
         hl: hl, more: Math.max(0, L.length - 1 - hl.length), first: first,
         hasDark: L.some(function(x) { return x.v.x.dk || num(x.v.n) === 0; }) };

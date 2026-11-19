@@ -656,7 +656,7 @@ function viSave(b) {
     if (resultType === 'win') r = Number(p.side) === winner ? 'win' : 'loss';
     else if (resultType) r = resultType;
     return { side_no: Number(p.side), slot: Number(p.slot) || 1, talent_id: p.talent_id || '', billed_name: String(p.billed || '').slice(0, 120),
-      role: /^(champion|challenger)$/.test(p.role || '') ? p.role : '', team_id: String(p.team_id || '').slice(0, 80), faction_id: String(p.faction_id || '').slice(0, 80),
+      role: /^(champion|challenger|billed)$/.test(p.role || '') ? p.role : '', team_id: String(p.team_id || '').slice(0, 80), faction_id: String(p.faction_id || '').slice(0, 80),
       result: r, entry_order: Number(p.entry) > 0 ? Number(p.entry) : '', elim_order: Number(p.elim) > 0 ? Number(p.elim) : '', source: 'panel', updated: now };
   });
 
@@ -836,7 +836,8 @@ function viCards(b) {
   function sideList(list, lang) {
     var sides = [];
     list.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(p) {
-      var n = names[p.talent_id]; (sides[p.side_no - 1] = sides[p.side_no - 1] || []).push(n ? n[lang] : p.billed_name);
+      // 2.105.0: role "billed" shows the name as billed (Shin・Saori Anou played by Sakura Hirota); she is still linked.
+      var n = names[p.talent_id]; (sides[p.side_no - 1] = sides[p.side_no - 1] || []).push(n && p.role !== 'billed' ? n[lang] : (p.billed_name || (n ? n[lang] : '')));
     });
     return sides.filter(Boolean);
   }
@@ -955,7 +956,10 @@ function viCards(b) {
     };
     var sv = seen[String(v.video_id)] || {};
     var mu = multi(en, t.stipulation);
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    // 2.105.0: a video published in another set than its match's show (an English-commentary set linked to the Japanese
+    // match) carries that set's show, so StarScope lists it under its own show.
+    var vset = String(v.set_id || ''), oss = vset && vset !== String(m.show_id || '') && shw[vset] ? shw[vset] : null;
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc } : { ok: true, map: map, now: now, full: true, venues: venLoc };
 }
