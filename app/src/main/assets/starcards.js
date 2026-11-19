@@ -64,7 +64,7 @@
   window.__tvStarCard = { html: block };
 
   // ---- Complete years (2.97.0): StarScope as the source for pages limited to a year whose every show is logged.
-  // AndroidHost.scopeCompleteJson() lists those years ([2026] in your build, none in others). A complete year is covered
+  // AndroidHost.scopeCompleteJson() lists those years ([2025, 2026] in your build since 2.106.0, none in others). A complete year is covered
   // up to its latest logged show ("through"); a show after that (one not logged yet) still comes from the site's search.
   // Pages that use this (Tag League, the tournament and title tabs, title histories) show the site's normal cards; the
   // index only decides which videos those are, so nothing on screen changes look. Nothing here asks the video site.

@@ -2669,7 +2669,7 @@ class MainActivity : Activity() {
 
     private fun scopeCompleteYears(): String {
         if (!sheetOn()) return "[]"
-        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2026]"
+        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2025,2026]"   // 2.106.0: 2025 fully logged
     }
 
     // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
@@ -3857,7 +3857,7 @@ class MainActivity : Activity() {
 
         // StarScope complete years (2.97.0, docs/ROSTER.md "StarScope complete years"): years whose shows are all logged, so
         // pages limited to them (Tag League, tournament and title tabs, title histories) read the index instead of searching
-        // the site. Your build: [2026] unless the roster file's "starscope": {"completeYears": [...]} says otherwise.
+        // the site. Your build: [2025, 2026] unless the roster file's "starscope": {"completeYears": [...]} says otherwise.
         // Other builds: none, while StarScope isn't public.
         @android.webkit.JavascriptInterface
         fun scopeCompleteJson(): String = this@MainActivity.scopeCompleteYears()

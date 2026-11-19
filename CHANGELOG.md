@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.106.0
+
+- **2025 is a StarScope complete year (your build).** With every 2025 show logged and dated, the built-in complete years are now 2025 and 2026, so 2025 gets what 2026 has had since 2.97.0, with no new requests to the site:
+  - Wrestler and tag team pages: the Tag League, 5★STAR GP, Cinderella and Championship tabs take 2025 matches from the index. A wrestler or team whose debut or first date is 2025 or later needs no site search on those tabs.
+  - Title histories: reigns from 2025 on use the index.
+  - Years: 2025 opens StarScope Shows for 2025 (every show as a poster card) instead of the site's year category.
+  - Video pages: 2025 videos get the StarScope card row and Up next.
+- The roster file's `starscope.completeYears` still overrides this (not set at the moment). Shows from other promotions (WAVE, Sendai Girls) stay in the index and show up in 2025's Shows; they never match a Stardom tournament or title.
+
 ## 2.105.0
 
 - **StarScope Shows: each video set is its own show.** A match can carry videos from two sets (Japanese and English commentary). The Shows list used to file every video under the match's show, so an English set linked to the Japanese matches vanished as a show. Now a video published in another set than its match's show is listed under its own set's show (name and venue from that set's row in the shows tab), and the player's title shows that show too. The match itself stays one row in the sheet.
