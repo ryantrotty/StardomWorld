@@ -788,11 +788,15 @@ function viSave(b) {
 // copy): matches saved or rated since, and every match of a show one of them belongs to (a venue set on one match is
 // the whole show's). `all` lists every video that has a card, so the TV drops the ones that are gone. Without since,
 // or when the TV's copy is a day old, the whole list, as before.
-// A block belongs to one tournament (2.102.1): Blue/Red Stars are the 5★STAR GP's, Blue/Red Goddesses the Tag League's.
-// Many league matches were logged with their block and round but no tournament, so they didn't count as 5★STAR GP or
-// Tag League matches. The tournament is now taken from the block wherever it's missing (the cards, the published file),
-// and added on save.
-function viBlockComp(block) { block = String(block || ''); return /-stars$/.test(block) ? '5star-gp' : /-goddesses$/.test(block) ? 'tag-league' : ''; }
+// A block belongs to one competition: the lists tab's parent (Blue/Red Stars: 5★STAR GP; Blue/Red Goddesses: Tag League).
+// 2.102.1 / 2.102.2: a match with a block and no competition gets it, on save, for the cards and the published file.
+// League matches were logged that way because site titles like "BLUE STARS-B Official Matches" named the block but
+// didn't match the competition's keywords (fixed in the lists tab too).
+function viBlockComp(block) {
+  block = String(block || '');
+  var hit = viRows('lists').filter(function(l) { return l.list === 'block' && l.value_id === block; })[0];
+  return hit && hit.parent ? String(hit.parent) : '';
+}
 function viWithComp(t) {
   if (!t || (t.competition && t.competition.length) || !t.block || !t.block.length) return t || {};
   var c = viBlockComp(t.block[0]), o = {};

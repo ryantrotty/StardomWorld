@@ -111,10 +111,7 @@
   }
   // Tournaments by id, with the label as a fallback for a list from an older sheet script.
   var COMP = { stargp: ['5star-gp', /5\s*★?\s*star/i], cinderella: ['cinderella', /cinderella/i], tagleague: ['tag-league', /tag\s*league|goddess/i] };
-  // 2.102.1: a block names its tournament (Blue/Red Stars: 5★STAR GP; Blue/Red Goddesses: Tag League), for league matches
-  // logged with a block but no tournament, from a sheet script before 2.102.1.
-  function blockComp(bk) { bk = String(bk || ''); return /-stars$/.test(bk) ? '5star-gp' : /-goddesses$/.test(bk) ? 'tag-league' : ''; }
-  function inComp(v, key) { var X = v.x || {}, c = COMP[key]; return !!c && (X.cv ? X.cv === c[0] : (X.bk ? blockComp(X.bk) === c[0] : c[1].test(X.c || ''))); }
+  function inComp(v, key) { var X = v.x || {}, c = COMP[key]; return !!c && (X.cv ? X.cv === c[0] : c[1].test(X.c || '')); }
   function isTitle(v, id) { var X = v.x || {}; if (id) return (X.tv || []).indexOf(id) >= 0; return !!((X.tv && X.tv.length) || (X.ti && X.ti.length)); }
   function siteTitle(v) {
     var t = ja ? (v.vtj || v.vt) : (v.vt || v.vtj);

@@ -455,6 +455,15 @@
         if (hit && !has(g, x.id)) { if (MULTI[g] || !(state.tags[g] || []).length) (state.tags[g] = state.tags[g] || []).push(x.id); }
       });
     });
+    compFromBlock(state.tags);
+  }
+  // A block belongs to one competition (the lists tab's parent, 2.102.2): a block without its competition gets it.
+  // Site titles such as "BLUE STARS-B Official Matches" name the block but not the tournament.
+  function compFromBlock(tags) {
+    var b = (tags.block || [])[0];
+    if (!b || (tags.competition || []).length) return;
+    var x = listOf('block').filter(function(y) { return y.id === b; })[0];
+    if (x && x.p) tags.competition = [x.p];
   }
   function toggle(g, v) {
     var L = state.tags[g] = state.tags[g] || [], i = L.indexOf(v);
@@ -464,6 +473,7 @@
       var c = state.tags.competition[0];
       state.tags.block = (state.tags.block || []).filter(function(b) { var x = listOf('block').filter(function(y) { return y.id === b; })[0]; return c && x && (!x.p || x.p === c); });
     }
+    if (g === 'block') compFromBlock(state.tags);
   }
   function nextNo(field) { var n = 0; people().forEach(function(x) { n = Math.max(n, Number(x.p[field]) || 0); }); return n + 1; }
   function personAt(k) { var m = /^(\d+)_(\d+)$/.exec(k); return state.sides[+m[1]].people[+m[2]]; }

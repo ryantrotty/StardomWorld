@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.102.2
+
+- **Fix at the source: league matches saved without their tournament.** The site titles 5★STAR GP league matches "BLUE STARS-B Official Matches" / "RED STARS-A 公式戦": the block's keywords matched, but the tournament's ("Stars Official", "スターズ公式") didn't, so card check, the logger and the phone suggested the block and round but no competition.
+  - The lists tab's 5★STAR GP keywords now also match "STARS-B Official" and "STARS-A 公式" (changed in the sheet, no redeploy needed for that part).
+  - Card check, the TV logger and the phone logger fill in the competition from the block (the lists tab's parent) whenever a block is suggested or picked without one.
+  - The sheet script's safety net (2.102.1) now reads the parent from the lists tab instead of a fixed rule; the TV's own copy of that rule is gone, so the Competition field is the one source.
+  - The sheet was repaired: 125 matches with a block and no competition (2024 and 2026 5★STAR GP league matches, four 2025 Tag League matches) got their competition row, marked source "repair".
+- Sheet script: **redeploy.** iPhone card check and the phone logger: published to GitHub Pages with this version.
+
 ## 2.102.1
 
 - **Fix: 5★STAR GP and Tag League tabs missing most 2026 league matches (since 2.98.0).** Many league matches were logged with their block (Blue/Red Stars, Blue/Red Goddesses) and round but no tournament, so only the knockout rounds (which have the tournament) counted. A block now names its tournament: Blue/Red Stars are 5★STAR GP, Blue/Red Goddesses are Tag League.
