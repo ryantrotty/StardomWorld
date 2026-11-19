@@ -202,6 +202,10 @@
   var S = lsGet(STATE_KEY) || { screen: 'home', tab: 'started', year: '', set: '', from: '' };
   function saveState() { lsSet(STATE_KEY, { screen: S.screen, tab: S.tab, year: S.year, set: S.set, from: S.from, y: root.scrollTop }); }
   var kitReady = false, show = null, recs = {}, saved = {}, attn = {}, reading = null, lastFetch = 0, readQ = [], sheetOpen = null, flash = '', flashBad = false, batch = null;
+  // Segments (2.96.0): cards you've marked as a retirement, homecoming, debut, return, award or announcement, by video:
+  // { type, ids }. Kept for this visit; Confirm / Confirm all save them like any ready card.
+  var segs = ssGet('ccPhoneSegs') || {};
+  function segSet(id, v) { if (v) segs[id] = v; else delete segs[id]; ssSet('ccPhoneSegs', segs); }
   var vs = { mode: 'view', text: '', busy: '', msg: '', err: '' };
   function kit() { return kitReady && window.__tvIndexKit; }
   var flashKey = false;
@@ -403,7 +407,9 @@
     var r = recs[v.id];
     if (status(v)) return misplaced(v) ? 'renumber' : 'logged';
     if (!r) return 'unread';
-    if (r.failed || attn[v.id]) return 'attn';
+    if (r.failed) return 'attn';
+    if (segs[v.id]) return 'ready';
+    if (attn[v.id]) return 'attn';
     var s = sides(r), K = kit();
     if (s.A.length < 2) return 'attn';
     if (!K) return 'unread';
@@ -433,6 +439,33 @@
     });
     return h;
   }
+  // A card the site gives no line-up for, whose title names a segment type and wrestlers in the library: offered as
+  // a segment, one tap to accept.
+  function segText(v, r) { return [r && r.title_en, r && r.title_ja, r && r.h1, v.t].filter(Boolean).join(' '); }
+  function segGuess(v, r) {
+    var K = kit(); if (!K || !K.list || !r || r.failed || sides(r).A.length >= 2) return null;
+    var text = segText(v, r), types = K.list('segment'), type = '';
+    (K.suggest(text) || []).some(function(x) { if (x.group !== 'segment') return false; var t = types.filter(function(y) { return y.name === x.label; })[0]; if (t) type = t.id; return !!t; });
+    var ids = K.inText(text);
+    return type || ids.length ? { type: type, ids: ids } : null;
+  }
+  function segLabel(type) { var t = (kit() && kit().list ? kit().list('segment') : []).filter(function(x) { return x.id === type; })[0]; return t ? t.name : type; }
+  function segHtml() {
+    var f = sheetOpen, K = kit(), L = K && f.q ? K.talents(f.q, 6) : [];
+    var h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:4px">Segment, not a match</div><div class="sub" style="color:#9AA6B4;margin-bottom:8px">' + esc(f.title) + '</div><div class="gl">Type</div><div class="bt" style="flex-wrap:wrap">';
+    (K ? K.list('segment') : []).forEach(function(t) { h += '<button class="b' + (f.type === t.id ? ' on' : '') + '" data-segty="' + esc(t.id) + '">' + esc(t.name) + '</button>'; });
+    h += '</div><div class="gl">In the segment</div>';
+    f.ids.forEach(function(id) { h += '<button class="pp" data-segrm="' + esc(id) + '"><span class="mk">✓</span><span><span class="n">' + esc(K.nameOf(id)) + '</span><small>Tap to remove</small></span></button>'; });
+    if (!f.ids.length) h += '<div class="sub" style="color:#9AA6B4">No one yet: search below.</div>';
+    h += '<input class="tx" id="ccp-sin" type="text" autocomplete="off" placeholder="Add a wrestler" value="' + esc(f.q) + '" style="margin-top:8px"><div id="ccp-sl">' + segList(L) + '</div>';
+    h += '<div class="bt"><button class="b on wide" data-segok="1"' + (f.type && f.ids.length ? '' : ' disabled') + '>Use as segment</button>' + (segs[f.v] ? '<button class="b" data-unseg="' + esc(f.v) + '">Not a segment</button>' : '') + '<button class="b" data-close="1">Cancel</button></div></div>';
+    return h;
+  }
+  function segList(L) { return L.filter(function(t) { return sheetOpen.ids.indexOf(t.id) < 0; }).map(function(t) { return '<button class="opt" data-segadd="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; }).join(''); }
+  function segOpen(v) {
+    var r = recs[v.id], g = segs[v.id] || segGuess(v, r) || { type: '', ids: [] };
+    sheetOpen = { seg: 1, v: v.id, title: (r && !r.failed && (r.title_en || r.title_ja)) || v.t, type: g.type, ids: g.ids.slice(), q: '' }; draw();
+  }
   function cardHtml(v, i) {
     var r = recs[v.id], s = status(v), k = cls(v), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
     var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
@@ -442,12 +475,17 @@
     if (r && r.failed) h += '<div class="er">Couldn\'t read this page (' + esc(r.failed) + ')</div>';
     else if (r) {
       var K = kit(), sug = K ? K.suggest([r.title_en, r.title_ja, r.h1].filter(Boolean).join(' ')) : [];
-      h += '<div class="gl">People</div>' + peopleHtml(v, r) +
+      var sg = segs[v.id], gs = !s && !sg ? segGuess(v, r) : null, K0 = kit();
+      if (sg) h += '<div class="gl">Segment · ' + esc(segLabel(sg.type)) + '</div>' + sg.ids.map(function(id) { return '<div class="pp"><span class="mk">✓</span><span class="n">' + esc(K0 ? K0.nameOf(id) : id) + '</span></div>'; }).join('') +
+        '<div class="rw"><span class="lb">Result</span><span class="vl">None: segments don\'t count as matches</span></div>';
+      else if (gs && gs.type && gs.ids.length) h += '<div class="er" style="color:#C9D2DC;border-color:#6B5A22">Looks like a segment: ' + esc(segLabel(gs.type)) + ' · ' + esc(gs.ids.map(function(id) { return K0.nameOf(id); }).join(', ')) + '<div class="bt"><button class="b on" data-segyes="' + esc(v.id) + '">Yes, a segment</button><button class="b" data-seg="' + esc(v.id) + '">Change</button></div></div>';
+      if (!sg) h += '<div class="gl">People</div>' + peopleHtml(v, r) +
         '<div class="rw"><span class="lb">Match type</span><span class="vl">' + esc(kindOf(r) || '–') + '</span></div>' +
         (sug.length ? '<div class="rw"><span class="lb">Suggested</span><span class="vl">' + sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') + '</span></div>' : '');
     }
     h += '<div class="bt">';
     if ((!s && k === 'ready') || k === 'renumber') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : k === 'renumber' ? 'Save as match ' + placeOf(v) : 'Confirm') + '</button>';
+    if (!s && r && !r.failed) h += '<button class="b" data-seg="' + esc(v.id) + '">' + (segs[v.id] ? 'Edit segment' : 'Segment…') + '</button>';
     h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a></div></div></div>';
     return h;
   }
@@ -511,7 +549,7 @@
     else rows += '<div class="bt" style="margin:-2px 0 4px"><button class="b" data-vchg="1">Change venue</button></div>';
     show.videos.forEach(function(v, i) {
       var k = cls(v), r = recs[v.id]; n[k] = (n[k] || 0) + 1;
-      var lab = k === 'renumber' ? 'logged as ' + map[v.id].n + ', save as ' + (i + 1) : k === 'logged' ? 'logged' : k === 'ready' ? 'ready' : k === 'attn' ? 'needs a look' : 'not read yet';
+      var lab = k === 'renumber' ? 'logged as ' + map[v.id].n + ', save as ' + (i + 1) : k === 'logged' ? 'logged' : k === 'ready' ? (segs[v.id] ? 'ready · segment' : 'ready') : k === 'attn' ? 'needs a look' : 'not read yet';
       rows += '<div class="er2' + (needsCard(v) ? ' open' : '') + '" data-row="' + esc(v.id) + '"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
     });
     var todo = n.ready + n.unread + n.renumber, nx = nextShow();
@@ -791,7 +829,7 @@
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
     var shown = false;
-    window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, collect: true, venue: showVenueId(),
+    window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, collect: true, venue: showVenueId(), segment: segs[id] || null,
       host: function() { shown = true; attn[id] = 1; setTimeout(function() { if (window.__tvIndexBack) window.__tvIndexBack(); }, 0); var d = document.createElement('div'); d.style.display = 'none'; document.body.appendChild(d); return d; },
       done: function(res) { done(!shown && res && res.collected ? res.collected : null); } });
   }
@@ -880,18 +918,20 @@
   function draw() { if (drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
   function paint() {
     var ae = document.activeElement;
-    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
+    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
     var y = root.scrollTop, h;
     if (!cfg) h = setupHtml();
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
         (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
-        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : fixHtml()) : '');
+        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : fixHtml()) : '');
     }
     root.innerHTML = h; root.scrollTop = y;
     var vin = root.querySelector('#ccp-vin');
     if (vin) { vin.oninput = function() { vs.text = vin.value; var l = root.querySelector('#ccp-vl'); if (l) l.innerHTML = venueList(); }; if (vs.focus) { vs.focus = false; vin.focus(); } }
+    var sin = root.querySelector('#ccp-sin');
+    if (sin) { sin.oninput = function() { sheetOpen.q = sin.value; var l = root.querySelector('#ccp-sl'); if (l) l.innerHTML = segList(kit().talents(sin.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; sin.focus(); } }
     var fin = root.querySelector('#ccp-fin');
     if (fin) fin.oninput = function() { sheetOpen.q = fin.value; var l = root.querySelector('#ccp-fl'); if (l) l.innerHTML = fixList(kit().talents(fin.value, 8)); };
     watchCards();
@@ -960,6 +1000,13 @@
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
     if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, q: d.raw, err: '', busy: false }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
+    if (d.seg && show) { var sv = show.videos.filter(function(x) { return x.id === d.seg; })[0]; if (sv) segOpen(sv); return; }
+    if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type && yg.ids.length) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
+    if (d.segty && sheetOpen) { sheetOpen.type = d.segty; draw(); return; }
+    if (d.segrm && sheetOpen) { sheetOpen.ids = sheetOpen.ids.filter(function(x) { return x !== d.segrm; }); draw(); return; }
+    if (d.segadd && sheetOpen) { sheetOpen.ids.push(d.segadd); sheetOpen.q = ''; sheetOpen.focus = true; draw(); return; }
+    if (d.segok && sheetOpen) { var so = sheetOpen; if (so.type && so.ids.length) { segSet(so.v, { type: so.type, ids: so.ids.slice() }); delete attn[so.v]; delete sendFail[so.v]; } sheetOpen = null; draw(); return; }
+    if (d.unseg) { segSet(d.unseg, null); sheetOpen = null; draw(); return; }
     if (d.row && show) { openCards[d.row] = !openCards[d.row]; draw(); if (openCards[d.row]) setTimeout(function() { var c = root.querySelector('.card[data-v="' + d.row + '"]'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80); return; }
     if (d.allcards) { showAllCards = !showAllCards; draw(); return; }
     if (d.rev && show) { setOrder(show.videos.slice().reverse(), show.orderBy === 'reversed by you' ? 'as listed' : 'reversed by you'); return; }
