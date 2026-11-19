@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.103.1
+
+- **Fix: iPhone card check couldn't add a new wrestler under her English name.** "Add as a new wrestler" always used the site's spelling, so a Japanese-only billing (マゼラティ) went into the library as her English name, and typing "Mazzerati" in the search box didn't change that.
+  - What you type in the search box is now offered as "Add as a new wrestler", with the site's spelling (and its other-language spelling) saved as her aliases so she is matched next time.
+  - The site's-spelling option says when it's Japanese only.
+- **Matched names can be changed.** Tapping a ✓ name on a match not yet logged opens the same picker (showing who it is now), to choose someone else or add a new wrestler. When the spelling still finds the old wrestler in the library (it's her own name), the pick counts for that match.
+- Sheet: the library entry added as マゼラティ (tp1795116946557) now reads Mazzerati, with マゼラティ as its Japanese name.
+- iPhone card check: **published to GitHub Pages** with this version. No sheet script change.
+
 ## 2.103.0
 
 - **Card check: Japanese-only match titles in English.** Older videos (2025 and earlier) have no English title on the site, so card check listed them as "6人タッグマッチ", "CMLL日本女子選手権試合" and so on. The usual match-title words are now turned into English for display: Singles Match, Six-/Eight-/Ten-Woman Tag Match, 3-Way Match, Battle Royal, Championship, Title Match, Japan Women's, Rookie Introduction, rounds and finals, plus the show words (tournaments, blocks, venues).
