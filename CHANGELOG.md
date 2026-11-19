@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.96.0
+
+- **Segments: non-match moments on the card can be logged.** Types: Retirement, Homecoming, Debut, Return, Award, Announcement (the `segment` list in the sheet's lists tab; add more there). A segment is the people in it plus its type: no sides, no result, never counted in a record.
+- **iPhone card check:** a card with no line-up whose title names a segment type and wrestlers shows "Looks like a segment: Retirement · Saki Kashima" with **Yes, a segment**. Any card not yet logged has **Segment…** (pick the type, add or remove people). A marked card is "ready · segment" and saves with Confirm / Confirm all.
+- **TV logger:** a SEGMENT · NOT A MATCH group at the top of the Match step. With one picked, Competitors needs only one person, Finish says a segment has no result, and the card preview shows the type. Picked by itself from the title only when the page has no line-up.
+- **StarScope:** a segment's card shows its type where the event goes and "Segment" underneath; a Segments filter on All matches; segments show on wrestler pages but not as team matches.
+- **Sheet script:** a save with a segment tag takes one side and no result; the list gives segments kind `segment` with their type. **Redeploy the script.**
+
 ## 2.95.0
 
 - **Aliases must read as one name.** The sheet script refuses a spelling as a person's alias when it has a comma, slash, "&", "vs" or a leading number, match words (Match, Tournament, Round, 戦…), more than three words, or another person's name inside it. This stops misread lines like "2, Moneyball Tournament 1st Round Giulia" or "Itsuki Aoki Akira Kurogane" from being saved. Covers proposals (Fix a name, AI suggestions), auto-approved proposals (a refused one is marked rejected with the reason) and aliases sent with a save. **Redeploy the script.**

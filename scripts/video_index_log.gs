@@ -636,13 +636,17 @@ function viSave(b) {
     else sideSet[p.side] = 1;
   });
   if (!ok) return { ok: false, error: 'a name is not in the library' };
-  if (Object.keys(sideSet).length < 2) return { ok: false, error: 'a match needs two sides' };
+  // Segments (2.96.0): a retirement ceremony, promo, debut, signing or homecoming is logged with a "segment" tag. The
+  // people in it are one side, and it has no result, so it never counts in anyone's record.
+  var segment = Array.isArray(b.tags) && b.tags.some(function(t) { return t && t.group === 'segment'; });
+  if (!segment && Object.keys(sideSet).length < 2) return { ok: false, error: 'a match needs two sides' };
+  if (segment) list.forEach(function(p) { p.side = 1; p.role = ''; p.entry = ''; p.elim = ''; });
   var version = /^(jp|en|digest|full)$/.test(b.version || '') ? b.version : 'jp';
   var now = new Date().toISOString(), device = String(b.device || '').slice(0, 40);
   // StarScope card check (2.83.0) saves with source "thumb": logged from the thumbnail and line-up, not watched.
   // A match already logged while watching keeps "panel"; watching and saving a thumb match makes it "panel".
   var src = b.source === 'thumb' ? 'thumb' : 'panel';
-  var resultType = /^(win|draw|nc)$/.test(m.result_type || '') ? m.result_type : '';
+  var resultType = !segment && /^(win|draw|nc)$/.test(m.result_type || '') ? m.result_type : '';
   var winner = resultType === 'win' && sideSet[m.winner_side] ? Number(m.winner_side) : '';
   if (resultType === 'win' && !winner) resultType = '';
   var pending = list.some(function(p) { return !p.talent_id; });
@@ -839,6 +843,7 @@ function viCards(b) {
       .map(function(x) { var l = String(lab('stipulation', x, lang)); return lang === 'ja' || /match$/i.test(l) ? l : l + ' match'; });
   }
   function event(m, t, s, lang) {
+    if (t.segment) return lab('segment', t.segment[0], lang);
     if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
     if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
     var sp = specials(t, lang);
@@ -862,6 +867,7 @@ function viCards(b) {
   function multi(s, st) { return big(s, st) || s.reduce(function(a, x) { return a + x.length; }, 0) > 4; }
   function foot(t, lang, s) {
     var f = [];
+    if (t.segment) return [lang === 'ja' ? 'セグメント' : 'Segment'];
     // A big match under a tournament or title still says what kind it is.
     if (s && big(s, t.stipulation) && (t.competition || t.title)) f.push(kind(s, lang, t.stipulation));
     var sp = specials(t, lang);
@@ -905,7 +911,8 @@ function viCards(b) {
     p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
     var extra = {
       u: String(m.updated || ''),
-      k: en.length > 2 ? 'multi' : (Math.max.apply(null, sizes) <= 1 ? 'singles' : 'tag'),
+      k: t.segment ? 'segment' : (en.length > 2 ? 'multi' : (Math.max.apply(null, sizes) <= 1 ? 'singles' : 'tag')),
+      sg: t.segment ? lab('segment', t.segment[0], 'en') : '', sgj: t.segment ? lab('segment', t.segment[0], 'ja') : '',
       c: t.competition ? lab('competition', t.competition[0], 'en') : '',
       ti: (t.title || []).map(function(x) { return lab('title', x, 'en'); }),
       g: Object.keys(groups),
