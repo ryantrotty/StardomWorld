@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.98.0
+
+- **Tag League, 5★STAR GP, Cinderella and Championship tabs: 2026 from StarScope (your build).** The tabs take a complete year's matches from the StarScope list and show them as the site's normal cards, in the same places, so nothing looks different; the site's search only looks for the rest.
+  - Team pages: **Tag League** and **Championship**. Wrestler pages: **5★STAR GP**, **Cinderella**, **Tag League** and **Championship**.
+  - No search at all when everything the tab can hold is in complete years: a Tag League team whose only league is 2026, a team the roster file dates from 2026 ("since"), a wrestler whose debut is in 2026.
+  - When the schedule has a Stardom show after the last logged one, the newest page of the search is still read, and only videos after that show are kept.
+  - Otherwise the search runs as before for the earlier years; a complete year's videos it finds are left out (the index already gave them). A tab now usually stops after one page on opening, since the index fills its first rows.
+  - 5★STAR GP comes from the tournament itself, so STARS members' matches no longer depend on the BLUE STARS search words for 2026.
+  - The debug panel says how many matches came from StarScope and what the site was still asked for.
+
 ## 2.97.0
 
 - **StarScope complete years (your build).** A year whose every show is logged can stand in for the site's search on pages limited to that year. 2026 is the first; the roster file's `"starscope": {"completeYears": [...]}` changes the list (docs/ROSTER.md). This version adds the groundwork only; the pages that use it follow in the next versions.

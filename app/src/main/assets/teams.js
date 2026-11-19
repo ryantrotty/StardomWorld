@@ -555,6 +555,8 @@
       var kept = [], d0 = V.dropped.length;
       items.forEach(function(it) {
         if (V.seen[it.id]) return; V.seen[it.id] = 1;
+        var cw = scCut(SC_CUT, it);
+        if (cw) { V.dropped.push('[' + cw + '] ' + it.t); return; }
         if (!isTagBeltMatch(it.t)) { V.dropped.push(it.t); return; }   // team pages keep tag title matches only
         if (beforeDebut(it)) { V.dropped.push('[before their debut] ' + it.t); return; }
         // a dated Goddess title match must be one this pair was in, by the title history (as champions or challengers);
@@ -572,7 +574,7 @@
       V.log.push(C.q + ' · page ' + C.page + ': ' + items.length + ' videos, ' + kept.length + ' kept' + (cached ? ' (saved copy)' : ''));
       dbgSend(C.q, C.page, items, kept, V.dropped.slice(d0), cached);
       C.page++;
-      if (!more) C.done = true;
+      if (!more || (SC_CUT && SC_CUT.after)) C.done = true;   // after the last logged show: the newest page is enough
       paintVids();
     });
   }
@@ -668,7 +670,7 @@
       dbgSend(L.q, L.page, items, kept.filter(isLeague), V.dropped.slice(d0).concat(kept.filter(function(x) { return !isLeague(x); }).map(function(x) { return '[not Tag League: in All Tag Matches] ' + x.t; })), cached);
       V.log.push(L.q + ' · page ' + L.page + ': ' + items.length + ' videos, ' + kept.length + ' kept' + (cached ? ' (saved copy)' : ''));
       L.page++;
-      if (!more) L.done = true;
+      if (!more || (SC_CUT && SC_CUT.after)) L.done = true;
       lgSave(); paintVids();
       save(kept, false, L.q);
       if (cb) cb(!cached);
@@ -713,10 +715,42 @@
     var m = /[?&]ts=(\d{9,11})/.exec(it.b || '');
     return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) < deb : false;
   }
+  // ---- StarScope complete years (2.98.0; assets/starcards.js window.__tvScopeIdx). The Tag League and Championship tabs on
+  // team pages, and the 5★STAR GP, Cinderella, Tag League and Championship tabs on wrestler pages, take a complete year's
+  // matches from the index and show them as the site's normal cards. The site's search then only looks for the rest:
+  //  - none at all when everything the tab can hold is in complete years (and no show since the last logged one);
+  //  - one newest page, kept only after the last logged show, when the schedule has a show not logged yet;
+  //  - otherwise the search runs as before, leaving out what the index already gave (a complete year's videos).
+  function SC() { var S = window.__tvScopeIdx; return S && S.from && S.from() ? S : null; }
+  function scNames(m) { return [m, siteName(m), searchName(m)].concat(ALIAS[String(m).toLowerCase()] || []); }
+  function scWith(S, v, members) {   // every member on one side, by any of their spellings
+    return (v.p || []).some(function(sd, i) {
+      return members.every(function(m) { return scNames(m).some(function(n) { var one = { p: [sd] }; return S.hasName(one, n); }); });
+    });
+  }
+  function scDate(it) { return dateOfTitle(half(it.t)); }
+  function scUp(it) { var m = /[?&]ts=(\d{9,11})/.exec(it.b || ''); return m ? new Date(+m[1] * 1000).toISOString().slice(0, 10) : ''; }
+  // Why a search result is left out under the cut (cut: { skip: 1 } or { after: 'YYYY-MM-DD' }), or ''.
+  function scCut(cut, it) {
+    var S = SC();
+    if (!cut || !S) return '';
+    var d = scDate(it);
+    if (cut.after) { var w = d || scUp(it); return !w || w <= cut.after ? 'in StarScope (logged through ' + cut.after + ')' : ''; }
+    return d && S.covered(d) ? 'in StarScope (' + d.slice(0, 4) + ' is complete)' : '';
+  }
+  // The index's matches for a tab, as cards: added to the list given, marked as seen.
+  function scAdd(list, found, seen) {
+    var S = SC(), n = 0;
+    found.forEach(function(x) { if (seen[x.id]) return; seen[x.id] = 1; list.push(S.item(x)); n++; });
+    return n;
+  }
+  var SC_CUT = null;   // the open team tab's cut (Tag League or Championship), read by keepItems and champMore
   function keepItems(items) {   // the 2-on-2 rule and the video index side check, for search results and saved lists alike
     var add = [];
     items.forEach(function(it) {
       if (V.seen[it.id]) return; V.seen[it.id] = 1;
+      var cw = scCut(SC_CUT, it);
+      if (cw) { V.dropped.push('[' + cw + '] ' + it.t); return; }
       if (beforeDebut(it)) { V.dropped.push('[before their debut] ' + it.t); return; }
       if (!isTagTitle(it.t)) { V.dropMulti++; V.dropped.push(it.t); return; }
       var s = sidesCheck(TEAM, it.id);
@@ -916,6 +950,29 @@
     Array.prototype.forEach.call(document.querySelectorAll('#tv-tt .tt-team[data-favt]'), function(a) { a.classList.toggle('tt-fav', isFav(a.getAttribute('data-favt'))); });
   };
   function initials(n) { return String(n).split(/\s+/).map(function(w) { return w[0]; }).join('').slice(0, 2).toUpperCase(); }
+  // StarScope for the open team tab (2.98.0): its complete-year matches go in first. Returns whether the site still
+  // needs searching. Tag League: only in a league year that isn't complete. Championship: the team's start date (the
+  // roster's "since") decides.
+  function scTeam(tab) {
+    var S = SC(), t = TEAM;
+    if (!S || !t) return true;
+    var lg = tab === 'tl', list = lg ? L.kept : C.kept;
+    var found = S.find(function(v) { return (lg ? S.inComp(v, 'tagleague') : (S.isTitle(v) && v.x.k === 'tag')) && scWith(S, v, t.members); });
+    var n = scAdd(list, found, V.seen), P = S.plan(lg ? '' : t.since), ys = S.years(), only, recent;
+    if (lg) {
+      var lys = t.league.map(function(x) { return String(x.year); });
+      only = lys.length > 0 && lys.every(function(y) { return ys.indexOf(y) >= 0; });
+      recent = only && P.recent && lys.indexOf(String(P.thru).slice(0, 4)) >= 0;   // this year's league still running
+    } else { only = P.only; recent = P.recent; }
+    SC_CUT = only ? (recent ? { after: P.thru } : null) : { skip: 1 };
+    V.log.push('StarScope: ' + n + ' match' + (n === 1 ? '' : 'es') + ' from the index (complete ' + ys.join(', ') + ', logged through ' + P.thru + ')' +
+      (only ? (recent ? ' · site: newest page only, for ' + P.unlogged.join(', ') : ' · no site search') : ' · site: other years'));
+    if (only && !recent) {
+      if (lg) { L.done = true; L.ran = true; } else { C.done = true; C.ran = true; }
+      return false;
+    }
+    return true;
+  }
   function renderTeam() {
     var t = TEAM;
     if (!t) {
@@ -985,8 +1042,14 @@
           setTimeout(main, MAIN_PAUSE_MS);
         });
       };
-      if (TAB === 'ch') { champMore(); return; }   // private builds: only the open tab searches
-      if (TAB === 'tl') { if (SHEET_ON) fromSheet(function() { leagueFirst(function() { paintVids(); }); }); else leagueFirst(function() { paintVids(); }); return; }
+      if (TAB === 'ch') { if (scTeam('ch')) champMore(); else paintVids(); return; }   // private builds: only the open tab searches
+      if (TAB === 'tl') {
+        if (!scTeam('tl')) { paintVids(); return; }   // all of it in StarScope: no search, no saved list needed
+        // under an "after" cut the saved list's progress doesn't apply: the newest page is read once
+        var lf = function() { if (SC_CUT && SC_CUT.after) { L.page = 1; L.done = false; leagueMore(function() { paintVids(); }); } else leagueFirst(function() { paintVids(); }); };
+        if (SHEET_ON) fromSheet(lf); else lf();
+        return;
+      }
       if (TAB === 'all') { if (SHEET_ON) fromSheet(function(main) { if (main) main(); else paintVids(); }); else loadMore(); return; }
       if (SHEET_ON) fromSheet(go); else go(loadMore);
     }
@@ -1016,6 +1079,8 @@
   }
   function wpJudge(it) {   // '' keeps the card, else why it was left out
     var t = half(it.t), d = dateOfTitle(t), api = WP.api, R = WP.rule;
+    var cw = scCut(WP.cut, it);
+    if (cw) return cw;
     if (R) {
       for (var i = 0; i < R.all.length; i++) if (!R.all[i].test(t)) return 'not ' + (WP.x.name || WP.tab);
       for (var j = 0; j < R.none.length; j++) if (R.none[j].test(t)) return 'not ' + (WP.x.name || WP.tab);
@@ -1049,8 +1114,8 @@
       WP.log.push(q + ' · page ' + WP.page + ': ' + items.length + ' videos, ' + kept.length + ' kept' + (cached ? ' (saved copy)' : ''));
       if (SHEET_ON) sheet('dbg_put', { page: 'wrestler-app', subject: WP.api.W.name, tab: WP.tab, url: location.pathname + location.search,
         record: { query: q, pageNo: WP.page, cached: !!cached, videos: items.length, kept: kept.map(function(x) { return x.t; }), dropped: dropped } }, function() {});
-      if (more) WP.page++;
-      else { WP.qi++; WP.page = 1; if (WP.qi >= WP.queries.length) WP.done = true; }
+      if (more && !(WP.cut && WP.cut.after)) WP.page++;
+      else { WP.qi++; WP.page = 1; if (WP.qi >= WP.queries.length) WP.done = true; }   // after the last logged show: each search's newest page only
       wpPaint();
       if (cb) cb();
     }, true);
@@ -1127,8 +1192,24 @@
     var on = scroller.querySelector('.wr-tab-on');
     if (Q.get('tvtab') && on) { focusEl(on); try { var sec = on.closest('#tv-wr').querySelector('.wr-tabs').previousElementSibling; scroller.scrollTop += sec.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12; } catch (e) {} }
     else focusEl(scroller.querySelector('.wr-btn') || on);
+    scWrestler(api, tab);
     wpPaint();
-    wpStart();
+    if (!WP.done) wpStart();
+  }
+  // StarScope for the open wrestler tab (2.98.0): 5★STAR GP, Cinderella, Tag League and Championship take a complete
+  // year's matches from the index; the debut decides whether the site still needs searching for earlier years.
+  var SC_TABS = { stargp: 1, cinderella: 1, tagleague: 1, champ: 1 };
+  function scWrestler(api, tab) {
+    var S = SC();
+    WP.cut = null;
+    if (!S || !SC_TABS[tab]) return;
+    var names = [api.W.name, api.W.search].concat(ALIAS[String(api.W.name).toLowerCase()] || []);
+    var found = S.find(function(v) { return (tab === 'champ' ? S.isTitle(v) : S.inComp(v, tab)) && names.some(function(n) { return S.hasName(v, n); }); });
+    var n = scAdd(WP.kept, found, WP.seen), P = S.plan(api.debut), ys = S.years();
+    WP.cut = P.only ? (P.recent ? { after: P.thru } : null) : { skip: 1 };
+    WP.log.push('StarScope: ' + n + ' match' + (n === 1 ? '' : 'es') + ' from the index (complete ' + ys.join(', ') + ', logged through ' + P.thru + (api.debut ? ', debut ' + api.debut : '') + ')' +
+      (P.only ? (P.recent ? ' · site: newest page only, for ' + P.unlogged.join(', ') : ' · no site search') : ' · site: earlier years'));
+    if (P.only && !P.recent) { WP.done = true; WP.ran = true; }
   }
 
   // ================================================================== remote: arrows move to the nearest item in that direction
