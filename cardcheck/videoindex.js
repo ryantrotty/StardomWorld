@@ -75,10 +75,21 @@
   }
   // The description is a Japanese block then an English block, each a title line and its line-up (a line starting
   // with "vs" carries on the line-up). Date-only lines are taken out first.
+  // 2.96.1: a title and its line-up on one line, "Singles Match Yuna Mizumori vs Anne Kanaya" (some descriptions,
+  // and the phone's list): split after the last match word before the first "vs", so the match type isn't read as
+  // part of the first name.
+  function oneLine(l) {
+    var h = half(l), i = h.search(VS);
+    if (i < 0) return null;
+    var m = /^(.*(?:Match|Battle|Fall|Royal|Rumble|Gauntlet|Elimination|マッチ|バトル|勝負|戦))\s*[:：]?\s+(\S.*)$/i.exec(h.slice(0, i));
+    return m ? { title: m[1], lineup: m[2] + h.slice(i) } : null;
+  }
   function blocks(L) {
     var out = [], cur = null, dates = [];
     L.forEach(function(l) {
       if (isDateLine(l)) { dates.push(dateOf(l)); return; }
+      var one = oneLine(l);
+      if (one) { cur = one; out.push(cur); return; }
       if (LEAD.test(half(l))) { cur = { title: l, lineup: null }; out.push(cur); return; }   // a ◆ line always starts a match
       if (cur && isVsLine(l)) { cur.lineup = (cur.lineup || '') + ' ' + half(l).trim(); return; }
       if (cur && cur.lineup == null) { cur.lineup = half(l).trim(); return; }

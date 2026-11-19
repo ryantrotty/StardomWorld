@@ -12,7 +12,7 @@
   var BASE = me ? me.replace(/[^\/]*$/, '') : 'https://ryantrotty.github.io/StardomWorld/cardcheck/';
   var VER = (/[?&]v=([^&]+)/.exec(me) || [])[1] || String(Date.now());
   var ROSTER = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json';
-  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear2_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec2_';   // 2.91.7: new names, so lists read wrongly before are dropped
+  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear2_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec3_';   // 2.91.7: new names, so lists read wrongly before are dropped
   var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null, report = '';
   // 2.91.5: the page the phone was sent, as text to copy and paste (the phone gets the site's mobile layout, which the
   // reader doesn't know yet): its size and title, then the first article cards and anything that looks like a link to a
@@ -908,6 +908,13 @@
     var f = sheetOpen; f.busy = true; f.err = ''; draw();
     post(body, function(t) {
       var r = null; try { r = JSON.parse(t); } catch (e) {}
+      // 2.96.1: a spelling the sheet won't keep as an alias (match words, two names): the pick still counts for this
+      // match, so the card can be confirmed; nothing is saved for next time.
+      if (r && !r.ok && body.type === 'new_alias' && /^Not saved as an alias/.test(r.error || '') && recs[f.v]) {
+        var nm = kit().nameOf(body.entity_id), rc = recs[f.v];
+        ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side) { side.forEach(function(n, j) { if (n === f.raw || (f.other && n === f.other)) side[j] = nm; }); }); });
+        ssSet(REC_KEY + f.v, rc); delete attn[f.v]; sheetOpen = null; note('Used ' + nm + ' for this match (that spelling isn\'t kept as an alias).', false); return;
+      }
       if (!r || !r.ok) { f.busy = false; f.err = String(r && r.error || 'not saved'); draw(); return; }
       window.__tvIndexKit.reload(function() { delete attn[f.v]; sheetOpen = null; draw(); });
     });
