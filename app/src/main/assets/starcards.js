@@ -740,7 +740,7 @@
     homeEl.innerHTML = homeHtml();
     var el = homeEl.querySelector('[data-k="' + (keep || '') + '"]') || (home.pop ? homeEl.querySelector('.pp .ch.on') || homeEl.querySelector('.pp .ch') : homeEl.querySelector('.ch.on'));
     if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); }
-    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '')); } catch (e) {}
+    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '') + (home.tab === 'shows' && home.f.sy ? '&sy=' + home.f.sy : '')); } catch (e) {}
     loadPictures();
   }
   function openPop(key) {
@@ -809,6 +809,9 @@
     home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: 'next', ly: '' };
     var qy = Q.get('y');
     if (scopeKind === 'log' && qy && yearCats()[qy]) { home.lf = 'year'; home.ly = qy; yearLoad(qy); }
+    // A complete year from the Years menu or the Eras page (2.101.0): Shows, filtered to that year.
+    var qsy = Q.get('sy');
+    if (scopeKind === 'shows' && /^\d{4}$/.test(qsy || '')) home.f.sy = qsy;
     homeRender('T' + scopeKind);
   }
   // For the Community menu: the newest StarScope matches, drawn as the same cards.

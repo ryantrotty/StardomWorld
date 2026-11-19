@@ -4569,6 +4569,21 @@ class MainActivity : Activity() {
 
     // When the current video ends: play the next video in the (chronological) carousel under the
     // player, or leave fullscreen and stay on the contents page when the list is finished.
+    // A year's page (2.101.0): the site's year category, except for a StarScope complete year (your build, see
+    // AndroidHost.scopeCompleteJson), which opens StarScope's Shows for that year: every show as a poster card.
+    private val yearUrlJs = """
+        (function(){
+          if (window.__tvYearUrl) return;
+          var CY = null;
+          window.__tvYearUrl = function(y) {
+            y = String(y);
+            if (CY === null) { CY = []; try { CY = (JSON.parse(window.AndroidHost && AndroidHost.scopeCompleteJson ? AndroidHost.scopeCompleteJson() : '[]') || []).map(String); } catch (e) { CY = []; } }
+            if (CY.indexOf(y) >= 0) return '/mypage?tvscope=shows&sy=' + y;
+            return '/contents/category/' + (y === '2020' ? '_2020' : y);
+          };
+        })();
+    """
+
     private val autoNextJs = """
         (function(){
           if (window.__tvAutoNextAttached) return;
@@ -6006,7 +6021,7 @@ class MainActivity : Activity() {
           function yearsList() {
             var out = [];
             for (var y = new Date().getFullYear(); y >= 2011; y--) {
-              out.push([String(y), '/contents/category/' + (y === 2020 ? '_2020' : y), String(y)]);   // the site's 2020 page is "_2020"
+              out.push([String(y), window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === 2020 ? '_2020' : y), String(y)]);   // the site's 2020 page is "_2020"; a StarScope complete year opens its Shows (2.101.0)
             }
             return out;
           }
@@ -6871,7 +6886,7 @@ class MainActivity : Activity() {
               var ecols = '';
               eraList.forEach(function(x) {
                 var epath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.seed || 'Stardom') + '&activetab=contents&page=1&tvera=' + x.n;
-                var ycl = (x.yearChips || []).slice().reverse().map(function(y) { return fiHtml(y, '/contents/category/' + (y === '2020' ? '_2020' : y)); }).join('');
+                var ycl = (x.yearChips || []).slice().reverse().map(function(y) { return fiHtml(y, window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === '2020' ? '_2020' : y)); }).join('');
                 ecols += '<div class="tv-shl-ecol"><a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + esc(epath) + '" href="' + esc(absUrl(epath)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + esc(x.years) + '</span></span></a>' + ycl + '</div>';
               });
               h = '<div class="tv-shl-t">' + esc(T('YEARS & ERAS', '年別・時代')) + '</div><div class="tv-shl-top">' + '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + esc(ERA_TEST[1]) + '" href="' + esc(absUrl(ERA_TEST[1])) + '">' + esc(T('All Years & Eras', 'すべての年と時代')) + '<span>' + esc(T('the overview page', '一覧ページ')) + '</span></a></div><div class="tv-shl-ec">' + ecols + '</div>';
@@ -8058,7 +8073,7 @@ class MainActivity : Activity() {
     var h = '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('All Years & Eras', 'すべての年と時代')) + '</div><div class="tv-eh-i">' + esc(T('Up and Down change era. Left and Right move along its years. OK opens the page.', '上下で時代、左右で年を選択。OKで開きます。')) + '</div></div>';
     h += '<div class="tv-bands">' + data.eras.slice().reverse().map(function(x) {
       var ys = (x.yearChips || []).slice().reverse().map(function(y) {
-        return '<a class="tv-yt" tabindex="0" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '"><span class="y">' + esc(y) + '</span><span class="s">' + esc(yearShow[y] || T('Year page', '年別ページ')) + '</span></a>';
+        return '<a class="tv-yt" tabindex="0" href="' + (window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === '2020' ? '_2020' : y)) + '"><span class="y">' + esc(y) + '</span><span class="s">' + esc(yearShow[y] || T('Year page', '年別ページ')) + '</span></a>';
       }).join('');
       var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.seed || 'Stardom') + '&activetab=contents&page=1&tvera=' + x.n;
       return '<div class="tv-band"><div class="tv-bh"><div class="tv-bk notranslate" translate="no">' + esc(x.kanji) + '</div><div style="min-width:0"><div class="tv-lbl" style="font-size:12px">' + esc(T('ERA ' + x.n + ' OF 5', '時代 ' + x.n + ' / 5')) + '</div><div style="font-size:21px;font-weight:900;line-height:1.1;margin-top:2px">' + esc(x.name) + '</div><div style="font-size:13px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(x.years) + '</div></div></div>' +
@@ -8083,7 +8098,7 @@ class MainActivity : Activity() {
         var px = Math.round((100 - t[0]) * 10) / 10;
         return '<div class="tv-tk" style="left:' + px + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div>' + (hide ? '' : '<div class="tv-tl" style="' + (px > 99 ? 'right:0;transform:none;' : 'left:' + px + '%;') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>');
       }).join('') + (e.n === 5 ? '' : '<div class="tv-tl" style="left:0;transform:none">' + esc(T('now', '現在')) + '</div>') +
-      (act ? yc.slice().reverse().map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') : '') + '</div>';
+      (act ? yc.slice().reverse().map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="' + (window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === '2020' ? '_2020' : y)) + '">' + y + '</a>'; }).join('') : '') + '</div>';
     if (!e.reigns) {
       h += '<div class="tv-desc"><div><div class="tv-lbl" style="font-size:13px">' + esc(T('Era ' + e.n + ' of 5', '時代 ' + e.n + ' / 5')) + '</div><div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.name) + '</div><div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.ja || '') + ' · ' + esc(e.years) + '</div><div style="font-size:15px;color:#9AA6B4;margin-top:8px">' + esc(T('This era is not built yet.', 'この時代はまだ準備中です。')) + '</div></div></div>';
       if (e.rising) h += sec(T('Rising stars', '新星'), '', wr(e.rising));
@@ -11378,6 +11393,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cookieBannerJs(), null)
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(assetText("toprated.js"), null)
+        view.evaluateJavascript(yearUrlJs, null)   // before the Years menu and the Eras page, which link years with it
         view.evaluateJavascript(eraJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)

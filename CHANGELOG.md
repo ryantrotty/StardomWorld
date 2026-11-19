@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.101.0
+
+- **2026 under Years & Eras opens StarScope's Shows (your build).** The 2026 year in the Years menu, on the All Years & Eras page and on the era timeline opens StarScope's Shows filtered to 2026: every show as a poster card (main event picture, date, venue, highlights). It's drawn from the StarScope list, so the year page makes no request to the site. Other years still open the site's year page.
+  - The Year filter on Shows can be changed or cleared there as usual, and the page's address keeps the year.
+  - Any year added to the roster file's complete years (docs/ROSTER.md) does the same.
+
 ## 2.100.0
 
 - **2026 videos follow their show's card (your build).** The player already offered Up next at the end; for a video in a complete year it now goes by the show's card in StarScope (match numbers) instead of the row the site put under the player.
