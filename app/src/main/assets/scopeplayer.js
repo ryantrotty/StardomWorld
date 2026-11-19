@@ -32,7 +32,7 @@
   // The show's name in English: the sheet keeps one name, often with a Japanese subtitle (〜しらんけどスターダム〜).
   // In English the Japanese parts are left out; in Japanese the name is shown whole.
   function showName(x) {
-    var n = String((x && x.sh) || '');
+    var n = String((x && (x.ss && x.ss.n || x.sh)) || '');   // 2.105.0: a video's own set's show first
     if (ja) return n;
     // English name from the schedule or the word list (assets/shownames.js, 2.78.2), the long one
     if (window.__tvShowName) return window.__tvShowName.en(n, x.sd || x.d, false);
@@ -194,7 +194,7 @@
   window.__tvScopeTitle = function() {
     if (!v || !(v.s && v.s.length)) return null;
     var n = namesLine(v);
-    var eb = [matchLabel(v, true), showName(v), dateText(v.d), ja ? (v.vnj || v.vn) : v.vn].filter(function(x) { return x; });
+    var V = v.ss || v, eb = [matchLabel(v, true), showName(v), dateText(v.d), ja ? (V.vnj || V.vn) : V.vn].filter(function(x) { return x; });
     var title = n.map(function(x, i) { return (i ? '<span class="tv-sc-vs">vs</span>' : '') + esc(x); }).join(' ');
     var ev = eventOf(v);
     var html = '<span class="tv-pb-bar"></span><div class="tv-sc-hd">' + (eb.length ? '<span class="tv-sc-eb">' + esc(eb.join(' · ')) + '</span>' : '') +

@@ -108,10 +108,18 @@ The All Tag Teams page shows which roster file the TV is using, under the team c
 
 StarScope names a show in English from the schedule when the show is on it. For older shows, Japanese words in the site's show name are swapped for English ones (longest first), then anything still Japanese is left out. These entries add to and override the built-in list in `assets/shownames.js`; an empty value removes the word. Japanese mode always shows the site's own name.
 
+## Match words (English match titles, 2.103.0)
+
+```json
+"matchWords": { "ガントレットマッチ": "Gauntlet Match", "提供": "" }
+```
+
+Older videos only have a Japanese title on the site ("6人タッグマッチ", "CMLL日本女子選手権試合"). Card check (TV and iPhone) shows them in English by swapping the usual match-title words (longest first; the show words above are used too), so "6人タッグマッチ" reads "Six-Woman Tag Match". Unlike show names, anything still Japanese stays, so nothing disappears. These entries add to and override the built-in list in `assets/shownames.js`; an empty value removes the word. Only what is shown changes: saves, the line-up reading and the Gemini prompts keep the site's own title. Japanese mode always shows the site's title.
+
 ## StarScope complete years (your build)
 
 ```json
 "starscope": { "completeYears": [2025, 2026] }
 ```
 
-Years whose every show is logged in StarScope. Pages limited to those years read the index instead of searching the site: the Tag League, 5★STAR GP, Cinderella and Championship tabs on wrestler and tag team pages, and title histories. They still show the site's normal cards; the index only decides which videos those are. Leave this out to keep the built-in `[2026]`; `[]` turns it off. A complete year counts up to its latest logged show: a show after that (on the schedule, not logged yet) is still looked for with the site's search, so keep logging new shows as they come. Only your build uses this while StarScope isn't public.
+Years whose every show is logged in StarScope. Pages limited to those years read the index instead of searching the site: the Tag League, 5★STAR GP, Cinderella and Championship tabs on wrestler and tag team pages, and title histories. They still show the site's normal cards; the index only decides which videos those are. Leave this out to keep the built-in `[2025, 2026]` (2.106.0; `[2026]` before); `[]` turns it off. A complete year counts up to its latest logged show: a show after that (on the schedule, not logged yet) is still looked for with the site's search, so keep logging new shows as they come. Only your build uses this while StarScope isn't public.

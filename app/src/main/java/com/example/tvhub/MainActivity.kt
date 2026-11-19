@@ -2669,7 +2669,7 @@ class MainActivity : Activity() {
 
     private fun scopeCompleteYears(): String {
         if (!sheetOn()) return "[]"
-        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2026]"
+        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2025,2026]"   // 2.106.0: 2025 fully logged
     }
 
     // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
@@ -3326,7 +3326,7 @@ class MainActivity : Activity() {
             if (code == 200) {
                 val body = c.inputStream.bufferedReader().use { it.readText() }
                 val rj = org.json.JSONObject(body)
-                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null || rj.optJSONObject("ppv") != null || rj.optJSONObject("showWords") != null) {
+                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null || rj.optJSONObject("ppv") != null || rj.optJSONObject("showWords") != null || rj.optJSONObject("matchWords") != null) {
                     have.writeText(body)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
                 }
@@ -3672,6 +3672,10 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun showWordsJson(): String = this@MainActivity.rosterData()?.optJSONObject("showWords")?.toString() ?: ""
 
+        // English match titles (2.103.0, assets/shownames.js): the roster file's "matchWords" {"Japanese": "English"}.
+        @android.webkit.JavascriptInterface
+        fun matchWordsJson(): String = this@MainActivity.rosterData()?.optJSONObject("matchWords")?.toString() ?: ""
+
         // Every build (2.47.0): the match types with the Titles & tournaments group, for the app-drawn wrestler page's tabs.
         @android.webkit.JavascriptInterface
         fun wrestlerTabsJson(): String = this@MainActivity.rosterMatchTypes(true)
@@ -3853,7 +3857,7 @@ class MainActivity : Activity() {
 
         // StarScope complete years (2.97.0, docs/ROSTER.md "StarScope complete years"): years whose shows are all logged, so
         // pages limited to them (Tag League, tournament and title tabs, title histories) read the index instead of searching
-        // the site. Your build: [2026] unless the roster file's "starscope": {"completeYears": [...]} says otherwise.
+        // the site. Your build: [2025, 2026] unless the roster file's "starscope": {"completeYears": [...]} says otherwise.
         // Other builds: none, while StarScope isn't public.
         @android.webkit.JavascriptInterface
         fun scopeCompleteJson(): String = this@MainActivity.scopeCompleteYears()

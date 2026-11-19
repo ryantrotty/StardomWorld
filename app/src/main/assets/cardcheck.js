@@ -286,7 +286,9 @@
     return null;
   }
   // The site's own title for the match, as written (only shown, never saved).
-  function siteTitle(rec) { return (ja ? rec.title_ja || rec.title_en : rec.title_en || rec.title_ja) || ''; }
+  function siteTitle(rec) { return mtEn((ja ? rec.title_ja || rec.title_en : rec.title_en || rec.title_ja) || ''); }
+  // English match titles for Japanese-only titles (2.103.0, assets/shownames.js); Japanese mode is left as it is.
+  function mtEn(t) { return window.__tvShowName && window.__tvShowName.match ? window.__tvShowName.match(t) : t; }
   // The match type StarScope gives it from the people, by the logger's rules (kind() in assets/indexpanel.js) without
   // the stipulations: Singles match, Tag team match, 3-Way Battle… (2.84.2: this row showed the site's title).
   function kindOf(rec) {
@@ -439,7 +441,7 @@
     show.videos.forEach(function(x, i) {
       if (i < cur - 1 || i > cur + 1) return;
       var s = status(x), r = recs[x.id], chip = s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : (s.k === 'saved' ? 'saved' : 't')) + '">' + esc(s.label) + '</span>' : (r && !r.failed ? '' : (i === cur ? '<span class="chp r">' + esc(r && r.failed ? T.notRead : T.reading) + '</span>' : ''));
-      var title = (r && !r.failed && (ja ? r.title_ja || r.title_en : r.title_en || r.title_ja)) || x.t;
+      var title = mtEn((r && !r.failed && (ja ? r.title_ja || r.title_en : r.title_en || r.title_ja)) || x.t);
       var line = '';
       if (i === cur && r && !r.failed) {
         var en = (r.sides_en || []).map(function(sd) { return sd.join(' & '); }).join(' vs '), jp = (r.sides_ja || []).map(function(sd) { return sd.join('&'); }).join(' vs ');
@@ -519,7 +521,7 @@
     show.videos.forEach(function(v, i) {
       var k = cls(i), r = recs[v.id], st = status(v), skip = batch && batch.skipped.indexOf(i) >= 0 || (lastRun && lastRun.indexOf(i) >= 0);
       n[k]++;
-      var title = (r && !r.failed && (ja ? r.title_ja || r.title_en : r.title_en || r.title_ja)) || v.t;
+      var title = mtEn((r && !r.failed && (ja ? r.title_ja || r.title_en : r.title_en || r.title_ja)) || v.t);
       var chip = st ? '<span class="chp ' + (st.k === 'watched' ? 'w' : (st.k === 'saved' ? 'saved' : 't')) + '">' + esc(st.label) + '</span>'
         : k === 'ready' ? '<span class="chp w">' + esc(T.eReady) + '</span>' : k === 'attn' ? '<span class="chp at">' + esc(skip ? T.skipped : T.eAttn) + '</span>' : '<span class="chp r">' + esc(T.eUnread) + '</span>';
       rows += '<div class="er2' + (batch && batch.at === i ? ' now' : '') + '"><b>' + (i + 1) + '</b><span class="tl">' + esc(title) + '</span>' + chip + '</div>';

@@ -46,6 +46,8 @@
     return DAY[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] + ' ' + (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1];
   }
   function isComment(t) { return /コメント|comments?\b/i.test(t) && !/試合|マッチ|match|commentary/i.test(t); }
+  // English match titles for Japanese-only titles (2.103.0, shownames.js); the line-up reading still uses the site's own.
+  function mtEn(t) { return window.__tvShowName && window.__tvShowName.match ? window.__tvShowName.match(t) : t; }
   function showName(n, date) { return window.__tvShowName ? window.__tvShowName.en(n, date, false) : n; }
 
   // ---- the page: one root over everything
@@ -108,7 +110,7 @@
   }
 
   // ---- the bridge the TV's scripts expect (AndroidHost), answered here
-  var FACT = '{"factions":[]}', MT = '{}', SW = '';
+  var FACT = '{"factions":[]}', MT = '{}', SW = '', MW = '';
   function post(body, done) {
     body.key = cfg.k; body.device = 'iphone-cardcheck'; body.owner = true;
     fetch(cfg.u, { method: 'POST', body: JSON.stringify(body) })
@@ -122,7 +124,7 @@
       starCards: function(id, p) { post(JSON.parse(p), function(t) { if (window.__tvStarCardsReply) window.__tvStarCardsReply(id, t); }); },
       scopeOn: function() { return true; }, videoIndexOn: function() { return true; }, categoriesOn: function() { return true; },
       indexPanel: function() {}, videoIndexPut: function() {},
-      factionsJson: function() { return FACT; }, matchTypesJson: function() { return MT; }, showWordsJson: function() { return SW; }
+      factionsJson: function() { return FACT; }, matchTypesJson: function() { return MT; }, showWordsJson: function() { return SW; }, matchWordsJson: function() { return MW; }
     };
   }
   function getJson(u) { return fetch(u, { cache: 'no-cache' }).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
@@ -172,6 +174,7 @@
       var mt = a[1]; if (a[2] && a[2].debuts) { mt.debuts = mt.debuts || {}; Object.keys(a[2].debuts).forEach(function(k) { mt.debuts[k] = a[2].debuts[k]; }); }
       MT = JSON.stringify(mt);
       SW = a[2] && a[2].showWords ? JSON.stringify(a[2].showWords) : '';
+      MW = a[2] && a[2].matchWords ? JSON.stringify(a[2].matchWords) : '';
       return ['shownames.js', 'setorder.js', 'videoindex.js', 'indexpanel.js'].reduce(function(p, n) { return p.then(function() { return loadScript(n); }); }, Promise.resolve());
     });
   }
@@ -443,7 +446,7 @@
       if (g) h += '<div class="fg">' + esc((g.kind === 'team' ? 'Team' : 'Faction') + ' · ' + g.name) + '</div>';
       names.forEach(function(raw, j) {
         var other = s.B[i] && s.B[i].length === names.length ? s.B[i][j] : '', id = K ? (K.resolve(raw) || K.resolve(other)) : '';
-        h += '<button class="pp' + (id || !K ? '' : ' bad') + '"' + (id || !K || status(v) ? '' : ' data-fix="' + esc(v.id) + '" data-raw="' + esc(raw) + '" data-other="' + esc(other) + '"') + '><span class="mk">' + (id ? '✓' : (K ? '?' : '·')) + '</span><span><span class="n">' +
+        h += '<button class="pp' + (id || !K ? '' : ' bad') + '"' + (!K || status(v) ? '' : ' data-fix="' + esc(v.id) + '" data-raw="' + esc(raw) + '" data-other="' + esc(other) + '"' + (id ? ' data-now="' + esc(id) + '"' : '')) + '><span class="mk">' + (id ? '✓' : (K ? '?' : '·')) + '</span><span><span class="n">' +
           esc(id ? K.nameOf(id) : raw) + '</span>' + (other && other !== raw ? '<small>' + esc(other) + '</small>' : '') + (!id && K ? '<small class="w">Not in the library · tap to fix</small>' : '') + '</span></button>';
       });
     });
@@ -474,10 +477,10 @@
   function segList(L) { return L.filter(function(t) { return sheetOpen.ids.indexOf(t.id) < 0; }).map(function(t) { return '<button class="opt" data-segadd="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; }).join(''); }
   function segOpen(v) {
     var r = recs[v.id], g = segs[v.id] || segGuess(v, r) || { type: '', ids: [] };
-    sheetOpen = { seg: 1, v: v.id, title: (r && !r.failed && (r.title_en || r.title_ja)) || v.t, type: g.type, ids: g.ids.slice(), q: '' }; draw();
+    sheetOpen = { seg: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), type: g.type, ids: g.ids.slice(), q: '' }; draw();
   }
   function cardHtml(v, i) {
-    var r = recs[v.id], s = status(v), k = cls(v), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
+    var r = recs[v.id], s = status(v), k = cls(v), title = mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t);
     var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
     var h = '<div class="card" data-v="' + esc(v.id) + '"><div class="pic"' + (v.th ? ' style="background-image:url(\'' + esc(v.th) + '\')"' : '') + '></div><div class="bd">' +
       '<div class="hd"><span class="t">Match ' + (i + 1) + ' of ' + show.videos.length + '</span>' + chip + '</div><div style="font-weight:700;color:#C9D2DC">' + esc(title) + '</div>';
@@ -561,7 +564,7 @@
     show.videos.forEach(function(v, i) {
       var k = cls(v), r = recs[v.id]; n[k] = (n[k] || 0) + 1;
       var lab = k === 'renumber' ? 'logged as ' + map[v.id].n + ', save as ' + (i + 1) : k === 'logged' ? 'logged' : k === 'ready' ? (segs[v.id] ? 'ready · segment' : 'ready') : k === 'attn' ? 'needs a look' : 'not read yet';
-      rows += '<div class="er2' + (needsCard(v) ? ' open' : '') + '" data-row="' + esc(v.id) + '"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
+      rows += '<div class="er2' + (needsCard(v) ? ' open' : '') + '" data-row="' + esc(v.id) + '"><b>' + (i + 1) + '</b><span class="x">' + esc(mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t)) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
     });
     var todo = n.ready + n.unread + n.renumber, nx = nextShow();
     var h = '<div class="end"><div class="hd">The card<span style="flex:1"></span><button class="b" style="height:36px;font-size:13px" data-allcards="1">' + (showAllCards ? 'Hide cards' : 'Show all cards') + '</button></div>' + rows + '<div class="bt">';
@@ -584,7 +587,7 @@
       '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' +
       '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
   }
-  function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String((r && !r.failed && (r.title_en || r.title_ja)) || v.t).slice(0, 40) + '"' : '–'; }
+  function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String(mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t)).slice(0, 40) + '"' : '–'; }
   // The card in a new order (2.93.0): reversed, or as an AI answer has it. Kept with the show on the phone; logged
   // matches whose saved number no longer fits are marked to re-save.
   function setOrder(vids, why) {
@@ -619,7 +622,7 @@
   }
   // 2.96.4: one match only (the Ask Gemini button on its card): who is in it, nothing else.
   function aiPromptOne(vi) {
-    var K = kit(), v = show.videos[vi], r = recs[v.id], ven = venueNow(), raw = rawVenue(), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, have = [];
+    var K = kit(), v = show.videos[vi], r = recs[v.id], ven = venueNow(), raw = rawVenue(), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, have = [];   // the site's own title for Gemini
     if (r && !r.failed) {
       var sd = sides(r);
       have = sd.A.map(function(names, si) { return names.map(function(rw, j) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : '', id = K ? (K.resolve(rw) || K.resolve(o)) : ''; return id ? K.nameOf(id) : '?' + personText(rw, o); }).join(' & '); });
@@ -967,6 +970,7 @@
   function fixHtml() {
     var f = sheetOpen, K = kit(), L = K && K.talents ? K.talents(f.q, 8) : [];
     var h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">Who is ' + esc(f.raw) + '?</div>' + (f.other ? '<div class="sub" style="color:#9AA6B4;margin-bottom:8px">' + esc(f.other) + '</div>' : '') +
+      (f.now && K ? '<div class="sub" style="color:#9AA6B4;margin-bottom:8px">Now: ' + esc(K.nameOf(f.now)) + '</div>' : '') +
       '<input class="tx" id="ccp-fin" type="text" autocomplete="off" placeholder="Search the library" value="' + esc(f.q) + '"><div id="ccp-fl">';
     // 2.96.2: two library names run together ("Aya Sakura Sayaka Kurara"): split into both.
     var two = K && K.inText ? K.inText([f.raw, f.other].filter(Boolean).join(' ')) : [];
@@ -977,7 +981,12 @@
   function fixList(L) {
     var f = sheetOpen, h = '';
     L.forEach(function(t) { h += '<button class="opt" data-pick="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; });
-    h += '<button class="opt" data-newp="1">' + esc(f.raw) + '<small>Add as a new wrestler</small></button>';
+    // 2.103.1: what is typed in the search box can be the new wrestler's name (an English name for a Japanese-only
+    // spelling), with the site's spelling kept as her alias. Before, only the site's spelling could be added.
+    var typed = String(f.q || '').trim();
+    if (typed && typed !== f.raw && typed !== f.other && !badAlias(typed) && !L.some(function(t) { return String(t.name).toLowerCase() === typed.toLowerCase(); }))
+      h += '<button class="opt" data-newp="2">' + esc(typed) + '<small>Add as a new wrestler · ' + esc(f.raw) + ' kept as her spelling</small></button>';
+    if (!f.now) h += '<button class="opt" data-newp="1">' + esc(f.raw) + '<small>Add as a new wrestler' + (hasJa(f.raw) ? ' (Japanese name only: type her English name above to use it instead)' : '') + '</small></button>';
     return h;
   }
   // The sheet refuses spellings that aren't one name (2.95.0): this mirrors its quick checks, so a misread line
@@ -989,19 +998,37 @@
       (/^[\x00-\x7f★☆]+$/.test(s) && s.split(/\s+/).length > 3);
   }
 
-  function fixSave(body) {
+  // The pick for this match only, in the read line-up (used when the sheet won't keep the spelling, or when the
+  // spelling still finds someone else in the library, e.g. it is that wrestler's own name).
+  function useHere(f, id) {
+    var rc = recs[f.v]; if (!rc) return '';
+    var nm = kit().nameOf(id);
+    ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side) { side.forEach(function(n, j) { if (n === f.raw || (f.other && n === f.other)) side[j] = nm; }); }); });
+    ssSet(REC_KEY + f.v, rc); delete attn[f.v];
+    return nm;
+  }
+  function fixSave(body, spell) {
     var f = sheetOpen; f.busy = true; f.err = ''; draw();
+    var done = function(id) {
+      window.__tvIndexKit.reload(function() {
+        var K = kit();
+        if (id && K && K.resolve(f.raw) !== id && !(f.other && K.resolve(f.other) === id)) useHere(f, id);
+        delete attn[f.v]; sheetOpen = null; draw();
+      });
+    };
     post(body, function(t) {
       var r = null; try { r = JSON.parse(t); } catch (e) {}
       // 2.96.1: a spelling the sheet won't keep as an alias (match words, two names): the pick still counts for this
       // match, so the card can be confirmed; nothing is saved for next time.
       if (r && !r.ok && body.type === 'new_alias' && /^Not saved as an alias/.test(r.error || '') && recs[f.v]) {
-        var nm = kit().nameOf(body.entity_id), rc = recs[f.v];
-        ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side) { side.forEach(function(n, j) { if (n === f.raw || (f.other && n === f.other)) side[j] = nm; }); }); });
-        ssSet(REC_KEY + f.v, rc); delete attn[f.v]; sheetOpen = null; note('Used ' + nm + ' for this match (that spelling isn\'t kept as an alias).', false); return;
+        var nm = useHere(f, body.entity_id); sheetOpen = null; note('Used ' + nm + ' for this match (that spelling isn\'t kept as an alias).', false); return;
       }
       if (!r || !r.ok) { f.busy = false; f.err = String(r && r.error || 'not saved'); draw(); return; }
-      window.__tvIndexKit.reload(function() { delete attn[f.v]; sheetOpen = null; draw(); });
+      var id = body.type === 'new_alias' ? body.entity_id : (r.id || '');
+      var left = (spell || []).slice();
+      // a new wrestler under her typed name: the site's spellings become her aliases, so she is found next time
+      var go = function() { if (!id || !left.length) { done(id); return; } post({ action: 'vi_propose', type: 'new_alias', value: left.shift(), entity_id: id, video: f.v }, go); };
+      go();
     });
   }
 
@@ -1026,6 +1053,7 @@
     if (sin) { sin.oninput = function() { sheetOpen.q = sin.value; var l = root.querySelector('#ccp-sl'); if (l) l.innerHTML = segList(kit().talents(sin.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; sin.focus(); } }
     var fin = root.querySelector('#ccp-fin');
     if (fin) fin.oninput = function() { sheetOpen.q = fin.value; var l = root.querySelector('#ccp-fl'); if (l) l.innerHTML = fixList(kit().talents(fin.value, 8)); };
+    if (fin && sheetOpen && sheetOpen.focus) { sheetOpen.focus = false; fin.focus(); }
     watchCards();
   }
   // Match pages are read for the cards on screen (and the one after), one at a time.
@@ -1090,7 +1118,7 @@
     if (d.vx) { vs.mode = 'view'; vs.err = ''; draw(); return; }
     if (d.vuse) { venueSet(d.vuse, d.nm); return; }
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
-    if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, q: d.raw, err: '', busy: false }; draw(); return; }
+    if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, now: d.now || '', q: d.now ? '' : d.raw, err: '', busy: false, focus: !!d.now }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
     if (d.split && sheetOpen && recs[sheetOpen.v]) {
       var fs = sheetOpen, K1 = kit(), ids = K1.inText([fs.raw, fs.other].filter(Boolean).join(' ')), rc = recs[fs.v], nm = ids.map(function(id) { return K1.nameOf(id); });
@@ -1126,8 +1154,13 @@
       });
       return;
     }
+    if (d.pick && sheetOpen && d.pick === sheetOpen.now) { sheetOpen = null; draw(); return; }
     if (d.pick && sheetOpen) { var f = sheetOpen; fixSave({ action: 'vi_propose', type: 'new_alias', value: f.raw, entity_id: d.pick, video: f.v }); return; }
-    if (d.newp && sheetOpen) { var g = sheetOpen; fixSave({ action: 'vi_propose', type: 'new_talent', value: g.raw, entity_id: '', video: g.v }); return; }
+    if (d.newp && sheetOpen) {
+      var g = sheetOpen, nm2 = d.newp === '2' ? String(g.q || '').trim() : g.raw;
+      fixSave({ action: 'vi_propose', type: 'new_talent', value: nm2, entity_id: '', video: g.v }, d.newp === '2' ? [g.raw, g.other].filter(function(x, k, all) { return x && x !== nm2 && all.indexOf(x) === k; }) : []);
+      return;
+    }
   });
   root.addEventListener('scroll', function() { clearTimeout(root.__s); root.__s = setTimeout(saveState, 400); }, { passive: true });
 

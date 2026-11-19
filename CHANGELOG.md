@@ -2,6 +2,56 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.106.0
+
+- **2025 is a StarScope complete year (your build).** With every 2025 show logged and dated, the built-in complete years are now 2025 and 2026, so 2025 gets what 2026 has had since 2.97.0, with no new requests to the site:
+  - Wrestler and tag team pages: the Tag League, 5★STAR GP, Cinderella and Championship tabs take 2025 matches from the index. A wrestler or team whose debut or first date is 2025 or later needs no site search on those tabs.
+  - Title histories: reigns from 2025 on use the index.
+  - Years: 2025 opens StarScope Shows for 2025 (every show as a poster card) instead of the site's year category.
+  - Video pages: 2025 videos get the StarScope card row and Up next.
+- The roster file's `starscope.completeYears` still overrides this (not set at the moment). Shows from other promotions (WAVE, Sendai Girls) stay in the index and show up in 2025's Shows; they never match a Stardom tournament or title.
+
+## 2.105.0
+
+- **StarScope Shows: each video set is its own show.** A match can carry videos from two sets (Japanese and English commentary). The Shows list used to file every video under the match's show, so an English set linked to the Japanese matches vanished as a show. Now a video published in another set than its match's show is listed under its own set's show (name and venue from that set's row in the shows tab), and the player's title shows that show too. The match itself stays one row in the sheet.
+  - The sheet script adds `ss` (the set's show: name, venue) to such cards.
+  - English sets logged with their own copies of the matches (the 2025 English shows) are unchanged.
+- **Billed names (look-alikes).** A participant with role `billed` is shown under the name as billed (Shin・Saori Anou, Kuro・Saori Anou, Shin・Natsupoi) while linked to the wrestler who played it (Sakura Hirota), so her pages count the match. The logger keeps that mark when the match is saved again; picking another wrestler for that slot clears it.
+- Sheet (19 Nov): X'mas NIGHT 2025 fixed: all 8 matches on the Japanese show (8135) numbered 1 to 8; the English set (8103) linked to all 8 as English versions (two missing links added: 8097, 8100). WAVE NAMI☆1 (6475) dated 1 Jan 2025. Natsu & Saori 10th anniversary rumble: the three look-alikes linked to Sakura Hirota with role `billed`. AWARD 2024 shows moved to 25 and 26 Jan 2025, Yamagata GP 2024 show to 2024-08-25, KOCHI 2025 to 2025-06-27, the 7 English 2025 shows dated with their Japanese twins.
+- Sheet script: **redeploy.** iPhone card check: **published to GitHub Pages** (indexpanel.js).
+
+## 2.104.0
+
+- **Venue locations.** The venues tab gains `country`, `prefecture_ja`, `city`, `city_ja` and `area` (after `note`), and `prefecture` now holds the English prefecture (or state / province) for every venue. Filled from a Gemini lookup, checked by hand; names kept as the app's own (Gemini's building names weren't used).
+  - The library (`vi_lib`) gives each venue `c`, `pj`, `ci`, `cj`, `a`; the StarScope list (`vi_cards`) and the published file add a `venues` map (location once per venue) and each card its venue id (`vid`). Nothing on screen changes yet.
+- **2025 index clean-up (sheet only, 19 Nov).** Backups of the tabs touched are in `bak_*_1119`.
+  - Dates: 22 shows with no date got theirs from their matches; NEW BLOOD 18 to 21, ANJO, the unit league final and AGQ 2025 (6831) dated with their matches; two matches dated a year late (KOBE Aug. no. 8, SENDAI Nov. no. 6) corrected.
+  - AGQ 2025 (only its English set exists) named and dated as the show.
+  - Shows from other promotions (WAVE, Sendai Girls) tagged `series` = `other-promotion`, dated.
+  - Empty duplicate show rows 8078 and 9080 merged into 8120 and 9195.
+  - About 15 show names cleaned (venue tacked on, brackets, HTML codes, English-set wording).
+  - Venues: 8 duplicates merged (Chateraise Sapporo, FACE Shinjuku, TKP Chiba x2, YouTree, Boat Race Shimonoseki, Act City Hamamatsu, Yume Messe Miyagi, Shiga) and their shows repointed; names cleaned (prefixes, rooms, sponsors) with the old lines kept as 41 venue aliases; HACHIOJI 2025 moved to Tokyo Tama Mirai Messe and the HAMAMATSU Tag League final given Hamamatsu General Industrial Exhibition Hall (both new).
+  - Wrestlers merged: Asuka Gouda into Asuka Goda, Kyuusei into Kyusei Ninja Ranmaru, Act into Act Yasukawa, Oscita into Osita.
+- Sheet script: **redeploy.** Every show's `updated` was set to now, so the TV and phone take the changes on their next StarScope list.
+
+## 2.103.1
+
+- **Fix: iPhone card check couldn't add a new wrestler under her English name.** "Add as a new wrestler" always used the site's spelling, so a Japanese-only billing (マゼラティ) went into the library as her English name, and typing "Mazzerati" in the search box didn't change that.
+  - What you type in the search box is now offered as "Add as a new wrestler", with the site's spelling (and its other-language spelling) saved as her aliases so she is matched next time.
+  - The site's-spelling option says when it's Japanese only.
+- **Matched names can be changed.** Tapping a ✓ name on a match not yet logged opens the same picker (showing who it is now), to choose someone else or add a new wrestler. When the spelling still finds the old wrestler in the library (it's her own name), the pick counts for that match.
+- Sheet: the library entry added as マゼラティ (tp1795116946557) now reads Mazzerati, with マゼラティ as its Japanese name.
+- iPhone card check: **published to GitHub Pages** with this version. No sheet script change.
+
+## 2.103.0
+
+- **Card check: Japanese-only match titles in English.** Older videos (2025 and earlier) have no English title on the site, so card check listed them as "6人タッグマッチ", "CMLL日本女子選手権試合" and so on. The usual match-title words are now turned into English for display: Singles Match, Six-/Eight-/Ten-Woman Tag Match, 3-Way Match, Battle Royal, Championship, Title Match, Japan Women's, Rookie Introduction, rounds and finals, plus the show words (tournaments, blocks, venues).
+  - Anything the list doesn't know stays in Japanese (nothing is dropped).
+  - The roster file's new `matchWords` adds or changes words without a build (docs/ROSTER.md).
+  - Display only: saves, the line-up reading and the Gemini prompts keep the site's own title. Japanese mode is unchanged.
+  - TV card check and iPhone card check both use it (shared `shownames.js`).
+- iPhone card check: **publish to GitHub Pages** with this version (shownames.js and cc.js changed). No sheet script change.
+
 ## 2.102.2
 
 - **Fix at the source: league matches saved without their tournament.** The site titles 5★STAR GP league matches "BLUE STARS-B Official Matches" / "RED STARS-A 公式戦": the block's keywords matched, but the tournament's ("Stars Official", "スターズ公式") didn't, so card check, the logger and the phone suggested the block and round but no competition.
