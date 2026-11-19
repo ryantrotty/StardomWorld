@@ -79,8 +79,11 @@
     var sides = [];
     r.participants.forEach(function(p) {
       var i = Number(p.side_no) - 1;
-      sides[i] = sides[i] || { role: p.role || '', team: '', people: [], teamId: p.team_id || '', factionId: p.faction_id || '' };
-      sides[i].people.push({ id: p.talent_id && byId[p.talent_id] ? p.talent_id : '', billed: p.billed_name, entry: p.entry_order || '', elim: p.elim_order || '' });
+      // 2.105.0: role "billed" is per person (shown under the billed name, e.g. a look-alike), not the side's role.
+      var sr = /^(champion|challenger)$/.test(p.role || '') ? p.role : '';
+      sides[i] = sides[i] || { role: sr, team: '', people: [], teamId: p.team_id || '', factionId: p.faction_id || '' };
+      if (sr && !sides[i].role) sides[i].role = sr;
+      sides[i].people.push({ id: p.talent_id && byId[p.talent_id] ? p.talent_id : '', billed: p.billed_name, keep: p.role === 'billed', entry: p.entry_order || '', elim: p.elim_order || '' });
     });
     return sides.filter(Boolean);
   }
@@ -759,7 +762,7 @@
     else {
       var p = S.people[pick.slot];
       if (!p.id && p.billed && norm(p.billed) && !badAlias(p.billed)) { state.aliases.push({ raw: p.billed, id: id }); nameMap[norm(p.billed)] = id; }
-      p.id = id; p.billed = byId[id].en; lastFocus = 'p' + pick.side + '_' + pick.slot;   // the saved name follows the pick (a placeholder or a wrong first pick no longer stays in billed_name)
+      p.id = id; p.billed = byId[id].en; p.keep = false; lastFocus = 'p' + pick.side + '_' + pick.slot;   // the saved name follows the pick (a placeholder or a wrong first pick no longer stays in billed_name)
     }
     remember(id); layer = 'main'; pick = null; nameStatus(); render();
   }
@@ -815,7 +818,7 @@
     S.forEach(function(s, i) {
       if (r.type === 'win' && state.sides[r.side - 1] === s) winner = i + 1;
       var team = sg ? '' : sideTeam(s), fac = sg ? '' : sideFaction(s);
-      s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: s.role, team_id: team, faction_id: fac, entry: p.entry || '', elim: p.elim || '' }); });
+      s.people.forEach(function(p, j) { parts.push({ side: i + 1, slot: j + 1, talent_id: p.id, billed: p.billed, role: p.keep ? 'billed' : s.role, team_id: team, faction_id: fac, entry: p.entry || '', elim: p.elim || '' }); });
     });
     // Tags pre-picked from the title and never looked at are saved as "auto", so they can be told from confirmed ones.
     var tags = [], TAB_OF = { segment: 'match', title: 'match', competition: 'match', round: 'match', block: 'match', stipulation: 'match', finish: 'finish', moment: 'moments' };
