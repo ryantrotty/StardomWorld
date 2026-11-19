@@ -2,6 +2,20 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.104.0
+
+- **Venue locations.** The venues tab gains `country`, `prefecture_ja`, `city`, `city_ja` and `area` (after `note`), and `prefecture` now holds the English prefecture (or state / province) for every venue. Filled from a Gemini lookup, checked by hand; names kept as the app's own (Gemini's building names weren't used).
+  - The library (`vi_lib`) gives each venue `c`, `pj`, `ci`, `cj`, `a`; the StarScope list (`vi_cards`) and the published file add a `venues` map (location once per venue) and each card its venue id (`vid`). Nothing on screen changes yet.
+- **2025 index clean-up (sheet only, 19 Nov).** Backups of the tabs touched are in `bak_*_1119`.
+  - Dates: 22 shows with no date got theirs from their matches; NEW BLOOD 18 to 21, ANJO, the unit league final and AGQ 2025 (6831) dated with their matches; two matches dated a year late (KOBE Aug. no. 8, SENDAI Nov. no. 6) corrected.
+  - AGQ 2025 (only its English set exists) named and dated as the show.
+  - Shows from other promotions (WAVE, Sendai Girls) tagged `series` = `other-promotion`, dated.
+  - Empty duplicate show rows 8078 and 9080 merged into 8120 and 9195.
+  - About 15 show names cleaned (venue tacked on, brackets, HTML codes, English-set wording).
+  - Venues: 8 duplicates merged (Chateraise Sapporo, FACE Shinjuku, TKP Chiba x2, YouTree, Boat Race Shimonoseki, Act City Hamamatsu, Yume Messe Miyagi, Shiga) and their shows repointed; names cleaned (prefixes, rooms, sponsors) with the old lines kept as 41 venue aliases; HACHIOJI 2025 moved to Tokyo Tama Mirai Messe and the HAMAMATSU Tag League final given Hamamatsu General Industrial Exhibition Hall (both new).
+  - Wrestlers merged: Asuka Gouda into Asuka Goda, Kyuusei into Kyusei Ninja Ranmaru, Act into Act Yasukawa, Oscita into Osita.
+- Sheet script: **redeploy.** Every show's `updated` was set to now, so the TV and phone take the changes on their next StarScope list.
+
 ## 2.103.1
 
 - **Fix: iPhone card check couldn't add a new wrestler under her English name.** "Add as a new wrestler" always used the site's spelling, so a Japanese-only billing (マゼラティ) went into the library as her English name, and typing "Mazzerati" in the search box didn't change that.

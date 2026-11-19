@@ -381,7 +381,8 @@ var VI = {
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
   shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note', 'updated'],
-  venues: ['venue_id', 'name_en', 'name_ja', 'prefecture', 'active', 'merged_into', 'note'],
+  // 2.104.0: where the building is, for grouping by country, prefecture or city later (filled from a Gemini lookup).
+  venues: ['venue_id', 'name_en', 'name_ja', 'prefecture', 'active', 'merged_into', 'note', 'country', 'prefecture_ja', 'city', 'city_ja', 'area'],
   talent: ['talent_id', 'name_en', 'name_ja', 'search', 'status', 'active', 'merged_into', 'note'],
   teams: ['team_id', 'name_en', 'name_ja', 'member_ids', 'active', 'merged_into', 'note'],
   factions: ['faction_id', 'name_en', 'name_ja', 'active', 'merged_into', 'note'],
@@ -532,7 +533,7 @@ function viAction(b) {
       merged: viRows('talent').filter(function(t) { return t.merged_into; }).map(function(t) { return [t.talent_id, t.merged_into]; }),
       aliases: viRows('aliases').filter(function(a) { return a.status !== 'rejected' && a.entity_type === 'talent'; }).map(function(a) { return [a.normalized || viNorm(a.alias), a.entity_id]; }),
       venueAliases: viRows('aliases').filter(function(a) { return a.status !== 'rejected' && a.entity_type === 'venue'; }).map(function(a) { return [a.normalized || viNorm(a.alias), a.entity_id]; }),
-      venues: viRows('venues').filter(function(v) { return viTrue(v.active) && !v.merged_into; }).map(function(v) { return { id: v.venue_id, en: v.name_en || v.name_ja, ja: v.name_ja, p: v.prefecture }; }),
+      venues: viRows('venues').filter(function(v) { return viTrue(v.active) && !v.merged_into; }).map(function(v) { return { id: v.venue_id, en: v.name_en || v.name_ja, ja: v.name_ja, p: v.prefecture, c: v.country, pj: v.prefecture_ja, ci: v.city, cj: v.city_ja, a: v.area }; }),
       teams: viRows('teams').filter(function(t) { return viTrue(t.active) && !t.merged_into; }).map(function(t) { return { id: t.team_id, en: t.name_en, m: String(t.member_ids || '').split('|').filter(String) }; }),
       factions: viRows('factions').filter(function(f) { return viTrue(f.active) && !f.merged_into; }).map(function(f) { return { id: f.faction_id, en: f.name_en, ja: f.name_ja }; })
     };
@@ -908,8 +909,13 @@ function viCards(b) {
   var tmn = TN.en, fcn = FN.en;
   // For the StarScope player (2.65.0): the show's name and venue for the video page's title.
   var shw = {}, ven = {};
-  viRows('venues').forEach(function(x) { ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en }; });
-  viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, v: ven[x.venue_id] || null }; });
+  // 2.104.0: each venue's location goes once in "venues" (not on every card); a card carries its venue's id (vid).
+  var venLoc = {};
+  viRows('venues').forEach(function(x) {
+    ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en };
+    if (viTrue(x.active) && !x.merged_into) venLoc[x.venue_id] = { en: x.name_en || x.name_ja, ja: x.name_ja || x.name_en, c: x.country || '', p: x.prefecture || '', pj: x.prefecture_ja || '', ci: x.city || '', cj: x.city_ja || '', a: x.area || '' };
+  });
+  viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, v: ven[x.venue_id] || null, vid: x.venue_id || '' }; });
   var map = {}, all = [], mvRows = viRows('match_videos'), hot = null, hotShow = {};
   if (since) {
     hot = {};
@@ -949,9 +955,9 @@ function viCards(b) {
     };
     var sv = seen[String(v.video_id)] || {};
     var mu = multi(en, t.stipulation);
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
-  return since ? { ok: true, map: map, now: now, since: since, all: all } : { ok: true, map: map, now: now, full: true };
+  return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc } : { ok: true, map: map, now: now, full: true, venues: venLoc };
 }
 
 // StarScope Log next (2.67.0): every video the private build has read ("videos") that has no match_videos row, grouped
@@ -1000,6 +1006,7 @@ function viPublicFile() {
     at: new Date().toISOString(),
     public: String(props.getProperty('STARSCOPE_PUBLIC') || '').toLowerCase() === 'true',
     cards: cards.map || {},
+    venues: cards.venues || {},
     roster: { talent: roster.talent || [], merged: roster.merged || [] }
   };
 }
@@ -1012,7 +1019,7 @@ function publishStarscope() {
   if (!token || !repo) throw new Error('Set GH_TOKEN and GH_REPO in Project Settings > Script properties first.');
   var branch = props.getProperty('GH_BRANCH') || 'main', path = props.getProperty('GH_PATH') || 'starscope.json';
   var file = viPublicFile();
-  var same = JSON.stringify({ p: file.public, c: file.cards, r: file.roster });
+  var same = JSON.stringify({ p: file.public, c: file.cards, v: file.venues, r: file.roster });
   var hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, same, Utilities.Charset.UTF_8));
   if (props.getProperty('PUBLISHED_HASH') === hash) return 'unchanged';
   var api = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path).replace(/%2F/g, '/');

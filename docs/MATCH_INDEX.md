@@ -11,6 +11,8 @@ Paste the whole of `scripts/video_index_log.gs` into the sheet's Apps Script, th
 - `videos`: raw page captures. Written by the app only.
 - `matches`, `match_videos`, `participants`, `match_tags`: reviewed data. One match can have many videos.
 - `talent`, `teams`, `factions`, `shows`, `venues`, `aliases`, `lists`: the approved library.
+- `venues` (2.104.0): one row per **building**; the room or hall (Hall A, 2F, West Hall, Sub Arena) stays in the show's `venue_raw`. After `note` come the location columns `country` (ISO code: JP, US, CN), `prefecture_ja`, `city`, `city_ja` and `area` (optional district: Sakae, Shinkiba); `prefecture` holds the English prefecture, or the state or province outside Japan. Tokyo's 23 wards count as the city. The library and the StarScope cards carry each venue's location once, in `venues`, and each card its venue's id (`vid`). The site's long venue lines (prefecture prefix, city in brackets, sponsors) are kept as venue aliases, so the venue's own `name_ja` stays the building's name.
+- `shows.series` `other-promotion`: shows from other promotions (WAVE, Sendai Girls) kept in the index, so Stardom-only views can leave them out later.
 - `ratings`: one star rating (1 to 5) per match per device (2.62.0); the logger shows the device's own and the average.
 - `proposals`: suggested additions. `changes`: edit history.
 - `playback`: the TV's play / pause / seek notes for the phone logger (2.68.0, `docs/STARSCOPE_PHONE.md`). Only the last two videos are kept.
