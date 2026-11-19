@@ -111,6 +111,10 @@
       var y = /(20\d{2}|19\d{2})/.exec(rest);
       var year = yearHint || (y ? y[1] : null);
       r.date = year ? iso(year, d[1], d[2]) : null;
+      // 2.96.5: a full date in brackets at the end, "（2026/04/26）", wins: the leading month and day can be a typo on the
+      // site ("12・26 … Yokohama Arena (2026/04/26)" for the April 26 Grand Queendom).
+      var full = /[（(]\s*(\d{4})\/(\d{1,2})\/(\d{1,2})\s*[）)]\s*$/.exec(rest);
+      if (full) r.date = iso(full[1], full[2], full[3]);
     }
     return r;
   }

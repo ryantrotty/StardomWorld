@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.96.5
+
+- **Fix: a show's date from a typo'd month and day.** When the site's show name ends with the full date in brackets, that date is used ("12・26『… GRAND QUEENDOM 2026』Yokohama Arena (2026/04/26)" was read as 26 December). Same reader on the TV and the iPhone; the iPhone also corrects shows it had already kept.
+
 ## 2.96.4
 
 - **iPhone card check: Ask Gemini on a match card.** A match that needs a look has its own Ask Gemini button (orange, first on the card). It asks about that match only: the show, date, venue, the match's place and title, and the site's line-up with the names card check couldn't place. The answer's names are offered as before; when its sides hold a different number of people than the site's (two names run together, a missing "&"), the whole line-up is offered as a replacement instead.
