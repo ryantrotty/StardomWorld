@@ -326,7 +326,11 @@
     show = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
     saveState(); draw(); root.scrollTop = 0;
     var c = lsGet(SET_KEY + set);
-    if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) { show = c; draw(); return; }
+    if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) {
+      var sl0 = window.__tvVixSetOf && c.line ? window.__tvVixSetOf(+set, c.line, null) : null;   // 2.96.5: the date read again (a typo'd month fixed)
+      if (sl0 && sl0.date && sl0.date !== c.date) { c.date = sl0.date; lsSet(SET_KEY + set, c); }
+      show = c; draw(); return;
+    }
     var go = function() {
       lastFetch = Date.now();
       var got = '', html = '';
