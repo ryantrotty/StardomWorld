@@ -68,7 +68,55 @@
     return n.replace(/[　-〿぀-ヿ㐀-鿿＀-￯]+/g, ' ')
       .replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/\s+/g, ' ').replace(/^[\s·\-–:]+|[\s·\-–:]+$/g, '').trim();
   }
+  // English match titles (2.103.0). Older videos only have a Japanese title on the site ("6人タッグマッチ",
+  // "CMLL日本女子選手権試合"), so card check showed it as it was. The usual match-title words are turned into English
+  // (with the show words above for tournaments, blocks and venues); anything the list doesn't know stays as it is.
+  // The roster file's "matchWords" adds or changes words. Only shown, never saved.
+  //   window.__tvShowName.match(title)
+  var MWORDS = {
+    '新人ご挨拶': 'Rookie Introduction', 'ご挨拶': 'Greeting', '入団会見': 'Signing Announcement',
+    'シングルマッチ': 'Singles Match', 'スペシャルシングルマッチ': 'Special Singles Match', 'タッグマッチ': 'Tag Match',
+    'スペシャルタッグマッチ': 'Special Tag Match', 'スペシャル': 'Special', 'ハンディキャップマッチ': 'Handicap Match',
+    '時間差バトルロイヤル': 'Staggered-Entry Battle Royal', 'バトルロイヤル': 'Battle Royal', 'ランブル': 'Rumble',
+    'ハードコアマッチ': 'Hardcore Match', 'デスマッチ': 'Deathmatch', '金網マッチ': 'Steel Cage Match', 'ラダーマッチ': 'Ladder Match',
+    'ランバージャックマッチ': 'Lumberjack Match', 'ノーDQマッチ': 'No DQ Match', 'ストリートファイト': 'Street Fight',
+    '敗者髪切りマッチ': 'Loser Gets Head Shaved Match', '髪切りマッチ': 'Hair vs Hair Match', '敗者': 'Loser', 'マスカラ・コントラ・マスカラ': 'Mask vs Mask',
+    'エキシビションマッチ': 'Exhibition Match', 'エキシビション': 'Exhibition', 'デビュー戦': 'Debut Match', '引退試合': 'Retirement Match',
+    '選手権試合': 'Championship', '選手権': 'Championship', 'タイトルマッチ': 'Title Match', '王座戦': 'Title Match', '王座': 'Title',
+    '挑戦者決定戦': 'Number One Contender Match', '次期挑戦者決定戦': 'Number One Contender Match',
+    '日本女子': 'Japan Women\'s', 'IWGP女子': 'IWGP Women\'s', 'ハイスピード': 'High Speed', 'フューチャー・オブ・スターダム': 'Future of Stardom',
+    'アーティスト・オブ・スターダム': 'Artist of Stardom', 'ストロングウィメンズ': 'Strong Women\'s', 'ゴッデス・オブ・スターダム': 'Goddesses of Stardom',
+    'トーナメント': 'Tournament', '準々決勝': 'Quarterfinal', '準決勝': 'Semifinal', '決勝戦': 'Final', '決勝': 'Final',
+    '1回戦': 'Round 1', '2回戦': 'Round 2', '3回戦': 'Round 3', '一回戦': 'Round 1', '二回戦': 'Round 2',
+    'メインイベント': 'Main Event', 'セミファイナル': 'Semi-Main Event', '試合': 'Match', 'マッチ': 'Match', 'タッグ': 'Tag', 'ブロック': 'Block'
+  };
+  try {
+    var mx = JSON.parse((H && H.matchWordsJson && H.matchWordsJson()) || '{}') || {};
+    Object.keys(mx).forEach(function(k) { if (k) MWORDS[k] = String(mx[k] || ''); });
+  } catch (e) {}
+  // the show words too (tournaments, blocks, venues), the match words winning
+  var MALL = {};
+  Object.keys(WORDS).forEach(function(k) { MALL[k] = WORDS[k]; });
+  Object.keys(MWORDS).forEach(function(k) { MALL[k] = MWORDS[k]; });
+  var MKEYS = Object.keys(MALL).sort(function(a, b) { return b.length - a.length; });
+  var NUM = { 2: 'Two', 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six', 8: 'Eight', 10: 'Ten', 12: 'Twelve' };
+  function matchEn(t) {
+    var n = String(t || '').replace(/[！-～]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).replace(/　/g, ' ');
+    // 6人タッグマッチ → Six-Woman Tag Match; 3WAYマッチ → 3-Way Match
+    n = n.replace(/(\d+)\s*人\s*タッグ\s*(マッチ)?/g, function(_, d) { return ' ' + (NUM[+d] || d) + '-Woman Tag Match '; });
+    n = n.replace(/(\d+)\s*WAY\s*(マッチ)?/gi, function(_, d) { return ' ' + d + '-Way Match '; });
+    n = n.replace(/第\s*(\d+)\s*試合/g, function(_, d) { return ' Match ' + d + ' '; });
+    MKEYS.forEach(function(k) { if (n.indexOf(k) >= 0) n = n.split(k).join(' ' + MALL[k] + ' '); });
+    n = n.replace(/[『「]/g, ' \u201c').replace(/[』」]/g, '\u201d ').replace(/・/g, ' ');
+    return n.replace(/\s+/g, ' ').replace(/\u201c /g, '\u201c').replace(/ \u201d/g, '\u201d').trim();
+  }
+
   window.__tvShowName = {
+    match: function(t) {
+      t = String(t || '');
+      if (ja() || !JP.test(t)) return t;
+      return matchEn(t) || t;
+    },
     en: function(name, date, short) {
       name = String(name || '');
       if (ja()) return name;

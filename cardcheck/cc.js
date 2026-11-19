@@ -46,6 +46,8 @@
     return DAY[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] + ' ' + (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1];
   }
   function isComment(t) { return /コメント|comments?\b/i.test(t) && !/試合|マッチ|match|commentary/i.test(t); }
+  // English match titles for Japanese-only titles (2.103.0, shownames.js); the line-up reading still uses the site's own.
+  function mtEn(t) { return window.__tvShowName && window.__tvShowName.match ? window.__tvShowName.match(t) : t; }
   function showName(n, date) { return window.__tvShowName ? window.__tvShowName.en(n, date, false) : n; }
 
   // ---- the page: one root over everything
@@ -108,7 +110,7 @@
   }
 
   // ---- the bridge the TV's scripts expect (AndroidHost), answered here
-  var FACT = '{"factions":[]}', MT = '{}', SW = '';
+  var FACT = '{"factions":[]}', MT = '{}', SW = '', MW = '';
   function post(body, done) {
     body.key = cfg.k; body.device = 'iphone-cardcheck'; body.owner = true;
     fetch(cfg.u, { method: 'POST', body: JSON.stringify(body) })
@@ -122,7 +124,7 @@
       starCards: function(id, p) { post(JSON.parse(p), function(t) { if (window.__tvStarCardsReply) window.__tvStarCardsReply(id, t); }); },
       scopeOn: function() { return true; }, videoIndexOn: function() { return true; }, categoriesOn: function() { return true; },
       indexPanel: function() {}, videoIndexPut: function() {},
-      factionsJson: function() { return FACT; }, matchTypesJson: function() { return MT; }, showWordsJson: function() { return SW; }
+      factionsJson: function() { return FACT; }, matchTypesJson: function() { return MT; }, showWordsJson: function() { return SW; }, matchWordsJson: function() { return MW; }
     };
   }
   function getJson(u) { return fetch(u, { cache: 'no-cache' }).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
@@ -172,6 +174,7 @@
       var mt = a[1]; if (a[2] && a[2].debuts) { mt.debuts = mt.debuts || {}; Object.keys(a[2].debuts).forEach(function(k) { mt.debuts[k] = a[2].debuts[k]; }); }
       MT = JSON.stringify(mt);
       SW = a[2] && a[2].showWords ? JSON.stringify(a[2].showWords) : '';
+      MW = a[2] && a[2].matchWords ? JSON.stringify(a[2].matchWords) : '';
       return ['shownames.js', 'setorder.js', 'videoindex.js', 'indexpanel.js'].reduce(function(p, n) { return p.then(function() { return loadScript(n); }); }, Promise.resolve());
     });
   }
@@ -474,10 +477,10 @@
   function segList(L) { return L.filter(function(t) { return sheetOpen.ids.indexOf(t.id) < 0; }).map(function(t) { return '<button class="opt" data-segadd="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; }).join(''); }
   function segOpen(v) {
     var r = recs[v.id], g = segs[v.id] || segGuess(v, r) || { type: '', ids: [] };
-    sheetOpen = { seg: 1, v: v.id, title: (r && !r.failed && (r.title_en || r.title_ja)) || v.t, type: g.type, ids: g.ids.slice(), q: '' }; draw();
+    sheetOpen = { seg: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), type: g.type, ids: g.ids.slice(), q: '' }; draw();
   }
   function cardHtml(v, i) {
-    var r = recs[v.id], s = status(v), k = cls(v), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
+    var r = recs[v.id], s = status(v), k = cls(v), title = mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t);
     var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
     var h = '<div class="card" data-v="' + esc(v.id) + '"><div class="pic"' + (v.th ? ' style="background-image:url(\'' + esc(v.th) + '\')"' : '') + '></div><div class="bd">' +
       '<div class="hd"><span class="t">Match ' + (i + 1) + ' of ' + show.videos.length + '</span>' + chip + '</div><div style="font-weight:700;color:#C9D2DC">' + esc(title) + '</div>';
@@ -561,7 +564,7 @@
     show.videos.forEach(function(v, i) {
       var k = cls(v), r = recs[v.id]; n[k] = (n[k] || 0) + 1;
       var lab = k === 'renumber' ? 'logged as ' + map[v.id].n + ', save as ' + (i + 1) : k === 'logged' ? 'logged' : k === 'ready' ? (segs[v.id] ? 'ready · segment' : 'ready') : k === 'attn' ? 'needs a look' : 'not read yet';
-      rows += '<div class="er2' + (needsCard(v) ? ' open' : '') + '" data-row="' + esc(v.id) + '"><b>' + (i + 1) + '</b><span class="x">' + esc((r && !r.failed && (r.title_en || r.title_ja)) || v.t) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
+      rows += '<div class="er2' + (needsCard(v) ? ' open' : '') + '" data-row="' + esc(v.id) + '"><b>' + (i + 1) + '</b><span class="x">' + esc(mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t)) + '</span><span class="chp ' + (k === 'logged' ? 't' : k === 'ready' ? 'w' : k === 'attn' || k === 'renumber' ? 'a' : 'r') + '">' + lab + '</span></div>';
     });
     var todo = n.ready + n.unread + n.renumber, nx = nextShow();
     var h = '<div class="end"><div class="hd">The card<span style="flex:1"></span><button class="b" style="height:36px;font-size:13px" data-allcards="1">' + (showAllCards ? 'Hide cards' : 'Show all cards') + '</button></div>' + rows + '<div class="bt">';
@@ -584,7 +587,7 @@
       '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' +
       '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
   }
-  function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String((r && !r.failed && (r.title_en || r.title_ja)) || v.t).slice(0, 40) + '"' : '–'; }
+  function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String(mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t)).slice(0, 40) + '"' : '–'; }
   // The card in a new order (2.93.0): reversed, or as an AI answer has it. Kept with the show on the phone; logged
   // matches whose saved number no longer fits are marked to re-save.
   function setOrder(vids, why) {
@@ -619,7 +622,7 @@
   }
   // 2.96.4: one match only (the Ask Gemini button on its card): who is in it, nothing else.
   function aiPromptOne(vi) {
-    var K = kit(), v = show.videos[vi], r = recs[v.id], ven = venueNow(), raw = rawVenue(), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, have = [];
+    var K = kit(), v = show.videos[vi], r = recs[v.id], ven = venueNow(), raw = rawVenue(), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, have = [];   // the site's own title for Gemini
     if (r && !r.failed) {
       var sd = sides(r);
       have = sd.A.map(function(names, si) { return names.map(function(rw, j) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : '', id = K ? (K.resolve(rw) || K.resolve(o)) : ''; return id ? K.nameOf(id) : '?' + personText(rw, o); }).join(' & '); });
