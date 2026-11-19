@@ -58,8 +58,14 @@
   function resolve(raw) { return nameMap[norm(raw)] || ''; }
   function nameOf(id) { var t = byId[id]; return t ? (ja && t.ja ? t.ja : t.en) : id; }
 
+  // 2.96.2: English first, unless the Japanese line-up has the same sides and more names: the English one missed an
+  // "&" ("Natsupoi & Aya Sakura Sayaka Kurara"), the Japanese one didn't.
+  function enFirst(r) {
+    var en = r.sides_en || [], ja = r.sides_ja || [], n = function(s) { return s.reduce(function(a, x) { return a + x.length; }, 0); };
+    return en.length >= 2 && !(ja.length === en.length && n(ja) > n(en));
+  }
   function fromPage() {
-    var useEn = rec.sides_en && rec.sides_en.length >= 2;
+    var useEn = enFirst(rec);
     var A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : [], roles = (useEn ? rec.roles_en : rec.roles_ja) || [], teams = (useEn ? rec.teams_en : rec.teams_ja) || [];
     return A.map(function(names, i) {
       return { role: roles[i] || '', team: teams[i] || '', people: names.map(function(raw, j) {
@@ -1001,12 +1007,12 @@
       (lib.aliases || []).forEach(function(a) { keys.push([a[0], a[1]]); });
       var long = function(k) { return k.length >= (/[぀-鿿]/.test(k) ? 2 : 4); };
       var hits = keys.filter(function(k) { return k[0] && long(k[0]) && t.indexOf(k[0]) >= 0; }).sort(function(a, b) { return b[0].length - a[0].length; });
-      var used = [], out = [];
+      var used = [], out = [], at = {};
       hits.forEach(function(h) {
         if (out.indexOf(h[1]) >= 0 || used.some(function(u) { return u.indexOf(h[0]) >= 0; })) return;
-        used.push(h[0]); out.push(h[1]);
+        used.push(h[0]); out.push(h[1]); at[h[1]] = t.indexOf(h[0]);
       });
-      return out;
+      return out.sort(function(a, b) { return at[a] - at[b]; });   // in the order they appear
     },
     reload: function(done) { call({ action: 'vi_lib' }, function(r) { if (r.ok) { store(LIB_KEY, { t: Date.now(), lib: r }); setLib(r); } if (done) done(!!r.ok); }); },
     // The site writes some venues two ways, 高知・セリーズ（CHRES）体育館 and 高知・［CHRES］セリーズ体育館: failing a straight
