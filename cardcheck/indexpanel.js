@@ -66,7 +66,7 @@
   }
   function fromPage() {
     var useEn = enFirst(rec);
-    var A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : [], roles = (useEn ? rec.roles_en : rec.roles_ja) || [], teams = (useEn ? rec.teams_en : rec.teams_ja) || [];
+    var A = useEn ? rec.sides_en : (rec.sides_ja || []), B = useEn ? (rec.sides_ja || []) : (rec.sides_en || []), roles = (useEn ? rec.roles_en : rec.roles_ja) || [], teams = (useEn ? rec.teams_en : rec.teams_ja) || [];
     return A.map(function(names, i) {
       return { role: roles[i] || '', team: teams[i] || '', people: names.map(function(raw, j) {
         // The other language's line-up, name for name, can settle a spelling the library doesn't know.
