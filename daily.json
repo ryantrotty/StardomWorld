@@ -1,14 +1,16 @@
 {
- "generated": "2026-11-18T06:31:58Z",
+ "generated": "2026-11-19T06:34:37Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-18T06:28:57Z",
-  "finished": "2026-11-18T06:31:58Z",
-  "requests": 35,
+  "started": "2026-11-19T06:29:07Z",
+  "finished": "2026-11-19T06:34:37Z",
+  "requests": 52,
   "schedule": {
    "ok": true,
    "events": 44,
-   "changed": [],
+   "changed": [
+    "20261210-korakuen"
+   ],
    "error": ""
   },
   "lineage": {
@@ -57,7 +59,7 @@
     "iwgp": {
      "read": true,
      "changed": false,
-     "note": "Reign 6 (Syuri) and all 6 defences (defCount 6, 5 listed) confirmed against Wikipedia; Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
+     "note": "Reign 6 (Syuri) and all 6 defences (defCount 6, 5 listed) confirmed against Wikipedia; the 6th defence's details are still not stated on the Wikipedia page, so it stays count-only. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     },
     "strong": {
      "read": true,
@@ -69,21 +71,22 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
+    "schedule: unknown match type kept in Japanese: ワールド・オブ・スターダム選手権試合",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
   },
   "league": {
-   "ok": false,
-   "updated": "2026-11-15",
+   "ok": true,
+   "updated": "2026-11-18",
    "source": "official",
-   "note": "Skipped: no league show finished since 2026-11-15; league unchanged."
+   "note": ""
   },
   "blocks": [],
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-16T06:30:44Z",
+  "updated": "2026-11-19T06:31:05Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -1520,7 +1523,21 @@
     "start": "2026-12-10T18:30:00+09:00",
     "fc": "2026-12-10T17:30:00+09:00",
     "doors": "2026-12-10T17:40:00+09:00",
-    "venue": "Korakuen Hall, Tokyo"
+    "venue": "Korakuen Hall, Tokyo",
+    "matches": [
+     {
+      "type": "ワールド・オブ・スターダム選手権試合",
+      "sides": [
+       "Suzu Suzuki",
+       "Maika"
+      ],
+      "type_ja": "ワールド・オブ・スターダム選手権試合",
+      "sides_ja": [
+       "鈴季すず",
+       "舞華"
+      ]
+     }
+    ]
    },
    {
     "id": "20261212-toyosu-kaiken",
@@ -7854,7 +7871,7 @@
  "league": {
   "tag": {
    "2026": {
-    "updated": "2026-11-15",
+    "updated": "2026-11-18",
     "source": "official",
     "points": [
      {
@@ -7862,7 +7879,7 @@
        "Suzu Suzuki",
        "Rina Yamashita"
       ],
-      "pts": 5
+      "pts": 7
      },
      {
       "team": [
@@ -7897,7 +7914,7 @@
        "Dark Silueta",
        "Valkyria"
       ],
-      "pts": 1
+      "pts": 3
      },
      {
       "team": [
@@ -7911,7 +7928,7 @@
        "Natsuko Tora",
        "Ruaka"
       ],
-      "pts": 3
+      "pts": 5
      },
      {
       "team": [
@@ -7932,7 +7949,7 @@
        "Saori Anou",
        "Fuwa Chan"
       ],
-      "pts": 5
+      "pts": 7
      },
      {
       "team": [
@@ -7946,21 +7963,21 @@
        "Maika",
        "Hanako"
       ],
-      "pts": 4
+      "pts": 5
      },
      {
       "team": [
        "Hanan",
        "Waka Tsukiyama"
       ],
-      "pts": 2
+      "pts": 4
      },
      {
       "team": [
        "Mei Seira",
        "Ema Maishima"
       ],
-      "pts": 2
+      "pts": 4
      },
      {
       "team": [
@@ -7974,7 +7991,7 @@
        "Starlight Kid",
        "Maki Itoh"
       ],
-      "pts": 7
+      "pts": 8
      },
      {
       "team": [
