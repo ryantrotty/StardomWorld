@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.96.3
+
+- **Fix: a name matched in English showed as Japanese and "not in the library"** once the Japanese line-up was used (2.96.2): the English spellings now pair up name for name both ways (TV logger and iPhone). The sheet also has Ami Sohrei's Japanese name (壮麗亜美) now.
+- **iPhone card check: Gemini is asked only what's missing.** Every match goes in as one short line for the running order; only the names it couldn't place, the line-ups the site didn't give, and the venue if unknown are asked about. The button says what it will ask ("Ask Gemini: order + 1 name"), or "Check order with Gemini" when nothing is missing. The answer gives the order as "same", "reversed" or a list, so the order is confirmed or fixed outright instead of guessed from overlapping names; matches are tied back by their number in the list. Copy AI prompt sends the same focused question.
+- **AI answers:** a wrestler already in the library whose site spelling can't be an alias is offered as "used for this match only", not as a new wrestler.
+
 ## 2.96.2
 
 - **Fix: two wrestlers read as one when the English line-up misses an "&"** ("Natsupoi & Aya Sakura Sayaka Kurara"). When the Japanese line-up has the same sides and more names, it is used instead (TV logger and iPhone card check); the English spellings still fill in where the counts match.

@@ -405,7 +405,7 @@
     var en = r.sides_en || [], ja = r.sides_ja || [], n = function(s) { return s.reduce(function(a, x) { return a + x.length; }, 0); };
     return en.length >= 2 && !(ja.length === en.length && n(ja) > n(en));
   }
-  function sides(r) { var useEn = enFirst(r); return { A: useEn ? r.sides_en : (r.sides_ja || []), B: useEn ? (r.sides_ja || []) : [] }; }
+  function sides(r) { var useEn = enFirst(r); return { A: useEn ? r.sides_en : (r.sides_ja || []), B: useEn ? (r.sides_ja || []) : (r.sides_en || []) }; }
   function placeOf(v) { return show ? show.videos.indexOf(v) + 1 : 0; }
   // 2.93.0: a logged match whose saved number isn't its place on the card as it now stands: re-saved by Confirm all.
   function misplaced(v) { var c = map[v.id]; return !!(c && !saved[v.id] && c.n !== '' && c.n != null && Number(c.n) > 0 && Number(c.n) !== placeOf(v)); }
@@ -577,7 +577,7 @@
     return '<div class="shw"><div class="n1">' + esc(en || show.line) + '</div>' + (show.line && show.line !== en ? '<div class="n2">' + esc(show.line) + '</div>' : '') +
       '<div class="d">' + esc(dateText(date) || 'Date not read') + '</div>' +
       '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' +
-      '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">Ask Gemini</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+      '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
   }
   function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String((r && !r.failed && (r.title_en || r.title_ja)) || v.t).slice(0, 40) + '"' : '–'; }
   // The card in a new order (2.93.0): reversed, or as an AI answer has it. Kept with the show on the phone; logged
@@ -587,36 +587,65 @@
     draw();
   }
   function personText(raw, other) { return other && other !== raw ? raw + ' (' + other + ')' : raw; }
-  function aiPrompt() {
-    var K = kit(), lines = [], ven = venueNow(), raw = rawVenue();
+  // 2.96.3: a focused question. Every match goes in as one short line (for the running order); only what's missing is
+  // asked about in full: the names card check couldn't place, line-ups the site didn't give, the venue if unknown.
+  // With nothing missing it is a yes / no on the order.
+  function aiNeeds() {
+    var K = kit(), need = [], unknownNames = 0;
     show.videos.forEach(function(v, i) {
-      var r = recs[v.id], title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t;
-      var c = map[v.id];
-      if ((!r || r.failed) && c && c.s) { lines.push((i + 1) + '. ' + title + ': ' + c.s.map(function(x) { return x.join(' & '); }).join(' vs ') + ' (logged)'); return; }
-      if (!r || r.failed) { lines.push((i + 1) + '. ' + title + ' (line-up not read)'); return; }
+      if (status(v) || segs[v.id]) return;
+      var r = recs[v.id];
+      if (!r || r.failed) { need.push({ i: i, what: 'line-up' }); return; }
       var sd = sides(r);
-      var txt = sd.A.map(function(names, si) {
-        return names.map(function(rw, j) {
-          var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : '', id = K ? (K.resolve(rw) || K.resolve(o)) : '';
-          return id ? K.nameOf(id) : '?' + personText(rw, o);
-        }).join(' & ');
-      }).join(' vs ');
-      lines.push((i + 1) + '. ' + title + ': ' + (txt || '(no line-up)'));
+      if (sd.A.length < 2) { need.push({ i: i, what: 'line-up' }); return; }
+      var q = [];
+      sd.A.forEach(function(names, si) { names.forEach(function(rw, j) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : ''; if (!(K && (K.resolve(rw) || K.resolve(o)))) q.push(personText(rw, o)); }); });
+      if (q.length) { need.push({ i: i, what: 'names', names: q }); unknownNames += q.length; }
     });
+    return { list: need, names: unknownNames, venue: !venueNow() };
+  }
+  function aiAskLabel() {
+    var n = aiNeeds(), bits = [];
+    if (n.names) bits.push(n.names + (n.names === 1 ? ' name' : ' names'));
+    var lu = n.list.filter(function(x) { return x.what === 'line-up'; }).length;
+    if (lu) bits.push(lu + (lu === 1 ? ' line-up' : ' line-ups'));
+    if (n.venue) bits.push('venue');
+    return bits.length ? 'Ask Gemini: order + ' + bits.join(', ') : 'Check order with Gemini';
+  }
+  function aiPrompt() {
+    var K = kit(), lines = [], ven = venueNow(), raw = rawVenue(), need = aiNeeds();
+    show.videos.forEach(function(v, i) {
+      var r = recs[v.id], title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, c = map[v.id], txt = '';
+      if (segs[v.id]) txt = 'segment: ' + segLabel(segs[v.id].type) + ' · ' + segs[v.id].ids.map(function(id) { return K.nameOf(id); }).join(', ');
+      else if ((!r || r.failed) && c && c.s) txt = c.s.map(function(x) { return x.join(' & '); }).join(' vs ');
+      else if (r && !r.failed) {
+        var sd = sides(r);
+        txt = sd.A.map(function(names, si) { return names.map(function(rw, j) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : '', id = K ? (K.resolve(rw) || K.resolve(o)) : ''; return id ? K.nameOf(id) : '?' + personText(rw, o); }).join(' & '); }).join(' vs ');
+      }
+      lines.push((i + 1) + '. ' + title + (txt ? ': ' + txt : ' (no line-up)'));
+    });
+    var ask = ['1. Is the list above the real running order (opener first, main event last)? Answer "order" with "same", "reversed", or the list numbers in the real order, e.g. [3,1,2].'];
+    if (need.list.length) {
+      ask.push('2. Only for these matches, give the full line-up (every wrestler, English and Japanese name as used at the time). "listed" is the number in the list above, "no" its real place on the card:');
+      need.list.forEach(function(x) { ask.push('   - #' + (x.i + 1) + (x.what === 'names' ? ': who is ' + x.names.join(', ') + '?' : ': the site gives no line-up')); });
+    }
+    if (need.venue) ask.push((need.list.length ? '3' : '2') + '. The venue: its English and Japanese name.');
+    var shape = '{"order": "same", ' + (need.venue ? '"venue": {"en": "", "ja": ""}, ' : '') + '"matches": [' + (need.list.length ? '{"listed": 1, "no": 1, "sides": [[{"en": "", "ja": ""}], [{"en": "", "ja": ""}]]}' : '') + ']}';
     return [
-      'I am logging a STARDOM (Japanese women\'s pro wrestling) show and need its card checked against reliable sources (the STARDOM official site, Cagematch, Wikipedia, news reports). Please search before answering.',
+      'I am logging a STARDOM (Japanese women\'s pro wrestling) show. Please search reliable sources (the STARDOM official site, Cagematch, Wikipedia, news reports) before answering.',
       '',
       'Show: ' + (show.line || show.name) + (showName(show.name, show.date) !== show.line ? ' (' + showName(show.name, show.date) + ')' : ''),
       'Date: ' + (show.date || 'unknown'),
       'Venue: ' + (ven ? ven.name : (raw ? raw + ' (not confirmed)' : 'unknown')),
       '',
-      'The card as the video site lists it. The site sometimes lists a show backwards (main event first), so please check the running order: "no" in your answer must be the match\'s real place on the card, opener = 1, main event last. Names starting with ? are ones I could not identify; please focus on those, on the venue if it is unknown, and on anything that looks wrong:',
+      'The card as the video site lists it (names starting with ? are ones I could not identify; the site sometimes lists a show backwards):',
       lines.join('\n'),
       '',
-      'Answer with only this JSON (no other text). Use null for anything you are not sure of; do not guess. "no" is the match\'s place on the card. Give every wrestler\'s English and Japanese name as used at the time of the show.',
-      '```json',
-      '{"show": "", "date": "YYYY-MM-DD", "venue": {"en": "", "ja": ""}, "matches": [{"no": 1, "type": "", "title": null, "tournament": null, "round": null, "sides": [[{"en": "", "ja": ""}], [{"en": "", "ja": ""}]]}]}',
-      '```'
+      'Please answer only these:',
+      ask.join('\n'),
+      '',
+      'Answer with only this JSON (no other text). Use null for anything you are not sure of; do not guess.' + (need.list.length ? '' : ' "matches" stays empty.'),
+      '```json', shape, '```'
     ].join('\n');
   }
   function copyText(t, btn, label) {
@@ -631,6 +660,7 @@
   function aiRead(text) {
     var a = String(text || ''), i = a.indexOf('{'), j = a.lastIndexOf('}'), data = null;
     if (i >= 0 && j > i) { try { data = JSON.parse(a.slice(i, j + 1)); } catch (e) {} }
+    if (data && !Array.isArray(data.matches) && data.order != null) data.matches = [];
     if (!data || !Array.isArray(data.matches)) return { err: 'No card found in the answer. It should hold the JSON block the prompt asks for.' };
     var K = kit(), out = [], norm = function(x) { return String(x || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-]+/g, ''); };
     var aiId = function(p) { return p ? (K.resolve(p.en || '') || K.resolve(p.ja || '')) : ''; };
@@ -648,7 +678,15 @@
       if (best >= 0 && bs >= 2) { at[v.id] = best; pairs.push([vi, best]); }
     });
     var place = function(mi) { var m = data.matches[mi]; return Number(m.no) > 0 ? Number(m.no) : mi + 1; };
-    var orderNote = '', reorder = null;
+    var orderNote = '', reorder = null, ord = data.order, nV = show.videos.length;
+    // 2.96.3: the answer says the order outright: "same", "reversed", or the list numbers in the real order.
+    if (ord === 'same' || ord === true) { orderNote = 'Gemini confirms this running order.'; pairs = []; }
+    else if (ord === 'reversed') { reorder = show.videos.slice().reverse(); pairs = []; out.unshift({ k: 'order', vids: reorder.map(function(v) { return v.id; }), why: 'reversed (the answer)', text: 'Reverse the card: the answer has it the other way round', on: true }); }
+    else if (Array.isArray(ord) && ord.length === nV && ord.map(Number).slice().sort(function(a, b) { return a - b; }).every(function(x, k) { return x === k + 1; })) {
+      pairs = [];
+      if (ord.every(function(x, k) { return Number(x) === k + 1; })) orderNote = 'Gemini confirms this running order.';
+      else { reorder = ord.map(function(x) { return show.videos[Number(x) - 1]; }); out.unshift({ k: 'order', vids: reorder.map(function(v) { return v.id; }), why: 'as the answer has it', text: 'Put the matches in the answer\'s order', on: true }); }
+    }
     if (pairs.length >= 2) {
       var ident = pairs.every(function(p) { return place(p[1]) === p[0] + 1; });
       var rev = pairs.every(function(p) { return place(p[1]) === show.videos.length - p[0]; });
@@ -672,7 +710,8 @@
       if (r && !r.failed && sides(r).A.length >= 2) return;
       var mi = -1;
       var cp = cardPos(vi);
-      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && (Number(m.no) === cp + 1 || (same && k === cp))) mi = k; });
+      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && Number(m.listed) === vi + 1) mi = k; });
+      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && m.listed == null && (Number(m.no) === cp + 1 || (same && k === cp))) mi = k; });
       var am = mi >= 0 ? data.matches[mi] : null;
       if (!am || !Array.isArray(am.sides) || am.sides.length < 2) return;
       used[mi] = 1;
@@ -692,7 +731,7 @@
         if (used[mi] || !Array.isArray(m.sides)) return;
         var ids = {}; m.sides.forEach(function(x) { (x || []).forEach(function(p) { var id = aiId(p); if (id) ids[id] = 1; }); });
         var sc = 0; mine.forEach(function(x) { x.forEach(function(p) { if (p.id && ids[p.id]) sc += 2; }); });
-        if (Number(m.no) === vi + 1 || (same && mi === vi)) sc += 1;
+        if (Number(m.listed) === vi + 1) sc += 3; else if (Number(m.no) === vi + 1 || (same && mi === vi)) sc += 1;
         if (sc > bs) { bs = sc; best = mi; }
       });
       if (best == null || bs < 1) return;
@@ -717,7 +756,8 @@
           if (at < 0) return;
           var p = left.splice(at, 1)[0], id = aiId(p), nm = p.en || p.ja;
           if (!nm) return;
-          if (id && !badAlias(u.raw)) out.push({ k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: badAlias(u.other) ? '' : u.other, id: id, name: K.nameOf(id), on: true });
+          if (id && badAlias(u.raw)) out.push({ k: 'use', v: v.id, no: vi + 1, raw: u.raw, other: u.other, id: id, name: K.nameOf(id), on: true });
+          else if (id && !badAlias(u.raw)) out.push({ k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: badAlias(u.other) ? '' : u.other, id: id, name: K.nameOf(id), on: true });
           else if (!newSeen[norm(p.en || p.ja)]) { newSeen[norm(p.en || p.ja)] = 1; out.push({ k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', on: true }); }
         });
       });
@@ -743,9 +783,9 @@
       if (a.info) h += '<div class="msg">✓ ' + esc(a.info) + '</div>';
       h += '<div class="gl">Tap to leave any out, then Apply</div>';
       a.sug.forEach(function(x, i) {
-        var t = x.k === 'order' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
+        var t = x.k === 'order' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' || x.k === 'use' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
           x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
-        var sub = x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        var sub = x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
         h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
       });
       var n = a.sug.filter(function(x) { return x.on; }).length;
@@ -757,7 +797,7 @@
   }
   // One at a time: venue, new wrestlers (then her other spelling), spellings for wrestlers already known.
   function aiApply() {
-    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, lineup: 3 }, done = 0, fail = [];
+    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, use: 2, lineup: 3 }, done = 0, fail = [];
     var todo = a.sug.filter(function(x) { return x.on; }).sort(function(x, y) { return rank[x.k] - rank[y.k]; });
     var next = function() {
       if (!todo.length) {
@@ -777,6 +817,11 @@
         var v = show.videos.filter(function(y) { return y.id === x.v; })[0], r = recs[x.v] && !recs[x.v].failed ? recs[x.v] : { id: Number(x.v), set: Number(show.set), title_en: v ? v.t : '', title_ja: '', shows: [], lines: [], thumb: v ? v.th : '', date: show.date };
         r.sides_en = x.en; r.sides_ja = x.ja; r.fromAi = 1; recs[x.v] = r; ssSet(REC_KEY + x.v, r); delete attn[x.v]; done++;
         next(); return;
+      }
+      if (x.k === 'use') {
+        var ru = recs[x.v];
+        if (ru) { ['sides_en', 'sides_ja'].forEach(function(k) { (ru[k] || []).forEach(function(side) { side.forEach(function(n, j) { if (n === x.raw || (x.other && n === x.other)) side[j] = x.name; }); }); }); ssSet(REC_KEY + x.v, ru); delete attn[x.v]; }
+        done++; next(); return;
       }
       if (x.k === 'alias') {
         post({ action: 'vi_propose', type: 'new_alias', value: x.raw, entity_id: x.id, video: x.v }, function(t) {
