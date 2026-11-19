@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.96.4
+
+- **iPhone card check: Ask Gemini on a match card.** A match that needs a look has its own Ask Gemini button (orange, first on the card). It asks about that match only: the show, date, venue, the match's place and title, and the site's line-up with the names card check couldn't place. The answer's names are offered as before; when its sides hold a different number of people than the site's (two names run together, a missing "&"), the whole line-up is offered as a replacement instead.
+
 ## 2.96.3
 
 - **Fix: a name matched in English showed as Japanese and "not in the library"** once the Japanese line-up was used (2.96.2): the English spellings now pair up name for name both ways (TV logger and iPhone). The sheet also has Ami Sohrei's Japanese name (壮麗亜美) now.
