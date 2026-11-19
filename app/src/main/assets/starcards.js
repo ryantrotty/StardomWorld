@@ -63,6 +63,82 @@
   // The logger's Card tab draws its preview with the same card (2.61.0).
   window.__tvStarCard = { html: block };
 
+  // ---- Complete years (2.97.0): StarScope as the source for pages limited to a year whose every show is logged.
+  // AndroidHost.scopeCompleteJson() lists those years ([2026] in your build, none in others). A complete year is covered
+  // up to its latest logged show ("through"); a show after that (one not logged yet) still comes from the site's search.
+  // Pages that use this (Tag League, the tournament and title tabs, title histories) show the site's normal cards; the
+  // index only decides which videos those are, so nothing on screen changes look. Nothing here asks the video site.
+  var CY = null, THRU = null;
+  function completeYears() {
+    if (CY) return CY;
+    CY = [];
+    try { var j = JSON.parse(H.scopeCompleteJson ? H.scopeCompleteJson() : '[]'); if (j && j.length) CY = j.map(String).sort(); } catch (e) { CY = []; }
+    return CY;
+  }
+  function through(y) {
+    if (!THRU) {
+      THRU = {};
+      Object.keys(map || {}).forEach(function(id) { var d = String((map[id] || {}).d || ''); if (d.length === 10) { var k = d.slice(0, 4); if (!THRU[k] || d > THRU[k]) THRU[k] = d; } });
+    }
+    return THRU[String(y)] || '';
+  }
+  // The first day of the run of complete years that ends with the newest one: [2025, 2026] gives 2025-01-01.
+  function coverFrom() {
+    var ys = completeYears(), y = ys.length ? +ys[ys.length - 1] : 0;
+    if (!y || !through(y)) return '';
+    while (ys.indexOf(String(y - 1)) >= 0 && through(y - 1)) y--;
+    return y + '-01-01';
+  }
+  function coverThru() { var ys = completeYears(); return ys.length ? through(ys[ys.length - 1]) : ''; }
+  function covered(d) { d = String(d || '').slice(0, 10); var y = d.slice(0, 4); return d.length === 10 && completeYears().indexOf(y) >= 0 && !!through(y) && d <= through(y); }
+  // Stardom's own shows on the schedule since the last logged one, up to today (Japan time): the shows still to log.
+  function unlogged() {
+    var thru = coverThru(), out = [];
+    if (!thru) return out;
+    var today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    try {
+      ((JSON.parse(H.scheduleJson()) || {}).events || []).forEach(function(e) {
+        var d = String(e.start || '').slice(0, 10);
+        if (e.own !== false && d > thru && d <= today && out.indexOf(d) < 0) out.push(d);
+      });
+    } catch (e) {}
+    return out.sort();
+  }
+  function hasName(v, name) { var k = norm(name); return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); }
+  function together(v, a, b) {
+    var ka = norm(a), kb = norm(b);
+    return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(ka) >= 0; }) && sd.some(function(p) { return p[0].indexOf(kb) >= 0; }); });
+  }
+  // Tournaments by id, with the label as a fallback for a list from an older sheet script.
+  var COMP = { stargp: ['5star-gp', /5\s*★?\s*star/i], cinderella: ['cinderella', /cinderella/i], tagleague: ['tag-league', /tag\s*league|goddess/i] };
+  function inComp(v, key) { var X = v.x || {}, c = COMP[key]; return !!c && (X.cv ? X.cv === c[0] : c[1].test(X.c || '')); }
+  function isTitle(v, id) { var X = v.x || {}; if (id) return (X.tv || []).indexOf(id) >= 0; return !!((X.tv && X.tv.length) || (X.ti && X.ti.length)); }
+  function siteTitle(v) {
+    var t = ja ? (v.vtj || v.vt) : (v.vt || v.vtj);
+    if (t) return t;
+    var d = String(v.d || '').replace(/-/g, '/');
+    return (d ? d + ' ' : '') + (ja ? v.ej : v.e) + ' ' + oneLine(v);
+  }
+  // window.__tvScopeIdx, not __tvScope: that one (further down) belongs to the menus and card check.
+  window.__tvScopeIdx = {
+    years: completeYears, through: through, from: coverFrom, thru: coverThru, covered: covered, unlogged: unlogged,
+    hasName: hasName, together: together, inComp: inComp, isTitle: isTitle,
+    // Every covered match passing test(v), newest first.
+    find: function(test) {
+      var out = [];
+      Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && covered(v.d) && test(v)) out.push({ id: id, v: v }); });
+      return out.sort(function(a, b) { return String(b.v.d).localeCompare(String(a.v.d)) || ((+a.v.n || 0) - (+b.v.n || 0)); });
+    },
+    // A match as the site's search would list it: the shape the team, wrestler and title pages already draw.
+    item: function(x) { return { id: x.id, h: location.origin + '/contents/' + x.id, t: siteTitle(x.v), b: x.v.th || '', d: x.v.d, sc: 1 }; },
+    // How a page limited to wrestlers who started on "start" (a debut or a team's first date) should look for matches:
+    // only: the index has all of it; recent: shows after the last logged one still need the site's newest page.
+    plan: function(start) {
+      var from = coverFrom(), thru = coverThru(), un = unlogged();
+      return { from: from, thru: thru, only: !!(from && start && String(start) >= from), recent: un.length > 0, unlogged: un };
+    }
+  };
+
   // ---- the telescope button on wrestler and tag team pages, and its results
   var TEL = '<svg width="30" height="30" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/><ellipse cx="40" cy="20" rx="4.5" ry="8.5" fill="#0B1118" stroke="currentColor" stroke-width="1.4"/></g><path fill="#F4C242" d="M50.5 -13Q50.5 -4.5 59 -4.5Q50.5 -4.5 50.5 4Q50.5 -4.5 42 -4.5Q50.5 -4.5 50.5 -13Z"/><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
   function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
@@ -77,7 +153,7 @@
       if (kind === 'w') {
         var want = [norm(a), norm(b)];
         sides.forEach(function(s) { s.forEach(function(p) { if (hasKey(p, want)) hit = true; }); });
-      } else {
+      } else if (!(v.x && v.x.k === 'segment')) {   // a segment isn't a team match (2.96.0)
         var one = [norm(a)], two = [norm(b)];
         sides.forEach(function(s) {
           var x = s.filter(function(p) { return hasKey(p, one); })[0], y = s.filter(function(p) { return hasKey(p, two); })[0];
@@ -162,10 +238,10 @@
   // ---- The StarScope page (2.63.0, private builds): /mypage?tvscope=recent | top | all. Drawn by the app from the
   // index's own list (the same one list the cards use), so the filters only ever offer what has been logged.
   var MIN_RATINGS = 1;   // one TV for now; raise to 3 when StarScope goes public, so one rating can't top the list
-  var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし', noNums: '試合番号未登録', next: '次に登録', wNot: '試合視聴済み・未登録', watched: '試合視聴', plays: '回再生', lastW: '最終視聴', notYet: '未登録', nextIntro: '見たけれど登録が終わっていない大会です。登録を始めた大会が先、次に多く見た順。', kLogged: '登録済み', kWatched: '視聴済み', kNot: '未視聴', loadingN: '読み込み中…', noneNext: '見た大会はすべて登録済みです。',
-    log: '大会を登録', lNext: '視聴済み・未登録', lStarted: '登録途中', ly: '年', lIntro: 'サムネイルと出場選手から大会のカードを登録します。試合は再生しません。', lMore: '次のページの大会を読み込み中…', lEnd: 'この年の大会はこれですべてです。', lNone: '該当する大会はありません', lErr: '読み込めませんでした', lTry: 'もう一度', lSite: 'サイトの大会' }
-    : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered', noNums: 'no match numbers yet', next: 'Log next', wNot: 'watched, not logged', watched: 'watched', plays: 'plays', lastW: 'last watched', notYet: 'not logged yet', nextIntro: "Shows you've watched but not finished logging. Shows you've started come first, then the most watched.", kLogged: 'Logged', kWatched: 'Watched', kNot: 'Not seen', loadingN: 'Loading…', noneNext: "Every show you've watched is logged.",
-    log: 'Log a show', lNext: 'Watched, not logged', lStarted: 'Started', ly: 'Year', lIntro: "Log a show's card from its thumbnails and line-ups, without playing anything.", lMore: 'Loading the next page of shows…', lEnd: "That's every show for this year.", lNone: 'No shows to log here.', lErr: "Couldn't load this page.", lTry: 'Try again', lSite: 'From the site' };
+  var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', seg: 'セグメント', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし', noNums: '試合番号未登録', next: '次に登録', wNot: '試合視聴済み・未登録', watched: '試合視聴', plays: '回再生', lastW: '最終視聴', notYet: '未登録', nextIntro: '見たけれど登録が終わっていない大会です。登録を始めた大会が先、次に多く見た順。', kLogged: '登録済み', kWatched: '視聴済み', kNot: '未視聴', loadingN: '読み込み中…', noneNext: '見た大会はすべて登録済みです。',
+    log: '大会を登録', lNext: '視聴済み・未登録', lStarted: '登録途中', ly: '年', lIntro: 'サムネイルと出場選手から大会のカードを登録します。試合は再生しません。', lMore: '次のページの大会を読み込み中…', lEnd: 'この年の大会はこれですべてです。', lNone: '該当する大会はありません', lErr: '読み込めませんでした', lTry: 'もう一度', lSite: 'サイトの大会', lNew: 'サイトの新着・未登録' }
+    : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', seg: 'Segments', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered', noNums: 'no match numbers yet', next: 'Log next', wNot: 'watched, not logged', watched: 'watched', plays: 'plays', lastW: 'last watched', notYet: 'not logged yet', nextIntro: "Shows you've watched but not finished logging. Shows you've started come first, then the most watched.", kLogged: 'Logged', kWatched: 'Watched', kNot: 'Not seen', loadingN: 'Loading…', noneNext: "Every show you've watched is logged.",
+    log: 'Log a show', lNext: 'Watched, not logged', lStarted: 'Started', ly: 'Year', lIntro: "Log a show's card from its thumbnails and line-ups, without playing anything.", lMore: 'Loading the next page of shows…', lEnd: "That's every show for this year.", lNone: 'No shows to log here.', lErr: "Couldn't load this page.", lTry: 'Try again', lSite: 'From the site', lNew: 'New on the site' };
   var home = null;   // { tab, f: filters, more, pop, focus }
   function homeList() { return Object.keys(map || {}).map(function(id) { return { id: id, v: map[id] }; }).filter(function(x) { return x.v && x.v.x; }); }
   function people(v) { var o = []; (v.s || []).forEach(function(sd) { sd.forEach(function(n) { if (o.indexOf(n) < 0) o.push(n); }); }); return o; }
@@ -213,7 +289,7 @@
     if (t === 'log') return h + logHtml() + (home.pop ? popHtml(list) : '');
     var shown;
     if (t === 'all') {
-      var prim = [['', HT.all0], ['singles', HT.singles], ['tag', HT.tagm], ['multi', HT.multi], ['title', HT.title], ['tour', HT.tour]].filter(function(p) {
+      var prim = [['', HT.all0], ['singles', HT.singles], ['tag', HT.tagm], ['multi', HT.multi], ['title', HT.title], ['tour', HT.tour], ['segment', HT.seg]].filter(function(p) {
         return !p[0] || list.some(function(x) { return passes(x, { k: p[0] }, ''); });
       });
       h += '<div class="row">' + prim.map(function(p) { return chipH('k:' + p[0], p[1], f.k === p[0]); }).join('') + chipH('more', HT.more + (home.more ? ' ▴' : ' ▾'), false, ' style="margin-left:14px"') + '</div>';
@@ -534,19 +610,58 @@
     if (!last || cards.indexOf(e.target) < 0) return;
     if (e.target.getBoundingClientRect().top >= last.getBoundingClientRect().top - 4) yearPage();
   }
+  // How much of one site show page (set) is logged (2.90.0). A match's show is the set it was first logged from, so the
+  // English commentary page and the Japanese one share their matches: counted here by the page's own videos, from the
+  // set each video was saved from (vs) and from the page as card check read it (tvCcSet<set>), before the match's show.
+  function setState(set) {
+    set = String(set);
+    var c = null; try { c = JSON.parse(localStorage.getItem('tvCcSet' + set) || 'null'); } catch (e) {}
+    var vids = c && c.videos && c.videos.length ? c.videos : null, mine = 0;
+    if (vids) vids.forEach(function(v) { if (map && map[v.id]) mine++; });
+    else Object.keys(map || {}).forEach(function(k) { if (String(map[k].vs || '') === set) mine++; });
+    var s = showsList().filter(function(x) { return x.sid === set; })[0];
+    if (vids && (!s || mine >= s.list.length)) return { count: mine + '/' + vids.length, complete: mine >= vids.length, any: mine > 0 };
+    if (s) return { count: countText(s), complete: !!s.complete, any: true };
+    return { count: mine ? mine + ' ' + HT.logged : '0 ' + HT.logged, complete: false, any: mine > 0 };
+  }
   function yearCard(x) {
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yl.y) : { show: x.name, date: '', venue: '' };
-    var logged = showsList().filter(function(s) { return s.sid === String(x.set); })[0];
-    return cardHtml({ href: checkHref(x.set, 'y' + yl.y), th: x.th, date: sl.date || '', count: logged ? countText(logged) : '0 ' + HT.logged, complete: !!(logged && logged.complete),
+    var st = setState(x.set);
+    return cardHtml({ href: checkHref(x.set, 'y' + yl.y), th: x.th, date: sl.date || '', count: st.count, complete: st.complete,
       name: showName(sl.show || x.name, sl.date) || x.name, venue: sl.venue || '',
       main: '<div class="me"><div class="eb dim">' + esc(HT.lSite) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
   }
+  // New on the site (2.102.0): the shows in the home page's New row (kept on the TV when the home page is drawn, so no
+  // extra request) with nothing logged yet, in the row's order. Keeps a complete year complete as shows come in.
+  function newSets() {
+    var c = lsJ('tvHomeNewAllV1'), out = [], seen = {}, logged = {};
+    if (!c || !c.items) return out;
+    Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.vs) logged[String(v.vs)] = 1; });
+    c.items.forEach(function(x) {
+      var m = /\/set\/(\d+)/.exec(x.href || '');
+      if (!m || seen[m[1]] || logged[m[1]]) return;
+      seen[m[1]] = 1;
+      var d = /(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(x.title || '');
+      out.push({ set: m[1], name: String(x.title || '').replace(/\s+/g, ' ').trim(), th: x.bg || '', date: d ? d[1] + '-' + ('0' + d[2]).slice(-2) + '-' + ('0' + d[3]).slice(-2) : '' });
+    });
+    return out;
+  }
+  function newCard(x) {
+    var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, String(x.date).slice(0, 4)) : { show: x.name, date: x.date, venue: '' };
+    return cardHtml({ href: checkHref(x.set, 'new'), th: x.th, date: sl.date || x.date || '', count: 0, complete: false,
+      name: showName(sl.show || x.name, sl.date || x.date) || x.name, venue: sl.venue || '',
+      main: '<div class="me"><div class="eb dim">' + esc(HT.lNew) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
+  }
   function logHtml() {
-    var lf = home.lf || 'next', nn = nextList().length;
-    var h = '<div class="row">' + chipH('lf:next', HT.lNext + (nn ? ' · ' + nn : ''), lf === 'next') + chipH('lf:started', HT.lStarted, lf === 'started') +
+    var ns = newSets();
+    if (!home.lf) home.lf = ns.length ? 'new' : 'next';
+    var lf = home.lf, nn = nextList().length;
+    var h = '<div class="row">' + (ns.length || lf === 'new' ? chipH('lf:new', HT.lNew + (ns.length ? ' · ' + ns.length : ''), lf === 'new') : '') + chipH('lf:next', HT.lNext + (nn ? ' · ' + nn : ''), lf === 'next') + chipH('lf:started', HT.lStarted, lf === 'started') +
       chipH('d:ly', HT.ly + (home.ly ? ': ' + esc(home.ly) : '') + ' ▾', lf === 'year') + '<span class="intro" style="margin-left:auto">' + esc(HT.lIntro) + '</span></div>';
     var cards = [];
-    if (lf === 'next') {
+    if (lf === 'new') {
+      cards = ns.map(newCard);
+    } else if (lf === 'next') {
       if (!sug) return h + '<div class="rs">' + HT.loadingN + '</div>';
       cards = nextList().map(function(e) { return nextCard(e, checkHref(e.g.set, 'next')); });
     } else if (lf === 'started') {
@@ -650,7 +765,7 @@
     homeEl.innerHTML = homeHtml();
     var el = homeEl.querySelector('[data-k="' + (keep || '') + '"]') || (home.pop ? homeEl.querySelector('.pp .ch.on') || homeEl.querySelector('.pp .ch') : homeEl.querySelector('.ch.on'));
     if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); }
-    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '')); } catch (e) {}
+    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '') + (home.tab === 'shows' && home.f.sy ? '&sy=' + home.f.sy : '')); } catch (e) {}
     loadPictures();
   }
   function openPop(key) {
@@ -716,9 +831,12 @@
     if (scopeDone || !map || !document.body) return;
     scopeDone = true;
     askSuggest();
-    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: 'next', ly: '' };
+    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: '', ly: '' };
     var qy = Q.get('y');
     if (scopeKind === 'log' && qy && yearCats()[qy]) { home.lf = 'year'; home.ly = qy; yearLoad(qy); }
+    // A complete year from the Years menu or the Eras page (2.101.0): Shows, filtered to that year.
+    var qsy = Q.get('sy');
+    if (scopeKind === 'shows' && /^\d{4}$/.test(qsy || '')) home.f.sy = qsy;
     homeRender('T' + scopeKind);
   }
   // For the Community menu: the newest StarScope matches, drawn as the same cards.
@@ -735,6 +853,8 @@
       });
     },
     years: function() { return Object.keys(yearCats()).sort(function(a, b) { return b.localeCompare(a); }); },
+    // For card check's Next show from the New list (2.102.0)
+    newShows: function() { return newSets().map(function(x) { return { set: x.set, href: checkHref(x.set, 'new'), name: showName(x.name, x.date) || x.name, date: x.date }; }); },
     // For card check's Next show (2.85.0): shows started and not finished, newest first.
     started: function() {
       return showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); })
@@ -835,6 +955,7 @@
       c = { t: Date.now(), s: r.now || '', f: Date.now(), map: map };
     }
     lsPut(KEY, c);
+    THRU = null;
     if (got) {
       try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
       soon();
@@ -845,7 +966,11 @@
   if (map) setTimeout(fillThumbs, 5000);
   var fresh = 0;
   try { var saved = kept(), ids = Object.keys((saved && saved.map) || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
-  if (Date.now() - fresh > AGE) ask();
+  // 2.97.0: once, the whole list, so the copy gets the complete-years fields (tournament, block and title ids, the
+  // site's title) from the updated sheet script. An older script simply doesn't send them; the pages fall back.
+  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '3'; } catch (e) {}
+  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '3'); } catch (e) {} ask({ full: true }); }
+  else if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();

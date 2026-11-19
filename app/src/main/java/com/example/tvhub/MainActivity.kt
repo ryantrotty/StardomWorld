@@ -2667,6 +2667,11 @@ class MainActivity : Activity() {
     private fun scopeLogOn(): Boolean = BuildConfig.VIDEO_INDEX_DRYRUN && sheetOn()
     private fun scopeReadOn(): Boolean = sheetOn() || scopeFilePublic()
 
+    private fun scopeCompleteYears(): String {
+        if (!sheetOn()) return "[]"
+        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2026]"
+    }
+
     // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
     @Volatile private var scopeCache: org.json.JSONObject? = null
     @Volatile private var scopeStamp = 0L
@@ -3846,6 +3851,13 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun scopeOn(): Boolean = this@MainActivity.scopeReadOn()
 
+        // StarScope complete years (2.97.0, docs/ROSTER.md "StarScope complete years"): years whose shows are all logged, so
+        // pages limited to them (Tag League, tournament and title tabs, title histories) read the index instead of searching
+        // the site. Your build: [2026] unless the roster file's "starscope": {"completeYears": [...]} says otherwise.
+        // Other builds: none, while StarScope isn't public.
+        @android.webkit.JavascriptInterface
+        fun scopeCompleteJson(): String = this@MainActivity.scopeCompleteYears()
+
         // StarScope on the phone (2.68.0, private builds, assets/scopelink.js): the video page's play / pause / seek notes
         // go to the sheet's playback tab, so a tap on the phone logger can be turned into a place in the video.
         @android.webkit.JavascriptInterface
@@ -4557,6 +4569,21 @@ class MainActivity : Activity() {
 
     // When the current video ends: play the next video in the (chronological) carousel under the
     // player, or leave fullscreen and stay on the contents page when the list is finished.
+    // A year's page (2.101.0): the site's year category, except for a StarScope complete year (your build, see
+    // AndroidHost.scopeCompleteJson), which opens StarScope's Shows for that year: every show as a poster card.
+    private val yearUrlJs = """
+        (function(){
+          if (window.__tvYearUrl) return;
+          var CY = null;
+          window.__tvYearUrl = function(y) {
+            y = String(y);
+            if (CY === null) { CY = []; try { CY = (JSON.parse(window.AndroidHost && AndroidHost.scopeCompleteJson ? AndroidHost.scopeCompleteJson() : '[]') || []).map(String); } catch (e) { CY = []; } }
+            if (CY.indexOf(y) >= 0) return '/mypage?tvscope=shows&sy=' + y;
+            return '/contents/category/' + (y === '2020' ? '_2020' : y);
+          };
+        })();
+    """
+
     private val autoNextJs = """
         (function(){
           if (window.__tvAutoNextAttached) return;
@@ -4642,6 +4669,10 @@ class MainActivity : Activity() {
           // The videos before and after this one, from the list already on the page (nothing is fetched), so the bar's
           // Previous and Next buttons can grey out at once. Same list as the automatic next video below.
           function neighbors() {
+            // 2.100.0: a 2026 video goes by its show's card in StarScope (assets/scopeplayer.js), however it was opened
+            var so = null;
+            try { so = window.__tvScopeOrder ? window.__tvScopeOrder() : null; } catch (e) { so = null; }
+            if (so && so.length) { var qp = indexIn(so, location.href); if (qp >= 0) return { list: so, prev: qp > 0 ? so[qp - 1] : '', next: so[qp + 1] || '' }; }
             var list = carouselList(), pos = indexIn(list, location.href);
             if (pos < 0) {
               var stored = null;
@@ -4665,19 +4696,9 @@ class MainActivity : Activity() {
             if (window.__tvAutoNextFired) return;
             window.__tvAutoNextFired = true;
 
-            var list = carouselList();
-            var pos = indexIn(list, location.href);
-            var stored = null;
-            try { stored = JSON.parse(sessionStorage.getItem('tvAutoNextList') || 'null'); } catch (e) {}
-
-            // This page's carousel may not contain the current video (or be empty): use the
-            // list remembered from the previous auto-advance instead.
-            if (pos < 0 && stored && stored.length) {
-              var sp = indexIn(stored, location.href);
-              if (sp >= 0) { list = stored; pos = sp; }
-            }
-
-            var next = list[pos + 1];
+            // The same order as the player's next button: StarScope's card for a 2026 video, else this page's carousel,
+            // else the list remembered from the previous auto-advance (2.100.0: one place, neighbors()).
+            var nb = neighbors(), list = nb.list, next = nb.next;
             if (next) {
               try { sessionStorage.setItem('tvAutoNextList', JSON.stringify(list)); } catch (e) {}
               location.href = next;
@@ -6000,7 +6021,7 @@ class MainActivity : Activity() {
           function yearsList() {
             var out = [];
             for (var y = new Date().getFullYear(); y >= 2011; y--) {
-              out.push([String(y), '/contents/category/' + (y === 2020 ? '_2020' : y), String(y)]);   // the site's 2020 page is "_2020"
+              out.push([String(y), window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === 2020 ? '_2020' : y), String(y)]);   // the site's 2020 page is "_2020"; a StarScope complete year opens its Shows (2.101.0)
             }
             return out;
           }
@@ -6865,7 +6886,7 @@ class MainActivity : Activity() {
               var ecols = '';
               eraList.forEach(function(x) {
                 var epath = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.seed || 'Stardom') + '&activetab=contents&page=1&tvera=' + x.n;
-                var ycl = (x.yearChips || []).slice().reverse().map(function(y) { return fiHtml(y, '/contents/category/' + (y === '2020' ? '_2020' : y)); }).join('');
+                var ycl = (x.yearChips || []).slice().reverse().map(function(y) { return fiHtml(y, window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === '2020' ? '_2020' : y)); }).join('');
                 ecols += '<div class="tv-shl-ecol"><a class="tv-sm-fi tv-shl-eh" tabindex="0" data-go="' + esc(epath) + '" href="' + esc(absUrl(epath)) + '"><span class="tv-shl-ek notranslate" translate="no">' + esc(x.kanji) + '</span><span class="tv-shl-ex"><span class="tv-shl-e1">' + esc(x.name) + '</span><span class="tv-shl-e2">' + esc(x.years) + '</span></span></a>' + ycl + '</div>';
               });
               h = '<div class="tv-shl-t">' + esc(T('YEARS & ERAS', '年別・時代')) + '</div><div class="tv-shl-top">' + '<a class="tv-sm-fi tv-shl-all" tabindex="0" data-go="' + esc(ERA_TEST[1]) + '" href="' + esc(absUrl(ERA_TEST[1])) + '">' + esc(T('All Years & Eras', 'すべての年と時代')) + '<span>' + esc(T('the overview page', '一覧ページ')) + '</span></a></div><div class="tv-shl-ec">' + ecols + '</div>';
@@ -7517,6 +7538,12 @@ class MainActivity : Activity() {
             var title = head ? (head.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var all = sec.querySelector('.ttl-wrap > a[href]');
             var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+            // 2.100.0: a 2026 video opened away from its show (a wrestler page, a search): the row is the show's card
+            // from StarScope instead of videos from elsewhere (assets/scopeplayer.js)
+            try {
+              var scl = window.__tvScopeCardList ? window.__tvScopeCardList(cards.map(function(c) { return c.href; })) : null;
+              if (scl && scl.cards && scl.cards.length) { cards = scl.cards; title = scl.title || title; all = scl.all ? { href: scl.all } : null; }
+            } catch (e) {}
 
             var html = '<h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:700 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span>' + esc(title) + '</span></h2>' +
               '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
@@ -8046,7 +8073,7 @@ class MainActivity : Activity() {
     var h = '<div class="tv-eh"><div class="tv-eh-bar"></div><div class="tv-eh-t">' + esc(T('All Years & Eras', 'すべての年と時代')) + '</div><div class="tv-eh-i">' + esc(T('Up and Down change era. Left and Right move along its years. OK opens the page.', '上下で時代、左右で年を選択。OKで開きます。')) + '</div></div>';
     h += '<div class="tv-bands">' + data.eras.slice().reverse().map(function(x) {
       var ys = (x.yearChips || []).slice().reverse().map(function(y) {
-        return '<a class="tv-yt" tabindex="0" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '"><span class="y">' + esc(y) + '</span><span class="s">' + esc(yearShow[y] || T('Year page', '年別ページ')) + '</span></a>';
+        return '<a class="tv-yt" tabindex="0" href="' + (window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === '2020' ? '_2020' : y)) + '"><span class="y">' + esc(y) + '</span><span class="s">' + esc(yearShow[y] || T('Year page', '年別ページ')) + '</span></a>';
       }).join('');
       var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.seed || 'Stardom') + '&activetab=contents&page=1&tvera=' + x.n;
       return '<div class="tv-band"><div class="tv-bh"><div class="tv-bk notranslate" translate="no">' + esc(x.kanji) + '</div><div style="min-width:0"><div class="tv-lbl" style="font-size:12px">' + esc(T('ERA ' + x.n + ' OF 5', '時代 ' + x.n + ' / 5')) + '</div><div style="font-size:21px;font-weight:900;line-height:1.1;margin-top:2px">' + esc(x.name) + '</div><div style="font-size:13px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(x.years) + '</div></div></div>' +
@@ -8071,7 +8098,7 @@ class MainActivity : Activity() {
         var px = Math.round((100 - t[0]) * 10) / 10;
         return '<div class="tv-tk" style="left:' + px + '%;' + (t[2] ? 'background:#F4C242' : '') + '"></div>' + (hide ? '' : '<div class="tv-tl" style="' + (px > 99 ? 'right:0;transform:none;' : 'left:' + px + '%;') + (t[2] ? 'color:#F4C242' : '') + '">' + t[1] + '</div>');
       }).join('') + (e.n === 5 ? '' : '<div class="tv-tl" style="left:0;transform:none">' + esc(T('now', '現在')) + '</div>') +
-      (act ? yc.slice().reverse().map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="/contents/category/' + (y === '2020' ? '_2020' : y) + '">' + y + '</a>'; }).join('') : '') + '</div>';
+      (act ? yc.slice().reverse().map(function(y, k) { return '<a class="tv-pill tv-yc" tabindex="0" style="left:' + (act[0] + act[1] * (k + 0.5) / yc.length) + '%" href="' + (window.__tvYearUrl ? window.__tvYearUrl(y) : '/contents/category/' + (y === '2020' ? '_2020' : y)) + '">' + y + '</a>'; }).join('') : '') + '</div>';
     if (!e.reigns) {
       h += '<div class="tv-desc"><div><div class="tv-lbl" style="font-size:13px">' + esc(T('Era ' + e.n + ' of 5', '時代 ' + e.n + ' / 5')) + '</div><div style="font-size:30px;font-weight:900;margin-top:4px">' + esc(e.name) + '</div><div style="font-size:17px;font-weight:700;color:#C9D2DC;margin-top:4px">' + esc(e.ja || '') + ' · ' + esc(e.years) + '</div><div style="font-size:15px;color:#9AA6B4;margin-top:8px">' + esc(T('This era is not built yet.', 'この時代はまだ準備中です。')) + '</div></div></div>';
       if (e.rising) h += sec(T('Rising stars', '新星'), '', wr(e.rising));
@@ -10719,6 +10746,8 @@ class MainActivity : Activity() {
             // the first three New videos, for the menu's Home shelf (2.78.0)
             try {
               if (allRowsData && allRowsData[0] && allRowsData[0].items) localStorage.setItem('tvHomeNewV1', JSON.stringify(allRowsData[0].items.slice(0, 3).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; })));
+              // the whole New row (2.102.0): StarScope's Log a show lists the new shows not logged yet (assets/starcards.js)
+              if (allRowsData && allRowsData[0] && allRowsData[0].items) localStorage.setItem('tvHomeNewAllV1', JSON.stringify({ t: Date.now(), items: allRowsData[0].items.map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; }) }));
             } catch (e) {}
             if (allRowsData && allRowsData.length > HOME_ROWS_SHOWN) allRowsData = allRowsData.slice(0, HOME_ROWS_SHOWN);
 
@@ -11366,6 +11395,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(cookieBannerJs(), null)
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(assetText("toprated.js"), null)
+        view.evaluateJavascript(yearUrlJs, null)   // before the Years menu and the Eras page, which link years with it
         view.evaluateJavascript(eraJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)

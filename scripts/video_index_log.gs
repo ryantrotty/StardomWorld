@@ -35,6 +35,11 @@
  *                                                              thumb, site_text (2.84.4): its picture and page text, kept in match_videos
  *   vi_show_venue {show, venue, raw, name, date}               (2.89.0) a show's venue, set once for the whole show from card check;
  *                                                              the site's spelling becomes the venue's alias
+ *   vi_ai {prompt}                                              (2.92.0) card check's "Ask Gemini": the prompt to the Gemini API
+ *                                                              with Google Search grounding; GEMINI_API_KEY (and optional
+ *                                                              GEMINI_MODEL) in the script properties. Answers {text, model, sources}
+ *   vi_save_many {items: [vi_save bodies]}                     (2.94.0) card check's Confirm / Confirm all: a whole card in one request,
+ *                                                              each tab read once; answers {results: [{video, ok, error, match_id}]}
  *   vi_translate {text}                                        (2.87.0) Japanese to English (Google's translator), for the logger
  *   vi_thumbs  {items: [{video, thumb}]}                        (2.84.4) pictures for card-check matches saved without one
  *   vi_propose {type, value, video}                            adds a row to proposals for approval in the sheet;
@@ -71,13 +76,31 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'sides_en', 'teams_en', 'notes_en', 'sides_ja', 'teams_ja', 'notes_ja',
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
-var MAX_CELL = 45000;   // a Sheets cell holds 50,000 characters
+var MAX_CELL = 45000;
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return out({ ok: false, error: 'bad json' }); }
-  var key = PropertiesService.getScriptProperties().getProperty('KEY');
-  if (!key || body.key !== key) return out({ ok: false, error: 'bad key' });
+  var props = PropertiesService.getScriptProperties(), key = props.getProperty('KEY'), ccKey = props.getProperty('CARDCHECK_KEY');
+  // 2.91.3: card check's setup check, answered without a key. Says which script is running, whether it can see
+  // CARDCHECK_KEY, and how the key sent compares with it; never either key.
+  if (body.action === 'cc_ping') {
+    var sent = String(body.key || ''), have = String(ccKey || ''), how = 'no';
+    if (have && sent === have) how = 'exact';
+    else if (have && sent.trim() === have.trim()) how = 'spaces';
+    else if (have && sent.trim().toLowerCase() === have.trim().toLowerCase()) how = 'case';
+    else if (key && sent.trim() === String(key).trim()) how = 'main';
+    var names = props.getKeys().filter(function(k) { return /card|check|cc/i.test(k); });
+    return out({ ok: true, script: '2.91.3', ccSet: !!have, ccLen: have.length, sentLen: sent.length, match: how, similar: names });
+  }
+  if (ccKey) ccKey = String(ccKey).trim();
+  if (typeof body.key === 'string') body.key = body.key.trim();
+  // 2.91.0: card check on the iPhone (web/cardcheck, a Safari bookmark) uses its own key, CARDCHECK_KEY in the script
+  // properties, good for logging only: no export, favorites, watch history, playback notes or debug.
+  var cc = !!ccKey && body.key === ccKey;
+  if ((!key || body.key !== key) && !cc) return out({ ok: false, error: 'bad key' });
+  if (cc && CC_ACTIONS.indexOf(body.action) < 0) return out({ ok: false, error: 'not allowed with the card check key' });
   if (body.action === 'export') return out({ ok: true, cols: COLS, rows: exportRows() });
   // Reads don't wait for the lock. Writes wait up to 25 s, then answer "busy" (the app keeps the change and sends it later)
   // rather than failing with Apps Script's lock timeout error.
@@ -100,8 +123,10 @@ function doPost(e) {
   if (body.action === 'vi_lib' && !viRows('proposals').some(function(p) { return p.status === 'approved'; })) return out(viAction(body));
   if (body.action === 'vi_lib' || body.action === 'vi_save' || body.action === 'vi_propose') return out(withLock(function() { return viAction(body); }));
   if (body.action === 'vi_translate') return out(viTranslate(body));
+  if (body.action === 'vi_ai') return out(viAi(body));
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
+  if (body.action === 'vi_save_many') return out(withLock(function() { return viSaveMany(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -352,7 +377,7 @@ var VI = {
   matches: ['match_id', 'show_id', 'date', 'card_no', 'is_dark', 'result_type', 'winner_side', 'level', 'status', 'source', 'device', 'updated', 'merged_into', 'note', 'date_set', 'card_total'],
   // thumb and site_text (2.84.4): a match logged with card check has no row in "videos" (it was never opened), so its
   // picture and the page's text (for the StarScope button) are kept here.
-  match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text'],
+  match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text', 'set_id'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
   shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note', 'updated'],
@@ -380,14 +405,20 @@ function viSheet(name) {
   return sh;
 }
 function viCell(v) { return v instanceof Date ? Utilities.formatDate(v, 'UTC', 'yyyy-MM-dd') : v; }
+// 2.94.0: a tab read once per request. Rows added (viAppend) and cells set (viSet) are kept in step with the copy;
+// a deleted row (viForget) makes the next read go back to the sheet. Each request is a fresh run, so nothing outlives it.
+var VI_MEMO = {};
+function viForget(name) { delete VI_MEMO[name]; }
 function viRows(name) {
+  if (VI_MEMO[name]) return VI_MEMO[name];
   var sh = viSheet(name), n = sh.getLastRow(), cols = VI[name];
-  if (n < 2) return [];
-  return sh.getRange(2, 1, n - 1, cols.length).getValues().map(function(v, i) {
+  var rows = n < 2 ? [] : sh.getRange(2, 1, n - 1, cols.length).getValues().map(function(v, i) {
     var o = { _row: i + 2 };
     cols.forEach(function(c, j) { o[c] = viCell(v[j]); });
     return o;
   });
+  VI_MEMO[name] = rows;
+  return rows;
 }
 function viAppend(name, rows) {
   if (!rows.length) return;
@@ -396,15 +427,37 @@ function viAppend(name, rows) {
   sh.getRange(start, 1, rows.length, cols.length).setNumberFormat('@').setValues(rows.map(function(r) {
     return cols.map(function(c) { return r[c] == null ? '' : String(r[c]); });
   }));
+  var memo = VI_MEMO[name];
+  if (memo) rows.forEach(function(r, k) { var o = { _row: start + k }; cols.forEach(function(c) { o[c] = r[c] == null ? '' : String(r[c]); }); memo.push(o); });
 }
 function viTrue(v) { return v === true || String(v).toUpperCase() === 'TRUE' || v === '' ; }
 function viNorm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
+// A spelling only becomes a person's alias when it reads as one name (2.95.0). The reader once took "2, Moneyball
+// Tournament 1st Round Giulia" and "Itsuki Aoki Akira Kurogane" from old descriptions; those are refused now:
+// commas, slashes, "&", "vs", a leading number, match words, more than three words, or someone else's name inside.
+// Returns why it was refused, or '' when it is fine.
+function viAliasBad(raw, id) {
+  var s = String(raw || '').normalize('NFKC').trim();
+  if (!s) return 'empty';
+  if (s.length > 40) return 'too long for one name';
+  if (/[,、;\/&]|\bvs\.?(\s|$)|(^|\s)\d/i.test(s)) return 'looks like more than a name (comma, "&", "vs" or a number)';
+  if (/\b(match|tournament|round|battle|league|final|title|championship|cup)\b|戦|試合|トーナメント/i.test(s)) return 'has match words in it';
+  if (/^[\x00-\x7f★☆]+$/.test(s) && s.split(/\s+/).length > 3) return 'more than three words: likely two names together';
+  var n = viNorm(s), other = '';
+  var look = function(name, owner) { var m = viNorm(name); if (!other && owner && owner !== id && m.length >= 5 && m !== n && n.indexOf(m) >= 0) other = name; };
+  viRows('talent').forEach(function(t) { look(t.name_en, t.talent_id); look(t.name_ja, t.talent_id); });
+  viRows('aliases').forEach(function(a) { if (a.entity_type === 'talent' && a.status !== 'rejected') look(a.alias, a.entity_id); });
+  return other ? 'has another person\'s name in it (' + other + ')' : '';
+}
+
 function viSlug(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
 // Sets a row's cells by column name.
 function viSet(name, row, fields) {
   var sh = viSheet(name), cols = VI[name];
   Object.keys(fields).forEach(function(k) { sh.getRange(row, cols.indexOf(k) + 1).setNumberFormat('@').setValue(String(fields[k])); });
+  var memo = VI_MEMO[name], o = memo && memo.filter(function(x) { return x._row === row; })[0];
+  if (o) Object.keys(fields).forEach(function(k) { o[k] = String(fields[k]); });
 }
 
 // A proposal set to "approved" in the sheet goes into the library the next time the library is read, then reads "applied".
@@ -421,6 +474,8 @@ function viApplyApproved() {
       if (!viRows('talent').some(function(t) { return t.talent_id === id; })) viAppend('talent', [{ talent_id: id, name_en: p.value, search: p.value, status: 'guest', active: 'TRUE', note: 'proposal ' + p.proposal_id }]);
     } else if (p.type === 'new_alias' && p.entity_id) {
       made1 = p.entity_id;
+      var bad = viAliasBad(p.value, p.entity_id);
+      if (bad) { viSet('proposals', p._row, { status: 'rejected', note: 'not a name: ' + bad }); return; }
       viAppend('aliases', [{ alias: p.value, normalized: viNorm(p.value), entity_type: 'talent', entity_id: p.entity_id, source: 'proposal', status: 'approved' }]);
     } else if (p.type === 'new_team') {
       // entity_id holds the partners, a|b, as the panel sent them.
@@ -485,6 +540,7 @@ function viAction(b) {
   if (b.action === 'vi_propose') {
     var type = String(b.type || ''), value = String(b.value || '').slice(0, 120);
     if (!/^new_(talent|alias|team|faction|option|venue)$/.test(type) || !value) return { ok: false, error: 'bad proposal' };
+    if (type === 'new_alias') { var why = viAliasBad(value, String(b.entity_id || '')); if (why) return { ok: false, error: 'Not saved as an alias: ' + why }; }
     // The owner's private build (the app adds owner, with the key) skips approval: the addition goes in now.
     // Any other sender, as the public build will be, still waits for approval in the sheet.
     var owner = b.owner === true, same = function(p) { return p.type === type && String(p.entity_id) === String(b.entity_id || '') && viNorm(p.value) === viNorm(value); };
@@ -564,7 +620,7 @@ function viRate(id, device, stars, now) {
   var mine = viRows('ratings').filter(function(r) { return r.match_id === id && String(r.device) === device; });
   if (mine.length) {
     if (stars) viSet('ratings', mine[0]._row, { stars: stars, updated: now });
-    else viSheet('ratings').deleteRow(mine[0]._row);
+    else { viSheet('ratings').deleteRow(mine[0]._row); viForget('ratings'); }
   } else if (stars) viAppend('ratings', [{ match_id: id, device: device, stars: stars, updated: now }]);
 }
 
@@ -580,13 +636,17 @@ function viSave(b) {
     else sideSet[p.side] = 1;
   });
   if (!ok) return { ok: false, error: 'a name is not in the library' };
-  if (Object.keys(sideSet).length < 2) return { ok: false, error: 'a match needs two sides' };
+  // Segments (2.96.0): a retirement ceremony, promo, debut, signing or homecoming is logged with a "segment" tag. The
+  // people in it are one side, and it has no result, so it never counts in anyone's record.
+  var segment = Array.isArray(b.tags) && b.tags.some(function(t) { return t && t.group === 'segment'; });
+  if (!segment && Object.keys(sideSet).length < 2) return { ok: false, error: 'a match needs two sides' };
+  if (segment) list.forEach(function(p) { p.side = 1; p.role = ''; p.entry = ''; p.elim = ''; });
   var version = /^(jp|en|digest|full)$/.test(b.version || '') ? b.version : 'jp';
   var now = new Date().toISOString(), device = String(b.device || '').slice(0, 40);
   // StarScope card check (2.83.0) saves with source "thumb": logged from the thumbnail and line-up, not watched.
   // A match already logged while watching keeps "panel"; watching and saving a thumb match makes it "panel".
   var src = b.source === 'thumb' ? 'thumb' : 'panel';
-  var resultType = /^(win|draw|nc)$/.test(m.result_type || '') ? m.result_type : '';
+  var resultType = !segment && /^(win|draw|nc)$/.test(m.result_type || '') ? m.result_type : '';
   var winner = resultType === 'win' && sideSet[m.winner_side] ? Number(m.winner_side) : '';
   if (resultType === 'win' && !winner) resultType = '';
   var pending = list.some(function(p) { return !p.talent_id; });
@@ -610,6 +670,15 @@ function viSave(b) {
   var fresh = !id;
   if (fresh) id = 'm' + video;
   rows.forEach(function(r) { r.match_id = id; });
+  // 2.94.0: a save card check built without reading the match first (keep): when the match is already logged, this
+  // video is only linked to it (another version, or the same video again); its people, results and tags stay as they are.
+  if (b.keep && !fresh) {
+    var now0 = new Date().toISOString(), vid0 = viRows('match_videos').filter(function(v) { return String(v.video_id) === video; })[0];
+    var th0 = /^https:\/\/www\.stardom-world\.com\//.test(String(b.thumb || '')) ? String(b.thumb).slice(0, 500) : '', set0 = /^\d{1,9}$/.test(String(b.set || '')) ? String(b.set) : '';
+    if (!vid0) viAppend('match_videos', [{ match_id: id, video_id: video, version: version, source: src, updated: now0, thumb: th0, site_text: String(b.site_text || '').slice(0, 3000), set_id: set0 }]);
+    else if (!vid0.set_id && set0) viSet('match_videos', vid0._row, { set_id: set0, updated: now0 });
+    return { ok: true, match_id: id, linked: linked, kept: true };
+  }
 
   // Old rows out, new rows in, the difference noted in changes.
   var oldParts = viRows('participants').filter(function(p) { return p.match_id === id; });
@@ -617,6 +686,7 @@ function viSave(b) {
   var before = sum(oldParts), after = sum(rows), log = [];
   var psh = viSheet('participants');
   oldParts.map(function(p) { return p._row; }).sort(function(a, c) { return c - a; }).forEach(function(n) { psh.deleteRow(n); });
+  if (oldParts.length) viForget('participants');
   viAppend('participants', rows);
   if (before !== after) log.push({ time: now, match_id: id, tab: 'participants', field: 'sides', old: before, 'new': after, source: 'panel', device: device });
 
@@ -645,14 +715,18 @@ function viSave(b) {
   var marks = b.marks || {}, sec = function(v) { return v === '' || v == null || !(Number(v) >= 0) ? '' : Math.floor(Number(v)); };
   var thumb = /^https:\/\/www\.stardom-world\.com\//.test(String(b.thumb || '')) ? String(b.thumb).slice(0, 500) : '';
   var siteText = String(b.site_text || '').slice(0, 3000);
+  // 2.90.0: the site's show page (set) this video is on. An English commentary video and the Japanese one share the
+  // match, and so its show_id, but sit on two set pages; this tells them apart.
+  var setId = /^\d{1,9}$/.test(String(b.set || '')) ? String(b.set) : '';
   var vids = viRows('match_videos').filter(function(v) { return String(v.video_id) === video; });
   if (vids.length) {
     var vf = { match_id: id, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), updated: now };
     if (thumb && !vids[0].thumb) vf.thumb = thumb;
     if (siteText && !vids[0].site_text) vf.site_text = siteText;
+    if (setId && !vids[0].set_id) vf.set_id = setId;
     viSet('match_videos', vids[0]._row, vf);
   }
-  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now, thumb: thumb, site_text: siteText }]);
+  else viAppend('match_videos', [{ match_id: id, video_id: video, version: version, bell_sec: sec(marks.bell), end_sec: sec(marks.end), source: src, updated: now, thumb: thumb, site_text: siteText, set_id: setId }]);
 
   // Tags: only values in the lists tab (and known wrestlers for the fall) are kept; this match's old tags are replaced.
   if (Array.isArray(b.tags)) {
@@ -660,11 +734,15 @@ function viSave(b) {
     var newTags = b.tags.slice(0, 40).filter(function(t) { return t && (t.group === 'fall' ? known[t.value] : okTag[t.group + '/' + t.value]); }).map(function(t) {
       return { match_id: id, tag_group: t.group, tag_value: t.value, source: t.source === 'auto' ? 'auto' : 'panel', confidence: t.source === 'auto' ? 'suggested' : 'confirmed', updated: now };
     });
+    var hasComp = newTags.some(function(t) { return t.tag_group === 'competition'; }), blk = newTags.filter(function(t) { return t.tag_group === 'block'; })[0];
+    var bc = !hasComp && blk ? viBlockComp(blk.tag_value) : '';
+    if (bc && okTag['competition/' + bc]) newTags.push({ match_id: id, tag_group: 'competition', tag_value: bc, source: 'auto', confidence: 'confirmed', updated: now });
     var oldTags = viRows('match_tags').filter(function(t) { return t.match_id === id; });
     var tagSum = function(a) { return a.map(function(t) { return t.tag_group + ':' + t.tag_value; }).sort().join(' '); };
     if (tagSum(oldTags) !== tagSum(newTags)) log.push({ time: now, match_id: id, tab: 'match_tags', field: 'tags', old: tagSum(oldTags), 'new': tagSum(newTags), source: 'panel', device: device });
     var tsh = viSheet('match_tags');
     oldTags.map(function(t) { return t._row; }).sort(function(x, y) { return y - x; }).forEach(function(n) { tsh.deleteRow(n); });
+    if (oldTags.length) viForget('match_tags');
     viAppend('match_tags', newTags);
   }
 
@@ -694,7 +772,7 @@ function viSave(b) {
     var add = [];
     b.aliases.slice(0, 40).forEach(function(a) {
       var n = viNorm(a && a.raw);
-      if (!n || have[n] || !known[a.id]) return;
+      if (!n || have[n] || !known[a.id] || viAliasBad(a.raw, a.id)) return;
       have[n] = 1;
       add.push({ alias: String(a.raw).slice(0, 120), normalized: n, entity_type: 'talent', entity_id: a.id, source: 'panel', status: 'approved' });
     });
@@ -710,6 +788,24 @@ function viSave(b) {
 // copy): matches saved or rated since, and every match of a show one of them belongs to (a venue set on one match is
 // the whole show's). `all` lists every video that has a card, so the TV drops the ones that are gone. Without since,
 // or when the TV's copy is a day old, the whole list, as before.
+// A block belongs to one competition: the lists tab's parent (Blue/Red Stars: 5★STAR GP; Blue/Red Goddesses: Tag League).
+// 2.102.1 / 2.102.2: a match with a block and no competition gets it, on save, for the cards and the published file.
+// League matches were logged that way because site titles like "BLUE STARS-B Official Matches" named the block but
+// didn't match the competition's keywords (fixed in the lists tab too).
+function viBlockComp(block) {
+  block = String(block || '');
+  var hit = viRows('lists').filter(function(l) { return l.list === 'block' && l.value_id === block; })[0];
+  return hit && hit.parent ? String(hit.parent) : '';
+}
+function viWithComp(t) {
+  if (!t || (t.competition && t.competition.length) || !t.block || !t.block.length) return t || {};
+  var c = viBlockComp(t.block[0]), o = {};
+  if (!c) return t;
+  for (var k in t) o[k] = t[k];
+  o.competition = [c];
+  return o;
+}
+
 function viCards(b) {
   var since = b && b.since ? String(b.since) : '', now = new Date().toISOString();
   var label = {}, names = {}, parts = {}, tags = {}, m2 = {};
@@ -722,7 +818,7 @@ function viCards(b) {
   var seen = {}, vsh = sheet(), vn = vsh.getLastRow();
   if (vn > 1) {
     var iT = COLS.indexOf('thumb'), iL = COLS.indexOf('lines'), iE = COLS.indexOf('title_en'), iJ = COLS.indexOf('title_ja');
-    vsh.getRange(2, 1, vn - 1, COLS.length).getValues().forEach(function(r) { seen[String(r[0])] = { text: viNorm([r[iE], r[iJ], r[iL]].join(' ')), th: r[iT] }; });
+    vsh.getRange(2, 1, vn - 1, COLS.length).getValues().forEach(function(r) { seen[String(r[0])] = { text: viNorm([r[iE], r[iJ], r[iL]].join(' ')), th: r[iT], en: String(r[iE] || ''), ja: String(r[iJ] || '') }; });
   }
   var keys = {}, words = {};
   viRows('talent').forEach(function(t) { keys[t.talent_id] = [t.name_en, t.search, t.name_ja].filter(String).map(viNorm); words[t.talent_id] = viNorm(t.search || t.name_en); });
@@ -768,6 +864,7 @@ function viCards(b) {
       .map(function(x) { var l = String(lab('stipulation', x, lang)); return lang === 'ja' || /match$/i.test(l) ? l : l + ' match'; });
   }
   function event(m, t, s, lang) {
+    if (t.segment) return lab('segment', t.segment[0], lang);
     if (t.competition) return lab('competition', t.competition[0], lang) + ' ' + String(m.date).slice(0, 4);
     if (t.title) return t.title.map(function(v) { return lab('title', v, lang); }).join(' / ');
     var sp = specials(t, lang);
@@ -791,6 +888,7 @@ function viCards(b) {
   function multi(s, st) { return big(s, st) || s.reduce(function(a, x) { return a + x.length; }, 0) > 4; }
   function foot(t, lang, s) {
     var f = [];
+    if (t.segment) return [lang === 'ja' ? 'セグメント' : 'Segment'];
     // A big match under a tournament or title still says what kind it is.
     if (s && big(s, t.stipulation) && (t.competition || t.title)) f.push(kind(s, lang, t.stipulation));
     var sp = specials(t, lang);
@@ -829,12 +927,13 @@ function viCards(b) {
     if (!m || !p || !p.length) return;
     all.push(String(v.video_id));
     if (hot && !hot[v.match_id] && !hotShow[String(m.show_id || '')]) return;
-    var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
+    var t = viWithComp(tags[v.match_id]), en = sideList(p, 'en'), ja = sideList(p, 'ja');
     var sizes = en.map(function(x) { return x.length; }), rt = rate[v.match_id], groups = {};
     p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
     var extra = {
       u: String(m.updated || ''),
-      k: en.length > 2 ? 'multi' : (Math.max.apply(null, sizes) <= 1 ? 'singles' : 'tag'),
+      k: t.segment ? 'segment' : (en.length > 2 ? 'multi' : (Math.max.apply(null, sizes) <= 1 ? 'singles' : 'tag')),
+      sg: t.segment ? lab('segment', t.segment[0], 'en') : '', sgj: t.segment ? lab('segment', t.segment[0], 'ja') : '',
       c: t.competition ? lab('competition', t.competition[0], 'en') : '',
       ti: (t.title || []).map(function(x) { return lab('title', x, 'en'); }),
       g: Object.keys(groups),
@@ -843,10 +942,14 @@ function viCards(b) {
       m: String(v.match_id), rd: t.round || [], st: (t.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && (t.title || []).indexOf(x) < 0; }),
       dk: String(m.is_dark).toUpperCase() === 'TRUE',
       // Card check (2.83.0): 1 when the match was logged from its thumbnail and line-up (not watched yet).
-      tb: String(m.source) === 'thumb' ? 1 : 0
+      tb: String(m.source) === 'thumb' ? 1 : 0,
+      // Complete years (2.97.0): the tournament, block and title ids, so pages limited to a complete year can pick their
+      // matches from the index (Tag League, 5★STAR GP, Cinderella, title tabs and title histories).
+      cv: t.competition ? String(t.competition[0]) : '', bk: t.block ? String(t.block[0]) : '', tv: (t.title || []).map(String)
     };
+    var sv = seen[String(v.video_id)] || {};
     var mu = multi(en, t.stipulation);
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return since ? { ok: true, map: map, now: now, since: since, all: all } : { ok: true, map: map, now: now, full: true };
 }
@@ -974,6 +1077,7 @@ function viExport() {
     var box = hide ? spoil : tags, o = box[t.match_id] = box[t.match_id] || {};
     (o[t.tag_group] = o[t.tag_group] || []).push(t.tag_value);
   });
+  Object.keys(tags).forEach(function(id) { tags[id] = viWithComp(tags[id]); });   // the tournament from the block (2.102.1)
   var matches = [], results = {};
   viRows('matches').forEach(function(m) {
     if (m.merged_into || !(Number(m.level) >= 1) || !parts[m.match_id]) return;
@@ -1174,4 +1278,55 @@ function viShowVenue(b) {
     alias = true;
   }
   return { ok: true, show: show, venue: vid, alias: alias };
+}
+
+// Card check's "Ask Gemini" (2.92.0): the show's prompt, as the phone wrote it, to the Gemini API with Google Search
+// grounding, so the card is looked up rather than remembered. The key stays here (GEMINI_API_KEY in the script
+// properties); GEMINI_MODEL picks the model, and a model the API doesn't know falls back to the next one.
+function viAi(b) {
+  var props = PropertiesService.getScriptProperties(), key = props.getProperty('GEMINI_API_KEY');
+  if (!key) return { ok: false, error: 'GEMINI_API_KEY is not set in the script properties' };
+  var prompt = String(b.prompt || '').slice(0, 12000);
+  if (!prompt) return { ok: false, error: 'no prompt' };
+  var models = [props.getProperty('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-2.5-flash-lite'].filter(function(m, k, all) { return m && all.indexOf(m) === k; }), last = '';
+  for (var i = 0; i < models.length; i++) {
+    var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(models[i]) + ':generateContent', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true, headers: { 'x-goog-api-key': key },
+      payload: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 1 } })
+    });
+    var code = res.getResponseCode(), j = null;
+    try { j = JSON.parse(res.getContentText()); } catch (e) {}
+    // 2.92.1: a model this key has no quota for (429) or doesn't know (404): the next one.
+    // 2.92.3: Google's own words for each model that didn't answer (a 404 can be more than an unknown model).
+    if (code === 404 || code === 429) { last += (last ? ' · ' : '') + models[i] + ' ' + code + ': ' + String((j && j.error && j.error.message) || res.getContentText()).replace(/\s+/g, ' ').slice(0, 220); continue; }
+    if (code !== 200 || !j) return { ok: false, error: 'Gemini ' + code + ': ' + String((j && j.error && j.error.message) || res.getContentText()).slice(0, 300) };
+    var c = (j.candidates || [])[0] || {}, text = ((c.content && c.content.parts) || []).map(function(p) { return p.text || ''; }).join('');
+    var src = (((c.groundingMetadata || {}).groundingChunks) || []).map(function(g) { return g.web ? { title: String(g.web.title || '').slice(0, 120), uri: g.web.uri } : null; }).filter(Boolean).slice(0, 8);
+    if (!text) return { ok: false, error: 'Gemini gave no text (' + (c.finishReason || 'no reason') + ')' };
+    return { ok: true, text: text, model: models[i], sources: src };
+  }
+  // 2.92.2: every model tried and why, and the models this key can call, so the right one can go in GEMINI_MODEL.
+  var have = '';
+  try {
+    var lm = JSON.parse(UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key }, muteHttpExceptions: true }).getContentText());
+    have = (lm.models || []).filter(function(m) { return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0 && /gemini/i.test(m.name); })
+      .map(function(m) { return String(m.name).replace(/^models\//, ''); }).filter(function(n) { return !/embedding|tts|image|audio|live|vision/i.test(n); }).slice(0, 20).join(', ');
+  } catch (e) {}
+  return { ok: false, error: 'no Gemini model answered (' + last + ')' + (have ? '. Models this key can call: ' + have + '. Put one in GEMINI_MODEL.' : '') };
+}
+
+// A card's matches in one request (2.94.0). Each item is what the logger would have sent for that match (vi_save), built
+// on the phone without reading the sheet first; one item's failure doesn't stop the rest.
+function viSaveMany(b) {
+  var items = Array.isArray(b.items) ? b.items.slice(0, 40) : [];
+  if (!items.length) return { ok: false, error: 'no matches' };
+  var results = items.map(function(it) {
+    var video = String(it && it.video || '');
+    try {
+      it.device = b.device; it.owner = b.owner;
+      var r = viSave(it);
+      return { video: video, ok: !!(r && r.ok), error: r && r.error || '', match_id: r && r.match_id || '', linked: !!(r && r.linked), kept: !!(r && r.kept) };
+    } catch (e) { return { video: video, ok: false, error: String(e && e.message || e) }; }
+  });
+  return { ok: true, results: results, saved: results.filter(function(x) { return x.ok; }).length };
 }

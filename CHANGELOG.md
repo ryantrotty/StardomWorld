@@ -2,6 +2,204 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.102.2
+
+- **Fix at the source: league matches saved without their tournament.** The site titles 5★STAR GP league matches "BLUE STARS-B Official Matches" / "RED STARS-A 公式戦": the block's keywords matched, but the tournament's ("Stars Official", "スターズ公式") didn't, so card check, the logger and the phone suggested the block and round but no competition.
+  - The lists tab's 5★STAR GP keywords now also match "STARS-B Official" and "STARS-A 公式" (changed in the sheet, no redeploy needed for that part).
+  - Card check, the TV logger and the phone logger fill in the competition from the block (the lists tab's parent) whenever a block is suggested or picked without one.
+  - The sheet script's safety net (2.102.1) now reads the parent from the lists tab instead of a fixed rule; the TV's own copy of that rule is gone, so the Competition field is the one source.
+  - The sheet was repaired: 125 matches with a block and no competition (2024 and 2026 5★STAR GP league matches, four 2025 Tag League matches) got their competition row, marked source "repair".
+- Sheet script: **redeploy.** iPhone card check and the phone logger: published to GitHub Pages with this version.
+
+## 2.102.1
+
+- **Fix: 5★STAR GP and Tag League tabs missing most 2026 league matches (since 2.98.0).** Many league matches were logged with their block (Blue/Red Stars, Blue/Red Goddesses) and round but no tournament, so only the knockout rounds (which have the tournament) counted. A block now names its tournament: Blue/Red Stars are 5★STAR GP, Blue/Red Goddesses are Tag League.
+  - The sheet script fills the tournament in from the block for the StarScope list and the published file, so those league cards also read "5★STAR GP 2026" / "Tag League 2026" instead of "Singles match" / "Tag team match".
+  - Saving a match with a block and no tournament now adds the tournament too.
+  - The TV does the same with a list from an older script, as long as it has the block.
+- Sheet script: **redeploy.** The TV picks the fix up with the whole list once a day; a full list is asked for on the first open after installing this build.
+
+## 2.102.0
+
+- **Log a show: New on the site (your build).** Shows in the home page's New row with nothing logged yet get their own list, first in StarScope's Log a show (and open by default while there are any), so 2026 stays complete as new shows come in.
+  - Read from the New row the home page already drew (kept on the TV each time the home page opens): no extra request to the site.
+  - Each card opens card check; its Next show goes on through the same list.
+  - A show leaves the list as soon as one of its matches is logged (it then shows under Started until it's finished).
+  - Only videos the New row links with their show are listed; a video the site lists on its own (no show) can't open card check and is left out.
+
+## 2.101.0
+
+- **2026 under Years & Eras opens StarScope's Shows (your build).** The 2026 year in the Years menu, on the All Years & Eras page and on the era timeline opens StarScope's Shows filtered to 2026: every show as a poster card (main event picture, date, venue, highlights). It's drawn from the StarScope list, so the year page makes no request to the site. Other years still open the site's year page.
+  - The Year filter on Shows can be changed or cleared there as usual, and the page's address keeps the year.
+  - Any year added to the roster file's complete years (docs/ROSTER.md) does the same.
+
+## 2.100.0
+
+- **2026 videos follow their show's card (your build).** The player already offered Up next at the end; for a video in a complete year it now goes by the show's card in StarScope (match numbers) instead of the row the site put under the player.
+  - Up next, the player's previous / next buttons and the end of the video all use the same order, so they're right however the video was opened: from a wrestler or team page, a search, Recently Watched or a title history, not only from the show's page.
+  - Opened away from its show, the row under the player becomes the show's card (the site's cards for that show, with match numbers, Now playing and Up next), titled with the show's name; View All opens the show.
+  - The Japanese and English-commentary versions of a show are separate shows in StarScope, so each keeps to its own.
+  - Older years are unchanged: the site's row decides, as before.
+
+## 2.99.0
+
+- **Title histories: 2026 reigns from StarScope (your build).** Choosing a reign takes that title's logged matches inside the reign from the StarScope list, as the same video cards.
+  - When the win and every defence on record fall in a complete year up to the last logged show, the whole reign comes from the index: nothing is searched, and the videos show at once (no OK needed to load them).
+  - A reign with a defence after the last logged show, or one that started before 2026, still runs its searches as before; the index's matches are shown first and the search adds the rest.
+  - The debug block says how many came from StarScope and whether the site was searched.
+
+## 2.98.0
+
+- **Tag League, 5★STAR GP, Cinderella and Championship tabs: 2026 from StarScope (your build).** The tabs take a complete year's matches from the StarScope list and show them as the site's normal cards, in the same places, so nothing looks different; the site's search only looks for the rest.
+  - Team pages: **Tag League** and **Championship**. Wrestler pages: **5★STAR GP**, **Cinderella**, **Tag League** and **Championship**.
+  - No search at all when everything the tab can hold is in complete years: a Tag League team whose only league is 2026, a team the roster file dates from 2026 ("since"), a wrestler whose debut is in 2026.
+  - When the schedule has a Stardom show after the last logged one, the newest page of the search is still read, and only videos after that show are kept.
+  - Otherwise the search runs as before for the earlier years; a complete year's videos it finds are left out (the index already gave them). A tab now usually stops after one page on opening, since the index fills its first rows.
+  - 5★STAR GP comes from the tournament itself, so STARS members' matches no longer depend on the BLUE STARS search words for 2026.
+  - The debug panel says how many matches came from StarScope and what the site was still asked for.
+
+## 2.97.0
+
+- **StarScope complete years (your build).** A year whose every show is logged can stand in for the site's search on pages limited to that year. 2026 is the first; the roster file's `"starscope": {"completeYears": [...]}` changes the list (docs/ROSTER.md). This version adds the groundwork only; the pages that use it follow in the next versions.
+  - A complete year counts up to its latest logged show. Stardom shows on the schedule after that day (not logged yet) are still looked for with the site's search.
+  - The StarScope list now carries each match's tournament, block and title ids and the site's title, so those pages can show the site's normal cards from it. The TV asks for the whole list once to pick them up.
+- Sheet script: `vi_cards` sends `x.cv` (tournament), `x.bk` (block), `x.tv` (title ids), `vt` / `vtj` (the site's title, when the video is in the videos tab). **Redeploy the script** before installing this build.
+
+## 2.96.5
+
+- **Fix: a show's date from a typo'd month and day.** When the site's show name ends with the full date in brackets, that date is used ("12・26『… GRAND QUEENDOM 2026』Yokohama Arena (2026/04/26)" was read as 26 December). Same reader on the TV and the iPhone; the iPhone also corrects shows it had already kept.
+
+## 2.96.4
+
+- **iPhone card check: Ask Gemini on a match card.** A match that needs a look has its own Ask Gemini button (orange, first on the card). It asks about that match only: the show, date, venue, the match's place and title, and the site's line-up with the names card check couldn't place. The answer's names are offered as before; when its sides hold a different number of people than the site's (two names run together, a missing "&"), the whole line-up is offered as a replacement instead.
+
+## 2.96.3
+
+- **Fix: a name matched in English showed as Japanese and "not in the library"** once the Japanese line-up was used (2.96.2): the English spellings now pair up name for name both ways (TV logger and iPhone). The sheet also has Ami Sohrei's Japanese name (壮麗亜美) now.
+- **iPhone card check: Gemini is asked only what's missing.** Every match goes in as one short line for the running order; only the names it couldn't place, the line-ups the site didn't give, and the venue if unknown are asked about. The button says what it will ask ("Ask Gemini: order + 1 name"), or "Check order with Gemini" when nothing is missing. The answer gives the order as "same", "reversed" or a list, so the order is confirmed or fixed outright instead of guessed from overlapping names; matches are tied back by their number in the list. Copy AI prompt sends the same focused question.
+- **AI answers:** a wrestler already in the library whose site spelling can't be an alias is offered as "used for this match only", not as a new wrestler.
+
+## 2.96.2
+
+- **Fix: two wrestlers read as one when the English line-up misses an "&"** ("Natsupoi & Aya Sakura Sayaka Kurara"). When the Japanese line-up has the same sides and more names, it is used instead (TV logger and iPhone card check); the English spellings still fill in where the counts match.
+- **iPhone card check:** Fix a name offers "Aya Sakura + Sayaka Kurara · Two wrestlers run together: split into 2" when the spelling holds two library names.
+
+## 2.96.1
+
+- **Fix: the match type was read as part of the first name.** A description that puts the title and line-up on one line ("Singles Match Yuna Mizumori vs Anne Kanaya", "シングルマッチ 水森由菜 vs 金屋あんね") is now split after the last match word (Match, Fall, Battle, マッチ, 勝負…), so the first name is just "Yuna Mizumori". Same reader on the TV and the iPhone; the iPhone reads its cards again (old readings dropped).
+- **iPhone card check:** picking the right wrestler for a spelling the sheet won't keep as an alias now uses her for that match anyway (the card can be confirmed); only the alias isn't saved.
+
+## 2.96.0
+
+- **Segments: non-match moments on the card can be logged.** Types: Retirement, Homecoming, Debut, Return, Award, Announcement (the `segment` list in the sheet's lists tab; add more there). A segment is the people in it plus its type: no sides, no result, never counted in a record.
+- **iPhone card check:** a card with no line-up whose title names a segment type and wrestlers shows "Looks like a segment: Retirement · Saki Kashima" with **Yes, a segment**. Any card not yet logged has **Segment…** (pick the type, add or remove people). A marked card is "ready · segment" and saves with Confirm / Confirm all.
+- **TV logger:** a SEGMENT · NOT A MATCH group at the top of the Match step. With one picked, Competitors needs only one person, Finish says a segment has no result, and the card preview shows the type. Picked by itself from the title only when the page has no line-up.
+- **StarScope:** a segment's card shows its type where the event goes and "Segment" underneath; a Segments filter on All matches; segments show on wrestler pages but not as team matches.
+- **Sheet script:** a save with a segment tag takes one side and no result; the list gives segments kind `segment` with their type. **Redeploy the script.**
+
+## 2.95.0
+
+- **Aliases must read as one name.** The sheet script refuses a spelling as a person's alias when it has a comma, slash, "&", "vs" or a leading number, match words (Match, Tournament, Round, 戦…), more than three words, or another person's name inside it. This stops misread lines like "2, Moneyball Tournament 1st Round Giulia" or "Itsuki Aoki Akira Kurogane" from being saved. Covers proposals (Fix a name, AI suggestions), auto-approved proposals (a refused one is marked rejected with the reason) and aliases sent with a save. **Redeploy the script.**
+- **iPhone card check:** AI suggestions no longer offer such spellings as aliases; Fix a name shows the sheet's reason if one is refused.
+- **TV logger:** picking the right person for a misread billed name no longer sends that name as an alias.
+- Sheet cleanup (data only): two bad aliases removed; duplicate venues merged (Niigata Duo Cerezo → Duo Cerezo, Ryoguku Sumo-Hall → Ryogoku Kokugikan, EBARA WAVE Arena Ota → Ota City General Gymnasium, Aichi Chunichi Hall → Chunichi Hall, Aimesse Yamanashi Hall A → Aimesse Yamanashi) with their shows moved and aliases added.
+
+## 2.94.0
+
+- **iPhone card check saves a card in one request, in the background.** Confirm / Confirm all no longer save match by match (a read and a save each, plus a list refresh). The logger builds each save on the phone without reading the sheet (collect mode, venue from the Venue line), card check sends the whole card as one `vi_save_many`, shows "Saving to the sheet…" and lets you carry on; the sheet splits it into its tabs. Turned-down matches show the reason; one changes-only list refresh at the end.
+- **Sheet script:** `vi_save_many`; each tab is read once per request and kept in step with its own writes (single saves on the TV get quicker too); a save marked `keep` for a match already logged only links the video (another version) and leaves its people, results and tags alone. **Redeploy the script.**
+- **The card at the top of a show:** venue first, then each match's state, Confirm all and Next. Only matches that need a look are shown as cards (tap a row to open one, or Show all cards); when all are ready, no cards or pictures load.
+
+## 2.93.0
+
+- **iPhone card check: the card's order.**
+  - The show header says which match is match 1 and how the order was set; **⇅ Reverse order** turns the card round (kept with the show on the phone).
+  - The AI answer checks the order by the wrestlers: each match with two or more known wrestlers (logged ones by their saved names) is found in the answer. Same order: "✓ The answer has the matches in this order." Reversed or shuffled: "Reverse the card" / "Put the matches in the answer's order" to approve; line-ups from the answer then follow that order.
+  - The prompt asks the AI to check the running order (opener 1, main event last; the site sometimes lists a show backwards) and lists logged matches with their names.
+  - A logged match whose saved number no longer fits its place shows "Saved as match N" and **Save as match M**; Confirm all re-saves them. The logger takes card check's place for the match number when asked to (`reorder`).
+
+## 2.92.3
+
+- Sheet script, Ask Gemini: each model that doesn't answer is reported with Google's own message (a "not found" came back for a model the key can call). Models tried after `GEMINI_MODEL`: `gemini-2.5-flash`, `gemini-flash-latest`, `gemini-3.5-flash`, `gemini-2.5-flash-lite`. **Redeploy the script.**
+
+## 2.92.2
+
+- Sheet script, Ask Gemini: when no model answers, the error lists every model tried and why (not found / no quota), and the Gemini models the key can call, to put in `GEMINI_MODEL`. **Redeploy the script.**
+
+## 2.92.1
+
+- **iPhone card check, AI answers: line-ups for matches the site gave none.** Older shows' descriptions often carry no line-up the reader understands, so most matches had no names and the answer had nothing to fill. Each such match now gets "Match N line-up → …" from the answer (by its place on the card when the answer has as many matches as the site), and every wrestler in it the library doesn't know is offered as a new wrestler. Applied: new wrestlers first, then the line-ups (kept on the phone for Confirm), so a confirmed match saves with them.
+- Sheet script, Ask Gemini: a model the key has no quota for (429) now falls back to the next model, as one it doesn't know (404) did; `gemini-2.5-flash-lite` is the last try. **Redeploy the script.**
+
+## 2.92.0
+
+- **iPhone card check: help from an AI for what the site doesn't say** (docs/CARDCHECK_PHONE.md).
+  - A show header at the top: the name in English and as the site writes it, and the date.
+  - **Copy AI prompt:** the show's name, date, venue and card, with unknown names marked, asking for the card from reliable sources as a JSON block. **Paste AI answer** reads it back.
+  - **Ask Gemini:** the same through the sheet script (`vi_ai`), Gemini API with Google Search grounding; the key (`GEMINI_API_KEY`) stays in the script properties. Its sources are listed under the suggestions.
+  - The answer becomes suggestions to approve, each untickable: a library wrestler for an unknown name (the site's spellings become her aliases), a new wrestler (with her Japanese name and the site's spellings), the venue (from the library or new, set for the whole show). Nothing is saved until Apply.
+- Fix: "Match 1 of 9" was drawn in the site's text colour (black) on the phone.
+- Sheet script: `vi_ai` (allowed with the card check key). Add `GEMINI_API_KEY` to the script properties, then **redeploy the script**.
+
+## 2.91.9
+
+- **iPhone card check, show lists:** each show's state in words: "Not started" (grey), "3 of 10 logged" (gold), "✓ All 10 logged" (green); "0 logged" read like a logged tag. The date and venue sit on their own line under the name. A year's shows run newest first by show date (the site lists them by when each was put up), and Next follows the same order.
+
+## 2.91.8
+
+- **iPhone card check: year lists.** The mobile search page reads its shows from `/user_api/contents` with `search[type]=set`, `search[category_ids][]=<year>`, `sort=di_s`, `order=d` (from the page report). The year chips now read that list, 20 shows a page, newest first; **Load more shows** reads the next page. Years kept empty on the phone before are dropped.
+
+## 2.91.7
+
+- **Fix (iPhone card check): every match "Couldn't read this page (HTTP 404)".** 2.91.4's fallback took video cards from elsewhere on the mobile show page (the site's newest videos, not the show's matches) and then asked for them as the show's match pages. It's gone: a show page without match links is always read from the show's own list (2.91.6). Show lists the phone kept from before are dropped.
+
+## 2.91.6
+
+- **iPhone card check reads shows from the site's own match list.** The mobile show page has no match links; it loads them from `/user_api/set/<id>/contents` (seen in the page report). Card check now asks that list once (all matches, `size=60`), and each entry's description already holds the line-up in both languages, so the matches are read from it with the TV's reader and no match page is opened: two requests per show (the show page and its list) instead of one per match.
+- The year lists on the phone still need the mobile list's address: the page report on an empty year will show it.
+
+## 2.91.5
+
+- **iPhone card check: Copy page report.** The iPhone is sent the site's mobile layout, with no links to the matches (show 6962: 10 article cards, no video links; the desktop page has 24). When a show page or a year's list can't be read, a **Copy page report** button copies what the phone received as text (size, title, user agent, the first article cards as tags and attributes, attributes and inline scripts that name contents / set / video; query strings left out), to paste to Claude so the mobile layout can be read.
+- A year whose list came back empty is read again next time instead of being kept for a day.
+
+## 2.91.4
+
+- **iPhone card check: show pages the phone is sent differently.** When a show page doesn't link its matches as `/set/<id>/contents/<video>`, the videos are read from the page's own article cards (related rows left out). When still nothing is found, what the phone received stays on screen: the address it ended on, the HTTP status, size, title, article cards, match links, scripts and the first video links.
+- "Change the card check link" only shows for key problems, not for every error.
+
+## 2.91.3
+
+- **iPhone card check: setup check on screen.** When the sheet turns the key down, card check asks the script (`cc_ping`, answered without a key) and shows what it sees, kept on screen: the script version running at that address, whether `CARDCHECK_KEY` is found and its length, the length of the key typed on the phone, and whether they match (exactly, apart from spaces, apart from capitals, or it's the main key). Neither key is ever shown or sent back.
+- Sheet script: keys are compared without surrounding spaces. **Redeploy the script.**
+
+## 2.91.2
+
+- **Fix (iPhone card check): setup.** The link box went empty after an error, so what was pasted couldn't be checked. Setup is now two boxes, kept as typed: the web app address (the phone logger's link works as it is; anything after `/exec` is left out) and the card check key. ⚙ reopens them with the address filled in.
+
+## 2.91.1
+
+- **Fix (iPhone card check): a wrong card check link could not be changed.** The link is now checked with the sheet as card check starts; a wrong one says what the sheet answered ("bad key", …) with **Change the card check link**, and the ⚙ button at the top opens the setup box at any time (Cancel keeps the old link).
+
+## 2.91.0
+
+- **Card check on the iPhone** (Safari bookmark; docs/CARDCHECK_PHONE.md). Tap the bookmark on any stardom-world.com page and card check opens over it as its own app: Started or a year's shows (Load more shows reads the next page only when tapped), a show's card as a feed of thumbnails, the Venue line (set once per show), people with ✓ / ?, Confirm and Confirm all, then Next for the next show in the list. It reads the site's pages from the phone, one at a time, 2 s apart, only for the cards you scroll to.
+  - Fix a name: tap a ? name, search the library and pick her (the site's spelling becomes her alias) or add her as a new wrestler.
+  - Runs the TV's own scripts underneath (match page reader, library, matching, faction pre-fill, the save), published beside it on GitHub Pages (`cardcheck/`, `scripts/publish_cardcheck.sh`).
+- Sheet script: **`CARDCHECK_KEY`**, a second key for logging only (library, get, save, propose, cards, suggest, thumbs, translate, show venue). Add it in the script properties, then **redeploy the script**.
+- Fix (TV): saving in the logger no longer throws away the TV's kept StarScope list. Since 2.88.0 the list is asked for by changes, and a missing copy turned every save in card check into a request for the whole list.
+- Logger kit: wrestler search (`talents`), used by the phone's Fix a name.
+
+## 2.90.1
+
+- **Year list shows every show again.** 2.90.0's hiding of fully logged shows is undone: it read further pages of the year by itself, which would add calls to the site as more shows are logged. Fully logged shows are listed and marked complete, as before. The per-page counts (English and Japanese pages) stay.
+
+## 2.90.0
+
+- **Log a show, by year: English and Japanese pages counted on their own.** A match belongs to the show it was first logged from, so when both the English commentary page and the Japanese page of a show were logged, one of them showed "0 logged". Each show page now counts its own videos: from the page as card check read it, and from the page each video was saved from (new: saves send it, the sheet keeps it in `match_videos.set_id`, the cards carry it as `vs`).
+- **Fully logged shows are left out of the year list.** When a page of the year leaves fewer than six shows, the next page is read by itself, one page at a time, 1.5 s apart.
+- Sheet script: `match_videos.set_id` (added by itself) and `vs` on the cards. **Redeploy the script.**
+
 ## 2.89.0
 
 - **Venue line in card check: see, set and save the show's venue in one place.** Every match (and the end of the card) shows a Venue line under the show's name: the venue with "✓ set for the show" or "✓ matched in the library", or the site's spelling in orange when it isn't known.

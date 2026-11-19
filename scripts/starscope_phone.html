@@ -244,6 +244,14 @@
         if (hit && (f.tags[g] || []).indexOf(x.id) < 0 && (MULTI[g] || !(f.tags[g] || []).length)) (f.tags[g] = f.tags[g] || []).push(x.id);
       });
     });
+    compFromBlock(f.tags);
+  }
+  // A block belongs to one competition (the lists tab's parent, 2.102.2): a block without its competition gets it.
+  function compFromBlock(tags) {
+    var b = (tags.block || [])[0];
+    if (!b || (tags.competition || []).length) return;
+    var x = listOf('block').filter(function(y) { return y.id === b; })[0];
+    if (x && x.p) tags.competition = [x.p];
   }
   function markKey(video) { return 'ssMarks' + video; }
 
@@ -488,6 +496,7 @@
       var c = form.tags.competition[0];
       form.tags.block = (form.tags.block || []).filter(function(b) { var x = listOf('block').filter(function(y) { return y.id === b; })[0]; return c && x && (!x.p || x.p === c); });
     }
+    if (g === 'block') compFromBlock(form.tags);
   }
 
   // Bell / Finish: the tap's time now; its place once the TV's notes up to that moment are in (a note can take a

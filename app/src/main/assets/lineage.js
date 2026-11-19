@@ -239,12 +239,34 @@
     next();
   }
 
+  // StarScope complete years (2.99.0; assets/starcards.js window.__tvScopeIdx): this title's logged matches inside the reign
+  // (a day either side). all: the win and every defence on record fall in complete years up to the last logged show,
+  // so the index has the whole reign and nothing is searched. null when StarScope isn't on or has no complete year.
+  function scIso(t) { return new Date(t).toISOString().slice(0, 10); }
+  function scReign(r) {
+    var S = window.__tvScopeIdx;
+    if (!S || !S.from || !S.from()) return null;
+    var from = scIso(r.ms - DAY), to = scIso((r.cur ? NOW : r.endMs) + DAY);
+    var dates = eventsOf(r).map(function(e) { return e.d; }).filter(Boolean);
+    var all = dates.length > 0 && dates.every(function(x) { return S.covered(x); });
+    var items = S.find(function(v) { return S.isTitle(v, P) && String(v.d) >= from && String(v.d) <= to; }).map(function(x) {
+      var it = S.item(x); it.r = x.v.d; it.sc = 1; return it;
+    });
+    return { all: all, items: items, thru: S.thru() };
+  }
   // Searches for reign i: one search per year of the reign, then the plain champion search for whatever is still missing.
   // part() is called as cards arrive so the page can fill in while later searches run. done(items, err)
   function loadReign(i, tk, part, done) {
     var r = R[i], d = (dbg[i] = dbg[i] || []);
     d.length = 0;
     var merged = { items: [], seen: {} }, qs = queries(r), k = 0, firstErr = '', fbs = fallbackQueries(r);
+    var sc = scReign(r);
+    if (sc) {
+      sc.items.forEach(function(it) { if (!merged.seen[it.h]) { merged.seen[it.h] = 1; merged.items.push(it); } });
+      d.push('StarScope: ' + sc.items.length + ' title match' + (sc.items.length === 1 ? '' : 'es') + ' in this reign from the index (logged through ' + sc.thru + ')' + (sc.all ? ', the whole reign: no search' : ''));
+      if (sc.all) { done(merged.items, ''); return; }
+      if (part && merged.items.length) part(merged.items);
+    }
     function step() {
       if (tk !== token) return;
       if (k >= qs.length && !merged.items.length && fbs.length) { qs.push(fbs.shift()); }
@@ -295,7 +317,7 @@
     var from = r.ms - DAY, to = (r.cur ? NOW : r.endMs) + DAY;
     items.forEach(function(it) {
       var nt = norm(it.t);
-      if (!hasAny(nt, titleA)) { rej.push([it, 'championship not in title']); return; }
+      if (!it.sc && !hasAny(nt, titleA)) { rej.push([it, 'championship not in title']); return; }
       var cd = cardDate(it), src = '', d = '';
       if (cd) { d = cd.d; src = cd.src; }
       else { var es = estimate(it, cal); if (es) { d = es; src = 'estimated'; } }
@@ -536,7 +558,8 @@
   }
 
   function cachedFor(i) {
-    var r = R[i], cc = readCache(), ok = false;
+    var r = R[i], cc = readCache(), ok = false, sc = scReign(r);
+    if (sc && sc.all) return true;   // StarScope has the whole reign: shown at once, no search
     queries(r).concat(fallbackQuery(r) ? [fallbackQuery(r)] : []).forEach(function(q) { var c = cc[q]; if (c && c.items && c.items.length && Date.now() - c.t < (r.cur ? 3 * 3600000 : 14 * 86400000)) ok = true; });
     return ok;
   }
