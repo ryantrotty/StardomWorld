@@ -734,6 +734,9 @@ function viSave(b) {
     var newTags = b.tags.slice(0, 40).filter(function(t) { return t && (t.group === 'fall' ? known[t.value] : okTag[t.group + '/' + t.value]); }).map(function(t) {
       return { match_id: id, tag_group: t.group, tag_value: t.value, source: t.source === 'auto' ? 'auto' : 'panel', confidence: t.source === 'auto' ? 'suggested' : 'confirmed', updated: now };
     });
+    var hasComp = newTags.some(function(t) { return t.tag_group === 'competition'; }), blk = newTags.filter(function(t) { return t.tag_group === 'block'; })[0];
+    var bc = !hasComp && blk ? viBlockComp(blk.tag_value) : '';
+    if (bc && okTag['competition/' + bc]) newTags.push({ match_id: id, tag_group: 'competition', tag_value: bc, source: 'auto', confidence: 'confirmed', updated: now });
     var oldTags = viRows('match_tags').filter(function(t) { return t.match_id === id; });
     var tagSum = function(a) { return a.map(function(t) { return t.tag_group + ':' + t.tag_value; }).sort().join(' '); };
     if (tagSum(oldTags) !== tagSum(newTags)) log.push({ time: now, match_id: id, tab: 'match_tags', field: 'tags', old: tagSum(oldTags), 'new': tagSum(newTags), source: 'panel', device: device });
@@ -785,6 +788,20 @@ function viSave(b) {
 // copy): matches saved or rated since, and every match of a show one of them belongs to (a venue set on one match is
 // the whole show's). `all` lists every video that has a card, so the TV drops the ones that are gone. Without since,
 // or when the TV's copy is a day old, the whole list, as before.
+// A block belongs to one tournament (2.102.1): Blue/Red Stars are the 5★STAR GP's, Blue/Red Goddesses the Tag League's.
+// Many league matches were logged with their block and round but no tournament, so they didn't count as 5★STAR GP or
+// Tag League matches. The tournament is now taken from the block wherever it's missing (the cards, the published file),
+// and added on save.
+function viBlockComp(block) { block = String(block || ''); return /-stars$/.test(block) ? '5star-gp' : /-goddesses$/.test(block) ? 'tag-league' : ''; }
+function viWithComp(t) {
+  if (!t || (t.competition && t.competition.length) || !t.block || !t.block.length) return t || {};
+  var c = viBlockComp(t.block[0]), o = {};
+  if (!c) return t;
+  for (var k in t) o[k] = t[k];
+  o.competition = [c];
+  return o;
+}
+
 function viCards(b) {
   var since = b && b.since ? String(b.since) : '', now = new Date().toISOString();
   var label = {}, names = {}, parts = {}, tags = {}, m2 = {};
@@ -906,7 +923,7 @@ function viCards(b) {
     if (!m || !p || !p.length) return;
     all.push(String(v.video_id));
     if (hot && !hot[v.match_id] && !hotShow[String(m.show_id || '')]) return;
-    var t = tags[v.match_id] || {}, en = sideList(p, 'en'), ja = sideList(p, 'ja');
+    var t = viWithComp(tags[v.match_id]), en = sideList(p, 'en'), ja = sideList(p, 'ja');
     var sizes = en.map(function(x) { return x.length; }), rt = rate[v.match_id], groups = {};
     p.forEach(function(x) { if (tmn[x.team_id]) groups[tmn[x.team_id]] = 1; if (fcn[x.faction_id]) groups[fcn[x.faction_id]] = 1; });
     var extra = {
@@ -1056,6 +1073,7 @@ function viExport() {
     var box = hide ? spoil : tags, o = box[t.match_id] = box[t.match_id] || {};
     (o[t.tag_group] = o[t.tag_group] || []).push(t.tag_value);
   });
+  Object.keys(tags).forEach(function(id) { tags[id] = viWithComp(tags[id]); });   // the tournament from the block (2.102.1)
   var matches = [], results = {};
   viRows('matches').forEach(function(m) {
     if (m.merged_into || !(Number(m.level) >= 1) || !parts[m.match_id]) return;

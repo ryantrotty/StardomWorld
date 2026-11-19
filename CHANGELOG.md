@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.102.1
+
+- **Fix: 5★STAR GP and Tag League tabs missing most 2026 league matches (since 2.98.0).** Many league matches were logged with their block (Blue/Red Stars, Blue/Red Goddesses) and round but no tournament, so only the knockout rounds (which have the tournament) counted. A block now names its tournament: Blue/Red Stars are 5★STAR GP, Blue/Red Goddesses are Tag League.
+  - The sheet script fills the tournament in from the block for the StarScope list and the published file, so those league cards also read "5★STAR GP 2026" / "Tag League 2026" instead of "Singles match" / "Tag team match".
+  - Saving a match with a block and no tournament now adds the tournament too.
+  - The TV does the same with a list from an older script, as long as it has the block.
+- Sheet script: **redeploy.** The TV picks the fix up with the whole list once a day; a full list is asked for on the first open after installing this build.
+
 ## 2.102.0
 
 - **Log a show: New on the site (your build).** Shows in the home page's New row with nothing logged yet get their own list, first in StarScope's Log a show (and open by default while there are any), so 2026 stays complete as new shows come in.
