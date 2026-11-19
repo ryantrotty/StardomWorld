@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.100.0
+
+- **2026 videos follow their show's card (your build).** The player already offered Up next at the end; for a video in a complete year it now goes by the show's card in StarScope (match numbers) instead of the row the site put under the player.
+  - Up next, the player's previous / next buttons and the end of the video all use the same order, so they're right however the video was opened: from a wrestler or team page, a search, Recently Watched or a title history, not only from the show's page.
+  - Opened away from its show, the row under the player becomes the show's card (the site's cards for that show, with match numbers, Now playing and Up next), titled with the show's name; View All opens the show.
+  - The Japanese and English-commentary versions of a show are separate shows in StarScope, so each keeps to its own.
+  - Older years are unchanged: the site's row decides, as before.
+
 ## 2.99.0
 
 - **Title histories: 2026 reigns from StarScope (your build).** Choosing a reign takes that title's logged matches inside the reign from the StarScope list, as the same video cards.

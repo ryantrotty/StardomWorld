@@ -203,6 +203,26 @@
     return { key: VID + '|' + (ja ? 'ja' : 'en') + '|' + ((v.x && v.x.u) || '') + '|' + eb.join('|') + '|' + n.join('|'), html: html };
   };
 
+  // ---- Complete years (2.100.0): a 2026 video follows its show's card in StarScope
+  // Up next, the player's previous / next and the end of the video go by the card order (match numbers) of the show in
+  // the StarScope list, so they're right however the video was opened (a wrestler page, a search, Recently Watched),
+  // not only from the show's own page. The English-commentary and Japanese versions of a show are separate shows here,
+  // so each keeps to its own. Opened away from its show, the row under the player becomes the show's card.
+  function scopeShow() {
+    if (!v || !map || !window.__tvScopeIdx || !window.__tvScopeIdx.covered(v.d)) return null;
+    var list = Object.keys(map).filter(function(id) { var x = map[id]; return x && x.x && sameShow(x) && num(x.n) != null; })
+      .sort(function(a, b) { return (num(map[a].n) - num(map[b].n)) || (+a - +b); });
+    return list.length >= 2 && list.indexOf(VID) >= 0 ? list : null;
+  }
+  function hrefOf(id) { var x = map[id]; return location.origin + (/^\/set\//.test(location.pathname) && x.vs ? '/set/' + x.vs : '') + '/contents/' + id; }
+  window.__tvScopeOrder = function() { var l = scopeShow(); return l ? l.map(hrefOf) : null; };
+  // For the row under the player (relatedRowJs): the show's card in place of a row that isn't the show.
+  window.__tvScopeCardList = function(hrefs) {
+    var l = scopeShow();
+    if (!l || (hrefs || []).some(function(h) { return idOf(h) === VID; })) return null;
+    return { title: showName(v), all: v.vs ? location.origin + '/set/' + v.vs : '', cards: l.map(function(id) { return { href: hrefOf(id), title: window.__tvScopeIdx.item({ id: id, v: map[id] }).t, bg: map[id].th || '' }; }) };
+  };
+
   // ---- the row under the player: The card, when the show is in StarScope
   var rowDone = false, scrolled = false;
   function sameShow(x) { return x && (v.sid ? String(x.sid || '') === String(v.sid) : (x.d && x.d === v.d)); }

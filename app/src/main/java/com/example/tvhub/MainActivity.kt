@@ -4654,6 +4654,10 @@ class MainActivity : Activity() {
           // The videos before and after this one, from the list already on the page (nothing is fetched), so the bar's
           // Previous and Next buttons can grey out at once. Same list as the automatic next video below.
           function neighbors() {
+            // 2.100.0: a 2026 video goes by its show's card in StarScope (assets/scopeplayer.js), however it was opened
+            var so = null;
+            try { so = window.__tvScopeOrder ? window.__tvScopeOrder() : null; } catch (e) { so = null; }
+            if (so && so.length) { var qp = indexIn(so, location.href); if (qp >= 0) return { list: so, prev: qp > 0 ? so[qp - 1] : '', next: so[qp + 1] || '' }; }
             var list = carouselList(), pos = indexIn(list, location.href);
             if (pos < 0) {
               var stored = null;
@@ -4677,19 +4681,9 @@ class MainActivity : Activity() {
             if (window.__tvAutoNextFired) return;
             window.__tvAutoNextFired = true;
 
-            var list = carouselList();
-            var pos = indexIn(list, location.href);
-            var stored = null;
-            try { stored = JSON.parse(sessionStorage.getItem('tvAutoNextList') || 'null'); } catch (e) {}
-
-            // This page's carousel may not contain the current video (or be empty): use the
-            // list remembered from the previous auto-advance instead.
-            if (pos < 0 && stored && stored.length) {
-              var sp = indexIn(stored, location.href);
-              if (sp >= 0) { list = stored; pos = sp; }
-            }
-
-            var next = list[pos + 1];
+            // The same order as the player's next button: StarScope's card for a 2026 video, else this page's carousel,
+            // else the list remembered from the previous auto-advance (2.100.0: one place, neighbors()).
+            var nb = neighbors(), list = nb.list, next = nb.next;
             if (next) {
               try { sessionStorage.setItem('tvAutoNextList', JSON.stringify(list)); } catch (e) {}
               location.href = next;
@@ -7529,6 +7523,12 @@ class MainActivity : Activity() {
             var title = head ? (head.textContent || '').replace(/\s+/g, ' ').trim() : '';
             var all = sec.querySelector('.ttl-wrap > a[href]');
             var ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
+            // 2.100.0: a 2026 video opened away from its show (a wrestler page, a search): the row is the show's card
+            // from StarScope instead of videos from elsewhere (assets/scopeplayer.js)
+            try {
+              var scl = window.__tvScopeCardList ? window.__tvScopeCardList(cards.map(function(c) { return c.href; })) : null;
+              if (scl && scl.cards && scl.cards.length) { cards = scl.cards; title = scl.title || title; all = scl.all ? { href: scl.all } : null; }
+            } catch (e) {}
 
             var html = '<h2 tabindex="-1" style="display:flex !important; align-items:center; color:#ffffff !important; font-family:Arial,Helvetica,sans-serif !important; font-size:22px; line-height:1.2; margin:0 0 14px 0; font-weight:700 !important; outline:none !important; user-select:none !important;"><span style="display:block; flex:0 0 auto; width:8px; height:26px; background:#F4C242; margin-right:12px;"></span><span>' + esc(title) + '</span></h2>' +
               '<div class="tv-grid-row" style="display:flex; flex-direction:row; gap:24px; overflow-x:auto; scroll-behavior:smooth; padding:12px 10px; margin:0 -10px;">';
