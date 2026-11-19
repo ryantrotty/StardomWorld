@@ -491,6 +491,7 @@
     }
     h += '<div class="bt">';
     if ((!s && k === 'ready') || k === 'renumber') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : k === 'renumber' ? 'Save as match ' + placeOf(v) : 'Confirm') + '</button>';
+    if (!s && k === 'attn' && !segs[v.id]) h += '<button class="b on" data-aione="' + esc(v.id) + '">Ask Gemini</button>';
     if (!s && r && !r.failed) h += '<button class="b" data-seg="' + esc(v.id) + '">' + (segs[v.id] ? 'Edit segment' : 'Segment…') + '</button>';
     h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a></div></div></div>';
     return h;
@@ -612,6 +613,28 @@
     if (n.venue) bits.push('venue');
     return bits.length ? 'Ask Gemini: order + ' + bits.join(', ') : 'Check order with Gemini';
   }
+  // 2.96.4: one match only (the Ask Gemini button on its card): who is in it, nothing else.
+  function aiPromptOne(vi) {
+    var K = kit(), v = show.videos[vi], r = recs[v.id], ven = venueNow(), raw = rawVenue(), title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, have = [];
+    if (r && !r.failed) {
+      var sd = sides(r);
+      have = sd.A.map(function(names, si) { return names.map(function(rw, j) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][j] : '', id = K ? (K.resolve(rw) || K.resolve(o)) : ''; return id ? K.nameOf(id) : '?' + personText(rw, o); }).join(' & '); });
+    }
+    return [
+      'I am logging one match from a STARDOM (Japanese women\'s pro wrestling) show. Please search reliable sources (the STARDOM official site, Cagematch, Wikipedia, news reports) before answering.',
+      '',
+      'Show: ' + (show.line || show.name) + (showName(show.name, show.date) !== show.line ? ' (' + showName(show.name, show.date) + ')' : ''),
+      'Date: ' + (show.date || 'unknown'),
+      'Venue: ' + (ven ? ven.name : (raw || 'unknown')),
+      'Match ' + (vi + 1) + ' of ' + show.videos.length + ' as the video site lists it: ' + title,
+      'The site\'s line-up: ' + (have.length >= 2 ? have.join(' vs ') : '(none)') + (have.join('').indexOf('?') >= 0 ? '  (names starting with ? are ones I could not identify; one entry may be two wrestlers run together, or one wrestler under a special name)' : ''),
+      '',
+      'Give only this match\'s full line-up: every wrestler on each side, with her English and Japanese name as used at the time. Answer with only this JSON (no other text); use null for anything you are not sure of, do not guess.',
+      '```json',
+      '{"matches": [{"listed": ' + (vi + 1) + ', "sides": [[{"en": "", "ja": ""}], [{"en": "", "ja": ""}]]}]}',
+      '```'
+    ].join('\n');
+  }
   function aiPrompt() {
     var K = kit(), lines = [], ven = venueNow(), raw = rawVenue(), need = aiNeeds();
     show.videos.forEach(function(v, i) {
@@ -707,7 +730,11 @@
     // answer has as many matches as the site) and offered as a line-up to approve; its unknown wrestlers as new ones.
     show.videos.forEach(function(v, vi) {
       var r = recs[v.id]; if (status(v)) return;
-      if (r && !r.failed && sides(r).A.length >= 2) return;
+      // 2.96.4: an answer about this one match whose sides hold a different number of people than the site's (two
+      // names run together, a missing "&") replaces the line-up instead of fixing names one by one.
+      var one = data.matches.filter(function(m) { return Number(m.listed) === vi + 1 && Array.isArray(m.sides); })[0];
+      var shape = function(ss) { return ss.map(function(x) { return (x || []).filter(function(p) { return p && (typeof p === 'string' || p.en || p.ja); }).length; }).join(','); };
+      if (r && !r.failed && sides(r).A.length >= 2 && !(one && shape(one.sides) !== shape(sides(r).A))) return;
       var mi = -1;
       var cp = cardPos(vi);
       data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && Number(m.listed) === vi + 1) mi = k; });
@@ -1081,9 +1108,10 @@
     if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }
     if (d.aitog && sheetOpen && sheetOpen.sug) { var it = sheetOpen.sug[+d.aitog]; it.on = !it.on; draw(); return; }
     if (d.aiapply && sheetOpen) { aiApply(); return; }
-    if (d.aiask) {
-      sheetOpen = { ai: 1, text: '', sug: null, busy: 'Asking Gemini (it searches first; this can take half a minute)…' }; draw();
-      post({ action: 'vi_ai', prompt: aiPrompt() }, function(t) {
+    if (d.aiask || d.aione) {
+      var vi1 = d.aione ? show.videos.map(function(x) { return x.id; }).indexOf(d.aione) : -1;
+      sheetOpen = { ai: 1, text: '', sug: null, busy: 'Asking Gemini' + (vi1 >= 0 ? ' about match ' + (vi1 + 1) : '') + ' (it searches first; this can take half a minute)…' }; draw();
+      post({ action: 'vi_ai', prompt: vi1 >= 0 ? aiPromptOne(vi1) : aiPrompt() }, function(t) {
         var r = null; try { r = JSON.parse(t); } catch (e) {}
         if (!sheetOpen || !sheetOpen.ai) return;
         sheetOpen.busy = '';
