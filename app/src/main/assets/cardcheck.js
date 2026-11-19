@@ -667,7 +667,7 @@
       return { href: '/mypage?tvscope=log', name: '' };
     }
     var sc = window.__tvScope, list = [];
-    try { list = sc ? (FROM === 'started' ? sc.started() : sc.toLog()) : []; } catch (e) { list = []; }
+    try { list = sc ? (FROM === 'started' ? sc.started() : FROM === 'new' && sc.newShows ? sc.newShows() : sc.toLog()) : []; } catch (e) { list = []; }
     var i = list.map(function(x) { return String(x.set); }).indexOf(SET);
     var rest = list.slice(i + 1).concat(list.slice(0, Math.max(i, 0))).filter(function(x) { return String(x.set) !== SET; });
     if (rest[0]) return { href: rest[0].href, name: rest[0].name, date: rest[0].date };

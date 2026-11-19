@@ -10746,6 +10746,8 @@ class MainActivity : Activity() {
             // the first three New videos, for the menu's Home shelf (2.78.0)
             try {
               if (allRowsData && allRowsData[0] && allRowsData[0].items) localStorage.setItem('tvHomeNewV1', JSON.stringify(allRowsData[0].items.slice(0, 3).map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; })));
+              // the whole New row (2.102.0): StarScope's Log a show lists the new shows not logged yet (assets/starcards.js)
+              if (allRowsData && allRowsData[0] && allRowsData[0].items) localStorage.setItem('tvHomeNewAllV1', JSON.stringify({ t: Date.now(), items: allRowsData[0].items.map(function(x) { return { href: x.href, title: x.title, bg: x.bgUrl || '' }; }) }));
             } catch (e) {}
             if (allRowsData && allRowsData.length > HOME_ROWS_SHOWN) allRowsData = allRowsData.slice(0, HOME_ROWS_SHOWN);
 

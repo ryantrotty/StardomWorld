@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.102.0
+
+- **Log a show: New on the site (your build).** Shows in the home page's New row with nothing logged yet get their own list, first in StarScope's Log a show (and open by default while there are any), so 2026 stays complete as new shows come in.
+  - Read from the New row the home page already drew (kept on the TV each time the home page opens): no extra request to the site.
+  - Each card opens card check; its Next show goes on through the same list.
+  - A show leaves the list as soon as one of its matches is logged (it then shows under Started until it's finished).
+  - Only videos the New row links with their show are listed; a video the site lists on its own (no show) can't open card check and is left out.
+
 ## 2.101.0
 
 - **2026 under Years & Eras opens StarScope's Shows (your build).** The 2026 year in the Years menu, on the All Years & Eras page and on the era timeline opens StarScope's Shows filtered to 2026: every show as a poster card (main event picture, date, venue, highlights). It's drawn from the StarScope list, so the year page makes no request to the site. Other years still open the site's year page.

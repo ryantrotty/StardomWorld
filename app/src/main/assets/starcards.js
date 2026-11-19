@@ -239,9 +239,9 @@
   // index's own list (the same one list the cards use), so the filters only ever offer what has been logged.
   var MIN_RATINGS = 1;   // one TV for now; raise to 3 when StarScope goes public, so one rating can't top the list
   var HT = ja ? { tag: '世界中のスターを地図に', recent: '新着', top: '高評価', all: 'すべての試合', matches: '試合', wrestlers: '選手', all0: 'すべて', singles: 'シングル', tagm: 'タッグ', multi: '3チーム以上', seg: 'セグメント', title: 'タイトルマッチ', tour: 'トーナメント', more: '詳細', w: '選手', g: 'チーム・ユニット', y: '年', c: 'トーナメント', ti: 'タイトル', r: '評価', sort: '並び順', any: 'すべて', sDate: '新しい順', sOld: '古い順', sAdded: '追加順', sTop: '高評価順', none: '該当する試合はありません', noneTop: 'まだ評価された試合はありません', newest: '新しい順', close: '閉じる', shows: '大会', showsN: '大会', latest: '全試合登録済み · 最新', alsoOn: 'ほかの試合', main: 'メインイベント', notMain: 'メインイベント未登録', noSize: '試合数未登録', logged: '試合登録済み', moreN: 'ほか', opener: '第1試合', sy: '年', sv: '会場', sc: '全試合登録済みのみ', ss: '並び順', sMost: '登録数順', noShows: '該当する大会はありません', match: '第', of: '／全', unnum: '番号なし', noNums: '試合番号未登録', next: '次に登録', wNot: '試合視聴済み・未登録', watched: '試合視聴', plays: '回再生', lastW: '最終視聴', notYet: '未登録', nextIntro: '見たけれど登録が終わっていない大会です。登録を始めた大会が先、次に多く見た順。', kLogged: '登録済み', kWatched: '視聴済み', kNot: '未視聴', loadingN: '読み込み中…', noneNext: '見た大会はすべて登録済みです。',
-    log: '大会を登録', lNext: '視聴済み・未登録', lStarted: '登録途中', ly: '年', lIntro: 'サムネイルと出場選手から大会のカードを登録します。試合は再生しません。', lMore: '次のページの大会を読み込み中…', lEnd: 'この年の大会はこれですべてです。', lNone: '該当する大会はありません', lErr: '読み込めませんでした', lTry: 'もう一度', lSite: 'サイトの大会' }
+    log: '大会を登録', lNext: '視聴済み・未登録', lStarted: '登録途中', ly: '年', lIntro: 'サムネイルと出場選手から大会のカードを登録します。試合は再生しません。', lMore: '次のページの大会を読み込み中…', lEnd: 'この年の大会はこれですべてです。', lNone: '該当する大会はありません', lErr: '読み込めませんでした', lTry: 'もう一度', lSite: 'サイトの大会', lNew: 'サイトの新着・未登録' }
     : { tag: 'Map all the Stars in the World', recent: 'Recently added', top: 'Top rated', all: 'All matches', matches: 'matches', wrestlers: 'wrestlers', all0: 'All', singles: 'Singles', tagm: 'Tag', multi: 'Multi-team', seg: 'Segments', title: 'Title matches', tour: 'Tournaments', more: 'More', w: 'Wrestler', g: 'Team or faction', y: 'Year', c: 'Tournament', ti: 'Title', r: 'Rating', sort: 'Sort', any: 'Any', sDate: 'Newest', sOld: 'Oldest', sAdded: 'Recently added', sTop: 'Top rated', none: 'No matches fit these filters.', noneTop: 'No rated matches yet.', newest: 'newest first', close: 'Close', shows: 'Shows', showsN: 'shows', latest: 'Fully logged · Latest', alsoOn: 'Also on the card', main: 'Main event', notMain: 'main event not logged', noSize: 'card size not logged', logged: 'logged', moreN: 'more', opener: 'Opener', sy: 'Year', sv: 'Venue', sc: 'Complete only', ss: 'Sort', sMost: 'Most logged', noShows: 'No shows fit these filters.', match: 'Match ', of: ' of ', unnum: 'unnumbered', noNums: 'no match numbers yet', next: 'Log next', wNot: 'watched, not logged', watched: 'watched', plays: 'plays', lastW: 'last watched', notYet: 'not logged yet', nextIntro: "Shows you've watched but not finished logging. Shows you've started come first, then the most watched.", kLogged: 'Logged', kWatched: 'Watched', kNot: 'Not seen', loadingN: 'Loading…', noneNext: "Every show you've watched is logged.",
-    log: 'Log a show', lNext: 'Watched, not logged', lStarted: 'Started', ly: 'Year', lIntro: "Log a show's card from its thumbnails and line-ups, without playing anything.", lMore: 'Loading the next page of shows…', lEnd: "That's every show for this year.", lNone: 'No shows to log here.', lErr: "Couldn't load this page.", lTry: 'Try again', lSite: 'From the site' };
+    log: 'Log a show', lNext: 'Watched, not logged', lStarted: 'Started', ly: 'Year', lIntro: "Log a show's card from its thumbnails and line-ups, without playing anything.", lMore: 'Loading the next page of shows…', lEnd: "That's every show for this year.", lNone: 'No shows to log here.', lErr: "Couldn't load this page.", lTry: 'Try again', lSite: 'From the site', lNew: 'New on the site' };
   var home = null;   // { tab, f: filters, more, pop, focus }
   function homeList() { return Object.keys(map || {}).map(function(id) { return { id: id, v: map[id] }; }).filter(function(x) { return x.v && x.v.x; }); }
   function people(v) { var o = []; (v.s || []).forEach(function(sd) { sd.forEach(function(n) { if (o.indexOf(n) < 0) o.push(n); }); }); return o; }
@@ -631,12 +631,37 @@
       name: showName(sl.show || x.name, sl.date) || x.name, venue: sl.venue || '',
       main: '<div class="me"><div class="eb dim">' + esc(HT.lSite) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
   }
+  // New on the site (2.102.0): the shows in the home page's New row (kept on the TV when the home page is drawn, so no
+  // extra request) with nothing logged yet, in the row's order. Keeps a complete year complete as shows come in.
+  function newSets() {
+    var c = lsJ('tvHomeNewAllV1'), out = [], seen = {}, logged = {};
+    if (!c || !c.items) return out;
+    Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.vs) logged[String(v.vs)] = 1; });
+    c.items.forEach(function(x) {
+      var m = /\/set\/(\d+)/.exec(x.href || '');
+      if (!m || seen[m[1]] || logged[m[1]]) return;
+      seen[m[1]] = 1;
+      var d = /(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(x.title || '');
+      out.push({ set: m[1], name: String(x.title || '').replace(/\s+/g, ' ').trim(), th: x.bg || '', date: d ? d[1] + '-' + ('0' + d[2]).slice(-2) + '-' + ('0' + d[3]).slice(-2) : '' });
+    });
+    return out;
+  }
+  function newCard(x) {
+    var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, String(x.date).slice(0, 4)) : { show: x.name, date: x.date, venue: '' };
+    return cardHtml({ href: checkHref(x.set, 'new'), th: x.th, date: sl.date || x.date || '', count: 0, complete: false,
+      name: showName(sl.show || x.name, sl.date || x.date) || x.name, venue: sl.venue || '',
+      main: '<div class="me"><div class="eb dim">' + esc(HT.lNew) + '</div><div class="t" style="font-weight:600;color:#C9D2DC">' + esc(x.name) + '</div></div>', rest: '' });
+  }
   function logHtml() {
-    var lf = home.lf || 'next', nn = nextList().length;
-    var h = '<div class="row">' + chipH('lf:next', HT.lNext + (nn ? ' · ' + nn : ''), lf === 'next') + chipH('lf:started', HT.lStarted, lf === 'started') +
+    var ns = newSets();
+    if (!home.lf) home.lf = ns.length ? 'new' : 'next';
+    var lf = home.lf, nn = nextList().length;
+    var h = '<div class="row">' + (ns.length || lf === 'new' ? chipH('lf:new', HT.lNew + (ns.length ? ' · ' + ns.length : ''), lf === 'new') : '') + chipH('lf:next', HT.lNext + (nn ? ' · ' + nn : ''), lf === 'next') + chipH('lf:started', HT.lStarted, lf === 'started') +
       chipH('d:ly', HT.ly + (home.ly ? ': ' + esc(home.ly) : '') + ' ▾', lf === 'year') + '<span class="intro" style="margin-left:auto">' + esc(HT.lIntro) + '</span></div>';
     var cards = [];
-    if (lf === 'next') {
+    if (lf === 'new') {
+      cards = ns.map(newCard);
+    } else if (lf === 'next') {
       if (!sug) return h + '<div class="rs">' + HT.loadingN + '</div>';
       cards = nextList().map(function(e) { return nextCard(e, checkHref(e.g.set, 'next')); });
     } else if (lf === 'started') {
@@ -806,7 +831,7 @@
     if (scopeDone || !map || !document.body) return;
     scopeDone = true;
     askSuggest();
-    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: 'next', ly: '' };
+    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: '', ly: '' };
     var qy = Q.get('y');
     if (scopeKind === 'log' && qy && yearCats()[qy]) { home.lf = 'year'; home.ly = qy; yearLoad(qy); }
     // A complete year from the Years menu or the Eras page (2.101.0): Shows, filtered to that year.
@@ -828,6 +853,8 @@
       });
     },
     years: function() { return Object.keys(yearCats()).sort(function(a, b) { return b.localeCompare(a); }); },
+    // For card check's Next show from the New list (2.102.0)
+    newShows: function() { return newSets().map(function(x) { return { set: x.set, href: checkHref(x.set, 'new'), name: showName(x.name, x.date) || x.name, date: x.date }; }); },
     // For card check's Next show (2.85.0): shows started and not finished, newest first.
     started: function() {
       return showsList().filter(function(s) { return !s.complete; }).sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); })
