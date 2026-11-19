@@ -399,7 +399,13 @@
     if (c) return c.x && c.x.tb ? { k: 'thumb', label: 'Logged from thumbnail' } : { k: 'watched', label: 'Logged while watching' };
     return null;
   }
-  function sides(r) { var useEn = r.sides_en && r.sides_en.length >= 2; return { A: useEn ? r.sides_en : (r.sides_ja || []), B: useEn ? (r.sides_ja || []) : [] }; }
+  // 2.96.2: English first, unless the Japanese line-up has the same sides and more names: the English one missed an
+  // "&" ("Natsupoi & Aya Sakura Sayaka Kurara"), the Japanese one didn't.
+  function enFirst(r) {
+    var en = r.sides_en || [], ja = r.sides_ja || [], n = function(s) { return s.reduce(function(a, x) { return a + x.length; }, 0); };
+    return en.length >= 2 && !(ja.length === en.length && n(ja) > n(en));
+  }
+  function sides(r) { var useEn = enFirst(r); return { A: useEn ? r.sides_en : (r.sides_ja || []), B: useEn ? (r.sides_ja || []) : [] }; }
   function placeOf(v) { return show ? show.videos.indexOf(v) + 1 : 0; }
   // 2.93.0: a logged match whose saved number isn't its place on the card as it now stands: re-saved by Confirm all.
   function misplaced(v) { var c = map[v.id]; return !!(c && !saved[v.id] && c.n !== '' && c.n != null && Number(c.n) > 0 && Number(c.n) !== placeOf(v)); }
@@ -886,6 +892,9 @@
     var f = sheetOpen, K = kit(), L = K && K.talents ? K.talents(f.q, 8) : [];
     var h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">Who is ' + esc(f.raw) + '?</div>' + (f.other ? '<div class="sub" style="color:#9AA6B4;margin-bottom:8px">' + esc(f.other) + '</div>' : '') +
       '<input class="tx" id="ccp-fin" type="text" autocomplete="off" placeholder="Search the library" value="' + esc(f.q) + '"><div id="ccp-fl">';
+    // 2.96.2: two library names run together ("Aya Sakura Sayaka Kurara"): split into both.
+    var two = K && K.inText ? K.inText([f.raw, f.other].filter(Boolean).join(' ')) : [];
+    if (two.length >= 2) h += '<button class="opt" data-split="1" style="border-color:#6B5A22">' + esc(two.map(function(id) { return K.nameOf(id); }).join(' + ')) + '<small>Two wrestlers run together: split into ' + two.length + '</small></button>';
     h += fixList(L) + '</div>' + (f.err ? '<div class="msg er">' + esc(f.err) + '</div>' : '') + (f.busy ? '<div class="msg">Saving…</div>' : '') + '<div class="bt"><button class="b" data-close="1">Cancel</button></div></div>';
     return h;
   }
@@ -1007,6 +1016,11 @@
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
     if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, q: d.raw, err: '', busy: false }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
+    if (d.split && sheetOpen && recs[sheetOpen.v]) {
+      var fs = sheetOpen, K1 = kit(), ids = K1.inText([fs.raw, fs.other].filter(Boolean).join(' ')), rc = recs[fs.v], nm = ids.map(function(id) { return K1.nameOf(id); });
+      ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side, i) { var j = side.indexOf(fs.raw); if (j < 0 && fs.other) j = side.indexOf(fs.other); if (j >= 0) rc[k][i] = side.slice(0, j).concat(nm, side.slice(j + 1)); }); });
+      ssSet(REC_KEY + fs.v, rc); delete attn[fs.v]; sheetOpen = null; draw(); return;
+    }
     if (d.seg && show) { var sv = show.videos.filter(function(x) { return x.id === d.seg; })[0]; if (sv) segOpen(sv); return; }
     if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type && yg.ids.length) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
     if (d.segty && sheetOpen) { sheetOpen.type = d.segty; draw(); return; }

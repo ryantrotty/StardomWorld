@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.96.2
+
+- **Fix: two wrestlers read as one when the English line-up misses an "&"** ("Natsupoi & Aya Sakura Sayaka Kurara"). When the Japanese line-up has the same sides and more names, it is used instead (TV logger and iPhone card check); the English spellings still fill in where the counts match.
+- **iPhone card check:** Fix a name offers "Aya Sakura + Sayaka Kurara · Two wrestlers run together: split into 2" when the spelling holds two library names.
+
 ## 2.96.1
 
 - **Fix: the match type was read as part of the first name.** A description that puts the title and line-up on one line ("Singles Match Yuna Mizumori vs Anne Kanaya", "シングルマッチ 水森由菜 vs 金屋あんね") is now split after the last match word (Match, Fall, Battle, マッチ, 勝負…), so the first name is just "Yuna Mizumori". Same reader on the TV and the iPhone; the iPhone reads its cards again (old readings dropped).
