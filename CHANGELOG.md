@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.103.0
+
+- **Card check: Japanese-only match titles in English.** Older videos (2025 and earlier) have no English title on the site, so card check listed them as "6人タッグマッチ", "CMLL日本女子選手権試合" and so on. The usual match-title words are now turned into English for display: Singles Match, Six-/Eight-/Ten-Woman Tag Match, 3-Way Match, Battle Royal, Championship, Title Match, Japan Women's, Rookie Introduction, rounds and finals, plus the show words (tournaments, blocks, venues).
+  - Anything the list doesn't know stays in Japanese (nothing is dropped).
+  - The roster file's new `matchWords` adds or changes words without a build (docs/ROSTER.md).
+  - Display only: saves, the line-up reading and the Gemini prompts keep the site's own title. Japanese mode is unchanged.
+  - TV card check and iPhone card check both use it (shared `shownames.js`).
+- iPhone card check: **publish to GitHub Pages** with this version (shownames.js and cc.js changed). No sheet script change.
+
 ## 2.102.2
 
 - **Fix at the source: league matches saved without their tournament.** The site titles 5★STAR GP league matches "BLUE STARS-B Official Matches" / "RED STARS-A 公式戦": the block's keywords matched, but the tournament's ("Stars Official", "スターズ公式") didn't, so card check, the logger and the phone suggested the block and round but no competition.

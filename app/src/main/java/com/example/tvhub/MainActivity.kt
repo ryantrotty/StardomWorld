@@ -3326,7 +3326,7 @@ class MainActivity : Activity() {
             if (code == 200) {
                 val body = c.inputStream.bufferedReader().use { it.readText() }
                 val rj = org.json.JSONObject(body)
-                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null || rj.optJSONObject("ppv") != null || rj.optJSONObject("showWords") != null) {
+                if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null || rj.optJSONObject("ppv") != null || rj.optJSONObject("showWords") != null || rj.optJSONObject("matchWords") != null) {
                     have.writeText(body)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
                 }
@@ -3671,6 +3671,10 @@ class MainActivity : Activity() {
         // English show names (2.78.2, assets/shownames.js): the roster file's "showWords" {"Japanese": "English"}.
         @android.webkit.JavascriptInterface
         fun showWordsJson(): String = this@MainActivity.rosterData()?.optJSONObject("showWords")?.toString() ?: ""
+
+        // English match titles (2.103.0, assets/shownames.js): the roster file's "matchWords" {"Japanese": "English"}.
+        @android.webkit.JavascriptInterface
+        fun matchWordsJson(): String = this@MainActivity.rosterData()?.optJSONObject("matchWords")?.toString() ?: ""
 
         // Every build (2.47.0): the match types with the Titles & tournaments group, for the app-drawn wrestler page's tabs.
         @android.webkit.JavascriptInterface
