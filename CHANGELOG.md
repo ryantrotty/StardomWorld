@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.99.0
+
+- **Title histories: 2026 reigns from StarScope (your build).** Choosing a reign takes that title's logged matches inside the reign from the StarScope list, as the same video cards.
+  - When the win and every defence on record fall in a complete year up to the last logged show, the whole reign comes from the index: nothing is searched, and the videos show at once (no OK needed to load them).
+  - A reign with a defence after the last logged show, or one that started before 2026, still runs its searches as before; the index's matches are shown first and the search adds the rest.
+  - The debug block says how many came from StarScope and whether the site was searched.
+
 ## 2.98.0
 
 - **Tag League, 5★STAR GP, Cinderella and Championship tabs: 2026 from StarScope (your build).** The tabs take a complete year's matches from the StarScope list and show them as the site's normal cards, in the same places, so nothing looks different; the site's search only looks for the rest.
