@@ -111,6 +111,25 @@
     return n.replace(/\s+/g, ' ').replace(/\u201c /g, '\u201c').replace(/ \u201d/g, '\u201d').trim();
   }
 
+  // 2.107.0: English names typed in the shows tab (name_en) win over everything else. They come with the StarScope list
+  // (cards' "she", and "ss.ne" for a video from another set), read once per page from the copy the TV or phone keeps.
+  var OVER = null;
+  function over() {
+    if (OVER) return OVER;
+    OVER = {};
+    ['tvVixCardsV4', 'ccPhoneCards'].forEach(function(k) {
+      try {
+        var m = (JSON.parse(localStorage.getItem(k) || 'null') || {}).map || {};
+        Object.keys(m).forEach(function(id) {
+          var c = m[id];
+          if (c && c.she && c.sh) OVER[c.sh] = c.she;
+          if (c && c.ss && c.ss.ne && c.ss.n) OVER[c.ss.n] = c.ss.ne;
+        });
+      } catch (e) {}
+    });
+    return OVER;
+  }
+
   window.__tvShowName = {
     match: function(t) {
       t = String(t || '');
@@ -120,6 +139,8 @@
     en: function(name, date, short) {
       name = String(name || '');
       if (ja()) return name;
+      var o = over()[name];
+      if (o) return o;
       var e = fromSchedule(name, date);
       if (e) return short ? e.short : e.title;
       return local(name);
