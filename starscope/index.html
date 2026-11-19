@@ -176,11 +176,15 @@
     ((now && now.videos) || []).forEach(function(v) { v.events.forEach(function(e) { out.push({ video: v.video, ts: e[0], ev: e[1], pos: e[2], playing: e[3], rate: e[4] }); }); });
     return out.sort(function(a, b) { return a.ts - b.ts; });
   }
+  var QUIET = 150000;
   function at(ts) {
     var last = null;
     allEvents().forEach(function(e) { if (e.ts <= ts) last = e; });
     if (!last) return null;
-    return { video: last.video, pos: last.pos + (last.playing ? (ts - last.ts) / 1000 * last.rate : 0), playing: !!last.playing, ev: last.ev };
+    // 2.79.3: a playing TV sends a note at least once a minute; after QUIET with none, it has gone quiet (left the video
+    // without its stop note getting through), so the time shows where the last note left it instead of running on.
+    var quiet = !!last.playing && ts - last.ts > QUIET, upto = quiet ? last.ts : ts;
+    return { video: last.video, pos: last.pos + (last.playing ? (upto - last.ts) / 1000 * last.rate : 0), playing: !!last.playing && !quiet, ev: last.ev, quiet: quiet };
   }
   function current() { return now && now.videos && now.videos[0]; }
 
@@ -202,7 +206,7 @@
   function drawLive() {
     var c = current(), p = c ? at(Date.now()) : null, el = $('live');
     if (!c || !p) { el.innerHTML = '<span class="dot"></span>Nothing on the TV yet'; return; }
-    var word = p.ev === 'stop' ? 'Left the video' : (p.playing ? 'Playing' : (p.ev === 'buffer' ? 'Loading' : 'Paused'));
+    var word = p.quiet ? 'No word from the TV' : p.ev === 'stop' ? 'Left the video' : (p.playing ? 'Playing' : (p.ev === 'buffer' ? 'Loading' : 'Paused'));
     el.innerHTML = '<span class="dot' + (p.playing ? ' on' : '') + '"></span>' + word + ' <b>' + mmss(p.pos) + '</b>';
   }
   setInterval(drawLive, 1000);
@@ -240,6 +244,14 @@
         if (hit && (f.tags[g] || []).indexOf(x.id) < 0 && (MULTI[g] || !(f.tags[g] || []).length)) (f.tags[g] = f.tags[g] || []).push(x.id);
       });
     });
+    compFromBlock(f.tags);
+  }
+  // A block belongs to one competition (the lists tab's parent, 2.102.2): a block without its competition gets it.
+  function compFromBlock(tags) {
+    var b = (tags.block || [])[0];
+    if (!b || (tags.competition || []).length) return;
+    var x = listOf('block').filter(function(y) { return y.id === b; })[0];
+    if (x && x.p) tags.competition = [x.p];
   }
   function markKey(video) { return 'ssMarks' + video; }
 
@@ -484,6 +496,7 @@
       var c = form.tags.competition[0];
       form.tags.block = (form.tags.block || []).filter(function(b) { var x = listOf('block').filter(function(y) { return y.id === b; })[0]; return c && x && (!x.p || x.p === c); });
     }
+    if (g === 'block') compFromBlock(form.tags);
   }
 
   // Bell / Finish: the tap's time now; its place once the TV's notes up to that moment are in (a note can take a
@@ -498,6 +511,7 @@
         delete pending[k];
         if (form !== f) return;
         if (!p) say('The TV hasn\'t sent anything yet. Is the video playing?', true);
+        else if (p.quiet) say('No word from the TV for a few minutes, so that tap can\'t be placed. Is a video playing on it?', true);
         else if (String(p.video) !== String(f.video)) say('At that tap the TV was on a different video.', true);
         else { touch(); f.marks[k] = Math.round(p.pos); store(markKey(f.video), f.marks); say((k === 'bell' ? 'Bell' : 'Finish') + ' at ' + mmss(p.pos) + (p.playing ? '' : ' (the video was paused)')); }
         render();
