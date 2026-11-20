@@ -2,6 +2,28 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.107.2
+
+- **Fix: StarScope Shows cards opened "page not found".** On the Shows page (all years and each year), every show card after the first linked to `stardom-world.com/1`, `/2`, `/7`... instead of its first match: the card list was built with `map(showCard)`, which passed each card's position in the list as its link. Each card now opens its first logged match again. Found with the 2.107.1 panel, which is removed again.
+
+## 2.107.1
+
+- **Debug (your build): "page not found" shows where it came from.** Some StarScope show cards (2024 shows, among others) open the site's "page not found" while the same videos play from search and from a plain link. When the site answers "page not found", a panel stays on screen with the address asked for, the referrer, the last StarScope card opened (its link and kind) and the last six pages in this tab, so it can be photographed and the bad link traced. Your build only; nothing changes elsewhere.
+
+## 2.107.0
+
+- **English show names you type.** The shows tab gets column K, `name_en` (header added). When filled, it's the show's English name everywhere StarScope names a show in English (Shows cards, the player's title, card rows, card check lists), ahead of the schedule and the word list. Empty keeps the automatic name; Japanese mode unchanged.
+  - The sheet script sends it with the StarScope list (cards' `she`, and `ss.ne` for a video from another set); `shownames.js` reads it from the list the TV or phone already keeps (no extra request).
+- Sheet script: **redeploy.** iPhone card check: **published to GitHub Pages** (shownames.js).
+
+## 2.106.2
+
+- **Fix: tag team pages list only 2 v 2 matches from StarScope.** The telescope results (and whether the telescope button shows at all) and the index matches on the Tag League and Championship tabs counted any match with both partners on the same side, so 6- and 8-woman tags, 3-way tags and rumbles came in. Now only two sides of two count. Wrestler pages are unchanged.
+
+## 2.106.1
+
+- **Fix: words split over two lines on StarScope show cards** ("in HACHI / NOHE", "SEND / AI", "MATS / UMOTO"). The site's stylesheet breaks words anywhere (set for Japanese text); the StarScope pages now wrap English between words everywhere (titles, venues, main event, highlights). A single word longer than the line can still break so nothing overflows. Japanese text wraps as before.
+
 ## 2.106.0
 
 - **2025 is a StarScope complete year (your build).** With every 2025 show logged and dated, the built-in complete years are now 2025 and 2026, so 2025 gets what 2026 has had since 2.97.0, with no new requests to the site:

@@ -380,7 +380,8 @@ var VI = {
   match_videos: ['match_id', 'video_id', 'version', 'start_sec', 'bell_sec', 'end_sec', 'source', 'updated', 'thumb', 'site_text', 'set_id'],
   participants: ['match_id', 'side_no', 'slot', 'talent_id', 'billed_name', 'role', 'team_id', 'faction_id', 'result', 'entry_order', 'elim_order', 'source', 'updated'],
   match_tags: ['match_id', 'tag_group', 'tag_value', 'source', 'confidence', 'updated'],
-  shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note', 'updated'],
+  // 2.107.0: name_en, typed by hand, is the show's English display name; it wins over the schedule and the word list.
+  shows: ['show_id', 'name', 'date', 'series', 'venue_id', 'venue_raw', 'active', 'merged_into', 'note', 'updated', 'name_en'],
   // 2.104.0: where the building is, for grouping by country, prefecture or city later (filled from a Gemini lookup).
   venues: ['venue_id', 'name_en', 'name_ja', 'prefecture', 'active', 'merged_into', 'note', 'country', 'prefecture_ja', 'city', 'city_ja', 'area'],
   talent: ['talent_id', 'name_en', 'name_ja', 'search', 'status', 'active', 'merged_into', 'note'],
@@ -916,7 +917,7 @@ function viCards(b) {
     ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en };
     if (viTrue(x.active) && !x.merged_into) venLoc[x.venue_id] = { en: x.name_en || x.name_ja, ja: x.name_ja || x.name_en, c: x.country || '', p: x.prefecture || '', pj: x.prefecture_ja || '', ci: x.city || '', cj: x.city_ja || '', a: x.area || '' };
   });
-  viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, v: ven[x.venue_id] || null, vid: x.venue_id || '' }; });
+  viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, ne: String(x.name_en || '').trim(), v: ven[x.venue_id] || null, vid: x.venue_id || '' }; });
   var map = {}, all = [], mvRows = viRows('match_videos'), hot = null, hotShow = {};
   if (since) {
     hot = {};
@@ -959,7 +960,7 @@ function viCards(b) {
     // 2.105.0: a video published in another set than its match's show (an English-commentary set linked to the Japanese
     // match) carries that set's show, so StarScope lists it under its own show.
     var vset = String(v.set_id || ''), oss = vset && vset !== String(m.show_id || '') && shw[vset] ? shw[vset] : null;
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', she: (shw[m.show_id] || {}).ne || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, ne: oss.ne || '', vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
   return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc } : { ok: true, map: map, now: now, full: true, venues: venLoc };
 }
