@@ -34,7 +34,22 @@
   }
 
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
-  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  // 2.107.3: a full phone storage used to fail without a word (the show's venue was saved to the sheet but not kept on
+  // the phone, so the card still read "Venue not read"). Now a write that doesn't fit first drops the lists that are
+  // read again anyway (other shows' pages, the year lists, then the StarScope list) and tries once more.
+  var lsFull = false;
+  function lsSet(k, v) {
+    var put = function() { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); };
+    try { put(); return true; } catch (e) {}
+    try {
+      var drop = function(re) { for (var i = localStorage.length - 1; i >= 0; i--) { var x = localStorage.key(i); if (x !== k && re.test(x || '')) localStorage.removeItem(x); } };
+      drop(new RegExp('^(' + SET_KEY + '(?!' + (window.__ccSetNow || 'x') + '$)|' + YEAR_KEY + ')'));
+      try { put(); return true; } catch (e2) {}
+      if (k !== CARDS_KEY) { drop(new RegExp('^' + CARDS_KEY + '$')); put(); return true; }
+    } catch (e3) {}
+    lsFull = true;
+    return false;
+  }
   function ssGet(k) { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function ssSet(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -326,12 +341,16 @@
   }
   function openShow(set, from) {
     S.screen = 'show'; S.set = String(set); S.from = from || S.from || 'started';
+    window.__ccSetNow = String(set);
     show = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
     saveState(); draw(); root.scrollTop = 0;
     var c = lsGet(SET_KEY + set);
     if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) {
       var sl0 = window.__tvVixSetOf && c.line ? window.__tvVixSetOf(+set, c.line, null) : null;   // 2.96.5: the date read again (a typo'd month fixed)
-      if (sl0 && sl0.date && sl0.date !== c.date) { c.date = sl0.date; lsSet(SET_KEY + set, c); }
+      var ch = false;
+      if (sl0 && sl0.date && sl0.date !== c.date) { c.date = sl0.date; ch = true; }
+      if (sl0 && sl0.venue && !c.venue) { c.venue = sl0.venue; ch = true; }   // 2.107.3: "2024年2月23日…『…』venue" lines
+      if (ch) lsSet(SET_KEY + set, c);
       show = c; draw(); return;
     }
     var go = function() {
@@ -509,8 +528,15 @@
     if (show) show.videos.some(function(v) { var r = recs[v.id], s0 = r && r.shows && r.shows[0]; if (s0 && s0.venue) { raw = s0.venue; return true; } return false; });
     return raw;
   }
+  // The show's venue as set here: kept in memory too, so it shows even when the phone's storage won't take it.
+  var venMem = {};
+  function venKeep(id, name) {
+    venMem[S.set] = { id: id, name: name };
+    if (!lsSet('ccPhoneVen' + S.set, { id: id, name: name })) vs.msg = 'Saved to the sheet. The phone\'s storage is full, so it\'s kept here until card check closes.';
+  }
+  function venMine() { return venMem[S.set] || lsGet('ccPhoneVen' + S.set); }
   function venueNow() {
-    var mine = lsGet('ccPhoneVen' + S.set); if (mine && mine.name) return { name: mine.name, how: 'set for the show' };
+    var mine = venMine(); if (mine && mine.name) return { name: mine.name, how: 'set for the show' };
     var sv = null; Object.keys(map).some(function(k) { var c = map[k]; if (String(c.vs || c.sid) === S.set && c.vn) { sv = c.vn; return true; } return false; });
     if (sv) return { name: sv, how: 'set for the show' };
     var K = kit(), raw = rawVenue(), m = K && raw ? K.venue(raw) : null;
@@ -537,8 +563,8 @@
       var r = null; try { r = JSON.parse(t); } catch (e) {}
       vs.busy = '';
       if (!r || !r.ok) { vs.err = String(r && r.error || 'not saved'); draw(); return; }
-      lsSet('ccPhoneVen' + S.set, { id: id, name: name });
-      vs.mode = 'view'; vs.msg = 'Set for every match on this show';
+      vs.msg = 'Set for every match on this show'; venKeep(id, name);
+      vs.mode = 'view';
       if (window.__tvIndexKit) window.__tvIndexKit.reload();
       cards(); draw();
     });
@@ -870,12 +896,12 @@
           go();
         });
       } else if (x.k === 'venue') {
-        post({ action: 'vi_show_venue', show: S.set, venue: x.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t) { if (after(t) && JSON.parse(t).ok) lsSet('ccPhoneVen' + S.set, { id: x.id, name: x.name }); next(); });
+        post({ action: 'vi_show_venue', show: S.set, venue: x.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t) { var r1 = after(t); if (r1 && r1.ok) venKeep(x.id, x.name); next(); });
       } else {
         post({ action: 'vi_propose', type: 'new_venue', value: x.en, entity_id: x.ja || (hasJa(rawVenue()) ? rawVenue() : ''), video: show.videos[0] ? show.videos[0].id : '' }, function(t) {
           var r = after(t);
           if (!r || !r.ok || !r.id) { next(); return; }
-          window.__tvIndexKit.reload(function() { post({ action: 'vi_show_venue', show: S.set, venue: r.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t2) { var r2 = null; try { r2 = JSON.parse(t2); } catch (e) {} if (r2 && r2.ok) lsSet('ccPhoneVen' + S.set, { id: r.id, name: x.en }); next(); }); });
+          window.__tvIndexKit.reload(function() { post({ action: 'vi_show_venue', show: S.set, venue: r.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t2) { var r2 = null; try { r2 = JSON.parse(t2); } catch (e) {} if (r2 && r2.ok) venKeep(r.id, x.en); else fail.push('venue: ' + (r2 && r2.error || 'no reply')); next(); }); });
         });
       }
     };
@@ -903,7 +929,7 @@
   // "Saving to the sheet…"; one the sheet turns down goes back to "needs a look" with its reason.
   var sending = {}, sendFail = {};
   function showVenueId() {
-    var mine = lsGet('ccPhoneVen' + S.set); if (mine && mine.id) return mine.id;
+    var mine = venMine(); if (mine && mine.id) return mine.id;
     var K = kit(), raw = rawVenue(), m = K && raw ? K.venue(raw) : null;
     return m ? m.id : '';
   }
