@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.107.1
+
+- **Debug (your build): "page not found" shows where it came from.** Some StarScope show cards (2024 shows, among others) open the site's "page not found" while the same videos play from search and from a plain link. When the site answers "page not found", a panel stays on screen with the address asked for, the referrer, the last StarScope card opened (its link and kind) and the last six pages in this tab, so it can be photographed and the bad link traced. Your build only; nothing changes elsewhere.
+
 ## 2.107.0
 
 - **English show names you type.** The shows tab gets column K, `name_en` (header added). When filled, it's the show's English name everywhere StarScope names a show in English (Shows cards, the player's title, card rows, card check lists), ahead of the schedule and the word list. Empty keeps the automatic name; Japanese mode unchanged.
