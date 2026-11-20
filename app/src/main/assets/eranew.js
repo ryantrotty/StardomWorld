@@ -7,6 +7,8 @@
   //  - counts, match thumbnails, show posters and rivalry match lists from the StarScope list the TV already keeps
   //    (window.__tvScopeIdx, assets/starcards.js), only once every year in scope.index.years is a complete year.
   // Nothing here asks the video site for anything: pictures are the site's own thumbnails, loaded as the page draws.
+  // 2.109.1: one pass over the list per drawing, cut-outs filled in after the page is drawn (so it answers at once),
+  // reigns back to the featured cards only, no thumbnails behind reigns or rivalries, posters exactly as on Shows.
   if (window.__tvEraNew) return;
   var H = window.AndroidHost || {};
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -52,10 +54,22 @@
   // Still waiting for assets/starcards.js (it loads after the Eras page script)?
   function scopePending(e) { return !!(e && e.scope && !idx() && H.scopeOn && call('scopeOn')); }
   function from(e) { return (e.scope && e.scope.from) || ''; }
+  var EL = { key: '', list: [], people: {}, at: 0 };
   function eraList(e) {
     var X = idx(), f = from(e);
     if (!X) return [];
-    return X.find(function(v) { return String(v.d || '') >= f; });
+    if (EL.key === f && Date.now() - EL.at < 2000) return EL.list;   // the same drawing: read once
+    EL = { key: f, at: Date.now(), list: X.find(function(v) { return String(v.d || '') >= f; }), people: null };
+    return EL.list;
+  }
+  // Matches per wrestler (by every name key), counted in one pass.
+  function peopleCount(e) {
+    var list = eraList(e);
+    if (EL.people) return EL.people;
+    var c = {};
+    list.forEach(function(x) { var seen = {}; (x.v.p || []).forEach(function(sd) { sd.forEach(function(p) { (p[0] || []).forEach(function(k) { if (!seen[k]) { seen[k] = 1; c[k] = (c[k] || 0) + 1; } }); }); }); });
+    EL.people = c;
+    return c;
   }
 
   var css = [
@@ -63,14 +77,7 @@
     '#tv-era .tvn-stat{background:#121922;border:2px solid #2A323C;border-radius:12px;padding:10px 14px;}',
     '#tv-era .tvn-stat b{display:block;font-size:26px;font-weight:900;color:#fff;line-height:1.05;}',
     '#tv-era .tvn-stat span{display:block;margin-top:3px;font-size:12px;font-weight:800;letter-spacing:.1em;color:#F4C242;text-transform:uppercase;}',
-    '#tv-era .tvn-rc{position:relative;background-size:cover;background-position:center;}',
-    '#tv-era .tvn-rc .tv-card{background:rgba(15,21,28,.86);}',
-    '#tv-era .tvn-rc .tv-card:focus{background:rgba(23,32,41,.9);}',
     '#tv-era .tvn-now{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:#F4C242;color:#1A1A1A;font-size:11px;font-weight:800;letter-spacing:.06em;vertical-align:2px;}',
-    '#tv-era a.tv-pill.tvn-cur{border-color:#F4C242;color:#fff;}',
-    '#tv-era .tvn-mini{display:flex;gap:14px;align-items:center;background:#161F2A;border:3px solid #2A323C;border-radius:12px;padding:8px 12px;flex:1 1 0;min-width:0;}',
-    '#tv-era .tvn-mini .tv-belt{width:70px;height:38px;}',
-    '#tv-era .tvn-mini .tv-oth{margin:0;}',
     '#tv-era .tvn-trs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;}',
     '#tv-era .tvn-tr{display:block;background:#161F2A;border:3px solid #2A323C;border-radius:8px;overflow:hidden;position:relative;}',
     '#tv-era a.tvn-tr:focus{border-color:#F4C242;background:#172029;}',
@@ -82,8 +89,7 @@
     '#tv-era .tvn-rvs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}',
     '#tv-era .tvn-rv{display:block;background:#161F2A;border:3px solid #2A323C;border-radius:12px;overflow:hidden;}',
     '#tv-era .tvn-rv:focus{border-color:#F4C242;background:#172029;}',
-    '#tv-era .tvn-rv .pic{position:relative;height:150px;background:#0B1118 center/cover no-repeat;overflow:hidden;}',
-    '#tv-era .tvn-rv .th{position:absolute;inset:0;background:center/cover no-repeat;opacity:.8;-webkit-mask-image:radial-gradient(ellipse 62% 70% at 50% 45%,#000 0%,rgba(0,0,0,.75) 55%,rgba(0,0,0,.25) 82%,transparent 100%);}',
+    '#tv-era .tvn-rv .pic{position:relative;height:150px;background:#0B1118 var(--tv-era-stars) center/cover no-repeat;overflow:hidden;}',
     '#tv-era .tvn-rv .ct{position:absolute;bottom:0;height:146px;width:auto;max-width:52%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(11,17,24,.9));}',
     '#tv-era .tvn-rv .ct.l{left:4px;}#tv-era .tvn-rv .ct.r{right:4px;}',
     '#tv-era .tvn-rv .ini{position:absolute;bottom:22px;width:84px;height:84px;border-radius:50%;border:2px dashed #3B4656;background:#0F151C;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#C9D2DC;}',
@@ -95,11 +101,12 @@
     '#tv-era .tvn-rv .a{font-size:16px;font-weight:800;line-height:1.2;}',
     '#tv-era .tvn-rv .b{font-size:13px;font-weight:600;color:#C9D2DC;margin-top:3px;line-height:1.25;}',
     '#tv-era .tvn-rv .c{font-size:13px;font-weight:700;color:#F4C242;margin-top:4px;}',
-    '#tv-era .tvn-shs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 210px;gap:16px;align-items:start;}',
-    '#tv-era .tvp .sc{border-radius:12px;}',
-    '#tv-era .tvp .sc:focus{background:#172029;}',
-    '#tv-era .tvn-shs .tvn-all{background:#161F2A;border:3px solid #2A323C;border-radius:12px;min-height:180px;}',
-    '#tv-era .tvn-shs .tvn-all:focus{border-color:#F4C242;background:#172029;}',
+    // Shows: the StarScope Shows grid itself (three to a row, 24 apart); the cards bring their own styles (starcards.js).
+    '#tv-era .tvp{font-family:Arial,Helvetica,sans-serif;}',
+    '#tv-era .tvp .sgr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start;}',
+    '#tv-era .tvn-allb{display:flex;align-items:center;justify-content:space-between;margin-top:14px;height:52px;padding:0 18px;background:#161F2A;border:3px solid #2A323C;border-radius:8px;font-size:17px;font-weight:700;color:#fff;}',
+    '#tv-era .tvn-allb span{font-size:13px;font-weight:600;color:#9AA6B4;}',
+    '#tv-era .tvn-allb:focus{border-color:#F4C242;background:#172029;}',
     '#tv-era .tvn-pp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}',
     '#tv-era .tvn-pt{display:flex;gap:10px;align-items:center;background:#161F2A;border:3px solid #2A323C;border-radius:8px;padding:6px 10px 6px 6px;min-width:0;}',
     '#tv-era .tvn-pt:focus{border-color:#F4C242;background:#172029;}',
@@ -111,13 +118,23 @@
     '#tv-era .tvn-dbg .h{font-size:13px;font-weight:800;letter-spacing:.14em;color:#F4C242;margin-bottom:6px;}',
     '#tv-era .tvn-dbg .r{display:flex;gap:10px;}#tv-era .tvn-dbg .r i{font-style:normal;color:#9AA6B4;width:28px;text-align:right;}'
   ].join('\n');
-  var cssDone = false;
+  // Own styles once; the poster card styles once StarScope's list is there (2.109.1: they were missed when the page
+  // drew before it, which left the posters unstyled).
+  var cssDone = false, showCssDone = false;
   function addCss() {
-    if (cssDone) return;
-    cssDone = true;
-    var X = idx(), st = document.createElement('style');
-    st.textContent = css + (X && X.showCss ? X.showCss('#tv-era .tvp') : '');
-    (document.head || document.documentElement).appendChild(st);
+    var X = idx();
+    if (!cssDone) {
+      cssDone = true;
+      var st = document.createElement('style');
+      st.textContent = css;
+      (document.head || document.documentElement).appendChild(st);
+    }
+    if (!showCssDone && X && X.showCss) {
+      showCssDone = true;
+      var s2 = document.createElement('style');
+      s2.textContent = X.showCss('#tv-era .tvp');
+      (document.head || document.documentElement).appendChild(s2);
+    }
   }
 
   // ---- title reigns (lineage files; every build)
@@ -130,47 +147,27 @@
   }
   function isNow(r) { return !r.end && !r.endType; }
   function reignNo(all, r) { var k = norm(r.champ), n = 0; all.forEach(function(x) { if (x.n <= r.n && norm(x.champ) === k) n++; }); return n; }
-  function winThumb(b, r) {
-    var X = idx();
-    if (!X) return '';
-    var keys = champNames(r.champ), hit = X.find(function(v) {
-      if (String(v.d) !== String(r.won)) return false;
-      var x = v.x || {};
-      if (!((x.tv || []).indexOf(b) >= 0)) return false;
-      return keys.every(function(k) { return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); });
-    })[0];
-    return hit && hit.v.th ? hit.v.th : '';
-  }
-  function beltPic(b, oldR) {
+  function beltPic(b) {
     var pic = call('beltDataUri', b);
     if (pic) return '<img src="' + esc(pic) + '" alt="">';
     return '<svg width="104" height="52" viewBox="0 0 120 60" fill="none" stroke="#F4C242" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="20" width="112" height="20" rx="5" fill="' + (b === 'world' ? '#2A1C10' : '#2A323C') + '"></rect><circle cx="60" cy="30" r="21" fill="#161F2A"></circle><circle cx="60" cy="30" r="12"></circle></svg>';
   }
-  function chip(b, r) {
-    var cur = isNow(r);
-    return '<a class="tv-pill' + (cur ? ' tvn-cur' : '') + '" tabindex="0" href="/mypage?tvch=' + esc(b) + '&tvrn=' + r.n + '">' + esc(r.champ) + ' · ' + esc(String(r.won).slice(0, 4)) + (cur ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</a>';
-  }
-  function reigns(e, withScope) {
+  // 2.109.1: the featured reign of each belt only (no list of every champion); holder, reign number, days and defences
+  // read from the lineage file, so they stay right.
+  function reigns(e) {
     var olds = {};
     (e.reigns || []).forEach(function(r) { olds[r.beltId] = r; });
-    var big = '', small = '';
-    (e.scope.reigns || []).forEach(function(c) {
+    return '<div class="tv-rg">' + (e.scope.reigns || []).map(function(c) {
       var R = reignsOf(c.beltId, e);
-      if (!R || !R.era.length) return;
-      var old = olds[c.beltId] || {}, newest = R.era.slice().reverse();   // newest on the left (timeline rule)
-      if (c.chips) {
-        small += '<div class="tvn-mini"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div style="min-width:0"><div class="tv-1 notranslate" translate="no">' + esc(R.L.title) + '</div><div class="tv-oth">' + newest.map(function(r) { return chip(c.beltId, r); }).join('') + '</div></div></div>';
-        return;
-      }
+      if (!R || !R.era.length || c.chips) return '';
+      var old = olds[c.beltId] || {};
       var fr = R.era.filter(function(r) { return r.n === c.feature; })[0];
       if (!fr) fr = R.era.slice().sort(function(x, y) { return days(y.won, y.end || today()) - days(x.won, x.end || today()); })[0];
-      var d = days(fr.won, fr.end || today()), df = (fr.defences || []).length, th = withScope ? winThumb(c.beltId, fr) : '';
-      var holder = fr.champ + ' · ' + T(ord(reignNo(R.all, fr)) + ' reign', reignNo(R.all, fr) + '度目');
+      var d = days(fr.won, fr.end || today()), df = (fr.defences || []).length, no = reignNo(R.all, fr);
+      var holder = fr.champ + ' · ' + T(ord(no) + ' reign', no + '度目');
       var stat = T(d + ' days · ' + df + (df === 1 ? ' defence' : ' defences'), d + '日 · 防衛' + df + '回');
-      big += '<div class="tv-rc' + (th ? ' tvn-rc' : '') + '"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '><a class="tv-card" tabindex="0" href="/mypage?tvch=' + esc(c.beltId) + '&tvrn=' + fr.n + '"><div class="tv-rrow"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div><div class="tv-1 notranslate" translate="no">' + esc(R.L.title.replace(/ Championship$/, '')) + (old.belt ? ' <s>· ' + esc(old.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(holder) + (isNow(fr) ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</div><div class="tv-3">' + esc(stat) + '</div></div></div></a>' +
-        '<div class="tv-oth">' + newest.filter(function(r) { return r !== fr; }).map(function(r) { return chip(c.beltId, r); }).join('') + '</div></div>';
-    });
-    return '<div class="tv-rg">' + big + '</div>' + (small ? '<div class="tv-rg" style="margin-top:10px">' + small + '</div>' : '');
+      return '<div class="tv-rc"><a class="tv-card" tabindex="0" href="/mypage?tvch=' + esc(c.beltId) + '&tvrn=' + fr.n + '"><div class="tv-rrow"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div class="notranslate" translate="no"><div class="tv-1">' + esc(R.L.title.replace(/ Championship$/, '')) + (old.belt ? ' <s>· ' + esc(old.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(holder) + (isNow(fr) ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</div><div class="tv-3">' + esc(stat) + '</div></div></div></a></div>';
+    }).join('') + '</div>';
   }
 
   // ---- the era in numbers (StarScope)
@@ -179,66 +176,72 @@
     list.forEach(function(x) { var k = (x.v.x && x.v.x.m) || x.id; m[k] = 1; if (x.v.sid) sh[x.v.sid] = 1; if ((x.v.x.tv || []).length || (x.v.x.ti || []).length) ti[k] = 1; });
     var ch = 0;
     BELTS.forEach(function(b) { var L = lineage(b); ((L && L.reigns) || []).forEach(function(r) { if (String(r.won) >= f && String(r.won) <= t) ch++; }); });
-    var D = debuts(), db = Object.keys(D).filter(function(k) { return D[k] >= f && D[k] <= t; }).length;
-    var it = [[Object.keys(sh).length, T('Shows', '大会')], [Object.keys(m).length, T('Matches', '試合')], [Object.keys(ti).length, T('Title matches', 'タイトルマッチ')], [ch, T('Title changes', '王座移動')], [db, T('Debuts', 'デビュー')]];
-    return '<div class="tvn-stats">' + it.map(function(a) { return '<div class="tvn-stat"><b>' + a[0] + '</b><span>' + esc(a[1]) + '</span></div>'; }).join('') + '</div>';
+    var ppl = {};
+    list.forEach(function(x) { (x.v.p || []).forEach(function(sd) { sd.forEach(function(p) { if (p[0] && p[0][0]) ppl[p[0][0]] = 1; }); }); });
+    var it = [[Object.keys(sh).length, T('Shows', '大会')], [Object.keys(m).length, T('Matches', '試合')], [Object.keys(ti).length, T('Title matches', 'タイトルマッチ')], [ch, T('Title changes', '王座移動')], [Object.keys(ppl).length, T('Wrestlers', '選手')]];
+    return '<div class="tvn-stats notranslate" translate="no">' + it.map(function(a) { return '<div class="tvn-stat"><b>' + a[0] + '</b><span>' + esc(a[1]) + '</span></div>'; }).join('') + '</div>';
   }
 
   // ---- top rated: thumbnails (StarScope), from assets/top_matches.json
   function nm(s) { if (s.length >= 5) return s.slice(0, 3).join(', ') + ' +' + (s.length - 3); return s.join(' & '); }
-  function topVid(m) {
-    var u = String(m.u || ''), mm = /\/contents\/(\d+)/.exec(u);
-    if (mm) return mm[1];
-    var X = idx();
-    if (!X) return '';
-    var keys = [].concat.apply([], m.s).map(norm);
-    var hit = X.find(function(v) { return String(v.d) === String(m.d) && keys.every(function(k) { return (v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); }); })[0];
-    return hit ? hit.id : '';
+  // The match's own logged video for its thumbnail: the list's address when logged, else any logged copy with the same
+  // people (and date when it has one); a copy with a picture first.
+  function topLogged(m) {
+    var X = idx(), u = String(m.u || ''), mm = /\/contents\/(\d+)/.exec(u), id = mm ? mm[1] : '';
+    if (!X) return { id: id, th: '' };
+    var v = id ? X.get(id) : null;
+    if (v && v.th) return { id: id, th: v.th };
+    var keys = [].concat.apply([], m.s).map(norm), best = null;
+    (X.any ? X.any : X.find)(function(w) {
+      if (w.d && String(w.d) !== String(m.d)) return false;
+      return keys.every(function(k) { return (w.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); });
+    }).forEach(function(x) { if (!best || (!best.v.th && x.v.th)) best = x; });
+    return { id: id || (best ? best.id : ''), th: best && best.v.th ? best.v.th : '' };
   }
   function top(e) {
     var list = topList().filter(function(m) { return m.e === e.n; });
     if (!list.length) return '';
     var X = idx(), h = list.slice(0, 5).map(function(m) {
-      var vid = topVid(m), v = vid && X ? X.get(vid) : null, th = v && v.th ? v.th : '';
+      var lg = topLogged(m), vid = lg.id, th = lg.th;
       var tag = vid ? 'a tabindex="0" href="/contents/' + esc(vid) + '"' : 'div';
       return '<' + tag + ' class="tvn-tr"><div class="im"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '></div><span class="sc notranslate" translate="no">' + Number(m.r).toFixed(2) + '</span>' +
         '<div class="a notranslate" translate="no">' + esc(m.s.map(nm).join(' vs ')) + '</div><div class="b">' + esc(monY(m.d) + (m.n ? ' · ' + m.n : '')) + '</div></' + (vid ? 'a' : 'div') + '>';
     }).join('');
     h += '<a class="tvn-tr tvn-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '">' + esc(T('All ' + list.length + ' matches in this era', 'この時代の全' + list.length + '試合')) + '</a>';
-    return '<div class="tvn-trs">' + h + '</div>';
+    return '<div class="tvn-trs notranslate" translate="no">' + h + '</div>';
   }
 
   // ---- rivalries (StarScope)
   function sideName(s) { if (s.t) return s.t; var f = facs()[s.f]; return f ? String(f.name).replace(/ \(.*\)$/, '') : s.f; }
+  // The picture is filled in after the page is drawn (fill()), initials until then or when there is no cut-out.
   function face(s, side) {
-    var n = s.t || ((idx() && idx().faction(s.f)) || {}).captain || '', c = cutout(n), h = '';
-    h += c ? '<img class="ct ' + side + '" src="' + esc(c) + '" alt="">' : '<div class="ini ' + side + ' notranslate" translate="no">' + esc(initials(s.t || sideName(s))) + '</div>';
-    if (s.f) { var lg = call('factionLogo', s.f); if (lg) h += '<img class="lg ' + side + '" src="' + esc(lg) + '" alt="">'; }
-    return h;
+    var n = s.t || ((idx() && idx().faction(s.f)) || {}).captain || '';
+    return '<div class="ini ' + side + '" data-cut="' + esc(n) + '">' + esc(initials(s.t || sideName(s))) + '</div>' + (s.f ? '<img class="lg ' + side + '" data-logo="' + esc(s.f) + '" alt="" style="display:none">' : '');
   }
   function rivalries(e) {
-    var X = idx(), f = from(e), sk = stars();
+    var X = idx(), f = from(e);
     return '<div class="tvn-rvs">' + (e.scope.rivalries || []).map(function(r) {
-      var fac = !!(r.a.f && r.b.f), list = fac ? X.fvs(r.a.f, r.b.f, f) : X.vs(r.a.t, r.b.t, f);
+      var rf = r.from || f, rt = r.to || '';
+      var fac = !!(r.a.f && r.b.f), list = (fac ? X.fvs(r.a.f, r.b.f, rf) : X.vs(r.a.t, r.b.t, rf)).filter(function(x) { return !rt || String(x.v.d) <= rt; });
       var ds = list.map(function(x) { return String(x.v.d); }).sort(), sg = list.filter(function(x) { return x.v.x && x.v.x.k === 'singles'; }).length;
-      var kv = r.key ? X.get(r.key) : null, th = (kv && kv.th) || (list[0] && list[0].v.th) || '';
       var cnt = list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合') + (fac ? '' : ' (' + sg + ' ' + T('singles', 'シングル') + ')');
       var rng = ds.length ? (monY(ds[0]) === monY(ds[ds.length - 1]) ? monY(ds[0]) : monY(ds[0]) + ' – ' + monY(ds[ds.length - 1])) : '';
-      var href = '/mypage?tvscope=' + (fac ? 'f&a=' + encodeURIComponent(r.a.f) + '&b=' + encodeURIComponent(r.b.f) : 'v&a=' + encodeURIComponent(r.a.t) + '&b=' + encodeURIComponent(r.b.t)) + '&from=' + encodeURIComponent(f);
-      return '<a class="tvn-rv" tabindex="0" href="' + esc(href) + '"><div class="pic"' + (sk ? ' style="background-image:url(\'' + esc(sk) + '\')"' : '') + '>' + (th ? '<div class="th" style="background-image:url(\'' + esc(th) + '\')"></div>' : '') +
-        face(r.a, 'l') + face(r.b, 'r') + '<span class="vs">VS</span></div>' +
+      var href = '/mypage?tvscope=' + (fac ? 'f&a=' + encodeURIComponent(r.a.f) + '&b=' + encodeURIComponent(r.b.f) : 'v&a=' + encodeURIComponent(r.a.t) + '&b=' + encodeURIComponent(r.b.t)) + '&from=' + encodeURIComponent(rf) + (rt ? '&to=' + encodeURIComponent(rt) : '');
+      return '<a class="tvn-rv notranslate" translate="no" tabindex="0" href="' + esc(href) + '"><div class="pic">' + face(r.a, 'l') + face(r.b, 'r') + '<span class="vs">VS</span></div>' +
         '<div class="tx"><div class="a notranslate" translate="no">' + esc(sideName(r.a) + ' vs ' + sideName(r.b)) + '</div><div class="b">' + esc(r.line || '') + '</div><div class="c">' + esc(cnt + (rng ? ' · ' + rng : '')) + '</div></div></a>';
     }).join('') + '</div>';
   }
 
   // ---- must-see shows: StarScope poster cards
+  // 2.109.1: the StarScope Shows page's own cards in its own grid, so they look exactly the same; then one bar to the
+  // full Shows page.
   function shows(e) {
     var X = idx(), all = X.shows(from(e), ''), cards = (e.scope.shows || []).map(function(s) {
       var h = X.showCard(s.sid);
       return h.replace(/<a class="sc"/, '<a class="sc" tabindex="0"').replace(/ data-bg="([^"]*)"/g, ' style="background-image:url(\'$1\')"');
     }).filter(Boolean);
     if (!cards.length) return '';
-    return '<div class="tvn-shs tvp">' + cards.join('') + '<a class="tvn-all" tabindex="0" href="/mypage?tvscope=shows">' + esc(T('All ' + all.length + ' shows of the era', 'この時代の全' + all.length + '大会')) + '<span style="display:block;margin-top:6px;font-size:12px;font-weight:600;color:#9AA6B4">' + esc(T('StarScope Shows', 'StarScope 大会')) + '</span></a></div>';
+    return '<div class="tvp notranslate" translate="no"><div class="sgr">' + cards.join('') + '</div><a class="tvn-allb" tabindex="0" href="/mypage?tvscope=shows">' + esc(T('All ' + all.length + ' shows of the era', 'この時代の全' + all.length + '大会')) + '<span>' + esc(T('StarScope Shows', 'StarScope 大会')) + '</span></a></div>';
   }
 
   // ---- wrestlers and rising stars
@@ -256,16 +259,14 @@
     return best;
   }
   function person(name, e, rising, withScope) {
-    var f = from(e), X = idx(), n = 0;
-    if (withScope) { var k = norm(name); n = eraList(e).filter(function(x) { return (x.v.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); }).length; }
-    var sb = window.__tvStar ? window.__tvStar([name], 'card') : '';
+    var f = from(e), n = withScope ? (peopleCount(e)[norm(name)] || 0) : 0;
     var bl = beltsHeld(name, f), line = withScope ? n + ' ' + T('matches in this era', '試合（この時代）') : '';
     if (rising) {
       var db = debuts()[norm(name)], ft = firstTitle(name);
       if (db && db >= f) line = T('Debut ', 'デビュー ') + monY(db) + (line ? ' · ' + line : '');
       else if (ft && ft.d >= f) line = T('First title ', '初戴冠 ') + monY(ft.d) + (line ? ' · ' + line : '');
     }
-    return '<a class="tvn-pt" tabindex="0" href="/mypage?tvwr=' + encodeURIComponent(name) + '"><div class="ph notranslate" translate="no"' + (sb ? ' style="' + esc(sb) + '"' : '') + '>' + (sb ? '' : esc(initials(name))) + '</div><div style="min-width:0"><div class="a notranslate" translate="no">' + esc(name) + '</div><div class="b">' + esc(line) + '</div><div class="c">' + esc(bl.join(' · ')) + '</div></div></a>';
+    return '<a class="tvn-pt notranslate" translate="no" tabindex="0" href="/mypage?tvwr=' + encodeURIComponent(name) + '"><div class="ph" data-star="' + esc(name) + '">' + esc(initials(name)) + '</div><div style="min-width:0"><div class="a">' + esc(name) + '</div><div class="b">' + esc(line) + '</div><div class="c">' + esc(bl.join(' · ')) + '</div></div></a>';
   }
   function people(list, e, rising, withScope) { return '<div class="tvn-pp">' + (list || []).map(function(n) { return person(n, e, rising, withScope); }).join('') + '</div>'; }
 
@@ -283,7 +284,7 @@
       if (x.former) facts.push(T('Disbanded ', '解散 ') + (x.disbanded || ''));
       if (withScope) facts.push(n + ' ' + T('unit matches', 'ユニット戦'));
       var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search || x.name) + '&tvfaction=' + encodeURIComponent(id);
-      return '<a class="tv-tile tv-fac" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(nmx.slice(0, 2))) + '</div><div style="min-width:0"><div class="nm">' + esc(nmx) + '</div>' +
+      return '<a class="tv-tile tv-fac notranslate" translate="no" tabindex="0" href="' + esc(path) + '"><div class="tv-fmark' + (pic ? ' tv-pic' : '') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="">' : esc(nmx.slice(0, 2))) + '</div><div style="min-width:0"><div class="nm">' + esc(nmx) + '</div>' +
         '<div style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc((x.members || []).map(function(m) { return m.name; }).join(', ')) + '</div>' +
         (facts.length ? '<div style="font-size:12px;font-weight:700;color:#F4C242;margin-top:2px">' + esc(facts.join(' · ')) + '</div>' : '') + '</div></a>';
     }).join('');
@@ -305,10 +306,44 @@
     }).join('') + '</div>';
   }
 
+  // ---- pictures after the page is drawn: the star field once (a CSS variable), then each cut-out and logo in turn,
+  // a few milliseconds apart, so the page can be used while they arrive.
+  var fillTimer = null;
+  function fill(root) {
+    if (fillTimer) { clearTimeout(fillTimer); fillTimer = null; }
+    var jobs = [];
+    if (root.querySelector('.tvn-rv') && !document.getElementById('tvn-stars')) jobs.push(function() {
+      var u = stars();
+      if (!u) return;
+      var st = document.createElement('style'); st.id = 'tvn-stars';
+      st.textContent = '#tv-era{--tv-era-stars:url(' + u + ');}';
+      (document.head || document.documentElement).appendChild(st);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-cut]'), function(el) {
+      jobs.push(function() {
+        var c = cutout(el.getAttribute('data-cut'));
+        if (!c || !el.parentNode) return;
+        var im = document.createElement('img'); im.className = 'ct ' + (el.classList.contains('l') ? 'l' : 'r'); im.alt = ''; im.src = c;
+        el.parentNode.replaceChild(im, el);
+      });
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-logo]'), function(el) {
+      jobs.push(function() { var lg = call('factionLogo', el.getAttribute('data-logo')); if (lg) { el.src = lg; el.style.display = ''; } });
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-star]'), function(el) {
+      jobs.push(function() {
+        var sb = window.__tvStar ? window.__tvStar([el.getAttribute('data-star')], 'card') : '';
+        if (sb) { el.setAttribute('style', sb); el.textContent = ''; }
+      });
+    });
+    function next() { var j = jobs.shift(); if (!j) { fillTimer = null; return; } try { j(); } catch (x) {} fillTimer = setTimeout(next, 30); }
+    fillTimer = setTimeout(next, 150);
+  }
+
   window.__tvEraNew = {
     has: function(e) { return !!(e && e.scope); },
     scopeOn: scopeOn, scopePending: scopePending, addCss: addCss,
     stats: stats, reigns: reigns, top: top, rivalries: rivalries, shows: shows,
-    people: people, factions: factions, picks: picks
+    people: people, factions: factions, picks: picks, fill: fill
   };
 })();

@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.109.1
+
+- **Fix: the New Horizons era page took several seconds before it answered.** The cut-outs, faction logos and star field (large pictures) were all read before the page could be used, and the StarScope list was gone through once per tile. The page now draws first with initials and reads the pictures one at a time afterwards, and the list is gone through once per drawing.
+- **Title reigns back to the four featured cards.** No list of every champion, no Artist and NEW BLOOD cards, and no match thumbnail behind the cards. Holder, reign number, days and defences still come from the lineage files (NOW when the featured reign is still held).
+- **Rivalry cards: no match thumbnail.** The two cut-outs (faction logos for factions) stand on the star field only.
+- **Must-see shows: exactly the StarScope Shows cards.** The poster styles were left out when the page drew before StarScope's list had loaded, so the cards came out unstyled. They now get the Shows page's styles and its grid (three to a row), with an All N shows bar under them.
+- **Top rated thumbnails:** a match whose top-rated address isn't the logged copy (Kamitani vs Tam, Career vs Career) now takes the picture from the logged copy, dated or not. Mayu Iwatani vs Sareee (AGQ 2024) has no logged video, so it stays without one.
+- **The new parts are kept out of page translation** ("233 little bit in this era", "TITLE MATCH").
+
 ## 2.109.0
 
 - **New Horizons era page, StarScope version** (new `assets/eranew.js`, era 5's new `scope` block in `eras.json`). Only picks are written by hand now; everything else is looked up when the page opens.

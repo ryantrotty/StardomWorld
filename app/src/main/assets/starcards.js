@@ -1022,6 +1022,8 @@
   }
   (function(X) {
     X.get = function(id) { return (map || {})[String(id)] || null; };
+    // Every logged match passing test(v), dated or not, complete year or not (2.109.1: top rated thumbnails).
+    X.any = function(test) { var o = []; Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && test(v)) o.push({ id: id, v: v }); }); return o; };
     X.ready = function() { return !!map; };
     X.vs = function(a, b, from) { return map ? pairList('v', a, b, from || '') : []; };
     X.fvs = function(a, b, from) { return map ? pairList('f', a, b, from || '') : []; };

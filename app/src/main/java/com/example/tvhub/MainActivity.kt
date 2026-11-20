@@ -8122,7 +8122,7 @@ class MainActivity : Activity() {
     if (NS) N.addCss();
     if (SC) h += '<div class="tv-sec">' + N.stats(e) + '</div>';
     // title reigns
-    var rg = NS ? N.reigns(e, SC) : '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
+    var rg = NS ? N.reigns(e) : '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
       var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
       var belt = pic ? '<img src="' + esc(pic) + '" alt="">' : BEL.replace('FILL', r.beltId === 'world' ? '#2A1C10' : '#2A323C');
       var base = '/mypage?tvch=' + esc(r.beltId) + '&tvrn=';
@@ -8168,6 +8168,7 @@ class MainActivity : Activity() {
     if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e);
     else h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
+    if (NS && N.fill) N.fill(scroller);   // 2.109.1: cut-outs and logos after the page is drawn
     // StarScope's list (assets/starcards.js) loads after this script: draw again once it is there, if focus is
     // still on the era chips.
     if (NS && !SC && N.scopePending(e) && !scopeWait) {

@@ -915,14 +915,6 @@
           {
             "beltId": "goddess",
             "feature": 36
-          },
-          {
-            "beltId": "artist",
-            "chips": true
-          },
-          {
-            "beltId": "newblood",
-            "chips": true
           }
         ],
         "rivalries": [
