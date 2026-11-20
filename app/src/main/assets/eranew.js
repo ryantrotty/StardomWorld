@@ -114,6 +114,17 @@
     '#tv-era .tvn-pt .a{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '#tv-era .tvn-pt .b{font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px;}',
     '#tv-era .tvn-pt .c{font-size:12px;font-weight:700;color:#F4C242;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    // 2.110.0: renders on the reign cards (right side, under the text), tag team tiles
+    '#tv-era .tvn-rcard{position:relative;overflow:hidden;}',
+    '#tv-era .tvn-rcard .tv-rrow{position:relative;z-index:1;}',
+    '#tv-era .tvn-rr{position:absolute;right:0;bottom:0;height:100%;display:flex;align-items:flex-end;justify-content:flex-end;pointer-events:none;}',
+    '#tv-era .tvn-rr img{height:96%;width:auto;max-width:150px;object-fit:contain;object-position:bottom;margin-left:-34px;-webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent 100%);}',
+    '#tv-era .tvn-rv .lgb{position:absolute;top:50%;transform:translateY(-50%);width:42%;height:118px;object-fit:contain;}',
+    '#tv-era .tvn-rv .lgb.l{left:4%;}#tv-era .tvn-rv .lgb.r{right:4%;}',
+    '#tv-era .tvn-rv .inif{position:absolute;top:50%;transform:translateY(-50%);width:42%;text-align:center;font-size:22px;font-weight:900;color:#C9D2DC;}',
+    '#tv-era .tvn-rv .inif.l{left:4%;}#tv-era .tvn-rv .inif.r{right:4%;}',
+    '#tv-era .tvn-tt .ph{width:110px;display:flex;gap:2px;background:none;}',
+    '#tv-era .tvn-tt .ph i{flex:1 1 0;height:74px;border-radius:8px;background:#0F151C;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:17px;font-weight:900;color:#C9D2DC;}',
     '#tv-era .tvn-dbg{margin-top:18px;background:#0F151C;border:2px solid #2A323C;border-radius:12px;padding:10px 14px;font-size:13px;color:#fff;}',
     '#tv-era .tvn-dbg .h{font-size:13px;font-weight:800;letter-spacing:.14em;color:#F4C242;margin-bottom:6px;}',
     '#tv-era .tvn-dbg .r{display:flex;gap:10px;}#tv-era .tvn-dbg .r i{font-style:normal;color:#9AA6B4;width:28px;text-align:right;}'
@@ -166,7 +177,8 @@
       var d = days(fr.won, fr.end || today()), df = (fr.defences || []).length, no = reignNo(R.all, fr);
       var holder = fr.champ + ' · ' + T(ord(no) + ' reign', no + '度目');
       var stat = T(d + ' days · ' + df + (df === 1 ? ' defence' : ' defences'), d + '日 · 防衛' + df + '回');
-      return '<div class="tv-rc"><a class="tv-card" tabindex="0" href="/mypage?tvch=' + esc(c.beltId) + '&tvrn=' + fr.n + '"><div class="tv-rrow"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div class="notranslate" translate="no"><div class="tv-1">' + esc(R.L.title.replace(/ Championship$/, '')) + (old.belt ? ' <s>· ' + esc(old.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(holder) + (isNow(fr) ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</div><div class="tv-3">' + esc(stat) + '</div></div></div></a></div>';
+      var cuts = String(fr.champ).split(/\s*&\s*|\s*,\s*/).join('|');
+      return '<div class="tv-rc"><a class="tv-card tvn-rcard" tabindex="0" href="/mypage?tvch=' + esc(c.beltId) + '&tvrn=' + fr.n + '"><div class="tvn-rr" data-cuts="' + esc(cuts) + '"></div><div class="tv-rrow"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div class="notranslate" translate="no"><div class="tv-1">' + esc(R.L.title.replace(/ Championship$/, '')) + (old.belt ? ' <s>· ' + esc(old.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(holder) + (isNow(fr) ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</div><div class="tv-3">' + esc(stat) + '</div></div></div></a></div>';
     }).join('') + '</div>';
   }
 
@@ -215,7 +227,9 @@
   function sideName(s) { if (s.t) return s.t; var f = facs()[s.f]; return f ? String(f.name).replace(/ \(.*\)$/, '') : s.f; }
   // The picture is filled in after the page is drawn (fill()), initials until then or when there is no cut-out.
   function face(s, side) {
-    var n = s.t || ((idx() && idx().faction(s.f)) || {}).captain || '';
+    // 2.110.0: a faction is its logo alone (its name in letters when the build has no logo), no wrestler.
+    if (s.f) return '<div class="inif ' + side + '" data-flogo="' + esc(s.f) + '">' + esc(sideName(s)) + '</div>';
+    var n = s.t || '';
     return '<div class="ini ' + side + '" data-cut="' + esc(n) + '">' + esc(initials(s.t || sideName(s))) + '</div>' + (s.f ? '<img class="lg ' + side + '" data-logo="' + esc(s.f) + '" alt="" style="display:none">' : '');
   }
   function rivalries(e) {
@@ -236,12 +250,12 @@
   // 2.109.1: the StarScope Shows page's own cards in its own grid, so they look exactly the same; then one bar to the
   // full Shows page.
   function shows(e) {
-    var X = idx(), all = X.shows(from(e), ''), cards = (e.scope.shows || []).map(function(s) {
+    var X = idx(), cards = (e.scope.shows || []).map(function(s) {
       var h = X.showCard(s.sid);
       return h.replace(/<a class="sc"/, '<a class="sc" tabindex="0"').replace(/ data-bg="([^"]*)"/g, ' style="background-image:url(\'$1\')"');
     }).filter(Boolean);
     if (!cards.length) return '';
-    return '<div class="tvp notranslate" translate="no"><div class="sgr">' + cards.join('') + '</div><a class="tvn-allb" tabindex="0" href="/mypage?tvscope=shows">' + esc(T('All ' + all.length + ' shows of the era', 'この時代の全' + all.length + '大会')) + '<span>' + esc(T('StarScope Shows', 'StarScope 大会')) + '</span></a></div>';
+    return '<div class="tvp notranslate" translate="no"><div class="sgr">' + cards.join('') + '</div></div>';
   }
 
   // ---- wrestlers and rising stars
@@ -267,6 +281,25 @@
       else if (ft && ft.d >= f) line = T('First title ', '初戴冠 ') + monY(ft.d) + (line ? ' · ' + line : '');
     }
     return '<a class="tvn-pt notranslate" translate="no" tabindex="0" href="/mypage?tvwr=' + encodeURIComponent(name) + '"><div class="ph" data-star="' + esc(name) + '">' + esc(initials(name)) + '</div><div style="min-width:0"><div class="a">' + esc(name) + '</div><div class="b">' + esc(line) + '</div><div class="c">' + esc(bl.join(' · ')) + '</div></div></a>';
+  }
+  // 2.110.0: top tag teams, the pairs that teamed most often in straight 2 v 2 matches in the era.
+  function tagTeams(e, count) {
+    var c = {}, tn = {};
+    eraList(e).forEach(function(x) {
+      var v = x.v, S = v.s || [];
+      if (S.length !== 2 || S[0].length !== 2 || S[1].length !== 2) return;
+      S.forEach(function(sd, i) {
+        var k = sd.slice().sort().join(' & ');
+        c[k] = (c[k] || 0) + 1;
+        var t = v.tn && v.tn[i]; if (t) { var o = tn[k] = tn[k] || {}; o[t] = (o[t] || 0) + 1; }
+      });
+    });
+    var keys = Object.keys(c).sort(function(a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, count || 4);
+    return '<div class="tvn-pp">' + keys.map(function(k) {
+      var ab = k.split(' & '), names = tn[k] ? Object.keys(tn[k]).sort(function(a, b) { return tn[k][b] - tn[k][a]; }) : [];
+      return '<a class="tvn-pt tvn-tt notranslate" translate="no" tabindex="0" href="/mypage?tvscope=t&a=' + encodeURIComponent(ab[0]) + '&b=' + encodeURIComponent(ab[1]) + '"><div class="ph"><i data-star="' + esc(ab[0]) + '" data-half="left">' + esc(initials(ab[0])) + '</i><i data-star="' + esc(ab[1]) + '" data-half="right">' + esc(initials(ab[1])) + '</i></div>' +
+        '<div style="min-width:0"><div class="a">' + esc(names[0] || k) + '</div><div class="b">' + esc(names[0] ? k : '') + '</div><div class="c">' + c[k] + ' ' + esc(T('matches together', '試合（タッグ）')) + '</div></div></a>';
+    }).join('') + '</div>';
   }
   function people(list, e, rising, withScope) { return '<div class="tvn-pp">' + (list || []).map(function(n) { return person(n, e, rising, withScope); }).join('') + '</div>'; }
 
@@ -327,12 +360,25 @@
         el.parentNode.replaceChild(im, el);
       });
     });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-cuts]'), function(el) {
+      jobs.push(function() {
+        el.getAttribute('data-cuts').split('|').forEach(function(n) { var c = cutout(n); if (c) { var im = document.createElement('img'); im.alt = ''; im.src = c; el.appendChild(im); } });
+      });
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-flogo]'), function(el) {
+      jobs.push(function() {
+        var lg = call('factionLogo', el.getAttribute('data-flogo'));
+        if (!lg || !el.parentNode) return;
+        var im = document.createElement('img'); im.className = 'lgb ' + (el.classList.contains('l') ? 'l' : 'r'); im.alt = ''; im.src = lg;
+        el.parentNode.replaceChild(im, el);
+      });
+    });
     Array.prototype.forEach.call(root.querySelectorAll('[data-logo]'), function(el) {
       jobs.push(function() { var lg = call('factionLogo', el.getAttribute('data-logo')); if (lg) { el.src = lg; el.style.display = ''; } });
     });
     Array.prototype.forEach.call(root.querySelectorAll('[data-star]'), function(el) {
       jobs.push(function() {
-        var sb = window.__tvStar ? window.__tvStar([el.getAttribute('data-star')], 'card') : '';
+        var sb = window.__tvStar ? window.__tvStar([el.getAttribute('data-star')], el.getAttribute('data-half') || 'card') : '';
         if (sb) { el.setAttribute('style', sb); el.textContent = ''; }
       });
     });
@@ -344,6 +390,6 @@
     has: function(e) { return !!(e && e.scope); },
     scopeOn: scopeOn, scopePending: scopePending, addCss: addCss,
     stats: stats, reigns: reigns, top: top, rivalries: rivalries, shows: shows,
-    people: people, factions: factions, picks: picks, fill: fill
+    people: people, tagTeams: tagTeams, factions: factions, picks: picks, fill: fill
   };
 })();

@@ -8120,7 +8120,6 @@ class MainActivity : Activity() {
     // complete years. Until then the parts below are drawn as before.
     var N = window.__tvEraNew, NS = !!(N && N.has(e)), SC = NS && N.scopeOn(e);
     if (NS) N.addCss();
-    if (SC) h += '<div class="tv-sec">' + N.stats(e) + '</div>';
     // title reigns
     var rg = NS ? N.reigns(e) : '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
       var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
@@ -8149,7 +8148,7 @@ class MainActivity : Activity() {
     else h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
     if (SC) { var shn = N.shows(e); if (shn) h += sec(T('Must-see shows', '必見の大会'), '', shn); }
     // wrestlers / factions / shows
-    var left = NS ? sec(T('Top wrestlers', 'トップ選手'), '', N.people(e.scope.wrestlers, e, false, SC)) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', N.people(e.scope.rising, e, true, SC))
+    var left = NS ? sec(T('Top wrestlers', 'トップ選手'), '', N.people(e.scope.wrestlers, e, false, SC)) + (SC ? '<div style="height:18px"></div>' + sec(T('Top tag teams', 'トップタッグチーム'), T('most matches together, 2 v 2', '2対2で組んだ試合数'), N.tagTeams(e, 4)) : '') + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', N.people(e.scope.rising, e, true, SC))
       : sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
     var fc = (e.factions || []).map(function(x) {
       var f = facs[x.id], own = false;
@@ -8165,7 +8164,7 @@ class MainActivity : Activity() {
       return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : (wd.step === 1 ? ' · ' + esc(T('all years', '全年')) : '')) + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
     if (NS) fc = N.factions(e, SC);
-    if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e);
+    if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e) + '<div class="tv-sec">' + N.stats(e) + '</div>';   // 2.110.0: the era in numbers at the very bottom
     else h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
     if (NS && N.fill) N.fill(scroller);   // 2.109.1: cut-outs and logos after the page is drawn

@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.110.0
+
+- **New Horizons era page:**
+  - **Top tag teams** (new, your build): the four pairs who teamed most often in straight 2 v 2 matches in the era, by StarScope (today Natsuko Tora & Ruaka 47, Sakura Aya & Sayaka Kurara 40, AZM & Miyu Amasaki 38, Hazuki & Koguma 35), under Top wrestlers. Each tile shows the two renders on one star sky, the team name when the index has one, and the count; OK opens StarScope's list of their matches together.
+  - **Renders on the title reign cards:** the featured champion's cut-out (both partners for a tag team) on the right of each card, under the text.
+  - **Faction rivalries show only the two faction logos**, no wrestler.
+  - **The era in numbers moved to the very bottom.** The All N shows link under Must-see shows is gone.
+  - Mayu Iwatani vs Sareee (AGQ 2024, 9.21) still has no thumbnail: it isn't in StarScope (the AGQ 2024 videos aren't in the site's 2024 category), so there's no picture to use until that match is logged.
+
 ## 2.109.1
 
 - **Fix: the New Horizons era page took several seconds before it answered.** The cut-outs, faction logos and star field (large pictures) were all read before the page could be used, and the StarScope list was gone through once per tile. The page now draws first with initials and reads the pictures one at a time afterwards, and the list is gone through once per drawing.
