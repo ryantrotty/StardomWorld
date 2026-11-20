@@ -479,6 +479,57 @@
     var r = recs[v.id], g = segs[v.id] || segGuess(v, r) || { type: '', ids: [] };
     sheetOpen = { seg: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), type: g.type, ids: g.ids.slice(), q: '' }; draw();
   }
+  // A line-up you type (2.108.0): for a card the site gives no line-up for (a sparring session, a debut), or one you
+  // entered before. Sides of wrestlers from the library, or a new wrestler under the name you type. Used as the read
+  // line-up, so Confirm saves it like any other card.
+  function manOpen(v) {
+    var r = recs[v.id], K = kit(), cur = [];
+    if (r && r.manIds) cur = r.manIds.map(function(x) { return x.slice(); });
+    else if (r && !r.failed && K) cur = sides(r).A.map(function(names) { return names.map(function(n) { return K.resolve(n); }).filter(Boolean); });
+    while (cur.length < 2) cur.push([]);
+    var at = 0; cur.some(function(x, i) { if (!x.length) { at = i; return true; } return false; });
+    sheetOpen = { man: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), sides: cur, at: at, q: '', err: '', busy: false }; draw();
+  }
+  function manHtml() {
+    var f = sheetOpen, K = kit(), L = K && f.q ? K.talents(f.q, 6) : [];
+    var h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:4px">Match: who was in it</div><div class="sub" style="color:#9AA6B4;margin-bottom:8px">' + esc(f.title) + '</div>';
+    f.sides.forEach(function(ids, i) {
+      if (i) h += '<div class="vs">VS</div>';
+      h += '<div class="bt" style="margin-top:4px"><button class="b' + (f.at === i ? ' on' : '') + '" data-mside="' + i + '">Side ' + (i + 1) + (f.at === i ? ' · adding here' : '') + '</button></div>';
+      ids.forEach(function(id) { h += '<button class="pp" data-mrm="' + i + ':' + esc(id) + '"><span class="mk">✓</span><span><span class="n">' + esc(K ? K.nameOf(id) : id) + '</span><small>Tap to remove</small></span></button>'; });
+      if (!ids.length) h += '<div class="sub" style="color:#9AA6B4">No one yet</div>';
+    });
+    if (f.sides.length < 4) h += '<div class="bt"><button class="b" data-mplus="1">+ Side</button></div>';
+    h += '<input class="tx" id="ccp-min" type="text" autocomplete="off" placeholder="Add to side ' + (f.at + 1) + '" value="' + esc(f.q) + '" style="margin-top:8px"><div id="ccp-ml">' + manList(L) + '</div>';
+    if (f.err) h += '<div class="msg er">' + esc(f.err) + '</div>';
+    if (f.busy) h += '<div class="msg">Adding…</div>';
+    var ok = f.sides.filter(function(x) { return x.length; }).length >= 2;
+    h += '<div class="bt"><button class="b on wide" data-mok="1"' + (ok && !f.busy ? '' : ' disabled') + '>Use this line-up</button><button class="b" data-close="1">Cancel</button></div></div>';
+    return h;
+  }
+  function manList(L) {
+    var f = sheetOpen, taken = [].concat.apply([], f.sides), h = '';
+    L.filter(function(t) { return taken.indexOf(t.id) < 0; }).forEach(function(t) { h += '<button class="opt" data-madd="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; });
+    var typed = String(f.q || '').trim();
+    if (typed && !badAlias(typed) && !L.some(function(t) { return String(t.name).toLowerCase() === typed.toLowerCase(); }))
+      h += '<button class="opt" data-mnew="1">' + esc(typed) + '<small>Add as a new wrestler</small></button>';
+    return h;
+  }
+  // A singles card fills fastest: adding to an empty side moves on to the next empty side.
+  function manAdd(id) {
+    var f = sheetOpen, side = f.sides[f.at], was = side.length;
+    if ([].concat.apply([], f.sides).indexOf(id) < 0) side.push(id);
+    if (!was) f.sides.some(function(x, i) { if (i !== f.at && !x.length) { f.at = i; return true; } return false; });
+    f.q = ''; f.focus = true; draw();
+  }
+  function manUse() {
+    var f = sheetOpen, K = kit(), r = recs[f.v]; if (!r || !K) return;
+    var ids = f.sides.filter(function(x) { return x.length; }), names = ids.map(function(x) { return x.map(function(id) { return K.nameOf(id); }); });
+    r.sides_en = names; r.sides_ja = names.map(function(x) { return x.slice(); }); r.manIds = ids;
+    ['roles_en', 'roles_ja', 'teams_en', 'teams_ja'].forEach(function(k) { delete r[k]; });
+    ssSet(REC_KEY + f.v, r); delete attn[f.v]; delete sendFail[f.v]; segSet(f.v, null);
+    sheetOpen = null; draw();
+  }
   function cardHtml(v, i) {
     var r = recs[v.id], s = status(v), k = cls(v), title = mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t);
     var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
@@ -492,13 +543,14 @@
       if (sg) h += '<div class="gl">Segment · ' + esc(segLabel(sg.type)) + '</div>' + sg.ids.map(function(id) { return '<div class="pp"><span class="mk">✓</span><span class="n">' + esc(K0 ? K0.nameOf(id) : id) + '</span></div>'; }).join('') +
         '<div class="rw"><span class="lb">Result</span><span class="vl">None: segments don\'t count as matches</span></div>';
       else if (gs && gs.type && gs.ids.length) h += '<div class="er" style="color:#C9D2DC;border-color:#6B5A22">Looks like a segment: ' + esc(segLabel(gs.type)) + ' · ' + esc(gs.ids.map(function(id) { return K0.nameOf(id); }).join(', ')) + '<div class="bt"><button class="b on" data-segyes="' + esc(v.id) + '">Yes, a segment</button><button class="b" data-seg="' + esc(v.id) + '">Change</button></div></div>';
-      if (!sg) h += '<div class="gl">People</div>' + peopleHtml(v, r) +
+      if (!sg) h += '<div class="gl">People' + (r.manIds ? ' · entered by you' : '') + '</div>' + peopleHtml(v, r) +
         '<div class="rw"><span class="lb">Match type</span><span class="vl">' + esc(kindOf(r) || '–') + '</span></div>' +
         (sug.length ? '<div class="rw"><span class="lb">Suggested</span><span class="vl">' + sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') + '</span></div>' : '');
     }
     h += '<div class="bt">';
     if ((!s && k === 'ready') || k === 'renumber') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : k === 'renumber' ? 'Save as match ' + placeOf(v) : 'Confirm') + '</button>';
     if (!s && k === 'attn' && !segs[v.id]) h += '<button class="b on" data-aione="' + esc(v.id) + '">Ask Gemini</button>';
+    if (!s && r && !r.failed && !segs[v.id] && (r.manIds || sides(r).A.length < 2)) h += '<button class="b" data-man="' + esc(v.id) + '">' + (r.manIds ? 'Edit line-up' : 'Match…') + '</button>';
     if (!s && r && !r.failed) h += '<button class="b" data-seg="' + esc(v.id) + '">' + (segs[v.id] ? 'Edit segment' : 'Segment…') + '</button>';
     h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a></div></div></div>';
     return h;
@@ -1037,20 +1089,22 @@
   function draw() { if (drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
   function paint() {
     var ae = document.activeElement;
-    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
+    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-min' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
     var y = root.scrollTop, h;
     if (!cfg) h = setupHtml();
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
         (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
-        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : fixHtml()) : '');
+        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : sheetOpen.man ? manHtml() : fixHtml()) : '');
     }
     root.innerHTML = h; root.scrollTop = y;
     var vin = root.querySelector('#ccp-vin');
     if (vin) { vin.oninput = function() { vs.text = vin.value; var l = root.querySelector('#ccp-vl'); if (l) l.innerHTML = venueList(); }; if (vs.focus) { vs.focus = false; vin.focus(); } }
     var sin = root.querySelector('#ccp-sin');
     if (sin) { sin.oninput = function() { sheetOpen.q = sin.value; var l = root.querySelector('#ccp-sl'); if (l) l.innerHTML = segList(kit().talents(sin.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; sin.focus(); } }
+    var min = root.querySelector('#ccp-min');
+    if (min) { min.oninput = function() { sheetOpen.q = min.value; var l = root.querySelector('#ccp-ml'); if (l) l.innerHTML = manList(kit().talents(min.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; min.focus(); } }
     var fin = root.querySelector('#ccp-fin');
     if (fin) fin.oninput = function() { sheetOpen.q = fin.value; var l = root.querySelector('#ccp-fl'); if (l) l.innerHTML = fixList(kit().talents(fin.value, 8)); };
     if (fin && sheetOpen && sheetOpen.focus) { sheetOpen.focus = false; fin.focus(); }
@@ -1125,6 +1179,23 @@
       ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side, i) { var j = side.indexOf(fs.raw); if (j < 0 && fs.other) j = side.indexOf(fs.other); if (j >= 0) rc[k][i] = side.slice(0, j).concat(nm, side.slice(j + 1)); }); });
       ssSet(REC_KEY + fs.v, rc); delete attn[fs.v]; sheetOpen = null; draw(); return;
     }
+    if (d.man && show) { var mv = show.videos.filter(function(x) { return x.id === d.man; })[0]; if (mv) manOpen(mv); return; }
+    if (d.mside && sheetOpen) { sheetOpen.at = +d.mside; sheetOpen.focus = true; draw(); return; }
+    if (d.mplus && sheetOpen) { sheetOpen.sides.push([]); sheetOpen.at = sheetOpen.sides.length - 1; sheetOpen.focus = true; draw(); return; }
+    if (d.mrm && sheetOpen) { var mi = +d.mrm.split(':')[0], mid = d.mrm.slice(d.mrm.indexOf(':') + 1); sheetOpen.sides[mi] = sheetOpen.sides[mi].filter(function(x) { return x !== mid; }); draw(); return; }
+    if (d.madd && sheetOpen) { manAdd(d.madd); return; }
+    if (d.mnew && sheetOpen) {
+      var mf = sheetOpen, mname = String(mf.q || '').trim(); if (!mname) return;
+      mf.busy = true; mf.err = ''; draw();
+      post({ action: 'vi_propose', type: 'new_talent', value: mname, entity_id: '', video: mf.v }, function(t) {
+        var r = null; try { r = JSON.parse(t); } catch (e) {}
+        if (sheetOpen !== mf) return;
+        if (!r || !r.ok || !r.id) { mf.busy = false; mf.err = String(r && r.error || (r && r.ok ? 'Sent for approval: not in the library yet' : 'not saved')); draw(); return; }
+        window.__tvIndexKit.reload(function() { mf.busy = false; if (sheetOpen === mf) manAdd(r.id); });
+      });
+      return;
+    }
+    if (d.mok && sheetOpen) { manUse(); return; }
     if (d.seg && show) { var sv = show.videos.filter(function(x) { return x.id === d.seg; })[0]; if (sv) segOpen(sv); return; }
     if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type && yg.ids.length) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
     if (d.segty && sheetOpen) { sheetOpen.type = d.segty; draw(); return; }

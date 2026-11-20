@@ -391,7 +391,7 @@
     function specials(lang) {
       var t = state.tags.title || [];
       return (state.tags.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && t.indexOf(x) < 0; })
-        .map(function(x) { var l = String(labIn('stipulation', x, lang)); return lang === 'ja' || /match$/i.test(l) ? l : l + ' match'; });
+        .map(function(x) { var l = String(labIn('stipulation', x, lang)); return lang === 'ja' || /(match|session)$/i.test(l) ? l : l + ' match'; });   // 2.108.0: "Sparring session" is already a name
     }
     function event(lang, s) {
       if (seg()) return labIn('segment', state.tags.segment[0], lang);

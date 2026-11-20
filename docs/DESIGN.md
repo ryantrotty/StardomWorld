@@ -300,4 +300,5 @@ Home shelf (2.78.0): width 1100. Main page item (19 px) on top; three equal colu
 - TV logger: a SEGMENT · NOT A MATCH tag group (the usual 12/800 gold label and panel chips, single choice) first in the Match step. Finish shows one 17 px #C9D2DC line instead of the result. No new colours or focus looks.
 - StarScope cards: the segment type sits in the gold event line, the people on one line with no "vs", "Segment" in the footer. Segments chip after Tournaments on All matches, same chip style.
 - iPhone card check: "Looks like a segment" box in the card's existing error-box shape with a #6B5A22 edge and #C9D2DC text (the gold-tint edge already used for suggestion pills); Segment… and Edit segment are the card's normal buttons; the segment sheet reuses the fix-a-name sheet (type buttons: chosen = orange fill).
+- iPhone card check, Match… (2.108.0): the line-up sheet reuses the segment sheet's parts: a side button per side (the side being added to = orange fill, "· adding here"), the people as the sheet's name rows (Tap to remove), the card's VS divider between sides, one search box and option list, Use this line-up (orange fill). No new colours.
 
