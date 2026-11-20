@@ -104,6 +104,13 @@
   function setOf(id, name, yearHint) {
     var n = half(name).replace(ENG_MARK, ''), r = { id: id, name: name, date: null, show: n, venue: null }, d;
     if ((d = /^(\d{4})\/(\d{1,2})\/(\d{1,2})[_\s]*(.*)$/.exec(n))) { r.date = iso(d[1], d[2], d[3]); r.show = d[4].trim(); }
+    // 2.107.3: other promotions' sets, "2024年2月23日新日本プロレス『THE NEW BEGINNING in SAPPORO』北海道立総合体育センター 北海きたえーる":
+    // the full date, then the show in 『』 and the venue after it.
+    else if ((d = /^\s*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*(.*)$/.exec(n))) {
+      r.date = iso(d[1], d[2], d[3]);
+      var qj = /『([^』]+)』\s*(.*)$/.exec(d[4]);
+      if (qj) { r.show = qj[1].trim(); r.venue = qj[2].trim() || null; } else r.show = d[4].trim();
+    }
     else if ((d = /^\s*(\d{1,2})\s*[・.\/]\s*(\d{1,2})\s*(.*)$/.exec(n))) {
       var rest = d[3], q = /『([^』]+)』\s*(.*)$/.exec(rest);
       if (q) { r.show = q[1].trim(); r.venue = q[2].replace(/[（(]\d{4}\/\d{1,2}\/\d{1,2}[）)]\s*$/, '').trim() || null; } else r.show = rest.trim();

@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.108.1
+
+- **Fix: iPhone card check, the venue didn't stay set.** Applying a venue (from the AI answer or Pick from list) saved it to the sheet, but card check kept it only in the phone's storage, and a write that didn't fit there failed without a word, so the card went back to "Venue not read". The venue is now also kept in memory for the session, and a write that doesn't fit first clears the lists card check reads again anyway (other shows' pages, the year lists, then the StarScope list) and tries again. If it still won't fit, the venue line says so.
+- **Other promotions' show lines are read.** Sets named like `2024年2月23日新日本プロレス『THE NEW BEGINNING in SAPPORO』北海道立総合体育センター 北海きたえーる` now give their date, show name and venue (they read as "Date not read" / "Venue not read"). A show page kept from earlier picks the venue up the next time it opens. Also used by the TV's match page reader.
+- Built on 2.108.0, so Match… (type a line-up yourself) stays: 2.107.3 was built from main and its publish had taken Match… off the phone. 2.107.3 is replaced by this version.
+- iPhone card check: **published to GitHub Pages** (cc.js, videoindex.js, indexpanel.js from 2.108.0). No sheet script change.
+
 ## 2.108.0
 
 - **iPhone card check: type a line-up yourself.** A card the site gives no line-up for (a trainee sparring session, a debut, a match with only a title) now has **Match…** beside Segment…. It opens a sheet with Side 1 and Side 2 (+ Side for up to four): search the library and tap to add, or type a name and **Add as a new wrestler** (added to the library at once, as with fixing a name). Adding to an empty side moves on to the next empty side, so a singles card is two taps. **Use this line-up** makes the card ready; Confirm saves it like any read card. The card shows "People · entered by you" and **Edit line-up** until it's saved.
