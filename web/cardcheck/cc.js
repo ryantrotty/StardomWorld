@@ -289,7 +289,7 @@
       if (!yl || yl.y !== S.year) yearOpen(S.year);
       // Newest show first by its date (the site lists them by when each was put up).
       var dOf = function(x) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, S.year) : null; return (sl && sl.date) || ''; };
-      h += yl.items.map(function(x, i) { return { x: x, d: dOf(x), i: i }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; })
+      h += yl.items.filter(function(x) { return !isComment(x.name); }).map(function(x, i) { return { x: x, d: dOf(x), i: i }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; })
         .map(function(o) { return showTile(o.x, 'y' + S.year); }).join('');
       if (yl.err) h += '<div class="er">Couldn\'t read the list (' + esc(yl.err) + ')</div><button class="b on" data-more="1">Try again</button>';
       else if (yl.busy) h += '<div class="ld">Reading the site\'s list…</div>';
@@ -326,7 +326,7 @@
   }
   function openShow(set, from) {
     S.screen = 'show'; S.set = String(set); S.from = from || S.from || 'started';
-    show = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
+    show = null; blank = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
     saveState(); draw(); root.scrollTop = 0;
     var c = lsGet(SET_KEY + set);
     if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) {
@@ -346,14 +346,18 @@
         return s;
       }).then(function(s) {
         // What the phone was sent, kept on screen (2.91.4), so a different page layout can be seen and read.
+        if (!s.videos.length && (s.comments || isComment(s.line))) { if (S.set === String(set)) { blank = { set: String(set), comments: true, line: s.line }; draw(); } return; }
         if (!s.videos.length) { report = pageReport('Show page /set/' + set, html, new DOMParser().parseFromString(html, 'text/html')); var L = lastSetLook || {}; diag = 'Show ' + set + ': ' + got + ' · ' + (L.len || 0) + ' characters · "' + String(L.title || '').slice(0, 60) + '" · ' + (L.articles || 0) + ' article cards · ' + (L.setLinks || 0) + ' match links · ' + (L.scripts || 0) + ' scripts · video links: ' + ((L.contentLinks || []).join(' ') || 'none'); throw new Error('no matches on the page'); }
         if (S.set !== String(set)) return;
         show = s; lsSet(SET_KEY + set, s); draw();
-      }).catch(function(e) { if (S.set === String(set)) note('Couldn\'t read the show page (' + (e && e.message || e) + ')', true); });
+      }).catch(function(e) { if (S.set === String(set)) { blank = { set: String(set) }; note('Couldn\'t read the show page (' + (e && e.message || e) + ')', true); } });
     };
     var wait = lastFetch + GAP - Date.now();
     if (wait > 0) setTimeout(go, wait); else go();
   }
+  // 2.107.3: a show page that opened with nothing to log (a backstage-comments set, or a page that couldn't be read):
+  // said on screen with a way on, in place of "Reading the show page…" for good.
+  var blank = null;
   function fromApi(set, s) {
     return new Promise(function(ok, bad) {
       var go = function() {
@@ -361,7 +365,9 @@
         fetch('/user_api/set/' + set + '/contents?size=60', { credentials: 'include', headers: { Accept: 'application/json' } })
           .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(function(list) {
-            var vids = (Array.isArray(list) ? list : []).filter(function(x) { return x && x.type === 'single' && !isComment(x.display_name); }).map(function(x) {
+            var all = (Array.isArray(list) ? list : []).filter(function(x) { return x && x.type === 'single'; });
+            s.comments = all.filter(function(x) { return isComment(x.display_name); }).length;
+            var vids = all.filter(function(x) { return !isComment(x.display_name); }).map(function(x) {
               return { id: String(x.id), t: String(x.display_name || '').trim(), th: (x.thumbnails && (x.thumbnails.lg || x.thumbnails.md)) || '', d: String(x.description || '') };
             });
             var so = window.__tvSetOrder, ord = so ? so.forSet(set, vids.map(function(v) { return { id: Number(v.id), t: v.t }; })) : null;
@@ -626,6 +632,11 @@
     return h;
   }
   function showHtml() {
+    if (!show && blank && blank.set === S.set) {
+      var nb = nextShow();
+      return '<div class="ld">' + (blank.comments ? 'This set is backstage comments only: no matches to log.' : 'Nothing to show for this one.') + '</div>' +
+        (nb ? '<button class="b on wide" data-go="' + esc(nb.set) + '" data-from="' + esc(S.from) + '">Next: ' + esc(nb.name) + '</button>' : '');
+    }
     if (!show) return '<div class="ld">Reading the show page…</div>';
     var cardsH = show.videos.map(function(v, i) { return needsCard(v) ? cardHtml(v, i) : ''; }).join('');
     return showHead() + endHtml() + (cardsH ? '<div class="gl" style="margin:14px 0 8px">' + (showAllCards ? 'Every match' : 'To look at') + '</div>' + cardsH : '');
@@ -942,7 +953,7 @@
         .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
     }
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
-    var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
+    var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { if (isComment(x.name)) return false; var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
     var nx = rest[0];
     if (!nx) return null;
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+nx.set, nx.name, null) : { show: nx.name };

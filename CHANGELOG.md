@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.108.1
+
+- **Fix (iPhone card check): backstage-comment sets no longer stall on "Reading the show page…".** Sets such as 10・20『STARDOM in FUJI 2024 Oct.』BSコメント/Subtitled in English hold only backstage comment videos, so card check found no matches, showed the page report and stayed on "Reading the show page…" for good. Now:
+  - Year lists leave out sets whose name is a comments set (the same rule that already drops comment videos from a card), and **Next:** skips over them. No extra requests: it's read from the names the list already has.
+  - Opening one anyway (from an old link or the Started list) says "This set is backstage comments only: no matches to log." with the **Next:** button, and no page report.
+  - Any other show page that can't be read now ends on "Nothing to show for this one." with **Next:**, under the error message, instead of "Reading the show page…".
+- iPhone card check: **published to GitHub Pages.**
+
 ## 2.108.0
 
 - **iPhone card check: type a line-up yourself.** A card the site gives no line-up for (a trainee sparring session, a debut, a match with only a title) now has **Match…** beside Segment…. It opens a sheet with Side 1 and Side 2 (+ Side for up to four): search the library and tap to add, or type a name and **Add as a new wrestler** (added to the library at once, as with fixing a name). Adding to an empty side moves on to the next empty side, so a singles card is two taps. **Use this line-up** makes the card ready; Confirm saves it like any read card. The card shows "People · entered by you" and **Edit line-up** until it's saved.
