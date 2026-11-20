@@ -34,7 +34,22 @@
   }
 
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
-  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  // 2.107.3: a full phone storage used to fail without a word (the show's venue was saved to the sheet but not kept on
+  // the phone, so the card still read "Venue not read"). Now a write that doesn't fit first drops the lists that are
+  // read again anyway (other shows' pages, the year lists, then the StarScope list) and tries once more.
+  var lsFull = false;
+  function lsSet(k, v) {
+    var put = function() { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); };
+    try { put(); return true; } catch (e) {}
+    try {
+      var drop = function(re) { for (var i = localStorage.length - 1; i >= 0; i--) { var x = localStorage.key(i); if (x !== k && re.test(x || '')) localStorage.removeItem(x); } };
+      drop(new RegExp('^(' + SET_KEY + '(?!' + (window.__ccSetNow || 'x') + '$)|' + YEAR_KEY + ')'));
+      try { put(); return true; } catch (e2) {}
+      if (k !== CARDS_KEY) { drop(new RegExp('^' + CARDS_KEY + '$')); put(); return true; }
+    } catch (e3) {}
+    lsFull = true;
+    return false;
+  }
   function ssGet(k) { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function ssSet(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -289,7 +304,7 @@
       if (!yl || yl.y !== S.year) yearOpen(S.year);
       // Newest show first by its date (the site lists them by when each was put up).
       var dOf = function(x) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, S.year) : null; return (sl && sl.date) || ''; };
-      h += yl.items.filter(function(x) { return !isComment(x.name); }).map(function(x, i) { return { x: x, d: dOf(x), i: i }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; })
+      h += yl.items.map(function(x, i) { return { x: x, d: dOf(x), i: i }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; })
         .map(function(o) { return showTile(o.x, 'y' + S.year); }).join('');
       if (yl.err) h += '<div class="er">Couldn\'t read the list (' + esc(yl.err) + ')</div><button class="b on" data-more="1">Try again</button>';
       else if (yl.busy) h += '<div class="ld">Reading the site\'s list…</div>';
@@ -326,12 +341,16 @@
   }
   function openShow(set, from) {
     S.screen = 'show'; S.set = String(set); S.from = from || S.from || 'started';
-    show = null; blank = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
+    window.__ccSetNow = String(set);
+    show = null; recs = {}; attn = {}; readQ = []; diag = ''; openCards = {}; showAllCards = false; vs = { mode: 'view', text: '', busy: '', msg: '', err: '' }; batch = null;
     saveState(); draw(); root.scrollTop = 0;
     var c = lsGet(SET_KEY + set);
     if (c && c.videos && c.videos.length && Date.now() - (c.t || 0) < SET_AGE) {
       var sl0 = window.__tvVixSetOf && c.line ? window.__tvVixSetOf(+set, c.line, null) : null;   // 2.96.5: the date read again (a typo'd month fixed)
-      if (sl0 && sl0.date && sl0.date !== c.date) { c.date = sl0.date; lsSet(SET_KEY + set, c); }
+      var ch = false;
+      if (sl0 && sl0.date && sl0.date !== c.date) { c.date = sl0.date; ch = true; }
+      if (sl0 && sl0.venue && !c.venue) { c.venue = sl0.venue; ch = true; }   // 2.107.3: "2024年2月23日…『…』venue" lines
+      if (ch) lsSet(SET_KEY + set, c);
       show = c; draw(); return;
     }
     var go = function() {
@@ -346,18 +365,14 @@
         return s;
       }).then(function(s) {
         // What the phone was sent, kept on screen (2.91.4), so a different page layout can be seen and read.
-        if (!s.videos.length && (s.comments || isComment(s.line))) { if (S.set === String(set)) { blank = { set: String(set), comments: true, line: s.line }; draw(); } return; }
         if (!s.videos.length) { report = pageReport('Show page /set/' + set, html, new DOMParser().parseFromString(html, 'text/html')); var L = lastSetLook || {}; diag = 'Show ' + set + ': ' + got + ' · ' + (L.len || 0) + ' characters · "' + String(L.title || '').slice(0, 60) + '" · ' + (L.articles || 0) + ' article cards · ' + (L.setLinks || 0) + ' match links · ' + (L.scripts || 0) + ' scripts · video links: ' + ((L.contentLinks || []).join(' ') || 'none'); throw new Error('no matches on the page'); }
         if (S.set !== String(set)) return;
         show = s; lsSet(SET_KEY + set, s); draw();
-      }).catch(function(e) { if (S.set === String(set)) { blank = { set: String(set) }; note('Couldn\'t read the show page (' + (e && e.message || e) + ')', true); } });
+      }).catch(function(e) { if (S.set === String(set)) note('Couldn\'t read the show page (' + (e && e.message || e) + ')', true); });
     };
     var wait = lastFetch + GAP - Date.now();
     if (wait > 0) setTimeout(go, wait); else go();
   }
-  // 2.107.3: a show page that opened with nothing to log (a backstage-comments set, or a page that couldn't be read):
-  // said on screen with a way on, in place of "Reading the show page…" for good.
-  var blank = null;
   function fromApi(set, s) {
     return new Promise(function(ok, bad) {
       var go = function() {
@@ -365,9 +380,7 @@
         fetch('/user_api/set/' + set + '/contents?size=60', { credentials: 'include', headers: { Accept: 'application/json' } })
           .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(function(list) {
-            var all = (Array.isArray(list) ? list : []).filter(function(x) { return x && x.type === 'single'; });
-            s.comments = all.filter(function(x) { return isComment(x.display_name); }).length;
-            var vids = all.filter(function(x) { return !isComment(x.display_name); }).map(function(x) {
+            var vids = (Array.isArray(list) ? list : []).filter(function(x) { return x && x.type === 'single' && !isComment(x.display_name); }).map(function(x) {
               return { id: String(x.id), t: String(x.display_name || '').trim(), th: (x.thumbnails && (x.thumbnails.lg || x.thumbnails.md)) || '', d: String(x.description || '') };
             });
             var so = window.__tvSetOrder, ord = so ? so.forSet(set, vids.map(function(v) { return { id: Number(v.id), t: v.t }; })) : null;
@@ -485,57 +498,6 @@
     var r = recs[v.id], g = segs[v.id] || segGuess(v, r) || { type: '', ids: [] };
     sheetOpen = { seg: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), type: g.type, ids: g.ids.slice(), q: '' }; draw();
   }
-  // A line-up you type (2.108.0): for a card the site gives no line-up for (a sparring session, a debut), or one you
-  // entered before. Sides of wrestlers from the library, or a new wrestler under the name you type. Used as the read
-  // line-up, so Confirm saves it like any other card.
-  function manOpen(v) {
-    var r = recs[v.id], K = kit(), cur = [];
-    if (r && r.manIds) cur = r.manIds.map(function(x) { return x.slice(); });
-    else if (r && !r.failed && K) cur = sides(r).A.map(function(names) { return names.map(function(n) { return K.resolve(n); }).filter(Boolean); });
-    while (cur.length < 2) cur.push([]);
-    var at = 0; cur.some(function(x, i) { if (!x.length) { at = i; return true; } return false; });
-    sheetOpen = { man: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), sides: cur, at: at, q: '', err: '', busy: false }; draw();
-  }
-  function manHtml() {
-    var f = sheetOpen, K = kit(), L = K && f.q ? K.talents(f.q, 6) : [];
-    var h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:4px">Match: who was in it</div><div class="sub" style="color:#9AA6B4;margin-bottom:8px">' + esc(f.title) + '</div>';
-    f.sides.forEach(function(ids, i) {
-      if (i) h += '<div class="vs">VS</div>';
-      h += '<div class="bt" style="margin-top:4px"><button class="b' + (f.at === i ? ' on' : '') + '" data-mside="' + i + '">Side ' + (i + 1) + (f.at === i ? ' · adding here' : '') + '</button></div>';
-      ids.forEach(function(id) { h += '<button class="pp" data-mrm="' + i + ':' + esc(id) + '"><span class="mk">✓</span><span><span class="n">' + esc(K ? K.nameOf(id) : id) + '</span><small>Tap to remove</small></span></button>'; });
-      if (!ids.length) h += '<div class="sub" style="color:#9AA6B4">No one yet</div>';
-    });
-    if (f.sides.length < 4) h += '<div class="bt"><button class="b" data-mplus="1">+ Side</button></div>';
-    h += '<input class="tx" id="ccp-min" type="text" autocomplete="off" placeholder="Add to side ' + (f.at + 1) + '" value="' + esc(f.q) + '" style="margin-top:8px"><div id="ccp-ml">' + manList(L) + '</div>';
-    if (f.err) h += '<div class="msg er">' + esc(f.err) + '</div>';
-    if (f.busy) h += '<div class="msg">Adding…</div>';
-    var ok = f.sides.filter(function(x) { return x.length; }).length >= 2;
-    h += '<div class="bt"><button class="b on wide" data-mok="1"' + (ok && !f.busy ? '' : ' disabled') + '>Use this line-up</button><button class="b" data-close="1">Cancel</button></div></div>';
-    return h;
-  }
-  function manList(L) {
-    var f = sheetOpen, taken = [].concat.apply([], f.sides), h = '';
-    L.filter(function(t) { return taken.indexOf(t.id) < 0; }).forEach(function(t) { h += '<button class="opt" data-madd="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; });
-    var typed = String(f.q || '').trim();
-    if (typed && !badAlias(typed) && !L.some(function(t) { return String(t.name).toLowerCase() === typed.toLowerCase(); }))
-      h += '<button class="opt" data-mnew="1">' + esc(typed) + '<small>Add as a new wrestler</small></button>';
-    return h;
-  }
-  // A singles card fills fastest: adding to an empty side moves on to the next empty side.
-  function manAdd(id) {
-    var f = sheetOpen, side = f.sides[f.at], was = side.length;
-    if ([].concat.apply([], f.sides).indexOf(id) < 0) side.push(id);
-    if (!was) f.sides.some(function(x, i) { if (i !== f.at && !x.length) { f.at = i; return true; } return false; });
-    f.q = ''; f.focus = true; draw();
-  }
-  function manUse() {
-    var f = sheetOpen, K = kit(), r = recs[f.v]; if (!r || !K) return;
-    var ids = f.sides.filter(function(x) { return x.length; }), names = ids.map(function(x) { return x.map(function(id) { return K.nameOf(id); }); });
-    r.sides_en = names; r.sides_ja = names.map(function(x) { return x.slice(); }); r.manIds = ids;
-    ['roles_en', 'roles_ja', 'teams_en', 'teams_ja'].forEach(function(k) { delete r[k]; });
-    ssSet(REC_KEY + f.v, r); delete attn[f.v]; delete sendFail[f.v]; segSet(f.v, null);
-    sheetOpen = null; draw();
-  }
   function cardHtml(v, i) {
     var r = recs[v.id], s = status(v), k = cls(v), title = mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t);
     var chip = k === 'renumber' ? '<span class="chp a">Saved as match ' + esc(map[v.id].n) + '</span>' : s ? '<span class="chp ' + (s.k === 'watched' ? 'w' : 't') + '">' + esc(s.label) + '</span>' : k === 'attn' ? '<span class="chp a">Needs a look</span>' : k === 'unread' ? '<span class="chp r">' + (reading === v.id ? 'Reading…' : 'Not read yet') + '</span>' : '';
@@ -549,14 +511,13 @@
       if (sg) h += '<div class="gl">Segment · ' + esc(segLabel(sg.type)) + '</div>' + sg.ids.map(function(id) { return '<div class="pp"><span class="mk">✓</span><span class="n">' + esc(K0 ? K0.nameOf(id) : id) + '</span></div>'; }).join('') +
         '<div class="rw"><span class="lb">Result</span><span class="vl">None: segments don\'t count as matches</span></div>';
       else if (gs && gs.type && gs.ids.length) h += '<div class="er" style="color:#C9D2DC;border-color:#6B5A22">Looks like a segment: ' + esc(segLabel(gs.type)) + ' · ' + esc(gs.ids.map(function(id) { return K0.nameOf(id); }).join(', ')) + '<div class="bt"><button class="b on" data-segyes="' + esc(v.id) + '">Yes, a segment</button><button class="b" data-seg="' + esc(v.id) + '">Change</button></div></div>';
-      if (!sg) h += '<div class="gl">People' + (r.manIds ? ' · entered by you' : '') + '</div>' + peopleHtml(v, r) +
+      if (!sg) h += '<div class="gl">People</div>' + peopleHtml(v, r) +
         '<div class="rw"><span class="lb">Match type</span><span class="vl">' + esc(kindOf(r) || '–') + '</span></div>' +
         (sug.length ? '<div class="rw"><span class="lb">Suggested</span><span class="vl">' + sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') + '</span></div>' : '');
     }
     h += '<div class="bt">';
     if ((!s && k === 'ready') || k === 'renumber') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : k === 'renumber' ? 'Save as match ' + placeOf(v) : 'Confirm') + '</button>';
     if (!s && k === 'attn' && !segs[v.id]) h += '<button class="b on" data-aione="' + esc(v.id) + '">Ask Gemini</button>';
-    if (!s && r && !r.failed && !segs[v.id] && (r.manIds || sides(r).A.length < 2)) h += '<button class="b" data-man="' + esc(v.id) + '">' + (r.manIds ? 'Edit line-up' : 'Match…') + '</button>';
     if (!s && r && !r.failed) h += '<button class="b" data-seg="' + esc(v.id) + '">' + (segs[v.id] ? 'Edit segment' : 'Segment…') + '</button>';
     h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a></div></div></div>';
     return h;
@@ -567,8 +528,15 @@
     if (show) show.videos.some(function(v) { var r = recs[v.id], s0 = r && r.shows && r.shows[0]; if (s0 && s0.venue) { raw = s0.venue; return true; } return false; });
     return raw;
   }
+  // The show's venue as set here: kept in memory too, so it shows even when the phone's storage won't take it.
+  var venMem = {};
+  function venKeep(id, name) {
+    venMem[S.set] = { id: id, name: name };
+    if (!lsSet('ccPhoneVen' + S.set, { id: id, name: name })) vs.msg = 'Saved to the sheet. The phone\'s storage is full, so it\'s kept here until card check closes.';
+  }
+  function venMine() { return venMem[S.set] || lsGet('ccPhoneVen' + S.set); }
   function venueNow() {
-    var mine = lsGet('ccPhoneVen' + S.set); if (mine && mine.name) return { name: mine.name, how: 'set for the show' };
+    var mine = venMine(); if (mine && mine.name) return { name: mine.name, how: 'set for the show' };
     var sv = null; Object.keys(map).some(function(k) { var c = map[k]; if (String(c.vs || c.sid) === S.set && c.vn) { sv = c.vn; return true; } return false; });
     if (sv) return { name: sv, how: 'set for the show' };
     var K = kit(), raw = rawVenue(), m = K && raw ? K.venue(raw) : null;
@@ -595,8 +563,8 @@
       var r = null; try { r = JSON.parse(t); } catch (e) {}
       vs.busy = '';
       if (!r || !r.ok) { vs.err = String(r && r.error || 'not saved'); draw(); return; }
-      lsSet('ccPhoneVen' + S.set, { id: id, name: name });
-      vs.mode = 'view'; vs.msg = 'Set for every match on this show';
+      vs.msg = 'Set for every match on this show'; venKeep(id, name);
+      vs.mode = 'view';
       if (window.__tvIndexKit) window.__tvIndexKit.reload();
       cards(); draw();
     });
@@ -632,11 +600,6 @@
     return h;
   }
   function showHtml() {
-    if (!show && blank && blank.set === S.set) {
-      var nb = nextShow();
-      return '<div class="ld">' + (blank.comments ? 'This set is backstage comments only: no matches to log.' : 'Nothing to show for this one.') + '</div>' +
-        (nb ? '<button class="b on wide" data-go="' + esc(nb.set) + '" data-from="' + esc(S.from) + '">Next: ' + esc(nb.name) + '</button>' : '');
-    }
     if (!show) return '<div class="ld">Reading the show page…</div>';
     var cardsH = show.videos.map(function(v, i) { return needsCard(v) ? cardHtml(v, i) : ''; }).join('');
     return showHead() + endHtml() + (cardsH ? '<div class="gl" style="margin:14px 0 8px">' + (showAllCards ? 'Every match' : 'To look at') + '</div>' + cardsH : '');
@@ -933,12 +896,12 @@
           go();
         });
       } else if (x.k === 'venue') {
-        post({ action: 'vi_show_venue', show: S.set, venue: x.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t) { if (after(t) && JSON.parse(t).ok) lsSet('ccPhoneVen' + S.set, { id: x.id, name: x.name }); next(); });
+        post({ action: 'vi_show_venue', show: S.set, venue: x.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t) { var r1 = after(t); if (r1 && r1.ok) venKeep(x.id, x.name); next(); });
       } else {
         post({ action: 'vi_propose', type: 'new_venue', value: x.en, entity_id: x.ja || (hasJa(rawVenue()) ? rawVenue() : ''), video: show.videos[0] ? show.videos[0].id : '' }, function(t) {
           var r = after(t);
           if (!r || !r.ok || !r.id) { next(); return; }
-          window.__tvIndexKit.reload(function() { post({ action: 'vi_show_venue', show: S.set, venue: r.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t2) { var r2 = null; try { r2 = JSON.parse(t2); } catch (e) {} if (r2 && r2.ok) lsSet('ccPhoneVen' + S.set, { id: r.id, name: x.en }); next(); }); });
+          window.__tvIndexKit.reload(function() { post({ action: 'vi_show_venue', show: S.set, venue: r.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t2) { var r2 = null; try { r2 = JSON.parse(t2); } catch (e) {} if (r2 && r2.ok) venKeep(r.id, x.en); else fail.push('venue: ' + (r2 && r2.error || 'no reply')); next(); }); });
         });
       }
     };
@@ -953,7 +916,7 @@
         .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
     }
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
-    var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { if (isComment(x.name)) return false; var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
+    var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
     var nx = rest[0];
     if (!nx) return null;
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+nx.set, nx.name, null) : { show: nx.name };
@@ -966,7 +929,7 @@
   // "Saving to the sheet…"; one the sheet turns down goes back to "needs a look" with its reason.
   var sending = {}, sendFail = {};
   function showVenueId() {
-    var mine = lsGet('ccPhoneVen' + S.set); if (mine && mine.id) return mine.id;
+    var mine = venMine(); if (mine && mine.id) return mine.id;
     var K = kit(), raw = rawVenue(), m = K && raw ? K.venue(raw) : null;
     return m ? m.id : '';
   }
@@ -1100,22 +1063,20 @@
   function draw() { if (drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
   function paint() {
     var ae = document.activeElement;
-    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-min' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
+    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
     var y = root.scrollTop, h;
     if (!cfg) h = setupHtml();
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
         (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
-        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : sheetOpen.man ? manHtml() : fixHtml()) : '');
+        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : fixHtml()) : '');
     }
     root.innerHTML = h; root.scrollTop = y;
     var vin = root.querySelector('#ccp-vin');
     if (vin) { vin.oninput = function() { vs.text = vin.value; var l = root.querySelector('#ccp-vl'); if (l) l.innerHTML = venueList(); }; if (vs.focus) { vs.focus = false; vin.focus(); } }
     var sin = root.querySelector('#ccp-sin');
     if (sin) { sin.oninput = function() { sheetOpen.q = sin.value; var l = root.querySelector('#ccp-sl'); if (l) l.innerHTML = segList(kit().talents(sin.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; sin.focus(); } }
-    var min = root.querySelector('#ccp-min');
-    if (min) { min.oninput = function() { sheetOpen.q = min.value; var l = root.querySelector('#ccp-ml'); if (l) l.innerHTML = manList(kit().talents(min.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; min.focus(); } }
     var fin = root.querySelector('#ccp-fin');
     if (fin) fin.oninput = function() { sheetOpen.q = fin.value; var l = root.querySelector('#ccp-fl'); if (l) l.innerHTML = fixList(kit().talents(fin.value, 8)); };
     if (fin && sheetOpen && sheetOpen.focus) { sheetOpen.focus = false; fin.focus(); }
@@ -1190,23 +1151,6 @@
       ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side, i) { var j = side.indexOf(fs.raw); if (j < 0 && fs.other) j = side.indexOf(fs.other); if (j >= 0) rc[k][i] = side.slice(0, j).concat(nm, side.slice(j + 1)); }); });
       ssSet(REC_KEY + fs.v, rc); delete attn[fs.v]; sheetOpen = null; draw(); return;
     }
-    if (d.man && show) { var mv = show.videos.filter(function(x) { return x.id === d.man; })[0]; if (mv) manOpen(mv); return; }
-    if (d.mside && sheetOpen) { sheetOpen.at = +d.mside; sheetOpen.focus = true; draw(); return; }
-    if (d.mplus && sheetOpen) { sheetOpen.sides.push([]); sheetOpen.at = sheetOpen.sides.length - 1; sheetOpen.focus = true; draw(); return; }
-    if (d.mrm && sheetOpen) { var mi = +d.mrm.split(':')[0], mid = d.mrm.slice(d.mrm.indexOf(':') + 1); sheetOpen.sides[mi] = sheetOpen.sides[mi].filter(function(x) { return x !== mid; }); draw(); return; }
-    if (d.madd && sheetOpen) { manAdd(d.madd); return; }
-    if (d.mnew && sheetOpen) {
-      var mf = sheetOpen, mname = String(mf.q || '').trim(); if (!mname) return;
-      mf.busy = true; mf.err = ''; draw();
-      post({ action: 'vi_propose', type: 'new_talent', value: mname, entity_id: '', video: mf.v }, function(t) {
-        var r = null; try { r = JSON.parse(t); } catch (e) {}
-        if (sheetOpen !== mf) return;
-        if (!r || !r.ok || !r.id) { mf.busy = false; mf.err = String(r && r.error || (r && r.ok ? 'Sent for approval: not in the library yet' : 'not saved')); draw(); return; }
-        window.__tvIndexKit.reload(function() { mf.busy = false; if (sheetOpen === mf) manAdd(r.id); });
-      });
-      return;
-    }
-    if (d.mok && sheetOpen) { manUse(); return; }
     if (d.seg && show) { var sv = show.videos.filter(function(x) { return x.id === d.seg; })[0]; if (sv) segOpen(sv); return; }
     if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type && yg.ids.length) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
     if (d.segty && sheetOpen) { sheetOpen.type = d.segty; draw(); return; }
