@@ -10,28 +10,6 @@
   if (!H || !H.starCards || !H.scopeOn || !H.scopeOn()) return;
   var SHEET = false; try { SHEET = !!(H.videoIndexOn && H.videoIndexOn()); } catch (e) {}
   window.__tvStarCards = true;
-  // 2.106.3, your build: when the site answers "page not found", show on screen (it stays) the address it was asked for,
-  // the pages before it in this tab, and the last StarScope card opened, so a bad link can be photographed and traced.
-  if (SHEET) (function() {
-    var TK = 'tvNavTrail1', trail = [];
-    try { trail = JSON.parse(sessionStorage.getItem(TK) || '[]') || []; } catch (e) { trail = []; }
-    trail.push({ u: location.href, r: document.referrer || '', t: new Date().toISOString().slice(11, 19) });
-    trail = trail.slice(-6);
-    try { sessionStorage.setItem(TK, JSON.stringify(trail)); } catch (e) {}
-    function check() {
-      var b = document.body; if (!b || document.getElementById('tv-nf-dbg')) return;
-      if ((b.innerText || '').indexOf('\u304a\u63a2\u3057\u306e\u30da\u30fc\u30b8\u304c\u898b\u5f53\u305f\u308a\u307e\u305b\u3093') < 0 && !/page (you|was) .*not found|404/i.test(document.title)) return;
-      var last = null; try { last = JSON.parse(sessionStorage.getItem('tvScopeLastClick') || 'null'); } catch (e) {}
-      var d = document.createElement('div'); d.id = 'tv-nf-dbg';
-      d.style.cssText = 'position:fixed;left:40px;right:40px;bottom:30px;z-index:2147483000;background:#0B1118;border:2px solid #F4C242;border-radius:10px;padding:14px 18px;font:600 16px/1.45 monospace;color:#fff;white-space:pre-wrap;word-break:break-all';
-      d.textContent = 'NOT FOUND (debug, your build)\nthis page: ' + location.href + '\nreferrer: ' + (document.referrer || '-') +
-        '\nlast StarScope card: ' + (last ? last.h + '  (' + last.k + ', ' + last.t + ')' : '-') +
-        '\ntrail:\n' + trail.map(function(x) { return '  ' + x.t + '  ' + x.u; }).join('\n');
-      b.appendChild(d);
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', check); else check();
-    setTimeout(check, 1500);
-  })();
   var KEY = 'tvVixCardsV4', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) map = c.map; } catch (e) {}
@@ -493,7 +471,7 @@
     // Newest first: the latest fully logged show leads, wide, with its whole running order.
     var feat = ss === 'date' ? shown.filter(function(s) { return s.complete; })[0] : null;
     if (feat) h += featured(feat);
-    h += '<div class="sgr">' + shown.filter(function(s) { return s !== feat; }).map(showCard).join('') + '</div>';
+    h += '<div class="sgr">' + shown.filter(function(s) { return s !== feat; }).map(function(s) { return showCard(s); }).join('')   /* 2.107.2: map's index was taken as the link */ + '</div>';
     return h;
   }
   // ---- Log next (2.67.0): shows you've watched but not finished logging, from the sheet's video log (vi_suggest).
@@ -816,7 +794,6 @@
     if (!k) return;
     if (k.charAt(0) === 'v') {
       if (el.getAttribute('data-auto')) { try { sessionStorage.setItem('tvVixAuto', '1'); } catch (e) {} }   // Log next: the logger opens on the video (assets/indexpanel.js)
-      try { sessionStorage.setItem('tvScopeLastClick', JSON.stringify({ h: el.getAttribute('href'), k: el.className + ' ' + k, t: new Date().toISOString().slice(11, 19) })); } catch (e) {}   // 2.106.3 debug
       location.href = el.getAttribute('href'); return;
     }
     if ((m = /^T(\w+)$/.exec(k))) { home.tab = m[1]; homeRender(k); return; }

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.107.2
+
+- **Fix: StarScope Shows cards opened "page not found".** On the Shows page (all years and each year), every show card after the first linked to `stardom-world.com/1`, `/2`, `/7`... instead of its first match: the card list was built with `map(showCard)`, which passed each card's position in the list as its link. Each card now opens its first logged match again. Found with the 2.107.1 panel, which is removed again.
+
 ## 2.107.1
 
 - **Debug (your build): "page not found" shows where it came from.** Some StarScope show cards (2024 shows, among others) open the site's "page not found" while the same videos play from search and from a plain link. When the site answers "page not found", a panel stays on screen with the address asked for, the referrer, the last StarScope card opened (its link and kind) and the last six pages in this tab, so it can be photographed and the bad link traced. Your build only; nothing changes elsewhere.
