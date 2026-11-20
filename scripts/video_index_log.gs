@@ -864,7 +864,7 @@ function viCards(b) {
   // (High Speed) is already said by the title. Same rules as specials() in assets/indexpanel.js.
   function specials(t, lang) {
     return (t.stipulation || []).filter(function(x) { return !/^(gauntlet|royal|rumble|handicap)$/.test(x) && (t.title || []).indexOf(x) < 0; })
-      .map(function(x) { var l = String(lab('stipulation', x, lang)); return lang === 'ja' || /match$/i.test(l) ? l : l + ' match'; });
+      .map(function(x) { var l = String(lab('stipulation', x, lang)); return lang === 'ja' || /(match|session)$/i.test(l) ? l : l + ' match'; });   // 2.108.0: "Sparring session" is already a name
   }
   function event(m, t, s, lang) {
     if (t.segment) return lab('segment', t.segment[0], lang);
