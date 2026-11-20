@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.109.0
+
+- **New Horizons era page, StarScope version** (new `assets/eranew.js`, era 5's new `scope` block in `eras.json`). Only picks are written by hand now; everything else is looked up when the page opens.
+  - **Title reigns from the lineage files (every build):** the featured reign's holder, reign number, days and defences are read, not typed, and every other reign in the era is a pill, newest first, with the champion now marked NOW (Suzu Suzuki, Hanan, Yuna Mizumori, AZM & Miyu Amasaki today). Artist and NEW BLOOD get slim cards with their pills.
+  - **Factions from factions.json (every build):** HATE, Neo Genesis, Mi Vida Loca and Cosmic Angels with their members, formed and disbanded years. The old stale lines (Suzu in Neo Genesis, Tam in Cosmic Angels, EXV as current) are gone, and the fallback rivalries and shows were corrected too (Mei Seira vs Suzu and Mi Vida Loca vs EXV in, Dream Queendom 2024 instead of Grand Queendom 2024).
+  - **When 2024, 2025 and 2026 are all StarScope complete years (your build):** a stat strip (shows, matches, title matches, title changes, wrestlers); the featured reign cards show the thumbnail of the match where the reign was won; Top rated becomes five thumbnail tiles; Defining rivalries become cut-out cards over the key match's thumbnail with "N matches (M singles) · date range", counting every match with the two on opposite sides (Mi Vida Loca vs EXV kept to Apr 2025 – 7 Feb 2026); Must-see shows are StarScope poster cards (Dream Queendom 2024, Grand Queendom 2025, Dream Queendom 2025) plus All N shows; wrestler and rising-star tiles get cut-outs, era match counts, debut or first title, and belts held in the era; factions get a unit match count; an era picks list (singles met most often) sits at the bottom. Until StarScope's list has loaded the page draws the plain version, then redraws once.
+- **StarScope results for two names** (`assets/starcards.js`): `/mypage?tvscope=v&a=&b=` lists every match with the two wrestlers on opposite sides, `tvscope=f` every match between two factions (a side of two or more, all members); both take `from` and `to`. The rivalry cards open these.
+- **2024 is a StarScope complete year** in your build (built-in default now `[2024, 2025, 2026]`), so title histories, the Tag League, tournament and Championship tabs read 2024 from the index too.
+- Sheet (no script change): 2024 clean-up done on 20 Nov (dates for 64 shows and 272 matches, Dream Queendom 2024 re-dated, segment tags restored, Yamagata and Chiba card numbers, other-promotion series, show names, 23 venues). The shows' `updated` was set so the TVs get the new dates with the next list.
+
 ## 2.108.1
 
 - **Fix: iPhone card check, the venue didn't stay set.** Applying a venue (from the AI answer or Pick from list) saved it to the sheet, but card check kept it only in the phone's storage, and a write that didn't fit there failed without a word, so the card went back to "Venue not read". The venue is now also kept in memory for the session, and a write that doesn't fit first clears the lists card check reads again anyway (other shows' pages, the year lists, then the StarScope list) and tries again. If it still won't fit, the venue line says so.

@@ -2669,7 +2669,7 @@ class MainActivity : Activity() {
 
     private fun scopeCompleteYears(): String {
         if (!sheetOn()) return "[]"
-        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2025,2026]"   // 2.106.0: 2025 fully logged
+        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2024,2025,2026]"   // 2.106.0: 2025 fully logged; 2.109.0: 2024 too
     }
 
     // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
@@ -8115,8 +8115,14 @@ class MainActivity : Activity() {
       '<div style="font-size:14px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(e.tagline || '') + '</div>' +
       '<div style="font-size:12px;font-weight:500;color:#C9D2DC;margin-top:4px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
       '</div></div>';
+    // 2.109.0: an era with a "scope" block (assets/eranew.js). Reigns and factions come from the lineage and factions
+    // files in every build; the numbers, thumbnails, posters and rivalry lists only once its years are all StarScope
+    // complete years. Until then the parts below are drawn as before.
+    var N = window.__tvEraNew, NS = !!(N && N.has(e)), SC = NS && N.scopeOn(e);
+    if (NS) N.addCss();
+    if (SC) h += '<div class="tv-sec">' + N.stats(e) + '</div>';
     // title reigns
-    var rg = '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
+    var rg = NS ? N.reigns(e, SC) : '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
       var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
       var belt = pic ? '<img src="' + esc(pic) + '" alt="">' : BEL.replace('FILL', r.beltId === 'world' ? '#2A1C10' : '#2A323C');
       var base = '/mypage?tvch=' + esc(r.beltId) + '&tvrn=';
@@ -8132,15 +8138,19 @@ class MainActivity : Activity() {
     }).join('') + '</div>';
     // top rated matches (shared rows from toprated.js; the last row opens the full list for this era)
     try {
-      var tr = window.__tvTopRows ? window.__tvTopRows(e.n, 5) : null;
+      var tr = SC ? null : (window.__tvTopRows ? window.__tvTopRows(e.n, 5) : null);
+      if (SC) { var tn = N.top(e); if (tn) h += sec(T('Top rated matches', '高評価の試合'), T('Fan voted ratings from Cagematch.net', 'Cagematch.netのファン投票'), tn); }
       if (tr) {
         var allRow = '<a class="tp-row tp-lk tp-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '"><div class="tp-mt"><div class="a">' + esc(T('All ' + tr.total + ' matches in this era', 'この時代の全' + tr.total + '試合')) + '</div></div></a>';
         h += sec(T('Top rated matches', '高評価の試合'), T('Fan voted ratings from Cagematch.net', 'Cagematch.netのファン投票'), tr.html.replace(/<\/div>$/, allRow + '</div>'));
       }
     } catch (x) {}
-    h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
+    if (SC) h += sec(T('Defining rivalries', '名勝負・因縁'), T('OK lists every StarScope match between them', 'OKで両者のStarScope全試合'), N.rivalries(e));
+    else h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
+    if (SC) { var shn = N.shows(e); if (shn) h += sec(T('Must-see shows', '必見の大会'), '', shn); }
     // wrestlers / factions / shows
-    var left = sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
+    var left = NS ? sec(T('Top wrestlers', 'トップ選手'), '', N.people(e.scope.wrestlers, e, false, SC)) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', N.people(e.scope.rising, e, true, SC))
+      : sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
     var fc = (e.factions || []).map(function(x) {
       var f = facs[x.id], own = false;
       if (!f && x.name) { f = { id: x.id, name: x.name, search: x.search }; own = true; }
@@ -8154,9 +8164,25 @@ class MainActivity : Activity() {
       var wd = widen(s.search, s.year, s.dead, 'show'), semp = wd.step === 2, shref = wd.url;
       return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : (wd.step === 1 ? ' · ' + esc(T('all years', '全年')) : '')) + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
-    h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
+    if (NS) fc = N.factions(e, SC);
+    if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e);
+    else h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
+    // StarScope's list (assets/starcards.js) loads after this script: draw again once it is there, if focus is
+    // still on the era chips.
+    if (NS && !SC && N.scopePending(e) && !scopeWait) {
+      scopeWait = setInterval(function() {
+        scopeTries++;
+        if (window.__tvScopeIdx || scopeTries > 20) {
+          clearInterval(scopeWait);
+          if (!window.__tvScopeIdx) return;
+          var ae = document.activeElement, onChip = !ae || ae === document.body || (ae.classList && ae.classList.contains('tv-chip'));
+          if (onChip && N.scopeOn(eraOf(cur) || e)) { render(); var c = root.querySelector('.tv-chip[data-era="' + cur + '"]'); if (c) focusEl(c); }
+        }
+      }, 300);
+    }
   }
+  var scopeWait = null, scopeTries = 0;
 
   function items() { return Array.prototype.slice.call(root.querySelectorAll('a[tabindex]')); }
   function focusEl(el) {
@@ -11400,6 +11426,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(assetText("toprated.js"), null)
         view.evaluateJavascript(yearUrlJs, null)   // before the Years menu and the Eras page, which link years with it
+        view.evaluateJavascript(assetText("eranew.js"), null)   // 2.109.0: the StarScope version of an era (read by eraJs)
         view.evaluateJavascript(eraJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)

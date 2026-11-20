@@ -147,8 +147,42 @@
   function hasKey(person, want) { return person[0].some(function(k) { return want.indexOf(k) >= 0; }); }
   // Every logged match with the wrestler (or, for a team, both partners on the same side), the same matches the StarScope
   // page's wrestler filter finds (2.85.0: no longer only the ones the site's search would miss).
+  // 2.109.0 (New Horizons era page): 'v' every match with wrestler a and wrestler b on opposite sides; 'f' every match
+  // between faction a and faction b (ids in factions.json), a side counting as a faction's when it has two or more
+  // wrestlers, all members. Both keep to "from" and "to" (dates) when the address gives them.
+  var FACM = null;
+  function facMembers(id) {
+    if (!FACM) {
+      FACM = {};
+      try { ((JSON.parse(H.factionsJson()) || {}).factions || []).forEach(function(f) { FACM[f.id] = { name: String(f.name || '').replace(/ \(.*\)$/, ''), keys: (f.members || []).map(function(m) { return norm(m.search || m.name); }), captain: f.captain || (f.captains || [])[0] || '' }; }); } catch (e) {}
+    }
+    return FACM[id] || null;
+  }
+  function sideHas(sd, k) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }
+  function sideOf(sd, keys) { return sd.length > 1 && sd.every(function(p) { return p[0].some(function(k) { return keys.indexOf(k) >= 0; }); }); }
+  function versus(v, a, b) {
+    var ka = norm(a), kb = norm(b), sides = v.p || [], ia = -1, ib = -1;
+    sides.forEach(function(sd, i) { if (ia < 0 && sideHas(sd, ka)) ia = i; if (ib < 0 && sideHas(sd, kb)) ib = i; });
+    return ia >= 0 && ib >= 0 && ia !== ib;
+  }
+  function facVersus(v, fa, fb) {
+    var A = facMembers(fa), B = facMembers(fb), sides = v.p || [], ia = -1, ib = -1;
+    if (!A || !B) return false;
+    sides.forEach(function(sd, i) { if (ia < 0 && sideOf(sd, A.keys)) ia = i; else if (ib < 0 && sideOf(sd, B.keys)) ib = i; });
+    return ia >= 0 && ib >= 0 && ia !== ib;
+  }
+  function pairList(kind, a, b, from, to) {
+    var out = [];
+    Object.keys(map || {}).forEach(function(id) {
+      var v = map[id];
+      if (!v || (v.x && v.x.k === 'segment') || (from && String(v.d || '') < from) || (to && String(v.d || '') > to)) return;
+      if (kind === 'v' ? versus(v, a, b) : facVersus(v, a, b)) out.push({ id: id, v: v });
+    });
+    return out.sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+  }
   function results(kind, a, b) {
     if (!map) return [];
+    if (kind === 'v' || kind === 'f') return pairList(kind, a, b, (Q && Q.get('from')) || '', (Q && Q.get('to')) || '');
     var out = [];
     Object.keys(map).forEach(function(id) {
       var v = map[id], sides = v.p || [], hit = false;
@@ -214,6 +248,9 @@
     scopeDone = true;
     var a = Q.get('a') || '', b = Q.get('b') || '', list = results(scopeKind, a, b);
     var head = scopeKind === 't' ? a + ' & ' + b : a;
+    if (scopeKind === 'v') head = a + ' vs ' + b;
+    if (scopeKind === 'f') { var fa = facMembers(a), fb = facMembers(b); head = (fa ? fa.name : a) + ' vs ' + (fb ? fb.name : b); }
+    if (scopeKind === 'v' || scopeKind === 'f') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
@@ -971,6 +1008,31 @@
     setTimeout(fillThumbs, 3000);
     if (again) { again = false; setTimeout(ask, 300); }
   };
+  // ---- For the Eras page (2.109.0, assets/eranew.js): the same one list, nothing more is asked of the site.
+  var SHOWS = null, SHOWS_AT = null;
+  function showsBy() {
+    if (SHOWS && SHOWS_AT === map) return SHOWS;
+    SHOWS = {}; SHOWS_AT = map;
+    try { showsList().forEach(function(s) { SHOWS[s.sid] = s; }); } catch (e) {}
+    return SHOWS;
+  }
+  function scopedCss(scope) {
+    var skip = /^#tvsh(\{|,)|#tvsh \.(hd|bar|wm|tg|ct|row|ch|rs|gr|hc|ov|pp|ph|pg|sgr|tvsc-host)\b/;
+    return HCSS.split('}').filter(function(r) { return r.trim() && !skip.test(r.trim()); }).map(function(r) { return r.replace(/#tvsh /g, scope + ' ') + '}'; }).join('');
+  }
+  (function(X) {
+    X.get = function(id) { return (map || {})[String(id)] || null; };
+    X.ready = function() { return !!map; };
+    X.vs = function(a, b, from) { return map ? pairList('v', a, b, from || '') : []; };
+    X.fvs = function(a, b, from) { return map ? pairList('f', a, b, from || '') : []; };
+    X.faction = facMembers;
+    X.oneLine = oneLine;
+    X.show = function(sid) { return map ? showsBy()[String(sid)] || null : null; };
+    X.shows = function(from, to) { var o = []; if (!map) return o; var by = showsBy(); Object.keys(by).forEach(function(k) { var d = String(by[k].date || ''); if (d && d >= (from || '') && (!to || d <= to)) o.push(by[k]); }); return o; };
+    X.showCard = function(sid) { var s = X.show(sid); return s ? showCard(s) : ''; };
+    X.showCss = scopedCss;
+  })(window.__tvScopeIdx);
+
   if (map) setTimeout(fillThumbs, 5000);
   var fresh = 0;
   try { var saved = kept(), ids = Object.keys((saved && saved.map) || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
