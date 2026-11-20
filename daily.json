@@ -1,15 +1,17 @@
 {
- "generated": "2026-11-19T06:34:37Z",
+ "generated": "2026-11-20T06:32:50Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-19T06:29:07Z",
-  "finished": "2026-11-19T06:34:37Z",
-  "requests": 52,
+  "started": "2026-11-20T06:29:18Z",
+  "finished": "2026-11-20T06:32:50Z",
+  "requests": 35,
   "schedule": {
    "ok": true,
    "events": 44,
    "changed": [
-    "20261210-korakuen"
+    "20261121-akita",
+    "20261122-fukushima",
+    "20261123-koriyama"
    ],
    "error": ""
   },
@@ -19,37 +21,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: Champion not in any title bout since last run"
+     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
     },
     "kawaii": {
      "read": false,
@@ -71,22 +73,22 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: unknown match type kept in Japanese: ワールド・オブ・スターダム選手権試合",
+    "schedule: unknown match type kept in Japanese: 3WAYタッグバトル",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
   },
   "league": {
-   "ok": true,
+   "ok": false,
    "updated": "2026-11-18",
    "source": "official",
-   "note": ""
+   "note": "Skipped: no league show finished since 2026-11-18; league unchanged."
   },
   "blocks": [],
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-19T06:31:05Z",
+  "updated": "2026-11-20T06:31:00Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -1084,6 +1086,44 @@
        "なつぽい & 梨杏",
        "小波 & 吏南"
       ]
+     },
+     {
+      "type": "Single Match",
+      "sides": [
+       "Rina Yamashita",
+       "Matoi Hamabe"
+      ],
+      "type_ja": "シングルマッチ",
+      "sides_ja": [
+       "山下りな",
+       "浜辺纏"
+      ]
+     },
+     {
+      "type": "3WAY Battle",
+      "sides": [
+       "Utami Hayashishita",
+       "Suzu Suzuki",
+       "Kikyo Furusawa"
+      ],
+      "type_ja": "3WAYバトル",
+      "sides_ja": [
+       "林下詩美",
+       "鈴季すず",
+       "古沢稀杏"
+      ]
+     },
+     {
+      "type": "8-person Tag Match",
+      "sides": [
+       "Saya Iida & Maika & HANAKO & Hime Yuria",
+       "Natsuko Tora & Momo Watanabe & Saya Kamitani & Ruaka"
+      ],
+      "type_ja": "8人タッグマッチ",
+      "sides_ja": [
+       "飯田沙耶 & 舞華 & HANAKO & 姫ゆりあ",
+       "刀羅ナツコ & 渡辺桃 & 上谷沙弥 & 琉悪夏"
+      ]
      }
     ]
    },
@@ -1179,6 +1219,46 @@
       "sides_ja": [
        "八神蘭奈 & 鉄アキラ",
        "刀羅ナツコ & 琉悪夏"
+      ]
+     },
+     {
+      "type": "3WAYタッグバトル",
+      "sides": [
+       "Hazuki",
+       "Koguma",
+       "Hime Yuria",
+       "Kikyo Furusawa",
+       "Konami",
+       "Rina"
+      ],
+      "type_ja": "3WAYタッグバトル",
+      "sides_ja": [
+       "葉月",
+       "コグマ",
+       "姫ゆりあ",
+       "古沢稀杏",
+       "小波",
+       "吏南"
+      ]
+     },
+     {
+      "type": "3WAYタッグバトル",
+      "sides": [
+       "Syuri",
+       "Ami Sohrei",
+       "Suzu Suzuki",
+       "Rina Yamashita",
+       "Starlight Kid",
+       "Maki Itoh"
+      ],
+      "type_ja": "3WAYタッグバトル",
+      "sides_ja": [
+       "朱里",
+       "壮麗亜美",
+       "鈴季すず",
+       "山下りな",
+       "スターライト・キッド",
+       "伊藤麻希"
       ]
      }
     ]
@@ -1277,6 +1357,48 @@
       "sides_ja": [
        "飯田沙耶 & 林下詩美",
        "小波 & 吏南"
+      ]
+     },
+     {
+      "type": "4WAY Battle",
+      "sides": [
+       "Sayaka Kurara",
+       "Starlight Kid",
+       "Lady C",
+       "Matoi Hamabe"
+      ],
+      "type_ja": "4WAYバトル",
+      "sides_ja": [
+       "玖麗さやか",
+       "スターライト・キッド",
+       "レディ・C",
+       "浜辺纏"
+      ]
+     },
+     {
+      "type": "3WAY Battle",
+      "sides": [
+       "Aya Sakura",
+       "Maki Itoh",
+       "Hime Yuria"
+      ],
+      "type_ja": "3WAYバトル",
+      "sides_ja": [
+       "さくらあや",
+       "伊藤麻希",
+       "姫ゆりあ"
+      ]
+     },
+     {
+      "type": "Tag Match",
+      "sides": [
+       "Saori Anou & Fuwa-chan",
+       "Syuri & Ami Sohrei"
+      ],
+      "type_ja": "タッグマッチ",
+      "sides_ja": [
+       "安納サオリ & フワちゃん",
+       "朱里 & 壮麗亜美"
       ]
      }
     ]
