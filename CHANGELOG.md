@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.112.0
+
+- **iPhone card check: venues suggested from the show's title.** 2023 show titles name a place but no venue ("STARDOM in WARABI", "in OSAKA-RINKAI", "～スターダム郡山大会～"), so card check read no venue for them. When a show has no venue, the venue box now lists up to five library venues for the places in the title ("From the title: Warabi"): a venue with the place in its name first, then one in that city, then that prefecture. Venues used more often in the index come first among equals, and each shows its city and prefecture when the library has them. Tap one to set it for the whole show, as with Pick from list. The same list shows under Change venue until you start typing.
+- **Ask Gemini: venue.** A new button in the venue box asks Gemini for the venue only (not the order or line-ups). The question names the title's places and the library venues there, so a known venue comes back under its library name. The answer opens in the usual AI answer sheet to apply. It also works from Change venue on a show that already has one.
+- TV: indexpanel.js gets the lookup card check uses (venuesNear); nothing changes on the TV's screens.
+- Built on 2.111.3 (Next show fix). No sheet script change. iPhone card check: needs publishing to GitHub Pages (cc.js, indexpanel.js).
+
 ## 2.111.3
 
 - **Fix: iPhone card check, no Next after logging a show.** Next show is picked from the year's list kept on the phone. When the phone's storage filled up (2.108.1 clears space so a venue save fits), that list was among the first things cleared, so the Next button disappeared, which showed up working through 2023. Now:

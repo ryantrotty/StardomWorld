@@ -600,12 +600,38 @@
     var K = kit(), raw = rawVenue(), m = K && raw ? K.venue(raw) : null;
     return m ? { name: m.name, how: 'matched in the library' } : null;
   }
+  // 2.112.0: the places a show's title names, for venue suggestions: "STARDOM in WARABI", "in OSAKA-RINKAI",
+  // "in MATSUYAMA-EHIME", "～スターダム郡山大会～".
+  var PLACE_SKIP = /^(stardom|final|the|of|and|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|day|night|tour|show|special|presents?)$/i;
+  function titlePlaces() {
+    var t = [show && show.line, show && show.name].filter(Boolean).join(' '), out = [], joined = [];
+    var add = function(w) { w = String(w || '').trim(); if (w && !PLACE_SKIP.test(w) && !/^\d+$/.test(w) && out.indexOf(w) < 0) out.push(w); };
+    t.replace(/\bin\s+([A-Za-z][A-Za-z]*(?:[\s\-][A-Za-z]+)*)/g, function(m0, g) {
+      var parts = g.split(/[\s\-]+/).filter(function(w) { return !PLACE_SKIP.test(w); });
+      if (parts.length > 1) { add(parts.join('')); joined.push(out[out.length - 1]); }   // OSAKA-RINKAI as one word too (matched, not shown)
+      parts.forEach(add);
+      return m0;
+    });
+    t.replace(/([一-龥ぁ-んァ-ヶ]{2,8})大会/g, function(m0, g) { add(g.replace(/^.*ダム/, '')); return m0; });
+    var pl = out.map(function(w) { return /[a-z]/i.test(w) ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w; });
+    pl.shown = pl.filter(function(w, i) { return joined.indexOf(out[i]) < 0; });
+    return pl;
+  }
+  function venueUse() { var u = {}; Object.keys(map).forEach(function(k) { var c = map[k]; if (c.vn) u[c.vn] = (u[c.vn] || 0) + 1; }); return u; }
+  function titleVenueHtml() {
+    var K = kit(), pl = titlePlaces();
+    if (!K || !K.venuesNear || !pl.length) return '';
+    var L = K.venuesNear(pl, 5, venueUse()), h = '<div class="gl" style="margin-top:8px">From the title: ' + esc(pl.shown.join(', ')) + '</div>';
+    if (!L.length) return h + '<div class="sub">No venues in the library for ' + esc(pl.shown.join(', ')) + ' yet.</div>';
+    L.forEach(function(v) { h += '<button class="opt" data-vuse="' + esc(v.id) + '" data-nm="' + esc(v.name) + '">' + esc(v.name) + '<small>' + esc((v.where ? v.where + ' · ' : '') + (v.u ? 'used ' + v.u + (v.u === 1 ? ' time' : ' times') + ' · ' : '') + 'Use this venue') + '</small></button>'; });
+    return h;
+  }
   function venueHtml() {
     var now = venueNow(), raw = rawVenue(), K = kit(), h = '<div class="ven in">';
     if (vs.mode === 'edit') {
-      h += '<input class="tx" id="ccp-vin" type="text" autocomplete="off" placeholder="Type a venue name" value="' + esc(vs.text) + '">' + (raw ? '<div class="sub">' + esc(raw) + '</div>' : '') + '<div id="ccp-vl">' + venueList() + '</div><div class="bt"><button class="b" data-vx="1">Cancel</button></div>';
+      h += '<input class="tx" id="ccp-vin" type="text" autocomplete="off" placeholder="Type a venue name" value="' + esc(vs.text) + '">' + (raw ? '<div class="sub">' + esc(raw) + '</div>' : '') + '<div id="ccp-vl">' + venueList() + '</div>' + (vs.text.trim() ? '' : titleVenueHtml()) + '<div class="bt"><button class="b" data-aiven="1">Ask Gemini: venue</button><button class="b" data-vx="1">Cancel</button></div>';
     } else if (now) h += '<div><span class="vv">' + esc(now.name) + '</span> <span class="vk">✓ ' + esc(now.how) + '</span></div><div class="bt"><button class="b" data-vchg="1">Change</button></div>';
-    else h += '<div class="vv bad">' + esc(raw ? '? ' + raw : '–') + '</div>' + (K ? '<div class="bt">' + (hasJa(raw) ? '<button class="b on" data-vtr="1">Translate &amp; add</button>' : '') + '<button class="b" data-vpk="1">Pick from list</button></div>' : '');
+    else h += '<div class="vv bad">' + esc(raw ? '? ' + raw : '–') + '</div>' + (K ? titleVenueHtml() + '<div class="bt">' + (hasJa(raw) ? '<button class="b on" data-vtr="1">Translate &amp; add</button>' : '') + '<button class="b" data-vpk="1">Pick from list</button><button class="b" data-aiven="1">Ask Gemini: venue</button></div>' : '');
     if (vs.busy || vs.msg || vs.err) h += '<div class="msg' + (vs.err ? ' er' : '') + '">' + esc(vs.err || vs.busy || vs.msg) + '</div>';
     return h + '</div>';
   }
@@ -765,6 +791,21 @@
       '```json', shape, '```'
     ].join('\n');
   }
+  // 2.112.0: the venue only (Ask Gemini: venue), with the library's venues for the title's places to choose from.
+  function aiPromptVenue() {
+    var K = kit(), raw = rawVenue(), pl = titlePlaces(), L = K && K.venuesNear ? K.venuesNear(pl, 8, venueUse()) : [];
+    return [
+      'I am logging a STARDOM (Japanese women\'s pro wrestling) show. Please search reliable sources (the STARDOM official site, Cagematch, Wikipedia, news reports) before answering.',
+      '',
+      'Show: ' + (show.line || show.name) + (showName(show.name, show.date) !== show.line ? ' (' + showName(show.name, show.date) + ')' : ''),
+      'Date: ' + (show.date || 'unknown'),
+      (raw ? 'The video site gives the venue as: ' + raw : 'The video site doesn\'t give the venue.') + (pl.length ? ' The title names: ' + pl.shown.join(', ') + '.' : ''),
+      L.length ? 'Venues I already have there (if it is one of these, use that exact English name): ' + L.map(function(v) { return v.name; }).join('; ') + '.' : '',
+      '',
+      'Which venue was this show held at? Give its English and Japanese name. Answer with only this JSON (no other text); use null if you are not sure, do not guess.',
+      '```json', '{"venue": {"en": "", "ja": ""}}', '```'
+    ].filter(function(x, i, all) { return x !== '' || all[i - 1] !== ''; }).join('\n');
+  }
   function copyText(t, btn, label) {
     var done = function() { if (btn) btn.textContent = label; };
     var ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; root.appendChild(ta);
@@ -777,7 +818,7 @@
   function aiRead(text) {
     var a = String(text || ''), i = a.indexOf('{'), j = a.lastIndexOf('}'), data = null;
     if (i >= 0 && j > i) { try { data = JSON.parse(a.slice(i, j + 1)); } catch (e) {} }
-    if (data && !Array.isArray(data.matches) && data.order != null) data.matches = [];
+    if (data && !Array.isArray(data.matches) && (data.order != null || data.venue)) data.matches = [];   // 2.112.0: a venue-only answer
     if (!data || !Array.isArray(data.matches)) return { err: 'No card found in the answer. It should hold the JSON block the prompt asks for.' };
     var K = kit(), out = [], norm = function(x) { return String(x || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-]+/g, ''); };
     var aiId = function(p) { return p ? (K.resolve(p.en || '') || K.resolve(p.ja || '')) : ''; };
@@ -885,7 +926,7 @@
     });
     // the venue, when the show hasn't one
     var vv = data.venue || {}, now = venueNow();
-    if (!now && (vv.en || vv.ja)) {
+    if ((!now || (sheetOpen && sheetOpen.venOnly)) && (vv.en || vv.ja)) {
       var m2 = (vv.ja && K.venue(vv.ja)) || (vv.en && K.venue(vv.en));
       out.unshift(m2 ? { k: 'venue', id: m2.id, name: m2.name, on: true } : { k: 'venueNew', en: vv.en || vv.ja, ja: vv.ja || '', on: true });
     }
@@ -1262,10 +1303,10 @@
     if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }
     if (d.aitog && sheetOpen && sheetOpen.sug) { var it = sheetOpen.sug[+d.aitog]; it.on = !it.on; draw(); return; }
     if (d.aiapply && sheetOpen) { aiApply(); return; }
-    if (d.aiask || d.aione) {
+    if (d.aiask || d.aione || d.aiven) {
       var vi1 = d.aione ? show.videos.map(function(x) { return x.id; }).indexOf(d.aione) : -1;
-      sheetOpen = { ai: 1, text: '', sug: null, busy: 'Asking Gemini' + (vi1 >= 0 ? ' about match ' + (vi1 + 1) : '') + ' (it searches first; this can take half a minute)…' }; draw();
-      post({ action: 'vi_ai', prompt: vi1 >= 0 ? aiPromptOne(vi1) : aiPrompt() }, function(t) {
+      sheetOpen = { ai: 1, text: '', sug: null, venOnly: !!d.aiven, busy: 'Asking Gemini' + (d.aiven ? ' for the venue' : vi1 >= 0 ? ' about match ' + (vi1 + 1) : '') + ' (it searches first; this can take half a minute)…' }; draw();
+      post({ action: 'vi_ai', prompt: d.aiven ? aiPromptVenue() : vi1 >= 0 ? aiPromptOne(vi1) : aiPrompt() }, function(t) {
         var r = null; try { r = JSON.parse(t); } catch (e) {}
         if (!sheetOpen || !sheetOpen.ai) return;
         sheetOpen.busy = '';
