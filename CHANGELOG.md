@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.111.3
+
+- **Fix: iPhone card check, no Next after logging a show.** Next show is picked from the year's list kept on the phone. When the phone's storage filled up (2.108.1 clears space so a venue save fits), that list was among the first things cleared, so the Next button disappeared, which showed up working through 2023. Now:
+  - Next uses the year's list already on screen when the phone's copy is gone.
+  - When space is needed, other shows' pages are cleared first, oldest first; the year lists only if that isn't enough.
+  - When the shows loaded so far run out, the button reads **Next: load more 2023 shows** (one request for the site's next 20, then straight on to the next show). When the year is done, **Next: 2023 is done, on to 2022** opens that year's list.
+- Built from main (2.108.1); no TV or sheet script change. iPhone card check: **needs publishing to GitHub Pages** (cc.js).
+
 ## 2.108.1
 
 - **Fix: iPhone card check, the venue didn't stay set.** Applying a venue (from the AI answer or Pick from list) saved it to the sheet, but card check kept it only in the phone's storage, and a write that didn't fit there failed without a word, so the card went back to "Venue not read". The venue is now also kept in memory for the session, and a write that doesn't fit first clears the lists card check reads again anyway (other shows' pages, the year lists, then the StarScope list) and tries again. If it still won't fit, the venue line says so.
