@@ -84,6 +84,7 @@
     '#ccp .pad{padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}',
     '#ccp .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}#ccp .chip{flex:none;height:36px;padding:0 14px;border-radius:20px;border:1px solid #2A323C;background:#161F2A;color:#C9D2DC;font-weight:700}',
     '#ccp .chip.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A}',
+    '#ccp .b.lt{border-color:#6B5A22;color:#F4C242}',
     '#ccp .chips.sub{margin-top:-4px}#ccp .chips.sub .chip{height:32px;padding:0 12px;font-size:13px;background:transparent}#ccp .chips.sub .chip.on{background:#2A2410;border-color:#F4C242;color:#F4C242}#ccp .chip .cn{opacity:.7;font-weight:600;margin-left:2px}',
     '#ccp .sc{display:flex;gap:12px;align-items:center;background:#161F2A;border:1px solid #2A323C;border-radius:12px;padding:8px;margin-bottom:10px;width:100%;text-align:left;color:#fff}',
     '#ccp .sc .im{flex:none;width:128px;aspect-ratio:16/9;border-radius:8px;background:#0F151C center/cover no-repeat}#ccp .sc .nm{display:block;font-weight:700;font-size:15px;line-height:1.25}#ccp .sc .sb{display:block;font-size:13px;color:#9AA6B4;margin-top:4px}',
@@ -139,6 +140,30 @@
       .then(function(r) { return r.text().then(function(t) { return { code: r.status, t: t }; }); })
       .then(function(x) { done(/^\s*\{/.test(x.t) ? x.t : JSON.stringify({ ok: false, error: 'HTTP ' + x.code + ' ' + x.t.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100) })); })
       .catch(function(e) { done(JSON.stringify({ ok: false, error: String(e && e.message || e) })); });
+  }
+  // 2.114.0: Watch Later, the TVs' own list (their favorites sync through the sheet): read once when card check starts,
+  // a tap adds or removes one video. Sheet requests only, nothing asked of the site.
+  var later = { ids: null, busy: {} };
+  function laterLoad() {
+    post({ action: 'cc_later', op: 'list' }, function(t) {
+      var r = null; try { r = JSON.parse(t); } catch (e) {}
+      later.ids = {}; if (r && r.ok) (r.ids || []).forEach(function(id) { later.ids[id] = 1; });
+      else later.err = String(r && r.error || 'no reply');
+      draw();
+    });
+  }
+  function laterToggle(id) {
+    if (!later.ids || later.busy[id]) return;
+    var v = show && show.videos.filter(function(x) { return x.id === id; })[0], r = recs[id], on = !later.ids[id];
+    if (later.err) { note('Watch Later isn\'t set up on the sheet yet (' + later.err + '). Redeploy the sheet script.', true); return; }
+    later.busy[id] = 1; draw();
+    post({ action: 'cc_later', op: on ? 'add' : 'remove', id: id, href: location.origin + (show ? '/set/' + show.set : '') + '/contents/' + id,
+      title: (r && !r.failed && (r.title_en || r.title_ja)) || (v && v.t) || 'Stardom World Video', bg: (v && v.th) || (r && r.thumb) || '' }, function(t) {
+      var x = null; try { x = JSON.parse(t); } catch (e) {}
+      delete later.busy[id];
+      if (x && x.ok) { if (on) later.ids[id] = 1; else delete later.ids[id]; note(on ? '★ Added to Watch Later (on the TVs within a minute)' : 'Removed from Watch Later'); }
+      else note('Watch Later didn\'t save (' + (x && x.error || 'no reply') + ')', true);
+    });
   }
   function host() {
     window.AndroidHost = {
@@ -587,7 +612,10 @@
     if (!s && k === 'attn' && !segs[v.id]) h += '<button class="b on" data-aione="' + esc(v.id) + '">Ask Gemini</button>';
     if (!s && r && !r.failed && !segs[v.id] && (r.manIds || sides(r).A.length < 2)) h += '<button class="b" data-man="' + esc(v.id) + '">' + (r.manIds ? 'Edit line-up' : 'Match…') + '</button>';
     if (!s && r && !r.failed) h += '<button class="b" data-seg="' + esc(v.id) + '">' + (segs[v.id] ? 'Edit segment' : 'Segment…') + '</button>';
-    h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a></div></div></div>';
+    h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a>';
+    var lt = later.ids && later.ids[v.id], lb = later.busy[v.id];   // 2.114.0
+    h += '<button class="b' + (lt ? ' lt' : '') + '" data-later="' + esc(v.id) + '"' + (lb || !later.ids ? ' disabled' : '') + '>' + (lb ? 'Saving…' : lt ? '✓ Watch later' : '+ Watch later') + '</button>';
+    h += '</div></div></div>';
     return h;
   }
   // The show's venue, set once for the whole show (vi_show_venue), as on the TV (2.89.0).
@@ -1291,6 +1319,7 @@
     if (d.go) { flash = ''; openShow(d.go, d.from); return; }
     if (d.confirm) { if (batch) return; batch = { list: [d.confirm], done: 0, at: d.confirm, stop: false, saved: 0 }; draw(); step(); return; }
     if (d.all) { confirmAll(); return; }
+    if (d.later) { laterToggle(d.later); return; }
     if (d.stop) { if (batch) batch.stop = true; return; }
     if (d.vtr) {
       vs.busy = 'Translating…'; vs.err = ''; draw();
@@ -1392,7 +1421,7 @@
         if (!r || !r.ok) { kitReady = false; note('The sheet said: ' + (r && r.error || 'no reply') + '. Check the card check link.', true, true); diagnose(); return; }
         window.__tvIndexKit.lib(function(ok) { kitReady = ok; flash = ''; draw(); });
       });
-      cards();
+      cards(); laterLoad();
       if (S.screen === 'show' && S.set) { var y0 = (lsGet(STATE_KEY) || {}).y || 0; openShow(S.set, S.from); setTimeout(function() { root.scrollTop = y0; }, 300); }
       else draw();
     }).catch(function(e) { note('Couldn\'t start: ' + (e && e.message || e), true); });
