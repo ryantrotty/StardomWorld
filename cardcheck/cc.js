@@ -84,6 +84,7 @@
     '#ccp .pad{padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}',
     '#ccp .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}#ccp .chip{flex:none;height:36px;padding:0 14px;border-radius:20px;border:1px solid #2A323C;background:#161F2A;color:#C9D2DC;font-weight:700}',
     '#ccp .chip.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A}',
+    '#ccp .chips.sub{margin-top:-4px}#ccp .chips.sub .chip{height:32px;padding:0 12px;font-size:13px;background:transparent}#ccp .chips.sub .chip.on{background:#2A2410;border-color:#F4C242;color:#F4C242}#ccp .chip .cn{opacity:.7;font-weight:600;margin-left:2px}',
     '#ccp .sc{display:flex;gap:12px;align-items:center;background:#161F2A;border:1px solid #2A323C;border-radius:12px;padding:8px;margin-bottom:10px;width:100%;text-align:left;color:#fff}',
     '#ccp .sc .im{flex:none;width:128px;aspect-ratio:16/9;border-radius:8px;background:#0F151C center/cover no-repeat}#ccp .sc .nm{display:block;font-weight:700;font-size:15px;line-height:1.25}#ccp .sc .sb{display:block;font-size:13px;color:#9AA6B4;margin-top:4px}',
     '#ccp .cnt{display:inline-block;margin-top:6px;font:800 11px system-ui;letter-spacing:1px;text-transform:uppercase;color:#F4C242}#ccp .cnt.done{color:#7FD3A0}#ccp .cnt.none{color:#9AA6B4;font-weight:700}',
@@ -224,7 +225,8 @@
 
   // ---- state
   var S = lsGet(STATE_KEY) || { screen: 'home', tab: 'started', year: '', set: '', from: '' };
-  function saveState() { lsSet(STATE_KEY, { screen: S.screen, tab: S.tab, year: S.year, set: S.set, from: S.from, y: root.scrollTop }); }
+  if (!S.yf) S.yf = 'all';   // 2.113.0: the year list's filter: all, logged, started, none
+  function saveState() { lsSet(STATE_KEY, { screen: S.screen, tab: S.tab, year: S.year, set: S.set, from: S.from, yf: S.yf, y: root.scrollTop }); }
   var kitReady = false, show = null, recs = {}, saved = {}, attn = {}, reading = null, lastFetch = 0, readQ = [], sheetOpen = null, flash = '', flashBad = false, batch = null;
   // Segments (2.96.0): cards you've marked as a retirement, homecoming, debut, return, award or announcement, by video:
   // { type, ids }. Kept for this visit; Confirm / Confirm all save them like any ready card.
@@ -290,6 +292,7 @@
       .catch(function(e) { mine.err = String(e && e.message || e); })
       .then(function() { mine.busy = false; draw(); });
   }
+  function tileState(set) { var sc = lsGet(SET_KEY + set), c = setCount(set, sc && sc.videos); return c.done ? 'logged' : c.n ? 'started' : 'none'; }
   function showTile(x, from) {
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, from.slice(1) || null) : { show: x.name, date: x.date || '' };
     var sc = lsGet(SET_KEY + x.set), c = setCount(x.set, sc && sc.videos), date = sl.date || x.date || '';
@@ -310,8 +313,15 @@
       if (!yl || yl.y !== S.year) yearOpen(S.year);
       // Newest show first by its date (the site lists them by when each was put up).
       var dOf = function(x) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, S.year) : null; return (sl && sl.date) || ''; };
-      h += yl.items.map(function(x, i) { return { x: x, d: dOf(x), i: i }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; })
-        .map(function(o) { return showTile(o.x, 'y' + S.year); }).join('');
+      // 2.113.0: All / Logged / Started / Not started, over the shows already read (no extra site calls).
+      var all = yl.items.map(function(x, i) { return { x: x, d: dOf(x), i: i, st: tileState(x.set) }; }).sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });
+      var cn = { all: all.length, logged: 0, started: 0, none: 0 };
+      all.forEach(function(o) { cn[o.st]++; });
+      h += '<div class="chips sub">' + [['all', 'All'], ['logged', 'Logged'], ['started', 'Started'], ['none', 'Not started']].map(function(f) {
+        return '<button class="chip' + (S.yf === f[0] ? ' on' : '') + '" data-yf="' + f[0] + '">' + f[1] + ' <span class="cn">' + cn[f[0]] + '</span></button>'; }).join('') + '</div>';
+      var shown = all.filter(function(o) { return S.yf === 'all' || o.st === S.yf; });
+      h += shown.map(function(o) { return showTile(o.x, 'y' + S.year); }).join('');
+      if (!shown.length && all.length) h += '<div class="ld">No ' + (S.yf === 'logged' ? 'fully logged' : S.yf === 'started' ? 'started' : 'unstarted') + ' shows in the ' + all.length + ' read so far' + (yl.done ? '.' : '. Load more to look further.') + '</div>';
       if (yl.err) h += '<div class="er">Couldn\'t read the list (' + esc(yl.err) + ')</div><button class="b on" data-more="1">Try again</button>';
       else if (yl.busy) h += '<div class="ld">Reading the site\'s list…</div>';
       else if (!yl.done) h += '<button class="b wide" data-more="1">Load more shows</button>';
@@ -686,8 +696,26 @@
       : '<button class="b' + on + ' wide" data-go="' + esc(nx.set) + '" data-from="' + esc(S.from) + '">Next: ' + esc(nx.name) + '</button>') + '</div>';
     return h;
   }
+  // 2.113.0: a show already logged in another order than the site lists it opens in the saved order, so the card
+  // matches the sheet and nothing is offered for re-saving (Confirm all on "logged as 8, save as 1" would have undone
+  // a correct order). Only while the order hasn't been chosen on the phone; Reverse order still flips it.
+  function adoptSaved() {
+    if (!show || show.orderBy) return;
+    var L = show.videos.filter(function(v) { var c = map[v.id]; return c && Number(c.n) > 0; });
+    if (L.length < 2 || !L.some(misplaced)) return;
+    var nums = L.map(function(v) { return Number(map[v.id].n); });
+    if (nums.some(function(x, i) { return nums.indexOf(x) !== i; })) return;   // two saved as the same number: leave it to him
+    var rest = show.videos.filter(function(v) { return L.indexOf(v) < 0; });
+    if (rest.length) {   // some not logged yet: only take the saved order when it is the list the other way round
+      var rv = show.videos.slice().reverse();
+      if (L.some(function(v) { return Number(map[v.id].n) !== rv.indexOf(v) + 1; })) return;
+      show.videos = rv;
+    } else show.videos = L.slice().sort(function(a, b) { return Number(map[a.id].n) - Number(map[b.id].n); });
+    show.orderBy = 'as saved in StarScope'; lsSet(SET_KEY + show.set, show);
+  }
   function showHtml() {
     if (!show) return '<div class="ld">Reading the show page…</div>';
+    adoptSaved();
     var cardsH = show.videos.map(function(v, i) { return needsCard(v) ? cardHtml(v, i) : ''; }).join('');
     return showHead() + endHtml() + (cardsH ? '<div class="gl" style="margin:14px 0 8px">' + (showAllCards ? 'Every match' : 'To look at') + '</div>' + cardsH : '');
   }
@@ -697,8 +725,16 @@
     show.videos.forEach(function(v) { if (cls(v) === 'attn') unknown++; });
     return '<div class="shw"><div class="n1">' + esc(en || show.line) + '</div>' + (show.line && show.line !== en ? '<div class="n2">' + esc(show.line) + '</div>' : '') +
       '<div class="d">' + esc(dateText(date) || 'Date not read') + '</div>' +
-      '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' +
+      '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' + orderNote() +
       '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+  }
+  // 2.113.0: what the order means for the sheet, in words: already saved this way (nothing to confirm), or which
+  // logged matches Confirm all would renumber.
+  function orderNote() {
+    var lg = show.videos.filter(function(v) { return status(v); }), mv = lg.filter(misplaced).length;
+    if (!lg.length) return '';
+    if (mv) return '<div class="n2" style="color:#FFB347;margin-top:2px">' + mv + ' of ' + lg.length + ' logged matches are saved in a different order; Confirm all would renumber them to this order.</div>';
+    return '<div class="n2" style="color:#7FD3A0;margin-top:2px">✓ ' + (lg.length === show.videos.length ? 'Saved in this order: nothing to confirm.' : 'Logged matches are saved in this order.') + '</div>';
   }
   function firstLast() { var v = show.videos[0], r = v && recs[v.id]; return v ? '"' + String(mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t)).slice(0, 40) + '"' : '–'; }
   // The card in a new order (2.93.0): reversed, or as an AI answer has it. Kept with the show on the phone; logged
@@ -1022,7 +1058,7 @@
         .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
     }
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
-    var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
+    var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var st = tileState(x.set); return st !== 'logged' && !(yy && S.yf === 'none' && st === 'started') && !(yy && S.yf === 'started' && st === 'none'); });   // 2.113.0: the year filter too
     var nx = rest[0];
     if (!nx && yy) {
       var c2 = lsGet(YEAR_KEY + yy), done = yl && yl.y === yy ? yl.done : !!(c2 && c2.done);
@@ -1243,6 +1279,7 @@
     if (d.closeall) { saveState(); root.style.display = 'none'; document.documentElement.style.overflow = ''; return; }
     if (d.home) { S.screen = 'home'; show = null; flash = ''; saveState(); draw(); root.scrollTop = 0; return; }
     if (d.tab) { S.tab = 'started'; saveState(); draw(); return; }
+    if (d.yf) { S.yf = d.yf; saveState(); draw(); return; }
     if (d.year) { S.tab = 'year'; S.year = d.year; if (d.gohome) { S.screen = 'home'; show = null; flash = ''; root.scrollTop = 0; } saveState(); draw(); return; }
     if (d.nextmore) {   // 2.111.3: the next page of the year's shows (one site request), then on to the next show in it
       var yy2 = d.nextmore;
