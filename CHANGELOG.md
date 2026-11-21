@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.110.2
+
+- **New Horizons era page: six must-see shows, two rows of three** (the StarScope Shows grid), newest first: Dream Queendom 2025, All Star Grand Queendom 2025, Dream Queendom 2024, 5★STAR GP 2024 final, The Conversion 2024, All Star Grand Queendom 2024 (now logged). Picks only, in `eras.json`; the cards come from StarScope.
+
 ## 2.110.1
 
 - **Fix: the bottom of the New Horizons era page couldn't be reached.** The era in numbers (and the era picks list) have nothing to focus, and Down only moved between focusable tiles, so the page stopped at the factions and rising stars. Down from the last tiles now scrolls to the very bottom; Up brings focus back into view, then moves up as usual.
