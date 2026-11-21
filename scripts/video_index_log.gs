@@ -77,7 +77,7 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
 var MAX_CELL = 45000;
-var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many'];   // a Sheets cell holds 50,000 characters
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many', 'cc_later'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
@@ -127,6 +127,7 @@ function doPost(e) {
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
   if (body.action === 'vi_save_many') return out(withLock(function() { return viSaveMany(body); }));
+  if (body.action === 'cc_later') return out(b_ccLater(body));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -237,6 +238,22 @@ function nextSeq() {
   var pr = PropertiesService.getScriptProperties(), n = (Number(pr.getProperty('FAV_SEQ')) || 0) + 1;
   pr.setProperty('FAV_SEQ', String(n));
   return n;
+}
+// 2.114.0: Watch Later from iPhone card check. Only "later:" items, through the same favorites tab the TVs sync from
+// (favsync.js pulls it within a minute), so the card check key never reads or changes any other favorite.
+//   cc_later {op: 'list'}                                   the video ids in Watch Later
+//   cc_later {op: 'add'|'remove', id, href, title, bg}      add (to the top) or take one out
+function b_ccLater(b) {
+  var op = String(b.op || 'list');
+  if (op === 'list') {
+    var sh = favSheet(), n = sh.getLastRow(), ids = [];
+    if (n > 1) sh.getRange(2, 1, n - 1, 4).getValues().forEach(function(v) { var k = String(v[0]); if (k.indexOf('later:') === 0 && !(v[3] === true || v[3] === 'TRUE')) ids.push(k.slice(6)); });
+    return { ok: true, ids: ids };
+  }
+  var id = String(b.id || '');
+  if (!/^\d{1,12}$/.test(id) || (op !== 'add' && op !== 'remove')) return { ok: false, error: 'bad request' };
+  var t = Date.now(), val = { id: id, href: String(b.href || '').slice(0, 300), title: String(b.title || '').slice(0, 300), bg: String(b.bg || '').slice(0, 500), i: -t };
+  return withLock(function() { return favAction({ action: 'fav_put', device: 'iphone-cardcheck', changes: [{ key: 'later:' + id, value: val, t: t, deleted: op === 'remove' }] }); });
 }
 function favKeyOk(k) { return typeof k === 'string' && k.length > 0 && k.length <= 300 && /^(w|fs|tt|later|m|s|pl|pli|rem|ppv|own):/.test(k); }
 function favValue(v) { var j = JSON.stringify(v == null ? null : v); return j.length > 20000 ? null : j; }

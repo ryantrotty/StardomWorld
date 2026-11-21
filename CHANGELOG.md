@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.114.0
+
+- **iPhone card check: Watch later button** beside Watch on every match card. A tap adds the video to the TVs' Watch Later list (top of the list); on the TVs within a minute through favorites sync. It then reads **✓ Watch later**; tap again to take it out. The list is read from the sheet once when card check starts, so the button knows what's already there. Sheet requests only, no site calls.
+- **Sheet script: `cc_later`**, allowed with the card check key. It only lists, adds or removes `later:` items in the favorites tab; the card check key still can't read or change any other favorite. **Redeploy** the sheet script.
+- **New stipulation: Indian Strap match (インディアン・ストラップ・マッチ).** Added to the sheet's lists tab with the keywords `Indian\s*Strap|Strap\s*Match|ストラップ`, so cards with it in the site's title show it under Suggested and get it on save. Card check picks it up the next time it loads the library.
+- Built on 2.113.0. iPhone card check: published to GitHub Pages (cc.js).
+
 ## 2.113.0
 
 - **iPhone card check: a show already logged in another order opens in the saved order.** When the site lists a show's matches the other way round (backstage comments first, the trainee greeting last) and the matches were logged in the real order, the card used to open as listed with every match marked "logged as 8, save as 1" and a Confirm all that would have saved the wrong order over the right one. Reverse order then lined it up with the sheet, so there was nothing left to confirm, which looked like the confirm option had gone. Now such a show opens in the saved order ("· as saved in StarScope"); with some matches not logged yet, only when the saved ones are exactly the list reversed. Reverse order still flips it either way. Shows whose order you already chose on the phone keep it.
