@@ -8234,11 +8234,14 @@ class MainActivity : Activity() {
     if (k === 13 || k === 23) return;   // a link: the browser opens it
     if (k === 37 || k === 38 || k === 39 || k === 40) {
       stop();
+      if (k === 38) { var ar = ae.getBoundingClientRect(); if (ar.bottom < 40) { focusEl(ae); return; } }   // scrolled to the bottom: Up first brings focus back into view
       var nx = geoNext(ae, k, items());
       if (isChip && (k === 37 || k === 39) && nx && nx.classList.contains('tv-chip')) { chooseEra(parseInt(nx.getAttribute('data-era'), 10)); return; }
       if (nx) focusEl(nx);
       else if (k === 37 && window.__tvOpenMenu) window.__tvOpenMenu();
       else if (k === 38) scroller.scrollTop = 0;
+      // 2.110.1: nothing focusable further down (the era in numbers, the era picks): Down scrolls to the bottom, Up comes back.
+      else if (k === 40) scroller.scrollTop = scroller.scrollHeight;
     }
   }, true);
 

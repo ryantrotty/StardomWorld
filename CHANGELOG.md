@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.110.1
+
+- **Fix: the bottom of the New Horizons era page couldn't be reached.** The era in numbers (and the era picks list) have nothing to focus, and Down only moved between focusable tiles, so the page stopped at the factions and rising stars. Down from the last tiles now scrolls to the very bottom; Up brings focus back into view, then moves up as usual.
+- Sheet: the AGQ 2024 English set's name lost a stray quote (`ALLSTAR GRAND QUEENDOM 2024 (English)`).
+
 ## 2.110.0
 
 - **New Horizons era page:**
