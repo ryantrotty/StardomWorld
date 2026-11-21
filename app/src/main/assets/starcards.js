@@ -178,7 +178,18 @@
       if (!v || (v.x && v.x.k === 'segment') || (from && String(v.d || '') < from) || (to && String(v.d || '') > to)) return;
       if (kind === 'v' ? versus(v, a, b) : facVersus(v, a, b)) out.push({ id: id, v: v });
     });
-    return out.sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+    return oneEach(out).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+  }
+  // 2.111.2: one entry per match. An English-commentary video linked to the Japanese match is the same match, so counts
+  // and lists keep the match's own video (the one in the match's show), else the first one.
+  function oneEach(list) {
+    var by = {}, out = [];
+    list.forEach(function(x) {
+      var m = (x.v.x && x.v.x.m) || x.id, own = !x.v.ss;
+      if (by[m] == null) { by[m] = out.length; out.push(x); }
+      else if (own && out[by[m]].v.ss) out[by[m]] = x;
+    });
+    return out;
   }
   function results(kind, a, b) {
     if (!map) return [];
@@ -1024,6 +1035,7 @@
     X.get = function(id) { return (map || {})[String(id)] || null; };
     // Every logged match passing test(v), dated or not, complete year or not (2.109.1: top rated thumbnails).
     X.any = function(test) { var o = []; Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && test(v)) o.push({ id: id, v: v }); }); return o; };
+    X.oneEach = oneEach;
     X.ready = function() { return !!map; };
     X.vs = function(a, b, from) { return map ? pairList('v', a, b, from || '') : []; };
     X.fvs = function(a, b, from) { return map ? pairList('f', a, b, from || '') : []; };

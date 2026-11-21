@@ -59,7 +59,9 @@
     var X = idx(), f = from(e);
     if (!X) return [];
     if (EL.key === f && Date.now() - EL.at < 2000) return EL.list;   // the same drawing: read once
-    EL = { key: f, at: Date.now(), list: X.find(function(v) { return String(v.d || '') >= f; }), people: null };
+    // 2.111.2: one entry per match (a linked English video is the same match, it was counted twice).
+    var L = X.find(function(v) { return String(v.d || '') >= f; });
+    EL = { key: f, at: Date.now(), list: X.oneEach ? X.oneEach(L) : L, people: null };
     return EL.list;
   }
   // Matches per wrestler (by every name key), counted in one pass.

@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.111.2
+
+- **Fix: every match twice on a show's card row when the show also has an English version.** English-commentary videos are attached to the Japanese match in the sheet (so a match is logged once), but the video page's card row, Up next and previous / next found a show's matches by the match's show, so they picked up the English videos too: AGQ 2024 listed each match twice, and so did the other shows with both versions (Dream Queendom 2025, the 2025 and 2026 shows logged in both languages). The card row now goes by the video's own set, so the Japanese show lists only Japanese videos and the English show only English ones, one per match.
+- **Fix: New Horizons era page counts.** Rivalry counts, wrestlers' match counts, top tag teams, faction unit matches and the era picks counted a match once per video, so a match with both versions counted twice. They now count each match once (the rivalry results page lists each match once too).
+- The sheet is unchanged: Japanese and English shows stay separate shows there, as before.
+
 ## 2.111.1
 
 - **New Horizons era page, must-see shows:** Dream Queendom 2025 is out; All Star Grand Queendom 2024 is added at the end. The three are now All Star Grand Queendom 2025, Dream Queendom 2024, All Star Grand Queendom 2024. Picks only, in `eras.json`.
