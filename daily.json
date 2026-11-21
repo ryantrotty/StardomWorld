@@ -1,17 +1,15 @@
 {
- "generated": "2026-11-20T06:32:50Z",
+ "generated": "2026-11-21T06:32:22Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-20T06:29:18Z",
-  "finished": "2026-11-20T06:32:50Z",
-  "requests": 35,
+  "started": "2026-11-21T06:29:02Z",
+  "finished": "2026-11-21T06:32:22Z",
+  "requests": 34,
   "schedule": {
    "ok": true,
    "events": 44,
    "changed": [
-    "20261121-akita",
-    "20261122-fukushima",
-    "20261123-koriyama"
+    "20261122-fukushima"
    ],
    "error": ""
   },
@@ -21,37 +19,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-19T06:34:37Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "kawaii": {
      "read": false,
@@ -61,7 +59,7 @@
     "iwgp": {
      "read": true,
      "changed": false,
-     "note": "Reign 6 (Syuri) and all 6 defences (defCount 6, 5 listed) confirmed against Wikipedia; the 6th defence's details are still not stated on the Wikipedia page, so it stays count-only. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
+     "note": "Reign 6 (Syuri) and all 6 defences (defCount 6, 5 listed) confirmed against Wikipedia; the 6th defence details are still not stated on the Wikipedia page, so it stays count-only. Wikipedia is the sole source (Cagematch dropped Nov 12, 2026)"
     },
     "strong": {
      "read": true,
@@ -73,7 +71,6 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: unknown match type kept in Japanese: 3WAYタッグバトル",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
    ]
@@ -88,7 +85,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-20T06:31:00Z",
+  "updated": "2026-11-21T06:30:39Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -107,7 +104,7 @@
    "20261122-fukushima": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.22%E7%A6%8F%E5%B3%B6%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
    "20261123-koriyama": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.23%E9%83%A1%E5%B1%B1%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
    "20261126-ppp": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/download-1.jpg",
-   "20261128-okazaki": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
+   "20261128-okazaki": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/tag2026zen_fix.jpg",
    "20261129-hamamatsu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/26.11.29%E6%B5%9C%E6%9D%BE%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
    "20261205-himeji": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
    "202612": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/2026_12_ol.jpg",
@@ -1222,7 +1219,7 @@
       ]
      },
      {
-      "type": "3WAYタッグバトル",
+      "type": "3-Way Tag Battle",
       "sides": [
        "Hazuki",
        "Koguma",
@@ -1242,7 +1239,7 @@
       ]
      },
      {
-      "type": "3WAYタッグバトル",
+      "type": "3-Way Tag Battle",
       "sides": [
        "Syuri",
        "Ami Sohrei",
