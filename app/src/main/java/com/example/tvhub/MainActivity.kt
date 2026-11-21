@@ -8185,9 +8185,24 @@ class MainActivity : Activity() {
   var scopeWait = null, scopeTries = 0;
 
   function items() { return Array.prototype.slice.call(root.querySelectorAll('a[tabindex]')); }
+  // 2.111.0: sideways rows (top rated). A card scrolled out of its row only counts for Left/Right inside that row, so
+  // Up and Down land on a card that can be seen.
+  function hrowOf(el) { return el && el.closest ? el.closest('.tvn-hr') : null; }
+  function shown(it, ae, k) {
+    var hr = hrowOf(it);
+    if (!hr || ((k === 37 || k === 39) && hr === hrowOf(ae))) return true;
+    var r = it.getBoundingClientRect(), b = hr.getBoundingClientRect();
+    return r.left >= b.left - 2 && r.right <= b.right + 2;
+  }
   function focusEl(el) {
     if (!el) return;
     try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    var hr = hrowOf(el);
+    if (hr) {
+      var cr = el.getBoundingClientRect(), hb = hr.getBoundingClientRect(), pad = 12;
+      if (cr.left < hb.left + pad) hr.scrollLeft -= hb.left + pad - cr.left;
+      else if (cr.right > hb.right - pad) hr.scrollLeft += cr.right - hb.right + pad;
+    }
     var r = el.getBoundingClientRect(), vh = window.innerHeight;
     if (r.top < 40) scroller.scrollTop += r.top - 40;
     else if (r.bottom > vh - 40) scroller.scrollTop += r.bottom - vh + 40;
@@ -8235,7 +8250,7 @@ class MainActivity : Activity() {
     if (k === 37 || k === 38 || k === 39 || k === 40) {
       stop();
       if (k === 38) { var ar = ae.getBoundingClientRect(); if (ar.bottom < 40) { focusEl(ae); return; } }   // scrolled to the bottom: Up first brings focus back into view
-      var nx = geoNext(ae, k, items());
+      var nx = geoNext(ae, k, items().filter(function(it) { return shown(it, ae, k); }));
       if (isChip && (k === 37 || k === 39) && nx && nx.classList.contains('tv-chip')) { chooseEra(parseInt(nx.getAttribute('data-era'), 10)); return; }
       if (nx) focusEl(nx);
       else if (k === 37 && window.__tvOpenMenu) window.__tvOpenMenu();

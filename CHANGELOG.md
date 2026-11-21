@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.111.0
+
+- **New Horizons era page: top rated matches as StarScope cards.** The five top rated matches now use the StarScope video card (picture, then the gold event line, names and footer with the date), the same card as on the StarScope pages, in a sideways row like the title pages' reign rows: four across, 24 apart, scrollbar hidden, gold ring focus. The Cagematch rating sits top right in the StarScope Top badge (★ 9.55). The fifth match and **All N matches in this era** are reached by scrolling right; the tile is the row's last card. A top match not in StarScope keeps the same card layout from top_matches.json (names and date).
+- **Moving in the row:** Left and Right go along the row first and scroll it so the focused card is in view; Left on the first card opens the menu. Up and Down only land on cards that can be seen, so focus never jumps to a card scrolled out of view.
+- **Must-see shows back to one row of three:** Dream Queendom 2025, All Star Grand Queendom 2025, Dream Queendom 2024. The second row (5★STAR GP 2024 final, The Conversion 2024, All Star Grand Queendom 2024) is removed from `eras.json`.
+
 ## 2.110.2
 
 - **New Horizons era page: six must-see shows, two rows of three** (the StarScope Shows grid), newest first: Dream Queendom 2025, All Star Grand Queendom 2025, Dream Queendom 2024, 5★STAR GP 2024 final, The Conversion 2024, All Star Grand Queendom 2024 (now logged). Picks only, in `eras.json`; the cards come from StarScope.

@@ -78,14 +78,18 @@
     '#tv-era .tvn-stat b{display:block;font-size:26px;font-weight:900;color:#fff;line-height:1.05;}',
     '#tv-era .tvn-stat span{display:block;margin-top:3px;font-size:12px;font-weight:800;letter-spacing:.1em;color:#F4C242;text-transform:uppercase;}',
     '#tv-era .tvn-now{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:#F4C242;color:#1A1A1A;font-size:11px;font-weight:800;letter-spacing:.06em;vertical-align:2px;}',
-    '#tv-era .tvn-trs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;}',
-    '#tv-era .tvn-tr{display:block;background:#161F2A;border:3px solid #2A323C;border-radius:8px;overflow:hidden;position:relative;}',
-    '#tv-era a.tvn-tr:focus{border-color:#F4C242;background:#172029;}',
-    '#tv-era .tvn-tr .im{height:0;padding-top:56.25%;background:#172029 center/cover no-repeat;}',
-    '#tv-era .tvn-tr .sc{position:absolute;left:8px;top:8px;background:#F4C242;color:#1A1A1A;border-radius:4px;padding:2px 7px;font-size:13px;font-weight:800;}',
-    '#tv-era .tvn-tr .a{padding:7px 10px 0 10px;font-size:14px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}',
-    '#tv-era .tvn-tr .b{padding:2px 10px 9px 10px;font-size:12px;font-weight:600;color:#9AA6B4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-    '#tv-era .tvn-all{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px;font-size:15px;font-weight:800;color:#F4C242;}',
+    // 2.111.0: top rated as StarScope video cards in a sideways row, like the reign detail row: four across, 24 apart,
+    // scrollbar hidden, look C focus (padding so the ring and lift aren't cut off); rating badge top right as on the
+    // StarScope page's Top sort; the All N matches tile is the row's last card.
+    '#tv-era .tvn-hr{display:flex;flex-direction:row;align-items:stretch;gap:24px;overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;padding:12px 10px;margin:0 -10px;scrollbar-width:none;}',
+    '#tv-era .tvn-hr::-webkit-scrollbar{display:none;}',
+    '#tv-era .tvn-mc{flex:0 0 calc(25% - 18px);max-width:calc(25% - 18px);display:block;position:relative;min-width:0;border-radius:8px;background:#1A1A1A;overflow:hidden;color:#fff;text-decoration:none;outline:none;}',
+    '#tv-era a.tvn-mc:focus{outline:3px solid #F4C242 !important;outline-offset:2px !important;box-shadow:0 0 16px rgba(244,194,66,.8) !important;transform:scale(1.03);z-index:5;}',
+    '#tv-era .tvn-mc .im{height:0;padding-top:56.25%;background:#161F2A center/cover no-repeat;}',
+    '#tv-era .tvn-mc .bd{position:absolute;right:8px;top:8px;background:#F4C242;color:#1A1A1A;font:800 13px Arial;padding:3px 8px;border-radius:4px;}',
+    '#tv-era .tvn-mc .tvsc-host{padding:11px 14px 13px;}',
+    '#tv-era .tvn-all{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px;font-size:17px;font-weight:800;color:#F4C242;background:#161F2A;}',
+    '#tv-era .tvn-all span{display:block;margin-top:6px;font-size:13px;font-weight:600;color:#9AA6B4;}',
     '#tv-era .tvn-rvs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}',
     '#tv-era .tvn-rv{display:block;background:#161F2A;border:3px solid #2A323C;border-radius:12px;overflow:hidden;}',
     '#tv-era .tvn-rv:focus{border-color:#F4C242;background:#172029;}',
@@ -200,27 +204,37 @@
   // people (and date when it has one); a copy with a picture first.
   function topLogged(m) {
     var X = idx(), u = String(m.u || ''), mm = /\/contents\/(\d+)/.exec(u), id = mm ? mm[1] : '';
-    if (!X) return { id: id, th: '' };
+    if (!X) return { id: id, th: '', v: null };
     var v = id ? X.get(id) : null;
-    if (v && v.th) return { id: id, th: v.th };
+    if (v && v.th) return { id: id, th: v.th, v: v };
     var keys = [].concat.apply([], m.s).map(norm), best = null;
     (X.any ? X.any : X.find)(function(w) {
       if (w.d && String(w.d) !== String(m.d)) return false;
       return keys.every(function(k) { return (w.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); });
     }).forEach(function(x) { if (!best || (!best.v.th && x.v.th)) best = x; });
-    return { id: id || (best ? best.id : ''), th: best && best.v.th ? best.v.th : '' };
+    var bv = v || (best ? best.v : null);
+    return { id: id || (best ? best.id : ''), th: bv && bv.th ? bv.th : (best && best.v.th ? best.v.th : ''), v: bv };
+  }
+  // 2.111.0: the StarScope video card (assets/starcards.js), the same block as on the StarScope pages; a match not in
+  // StarScope gets the same layout from top_matches.json (names, date).
+  function cardBody(m, v) {
+    var C = window.__tvStarCard;
+    if (v && v.s && C && C.html) return C.html(v);
+    var lines = m.s.map(function(sd, i) { return (i ? 'vs ' : '') + esc(nm(sd)); }).join('<br>');
+    var d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(m.d || ''), dt = d ? (isJa() ? d[1] + '年' + (+d[2]) + '月' + (+d[3]) + '日' : MON[+d[2] - 1] + ' ' + (+d[3]) + ', ' + d[1]) : '';
+    return '<div class="tvsc notranslate" translate="no"><div class="ev">' + esc(m.n || '') + '</div><div class="nm">' + lines + '</div><div class="ft"><span></span><b>' + esc(dt) + '</b></div></div>';
   }
   function top(e) {
     var list = topList().filter(function(m) { return m.e === e.n; });
     if (!list.length) return '';
-    var X = idx(), h = list.slice(0, 5).map(function(m) {
+    var h = list.slice(0, 5).map(function(m) {
       var lg = topLogged(m), vid = lg.id, th = lg.th;
       var tag = vid ? 'a tabindex="0" href="/contents/' + esc(vid) + '"' : 'div';
-      return '<' + tag + ' class="tvn-tr"><div class="im"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '></div><span class="sc notranslate" translate="no">' + Number(m.r).toFixed(2) + '</span>' +
-        '<div class="a notranslate" translate="no">' + esc(m.s.map(nm).join(' vs ')) + '</div><div class="b">' + esc(monY(m.d) + (m.n ? ' · ' + m.n : '')) + '</div></' + (vid ? 'a' : 'div') + '>';
+      return '<' + tag + ' class="tvn-mc"><div class="im"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '></div><span class="bd notranslate" translate="no">★ ' + Number(m.r).toFixed(2) + '</span>' +
+        '<div class="tvsc-host">' + cardBody(m, lg.v) + '</div></' + (vid ? 'a' : 'div') + '>';
     }).join('');
-    h += '<a class="tvn-tr tvn-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '">' + esc(T('All ' + list.length + ' matches in this era', 'この時代の全' + list.length + '試合')) + '</a>';
-    return '<div class="tvn-trs notranslate" translate="no">' + h + '</div>';
+    h += '<a class="tvn-mc tvn-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '">' + esc(T('All ' + list.length + ' matches', '全' + list.length + '試合')) + '<span>' + esc(T('in this era', 'この時代')) + '</span></a>';
+    return '<div class="tvn-hr notranslate" translate="no">' + h + '</div>';
   }
 
   // ---- rivalries (StarScope)
