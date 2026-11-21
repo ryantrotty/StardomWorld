@@ -43,7 +43,13 @@
     try { put(); return true; } catch (e) {}
     try {
       var drop = function(re) { for (var i = localStorage.length - 1; i >= 0; i--) { var x = localStorage.key(i); if (x !== k && re.test(x || '')) localStorage.removeItem(x); } };
-      drop(new RegExp('^(' + SET_KEY + '(?!' + (window.__ccSetNow || 'x') + '$)|' + YEAR_KEY + ')'));
+      // 2.111.3: other shows' pages first, oldest first (they're read again anyway); the year lists only if that
+      // isn't enough, since Next show is picked from them.
+      var olds = [];
+      for (var j = 0; j < localStorage.length; j++) { var y = localStorage.key(j) || ''; if (y !== k && y.indexOf(SET_KEY) === 0 && y !== SET_KEY + (window.__ccSetNow || 'x')) { var o = lsGet(y); olds.push({ k: y, t: (o && o.t) || 0 }); } }
+      olds.sort(function(a, b) { return a.t - b.t; });
+      for (var q = 0; q < olds.length; q++) { localStorage.removeItem(olds[q].k); if (q % 5 === 4 || q === olds.length - 1) { try { put(); return true; } catch (e4) {} } }
+      drop(new RegExp('^' + YEAR_KEY));
       try { put(); return true; } catch (e2) {}
       if (k !== CARDS_KEY) { drop(new RegExp('^' + CARDS_KEY + '$')); put(); return true; }
     } catch (e3) {}
@@ -648,7 +654,10 @@
     var h = '<div class="end"><div class="hd">The card<span style="flex:1"></span><button class="b" style="height:36px;font-size:13px" data-allcards="1">' + (showAllCards ? 'Hide cards' : 'Show all cards') + '</button></div>' + rows + '<div class="bt">';
     if (batch) h += '<button class="b on wide" disabled>Confirming ' + Math.min(batch.done + 1, batch.list.length) + ' of ' + batch.list.length + '…</button><button class="b" data-stop="1">Stop</button>';
     else if (todo) h += '<button class="b on wide" data-all="1">Confirm all (' + todo + ')</button>';
-    h += '</div>' + (nx ? '<button class="b' + (todo || batch ? '' : ' on') + ' wide" data-go="' + esc(nx.set) + '" data-from="' + esc(S.from) + '">Next: ' + esc(nx.name) + '</button>' : '') + '</div>';
+    var on = todo || batch ? '' : ' on';
+    h += '</div>' + (!nx ? '' : nx.more ? '<button class="b' + on + ' wide" data-nextmore="' + esc(nx.more) + '"' + (yl && yl.busy ? ' disabled>Reading the site\'s list…' : '>Next: load more ' + esc(nx.more) + ' shows') + '</button>' + (yl && yl.err ? '<div class="er">Couldn\'t read the list (' + esc(yl.err) + ')</div>' : '')
+      : nx.year ? '<button class="b' + on + ' wide" data-year="' + esc(nx.year) + '" data-gohome="1">Next: ' + esc(S.from.slice(1)) + ' is done, on to ' + esc(nx.year) + '</button>'
+      : '<button class="b' + on + ' wide" data-go="' + esc(nx.set) + '" data-from="' + esc(S.from) + '">Next: ' + esc(nx.name) + '</button>') + '</div>';
     return h;
   }
   function showHtml() {
@@ -960,16 +969,26 @@
     next();
   }
   // Next show: the next one in the list you came from (a year: the next older one not fully logged; Started: the next).
+  // 2.111.3: the year's list is taken from the one on screen when the phone's copy was cleared for space (Next used to
+  // vanish then). When the loaded shows run out: Load more of the year, or (the year done) the year before.
   function nextShow() {
-    var list = [];
+    var list = [], yy = '', items = null;
     if (/^y\d{4}$/.test(S.from)) {
-      var c = lsGet(YEAR_KEY + S.from.slice(1)), yy = S.from.slice(1);
-      list = (c && c.items || []).map(function(x, i) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yy) : null; return { set: x.set, name: x.name, d: (sl && sl.date) || '', i: i }; })
+      yy = S.from.slice(1);
+      var c = lsGet(YEAR_KEY + yy);
+      items = c && c.items && c.items.length ? c.items : yl && yl.y === yy ? yl.items : [];
+      list = items.map(function(x, i) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yy) : null; return { set: x.set, name: x.name, d: (sl && sl.date) || '', i: i }; })
         .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
     }
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
     var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var sc = lsGet(SET_KEY + x.set); return !setCount(x.set, sc && sc.videos).done; });
     var nx = rest[0];
+    if (!nx && yy) {
+      var c2 = lsGet(YEAR_KEY + yy), done = yl && yl.y === yy ? yl.done : !!(c2 && c2.done);
+      if (!items.length || !done) return { more: yy };
+      var prev = years().filter(function(y) { return y < yy; })[0];
+      return prev ? { year: prev } : null;
+    }
     if (!nx) return null;
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+nx.set, nx.name, null) : { show: nx.name };
     return { set: nx.set, name: showName(sl.show || nx.name, sl.date) || nx.name };
@@ -1183,7 +1202,13 @@
     if (d.closeall) { saveState(); root.style.display = 'none'; document.documentElement.style.overflow = ''; return; }
     if (d.home) { S.screen = 'home'; show = null; flash = ''; saveState(); draw(); root.scrollTop = 0; return; }
     if (d.tab) { S.tab = 'started'; saveState(); draw(); return; }
-    if (d.year) { S.tab = 'year'; S.year = d.year; saveState(); draw(); return; }
+    if (d.year) { S.tab = 'year'; S.year = d.year; if (d.gohome) { S.screen = 'home'; show = null; flash = ''; root.scrollTop = 0; } saveState(); draw(); return; }
+    if (d.nextmore) {   // 2.111.3: the next page of the year's shows (one site request), then on to the next show in it
+      var yy2 = d.nextmore;
+      if (!yl || yl.y !== yy2) yearOpen(yy2); else if (!yl.done) { yl.err = ''; yearPage(); }
+      var wait = function() { if (yl && yl.busy) { setTimeout(wait, 300); return; } var nx2 = nextShow(); if (nx2 && nx2.set) { flash = ''; openShow(nx2.set, S.from); } else draw(); };
+      setTimeout(wait, 300); return;
+    }
     if (d.more) { if (yl) { yl.err = ''; yearPage(); } return; }
     if (d.go) { flash = ''; openShow(d.go, d.from); return; }
     if (d.confirm) { if (batch) return; batch = { list: [d.confirm], done: 0, at: d.confirm, stop: false, saved: 0 }; draw(); step(); return; }
