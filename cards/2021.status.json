@@ -1,0 +1,100 @@
+{
+ "year": 2021,
+ "ok": true,
+ "generated": "2026-11-22",
+ "shows": 101,
+ "matches": 616,
+ "full_cards": 96,
+ "gaps": [
+  {
+   "date": "2021-01-17",
+   "show": "スターダム１０周年記念日",
+   "missing": "'4WAYタッグバトル・イリミネーションマッチ': 4-way match but only 2 sides listed on the official results page"
+  },
+  {
+   "date": "2021-01-30",
+   "show": "高田馬場大会～日本武道館大前夜祭",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-02-13",
+   "show": "Go to BUDOKAN! STARDOM Valentine Special Day-1",
+   "missing": "'3WAYタッグ・バトル　変則イリミネーションマッチ': 3-way match but only 2 sides listed on the official results page"
+  },
+  {
+   "date": "2021-02-13",
+   "show": "Go to BUDOKAN! STARDOM Valentine Special Day-1",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-02-21",
+   "show": "新木場大会",
+   "missing": "'スターダム・ランブル': battle royal entrants may be incomplete (official summary lists only some participants)"
+  },
+  {
+   "date": "2021-03-03",
+   "show": "レック Presents スターダム10周年記念～ひな祭り ALLSTAR DREAM CINDERELLA～",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-06-08",
+   "show": "Road to TOKYO DREAM CINDERELLA 2021 Special Edition",
+   "missing": "results page heading has no date to cross-check"
+  },
+  {
+   "date": "2021-07-10",
+   "show": "CINDERELLA SUMMER TOUR 2021 in OSAKA",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-07-25",
+   "show": "CINDERELLA SUMMER TOUR 2021 in TOKYO",
+   "missing": "'3WAYバトル': 3-way match but only 2 sides listed on the official results page"
+  },
+  {
+   "date": "2021-08-13",
+   "show": "5★STAR GP 2021 後楽園大会",
+   "missing": "'4WAYバトル': 4-way match but only 2 sides listed on the official results page"
+  },
+  {
+   "date": "2021-10-09",
+   "show": "10th Anniversary GRAND FINAL OSAKA DREAM CINDERELLA 2021 ～大阪めっちゃスターダム～",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-11-03",
+   "show": "KAWASAKI SUPER WARS ～川崎超女大戦～",
+   "missing": "title 'SWA選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-11-27",
+   "show": "FIBREPLEX Presents TOKYO SUPER WARS ～東京超女大戦～",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2021-12-25",
+   "show": "STARDOM YEAREND CLIMAX 2021",
+   "missing": "official results page not read (wwr-stardom.com returned HTTP 403); card taken from the Battle News report, not one of the four named news outlets — check against the official page when it can be read"
+  },
+  {
+   "date": "2021-12-29",
+   "show": "STARDOM DREAM QUEENDOM 2021",
+   "missing": "official results page not read (wwr-stardom.com returned HTTP 403); card taken from the Battle News report, not one of the four named news outlets — check against the official page when it can be read"
+  },
+  {
+   "date": "2021-12-29",
+   "show": "STARDOM DREAM QUEENDOM 2021",
+   "missing": "Battle News numbers the 5-way battle 第0試合 (opening/pre-show match); it is no. 1 here"
+  }
+ ],
+ "blocked": [
+  {
+   "site": "www.cagematch.net",
+   "note": "Two requests returned HTTP 307 with an empty body (no redirect target); stopped using Cagematch for this job."
+  },
+  {
+   "site": "wwr-stardom.com",
+   "note": "HTTP 403 on the official results page for 2021-12-25 (request ~213 of the job, 8-15s spacing); stopped using the site for this job. Results pages for 2021-12-25 and 2021-12-29 were not read from it."
+  }
+ ]
+}
