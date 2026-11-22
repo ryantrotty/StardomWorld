@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.115.1
+
+- **Fix: Confirm did nothing on a segment with no names.** The logger's People step still wanted at least one person in a segment, so card check's quick save stopped there without a word (Korakuen Nov. 2023, match 2). A segment with nobody in it now counts as ready and saves.
+- Built on 2.115.0. iPhone card check: published to GitHub Pages (indexpanel.js). No sheet script change beyond 2.115.0.
+
 ## 2.115.0
 
 - **Segments with nobody in them.** A greeting or segment with only the company's President in it (who isn't indexed) can now be saved with no names: in iPhone card check, Segment… → pick the type → **Use as segment, no names**. A card whose title reads as a segment but names no one in the library is offered as one ("Looks like a segment: Greeting · no wrestler in it"). The TV's logger allows it too. Nothing about it shows on StarScope cards, Shows or the published index: it only marks the video as done, in its place on the card.
