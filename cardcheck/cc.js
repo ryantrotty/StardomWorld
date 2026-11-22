@@ -357,6 +357,10 @@
       h += '<div class="chips sub">' + [['all', 'All'], ['logged', 'Logged'], ['started', 'Started'], ['none', 'Not started']].map(function(f) {
         return '<button class="chip' + (S.yf === f[0] ? ' on' : '') + '" data-yf="' + f[0] + '">' + f[1] + ' <span class="cn">' + cn[f[0]] + '</span></button>'; }).join('') + '</div>';
       var shown = all.filter(function(o) { return S.yf === 'all' || o.st === S.yf; });
+      refLoad(S.year);
+      var refY = refs[S.year];
+      if (refY && refY.data) h += '<div class="gl" style="margin:0 0 10px;color:#F4C242">Reference cards: ' + refY.data.shows.length + ' shows' + (refY.data.generated ? ' · ' + esc(refY.data.generated) : '') + '</div>';
+      else if (refY && refY.err) h += '<div class="gl" style="margin:0 0 10px">Reference cards couldn\'t be read (' + esc(refY.err) + ')</div>';
       // 2.116.0: venues for the shows on this list in one go (no site calls: the venue the list gives, else Gemini).
       var bvN = bvCands(shown.map(function(o) { return o.x; }), S.year).length;
       if (bvN) h += '<button class="opt" data-bulkven="1" style="margin:0 0 12px">Fill venues · ' + bvN + ' show' + (bvN > 1 ? 's' : '') + ' without one<small>From the ' + shown.length + ' shows on this list' + (yl.done ? '' : ' (Load more first to include more)') + ' · Gemini or copy to any AI · you check each one before it\'s saved</small></button>';
@@ -772,7 +776,7 @@
     return '<div class="shw"><div class="n1">' + esc(en || show.line) + '</div>' + (show.line && show.line !== en ? '<div class="n2">' + esc(show.line) + '</div>' : '') +
       '<div class="d">' + esc(dateText(date) || 'Date not read') + '</div>' +
       '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' + orderNote() +
-      '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+      '<div class="bt">' + refButtons() + '<button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
   }
   // 2.113.0: what the order means for the sheet, in words: already saved this way (nothing to confirm), or which
   // logged matches Confirm all would renumber.
@@ -1016,7 +1020,7 @@
     return { list: out, note: note, info: orderNote };
   }
   function aiHtml() {
-    var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">AI answer</div>';
+    var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">' + (a.ref ? 'Reference card' : 'AI answer') + '</div>';
     if (a.busy) h += '<div class="ld">' + esc(a.busy) + '</div>';
     if (!a.sug) {
       h += '<textarea class="tx" id="ccp-ai" placeholder="Paste the AI\'s answer here">' + esc(a.text || '') + '</textarea><div class="bt"><button class="b on wide" data-airead="1">Read answer</button><button class="b" data-close="1">Cancel</button></div>';
@@ -1027,9 +1031,9 @@
       if (a.info) h += '<div class="msg">✓ ' + esc(a.info) + '</div>';
       h += '<div class="gl">Tap to leave any out, then Apply</div>';
       a.sug.forEach(function(x, i) {
-        var t = x.k === 'order' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' || x.k === 'use' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
+        var t = x.k === 'order' || x.k === 'reftags' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' || x.k === 'use' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
           x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
-        var sub = x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        var sub = x.k === 'reftags' ? 'Suggested on each match from the reference card; logged matches keep theirs' : x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
         h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
       });
       var n = a.sug.filter(function(x) { return x.on; }).length;
@@ -1041,7 +1045,7 @@
   }
   // One at a time: venue, new wrestlers (then her other spelling), spellings for wrestlers already known.
   function aiApply() {
-    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, use: 2, lineup: 3 }, done = 0, fail = [];
+    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, use: 2, lineup: 3, reftags: 4 }, done = 0, fail = [];
     var todo = a.sug.filter(function(x) { return x.on; }).sort(function(x, y) { return rank[x.k] - rank[y.k]; });
     var next = function() {
       if (!todo.length) {
@@ -1056,6 +1060,10 @@
         var nv = x.vids.map(function(id) { return byId[id]; }).filter(Boolean);
         if (nv.length === show.videos.length) { setOrder(nv, x.why); done++; }
         next(); return;
+      }
+      if (x.k === 'reftags') {
+        Object.keys(x.map).forEach(function(vid) { refTags[vid] = x.map[vid]; var rr = recs[vid]; if (rr && !rr.failed) { rr.ref = x.map[vid]; ssSet(REC_KEY + vid, rr); } });
+        ssSet('ccPhoneRefTags', refTags); done++; next(); return;
       }
       if (x.k === 'lineup') {
         var v = show.videos.filter(function(y) { return y.id === x.v; })[0], r = recs[x.v] && !recs[x.v].failed ? recs[x.v] : { id: Number(x.v), set: Number(show.set), title_en: v ? v.t : '', title_ja: '', shows: [], lines: [], thumb: v ? v.th : '', date: show.date };
@@ -1090,6 +1098,95 @@
       }
     };
     next();
+  }
+  // ---- 2.117.0: reference cards. Muse researches each older year's shows from outside sources (never the video site)
+  // and publishes cards/<year>.json on the cards-data branch. A show with one opens it as an AI answer, already read:
+  // the same approvals as Gemini (order, line-ups the site lacks, new names, the venue), plus tournament, round, block
+  // and title for each match on one tick. One GitHub request per year, kept while card check is open.
+  var REF_BASE = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/cards-data/cards/', refs = {}, refTags = ssGet('ccPhoneRefTags') || {};
+  function refLoad(y) {
+    y = String(y || ''); if (!/^\d{4}$/.test(y) || refs[y]) return;
+    refs[y] = { busy: true };
+    getJson(REF_BASE + y + '.json')
+      .then(function(d) { refs[y] = d && Array.isArray(d.shows) ? { data: d } : { err: 'not a reference card file' }; })
+      .catch(function(e) { var m = String(e && e.message || e); refs[y] = /404/.test(m) ? { missing: true } : { err: m }; })
+      .then(function() { draw(); });
+  }
+  function refNorm(t) { return String(t || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-『』「」]+/g, ''); }
+  // The library ids on one video: its line-up as read from the site, else the names saved for it.
+  function vidIds(v) {
+    var K = kit(), r = recs[v.id], ids = {}, c = map[v.id];
+    if (!K) return ids;
+    if (r && !r.failed) { var sd = sides(r); sd.A.forEach(function(names, si) { names.forEach(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : '', id = K.resolve(rw) || K.resolve(o); if (id) ids[id] = 1; }); }); }
+    else if (c && c.s) (c.s || []).forEach(function(x, si) { x.forEach(function(nm, k) { var id = K.resolve(nm) || K.resolve(((c.sj || [])[si] || [])[k]); if (id) ids[id] = 1; }); });
+    return ids;
+  }
+  function refIds(m) {
+    var K = kit(), ids = {};
+    (m.sides || []).forEach(function(sd) { (sd || []).forEach(function(p) { var id = p && K && (K.resolve(p.en || '') || K.resolve(p.ja || '')); if (id) ids[id] = 1; }); });
+    return ids;
+  }
+  // The reference shows for the open show: by date; when two share it, by venue, then name, then wrestlers in common.
+  function refCands() {
+    if (!show || !show.date) return [];
+    var R = refs[show.date.slice(0, 4)];
+    if (!R || !R.data) return [];
+    var L = R.data.shows.map(function(s, i) { return { s: s, i: i }; }).filter(function(o) { return o.s && o.s.date === show.date; });
+    if (L.length < 2) return L;
+    var K = kit(), now = venueNow(), raw = refNorm(rawVenue()), title = refNorm([show.line, show.name].join(' ')), mine = {};
+    show.videos.forEach(function(v) { var x = vidIds(v); Object.keys(x).forEach(function(k) { mine[k] = 1; }); });
+    L.forEach(function(o) {
+      var s = o.s, ve = s.venue || {}, sc = 0, lib = K && ((ve.ja && K.venue(ve.ja)) || (ve.en && K.venue(ve.en)));
+      if ((lib && now && lib.name === now.name) || (raw && ve.ja && raw.indexOf(refNorm(ve.ja)) >= 0)) sc += 4;
+      if ([s.name_ja, s.name_en].some(function(n) { var k = refNorm(n); return k && (title.indexOf(k) >= 0 || k.indexOf(title) >= 0); })) sc += 2;
+      (s.matches || []).forEach(function(m) { Object.keys(refIds(m)).forEach(function(id) { if (mine[id]) sc += 0.1; }); });
+      o.sc = sc;
+    });
+    L.sort(function(a, b) { return b.sc - a.sc; });
+    return L[0].sc > L[1].sc ? [L[0]] : L.filter(function(o) { return o.sc === L[0].sc; });
+  }
+  function refButtons() {
+    if (!show || !show.date) return '';
+    refLoad(show.date.slice(0, 4));
+    var C = refCands();
+    return C.map(function(o) { return '<button class="b on" data-ref="' + o.i + '">' + esc(C.length > 1 ? 'Reference: ' + (o.s.name_en || o.s.name_ja || 'show ' + (o.i + 1)) : 'Reference card') + '</button>'; }).join('');
+  }
+  // Videos to the reference card's matches: two or more wrestlers in common, else the same place when both have as
+  // many entries.
+  function refMap(rs) {
+    var out = {}, used = {}, ms = rs.matches || [];
+    show.videos.forEach(function(v) {
+      var ids = vidIds(v); if (Object.keys(ids).length < 2) return;
+      var best = -1, bs = 0;
+      ms.forEach(function(m, mi) { if (used[mi]) return; var n = 0; Object.keys(refIds(m)).forEach(function(id) { if (ids[id]) n++; }); if (n > bs) { bs = n; best = mi; } });
+      if (best >= 0 && bs >= 2) { used[best] = 1; out[v.id] = ms[best]; }
+    });
+    if (ms.length === show.videos.length) show.videos.forEach(function(v, vi) { if (!out[v.id] && !used[vi]) out[v.id] = ms[vi]; });
+    return out;
+  }
+  function refTagText(m) {
+    return [m.type, m.stipulation].concat(m.titles || []).concat([m.tournament, m.round, m.block]).filter(function(x) { return x && typeof x === 'string'; }).join(' / ');
+  }
+  function refOpen(i) {
+    var R = refs[show.date.slice(0, 4)], rs = R && R.data && R.data.shows[i];
+    if (!rs) return;
+    var ans = {
+      date: rs.date || '',
+      venue: rs.venue && (rs.venue.en || rs.venue.ja) ? { en: rs.venue.en || '', ja: rs.venue.ja || '' } : null,
+      matches: (rs.matches || []).filter(function(m) { return m && m.kind !== 'segment' && Array.isArray(m.sides); }).map(function(m) {
+        return { no: m.no, type: m.type || '', sides: m.sides.map(function(sd) { return (sd || []).filter(function(p) { return p && (p.en || p.ja); }).map(function(p) { return { en: p.en || '', ja: p.ja || '' }; }); }) };
+      })
+    };
+    var text = JSON.stringify(ans);
+    sheetOpen = { ai: 1, ref: 1, text: text, sug: null, sources: (rs.sources || []).map(function(u) { return { title: u, uri: u }; }) };
+    var rd = aiRead(text);
+    if (rd.err) { sheetOpen.err = rd.err; draw(); return; }
+    var pairs = refMap(rs), tags = {}, n = 0;
+    show.videos.forEach(function(v) { var m = pairs[v.id], t = m && refTagText(m); if (t && !status(v) && !isSeg(v.id)) { tags[v.id] = t; n++; } });
+    if (n) rd.list.push({ k: 'reftags', map: tags, text: 'Match type, title, tournament, round and block for ' + n + ' match' + (n > 1 ? 'es' : ''), on: true });
+    sheetOpen.sug = rd.list; sheetOpen.info = rd.info;
+    sheetOpen.note = [rd.note, (rs.gaps || []).length ? 'Gaps in the reference card: ' + rs.gaps.join('; ') : ''].filter(Boolean).join(' ');
+    draw();
   }
   // ---- 2.116.0: venues for a year's list in one go. The shows read so far (as filtered) that have no venue saved and
   // whose venue on the site isn't in the library go to Gemini together, or as prompts to copy into any AI. Nothing is
@@ -1297,6 +1394,7 @@
     if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(show.set), show: show.name, venue: show.venue, date: show.date }];
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
+    if (refTags[id] && !rec.ref) rec.ref = refTags[id];   // 2.117.0: the reference card's tags, for the logger's suggestions
     var shown = false;
     window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, collect: true, venue: showVenueId(), segment: segs[id] || null,
       host: function() { shown = true; attn[id] = 1; setTimeout(function() { if (window.__tvIndexBack) window.__tvIndexBack(); }, 0); var d = document.createElement('div'); d.style.display = 'none'; document.body.appendChild(d); return d; },
@@ -1325,6 +1423,7 @@
     if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(show.set), show: show.name, venue: show.venue, date: show.date }];
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
+    if (refTags[id] && !rec.ref) rec.ref = refTags[id];   // 2.117.0: the reference card's tags, for the logger's suggestions
     var shown = false;
     window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, reorder: !!re,
       // The logger wants to show itself (a name it can't place): not on the phone; the match is marked to look at.
@@ -1566,6 +1665,7 @@
     if (d.bvtog && sheetOpen && sheetOpen.bulk) { var br = sheetOpen.rows[+d.bvtog]; if (br && br.res && !br.res.none && !br.done) br.on = !br.on; draw(); return; }
     if (d.bvlib && sheetOpen && sheetOpen.bulk) { var bi = +d.bvlib.split(':')[0], bl = sheetOpen.rows[bi]; if (bl && bl.res) { bl.res = { lib: d.bvlib.slice(d.bvlib.indexOf(':') + 1), name: d.nm, src: bl.res.src, en: bl.res.en }; bl.name = d.nm; bl.on = true; } draw(); return; }
     if (d.bvapply && sheetOpen && sheetOpen.bulk) { bvApply(); return; }
+    if (d.ref != null && d.ref !== '' && show) { refOpen(+d.ref); return; }
     if (d.aicopy) { copyText(aiPrompt(), b, 'Copied: paste it into Gemini'); return; }
     if (d.aipaste) { sheetOpen = { ai: 1, text: '', sug: null }; draw(); return; }
     if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }
