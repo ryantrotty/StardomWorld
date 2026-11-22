@@ -1,0 +1,56 @@
+{
+ "year": 2020,
+ "ok": true,
+ "generated": "2026-11-22",
+ "shows": 55,
+ "matches": 388,
+ "full_cards": 54,
+ "gaps": [
+  {
+   "date": "2020-01-26",
+   "show": "スターダム９周年記念日 in 大阪",
+   "missing": "venue differs between results page ('エディオンアリーナ大阪') and calendar ('エディオンアリーナ大阪（大阪府立体育会館）第2競技場'); results page used"
+  },
+  {
+   "date": "2020-01-26",
+   "show": "スターダム９周年記念日 in 大阪",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2020-03-08",
+   "show": "ロストディケイド Presents NO PEOPLE GATE",
+   "missing": "'スペシャル時間差バトルロイヤル': battle royal entrants may be incomplete (official summary lists only some participants)"
+  },
+  {
+   "date": "2020-03-24",
+   "show": "シンデレラ・トーナメント2020",
+   "missing": "'シンデレラ・トーナメント　準決勝': listed as a walkover (不戦勝) on the official results page with no opponent named; opponent left null"
+  },
+  {
+   "date": "2020-07-24",
+   "show": "STARDOM CINDERELLA SUMMER IN NAGOYA",
+   "missing": "match type billed as 'ワールド・オブ・スターダ選手権' on the official page (spelling as printed); listed as World of Stardom Championship"
+  },
+  {
+   "date": "2020-08-15",
+   "show": "5★STAR GP 2020",
+   "missing": "show cancelled on the day (official results page: 中止); not listed because it was not held"
+  },
+  {
+   "date": "2020-11-15",
+   "show": "STARDOM SENDAI CINDERELLA 2020",
+   "missing": "title 'SWA選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2020-12-20",
+   "show": "スターダム10周年記念イヤー夢の祭典～プロローグ～OSAKA DREAM CINDERELLA",
+   "missing": "'フューチャー・オブ・スターダム選手権試合　3WAYバトル': the champion 舞華 is not in the results table; taken from the note under the match on the official page"
+  },
+  {
+   "date": "2020-12-20",
+   "show": "スターダム10周年記念イヤー夢の祭典～プロローグ～OSAKA DREAM CINDERELLA",
+   "missing": "title 'SWA世界' (billed inside 'ワンダー・オブ・スターダム＆SWA世界 二冠選手権試合') is not in the app's title list; listed as SWA世界選手権"
+  }
+ ],
+ "blocked": []
+}
