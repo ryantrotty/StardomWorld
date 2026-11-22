@@ -123,7 +123,7 @@ Type a show's English name in the sheet's **shows** tab, column **K (`name_en`)*
 ## StarScope complete years (your build)
 
 ```json
-"starscope": { "completeYears": [2025, 2026] }
+"starscope": { "completeYears": [2024, 2025, 2026] }
 ```
 
-Years whose every show is logged in StarScope. Pages limited to those years read the index instead of searching the site: the Tag League, 5★STAR GP, Cinderella and Championship tabs on wrestler and tag team pages, and title histories. They still show the site's normal cards; the index only decides which videos those are. Leave this out to keep the built-in `[2025, 2026]` (2.106.0; `[2026]` before); `[]` turns it off. A complete year counts up to its latest logged show: a show after that (on the schedule, not logged yet) is still looked for with the site's search, so keep logging new shows as they come. Only your build uses this while StarScope isn't public.
+Years whose every show is logged in StarScope. Pages limited to those years read the index instead of searching the site: the Tag League, 5★STAR GP, Cinderella and Championship tabs on wrestler and tag team pages, and title histories. They still show the site's normal cards; the index only decides which videos those are. Leave this out to keep the built-in `[2024, 2025, 2026]` (2.109.0; `[2025, 2026]` from 2.106.0, `[2026]` before); `[]` turns it off. A complete year counts up to its latest logged show: a show after that (on the schedule, not logged yet) is still looked for with the site's search, so keep logging new shows as they come. Only your build uses this while StarScope isn't public.

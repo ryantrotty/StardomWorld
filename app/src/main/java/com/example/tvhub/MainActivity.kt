@@ -2669,7 +2669,7 @@ class MainActivity : Activity() {
 
     private fun scopeCompleteYears(): String {
         if (!sheetOn()) return "[]"
-        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2025,2026]"   // 2.106.0: 2025 fully logged
+        return rosterData()?.optJSONObject("starscope")?.optJSONArray("completeYears")?.toString() ?: "[2024,2025,2026]"   // 2.106.0: 2025 fully logged; 2.109.0: 2024 too
     }
 
     // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
@@ -6170,6 +6170,10 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi.tv-wr-n{display:flex;align-items:center;justify-content:space-between;gap:6px;}',
             '#tv-sm-shelf .tv-wr-l{min-width:0;}',
             '#tv-sm-shelf .tv-wr-c{flex:none;display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#9aa6b4;}',
+            '#tv-sm-shelf .tv-wr-c.tv-wr-cc{color:#F4C242;}',
+            // 2.118.1: the favorite star sits on the name, as on every other row (on the row itself the flex layout pushed it apart)
+            '#tv-sm-shelf .tv-sm-fi.tv-wr-n.tv-fav-on::before{content:none;}',
+            '#tv-sm-shelf .tv-wr-n.tv-fav-on .tv-wr-l::before{content:"\\2605  ";color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{background:#FFB347 !important;color:#1A1A1A !important;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab:focus{border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
@@ -6692,9 +6696,20 @@ class MainActivity : Activity() {
             var az = function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); };
             return { cur: lists.current.sort(az), past: lists.past.sort(az), guest: lists.guest.sort(az) };
           }
-          function wrRowsHtml(rows, counts) {
+          // 2.118.0: a gold telescope after a current wrestler whose whole career is in StarScope (debut on or after the
+          // first day of the complete years, assets/starcards.js); Past and Guests no longer show a telescope or count.
+          function wrComplete() {
+            var S = window.__tvScopeIdx, from = '';
+            try { from = S && S.from ? S.from() : ''; } catch (e) { from = ''; }
+            if (!from) return null;
+            var deb = {}, low = function(x) { return String(x || '').trim().toLowerCase(); };
+            try { var D = (JSON.parse(AndroidHost.matchTypesJson()) || {}).debuts || {}; Object.keys(D).forEach(function(k) { if (k.charAt(0) !== '_') deb[low(k)] = String(D[k] || ''); }); } catch (e) {}
+            return function(r) { var d = deb[low(r[0])] || deb[low(SEARCH_AS[r[0]])] || ''; return !!d && d >= from; };
+          }
+          function wrRowsHtml(rows, mark) {
+            var cc = mark ? wrComplete() : null;
             return rows.map(function(r) {
-              var c = counts && r[3] ? '<span class="tv-wr-c">' + TELE_SM + r[3] + '</span>' : '';
+              var c = cc && cc(r) ? '<span class="tv-wr-c tv-wr-cc" aria-label="StarScope">' + TELE_SM + '</span>' : '';
               return '<a class="tv-sm-fi' + (c ? ' tv-wr-n' : '') + '" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + (c ? '<span class="tv-wr-l">' : '') + esc(isJa() && r[2] ? r[2] : r[0]) + (c ? '</span>' + c : '') + '</a>';
             }).join('');
           }
@@ -6947,7 +6962,7 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div><div class="tv-shl-wtabs">' +
                 tabs.map(function(tb, ti) { return '<a class="tv-sm-fi tv-shl-wtab' + (ti ? '' : ' tv-wtab-on') + '" tabindex="0" data-wtab="' + ti + '"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">' + WR_ICONS[ti] + '</svg><span>' + esc(tb[0]) + '</span><span class="tv-wtab-n">' + tb[1].length + '</span></a>'; }).join('') + '</div>' +
                 // Current keeps the spotlight; Past and Guests have none (no photos), so their names spread over five columns.
-                tabs.map(function(tb, ti) { return '<div class="tv-shl-wl" data-wbody="' + ti + '" style="' + (ti ? 'display:none;' : '') + 'column-count:' + (ti ? (spot ? 5 : 4) : (spot ? 3 : 4)) + ';column-gap:10px;">' + wrRowsHtml(tb[1], ti > 0) + '</div>'; }).join('');
+                tabs.map(function(tb, ti) { return '<div class="tv-shl-wl" data-wbody="' + ti + '" style="' + (ti ? 'display:none;' : '') + 'column-count:' + (ti ? (spot ? 5 : 4) : (spot ? 3 : 4)) + ';column-gap:10px;">' + wrRowsHtml(tb[1], ti === 0) + '</div>'; }).join('');
               if (spot) {
                 w = 1000;
                 h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';
@@ -8115,8 +8130,13 @@ class MainActivity : Activity() {
       '<div style="font-size:14px;font-weight:700;color:#C9D2DC;margin-top:3px">' + esc(e.tagline || '') + '</div>' +
       '<div style="font-size:12px;font-weight:500;color:#C9D2DC;margin-top:4px;line-height:1.35">' + esc(e.blurb || '') + '</div>' +
       '</div></div>';
+    // 2.109.0: an era with a "scope" block (assets/eranew.js). Reigns and factions come from the lineage and factions
+    // files in every build; the numbers, thumbnails, posters and rivalry lists only once its years are all StarScope
+    // complete years. Until then the parts below are drawn as before.
+    var N = window.__tvEraNew, NS = !!(N && N.has(e)), SC = NS && N.scopeOn(e);
+    if (NS) N.addCss();
     // title reigns
-    var rg = '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
+    var rg = NS ? N.reigns(e) : '<div class="tv-rg">' + (e.reigns || []).map(function(r) {
       var pic = ''; try { pic = AndroidHost.beltDataUri(r.beltId) || ''; } catch (x) {}
       var belt = pic ? '<img src="' + esc(pic) + '" alt="">' : BEL.replace('FILL', r.beltId === 'world' ? '#2A1C10' : '#2A323C');
       var base = '/mypage?tvch=' + esc(r.beltId) + '&tvrn=';
@@ -8132,15 +8152,19 @@ class MainActivity : Activity() {
     }).join('') + '</div>';
     // top rated matches (shared rows from toprated.js; the last row opens the full list for this era)
     try {
-      var tr = window.__tvTopRows ? window.__tvTopRows(e.n, 5) : null;
+      var tr = SC ? null : (window.__tvTopRows ? window.__tvTopRows(e.n, 5) : null);
+      if (SC) { var tn = N.top(e); if (tn) h += sec(T('Top rated matches', '高評価の試合'), T('Fan voted ratings from Cagematch.net', 'Cagematch.netのファン投票'), tn); }
       if (tr) {
         var allRow = '<a class="tp-row tp-lk tp-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '"><div class="tp-mt"><div class="a">' + esc(T('All ' + tr.total + ' matches in this era', 'この時代の全' + tr.total + '試合')) + '</div></div></a>';
         h += sec(T('Top rated matches', '高評価の試合'), T('Fan voted ratings from Cagematch.net', 'Cagematch.netのファン投票'), tr.html.replace(/<\/div>$/, allRow + '</div>'));
       }
     } catch (x) {}
-    h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
+    if (SC) h += sec(T('Defining rivalries', '名勝負・因縁'), T('OK lists every StarScope match between them', 'OKで両者のStarScope全試合'), N.rivalries(e));
+    else h += sec(T('Defining rivalries', '名勝負・因縁'), T('each tile runs one search: the two names and the year', '2人の名前と年で1回検索'), rv);
+    if (SC) { var shn = N.shows(e); if (shn) h += sec(T('Must-see shows', '必見の大会'), '', shn); }
     // wrestlers / factions / shows
-    var left = sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
+    var left = NS ? sec(T('Top wrestlers', 'トップ選手'), '', N.people(e.scope.wrestlers, e, false, SC)) + (SC ? '<div style="height:18px"></div>' + sec(T('Top tag teams', 'トップタッグチーム'), T('most matches together, 2 v 2', '2対2で組んだ試合数'), N.tagTeams(e, 4)) : '') + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', N.people(e.scope.rising, e, true, SC))
+      : sec(T('Top wrestlers', 'トップ選手'), '', wr(e.wrestlers || [])) + '<div style="height:18px"></div>' + sec(T('Rising stars', '新星'), '', wr(e.rising || []));
     var fc = (e.factions || []).map(function(x) {
       var f = facs[x.id], own = false;
       if (!f && x.name) { f = { id: x.id, name: x.name, search: x.search }; own = true; }
@@ -8154,14 +8178,46 @@ class MainActivity : Activity() {
       var wd = widen(s.search, s.year, s.dead, 'show'), semp = wd.step === 2, shref = wd.url;
       return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : (wd.step === 1 ? ' · ' + esc(T('all years', '全年')) : '')) + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
-    h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
+    if (NS) fc = N.factions(e, SC);
+    if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e) + '<div class="tv-sec">' + N.stats(e) + '</div>';   // 2.110.0: the era in numbers at the very bottom
+    else h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
+    if (NS && N.fill) N.fill(scroller);   // 2.109.1: cut-outs and logos after the page is drawn
+    // StarScope's list (assets/starcards.js) loads after this script: draw again once it is there, if focus is
+    // still on the era chips.
+    if (NS && !SC && N.scopePending(e) && !scopeWait) {
+      scopeWait = setInterval(function() {
+        scopeTries++;
+        if (window.__tvScopeIdx || scopeTries > 20) {
+          clearInterval(scopeWait);
+          if (!window.__tvScopeIdx) return;
+          var ae = document.activeElement, onChip = !ae || ae === document.body || (ae.classList && ae.classList.contains('tv-chip'));
+          if (onChip && N.scopeOn(eraOf(cur) || e)) { render(); var c = root.querySelector('.tv-chip[data-era="' + cur + '"]'); if (c) focusEl(c); }
+        }
+      }, 300);
+    }
   }
+  var scopeWait = null, scopeTries = 0;
 
   function items() { return Array.prototype.slice.call(root.querySelectorAll('a[tabindex]')); }
+  // 2.111.0: sideways rows (top rated). A card scrolled out of its row only counts for Left/Right inside that row, so
+  // Up and Down land on a card that can be seen.
+  function hrowOf(el) { return el && el.closest ? el.closest('.tvn-hr') : null; }
+  function shown(it, ae, k) {
+    var hr = hrowOf(it);
+    if (!hr || ((k === 37 || k === 39) && hr === hrowOf(ae))) return true;
+    var r = it.getBoundingClientRect(), b = hr.getBoundingClientRect();
+    return r.left >= b.left - 2 && r.right <= b.right + 2;
+  }
   function focusEl(el) {
     if (!el) return;
     try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    var hr = hrowOf(el);
+    if (hr) {
+      var cr = el.getBoundingClientRect(), hb = hr.getBoundingClientRect(), pad = 12;
+      if (cr.left < hb.left + pad) hr.scrollLeft -= hb.left + pad - cr.left;
+      else if (cr.right > hb.right - pad) hr.scrollLeft += cr.right - hb.right + pad;
+    }
     var r = el.getBoundingClientRect(), vh = window.innerHeight;
     if (r.top < 40) scroller.scrollTop += r.top - 40;
     else if (r.bottom > vh - 40) scroller.scrollTop += r.bottom - vh + 40;
@@ -8208,11 +8264,14 @@ class MainActivity : Activity() {
     if (k === 13 || k === 23) return;   // a link: the browser opens it
     if (k === 37 || k === 38 || k === 39 || k === 40) {
       stop();
-      var nx = geoNext(ae, k, items());
+      if (k === 38) { var ar = ae.getBoundingClientRect(); if (ar.bottom < 40) { focusEl(ae); return; } }   // scrolled to the bottom: Up first brings focus back into view
+      var nx = geoNext(ae, k, items().filter(function(it) { return shown(it, ae, k); }));
       if (isChip && (k === 37 || k === 39) && nx && nx.classList.contains('tv-chip')) { chooseEra(parseInt(nx.getAttribute('data-era'), 10)); return; }
       if (nx) focusEl(nx);
       else if (k === 37 && window.__tvOpenMenu) window.__tvOpenMenu();
       else if (k === 38) scroller.scrollTop = 0;
+      // 2.110.1: nothing focusable further down (the era in numbers, the era picks): Down scrolls to the bottom, Up comes back.
+      else if (k === 40) scroller.scrollTop = scroller.scrollHeight;
     }
   }, true);
 
@@ -11400,6 +11459,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(factionJs, null)
         view.evaluateJavascript(assetText("toprated.js"), null)
         view.evaluateJavascript(yearUrlJs, null)   // before the Years menu and the Eras page, which link years with it
+        view.evaluateJavascript(assetText("eranew.js"), null)   // 2.109.0: the StarScope version of an era (read by eraJs)
         view.evaluateJavascript(eraJs, null)
         view.evaluateJavascript(recentPageJs, null)
         view.evaluateJavascript(filterBarJs, null)

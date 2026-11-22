@@ -742,10 +742,10 @@
           "year": "2024"
         },
         {
-          "name": "All Star Grand Queendom 2024",
-          "sub": "Post-split statement show",
-          "when": "APR 2024",
-          "search": "Grand Queendom",
+          "name": "Dream Queendom 2024",
+          "sub": "Three titles change hands",
+          "when": "DEC 2024",
+          "search": "DREAM QUEENDOM",
           "year": "2024"
         },
         {
@@ -761,7 +761,7 @@
           "a": "Saya Kamitani",
           "b": "Tam Nakano",
           "tag": "RIVALRY",
-          "when": "2024",
+          "when": "2024–25",
           "title": "Saya Kamitani vs Tam Nakano, Queen's Quest shattered",
           "words": "Saya Kamitani Tam Nakano",
           "year": ""
@@ -770,18 +770,27 @@
           "a": "Neo Genesis",
           "b": "H.A.T.E.",
           "tag": "RIVALRY",
-          "when": "2024–25",
+          "when": "2024–26",
           "title": "Neo Genesis vs H.A.T.E., the faction war",
           "words": "Neo Genesis H.A.T.E.",
           "year": ""
         },
         {
-          "a": "Maika",
+          "a": "Mei Seira",
           "b": "Suzu Suzuki",
           "tag": "RIVALRY",
-          "when": "2024",
-          "title": "Maika vs Suzu Suzuki, the new generation's leader",
-          "words": "Maika Suzu Suzuki",
+          "when": "2025",
+          "title": "Mei Seira vs Suzu Suzuki, Crazy Star splits",
+          "words": "Mei Seira Suzu Suzuki",
+          "year": ""
+        },
+        {
+          "a": "Mi Vida Loca",
+          "b": "EXV",
+          "tag": "RIVALRY",
+          "when": "2025–26",
+          "title": "Mi Vida Loca vs EXV, loser disbands",
+          "words": "Suzu Suzuki Maika",
           "year": ""
         }
       ],
@@ -854,44 +863,133 @@
       ],
       "wrestlers": [
         {
-          "name": "Saya Kamitani",
-          "note": "Red Belt, 483 days"
+          "name": "Saya Kamitani"
         },
         {
-          "name": "Maika",
-          "note": "EXV"
+          "name": "Starlight Kid"
         },
         {
-          "name": "Starlight Kid",
-          "note": "Neo Genesis, White Belt"
+          "name": "Suzu Suzuki"
         },
         {
-          "name": "Suzu Suzuki",
-          "note": "Red Belt champion"
+          "name": "Mei Seira"
         }
       ],
       "factions": [
         {
-          "id": "hate",
-          "sub": "Saya Kamitani, Natsuko Tora, Thekla, Konami",
-          "mono": "HT"
+          "id": "hate"
         },
         {
-          "id": "neo-genesis",
-          "sub": "Starlight Kid, Suzu Suzuki, AZM, Mei Seira",
-          "mono": "NG"
+          "id": "neo-genesis"
         },
         {
-          "id": "cosmic-angels",
-          "sub": "Tam Nakano, Saori Anou, Natsupoi",
-          "mono": "CA"
+          "id": "mi-vida-loca"
         },
         {
-          "id": "empress-nexus-venus",
-          "sub": "Maika, Mina Shirakawa, HANAKO",
-          "mono": "EXV"
+          "id": "cosmic-angels"
         }
-      ]
+      ],
+      "scope": {
+        "_note": "2.109.0: the StarScope version of this era (assets/eranew.js). Picks only, by name or id; holders, days, defences, members, counts and pictures are looked up when the page opens (lineage files, factions.json, the StarScope list). index.years must all be StarScope complete years for the StarScope parts to show; reigns and factions read the lineage and factions files in every build.",
+        "from": "2024-03-01",
+        "index": {
+          "years": [
+            "2024",
+            "2025",
+            "2026"
+          ]
+        },
+        "reigns": [
+          {
+            "beltId": "world",
+            "feature": 20
+          },
+          {
+            "beltId": "wonder",
+            "feature": 24
+          },
+          {
+            "beltId": "highspeed",
+            "feature": 27
+          },
+          {
+            "beltId": "goddess",
+            "feature": 36
+          }
+        ],
+        "rivalries": [
+          {
+            "a": {
+              "t": "Saya Kamitani"
+            },
+            "b": {
+              "t": "Tam Nakano"
+            },
+            "line": "Queen's Quest shattered, settled Career vs Career",
+            "key": "6830"
+          },
+          {
+            "a": {
+              "f": "neo-genesis"
+            },
+            "b": {
+              "f": "hate"
+            },
+            "line": "The faction war over every unit belt"
+          },
+          {
+            "a": {
+              "t": "Mei Seira"
+            },
+            "b": {
+              "t": "Suzu Suzuki"
+            },
+            "line": "Crazy Star splits, No DQ at Grand Queendom",
+            "key": "6825"
+          },
+          {
+            "a": {
+              "f": "mi-vida-loca"
+            },
+            "b": {
+              "f": "empress-nexus-venus"
+            },
+            "line": "Loser disbands",
+            "key": "8321",
+            "from": "2025-04-01",
+            "to": "2026-02-07"
+          }
+        ],
+        "shows": [
+          {
+            "sid": "6831"
+          },
+          {
+            "sid": "6413"
+          },
+          {
+            "sid": "5674"
+          }
+        ],
+        "wrestlers": [
+          "Saya Kamitani",
+          "Starlight Kid",
+          "Suzu Suzuki",
+          "Mei Seira"
+        ],
+        "rising": [
+          "Sayaka Kurara",
+          "Rian",
+          "Hanako",
+          "Ranna Yagami"
+        ],
+        "factions": [
+          "hate",
+          "neo-genesis",
+          "mi-vida-loca",
+          "cosmic-angels"
+        ]
+      }
     }
   ]
 }
