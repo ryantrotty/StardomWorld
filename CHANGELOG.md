@@ -2,7 +2,7 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
-## 2.116.0
+## 2.118.0
 
 - **Complete-career wrestler pages.** A wrestler whose debut falls in StarScope's run of complete years (2022–2026 now) has every match in the index, so her page is drawn from it. Shows after the last logged one still come from the site's newest page. It applies by itself to anyone whose roster debut date is in a complete year, future debuts included. What's new on those pages:
   - **Title row:** a STARSCOPE · EVERY MATCH SINCE DEBUT badge.
@@ -13,7 +13,28 @@ All notable changes to this project. Versions match `versionName` in `app/build.
   - **Matches:** a count on every tab (All Matches, Championship, 5★STAR GP, Cinderella, Tag League), StarScope cards instead of the site's, and on All Matches year chips that jump to a year, with one row heading per year. A match counts once even with two videos; both videos stay listed. Pictures load near the screen and are let go far from it.
   - A line saying what StarScope covers, up to the last logged show.
 - **Wrestlers menu:** a gold telescope after each current wrestler whose page is a complete career. Past and Guests no longer show the telescope or match count.
-- **Sheet script:** each card now carries every wrestler's faction (`fa`) and the match's moments (`mo`). The TV asks for the whole list once to pick them up. Paste `scripts/video_index_log.gs` into Apps Script and deploy a new version; without it the faction strip and homecoming are left out.
+- Built on 2.117.0 (reference cards, bulk venues). **Sheet script:** each card now carries every wrestler's faction (`fa`) and the match's moments (`mo`). The TV asks for the whole list once to pick them up. Paste `scripts/video_index_log.gs` into Apps Script and deploy a new version; without it the faction strip and homecoming are left out.
+## 2.117.0
+
+- **iPhone card check: reference cards.** For years Muse has researched (2021 and earlier), card check reads `cards/<year>.json` from the `cards-data` branch, once per year while it's open (a GitHub request, not the site). The year list says "Reference cards: N shows" when the year has one.
+- **Reference card button** on a show whose date is in the file, first in the row beside Reverse order and Ask Gemini. When two shows share the date, it picks by venue, then name, then wrestlers in common. If it still can't tell, there's one button per show ("Reference: …").
+- It opens in the AI answer sheet, already read, with the same approvals as Gemini: running order, line-ups for matches the site gave none, new wrestlers and spellings, and the venue when the show has none. Segments in the file aren't used for line-ups.
+- **New tick: match type, title, tournament, round and block** for each match it can pair (two or more wrestlers in common, else the same place when the counts agree). They feed the logger's suggestions for those matches when you confirm. Logged matches keep their own tags.
+- The reference card's gaps show at the top of the sheet. Gemini stays available for anything the file leaves empty.
+- indexpanel.js: the logger's tag suggestions also read card check's reference line (`rec.ref`). Nothing changes on the TV unless card check set it.
+- docs/REFERENCE_CARDS.md: the file Muse writes. The full workflow is in the Project doc "Muse reference cards workflow (2021 and earlier)".
+- Built on 2.116.0. No sheet script change. iPhone card check: published to GitHub Pages (cc.js, indexpanel.js).
+
+## 2.116.0
+
+- **iPhone card check: Fill venues for a whole year list.** A **Fill venues · N shows without one** button above a year's show list collects every show on the list (as filtered, from the shows read so far) that has no venue saved and whose venue on the site isn't in the library. Shows whose site venue already matches the library are left alone, since they fill in by themselves.
+- **Two ways to ask:** **Ask Gemini** sends them through the sheet script, up to 15 shows per request; **Copy the prompt** (or Copy prompt 1 of N for a long list) puts the same question on the clipboard for Gemini or any other AI, then **Paste an answer**, one part at a time. No site calls either way.
+- **No guesses.** The prompt asks for a venue only when a source names it for that show on that date, never one worked out from the town in the title. An answer with no venue or no source is shown as left out and can't be saved.
+- **You check before anything's saved.** Each show gets a row. A venue already in the library comes ticked under its library name. A new venue comes **unticked**: the AI's short name is in an editable box, with its full name, Japanese name, city and prefecture and source underneath. Fix the name, then tap to tick it. Typing a name that's already in the library offers that venue instead. **Save N venues** saves each one for its show (vi_show_venue, as the venue line does); two shows at the same new venue make one venue.
+- **New venues get their place:** country, prefecture and city (English and Japanese) from the confirmed answer fill the venues tab's empty cells; nothing already there is overwritten.
+- Show tiles show a venue saved from the phone.
+- **Sheet script: `cc_venue_place`**, allowed with the card check key. **Redeploy** the sheet script (without it, venues still save, just without city and prefecture, and card check says so).
+- Built on 2.115.2 (merged from main). Nothing changes on the TV. iPhone card check: published to GitHub Pages (cc.js).
 
 ## 2.115.2
 

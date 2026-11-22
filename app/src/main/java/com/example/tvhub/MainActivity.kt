@@ -6693,7 +6693,7 @@ class MainActivity : Activity() {
             var az = function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); };
             return { cur: lists.current.sort(az), past: lists.past.sort(az), guest: lists.guest.sort(az) };
           }
-          // 2.116.0: a gold telescope after a current wrestler whose whole career is in StarScope (debut on or after the
+          // 2.118.0: a gold telescope after a current wrestler whose whole career is in StarScope (debut on or after the
           // first day of the complete years, assets/starcards.js); Past and Guests no longer show a telescope or count.
           function wrComplete() {
             var S = window.__tvScopeIdx, from = '';

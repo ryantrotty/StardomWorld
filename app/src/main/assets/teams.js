@@ -311,7 +311,7 @@
     '#tv-tt .tt-more.tt-top{min-height:60px;font-size:17px;align-self:start;}',
     '#tv-tt .tt-msg{padding:14px 6px;font-size:16px;color:#9AA6B4;}',
     '#tv-tt .tt-empty{border:2px dashed #3B4656;border-radius:12px;padding:26px 24px;text-align:center;color:#9AA6B4;font-size:15px;font-weight:600;line-height:1.5;}',
-    // complete career (2.116.0)
+    // complete career (2.118.0)
     '#tv-tt .cc-badge{display:flex;align-items:center;gap:8px;margin-left:18px;padding:6px 14px;border:2px solid #2A323C;border-radius:20px;font-size:13px;font-weight:800;letter-spacing:1px;color:#F4C242;align-self:center;}',
     '#tv-tt .cc-n{font-style:normal;font-size:14px;font-weight:700;opacity:.75;margin-left:7px;}',
     '#tv-tt .cc-top{display:flex;gap:32px;align-items:flex-start;}',
@@ -1165,7 +1165,7 @@
     var box = document.getElementById('tt-vids'), st = document.getElementById('tt-vst'), dbg = document.getElementById('tt-dbg');
     if (!box) return;
     var ae = document.activeElement, had = ae && box.contains(ae) ? (ae.getAttribute('data-vid') || (ae.getAttribute('data-top') ? 'top' : 'more')) : '';
-    if (WP.cc) {   // complete career: StarScope cards (2.116.0)
+    if (WP.cc) {   // complete career: StarScope cards (2.118.0)
       var cnt = ccPaint(box);
       if (st) st.textContent = cnt + ' ' + T(cnt === 1 ? 'match' : 'matches', '試合');
       if (dbg) dbg.textContent = [T('Complete career · tab: ', '全キャリア · タブ: ') + WP.tab + ' · debut ' + WP.api.debut + ' · ' + WP.cc.D.cards.length + ' videos, ' + WP.cc.St.total + ' matches'].concat(WP.log).join('\n');
@@ -1264,7 +1264,7 @@
     if (P.only && !P.recent) { WP.done = true; WP.ran = true; }
   }
 
-  // ---- Complete career (2.116.0): a wrestler whose debut falls in StarScope's run of complete years has every match
+  // ---- Complete career (2.118.0): a wrestler whose debut falls in StarScope's run of complete years has every match
   // in the index. Her page then comes from the index alone (shows after the last logged one still come from the site's
   // newest page): StarScope cards by year, counts on the tabs, her debut, a career strip, partners, rivals, factions and
   // match types. Spoilers are fine here (title matches, how far she got). Everything is worked out on the TV from the
@@ -1326,7 +1326,7 @@
           o.n++; if (kd === 'singles') o.s++;
         });
       });
-      // her faction in this match (sheets from 2.116.0 send each wrestler's faction)
+      // her faction in this match (sheets from 2.118.0 send each wrestler's faction)
       var fa = X.fa && X.fa[at[0]] ? X.fa[at[0]][at[1]] : '';
       if (fa) { var last = out.fac[out.fac.length - 1]; if (last && last.f === fa) { last.to = v.d; last.n++; } else out.fac.push({ f: fa, from: v.d, to: v.d, n: 1 }); }
     });

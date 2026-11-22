@@ -303,7 +303,7 @@ Home shelf (2.78.0): width 1100. Main page item (19 px) on top; three equal colu
 - iPhone card check, Match… (2.108.0): the line-up sheet reuses the segment sheet's parts: a side button per side (the side being added to = orange fill, "· adding here"), the people as the sheet's name rows (Tap to remove), the card's VS divider between sides, one search box and option list, Use this line-up (orange fill). No new colours.
 
 
-## Complete-career wrestler pages (2.116.0, private builds)
+## Complete-career wrestler pages (2.118.0, private builds)
 
 For a wrestler whose debut is in StarScope's complete years (app-drawn page, assets/teams.js). No new colours or focus looks.
 - Title row: a pill after the name (2 px #2A323C border, radius 20, padding 6/14): 18 px telescope, 13/800 gold uppercase with 1 px spacing, "STARSCOPE · EVERY MATCH SINCE DEBUT".

@@ -337,7 +337,7 @@
     var label = (c.done ? '✓ All ' + c.tot + ' matches logged' : !c.n && !c.sg ? 'Not started' : c.tot ? c.n + ' of ' + c.tot + ' matches logged' : c.n + ' logged') + segTxt;
     var cls2 = c.done ? ' done' : !c.n && !c.sg ? ' none' : '';
     return '<button class="sc" data-go="' + esc(x.set) + '" data-from="' + esc(from) + '"><span class="im"' + (x.th ? ' style="background-image:url(\'' + esc(x.th) + '\')"' : '') + '></span><span><span class="nm">' +
-      esc(showName(sl.show || x.name, date) || x.name) + '</span><span class="sb">' + esc([dateText(date), sl.venue || x.venue || ''].filter(Boolean).join(' · ')) + '</span><span class="cnt' + cls2 + '">' + esc(label) + '</span></span></button>';
+      esc(showName(sl.show || x.name, date) || x.name) + '</span><span class="sb">' + esc([dateText(date), bvSaved(x.set) || sl.venue || x.venue || ''].filter(Boolean).join(' · ')) + '</span><span class="cnt' + cls2 + '">' + esc(label) + '</span></span></button>';
   }
   function homeHtml() {
     var h = '<div class="chips"><button class="chip' + (S.tab === 'started' ? ' on' : '') + '" data-tab="started">Started</button>';
@@ -357,6 +357,13 @@
       h += '<div class="chips sub">' + [['all', 'All'], ['logged', 'Logged'], ['started', 'Started'], ['none', 'Not started']].map(function(f) {
         return '<button class="chip' + (S.yf === f[0] ? ' on' : '') + '" data-yf="' + f[0] + '">' + f[1] + ' <span class="cn">' + cn[f[0]] + '</span></button>'; }).join('') + '</div>';
       var shown = all.filter(function(o) { return S.yf === 'all' || o.st === S.yf; });
+      refLoad(S.year);
+      var refY = refs[S.year];
+      if (refY && refY.data) h += '<div class="gl" style="margin:0 0 10px;color:#F4C242">Reference cards: ' + refY.data.shows.length + ' shows' + (refY.data.generated ? ' · ' + esc(refY.data.generated) : '') + '</div>';
+      else if (refY && refY.err) h += '<div class="gl" style="margin:0 0 10px">Reference cards couldn\'t be read (' + esc(refY.err) + ')</div>';
+      // 2.116.0: venues for the shows on this list in one go (no site calls: the venue the list gives, else Gemini).
+      var bvN = bvCands(shown.map(function(o) { return o.x; }), S.year).length;
+      if (bvN) h += '<button class="opt" data-bulkven="1" style="margin:0 0 12px">Fill venues · ' + bvN + ' show' + (bvN > 1 ? 's' : '') + ' without one<small>From the ' + shown.length + ' shows on this list' + (yl.done ? '' : ' (Load more first to include more)') + ' · Gemini or copy to any AI · you check each one before it\'s saved</small></button>';
       h += shown.map(function(o) { return showTile(o.x, 'y' + S.year); }).join('');
       if (!shown.length && all.length) h += '<div class="ld">No ' + (S.yf === 'logged' ? 'fully logged' : S.yf === 'started' ? 'started' : 'unstarted') + ' shows in the ' + all.length + ' read so far' + (yl.done ? '.' : '. Load more to look further.') + '</div>';
       if (yl.err) h += '<div class="er">Couldn\'t read the list (' + esc(yl.err) + ')</div><button class="b on" data-more="1">Try again</button>';
@@ -654,8 +661,10 @@
   // 2.112.0: the places a show's title names, for venue suggestions: "STARDOM in WARABI", "in OSAKA-RINKAI",
   // "in MATSUYAMA-EHIME", "～スターダム郡山大会～".
   var PLACE_SKIP = /^(stardom|final|the|of|and|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|day|night|tour|show|special|presents?)$/i;
-  function titlePlaces() {
-    var t = [show && show.line, show && show.name].filter(Boolean).join(' '), out = [], joined = [];
+  function titlePlaces() { return titlePlacesOf([show && show.line, show && show.name].filter(Boolean).join(' ')); }
+  // 2.116.0: the same for any show's title (the year list's bulk venues).
+  function titlePlacesOf(t) {
+    var out = [], joined = [];
     var add = function(w) { w = String(w || '').trim(); if (w && !PLACE_SKIP.test(w) && !/^\d+$/.test(w) && out.indexOf(w) < 0) out.push(w); };
     t.replace(/\bin\s+([A-Za-z][A-Za-z]*(?:[\s\-][A-Za-z]+)*)/g, function(m0, g) {
       var parts = g.split(/[\s\-]+/).filter(function(w) { return !PLACE_SKIP.test(w); });
@@ -767,7 +776,7 @@
     return '<div class="shw"><div class="n1">' + esc(en || show.line) + '</div>' + (show.line && show.line !== en ? '<div class="n2">' + esc(show.line) + '</div>' : '') +
       '<div class="d">' + esc(dateText(date) || 'Date not read') + '</div>' +
       '<div class="n2" style="margin-top:6px">Card order: match 1 is ' + esc(firstLast()) + (show.orderBy ? ' · ' + esc(show.orderBy) : '') + '</div>' + orderNote() +
-      '<div class="bt"><button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
+      '<div class="bt">' + refButtons() + '<button class="b" data-rev="1">⇅ Reverse order</button><button class="b' + (unknown || !venueNow() ? ' on' : '') + '" data-aiask="1">' + esc(aiAskLabel()) + '</button><button class="b" data-aicopy="1">Copy AI prompt</button><button class="b" data-aipaste="1">Paste AI answer</button></div></div>';
   }
   // 2.113.0: what the order means for the sheet, in words: already saved this way (nothing to confirm), or which
   // logged matches Confirm all would renumber.
@@ -1011,7 +1020,7 @@
     return { list: out, note: note, info: orderNote };
   }
   function aiHtml() {
-    var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">AI answer</div>';
+    var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">' + (a.ref ? 'Reference card' : 'AI answer') + '</div>';
     if (a.busy) h += '<div class="ld">' + esc(a.busy) + '</div>';
     if (!a.sug) {
       h += '<textarea class="tx" id="ccp-ai" placeholder="Paste the AI\'s answer here">' + esc(a.text || '') + '</textarea><div class="bt"><button class="b on wide" data-airead="1">Read answer</button><button class="b" data-close="1">Cancel</button></div>';
@@ -1022,9 +1031,9 @@
       if (a.info) h += '<div class="msg">✓ ' + esc(a.info) + '</div>';
       h += '<div class="gl">Tap to leave any out, then Apply</div>';
       a.sug.forEach(function(x, i) {
-        var t = x.k === 'order' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' || x.k === 'use' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
+        var t = x.k === 'order' || x.k === 'reftags' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' || x.k === 'use' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
           x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
-        var sub = x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        var sub = x.k === 'reftags' ? 'Suggested on each match from the reference card; logged matches keep theirs' : x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
         h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
       });
       var n = a.sug.filter(function(x) { return x.on; }).length;
@@ -1036,7 +1045,7 @@
   }
   // One at a time: venue, new wrestlers (then her other spelling), spellings for wrestlers already known.
   function aiApply() {
-    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, use: 2, lineup: 3 }, done = 0, fail = [];
+    var a = sheetOpen, rank = { order: 0, venue: 0, venueNew: 0, 'new': 1, alias: 2, use: 2, lineup: 3, reftags: 4 }, done = 0, fail = [];
     var todo = a.sug.filter(function(x) { return x.on; }).sort(function(x, y) { return rank[x.k] - rank[y.k]; });
     var next = function() {
       if (!todo.length) {
@@ -1051,6 +1060,10 @@
         var nv = x.vids.map(function(id) { return byId[id]; }).filter(Boolean);
         if (nv.length === show.videos.length) { setOrder(nv, x.why); done++; }
         next(); return;
+      }
+      if (x.k === 'reftags') {
+        Object.keys(x.map).forEach(function(vid) { refTags[vid] = x.map[vid]; var rr = recs[vid]; if (rr && !rr.failed) { rr.ref = x.map[vid]; ssSet(REC_KEY + vid, rr); } });
+        ssSet('ccPhoneRefTags', refTags); done++; next(); return;
       }
       if (x.k === 'lineup') {
         var v = show.videos.filter(function(y) { return y.id === x.v; })[0], r = recs[x.v] && !recs[x.v].failed ? recs[x.v] : { id: Number(x.v), set: Number(show.set), title_en: v ? v.t : '', title_ja: '', shows: [], lines: [], thumb: v ? v.th : '', date: show.date };
@@ -1083,6 +1096,259 @@
           window.__tvIndexKit.reload(function() { post({ action: 'vi_show_venue', show: S.set, venue: r.id, raw: rawVenue(), name: show.name || '', date: show.date || '' }, function(t2) { var r2 = null; try { r2 = JSON.parse(t2); } catch (e) {} if (r2 && r2.ok) venKeep(r.id, x.en); else fail.push('venue: ' + (r2 && r2.error || 'no reply')); next(); }); });
         });
       }
+    };
+    next();
+  }
+  // ---- 2.117.0: reference cards. Muse researches each older year's shows from outside sources (never the video site)
+  // and publishes cards/<year>.json on the cards-data branch. A show with one opens it as an AI answer, already read:
+  // the same approvals as Gemini (order, line-ups the site lacks, new names, the venue), plus tournament, round, block
+  // and title for each match on one tick. One GitHub request per year, kept while card check is open.
+  var REF_BASE = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/cards-data/cards/', refs = {}, refTags = ssGet('ccPhoneRefTags') || {};
+  function refLoad(y) {
+    y = String(y || ''); if (!/^\d{4}$/.test(y) || refs[y]) return;
+    refs[y] = { busy: true };
+    getJson(REF_BASE + y + '.json')
+      .then(function(d) { refs[y] = d && Array.isArray(d.shows) ? { data: d } : { err: 'not a reference card file' }; })
+      .catch(function(e) { var m = String(e && e.message || e); refs[y] = /404/.test(m) ? { missing: true } : { err: m }; })
+      .then(function() { draw(); });
+  }
+  function refNorm(t) { return String(t || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-『』「」]+/g, ''); }
+  // The library ids on one video: its line-up as read from the site, else the names saved for it.
+  function vidIds(v) {
+    var K = kit(), r = recs[v.id], ids = {}, c = map[v.id];
+    if (!K) return ids;
+    if (r && !r.failed) { var sd = sides(r); sd.A.forEach(function(names, si) { names.forEach(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : '', id = K.resolve(rw) || K.resolve(o); if (id) ids[id] = 1; }); }); }
+    else if (c && c.s) (c.s || []).forEach(function(x, si) { x.forEach(function(nm, k) { var id = K.resolve(nm) || K.resolve(((c.sj || [])[si] || [])[k]); if (id) ids[id] = 1; }); });
+    return ids;
+  }
+  function refIds(m) {
+    var K = kit(), ids = {};
+    (m.sides || []).forEach(function(sd) { (sd || []).forEach(function(p) { var id = p && K && (K.resolve(p.en || '') || K.resolve(p.ja || '')); if (id) ids[id] = 1; }); });
+    return ids;
+  }
+  // The reference shows for the open show: by date; when two share it, by venue, then name, then wrestlers in common.
+  function refCands() {
+    if (!show || !show.date) return [];
+    var R = refs[show.date.slice(0, 4)];
+    if (!R || !R.data) return [];
+    var L = R.data.shows.map(function(s, i) { return { s: s, i: i }; }).filter(function(o) { return o.s && o.s.date === show.date; });
+    if (L.length < 2) return L;
+    var K = kit(), now = venueNow(), raw = refNorm(rawVenue()), title = refNorm([show.line, show.name].join(' ')), mine = {};
+    show.videos.forEach(function(v) { var x = vidIds(v); Object.keys(x).forEach(function(k) { mine[k] = 1; }); });
+    L.forEach(function(o) {
+      var s = o.s, ve = s.venue || {}, sc = 0, lib = K && ((ve.ja && K.venue(ve.ja)) || (ve.en && K.venue(ve.en)));
+      if ((lib && now && lib.name === now.name) || (raw && ve.ja && raw.indexOf(refNorm(ve.ja)) >= 0)) sc += 4;
+      if ([s.name_ja, s.name_en].some(function(n) { var k = refNorm(n); return k && (title.indexOf(k) >= 0 || k.indexOf(title) >= 0); })) sc += 2;
+      (s.matches || []).forEach(function(m) { Object.keys(refIds(m)).forEach(function(id) { if (mine[id]) sc += 0.1; }); });
+      o.sc = sc;
+    });
+    L.sort(function(a, b) { return b.sc - a.sc; });
+    return L[0].sc > L[1].sc ? [L[0]] : L.filter(function(o) { return o.sc === L[0].sc; });
+  }
+  function refButtons() {
+    if (!show || !show.date) return '';
+    refLoad(show.date.slice(0, 4));
+    var C = refCands();
+    return C.map(function(o) { return '<button class="b on" data-ref="' + o.i + '">' + esc(C.length > 1 ? 'Reference: ' + (o.s.name_en || o.s.name_ja || 'show ' + (o.i + 1)) : 'Reference card') + '</button>'; }).join('');
+  }
+  // Videos to the reference card's matches: two or more wrestlers in common, else the same place when both have as
+  // many entries.
+  function refMap(rs) {
+    var out = {}, used = {}, ms = rs.matches || [];
+    show.videos.forEach(function(v) {
+      var ids = vidIds(v); if (Object.keys(ids).length < 2) return;
+      var best = -1, bs = 0;
+      ms.forEach(function(m, mi) { if (used[mi]) return; var n = 0; Object.keys(refIds(m)).forEach(function(id) { if (ids[id]) n++; }); if (n > bs) { bs = n; best = mi; } });
+      if (best >= 0 && bs >= 2) { used[best] = 1; out[v.id] = ms[best]; }
+    });
+    if (ms.length === show.videos.length) show.videos.forEach(function(v, vi) { if (!out[v.id] && !used[vi]) out[v.id] = ms[vi]; });
+    return out;
+  }
+  function refTagText(m) {
+    return [m.type, m.stipulation].concat(m.titles || []).concat([m.tournament, m.round, m.block]).filter(function(x) { return x && typeof x === 'string'; }).join(' / ');
+  }
+  function refOpen(i) {
+    var R = refs[show.date.slice(0, 4)], rs = R && R.data && R.data.shows[i];
+    if (!rs) return;
+    var ans = {
+      date: rs.date || '',
+      venue: rs.venue && (rs.venue.en || rs.venue.ja) ? { en: rs.venue.en || '', ja: rs.venue.ja || '' } : null,
+      matches: (rs.matches || []).filter(function(m) { return m && m.kind !== 'segment' && Array.isArray(m.sides); }).map(function(m) {
+        return { no: m.no, type: m.type || '', sides: m.sides.map(function(sd) { return (sd || []).filter(function(p) { return p && (p.en || p.ja); }).map(function(p) { return { en: p.en || '', ja: p.ja || '' }; }); }) };
+      })
+    };
+    var text = JSON.stringify(ans);
+    sheetOpen = { ai: 1, ref: 1, text: text, sug: null, sources: (rs.sources || []).map(function(u) { return { title: u, uri: u }; }) };
+    var rd = aiRead(text);
+    if (rd.err) { sheetOpen.err = rd.err; draw(); return; }
+    var pairs = refMap(rs), tags = {}, n = 0;
+    show.videos.forEach(function(v) { var m = pairs[v.id], t = m && refTagText(m); if (t && !status(v) && !isSeg(v.id)) { tags[v.id] = t; n++; } });
+    if (n) rd.list.push({ k: 'reftags', map: tags, text: 'Match type, title, tournament, round and block for ' + n + ' match' + (n > 1 ? 'es' : ''), on: true });
+    sheetOpen.sug = rd.list; sheetOpen.info = rd.info;
+    sheetOpen.note = [rd.note, (rs.gaps || []).length ? 'Gaps in the reference card: ' + rs.gaps.join('; ') : ''].filter(Boolean).join(' ');
+    draw();
+  }
+  // ---- 2.116.0: venues for a year's list in one go. The shows read so far (as filtered) that have no venue saved and
+  // whose venue on the site isn't in the library go to Gemini together, or as prompts to copy into any AI. Nothing is
+  // saved until it's confirmed here: a library venue comes ticked; a new venue's name sits in a box to check and shorten,
+  // and stays unticked until tapped. An answer without a venue or without a source that names it is left out (no guesses).
+  var BV_EX = 'Korakuen Hall, Edion Arena Osaka, Belle Salle Takadanobaba, Ota City General Gymnasium, Aimesse Yamanashi';
+  function bvSaved(set) {
+    var mine = venMem[set] || lsGet('ccPhoneVen' + set); if (mine && mine.name) return mine.name;
+    var sv = ''; Object.keys(map).some(function(k) { var c = map[k]; if (String(c.vs || c.sid) === String(set) && c.vn) { sv = c.vn; return true; } return false; });
+    return sv;
+  }
+  function bvCands(items, yy) {
+    var K = kit(); if (!K || !K.venue) return [];
+    return items.map(function(x) {
+      var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yy) : { show: x.name, date: '', venue: null }, raw = sl.venue || '';
+      if (bvSaved(x.set) || (raw && K.venue(raw))) return null;
+      var pl = titlePlacesOf([x.name, sl.show].filter(Boolean).join(' '));
+      return { set: String(x.set), full: x.name, show: showName(sl.show || x.name, sl.date) || x.name, date: sl.date || '', raw: raw, pl: pl,
+        near: K.venuesNear && pl.length ? K.venuesNear(pl, 4, venueUse()).map(function(v) { return v.name; }) : [], res: null, on: false, name: '' };
+    }).filter(Boolean);
+  }
+  function bvPrompt(rows) {
+    return [
+      'I am logging STARDOM (Japanese women\'s pro wrestling) shows. For each show below, search reliable sources (the STARDOM official site and its results pages, Cagematch, Wikipedia, news reports) for the venue it was held at on that date.',
+      '',
+      'Rules:',
+      '- Only give a venue that a source you found names for this show on this date. If you can\'t confirm it, use null. Do not guess, and do not work a venue out from the town in the title.',
+      '- If it is one of the venues I already have (listed with the show), use that exact English name.',
+      '- "short" is the venue\'s English name the way I write it: its common name, no operator or sponsor prefix, no room or hall number unless it is part of the name. My style: ' + BV_EX + '.',
+      '- "source" is the page that names the venue for this show (site and address).',
+      '- "country" is the two-letter code (JP); "prefecture" and "city" in English without "Prefecture" or "City", with their Japanese in "prefecture_ja" and "city_ja".',
+      '',
+      'Shows:',
+      rows.map(function(r) {
+        return 'ref ' + r.set + ' · ' + (r.date || 'date unknown') + ' · ' + r.show + (r.full.indexOf(r.show) < 0 ? ' (' + r.full + ')' : '') +
+          (r.raw ? ' · the video site gives the venue as: ' + r.raw : '') + (r.near.length ? ' · venues I have there: ' + r.near.join('; ') : '');
+      }).join('\n'),
+      '',
+      'Answer with only this JSON (no other text), one entry per show in the same order, "venue": null for any you can\'t confirm:',
+      '```json',
+      '{"shows": [{"ref": "", "venue": {"en": "", "ja": "", "short": ""}, "country": "", "prefecture": "", "prefecture_ja": "", "city": "", "city_ja": "", "source": ""}]}',
+      '```'
+    ].join('\n');
+  }
+  // Prompts of up to 15 shows, kept well under what the sheet script passes on (12,000 characters).
+  function bvParts(rows) {
+    var parts = [], cur = [];
+    rows.forEach(function(r) { if (cur.length && (cur.length >= 15 || bvPrompt(cur.concat([r])).length > 9500)) { parts.push(cur); cur = []; } cur.push(r); });
+    if (cur.length) parts.push(cur);
+    return parts;
+  }
+  function bvOpen(rows) { sheetOpen = { bulk: 1, rows: rows, parts: bvParts(rows), paste: false, text: '', busy: '', err: '', msg: '' }; draw(); }
+  function bvRead(text) {
+    var a = String(text || ''), i = a.indexOf('{'), j = a.lastIndexOf('}'), data = null, K = kit(), n = 0;
+    if (i >= 0 && j > i) { try { data = JSON.parse(a.slice(i, j + 1)); } catch (e) {} }
+    if (!data || !Array.isArray(data.shows)) return { err: 'No list of shows found in the answer. It should hold the JSON block the prompt asks for.' };
+    var by = {}; sheetOpen.rows.forEach(function(r) { by[r.set] = r; });
+    data.shows.forEach(function(it) {
+      var r = it && by[String(it.ref == null ? '' : it.ref).replace(/\D/g, '')]; if (!r || r.done) return;
+      n++;
+      var v = it.venue || {}, en = String(v.en || '').trim(), ja = String(v.ja || '').trim(), sh = String(v.short || '').trim(), src = String(it.source || '').trim();
+      if (!en && !ja && !sh) { r.res = { none: 'Not confirmed by the answer' }; r.on = false; return; }
+      if (!src || /^(null|none|n\/a|unknown)$/i.test(src)) { r.res = { none: 'No source given for ' + (sh || en || ja) + ', so left out' }; r.on = false; return; }
+      var lib = (ja && K.venue(ja)) || (en && K.venue(en)) || (sh && K.venue(sh));
+      var place = { country: it.country || '', prefecture: it.prefecture || '', prefecture_ja: it.prefecture_ja || '', city: it.city || '', city_ja: it.city_ja || '' };
+      if (lib) { r.res = { lib: lib.id, name: lib.name, src: src, en: en }; r.name = lib.name; r.on = true; }
+      else { r.res = { nw: 1, en: en || sh || ja, ja: ja, src: src, place: place }; r.name = sh || en || ja; r.on = false; }
+    });
+    return { n: n };
+  }
+  function bvLib(i) {
+    var r = sheetOpen.rows[i], K = kit(), t = String(r.name || '').trim();
+    if (!K || !K.venues || t.length < 3) return '';
+    return K.venues(t, 3).filter(function(v) { return !r.res || v.id !== r.res.lib; }).map(function(v) { return '<button class="opt" data-bvlib="' + i + ':' + esc(v.id) + '" data-nm="' + esc(v.name) + '">' + esc(v.name) + '<small>Already in the library: use this</small></button>'; }).join('');
+  }
+  function bvHtml() {
+    var a = sheetOpen, rows = a.rows, got = rows.filter(function(r) { return r.res; }).length;
+    var h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:6px">Venues for ' + rows.length + ' show' + (rows.length > 1 ? 's' : '') + '</div>' +
+      '<div class="sub" style="font-size:13px;color:#9AA6B4">Library venues come ticked. A new venue stays unticked until you\'ve checked its name and tapped it.</div>';
+    if (a.busy) h += '<div class="ld">' + esc(a.busy) + '</div>';
+    if (!a.busy) {
+      h += '<div class="bt"><button class="b' + (got ? '' : ' on') + ' wide" data-bvask="1">' + (got ? 'Ask Gemini again' : 'Ask Gemini') + '</button><button class="b" data-bvpaste="1">Paste an answer</button></div>';
+      a.parts.forEach(function(p, k) {
+        var first = rows.indexOf(p[0]) + 1, last = rows.indexOf(p[p.length - 1]) + 1;
+        h += '<button class="opt" data-bvcopy="' + k + '">' + (a.parts.length > 1 ? 'Copy prompt ' + (k + 1) + ' of ' + a.parts.length : 'Copy the prompt') + '<small>' + (a.parts.length > 1 ? 'Shows ' + first + '–' + last + ' · ' : '') + 'paste into Gemini or any AI, then Paste an answer</small></button>';
+      });
+      if (a.paste) h += '<textarea class="tx" id="ccp-bvt" style="margin-top:8px" placeholder="Paste the AI\'s answer here (one part at a time)">' + esc(a.text || '') + '</textarea><div class="bt"><button class="b on wide" data-bvread="1">Read answer</button></div>';
+    }
+    if (a.err) h += '<div class="msg er">' + esc(a.err) + '</div>';
+    if (a.msg) h += '<div class="msg">' + esc(a.msg) + '</div>';
+    rows.forEach(function(r, i) {
+      var top = '<b style="color:#fff">' + esc(r.show) + '</b><small>' + esc([dateText(r.date), r.raw].filter(Boolean).join(' · ')) + '</small>', x = r.res;
+      if (r.done) h += '<div class="sug"><span class="bx" style="background:#2E9E5B;border-color:#2E9E5B">✓</span><span>' + top + '<small>Saved: ' + esc(r.name) + '</small></span></div>';
+      else if (!x) h += '<div class="sug"><span class="bx"></span><span>' + top + '<small>Waiting for an answer</small></span></div>';
+      else if (x.none) h += '<div class="sug"><span class="bx">–</span><span>' + top + '<small>' + esc(x.none) + '</small></span></div>';
+      else if (x.lib) h += '<button class="sug' + (r.on ? ' on' : '') + '" data-bvtog="' + i + '"><span class="bx">' + (r.on ? '✓' : '') + '</span><span>' + top + '<small style="color:#F4C242">' + esc(r.name) + ' · in the library</small><small>' + esc((x.en && x.en !== r.name ? x.en + ' · ' : '') + x.src) + '</small></span></button>';
+      else {
+        var pl = x.place, where = [pl.city, pl.prefecture, pl.country].filter(Boolean).join(', ');
+        h += '<div class="sug' + (r.on ? ' on' : '') + '" style="flex-direction:column;gap:6px"><button class="sug' + (r.on ? ' on' : '') + '" data-bvtog="' + i + '" style="margin:0;border:0;padding:0;background:none"><span class="bx">' + (r.on ? '✓' : '') + '</span><span>' + top + '<small style="color:#FFB347">New venue · ' + (r.on ? 'name checked' : 'check the name, then tap here') + '</small></span></button>' +
+          '<input class="tx bvin" data-bvi="' + i + '" type="text" autocomplete="off" value="' + esc(r.name) + '">' +
+          '<small style="color:#9AA6B4;font-size:12px">AI: ' + esc([x.en, x.ja].filter(Boolean).join(' · ') + (where ? ' · ' + where : '')) + '<br>' + esc(x.src) + '</small><div id="ccp-bvl' + i + '">' + bvLib(i) + '</div></div>';
+      }
+    });
+    var n = rows.filter(function(r) { return r.on && r.res && !r.done && String(r.name || '').trim(); }).length;
+    h += '<div class="bt" style="margin-top:12px"><button class="b on wide" data-bvapply="1"' + (n && !a.busy ? '' : ' disabled') + '>Save ' + n + ' venue' + (n === 1 ? '' : 's') + '</button><button class="b" data-close="1">Close</button></div>';
+    return h + '</div>';
+  }
+  function bvAsk() {
+    var a = sheetOpen, k = 0, fails = [], read = 0;
+    a.err = ''; a.msg = '';
+    var next = function() {
+      if (sheetOpen !== a) return;
+      if (k >= a.parts.length) { a.busy = ''; a.err = fails.join(' · '); a.msg = read ? 'Read ' + read + ' answer' + (read > 1 ? 's' : '') + '.' : ''; draw(); return; }
+      a.busy = 'Asking Gemini' + (a.parts.length > 1 ? ', part ' + (k + 1) + ' of ' + a.parts.length : '') + ' (it searches first; this can take a minute)…'; draw();
+      post({ action: 'vi_ai', prompt: bvPrompt(a.parts[k]) }, function(t) {
+        if (sheetOpen !== a) return;   // closed while Gemini was searching
+        var r = null; try { r = JSON.parse(t); } catch (e) {}
+        var label = a.parts.length > 1 ? 'Part ' + (k + 1) + ': ' : '';
+        if (!r || !r.ok) fails.push(label + 'Gemini: ' + (r && r.error || 'no reply'));
+        else { var rd = bvRead(r.text); if (rd.err) fails.push(label + rd.err); else read += rd.n; }
+        k++; next();
+      });
+    };
+    next();
+  }
+  function bvApply() {
+    var a = sheetOpen, todo = a.rows.filter(function(r) { return r.on && r.res && !r.done && String(r.name || '').trim(); }), made = {}, ok = 0, fail = [], placeNote = '';
+    var key = function(t) { return String(t || '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim(); };
+    var parse = function(t) { try { return JSON.parse(t); } catch (e) { return null; } };
+    var showVen = function(r, id, name, then) {
+      post({ action: 'vi_show_venue', show: r.set, venue: id, raw: r.raw || '', name: r.full || '', date: r.date || '' }, function(t) {
+        var x = parse(t);
+        if (x && x.ok) { ok++; r.done = true; r.name = name; venMem[r.set] = { id: id, name: name }; lsSet('ccPhoneVen' + r.set, { id: id, name: name }); }
+        else fail.push(r.show + ': ' + (x && x.error || 'no reply'));
+        then();
+      });
+    };
+    var next = function() {
+      if (!todo.length) {
+        a.busy = 'Refreshing the library…'; draw();
+        window.__tvIndexKit.reload(function() { a.busy = ''; a.err = fail.length ? 'Not saved: ' + fail.join('; ') : ''; a.msg = (ok ? 'Saved venues for ' + ok + ' show' + (ok > 1 ? 's' : '') + '.' : '') + placeNote; draw(); });
+        return;
+      }
+      var r = todo.shift(), x = r.res, name = String(r.name).trim(), K = kit();
+      a.busy = 'Saving ' + (ok + fail.length + 1) + '…'; draw();
+      if (x.lib) { showVen(r, x.lib, name, next); return; }
+      // A name typed to one already in the library is that venue.
+      var have = K && K.venues ? K.venues(name, 6).filter(function(v) { return key(v.name) === key(name); })[0] : null;
+      if (have) { showVen(r, have.id, have.name, next); return; }
+      if (made[key(name)]) { showVen(r, made[key(name)], name, next); return; }
+      post({ action: 'vi_propose', type: 'new_venue', value: name, entity_id: x.ja || (hasJa(r.raw) ? r.raw : ''), video: '' }, function(t) {
+        var p = parse(t);
+        if (!p || !p.ok || !p.applied || !p.id) { fail.push(r.show + ': ' + (p && (p.error || 'saved for approval') || 'no reply')); next(); return; }
+        made[key(name)] = p.id;
+        var pl = x.place || {};
+        if (![pl.country, pl.prefecture, pl.prefecture_ja, pl.city, pl.city_ja].some(Boolean)) { showVen(r, p.id, name, next); return; }
+        post({ action: 'cc_venue_place', venue: p.id, country: pl.country, prefecture: pl.prefecture, prefecture_ja: pl.prefecture_ja, city: pl.city, city_ja: pl.city_ja }, function(t2) {
+          var q = parse(t2);
+          if (!(q && q.ok) && !placeNote) placeNote = ' City and prefecture weren\'t saved (' + (q && q.error || 'no reply') + '): redeploy the sheet script.';
+          showVen(r, p.id, name, next);
+        });
+      });
     };
     next();
   }
@@ -1128,6 +1394,7 @@
     if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(show.set), show: show.name, venue: show.venue, date: show.date }];
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
+    if (refTags[id] && !rec.ref) rec.ref = refTags[id];   // 2.117.0: the reference card's tags, for the logger's suggestions
     var shown = false;
     window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, collect: true, venue: showVenueId(), segment: segs[id] || null,
       host: function() { shown = true; attn[id] = 1; setTimeout(function() { if (window.__tvIndexBack) window.__tvIndexBack(); }, 0); var d = document.createElement('div'); d.style.display = 'none'; document.body.appendChild(d); return d; },
@@ -1156,6 +1423,7 @@
     if (!rec.shows || !rec.shows.length) rec.shows = [{ id: Number(show.set), show: show.name, venue: show.venue, date: show.date }];
     if (!rec.date) rec.date = show.date;
     if (!rec.thumb) rec.thumb = v.th;
+    if (refTags[id] && !rec.ref) rec.ref = refTags[id];   // 2.117.0: the reference card's tags, for the logger's suggestions
     var shown = false;
     window.__tvIndexOpen({ set: show.set, video: id, rec: rec, place: { no: i + 1, total: show.videos.length }, thumb: true, tab: 'card', quick: true, reorder: !!re,
       // The logger wants to show itself (a name it can't place): not on the phone; the match is marked to look at.
@@ -1252,18 +1520,21 @@
   function draw() { if (drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
   function paint() {
     var ae = document.activeElement;
-    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-min' || ae.id === 'ccp-ai')) return;   // typing: the lists under the box update by themselves
+    if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-min' || ae.id === 'ccp-ai' || ae.id === 'ccp-bvt' || (ae.classList && ae.classList.contains('bvin')))) return;   // typing: the lists under the box update by themselves
     var y = root.scrollTop, h;
     if (!cfg) h = setupHtml();
     else {
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
         (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
-        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : sheetOpen.man ? manHtml() : fixHtml()) : '');
+        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.bulk ? bvHtml() : sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : sheetOpen.man ? manHtml() : fixHtml()) : '');
     }
     root.innerHTML = h; root.scrollTop = y;
     var vin = root.querySelector('#ccp-vin');
     if (vin) { vin.oninput = function() { vs.text = vin.value; var l = root.querySelector('#ccp-vl'); if (l) l.innerHTML = venueList(); }; if (vs.focus) { vs.focus = false; vin.focus(); } }
+    Array.prototype.forEach.call(root.querySelectorAll('input.bvin'), function(inp) {
+      inp.oninput = function() { if (!sheetOpen || !sheetOpen.bulk) return; var i = +inp.getAttribute('data-bvi'); sheetOpen.rows[i].name = inp.value; var l = root.querySelector('#ccp-bvl' + i); if (l) l.innerHTML = bvLib(i); };
+    });
     var sin = root.querySelector('#ccp-sin');
     if (sin) { sin.oninput = function() { sheetOpen.q = sin.value; var l = root.querySelector('#ccp-sl'); if (l) l.innerHTML = segList(kit().talents(sin.value, 6)); }; if (sheetOpen.focus) { sheetOpen.focus = false; sin.focus(); } }
     var min = root.querySelector('#ccp-min');
@@ -1377,6 +1648,24 @@
     if (d.row && show) { openCards[d.row] = !openCards[d.row]; draw(); if (openCards[d.row]) setTimeout(function() { var c = root.querySelector('.card[data-v="' + d.row + '"]'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80); return; }
     if (d.allcards) { showAllCards = !showAllCards; draw(); return; }
     if (d.rev && show) { setOrder(show.videos.slice().reverse(), show.orderBy === 'reversed by you' ? 'as listed' : 'reversed by you'); return; }
+    // Safari keeps a text box focused when a button is tapped, and the screen doesn't redraw while one is: let it go first.
+    if (sheetOpen && sheetOpen.bulk && document.activeElement && (document.activeElement.id === 'ccp-bvt' || (document.activeElement.classList && document.activeElement.classList.contains('bvin')))) document.activeElement.blur();
+    if (d.bulkven && yl) {
+      var bvAll = yl.items.map(function(x, i) { return { x: x, st: tileState(x.set) }; }).filter(function(o) { return S.yf === 'all' || o.st === S.yf; }).map(function(o) { return o.x; });
+      bvOpen(bvCands(bvAll, S.year)); return;
+    }
+    if (d.bvask && sheetOpen && sheetOpen.bulk) { bvAsk(); return; }
+    if (d.bvpaste && sheetOpen && sheetOpen.bulk) { sheetOpen.paste = true; draw(); setTimeout(function() { var t = root.querySelector('#ccp-bvt'); if (t) t.focus(); }, 50); return; }
+    if (d.bvcopy && sheetOpen && sheetOpen.bulk) { copyText(bvPrompt(sheetOpen.parts[+d.bvcopy]), b, 'Copied: paste it into Gemini or any AI'); sheetOpen.paste = true; return; }
+    if (d.bvread && sheetOpen && sheetOpen.bulk) {
+      var bo = sheetOpen; bo.text = (root.querySelector('#ccp-bvt') || {}).value || ''; var brd = bvRead(bo.text);
+      if (brd.err) { bo.err = brd.err; bo.msg = ''; } else { bo.err = brd.n ? '' : 'None of these shows are in that answer (it may be for another list).'; bo.msg = brd.n ? 'Read ' + brd.n + ' answer' + (brd.n > 1 ? 's' : '') + '.' : ''; bo.text = ''; bo.paste = false; }
+      draw(); return;
+    }
+    if (d.bvtog && sheetOpen && sheetOpen.bulk) { var br = sheetOpen.rows[+d.bvtog]; if (br && br.res && !br.res.none && !br.done) br.on = !br.on; draw(); return; }
+    if (d.bvlib && sheetOpen && sheetOpen.bulk) { var bi = +d.bvlib.split(':')[0], bl = sheetOpen.rows[bi]; if (bl && bl.res) { bl.res = { lib: d.bvlib.slice(d.bvlib.indexOf(':') + 1), name: d.nm, src: bl.res.src, en: bl.res.en }; bl.name = d.nm; bl.on = true; } draw(); return; }
+    if (d.bvapply && sheetOpen && sheetOpen.bulk) { bvApply(); return; }
+    if (d.ref != null && d.ref !== '' && show) { refOpen(+d.ref); return; }
     if (d.aicopy) { copyText(aiPrompt(), b, 'Copied: paste it into Gemini'); return; }
     if (d.aipaste) { sheetOpen = { ai: 1, text: '', sug: null }; draw(); return; }
     if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }

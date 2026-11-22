@@ -77,7 +77,7 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
 var MAX_CELL = 45000;
-var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many', 'cc_later'];   // a Sheets cell holds 50,000 characters
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many', 'cc_later', 'cc_venue_place'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
@@ -128,6 +128,7 @@ function doPost(e) {
   if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
   if (body.action === 'vi_save_many') return out(withLock(function() { return viSaveMany(body); }));
   if (body.action === 'cc_later') return out(b_ccLater(body));
+  if (body.action === 'cc_venue_place') return out(withLock(function() { return ccVenuePlace(body); }));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -937,7 +938,7 @@ function viCards(b) {
     // 2.85.0: one name per side where known, '' where not (the cards fall back to the wrestlers for that side).
     return by.some(Boolean) ? by : null;
   }
-  // 2.116.0: each wrestler's faction name, side by side in the cards' order ('' where none is logged).
+  // 2.118.0: each wrestler's faction name, side by side in the cards' order ('' where none is logged).
   function facSides(p) {
     var sides = [];
     p.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(x) { (sides[x.side_no - 1] = sides[x.side_no - 1] || []).push(FN.en[x.faction_id] || ''); });
@@ -1014,7 +1015,7 @@ function viCards(b) {
       // Complete years (2.97.0): the tournament, block and title ids, so pages limited to a complete year can pick their
       // matches from the index (Tag League, 5★STAR GP, Cinderella, title tabs and title histories).
       cv: t.competition ? String(t.competition[0]) : '', bk: t.block ? String(t.block[0]) : '', tv: (t.title || []).map(String),
-      // 2.116.0: complete-career wrestler pages: each wrestler's faction (same order as the sides) and the moments.
+      // 2.118.0: complete-career wrestler pages: each wrestler's faction (same order as the sides) and the moments.
       mo: (t.moment || []).map(String), fa: facSides(p)
     };
     var sv = seen[String(v.video_id)] || {};
@@ -1352,6 +1353,22 @@ function viShowVenue(b) {
     alias = true;
   }
   return { ok: true, show: show, venue: vid, alias: alias };
+}
+
+// Card check's bulk venues (2.116.0): where a new venue is (country, prefecture, city, in English and Japanese), as
+// the AI's answer gave it and only after it was confirmed on the phone. Fills empty cells only: never overwrites.
+function ccVenuePlace(b) {
+  var vid = String(b.venue || '');
+  var v = vid && viRows('venues').filter(function(x) { return x.venue_id === vid; })[0];
+  if (!v) return { ok: false, error: 'no such venue' };
+  var set = {};
+  ['country', 'prefecture', 'prefecture_ja', 'city', 'city_ja'].forEach(function(k) {
+    var val = String(b[k] || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (k === 'country') val = val.toUpperCase();
+    if (val && !String(v[k] || '').trim()) set[k] = val;
+  });
+  if (Object.keys(set).length) viSet('venues', v._row, set);
+  return { ok: true, venue: vid, set: Object.keys(set) };
 }
 
 // Card check's "Ask Gemini" (2.92.0): the show's prompt, as the phone wrote it, to the Gemini API with Google Search
