@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.118.1
+
+- **Fix: favorite star spacing in the Wrestlers menu.** On rows with the StarScope telescope, the ★ was pushed away from the name. It now sits on the name, as on every other row.
+- **Fix: debut card picture.** The debut card's thumbnail never loaded, because only the match grid was watched for pictures. Every StarScope card on the page is watched now.
+- **More shows StarScope's filters on the page** instead of opening the site's search. The filters are Partner, Opponent, Team or faction, Year, Tournament, Title and Sort (Newest, Oldest, Top rated). Each opens its choices, with a count each, in a row underneath. Choosing one redraws the cards. With a filter or sort set, All Matches is one grid instead of rows by year.
+- **Singles Matches tab** after All Matches, with its count.
+- **No StarScope button** on these pages: the page is StarScope already.
+- **Partners and rivals show a picture.** It loads just after the page: the cut-out over the Tag League circles' colour and glow, else the photo, else initials.
+- **Factions and match types** each span both columns.
+
 ## 2.118.0
 
 - **Complete-career wrestler pages.** A wrestler whose debut falls in StarScope's run of complete years (2022–2026 now) has every match in the index, so her page is drawn from it. Shows after the last logged one still come from the site's newest page. It applies by itself to anyone whose roster debut date is in a complete year, future debuts included. What's new on those pages:

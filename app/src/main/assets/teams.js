@@ -347,6 +347,15 @@
     '#tv-tt .cc-yh{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;margin-top:8px;font-size:22px;font-weight:700;}',
     '#tv-tt .cc-yh span{font-size:14px;font-weight:700;color:#9AA6B4;}',
     '#tv-tt .tt-card .tvsc-host{padding:11px 14px 13px;}',
+    '#tv-tt .cc-row .av.ph{border:2px solid #2A323C;}',
+    '#tv-tt .cc > div + div, #tv-tt .cc > .cc-two + div{margin-top:4px;}',
+    '#tv-tt .cc-frow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;padding:10px 12px;background:#121922;border-radius:12px;}',
+    '#tv-tt .cc-frow.cc-opts{background:#0F151C;border:2px solid #2A323C;}',
+    '#tv-tt .cc-fc{height:40px;line-height:36px;padding:0 14px;border-radius:10px;border:2px solid #2A323C;background:#161F2A;font-size:16px;font-weight:700;color:#fff !important;cursor:pointer;white-space:nowrap;}',
+    '#tv-tt .cc-fc em{font-style:normal;font-size:13px;opacity:.75;}',
+    '#tv-tt .cc-fc.on{background:#FFB347;border-color:#FFB347;color:#1A1A1A !important;}',
+    '#tv-tt .cc-fc.op{border-color:#6B5A22;}',
+    '#tv-tt .cc-fc:focus{border-color:#F4C242;outline:none;}',
     '#tv-tt .tt-dbg{margin-top:22px;padding:12px 16px;background:#0F151C;border:2px solid #2A323C;border-radius:10px;font:13px/1.5 Arial,Helvetica,sans-serif;color:#9AA6B4;white-space:pre-wrap;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
@@ -1221,14 +1230,17 @@
     var CC = WP.cc, cn = function(id) { var n = CC ? (id === 'all' ? CC.St.total : CC.St.tabs[id]) : null; return n != null ? '<em class="cc-n">' + n + '</em>' : ''; };
     var cats = api.cats || [], tab = Q.get('tvtab') || 'all', x = null;
     cats.forEach(function(c) { if (c.id === tab) x = c; });
-    if (!x) tab = 'all';
+    if (!x && !(CC && tab === 'singles')) tab = 'all';
     WP.tab = tab; WP.x = x; WP.rule = wpRule(x);
     var base = api.W.search, w = x ? wpWords(x) : null;
     WP.queries = x ? [base + ' ' + w.search].concat(w.alts.map(function(a) { return base + ' ' + a; })) : [base];
     var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(base) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(base) + '&q%5Btype%5D=single&tvmore=1';
-    var tabs = '<div class="wr-tabs" data-scope="w" data-scope-a="' + esc(api.W.name) + '" data-scope-b="' + esc(api.W.search) + '"><a class="wr-tab' + (tab === 'all' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('all'))) + '">' + esc(T('All Matches', 'すべての試合')) + cn('all') + '</a>' +
+    // complete career (2.118.1): no StarScope button (the page is StarScope), a Singles Matches tab, More opens the filters here
+    var tabs = '<div class="wr-tabs"' + (CC ? '' : ' data-scope="w" data-scope-a="' + esc(api.W.name) + '" data-scope-b="' + esc(api.W.search) + '"') + '><a class="wr-tab' + (tab === 'all' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('all'))) + '">' + esc(T('All Matches', 'すべての試合')) + cn('all') + '</a>' +
+      (CC ? '<a class="wr-tab' + (tab === 'singles' ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath('singles'))) + '">' + esc(T('Singles Matches', 'シングルマッチ')) + '<em class="cc-n">' + CC.St.kinds.singles + '</em></a>' : '') +
       cats.map(function(c) { return '<a class="wr-tab' + (tab === c.id ? ' wr-tab-on' : '') + '" tabindex="0" href="' + esc(absUrl(wpPath(c.id))) + '">' + esc(isJa() && c.ja ? c.ja : c.name) + cn(c.id) + '</a>'; }).join('') +
-      '<a class="wr-tab wr-tab-more" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
+      (CC ? '<a class="wr-tab wr-tab-more" tabindex="0" data-ccmore="1">' + esc(T('More', '詳細')) + ' ▾</a></div><div id="cc-fil"></div>' :
+      '<a class="wr-tab wr-tab-more" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>');
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(api.W.name) + '</div><div class="tt-note">' + esc(T('Wrestler', '選手')) + '</div></div>' +
       (CC ? '<div class="cc-badge notranslate" translate="no">' + CC_TEL + esc(T('STARSCOPE · EVERY MATCH SINCE DEBUT', 'STARSCOPE · デビュー以来の全試合')) + '</div>' : '') +
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
@@ -1238,6 +1250,8 @@
     if (CC) {   // the career block goes just above MATCHES (the header's last section)
       var secs = scroller.querySelectorAll('#tv-wr .wr-sec'), mh = secs[secs.length - 1];
       if (mh) mh.insertAdjacentHTML('beforebegin', '<div class="cc">' + ccHtml(api, CC.D, CC.St, CC.P) + '</div>');
+      WP.ccf = {}; WP.ccOpen = ''; WP.ccShow = false;
+      ccRenders();
     }
     window.__tvWrAppFav = function() { var b = scroller.querySelector('[data-wrfav]'); if (b) { b.innerHTML = api.favInner(); b.classList.toggle('wr-on', api.isFav()); } };
     // a tab was just chosen: open at MATCHES with that tab focused; otherwise on the favorites button
@@ -1254,9 +1268,9 @@
   function scWrestler(api, tab) {
     var S = SC();
     WP.cut = null;
-    if (!S || !(SC_TABS[tab] || (WP.cc && tab === 'all'))) return;
+    if (!S || !(SC_TABS[tab] || (WP.cc && (tab === 'all' || tab === 'singles')))) return;
     var names = [api.W.name, api.W.search].concat(ALIAS[String(api.W.name).toLowerCase()] || []);
-    var found = S.find(function(v) { return (tab === 'all' ? true : tab === 'champ' ? S.isTitle(v) : S.inComp(v, tab)) && names.some(function(n) { return S.hasName(v, n); }); });
+    var found = S.find(function(v) { return (tab === 'all' ? true : tab === 'singles' ? ccKind(v) === 'singles' : tab === 'champ' ? S.isTitle(v) : S.inComp(v, tab)) && names.some(function(n) { return S.hasName(v, n); }); });
     var n = scAdd(WP.kept, found, WP.seen), P = S.plan(api.debut), ys = S.years();
     WP.cut = P.only ? (P.recent ? { after: P.thru } : null) : { skip: 1 };
     WP.log.push('StarScope: ' + n + ' match' + (n === 1 ? '' : 'es') + ' from the index (complete ' + ys.join(', ') + ', logged through ' + P.thru + (api.debut ? ', debut ' + api.debut : '') + ')' +
@@ -1389,6 +1403,18 @@
     out.first = first;
     return out;
   }
+  // 2.118.1: the partners' and rivals' circles get their picture after the page is drawn: the cut-out over the
+  // Tag League circles' colour and glow, else the photo; initials stay where there's neither.
+  function ccRenders() {
+    setTimeout(function() {
+      Array.prototype.forEach.call(scroller.querySelectorAll('.cc-row .av[data-n]'), function(el) {
+        var n = el.getAttribute('data-n'), sb = window.__tvStar ? window.__tvStar([n, siteName(n)], 'tiny') : '', ph = sb ? '' : (call('wrestlerPhoto', n) || call('wrestlerPhoto', siteName(n)));
+        if (!sb && !ph) return;
+        el.setAttribute('style', sb || 'background:#161F2A url(\'' + ph + '\') center top/cover no-repeat;');
+        el.classList.add('ph'); el.textContent = '';
+      });
+    }, 400);
+  }
   function ccWrPath(name) { return '/mypage?tvwr=' + encodeURIComponent(name); }
   function ccSec(title, note) { return '<div class="wr-sec"><i></i><b>' + esc(title) + '</b>' + (note ? '<span>' + esc(note) + '</span>' : '') + '</div>'; }
   function ccCard(x, badge) {
@@ -1412,22 +1438,21 @@
     function rows(list, rival) {
       return list.map(function(o) {
         var ini = String(o.name || '?').split(/\s+/).map(function(w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase();
-        return '<a class="cc-row" tabindex="0" href="' + esc(absUrl(ccWrPath(o.name))) + '"><span class="av notranslate" translate="no">' + esc(ini) + '</span><span class="nm">' + esc(o.name) + '</span><span class="ct">' + o.n + '<em>' + esc(rival ? T(' matches (' + o.s + ' singles)', '試合（シングル' + o.s + '）') : T(' matches', '試合')) + '</em></span></a>';
+        return '<a class="cc-row" tabindex="0" href="' + esc(absUrl(ccWrPath(o.name))) + '"><span class="av notranslate" translate="no" data-n="' + esc(o.name) + '">' + esc(ini) + '</span><span class="nm">' + esc(o.name) + '</span><span class="ct">' + o.n + '<em>' + esc(rival ? T(' matches (' + o.s + ' singles)', '試合（シングル' + o.s + '）') : T(' matches', '試合')) + '</em></span></a>';
       }).join('');
     }
     if (St.partners.length || St.rivals.length) {
       h += '<div class="cc-two"><div>' + ccSec(T('TOP PARTNERS', 'パートナー'), T('2 v 2 matches together', '2対2で組んだ試合')) + rows(St.partners, false) + '</div>' +
         '<div>' + ccSec(T('RIVALS', 'ライバル'), T('Opposite sides, any match', '対戦（すべての試合）')) + rows(St.rivals, true) + '</div></div>';
     }
-    h += '<div class="cc-two">';
     if (St.fac.length) {
       h += '<div>' + ccSec(T('FACTIONS', 'ユニット')) + '<div class="cc-facs">' + St.fac.map(function(r, i) {
         var to = i === 0 ? T('now', '現在') : fmtD(r.to);
         return '<div class="cc-fac' + (i === 0 ? ' on' : '') + '" style="flex:' + r.n + '"><div class="f1">' + esc(r.f) + '</div><div class="f2">' + esc(fmtD(r.from) + ' – ' + to + ' · ' + r.n + T(' matches', '試合')) + '</div></div>';
       }).join('') + '</div></div>';
-    } else h += '<div></div>';
+    }
     var K = St.kinds, kinds = [['multi', T('Multi', '3チーム以上'), '#F4C242'], ['tag', T('Tag', 'タッグ'), '#FFB347'], ['six', T('6-person', '6人タッグ'), '#C9D2DC'], ['singles', T('Singles', 'シングル'), '#FFFFFF']].filter(function(k) { return K[k[0]]; });
-    h += '<div>' + ccSec(T('MATCH TYPES', '試合形式')) + '<div class="cc-types">' + kinds.map(function(k) { return '<div style="flex:' + K[k[0]] + ';background:' + k[2] + '">' + esc(k[1]) + ' ' + K[k[0]] + '</div>'; }).join('') + '</div></div></div>';
+    h += '<div>' + ccSec(T('MATCH TYPES', '試合形式')) + '<div class="cc-types">' + kinds.map(function(k) { return '<div style="flex:' + K[k[0]] + ';background:' + k[2] + '">' + esc(k[1]) + ' ' + K[k[0]] + '</div>'; }).join('') + '</div></div>';
     h += '<div class="cc-fine">' + esc(T('StarScope: every match from ', 'StarScope: ') + fmtD(api.debut) + T(' to ', '〜') + fmtD(P.thru) + T(' (last logged show).', '（最新の登録済み大会）のすべての試合。') +
       (P.recent ? T(' Newer shows come from the site’s search until they’re logged.', ' それ以降の大会は登録されるまでサイトの検索から表示します。') : '')) + '</div>';
     return h;
@@ -1435,21 +1460,83 @@
   // Pictures near the screen only (pages with hundreds of cards): set as a card comes within a screen of view, let go
   // when it is three screens away.
   var ccIO = null;
-  function ccPictures(box) {
-    if (!box || !window.IntersectionObserver) { Array.prototype.forEach.call((box || document).querySelectorAll('.cc-sc .im[data-bg]'), function(im) { im.style.backgroundImage = 'url(\'' + im.getAttribute('data-bg') + '\')'; }); return; }
+  function ccPictures() {
+    var box = scroller;   // every StarScope card on the page: the debut card sits outside the grid (2.118.1)
+    if (!window.IntersectionObserver) { Array.prototype.forEach.call(box.querySelectorAll('.cc-sc .im[data-bg]'), function(im) { im.style.backgroundImage = 'url(\'' + im.getAttribute('data-bg') + '\')'; }); return; }
     if (ccIO) ccIO.disconnect();
     var near = new IntersectionObserver(function(es) { es.forEach(function(e) { var im = e.target; if (e.isIntersecting && !im.style.backgroundImage) im.style.backgroundImage = 'url(\'' + im.getAttribute('data-bg') + '\')'; }); }, { root: scroller, rootMargin: '600px 0px' });
     var far = new IntersectionObserver(function(es) { es.forEach(function(e) { if (!e.isIntersecting) e.target.style.backgroundImage = ''; }); }, { root: scroller, rootMargin: '1800px 0px' });
     Array.prototype.forEach.call(box.querySelectorAll('.cc-sc .im[data-bg]'), function(im) { near.observe(im); far.observe(im); });
     ccIO = { disconnect: function() { near.disconnect(); far.disconnect(); } };
   }
+  // ---- More on a complete career (2.118.1): StarScope's filters on this page, not the site's search. More shows a row
+  // of filters (partner, opponent, team or faction, year, tournament, title, sort); a filter opens its choices (each
+  // with how many matches) in a row under it; choosing one redraws the cards.
+  var CC_FK = ['p', 'o', 'g', 'y', 'c', 'ti', 'sort'];
+  function ccFL(k) { return { p: T('Partner', 'パートナー'), o: T('Opponent', '対戦相手'), g: T('Team or faction', 'チーム・ユニット'), y: T('Year', '年'), c: T('Tournament', 'トーナメント'), ti: T('Title', 'タイトル'), sort: T('Sort', '並び順') }[k]; }
+  var CC_SORT = { 'new': ['Newest', '新しい順'], old: ['Oldest', '古い順'], top: ['Top rated', '高評価順'] };
+  function ccVals(x, k) {
+    var v = x.v, X = v.x, at = x.at || [0, 0];
+    if (k === 'p') return ccSide(v, at[0]).filter(function(n, j) { return j !== at[1]; });
+    if (k === 'o') { var o = []; (v.s || []).forEach(function(sd, i) { if (i !== at[0]) o = o.concat(ccSide(v, i)); }); return o; }
+    if (k === 'g') return X.g || [];
+    if (k === 'y') return [String(v.d).slice(0, 4)];
+    if (k === 'c') return X.c ? [X.c] : [];
+    if (k === 'ti') return X.ti || [];
+    return [];
+  }
+  function ccFiltered(list) {
+    var F = WP.ccf || {};
+    var out = list.filter(function(x) { return CC_FK.every(function(k) { return k === 'sort' || !F[k] || ccVals(x, k).indexOf(F[k]) >= 0; }); });
+    if (F.sort === 'old') out = out.slice().sort(function(a, b) { return String(a.v.d).localeCompare(String(b.v.d)); });
+    if (F.sort === 'top') out = out.slice().sort(function(a, b) { return ((b.v.x.r || 0) - (a.v.x.r || 0)) || String(b.v.d).localeCompare(String(a.v.d)); });
+    return out;
+  }
+  function ccCount(list) { var seen = {}; list.forEach(function(x) { seen[x.v.x.m || x.id] = 1; }); return Object.keys(seen).length; }
+  function ccFil(base) {
+    var box = document.getElementById('cc-fil');
+    if (!box) return;
+    if (!WP.ccShow) { box.innerHTML = ''; return; }
+    var F = WP.ccf, h = '<div class="cc-frow">';
+    CC_FK.forEach(function(k) {
+      var val = k === 'sort' ? (F.sort && F.sort !== 'new' ? T(CC_SORT[F.sort][0], CC_SORT[F.sort][1]) : '') : (F[k] || '');
+      if (k !== 'sort' && !val && !ccOpts(base, k).length) return;   // nothing to choose
+      h += '<a class="cc-fc' + (val ? ' on' : '') + (WP.ccOpen === k ? ' op' : '') + '" tabindex="0" data-ccf="' + k + '"' + (k === 'sort' ? ' style="margin-left:auto"' : '') + '>' + esc(ccFL(k) + (val ? ': ' + val : '')) + ' ▾</a>';
+    });
+    h += '</div>';
+    if (WP.ccOpen) {
+      var k = WP.ccOpen, opts = k === 'sort' ? Object.keys(CC_SORT).map(function(s) { return { v: s, l: T(CC_SORT[s][0], CC_SORT[s][1]) }; }) : [{ v: '', l: T('Any', 'すべて') }].concat(ccOpts(base, k).map(function(o) { return { v: o.v, l: o.v, n: o.n }; }));
+      h += '<div class="cc-frow cc-opts">' + opts.map(function(o) {
+        var on = k === 'sort' ? (F.sort || 'new') === o.v : (F[k] || '') === o.v;
+        return '<a class="cc-fc' + (on ? ' on' : '') + '" tabindex="0" data-ccv="' + esc(o.v) + '">' + esc(o.l) + (o.n ? ' <em>' + o.n + '</em>' : '') + '</a>';
+      }).join('') + '</div>';
+    }
+    box.innerHTML = h;
+  }
+  function ccOpts(base, k) {
+    var F = WP.ccf || {}, count = {}, seen = {};
+    base.filter(function(x) { return CC_FK.every(function(j) { return j === k || j === 'sort' || !F[j] || ccVals(x, j).indexOf(F[j]) >= 0; }); }).forEach(function(x) {
+      var mk = x.v.x.m || x.id;
+      ccVals(x, k).forEach(function(val) { if (!val || seen[mk + '|' + val]) return; seen[mk + '|' + val] = 1; count[val] = (count[val] || 0) + 1; });
+    });
+    return Object.keys(count).map(function(v) { return { v: v, n: count[v] }; }).sort(k === 'y' ? function(a, b) { return b.v.localeCompare(a.v); } : function(a, b) { return b.n - a.n || a.v.localeCompare(b.v); });
+  }
+  function ccRepaint(focusSel) {
+    wpPaint();
+    var f = focusSel && scroller.querySelector(focusSel);
+    if (f) focusEl(f);
+  }
   // MATCHES for a complete career: the open tab's index matches as StarScope cards. All Matches is by year (year chips
   // jump to a year); the other tabs are one grid, newest first. Shows not logged yet (site cards) come first.
   function ccPaint(box) {
-    var C = WP.cc, S = SC(), tab = WP.tab, list = C.D.cards.filter(function(x) { return tab === 'all' ? true : tab === 'champ' ? S.isTitle(x.v) : S.inComp(x.v, tab); });
+    var C = WP.cc, S = SC(), tab = WP.tab, list = C.D.cards.filter(function(x) { return tab === 'all' ? true : tab === 'singles' ? ccKind(x.v) === 'singles' : tab === 'champ' ? S.isTitle(x.v) : S.inComp(x.v, tab); });
+    var base = list;
+    list = ccFiltered(list);
+    ccFil(base);
     var site = WP.kept.filter(function(it) { return !it.sc; }), h = '';
     if (site.length) h += '<div class="cc-yh">' + esc(T('Not logged yet', '未登録')) + '<span>' + site.length + '</span></div>' + site.map(cardHtml).join('');
-    if (tab === 'all') {
+    var filtered = Object.keys(WP.ccf || {}).some(function(k) { return WP.ccf[k] && k !== 'sort'; }), sorted = WP.ccf && WP.ccf.sort && WP.ccf.sort !== 'new';
+    if (tab === 'all' && !filtered && !sorted) {
       var ys = Object.keys(C.St.years).sort().reverse(), byY = {};
       list.forEach(function(x) { var y = String(x.v.d).slice(0, 4); (byY[y] = byY[y] || []).push(x); });
       h = '<div class="cc-years">' + '<span class="lb">' + esc(T('YEAR', '年')) + '</span>' + ys.map(function(y) { return '<a class="cc-yc" tabindex="0" data-wyear="' + y + '">' + y + ' <em>' + C.St.years[y] + '</em></a>'; }).join('') + '</div>' + h;
@@ -1460,8 +1547,8 @@
     if (list.length > 4) h += '<a class="tt-more tt-top" tabindex="0" data-top="1">' + esc(T('Back to top', 'トップへ戻る')) + ' ↑</a>';
     box.className = 'tt-vids';
     box.innerHTML = h;
-    ccPictures(box);
-    var n = tab === 'all' ? C.St.total : (C.St.tabs[tab] || 0);
+    ccPictures();
+    var n = filtered ? ccCount(list) : tab === 'all' ? C.St.total : tab === 'singles' ? C.St.kinds.singles : (C.St.tabs[tab] || 0);
     return n + site.length;
   }
 
@@ -1490,6 +1577,9 @@
     if (el.getAttribute('data-favb') != null) { if (window.__tvFav && TEAM) window.__tvFav.toggleTeam(TEAM.id); return true; }
     if (el.getAttribute('data-wrfav') != null) { if (WP.api) { WP.api.toggleFav(); if (window.__tvWrAppFav) window.__tvWrAppFav(); } return true; }
     if (el.getAttribute('data-wmore') != null) { if (!WP.busy) wpLoad(); return true; }
+    if (el.getAttribute('data-ccmore') != null) { WP.ccShow = !WP.ccShow; WP.ccOpen = ''; ccRepaint(WP.ccShow ? '[data-ccf]' : '[data-ccmore]'); return true; }
+    if (el.getAttribute('data-ccf') != null) { var fk = el.getAttribute('data-ccf'); WP.ccOpen = WP.ccOpen === fk ? '' : fk; ccRepaint(WP.ccOpen ? '[data-ccv]' : '[data-ccf="' + fk + '"]'); return true; }
+    if (el.getAttribute('data-ccv') != null) { var ok = WP.ccOpen; if (ok) WP.ccf[ok] = el.getAttribute('data-ccv'); WP.ccOpen = ''; ccRepaint('[data-ccf="' + ok + '"]'); return true; }
     if (el.getAttribute('data-wyear') != null) {   // a year chip: to that year's first card
       var yh = document.getElementById('cc-y' + el.getAttribute('data-wyear')), c = yh && yh.nextElementSibling;
       while (c && !c.classList.contains('tt-card')) c = c.nextElementSibling;

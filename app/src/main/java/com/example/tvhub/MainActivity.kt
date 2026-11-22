@@ -6171,6 +6171,9 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-wr-l{min-width:0;}',
             '#tv-sm-shelf .tv-wr-c{flex:none;display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#9aa6b4;}',
             '#tv-sm-shelf .tv-wr-c.tv-wr-cc{color:#F4C242;}',
+            // 2.118.1: the favorite star sits on the name, as on every other row (on the row itself the flex layout pushed it apart)
+            '#tv-sm-shelf .tv-sm-fi.tv-wr-n.tv-fav-on::before{content:none;}',
+            '#tv-sm-shelf .tv-wr-n.tv-fav-on .tv-wr-l::before{content:"\\2605  ";color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{background:#FFB347 !important;color:#1A1A1A !important;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab:focus{border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
