@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.115.0
+
+- **Segments with nobody in them.** A greeting or segment with only the company's President in it (who isn't indexed) can now be saved with no names: in iPhone card check, Segment… → pick the type → **Use as segment, no names**. A card whose title reads as a segment but names no one in the library is offered as one ("Looks like a segment: Greeting · no wrestler in it"). The TV's logger allows it too. Nothing about it shows on StarScope cards, Shows or the published index: it only marks the video as done, in its place on the card.
+- **Segments don't count toward a show's matches.** Show tiles now read "**5 of 7 matches logged · 1 segment**" and "**✓ All 7 matches logged · 1 segment**": a logged segment (named or not) comes off the show's total instead of counting as a match, so a show reads complete once every match is in and every segment is marked. Started / Logged / Not started and Next show follow the same count.
+- **New segment type: Greeting (挨拶)**, added to the sheet's lists tab (keywords `greeting|ご挨拶|挨拶`).
+- **Sheet script:** a segment saves with an empty line-up (a match still needs two sides); a nameless segment is never linked to another match as a second version; `vi_cards` sends the nameless segments apart as `blank` (video → set), since they have no card. **Redeploy** the sheet script.
+- Built on 2.114.0. iPhone card check: needs publishing to GitHub Pages (cc.js, indexpanel.js).
+
 ## 2.114.0
 
 - **iPhone card check: Watch later button** beside Watch on every match card. A tap adds the video to the TVs' Watch Later list (top of the list); on the TVs within a minute through favorites sync. It then reads **✓ Watch later**; tap again to take it out. The list is read from the sheet once when card check starts, so the button knows what's already there. Sheet requests only, no site calls.

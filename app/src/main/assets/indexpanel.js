@@ -811,7 +811,8 @@
     if (busy) return;
     var S = state.sides.filter(function(s) { return s.people.length; });
     var sg = seg();
-    if (S.length < (sg ? 1 : 2)) { say(sg ? T.needSeg : T.need, true); return; }
+    // 2.115.0: a segment may have nobody in it (the president's greeting: he isn't indexed).
+    if (!sg && S.length < 2) { say(T.need, true); return; }
     // A segment: everyone in it on one side, no result (the sheet does the same).
     if (sg) S = [{ role: '', team: '', people: [].concat.apply([], S.map(function(s) { return s.people; })) }];
     var parts = [], r = sg ? { type: '', side: 0 } : state.result, winner = 0;

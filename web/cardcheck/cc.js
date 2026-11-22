@@ -228,6 +228,10 @@
 
   // ---- the StarScope list (what is logged): one request at a time, changes only after the first copy
   var map = (lsGet(CARDS_KEY) || {}).map || {}, cardsBusy = false, cardsAgain = false;
+  // 2.115.0: segments saved with nobody in them (the president's greeting) have no card in the list; the sheet sends
+  // them apart, by video with their show's set. Always the whole list (it's small).
+  var blank = (lsGet(CARDS_KEY) || {}).blank || {};
+  function isSeg(id) { var c = map[id]; return !!(blank[id] || (c && c.x && c.x.k === 'segment')); }
   function cards(full) {
     if (cardsBusy) { cardsAgain = true; return; }
     var c = lsGet(CARDS_KEY), body = { action: 'vi_cards' };
@@ -240,8 +244,9 @@
         if (r.since && c && c.map) {
           var m = c.map; Object.keys(r.map).forEach(function(k) { m[k] = r.map[k]; });
           if (r.all) { var keep = {}; r.all.forEach(function(k) { keep[k] = 1; }); Object.keys(m).forEach(function(k) { if (!keep[k]) delete m[k]; }); }
-          map = m; lsSet(CARDS_KEY, { s: r.now || c.s, f: c.f || 0, map: m });
-        } else { map = r.map; lsSet(CARDS_KEY, { s: r.now || '', f: Date.now(), map: map }); }
+          if (r.blank) blank = r.blank;
+          map = m; lsSet(CARDS_KEY, { s: r.now || c.s, f: c.f || 0, map: m, blank: blank });
+        } else { map = r.map; if (r.blank) blank = r.blank; lsSet(CARDS_KEY, { s: r.now || '', f: Date.now(), map: map, blank: blank }); }
         draw();
       } else if (!Object.keys(map).length && !flash) note('StarScope list: ' + (r && r.error || 'no reply'), true, /key/i.test(r && r.error || ''));
       if (cardsAgain) { cardsAgain = false; setTimeout(function() { cards(); }, 300); }
@@ -263,12 +268,18 @@
   function note(t, bad, keyIssue) { flash = t; flashBad = !!bad; flashKey = !!keyIssue; draw(); }
 
   // ---- Log a show: shows started, and the site's list of a year's shows (a page at a time, the next when you ask)
+  // 2.115.0: segments (greetings, ceremonies, backstage comments) don't count as matches: a logged segment comes off the
+  // show's total instead of counting as logged, so "7 of 7 matches" means every match is in and every segment marked.
   function setCount(set, vids) {
     set = String(set);
-    var n = 0, tot = vids ? vids.length : 0, mids = {};
-    if (vids) vids.forEach(function(v) { if (map[v.id]) n++; });
-    else Object.keys(map).forEach(function(k) { var c = map[k]; if (String(c.vs || c.sid || '') === set && !mids[c.x && c.x.m]) { mids[c.x && c.x.m] = 1; n++; if (+c.t > tot) tot = +c.t; } });
-    return { n: n, tot: tot, done: tot > 0 && n >= tot };
+    var n = 0, tot = vids ? vids.length : 0, sg = 0, mids = {};
+    if (vids) vids.forEach(function(v) { if (isSeg(v.id)) sg++; else if (map[v.id]) n++; });
+    else {
+      Object.keys(map).forEach(function(k) { var c = map[k]; if (String(c.vs || c.sid || '') === set && !mids[c.x && c.x.m]) { mids[c.x && c.x.m] = 1; if (isSeg(k)) sg++; else n++; if (+c.t > tot) tot = +c.t; } });
+      Object.keys(blank).forEach(function(k) { if (String(blank[k]) === set) sg++; });
+    }
+    var all = tot; tot = Math.max(0, tot - sg);
+    return { n: n, tot: tot, sg: sg, done: all > 0 && n >= tot };
   }
   function startedList() {
     var by = {};
@@ -279,8 +290,8 @@
       var mid = c.x && c.x.m; if (!g.mids[mid]) { g.mids[mid] = 1; g.n++; }
       if (+c.t > g.tot) g.tot = +c.t;
     });
-    return Object.keys(by).map(function(k) { var g = by[k], sc = lsGet(SET_KEY + k); if (sc && sc.videos) { var x = setCount(k, sc.videos); g.n = x.n; g.tot = x.tot; } return g; })
-      .filter(function(g) { return !(g.tot > 0 && g.n >= g.tot); })
+    return Object.keys(by).map(function(k) { var g = by[k], sc = lsGet(SET_KEY + k), x = setCount(k, sc && sc.videos); g.n = x.n; g.tot = x.tot; g.sg = x.sg; g.done = x.done; return g; })
+      .filter(function(g) { return !g.done; })
       .sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
   }
   function years() {
@@ -317,13 +328,14 @@
       .catch(function(e) { mine.err = String(e && e.message || e); })
       .then(function() { mine.busy = false; draw(); });
   }
-  function tileState(set) { var sc = lsGet(SET_KEY + set), c = setCount(set, sc && sc.videos); return c.done ? 'logged' : c.n ? 'started' : 'none'; }
+  function tileState(set) { var sc = lsGet(SET_KEY + set), c = setCount(set, sc && sc.videos); return c.done ? 'logged' : c.n || c.sg ? 'started' : 'none'; }
   function showTile(x, from) {
     var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, from.slice(1) || null) : { show: x.name, date: x.date || '' };
     var sc = lsGet(SET_KEY + x.set), c = setCount(x.set, sc && sc.videos), date = sl.date || x.date || '';
     // 2.91.9: the state in words, so "0 logged" no longer reads like a logged tag.
-    var label = c.done ? '✓ All ' + c.tot + ' logged' : !c.n ? 'Not started' : c.tot ? c.n + ' of ' + c.tot + ' logged' : c.n + ' logged';
-    var cls2 = c.done ? ' done' : !c.n ? ' none' : '';
+    var segTxt = c.sg ? ' · ' + c.sg + ' segment' + (c.sg > 1 ? 's' : '') : '';
+    var label = (c.done ? '✓ All ' + c.tot + ' matches logged' : !c.n && !c.sg ? 'Not started' : c.tot ? c.n + ' of ' + c.tot + ' matches logged' : c.n + ' logged') + segTxt;
+    var cls2 = c.done ? ' done' : !c.n && !c.sg ? ' none' : '';
     return '<button class="sc" data-go="' + esc(x.set) + '" data-from="' + esc(from) + '"><span class="im"' + (x.th ? ' style="background-image:url(\'' + esc(x.th) + '\')"' : '') + '></span><span><span class="nm">' +
       esc(showName(sl.show || x.name, date) || x.name) + '</span><span class="sb">' + esc([dateText(date), sl.venue || x.venue || ''].filter(Boolean).join(' · ')) + '</span><span class="cnt' + cls2 + '">' + esc(label) + '</span></span></button>';
   }
@@ -463,7 +475,8 @@
     if (sending[v.id]) return { k: 'saved', label: 'Saving to the sheet…' };
     if (saved[v.id]) return { k: 'saved', label: 'Logged' };
     var c = map[v.id];
-    if (c) return c.x && c.x.tb ? { k: 'thumb', label: 'Logged from thumbnail' } : { k: 'watched', label: 'Logged while watching' };
+    if (blank[v.id] && !c) return { k: 'thumb', label: 'Segment · no names' };
+    if (c) return c.x && c.x.k === 'segment' ? { k: 'thumb', label: 'Segment' } : c.x && c.x.tb ? { k: 'thumb', label: 'Logged from thumbnail' } : { k: 'watched', label: 'Logged while watching' };
     return null;
   }
   // 2.96.2: English first, unless the Japanese line-up has the same sides and more names: the English one missed an
@@ -529,9 +542,9 @@
     (K ? K.list('segment') : []).forEach(function(t) { h += '<button class="b' + (f.type === t.id ? ' on' : '') + '" data-segty="' + esc(t.id) + '">' + esc(t.name) + '</button>'; });
     h += '</div><div class="gl">In the segment</div>';
     f.ids.forEach(function(id) { h += '<button class="pp" data-segrm="' + esc(id) + '"><span class="mk">✓</span><span><span class="n">' + esc(K.nameOf(id)) + '</span><small>Tap to remove</small></span></button>'; });
-    if (!f.ids.length) h += '<div class="sub" style="color:#9AA6B4">No one yet: search below.</div>';
+    if (!f.ids.length) h += '<div class="sub" style="color:#9AA6B4">No one yet: search below. Or leave it empty for a segment with no wrestler in it (the President\'s greeting): it\'s saved with no names.</div>';
     h += '<input class="tx" id="ccp-sin" type="text" autocomplete="off" placeholder="Add a wrestler" value="' + esc(f.q) + '" style="margin-top:8px"><div id="ccp-sl">' + segList(L) + '</div>';
-    h += '<div class="bt"><button class="b on wide" data-segok="1"' + (f.type && f.ids.length ? '' : ' disabled') + '>Use as segment</button>' + (segs[f.v] ? '<button class="b" data-unseg="' + esc(f.v) + '">Not a segment</button>' : '') + '<button class="b" data-close="1">Cancel</button></div></div>';
+    h += '<div class="bt"><button class="b on wide" data-segok="1"' + (f.type ? '' : ' disabled') + '>' + (f.ids.length ? 'Use as segment' : 'Use as segment, no names') + '</button>' + (segs[f.v] ? '<button class="b" data-unseg="' + esc(f.v) + '">Not a segment</button>' : '') + '<button class="b" data-close="1">Cancel</button></div></div>';
     return h;
   }
   function segList(L) { return L.filter(function(t) { return sheetOpen.ids.indexOf(t.id) < 0; }).map(function(t) { return '<button class="opt" data-segadd="' + esc(t.id) + '">' + esc(t.name) + (t.other ? '<small>' + esc(t.other) + '</small>' : '') + '</button>'; }).join(''); }
@@ -600,9 +613,9 @@
     else if (r) {
       var K = kit(), sug = K ? K.suggest([r.title_en, r.title_ja, r.h1].filter(Boolean).join(' ')) : [];
       var sg = segs[v.id], gs = !s && !sg ? segGuess(v, r) : null, K0 = kit();
-      if (sg) h += '<div class="gl">Segment · ' + esc(segLabel(sg.type)) + '</div>' + sg.ids.map(function(id) { return '<div class="pp"><span class="mk">✓</span><span class="n">' + esc(K0 ? K0.nameOf(id) : id) + '</span></div>'; }).join('') +
-        '<div class="rw"><span class="lb">Result</span><span class="vl">None: segments don\'t count as matches</span></div>';
-      else if (gs && gs.type && gs.ids.length) h += '<div class="er" style="color:#C9D2DC;border-color:#6B5A22">Looks like a segment: ' + esc(segLabel(gs.type)) + ' · ' + esc(gs.ids.map(function(id) { return K0.nameOf(id); }).join(', ')) + '<div class="bt"><button class="b on" data-segyes="' + esc(v.id) + '">Yes, a segment</button><button class="b" data-seg="' + esc(v.id) + '">Change</button></div></div>';
+      if (sg) h += '<div class="gl">Segment · ' + esc(segLabel(sg.type)) + '</div>' + (sg.ids.length ? sg.ids.map(function(id) { return '<div class="pp"><span class="mk">✓</span><span class="n">' + esc(K0 ? K0.nameOf(id) : id) + '</span></div>'; }).join('') : '<div class="sub" style="color:#9AA6B4">No one: saved with no names</div>') +
+        '<div class="rw"><span class="lb">Result</span><span class="vl">None: segments don\'t count toward the show\'s matches</span></div>';
+      else if (gs && gs.type) h += '<div class="er" style="color:#C9D2DC;border-color:#6B5A22">Looks like a segment: ' + esc(segLabel(gs.type)) + ' · ' + esc(gs.ids.length ? gs.ids.map(function(id) { return K0.nameOf(id); }).join(', ') : 'no wrestler in it, saved with no names') + '<div class="bt"><button class="b on" data-segyes="' + esc(v.id) + '">Yes, a segment</button><button class="b" data-seg="' + esc(v.id) + '">Change</button></div></div>';
       if (!sg) h += '<div class="gl">People' + (r.manIds ? ' · entered by you' : '') + '</div>' + peopleHtml(v, r) +
         '<div class="rw"><span class="lb">Match type</span><span class="vl">' + esc(kindOf(r) || '–') + '</span></div>' +
         (sug.length ? '<div class="rw"><span class="lb">Suggested</span><span class="vl">' + sug.map(function(x) { return '<span class="sg">' + esc(x.label) + '</span>'; }).join('') + '</span></div>' : '');
@@ -823,7 +836,7 @@
     var K = kit(), lines = [], ven = venueNow(), raw = rawVenue(), need = aiNeeds();
     show.videos.forEach(function(v, i) {
       var r = recs[v.id], title = (r && !r.failed && (r.title_en || r.title_ja)) || v.t, c = map[v.id], txt = '';
-      if (segs[v.id]) txt = 'segment: ' + segLabel(segs[v.id].type) + ' · ' + segs[v.id].ids.map(function(id) { return K.nameOf(id); }).join(', ');
+      if (segs[v.id]) txt = 'segment: ' + segLabel(segs[v.id].type) + (segs[v.id].ids.length ? ' · ' + segs[v.id].ids.map(function(id) { return K.nameOf(id); }).join(', ') : '');
       else if ((!r || r.failed) && c && c.s) txt = c.s.map(function(x) { return x.join(' & '); }).join(' vs ');
       else if (r && !r.failed) {
         var sd = sides(r);
@@ -1355,11 +1368,11 @@
     }
     if (d.mok && sheetOpen) { manUse(); return; }
     if (d.seg && show) { var sv = show.videos.filter(function(x) { return x.id === d.seg; })[0]; if (sv) segOpen(sv); return; }
-    if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type && yg.ids.length) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
+    if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
     if (d.segty && sheetOpen) { sheetOpen.type = d.segty; draw(); return; }
     if (d.segrm && sheetOpen) { sheetOpen.ids = sheetOpen.ids.filter(function(x) { return x !== d.segrm; }); draw(); return; }
     if (d.segadd && sheetOpen) { sheetOpen.ids.push(d.segadd); sheetOpen.q = ''; sheetOpen.focus = true; draw(); return; }
-    if (d.segok && sheetOpen) { var so = sheetOpen; if (so.type && so.ids.length) { segSet(so.v, { type: so.type, ids: so.ids.slice() }); delete attn[so.v]; delete sendFail[so.v]; } sheetOpen = null; draw(); return; }
+    if (d.segok && sheetOpen) { var so = sheetOpen; if (so.type) { segSet(so.v, { type: so.type, ids: so.ids.slice() }); delete attn[so.v]; delete sendFail[so.v]; } sheetOpen = null; draw(); return; }
     if (d.unseg) { segSet(d.unseg, null); sheetOpen = null; draw(); return; }
     if (d.row && show) { openCards[d.row] = !openCards[d.row]; draw(); if (openCards[d.row]) setTimeout(function() { var c = root.querySelector('.card[data-v="' + d.row + '"]'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80); return; }
     if (d.allcards) { showAllCards = !showAllCards; draw(); return; }
