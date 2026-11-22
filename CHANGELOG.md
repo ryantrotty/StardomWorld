@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.118.2
+
+- **The New Horizons era page with StarScope is back in the build.** The era work (2.110.0 to 2.111.2: StarScope era page, must-see shows, top-rated matches as StarScope cards, English-version double counting) was never merged into main, so builds from main showed the old era page. It's merged here.
+
 ## 2.118.1
 
 - **Fix: favorite star spacing in the Wrestlers menu.** On rows with the StarScope telescope, the ★ was pushed away from the name. It now sits on the name, as on every other row.
@@ -93,6 +97,58 @@ All notable changes to this project. Versions match `versionName` in `app/build.
   - When the shows loaded so far run out, the button reads **Next: load more 2023 shows** (one request for the site's next 20, then straight on to the next show). When the year is done, **Next: 2023 is done, on to 2022** opens that year's list.
 - Built from main (2.108.1); no TV or sheet script change. iPhone card check: **needs publishing to GitHub Pages** (cc.js).
 
+## 2.111.2
+
+- **Fix: every match twice on a show's card row when the show also has an English version.** English-commentary videos are attached to the Japanese match in the sheet (so a match is logged once), but the video page's card row, Up next and previous / next found a show's matches by the match's show, so they picked up the English videos too: AGQ 2024 listed each match twice, and so did the other shows with both versions (Dream Queendom 2025, the 2025 and 2026 shows logged in both languages). The card row now goes by the video's own set, so the Japanese show lists only Japanese videos and the English show only English ones, one per match.
+- **Fix: New Horizons era page counts.** Rivalry counts, wrestlers' match counts, top tag teams, faction unit matches and the era picks counted a match once per video, so a match with both versions counted twice. They now count each match once (the rivalry results page lists each match once too).
+- The sheet is unchanged: Japanese and English shows stay separate shows there, as before.
+
+## 2.111.1
+
+- **New Horizons era page, must-see shows:** Dream Queendom 2025 is out; All Star Grand Queendom 2024 is added at the end. The three are now All Star Grand Queendom 2025, Dream Queendom 2024, All Star Grand Queendom 2024. Picks only, in `eras.json`.
+
+## 2.111.0
+
+- **New Horizons era page: top rated matches as StarScope cards.** The five top rated matches now use the StarScope video card (picture, then the gold event line, names and footer with the date), the same card as on the StarScope pages, in a sideways row like the title pages' reign rows: four across, 24 apart, scrollbar hidden, gold ring focus. The Cagematch rating sits top right in the StarScope Top badge (★ 9.55). The fifth match and **All N matches in this era** are reached by scrolling right; the tile is the row's last card. A top match not in StarScope keeps the same card layout from top_matches.json (names and date).
+- **Moving in the row:** Left and Right go along the row first and scroll it so the focused card is in view; Left on the first card opens the menu. Up and Down only land on cards that can be seen, so focus never jumps to a card scrolled out of view.
+- **Must-see shows back to one row of three:** Dream Queendom 2025, All Star Grand Queendom 2025, Dream Queendom 2024. The second row (5★STAR GP 2024 final, The Conversion 2024, All Star Grand Queendom 2024) is removed from `eras.json`.
+
+## 2.110.2
+
+- **New Horizons era page: six must-see shows, two rows of three** (the StarScope Shows grid), newest first: Dream Queendom 2025, All Star Grand Queendom 2025, Dream Queendom 2024, 5★STAR GP 2024 final, The Conversion 2024, All Star Grand Queendom 2024 (now logged). Picks only, in `eras.json`; the cards come from StarScope.
+
+## 2.110.1
+
+- **Fix: the bottom of the New Horizons era page couldn't be reached.** The era in numbers (and the era picks list) have nothing to focus, and Down only moved between focusable tiles, so the page stopped at the factions and rising stars. Down from the last tiles now scrolls to the very bottom; Up brings focus back into view, then moves up as usual.
+- Sheet: the AGQ 2024 English set's name lost a stray quote (`ALLSTAR GRAND QUEENDOM 2024 (English)`).
+
+## 2.110.0
+
+- **New Horizons era page:**
+  - **Top tag teams** (new, your build): the four pairs who teamed most often in straight 2 v 2 matches in the era, by StarScope (today Natsuko Tora & Ruaka 47, Sakura Aya & Sayaka Kurara 40, AZM & Miyu Amasaki 38, Hazuki & Koguma 35), under Top wrestlers. Each tile shows the two renders on one star sky, the team name when the index has one, and the count; OK opens StarScope's list of their matches together.
+  - **Renders on the title reign cards:** the featured champion's cut-out (both partners for a tag team) on the right of each card, under the text.
+  - **Faction rivalries show only the two faction logos**, no wrestler.
+  - **The era in numbers moved to the very bottom.** The All N shows link under Must-see shows is gone.
+  - Mayu Iwatani vs Sareee (AGQ 2024, 9.21) still has no thumbnail: it isn't in StarScope (the AGQ 2024 videos aren't in the site's 2024 category), so there's no picture to use until that match is logged.
+
+## 2.109.1
+
+- **Fix: the New Horizons era page took several seconds before it answered.** The cut-outs, faction logos and star field (large pictures) were all read before the page could be used, and the StarScope list was gone through once per tile. The page now draws first with initials and reads the pictures one at a time afterwards, and the list is gone through once per drawing.
+- **Title reigns back to the four featured cards.** No list of every champion, no Artist and NEW BLOOD cards, and no match thumbnail behind the cards. Holder, reign number, days and defences still come from the lineage files (NOW when the featured reign is still held).
+- **Rivalry cards: no match thumbnail.** The two cut-outs (faction logos for factions) stand on the star field only.
+- **Must-see shows: exactly the StarScope Shows cards.** The poster styles were left out when the page drew before StarScope's list had loaded, so the cards came out unstyled. They now get the Shows page's styles and its grid (three to a row), with an All N shows bar under them.
+- **Top rated thumbnails:** a match whose top-rated address isn't the logged copy (Kamitani vs Tam, Career vs Career) now takes the picture from the logged copy, dated or not. Mayu Iwatani vs Sareee (AGQ 2024) has no logged video, so it stays without one.
+- **The new parts are kept out of page translation** ("233 little bit in this era", "TITLE MATCH").
+
+## 2.109.0
+
+- **New Horizons era page, StarScope version** (new `assets/eranew.js`, era 5's new `scope` block in `eras.json`). Only picks are written by hand now; everything else is looked up when the page opens.
+  - **Title reigns from the lineage files (every build):** the featured reign's holder, reign number, days and defences are read, not typed, and every other reign in the era is a pill, newest first, with the champion now marked NOW (Suzu Suzuki, Hanan, Yuna Mizumori, AZM & Miyu Amasaki today). Artist and NEW BLOOD get slim cards with their pills.
+  - **Factions from factions.json (every build):** HATE, Neo Genesis, Mi Vida Loca and Cosmic Angels with their members, formed and disbanded years. The old stale lines (Suzu in Neo Genesis, Tam in Cosmic Angels, EXV as current) are gone, and the fallback rivalries and shows were corrected too (Mei Seira vs Suzu and Mi Vida Loca vs EXV in, Dream Queendom 2024 instead of Grand Queendom 2024).
+  - **When 2024, 2025 and 2026 are all StarScope complete years (your build):** a stat strip (shows, matches, title matches, title changes, wrestlers); the featured reign cards show the thumbnail of the match where the reign was won; Top rated becomes five thumbnail tiles; Defining rivalries become cut-out cards over the key match's thumbnail with "N matches (M singles) · date range", counting every match with the two on opposite sides (Mi Vida Loca vs EXV kept to Apr 2025 – 7 Feb 2026); Must-see shows are StarScope poster cards (Dream Queendom 2024, Grand Queendom 2025, Dream Queendom 2025) plus All N shows; wrestler and rising-star tiles get cut-outs, era match counts, debut or first title, and belts held in the era; factions get a unit match count; an era picks list (singles met most often) sits at the bottom. Until StarScope's list has loaded the page draws the plain version, then redraws once.
+- **StarScope results for two names** (`assets/starcards.js`): `/mypage?tvscope=v&a=&b=` lists every match with the two wrestlers on opposite sides, `tvscope=f` every match between two factions (a side of two or more, all members); both take `from` and `to`. The rivalry cards open these.
+- **2024 is a StarScope complete year** in your build (built-in default now `[2024, 2025, 2026]`), so title histories, the Tag League, tournament and Championship tabs read 2024 from the index too.
+- Sheet (no script change): 2024 clean-up done on 20 Nov (dates for 64 shows and 272 matches, Dream Queendom 2024 re-dated, segment tags restored, Yamagata and Chiba card numbers, other-promotion series, show names, 23 venues). The shows' `updated` was set so the TVs get the new dates with the next list.
 ## 2.108.1
 
 - **Fix: iPhone card check, the venue didn't stay set.** Applying a venue (from the AI answer or Pick from list) saved it to the sheet, but card check kept it only in the phone's storage, and a write that didn't fit there failed without a word, so the card went back to "Venue not read". The venue is now also kept in memory for the session, and a write that doesn't fit first clears the lists card check reads again anyway (other shows' pages, the year lists, then the StarScope list) and tries again. If it still won't fit, the venue line says so.

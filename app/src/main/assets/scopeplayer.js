@@ -212,6 +212,11 @@
     if (!v || !map || !window.__tvScopeIdx || !window.__tvScopeIdx.covered(v.d)) return null;
     var list = Object.keys(map).filter(function(id) { var x = map[id]; return x && x.x && sameShow(x) && num(x.n) != null; })
       .sort(function(a, b) { return (num(map[a].n) - num(map[b].n)) || (+a - +b); });
+    // 2.111.2: one video per match. An English video whose set isn't known yet still shares its match with the Japanese
+    // one; keep the one playing, else the first (lowest video number).
+    var seen = {}, one = [];
+    list.forEach(function(id) { var m = (map[id].x && map[id].x.m) || id; if (seen[m] == null) { seen[m] = one.length; one.push(id); } else if (id === VID) one[seen[m]] = id; });
+    list = one;
     return list.length >= 2 && list.indexOf(VID) >= 0 ? list : null;
   }
   function hrefOf(id) { var x = map[id]; return location.origin + (/^\/set\//.test(location.pathname) && x.vs ? '/set/' + x.vs : '') + '/contents/' + id; }
@@ -225,7 +230,11 @@
 
   // ---- the row under the player: The card, when the show is in StarScope
   var rowDone = false, scrolled = false;
-  function sameShow(x) { return x && (v.sid ? String(x.sid || '') === String(v.sid) : (x.d && x.d === v.d)); }
+  // 2.111.2: the same show means the same video set. An English-commentary video linked to the Japanese match keeps its
+  // match's show in sid, but its own set in vs, so the Japanese and English shows stay apart (they were mixed, every
+  // match twice in the card row, Up next and previous / next).
+  function setOf(x) { return String((x && (x.vs || x.sid)) || ''); }
+  function sameShow(x) { return x && (setOf(v) ? setOf(x) === setOf(v) : (x.d && x.d === v.d)); }
   function decorate() {
     if (!v || !map) return;
     var row = document.querySelector('.tv-related-row');
