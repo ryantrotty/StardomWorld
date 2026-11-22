@@ -22,7 +22,12 @@ All notable changes to this project. Versions match `versionName` in `app/build.
 - **New venues get their place:** country, prefecture and city (English and Japanese) from the confirmed answer fill the venues tab's empty cells; nothing already there is overwritten.
 - Show tiles show a venue saved from the phone.
 - **Sheet script: `cc_venue_place`**, allowed with the card check key. **Redeploy** the sheet script (without it, venues still save, just without city and prefecture, and card check says so).
-- Built on 2.115.1. Nothing changes on the TV. iPhone card check: published to GitHub Pages (cc.js).
+- Built on 2.115.2 (merged from main). Nothing changes on the TV. iPhone card check: published to GitHub Pages (cc.js).
+
+## 2.115.2
+
+- **Fix: segments lost their type when saved.** In the sheet, match_tags' tag_group column had a strict dropdown with no "segment" in it, and participants' role column had none for "billed". The sheet script's write threw partway through the row. That left a tag row holding only the match id, and the rest of the save (changes log, aliases, rating) never ran. It has happened to every segment card check has saved so far. The sheet script now handles a dropdown that refuses a value: it adds the value to the list, sets the dropdown to warn instead of refuse, and writes again. In the sheet itself, those dropdowns (tag_group, role, talent/team/faction, result, result_type, version) now list segment and billed and only warn.
+- Sheet script change: paste `scripts/video_index_log.gs` into Apps Script and deploy a new version. No app or card check change. Built on 2.115.1.
 
 ## 2.115.1
 
