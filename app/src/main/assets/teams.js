@@ -1256,10 +1256,12 @@
     window.__tvWrAppFav = function() { var b = scroller.querySelector('[data-wrfav]'); if (b) { b.innerHTML = api.favInner(); b.classList.toggle('wr-on', api.isFav()); } };
     // a tab was just chosen: open at MATCHES with that tab focused; otherwise on the favorites button
     var on = scroller.querySelector('.wr-tab-on');
+    var ccFirst = !!(CC && Q.get('tvtab') && on);   // complete career: a chosen tab lands on its first match (2.118.3)
     if (Q.get('tvtab') && on) { focusEl(on); try { var sec = on.closest('#tv-wr').querySelector('.wr-tabs').previousElementSibling; scroller.scrollTop += sec.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12; } catch (e) {} }
     else focusEl(scroller.querySelector('.wr-btn') || on);
     scWrestler(api, tab);
     wpPaint();
+    if (ccFirst) ccFocusFirst(on);
     if (!WP.done) wpStart();
   }
   // StarScope for the open wrestler tab (2.98.0): 5★STAR GP, Cinderella, Tag League and Championship take a complete
@@ -1470,14 +1472,16 @@
     ccIO = { disconnect: function() { near.disconnect(); far.disconnect(); } };
   }
   // ---- More on a complete career (2.118.1): StarScope's filters on this page, not the site's search. More shows a row
-  // of filters (partner, opponent, team or faction, year, tournament, title, sort); a filter opens its choices (each
-  // with how many matches) in a row under it; choosing one redraws the cards.
-  var CC_FK = ['p', 'o', 'g', 'y', 'c', 'ti', 'sort'];
-  function ccFL(k) { return { p: T('Partner', 'パートナー'), o: T('Opponent', '対戦相手'), g: T('Team or faction', 'チーム・ユニット'), y: T('Year', '年'), c: T('Tournament', 'トーナメント'), ti: T('Title', 'タイトル'), sort: T('Sort', '並び順') }[k]; }
+  // of filters (partner, match type (2.118.3), opponent, team or faction, year, tournament, title, sort); a filter opens its choices (each
+  // with how many matches) in a row under it; choosing one redraws the cards and focuses the first match.
+  var CC_FK = ['p', 'k', 'o', 'g', 'y', 'c', 'ti', 'sort'];
+  var CC_KL = { singles: ['Singles', 'シングル'], tag: ['Tag team', 'タッグ'], six: ['Six-person tag', '6人タッグ'], multi: ['Multi-person', '多人数'] };
+  function ccFL(k) { return { p: T('Partner', 'パートナー'), k: T('Match type', '試合形式'), o: T('Opponent', '対戦相手'), g: T('Team or faction', 'チーム・ユニット'), y: T('Year', '年'), c: T('Tournament', 'トーナメント'), ti: T('Title', 'タイトル'), sort: T('Sort', '並び順') }[k]; }
   var CC_SORT = { 'new': ['Newest', '新しい順'], old: ['Oldest', '古い順'], top: ['Top rated', '高評価順'] };
   function ccVals(x, k) {
     var v = x.v, X = v.x, at = x.at || [0, 0];
     if (k === 'p') return ccSide(v, at[0]).filter(function(n, j) { return j !== at[1]; });
+    if (k === 'k') { var kl = CC_KL[ccKind(v)]; return [T(kl[0], kl[1])]; }
     if (k === 'o') { var o = []; (v.s || []).forEach(function(sd, i) { if (i !== at[0]) o = o.concat(ccSide(v, i)); }); return o; }
     if (k === 'g') return X.g || [];
     if (k === 'y') return [String(v.d).slice(0, 4)];
@@ -1500,7 +1504,7 @@
     var F = WP.ccf, h = '<div class="cc-frow">';
     CC_FK.forEach(function(k) {
       var val = k === 'sort' ? (F.sort && F.sort !== 'new' ? T(CC_SORT[F.sort][0], CC_SORT[F.sort][1]) : '') : (F[k] || '');
-      if (k !== 'sort' && !val && !ccOpts(base, k).length) return;   // nothing to choose
+      if (k !== 'sort' && !val && (WP.tab === 'singles' && k === 'k' || !ccOpts(base, k).length)) return;   // nothing to choose
       h += '<a class="cc-fc' + (val ? ' on' : '') + (WP.ccOpen === k ? ' op' : '') + '" tabindex="0" data-ccf="' + k + '"' + (k === 'sort' ? ' style="margin-left:auto"' : '') + '>' + esc(ccFL(k) + (val ? ': ' + val : '')) + ' ▾</a>';
     });
     h += '</div>';
@@ -1520,6 +1524,11 @@
       ccVals(x, k).forEach(function(val) { if (!val || seen[mk + '|' + val]) return; seen[mk + '|' + val] = 1; count[val] = (count[val] || 0) + 1; });
     });
     return Object.keys(count).map(function(v) { return { v: v, n: count[v] }; }).sort(k === 'y' ? function(a, b) { return b.v.localeCompare(a.v); } : function(a, b) { return b.n - a.n || a.v.localeCompare(b.v); });
+  }
+  // the first match card of the results (2.118.3); the fallback when there are none
+  function ccFocusFirst(fallback) {
+    var c = scroller.querySelector('#tt-vids .tt-card');
+    if (c) focusEl(c, true); else if (fallback) focusEl(fallback);
   }
   function ccRepaint(focusSel) {
     wpPaint();
@@ -1579,7 +1588,7 @@
     if (el.getAttribute('data-wmore') != null) { if (!WP.busy) wpLoad(); return true; }
     if (el.getAttribute('data-ccmore') != null) { WP.ccShow = !WP.ccShow; WP.ccOpen = ''; ccRepaint(WP.ccShow ? '[data-ccf]' : '[data-ccmore]'); return true; }
     if (el.getAttribute('data-ccf') != null) { var fk = el.getAttribute('data-ccf'); WP.ccOpen = WP.ccOpen === fk ? '' : fk; ccRepaint(WP.ccOpen ? '[data-ccv]' : '[data-ccf="' + fk + '"]'); return true; }
-    if (el.getAttribute('data-ccv') != null) { var ok = WP.ccOpen; if (ok) WP.ccf[ok] = el.getAttribute('data-ccv'); WP.ccOpen = ''; ccRepaint('[data-ccf="' + ok + '"]'); return true; }
+    if (el.getAttribute('data-ccv') != null) { var ok = WP.ccOpen; if (ok) WP.ccf[ok] = el.getAttribute('data-ccv'); WP.ccOpen = ''; ccRepaint(); ccFocusFirst(scroller.querySelector('[data-ccf="' + ok + '"]')); return true; }
     if (el.getAttribute('data-wyear') != null) {   // a year chip: to that year's first card
       var yh = document.getElementById('cc-y' + el.getAttribute('data-wyear')), c = yh && yh.nextElementSibling;
       while (c && !c.classList.contains('tt-card')) c = c.nextElementSibling;

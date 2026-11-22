@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.118.3
+
+- **Complete-career pages: choosing a filter goes to the results.** Picking a choice under More, or opening a matches tab (Singles Matches, Championship and so on), now puts focus on the first match card instead of leaving it on the filter or tab row.
+- **More: new Match type filter.** Singles, Tag team, Six-person tag or Multi-person, each with its match count. It sits after Partner, which stays in the row on every tab except Singles Matches.
+
 ## 2.118.2
 
 - **The New Horizons era page with StarScope is back in the build.** The era work (2.110.0 to 2.111.2: StarScope era page, must-see shows, top-rated matches as StarScope cards, English-version double counting) was never merged into main, so builds from main showed the old era page. It's merged here.
