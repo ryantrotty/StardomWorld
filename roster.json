@@ -375,7 +375,7 @@
   "2027-04-25": {}
  },
  "starscope": {
-  "_note": "Years fully logged in StarScope (your build only). 2023 added 21 Nov 2026 after the 2023 sweep; 2022 added 22 Nov 2026 after the 2022 sweep.",
-  "completeYears": [2022, 2023, 2024, 2025, 2026]
+  "_note": "Years fully logged in StarScope (your build only). 2023 added 21 Nov 2026 after the 2023 sweep; 2022 added 22 Nov 2026 after the 2022 sweep; 2021 added 22 Nov 2026 after the 2021 sweep.",
+  "completeYears": [2021, 2022, 2023, 2024, 2025, 2026]
  }
 }
