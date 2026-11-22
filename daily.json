@@ -1,16 +1,14 @@
 {
- "generated": "2026-11-21T06:32:22Z",
+ "generated": "2026-11-22T06:35:02Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-21T06:29:02Z",
-  "finished": "2026-11-21T06:32:22Z",
-  "requests": 34,
+  "started": "2026-11-22T06:29:26Z",
+  "finished": "2026-11-22T06:35:02Z",
+  "requests": 53,
   "schedule": {
    "ok": true,
    "events": 44,
-   "changed": [
-    "20261122-fukushima"
-   ],
+   "changed": [],
    "error": ""
   },
   "lineage": {
@@ -76,10 +74,10 @@
    ]
   },
   "league": {
-   "ok": false,
-   "updated": "2026-11-18",
+   "ok": true,
+   "updated": "2026-11-21",
    "source": "official",
-   "note": "Skipped: no league show finished since 2026-11-18; league unchanged."
+   "note": ""
   },
   "blocks": [],
   "errors": []
@@ -7990,7 +7988,7 @@
  "league": {
   "tag": {
    "2026": {
-    "updated": "2026-11-18",
+    "updated": "2026-11-21",
     "source": "official",
     "points": [
      {
@@ -8005,7 +8003,7 @@
        "Natsupoi",
        "Rian"
       ],
-      "pts": 2
+      "pts": 4
      },
      {
       "team": [
@@ -8026,14 +8024,14 @@
        "Hazuki",
        "Koguma"
       ],
-      "pts": 7
+      "pts": 9
      },
      {
       "team": [
        "Dark Silueta",
        "Valkyria"
       ],
-      "pts": 3
+      "pts": 5
      },
      {
       "team": [
@@ -8075,7 +8073,7 @@
        "Yuna Mizumori",
        "Anne Kanaya"
       ],
-      "pts": 2
+      "pts": 4
      },
      {
       "team": [
@@ -8089,7 +8087,7 @@
        "Hanan",
        "Waka Tsukiyama"
       ],
-      "pts": 4
+      "pts": 6
      },
      {
       "team": [
@@ -8110,7 +8108,7 @@
        "Starlight Kid",
        "Maki Itoh"
       ],
-      "pts": 8
+      "pts": 10
      },
      {
       "team": [
