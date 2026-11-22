@@ -314,7 +314,7 @@
   // A step shows a tick once it has what it needs; the steps can be done in any order.
   function stepDone(t) {
     if (!state) return false;
-    if (t === 'people') { var S = state.sides.filter(function(s) { return s.people.length; }); return S.length >= (seg() ? 1 : 2) && S.every(function(s) { return s.people.every(function(p) { return p.id; }); }); }
+    if (t === 'people') { var S = state.sides.filter(function(s) { return s.people.length; }); return S.length >= (seg() ? 0 : 2) && S.every(function(s) { return s.people.every(function(p) { return p.id; }); }); }
     if (t === 'match') return !!(state.venue || ['segment', 'competition', 'title', 'round', 'block', 'stipulation'].some(function(g) { return (state.tags[g] || []).length; }));
     if (t === 'finish') return !!(seg() || state.result.type || state.fall || (state.tags.finish || []).length || state.rating);
     return false;
