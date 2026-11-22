@@ -125,10 +125,10 @@
   window.__tvScopeIdx = {
     years: completeYears, through: through, from: coverFrom, thru: coverThru, covered: covered, unlogged: unlogged,
     hasName: hasName, together: together, twoOnTwo: twoOnTwo, inComp: inComp, isTitle: isTitle,
-    // Every covered match passing test(v), newest first.
-    find: function(test) {
+    // Every covered match passing test(v), newest first. withSegments (2.116.0): segments too (a complete career's intro).
+    find: function(test, withSegments) {
       var out = [];
-      Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && covered(v.d) && test(v)) out.push({ id: id, v: v }); });
+      Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && (withSegments || v.x.k !== 'segment') && covered(v.d) && test(v)) out.push({ id: id, v: v }); });
       return out.sort(function(a, b) { return String(b.v.d).localeCompare(String(a.v.d)) || ((+a.v.n || 0) - (+b.v.n || 0)); });
     },
     // A match as the site's search would list it: the shape the team, wrestler and title pages already draw.
@@ -976,8 +976,9 @@
   try { var saved = kept(), ids = Object.keys((saved && saved.map) || {}); if (ids.length && saved.map[ids[0]].x) fresh = saved.t || 0; } catch (e) {}   // a list without the wrestler data is never kept
   // 2.97.0: once, the whole list, so the copy gets the complete-years fields (tournament, block and title ids, the
   // site's title) from the updated sheet script. An older script simply doesn't send them; the pages fall back.
-  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '3'; } catch (e) {}
-  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '3'); } catch (e) {} ask({ full: true }); }
+  // 2.116.0: shape 4, each wrestler's faction (fa) and the match's moments (mo) for complete-career wrestler pages.
+  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '4'; } catch (e) {}
+  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '4'); } catch (e) {} ask({ full: true }); }
   else if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);

@@ -6170,6 +6170,7 @@ class MainActivity : Activity() {
             '#tv-sm-shelf .tv-sm-fi.tv-wr-n{display:flex;align-items:center;justify-content:space-between;gap:6px;}',
             '#tv-sm-shelf .tv-wr-l{min-width:0;}',
             '#tv-sm-shelf .tv-wr-c{flex:none;display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#9aa6b4;}',
+            '#tv-sm-shelf .tv-wr-c.tv-wr-cc{color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wtab.tv-wtab-on{background:#FFB347 !important;color:#1A1A1A !important;}',
             '#tv-sm-shelf .tv-sm-fi.tv-shl-wtab:focus{border-color:#F4C242;}',
             '#tv-sm-shelf .tv-shl-wl .tv-sm-fi{font-size:15px;padding:5px 8px;margin:0;}',
@@ -6692,9 +6693,20 @@ class MainActivity : Activity() {
             var az = function(a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); };
             return { cur: lists.current.sort(az), past: lists.past.sort(az), guest: lists.guest.sort(az) };
           }
-          function wrRowsHtml(rows, counts) {
+          // 2.116.0: a gold telescope after a current wrestler whose whole career is in StarScope (debut on or after the
+          // first day of the complete years, assets/starcards.js); Past and Guests no longer show a telescope or count.
+          function wrComplete() {
+            var S = window.__tvScopeIdx, from = '';
+            try { from = S && S.from ? S.from() : ''; } catch (e) { from = ''; }
+            if (!from) return null;
+            var deb = {}, low = function(x) { return String(x || '').trim().toLowerCase(); };
+            try { var D = (JSON.parse(AndroidHost.matchTypesJson()) || {}).debuts || {}; Object.keys(D).forEach(function(k) { if (k.charAt(0) !== '_') deb[low(k)] = String(D[k] || ''); }); } catch (e) {}
+            return function(r) { var d = deb[low(r[0])] || deb[low(SEARCH_AS[r[0]])] || ''; return !!d && d >= from; };
+          }
+          function wrRowsHtml(rows, mark) {
+            var cc = mark ? wrComplete() : null;
             return rows.map(function(r) {
-              var c = counts && r[3] ? '<span class="tv-wr-c">' + TELE_SM + r[3] + '</span>' : '';
+              var c = cc && cc(r) ? '<span class="tv-wr-c tv-wr-cc" aria-label="StarScope">' + TELE_SM + '</span>' : '';
               return '<a class="tv-sm-fi' + (c ? ' tv-wr-n' : '') + '" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + (c ? '<span class="tv-wr-l">' : '') + esc(isJa() && r[2] ? r[2] : r[0]) + (c ? '</span>' + c : '') + '</a>';
             }).join('');
           }
@@ -6947,7 +6959,7 @@ class MainActivity : Activity() {
               h = '<div class="tv-shl-t">' + esc(T('WRESTLERS', '選手')) + '</div><div class="tv-shl-wtabs">' +
                 tabs.map(function(tb, ti) { return '<a class="tv-sm-fi tv-shl-wtab' + (ti ? '' : ' tv-wtab-on') + '" tabindex="0" data-wtab="' + ti + '"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">' + WR_ICONS[ti] + '</svg><span>' + esc(tb[0]) + '</span><span class="tv-wtab-n">' + tb[1].length + '</span></a>'; }).join('') + '</div>' +
                 // Current keeps the spotlight; Past and Guests have none (no photos), so their names spread over five columns.
-                tabs.map(function(tb, ti) { return '<div class="tv-shl-wl" data-wbody="' + ti + '" style="' + (ti ? 'display:none;' : '') + 'column-count:' + (ti ? (spot ? 5 : 4) : (spot ? 3 : 4)) + ';column-gap:10px;">' + wrRowsHtml(tb[1], ti > 0) + '</div>'; }).join('');
+                tabs.map(function(tb, ti) { return '<div class="tv-shl-wl" data-wbody="' + ti + '" style="' + (ti ? 'display:none;' : '') + 'column-count:' + (ti ? (spot ? 5 : 4) : (spot ? 3 : 4)) + ';column-gap:10px;">' + wrRowsHtml(tb[1], ti === 0) + '</div>'; }).join('');
               if (spot) {
                 w = 1000;
                 h = '<div class="tv-wsp-wrap"><div class="tv-wsp-names">' + h + '</div>' + window.__tvWrSpot.html() + '</div>';

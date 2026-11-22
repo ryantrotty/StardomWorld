@@ -937,6 +937,12 @@ function viCards(b) {
     // 2.85.0: one name per side where known, '' where not (the cards fall back to the wrestlers for that side).
     return by.some(Boolean) ? by : null;
   }
+  // 2.116.0: each wrestler's faction name, side by side in the cards' order ('' where none is logged).
+  function facSides(p) {
+    var sides = [];
+    p.slice().sort(function(a, b) { return (a.side_no - b.side_no) || (a.slot - b.slot); }).forEach(function(x) { (sides[x.side_no - 1] = sides[x.side_no - 1] || []).push(FN.en[x.faction_id] || ''); });
+    return sides.filter(Boolean);
+  }
   // Multi-person matches (2.85.0): more than two sides, or more than four wrestlers. Their cards use team names.
   function multi(s, st) { return big(s, st) || s.reduce(function(a, x) { return a + x.length; }, 0) > 4; }
   function foot(t, lang, s) {
@@ -1007,7 +1013,9 @@ function viCards(b) {
       tb: String(m.source) === 'thumb' ? 1 : 0,
       // Complete years (2.97.0): the tournament, block and title ids, so pages limited to a complete year can pick their
       // matches from the index (Tag League, 5★STAR GP, Cinderella, title tabs and title histories).
-      cv: t.competition ? String(t.competition[0]) : '', bk: t.block ? String(t.block[0]) : '', tv: (t.title || []).map(String)
+      cv: t.competition ? String(t.competition[0]) : '', bk: t.block ? String(t.block[0]) : '', tv: (t.title || []).map(String),
+      // 2.116.0: complete-career wrestler pages: each wrestler's faction (same order as the sides) and the moments.
+      mo: (t.moment || []).map(String), fa: facSides(p)
     };
     var sv = seen[String(v.video_id)] || {};
     var mu = multi(en, t.stipulation);

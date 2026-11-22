@@ -302,3 +302,17 @@ Home shelf (2.78.0): width 1100. Main page item (19 px) on top; three equal colu
 - iPhone card check: "Looks like a segment" box in the card's existing error-box shape with a #6B5A22 edge and #C9D2DC text (the gold-tint edge already used for suggestion pills); Segment… and Edit segment are the card's normal buttons; the segment sheet reuses the fix-a-name sheet (type buttons: chosen = orange fill).
 - iPhone card check, Match… (2.108.0): the line-up sheet reuses the segment sheet's parts: a side button per side (the side being added to = orange fill, "· adding here"), the people as the sheet's name rows (Tap to remove), the card's VS divider between sides, one search box and option list, Use this line-up (orange fill). No new colours.
 
+
+## Complete-career wrestler pages (2.116.0, private builds)
+
+For a wrestler whose debut is in StarScope's complete years (app-drawn page, assets/teams.js). No new colours or focus looks.
+- Title row: a pill after the name (2 px #2A323C border, radius 20, padding 6/14): 18 px telescope, 13/800 gold uppercase with 1 px spacing, "STARSCOPE · EVERY MATCH SINCE DEBUT".
+- Career block, between the header and MATCHES, using the header's section style (8 x 26 gold bar, 15/800 gold, 13/600 grey note):
+  - DEBUT: one StarScope card (look C ring) 340 wide, with an orange DEBUT tag top left; a 13/700 grey line under it for the intro segment.
+  - CAREER: up to eight tiles, four across, newest on the left (timeline rule). #161F2A, 2 px #2A323C, radius 12, 104 min high. 12/800 tag (gold; orange for debut and homecoming; #C9D2DC for factions) with the 13/700 gold date on the right, a 17/700 title and a 13/600 #C9D2DC line (two lines at most). Focus is look A; OK opens that match.
+  - TOP PARTNERS and RIVALS, two columns: rows 60 high, #161F2A, radius 8, a 38 px dashed initials circle, 17/700 name, 20/800 count with a 13/700 grey unit. Look A focus; OK opens that wrestler's page.
+  - FACTIONS: one tile per faction, newest first, widths in proportion to matches. The current faction has the #6B5A22 edge. 17/700 name, 13/600 dates and count. Not focusable.
+  - MATCH TYPES: a 44 high bar, radius 10, segments in gold, orange, #C9D2DC and white with 14/800 ink labels. Not focusable.
+  - A 13/700 grey coverage line.
+- MATCHES: each tab carries its count (14/700 at 75 %). Cards are StarScope cards inside the team page card (gold date badge, look C ring). On All Matches, year chips sit above the grid (36 high, radius 20, 15/700, look A focus) and each year starts with a 22/700 heading and a 14/700 grey count. Shows not logged yet come first, under "Not logged yet", as the site's cards.
+- Wrestlers menu: a gold (#F4C242) 14 px telescope at the right of a current wrestler with a complete-career page. Past and Guests show no telescope or count.

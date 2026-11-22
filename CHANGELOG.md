@@ -2,6 +2,19 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.116.0
+
+- **Complete-career wrestler pages.** A wrestler whose debut falls in StarScope's run of complete years (2022–2026 now) has every match in the index, so her page is drawn from it. Shows after the last logged one still come from the site's newest page. It applies by itself to anyone whose roster debut date is in a complete year, future debuts included. What's new on those pages:
+  - **Title row:** a STARSCOPE · EVERY MATCH SINCE DEBUT badge.
+  - **Debut:** her debut match as a StarScope card, with her intro segment noted when it's logged.
+  - **Career strip:** up to eight milestones, newest on the left. Debut, first title match for each belt, homecoming, her best knockout run (Cinderella semifinal and so on) or her latest league year, factions joined, and her latest title match. Spoilers allowed.
+  - **Top partners and rivals:** partners by 2 v 2 matches together; rivals by any match on opposite sides, "N matches (M singles)". Each row opens that wrestler's page.
+  - **Factions:** a strip from each match's faction, with one- or two-match blips folded in. **Match types:** a bar of multi-person, tag, 6-person and singles.
+  - **Matches:** a count on every tab (All Matches, Championship, 5★STAR GP, Cinderella, Tag League), StarScope cards instead of the site's, and on All Matches year chips that jump to a year, with one row heading per year. A match counts once even with two videos; both videos stay listed. Pictures load near the screen and are let go far from it.
+  - A line saying what StarScope covers, up to the last logged show.
+- **Wrestlers menu:** a gold telescope after each current wrestler whose page is a complete career. Past and Guests no longer show the telescope or match count.
+- **Sheet script:** each card now carries every wrestler's faction (`fa`) and the match's moments (`mo`). The TV asks for the whole list once to pick them up. Paste `scripts/video_index_log.gs` into Apps Script and deploy a new version; without it the faction strip and homecoming are left out.
+
 ## 2.115.2
 
 - **Fix: segments lost their type when saved.** In the sheet, match_tags' tag_group column had a strict dropdown with no "segment" in it, and participants' role column had none for "billed". The sheet script's write threw partway through the row. That left a tag row holding only the match id, and the rest of the save (changes log, aliases, rating) never ran. It has happened to every segment card check has saved so far. The sheet script now handles a dropdown that refuses a value: it adds the value to the list, sets the dropdown to warn instead of refuse, and writes again. In the sheet itself, those dropdowns (tag_group, role, talent/team/faction, result, result_type, version) now list segment and billed and only warn.
