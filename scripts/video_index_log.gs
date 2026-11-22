@@ -443,11 +443,34 @@ function viAppend(name, rows) {
   if (!rows.length) return;
   var sh = viSheet(name), cols = VI[name], start = sh.getLastRow() + 1;
   if (start + rows.length - 1 > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), Math.max(rows.length, 500));
-  sh.getRange(start, 1, rows.length, cols.length).setNumberFormat('@').setValues(rows.map(function(r) {
-    return cols.map(function(c) { return r[c] == null ? '' : String(r[c]); });
-  }));
+  var vals = rows.map(function(r) { return cols.map(function(c) { return r[c] == null ? '' : String(r[c]); }); });
+  var write = function() { sh.getRange(start, 1, rows.length, cols.length).setNumberFormat('@').setValues(vals); };
+  // 2.115.2: a strict dropdown in the sheet that doesn't list a value (match_tags' tag_group had no "segment") made
+  // setValues throw after writing only the cells before it: a tag row with just its match id, and the rest of the save
+  // (log, aliases, rating) never ran. The dropdowns now take the missing values and warn instead of refusing.
+  try { write(); } catch (e) {
+    if (!/validation/i.test(String(e && e.message || e))) throw e;
+    viRelaxValidation(sh, start, vals);
+    write();
+  }
   var memo = VI_MEMO[name];
   if (memo) rows.forEach(function(r, k) { var o = { _row: start + k }; cols.forEach(function(c) { o[c] = r[c] == null ? '' : String(r[c]); }); memo.push(o); });
+}
+// Adds the values about to be written to each strict list dropdown that doesn't have them, and makes every dropdown on
+// those columns warn rather than refuse (a range dropdown such as talent ids can't take new values, so it only warns).
+function viRelaxValidation(sh, row, vals) {
+  var last = Math.max(sh.getMaxRows(), row + vals.length) - 1;
+  for (var c = 0; c < vals[0].length; c++) {
+    var rule = sh.getRange(row, c + 1).getDataValidation();
+    if (!rule) continue;
+    var b = rule.copy().setAllowInvalid(true);
+    if (rule.getCriteriaType() === SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST) {
+      var args = rule.getCriteriaValues(), list = (args[0] || []).slice();
+      vals.forEach(function(v) { if (v[c] !== '' && list.indexOf(v[c]) < 0) list.push(v[c]); });
+      b = b.requireValueInList(list, args[1] !== false);
+    }
+    sh.getRange(2, c + 1, last, 1).setDataValidation(b.build());
+  }
 }
 function viTrue(v) { return v === true || String(v).toUpperCase() === 'TRUE' || v === '' ; }
 function viNorm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
@@ -474,7 +497,15 @@ function viSlug(s) { return String(s || '').normalize('NFKC').toLowerCase().repl
 // Sets a row's cells by column name.
 function viSet(name, row, fields) {
   var sh = viSheet(name), cols = VI[name];
-  Object.keys(fields).forEach(function(k) { sh.getRange(row, cols.indexOf(k) + 1).setNumberFormat('@').setValue(String(fields[k])); });
+  Object.keys(fields).forEach(function(k) {
+    var cell = sh.getRange(row, cols.indexOf(k) + 1), v = String(fields[k]);
+    try { cell.setNumberFormat('@').setValue(v); } catch (e) {   // 2.115.2: a strict dropdown without this value
+      if (!/validation/i.test(String(e && e.message || e))) throw e;
+      var vals = [cols.map(function(c) { return c === k ? v : ''; })];
+      viRelaxValidation(sh, row, vals);
+      cell.setNumberFormat('@').setValue(v);
+    }
+  });
   var memo = VI_MEMO[name], o = memo && memo.filter(function(x) { return x._row === row; })[0];
   if (o) Object.keys(fields).forEach(function(k) { o[k] = String(fields[k]); });
 }
