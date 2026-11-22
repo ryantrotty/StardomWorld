@@ -447,7 +447,8 @@
     return h;
   }
   function suggestTags() {
-    var text = [rec && rec.title_en, rec && rec.title_ja, rec && rec.h1].filter(Boolean).join(' ');
+    // 2.117.0: rec.ref is card check's reference card line (type, title, tournament, round, block), when one was applied.
+    var text = [rec && rec.title_en, rec && rec.title_ja, rec && rec.h1, rec && rec.ref].filter(Boolean).join(' ');
     SUGGEST.forEach(function(g) {
       if (g === 'segment' && state.sides.filter(function(sd) { return sd.people.length; }).length >= 2) return;   // a line-up: a match, not a segment
       if (g === 'title' && (!/championship|選手権/i.test(text) || /挑戦者決定|next\s*challenger/i.test(text))) return;

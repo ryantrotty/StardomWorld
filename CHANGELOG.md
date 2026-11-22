@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.117.0
+
+- **iPhone card check: reference cards.** For years Muse has researched (2021 and earlier), card check reads `cards/<year>.json` from the `cards-data` branch, once per year while it's open (a GitHub request, not the site). The year list says "Reference cards: N shows" when the year has one.
+- **Reference card button** on a show whose date is in the file, first in the row beside Reverse order and Ask Gemini. When two shows share the date, it picks by venue, then name, then wrestlers in common. If it still can't tell, there's one button per show ("Reference: …").
+- It opens in the AI answer sheet, already read, with the same approvals as Gemini: running order, line-ups for matches the site gave none, new wrestlers and spellings, and the venue when the show has none. Segments in the file aren't used for line-ups.
+- **New tick: match type, title, tournament, round and block** for each match it can pair (two or more wrestlers in common, else the same place when the counts agree). They feed the logger's suggestions for those matches when you confirm. Logged matches keep their own tags.
+- The reference card's gaps show at the top of the sheet. Gemini stays available for anything the file leaves empty.
+- indexpanel.js: the logger's tag suggestions also read card check's reference line (`rec.ref`). Nothing changes on the TV unless card check set it.
+- docs/REFERENCE_CARDS.md: the file Muse writes. The full workflow is in the Project doc "Muse reference cards workflow (2021 and earlier)".
+- Built on 2.116.0. No sheet script change. iPhone card check: published to GitHub Pages (cc.js, indexpanel.js).
+
 ## 2.116.0
 
 - **iPhone card check: Fill venues for a whole year list.** A **Fill venues · N shows without one** button above a year's show list collects every show on the list (as filtered, from the shows read so far) that has no venue saved and whose venue on the site isn't in the library. Shows whose site venue already matches the library are left alone, since they fill in by themselves.
