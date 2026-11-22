@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.115.2
+
+- **Fix: segments lost their type when saved.** In the sheet, match_tags' tag_group column had a strict dropdown with no "segment" in it, and participants' role column had none for "billed". The sheet script's write threw partway through the row. That left a tag row holding only the match id, and the rest of the save (changes log, aliases, rating) never ran. It has happened to every segment card check has saved so far. The sheet script now handles a dropdown that refuses a value: it adds the value to the list, sets the dropdown to warn instead of refuse, and writes again. In the sheet itself, those dropdowns (tag_group, role, talent/team/faction, result, result_type, version) now list segment and billed and only warn.
+- Sheet script change: paste `scripts/video_index_log.gs` into Apps Script and deploy a new version. No app or card check change. Built on 2.115.1.
+
 ## 2.115.1
 
 - **Fix: Confirm did nothing on a segment with no names.** The logger's People step still wanted at least one person in a segment, so card check's quick save stopped there without a word (Korakuen Nov. 2023, match 2). A segment with nobody in it now counts as ready and saves.
