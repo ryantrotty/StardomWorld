@@ -314,7 +314,7 @@
   // A step shows a tick once it has what it needs; the steps can be done in any order.
   function stepDone(t) {
     if (!state) return false;
-    if (t === 'people') { var S = state.sides.filter(function(s) { return s.people.length; }); return S.length >= (seg() ? 1 : 2) && S.every(function(s) { return s.people.every(function(p) { return p.id; }); }); }
+    if (t === 'people') { var S = state.sides.filter(function(s) { return s.people.length; }); return S.length >= (seg() ? 0 : 2) && S.every(function(s) { return s.people.every(function(p) { return p.id; }); }); }
     if (t === 'match') return !!(state.venue || ['segment', 'competition', 'title', 'round', 'block', 'stipulation'].some(function(g) { return (state.tags[g] || []).length; }));
     if (t === 'finish') return !!(seg() || state.result.type || state.fall || (state.tags.finish || []).length || state.rating);
     return false;
@@ -811,7 +811,8 @@
     if (busy) return;
     var S = state.sides.filter(function(s) { return s.people.length; });
     var sg = seg();
-    if (S.length < (sg ? 1 : 2)) { say(sg ? T.needSeg : T.need, true); return; }
+    // 2.115.0: a segment may have nobody in it (the president's greeting: he isn't indexed).
+    if (!sg && S.length < 2) { say(T.need, true); return; }
     // A segment: everyone in it on one side, no result (the sheet does the same).
     if (sg) S = [{ role: '', team: '', people: [].concat.apply([], S.map(function(s) { return s.people; })) }];
     var parts = [], r = sg ? { type: '', side: 0 } : state.result, winner = 0;
@@ -995,6 +996,26 @@
         if (at < 99) out.push({ id: v.id, name: lab(v), at: at });
       });
       return out.sort(function(x, y) { return x.at - y.at || x.name.length - y.name.length; }).slice(0, n || 6);
+    },
+    // For card check (2.112.0): venues for the places a show's title names ("STARDOM in WARABI", "郡山大会"). A word in
+    // the venue's name counts most, then its city, then its prefecture, then how many of the words hit; used[] (venue name -> times used) breaks ties.
+    venuesNear: function(words, n, used) {
+      if (!lib || !words || !words.length) return [];
+      var ws = words.map(norm).filter(function(w) { return w.length >= 2; });
+      var bare = function(x, re) { return norm(String(x || '').replace(re, '')); };
+      var out = [];
+      (lib.venues || []).forEach(function(v) {
+        var nm = [norm(v.en), norm(v.ja)], ci = [bare(v.ci, /\s*(city|ward)$/i), bare(v.cj, /[市区町村]$/)], pr = [bare(v.p, /\s*prefecture$/i), bare(v.pj, /[都道府県]$/)];
+        var sc = 0, hit = '', hits = 0;
+        ws.forEach(function(w) {
+          var s1 = nm.some(function(x) { return x && x.indexOf(w) >= 0; }) ? 3 : ci.some(function(x) { return x && x === w; }) ? 2 : pr.some(function(x) { return x && x === w; }) ? 1 : 0;
+          if (s1 > sc) { sc = s1; hit = w; }
+          if (s1) hits++;
+        });
+        sc = sc * 10 + hits;   // more of the title's words in it first (OSAKA-RINKAI: the Rinkai venue before other Osaka ones)
+        if (sc) out.push({ id: v.id, name: lab(v), sc: sc, where: [ja ? v.cj : v.ci, ja ? v.pj : v.p].filter(Boolean).join(', '), u: (used && used[lab(v)]) || 0 });
+      });
+      return out.sort(function(a, b) { return b.sc - a.sc || b.u - a.u || a.name.length - b.name.length; }).slice(0, n || 5);
     },
     // For card check on the iPhone (2.91.0): wrestlers whose names hold q, best first.
     talents: function(q, n) {

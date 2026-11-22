@@ -77,7 +77,7 @@ var COLS = ['id', 'first_seen', 'last_seen', 'times_seen', 'date', 'no', 'title_
   'show', 'show_date', 'venue', 'set_id', 'tags', 'access', 'thumb', 'lines', 'app', 'rec'];
 var JSON_COLS = { sides_en: 1, teams_en: 1, notes_en: 1, sides_ja: 1, teams_ja: 1, notes_ja: 1, tags: 1, access: 1, lines: 1, rec: 1 };
 var MAX_CELL = 45000;
-var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many'];   // a Sheets cell holds 50,000 characters
+var CC_ACTIONS = ['vi_lib', 'vi_get', 'vi_save', 'vi_propose', 'vi_cards', 'vi_suggest', 'vi_thumbs', 'vi_translate', 'vi_show_venue', 'vi_ai', 'vi_save_many', 'cc_later'];   // a Sheets cell holds 50,000 characters
 
 function doPost(e) {
   var body;
@@ -127,6 +127,7 @@ function doPost(e) {
   if (body.action === 'vi_thumbs') return out(withLock(function() { return viThumbs(body); }));
   if (body.action === 'vi_show_venue') return out(withLock(function() { return viShowVenue(body); }));
   if (body.action === 'vi_save_many') return out(withLock(function() { return viSaveMany(body); }));
+  if (body.action === 'cc_later') return out(b_ccLater(body));
   if (body.action === 'fav_since') return out(favAction(body));
   if (body.action === 'fav_replace' || body.action === 'fav_put') return out(withLock(function() { return favAction(body); }));
   if (body.action !== 'put') return out({ ok: false, error: 'bad action' });
@@ -237,6 +238,22 @@ function nextSeq() {
   var pr = PropertiesService.getScriptProperties(), n = (Number(pr.getProperty('FAV_SEQ')) || 0) + 1;
   pr.setProperty('FAV_SEQ', String(n));
   return n;
+}
+// 2.114.0: Watch Later from iPhone card check. Only "later:" items, through the same favorites tab the TVs sync from
+// (favsync.js pulls it within a minute), so the card check key never reads or changes any other favorite.
+//   cc_later {op: 'list'}                                   the video ids in Watch Later
+//   cc_later {op: 'add'|'remove', id, href, title, bg}      add (to the top) or take one out
+function b_ccLater(b) {
+  var op = String(b.op || 'list');
+  if (op === 'list') {
+    var sh = favSheet(), n = sh.getLastRow(), ids = [];
+    if (n > 1) sh.getRange(2, 1, n - 1, 4).getValues().forEach(function(v) { var k = String(v[0]); if (k.indexOf('later:') === 0 && !(v[3] === true || v[3] === 'TRUE')) ids.push(k.slice(6)); });
+    return { ok: true, ids: ids };
+  }
+  var id = String(b.id || '');
+  if (!/^\d{1,12}$/.test(id) || (op !== 'add' && op !== 'remove')) return { ok: false, error: 'bad request' };
+  var t = Date.now(), val = { id: id, href: String(b.href || '').slice(0, 300), title: String(b.title || '').slice(0, 300), bg: String(b.bg || '').slice(0, 500), i: -t };
+  return withLock(function() { return favAction({ action: 'fav_put', device: 'iphone-cardcheck', changes: [{ key: 'later:' + id, value: val, t: t, deleted: op === 'remove' }] }); });
 }
 function favKeyOk(k) { return typeof k === 'string' && k.length > 0 && k.length <= 300 && /^(w|fs|tt|later|m|s|pl|pli|rem|ppv|own):/.test(k); }
 function favValue(v) { var j = JSON.stringify(v == null ? null : v); return j.length > 20000 ? null : j; }
@@ -629,7 +646,10 @@ function viRate(id, device, stars, now) {
 function viSave(b) {
   var video = String(b.video || ''), m = b.match || {}, list = b.participants;
   if (!/^\d{1,9}$/.test(video)) return { ok: false, error: 'bad video' };
-  if (!Array.isArray(list) || !list.length || list.length > 60) return { ok: false, error: 'bad participants' };
+  // 2.115.0: a segment may have nobody in it (a greeting by the company's president, who isn't indexed), so an empty
+  // list is only refused for a match.
+  var segment = Array.isArray(b.tags) && b.tags.some(function(t) { return t && t.group === 'segment'; });
+  if (!Array.isArray(list) || (!list.length && !segment) || list.length > 60) return { ok: false, error: 'bad participants' };
   var date = /^\d{4}-\d{2}-\d{2}$/.test(m.date || '') ? m.date : '';
   var known = {}; viRows('talent').forEach(function(t) { known[t.talent_id] = 1; });
   var ok = true, sideSet = {};
@@ -640,7 +660,6 @@ function viSave(b) {
   if (!ok) return { ok: false, error: 'a name is not in the library' };
   // Segments (2.96.0): a retirement ceremony, promo, debut, signing or homecoming is logged with a "segment" tag. The
   // people in it are one side, and it has no result, so it never counts in anyone's record.
-  var segment = Array.isArray(b.tags) && b.tags.some(function(t) { return t && t.group === 'segment'; });
   if (!segment && Object.keys(sideSet).length < 2) return { ok: false, error: 'a match needs two sides' };
   if (segment) list.forEach(function(p) { p.side = 1; p.role = ''; p.entry = ''; p.elim = ''; });
   var version = /^(jp|en|digest|full)$/.test(b.version || '') ? b.version : 'jp';
@@ -662,7 +681,7 @@ function viSave(b) {
   });
 
   var matches = viRows('matches'), id = viResolveMerged(viFindMatch(video), matches), linked = false;
-  if (!id && date) {
+  if (!id && date && rows.length) {   // 2.115.0: a segment with nobody in it is never another version of something
     // The same people on the same date is the same match: another version of it (English commentary, digest).
     var key = viKey(date, rows), byMatch = {};
     viRows('participants').forEach(function(p) { (byMatch[p.match_id] = byMatch[p.match_id] || []).push(p); });
@@ -930,8 +949,12 @@ function viCards(b) {
     Object.keys(parts).forEach(function(id) { parts[id].forEach(function(x) { touch(id, x.updated); }); });
     viRows('shows').forEach(function(x) { if (newer(x.updated)) hotShow[String(x.show_id)] = 1; });   // a show's venue set (2.89.0)
   }
+  // 2.115.0: segments logged with nobody in them (the president's greeting) have no card, so they're listed apart, by
+  // video with their show's set: card check counts them as done and leaves them out of a show's matches.
+  var blank = {};
   mvRows.forEach(function(v) {
     var m = m2[v.match_id], p = parts[v.match_id];
+    if (m && (!p || !p.length) && viWithComp(tags[v.match_id]).segment) blank[String(v.video_id)] = String(v.set_id || m.show_id || '');
     if (!m || !p || !p.length) return;
     all.push(String(v.video_id));
     if (hot && !hot[v.match_id] && !hotShow[String(m.show_id || '')]) return;
@@ -962,7 +985,7 @@ function viCards(b) {
     var vset = String(v.set_id || ''), oss = vset && vset !== String(m.show_id || '') && shw[vset] ? shw[vset] : null;
     map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', she: (shw[m.show_id] || {}).ne || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, ne: oss.ne || '', vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
   });
-  return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc } : { ok: true, map: map, now: now, full: true, venues: venLoc };
+  return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc, blank: blank } : { ok: true, map: map, now: now, full: true, venues: venLoc, blank: blank };
 }
 
 // StarScope Log next (2.67.0): every video the private build has read ("videos") that has no match_videos row, grouped

@@ -2,6 +2,48 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.115.1
+
+- **Fix: Confirm did nothing on a segment with no names.** The logger's People step still wanted at least one person in a segment, so card check's quick save stopped there without a word (Korakuen Nov. 2023, match 2). A segment with nobody in it now counts as ready and saves.
+- Built on 2.115.0. iPhone card check: published to GitHub Pages (indexpanel.js). No sheet script change beyond 2.115.0.
+
+## 2.115.0
+
+- **Segments with nobody in them.** A greeting or segment with only the company's President in it (who isn't indexed) can now be saved with no names: in iPhone card check, Segment… → pick the type → **Use as segment, no names**. A card whose title reads as a segment but names no one in the library is offered as one ("Looks like a segment: Greeting · no wrestler in it"). The TV's logger allows it too. Nothing about it shows on StarScope cards, Shows or the published index: it only marks the video as done, in its place on the card.
+- **Segments don't count toward a show's matches.** Show tiles now read "**5 of 7 matches logged · 1 segment**" and "**✓ All 7 matches logged · 1 segment**": a logged segment (named or not) comes off the show's total instead of counting as a match, so a show reads complete once every match is in and every segment is marked. Started / Logged / Not started and Next show follow the same count.
+- **New segment type: Greeting (挨拶)**, added to the sheet's lists tab (keywords `greeting|ご挨拶|挨拶`).
+- **Sheet script:** a segment saves with an empty line-up (a match still needs two sides); a nameless segment is never linked to another match as a second version; `vi_cards` sends the nameless segments apart as `blank` (video → set), since they have no card. **Redeploy** the sheet script.
+- Built on 2.114.0. iPhone card check: needs publishing to GitHub Pages (cc.js, indexpanel.js).
+
+## 2.114.0
+
+- **iPhone card check: Watch later button** beside Watch on every match card. A tap adds the video to the TVs' Watch Later list (top of the list); on the TVs within a minute through favorites sync. It then reads **✓ Watch later**; tap again to take it out. The list is read from the sheet once when card check starts, so the button knows what's already there. Sheet requests only, no site calls.
+- **Sheet script: `cc_later`**, allowed with the card check key. It only lists, adds or removes `later:` items in the favorites tab; the card check key still can't read or change any other favorite. **Redeploy** the sheet script.
+- **New stipulation: Indian Strap match (インディアン・ストラップ・マッチ).** Added to the sheet's lists tab with the keywords `Indian\s*Strap|Strap\s*Match|ストラップ`, so cards with it in the site's title show it under Suggested and get it on save. Card check picks it up the next time it loads the library.
+- Built on 2.113.0. iPhone card check: published to GitHub Pages (cc.js).
+
+## 2.113.0
+
+- **iPhone card check: a show already logged in another order opens in the saved order.** When the site lists a show's matches the other way round (backstage comments first, the trainee greeting last) and the matches were logged in the real order, the card used to open as listed with every match marked "logged as 8, save as 1" and a Confirm all that would have saved the wrong order over the right one. Reverse order then lined it up with the sheet, so there was nothing left to confirm, which looked like the confirm option had gone. Now such a show opens in the saved order ("· as saved in StarScope"); with some matches not logged yet, only when the saved ones are exactly the list reversed. Reverse order still flips it either way. Shows whose order you already chose on the phone keep it.
+- **Card order line says what it means for the sheet:** "✓ Saved in this order: nothing to confirm", or in amber how many logged matches are saved in a different order and that Confirm all would renumber them.
+- **Year lists: All / Logged / Started / Not started.** A row of filter chips under the years, each with its count. It filters the shows already read from the site's list (no extra site calls); Load more shows reads the next page as before. Next after logging follows the filter: on Not started it skips started shows, on Started it skips unstarted ones. The filter is remembered.
+- Built on 2.112.0. No sheet script change, nothing changes on the TV. iPhone card check: published to GitHub Pages (cc.js).
+
+## 2.112.0
+
+- **iPhone card check: venues suggested from the show's title.** 2023 show titles name a place but no venue ("STARDOM in WARABI", "in OSAKA-RINKAI", "～スターダム郡山大会～"), so card check read no venue for them. When a show has no venue, the venue box now lists up to five library venues for the places in the title ("From the title: Warabi"): a venue with the place in its name first, then one in that city, then that prefecture. Venues used more often in the index come first among equals, and each shows its city and prefecture when the library has them. Tap one to set it for the whole show, as with Pick from list. The same list shows under Change venue until you start typing.
+- **Ask Gemini: venue.** A new button in the venue box asks Gemini for the venue only (not the order or line-ups). The question names the title's places and the library venues there, so a known venue comes back under its library name. The answer opens in the usual AI answer sheet to apply. It also works from Change venue on a show that already has one.
+- TV: indexpanel.js gets the lookup card check uses (venuesNear); nothing changes on the TV's screens.
+- Built on 2.111.3 (Next show fix). No sheet script change. iPhone card check: needs publishing to GitHub Pages (cc.js, indexpanel.js).
+
+## 2.111.3
+
+- **Fix: iPhone card check, no Next after logging a show.** Next show is picked from the year's list kept on the phone. When the phone's storage filled up (2.108.1 clears space so a venue save fits), that list was among the first things cleared, so the Next button disappeared, which showed up working through 2023. Now:
+  - Next uses the year's list already on screen when the phone's copy is gone.
+  - When space is needed, other shows' pages are cleared first, oldest first; the year lists only if that isn't enough.
+  - When the shows loaded so far run out, the button reads **Next: load more 2023 shows** (one request for the site's next 20, then straight on to the next show). When the year is done, **Next: 2023 is done, on to 2022** opens that year's list.
+- Built from main (2.108.1); no TV or sheet script change. iPhone card check: **needs publishing to GitHub Pages** (cc.js).
+
 ## 2.108.1
 
 - **Fix: iPhone card check, the venue didn't stay set.** Applying a venue (from the AI answer or Pick from list) saved it to the sheet, but card check kept it only in the phone's storage, and a write that didn't fit there failed without a word, so the card went back to "Venue not read". The venue is now also kept in memory for the session, and a write that doesn't fit first clears the lists card check reads again anyway (other shows' pages, the year lists, then the StarScope list) and tries again. If it still won't fit, the venue line says so.
