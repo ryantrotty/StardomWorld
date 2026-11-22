@@ -1,0 +1,434 @@
+{
+ "year": 2019,
+ "ok": true,
+ "generated": "2026-11-22",
+ "shows": 86,
+ "matches": 172,
+ "full_cards": 26,
+ "gaps": [
+  {
+   "date": "2019-09-16",
+   "show": "5★STAR GP 2019（夜）",
+   "missing": "the official calendar lists this night show twice (event pages 20190916-2 and 20190916-3, identical, same results page); listed once"
+  },
+  {
+   "date": "2019-01-02",
+   "show": "NEWYEAR STARS 2019",
+   "missing": "match 3: name printed as 'セイディ・ギブス' on the official page (other 2019 official pages print 'セイディ・キブス'); kept as printed, en null"
+  },
+  {
+   "date": "2019-01-03",
+   "show": "NEWYEAR STARS 2019",
+   "missing": "'新春バトルロイヤル': battle royal entrants may be incomplete (official summary lists only some participants)"
+  },
+  {
+   "date": "2019-01-03",
+   "show": "NEWYEAR STARS 2019",
+   "missing": "match 3: name printed as 'アレックス・ガルシア' on the official page (other 2019 official pages print 'アレックス・グラシア'); kept as printed, en null"
+  },
+  {
+   "date": "2019-01-14",
+   "show": "スターダム8周年記念日",
+   "missing": "title 'SWA世界' (billed inside 'SWA世界＆EVEインターナショナル二冠選手権試合') is not in the app's title list; listed as SWA世界選手権"
+  },
+  {
+   "date": "2019-01-14",
+   "show": "スターダム8周年記念日",
+   "missing": "title 'EVEインターナショナル' (billed inside 'SWA世界＆EVEインターナショナル二冠選手権試合') is not in the app's title list; listed as EVEインターナショナル選手権"
+  },
+  {
+   "date": "2019-01-14",
+   "show": "スターダム8周年記念日",
+   "missing": "gauntlet match ('ガントレット') is listed on the official results page as 3 separate tables (one per fall); kept as 3 entries in that order"
+  },
+  {
+   "date": "2019-02-24",
+   "show": "NEWYEAR STARS 2019（夜）",
+   "missing": "title 'WOH世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2019-02-24",
+   "show": "NEWYEAR STARS 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-03-03",
+   "show": "STARDOM WORLD in NAGOYA",
+   "missing": "title 'EVEインターナショナル選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2019-03-21",
+   "show": "Grow up Stars 2019（昼）",
+   "missing": "match 4: name printed as 'レベル・ケイ' on the official page (other 2019 official pages print 'レベル・ケル'); kept as printed, en null"
+  },
+  {
+   "date": "2019-03-24",
+   "show": "Grow up Stars 2019",
+   "missing": "match 3: name printed as '林下歌美' on the official page (other 2019 official pages print '林下詩美'); kept as printed, en null"
+  },
+  {
+   "date": "2019-03-28",
+   "show": "DREAM SLAM 2019",
+   "missing": "'バトルロイヤル　20分勝負': the elimination order under the match uses shortened names ('➀小野崎②羽南③吏南＆妃南⑤叫女'); not used as entrant names"
+  },
+  {
+   "date": "2019-03-28",
+   "show": "DREAM SLAM 2019",
+   "missing": "'バトルロイヤル　20分勝負': battle royal entrants may be incomplete (official summary lists only some participants)"
+  },
+  {
+   "date": "2019-03-28",
+   "show": "DREAM SLAM 2019",
+   "missing": "title 'SWA世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2019-03-28",
+   "show": "DREAM SLAM 2019",
+   "missing": "title 'WOH世界選手権' is not in the app's title list; kept as billed"
+  },
+  {
+   "date": "2019-04-14",
+   "show": "ドラフト会議2019",
+   "missing": "'ドラフト会議2019 5WAYバトル　30分勝負': entrant 岩谷麻優 is not in the results table; taken from the elimination order (勝ち抜け順/退場順) under the match on the official page"
+  },
+  {
+   "date": "2019-04-14",
+   "show": "ドラフト会議2019",
+   "missing": "'ドラフト会議2019 5WAYバトル　30分勝負': entrant 渡辺桃 is not in the results table; taken from the elimination order (勝ち抜け順/退場順) under the match on the official page"
+  },
+  {
+   "date": "2019-04-14",
+   "show": "ドラフト会議2019",
+   "missing": "'ドラフト会議2019 5WAYバトル　30分勝負': entrant 花月 is not in the results table; taken from the elimination order (勝ち抜け順/退場順) under the match on the official page"
+  },
+  {
+   "date": "2019-04-21",
+   "show": "GLORY STARS 2019（夜）",
+   "missing": "venue differs between results page ('大阪・世界観') and calendar ('大阪・世界館'); results page used"
+  },
+  {
+   "date": "2019-04-21",
+   "show": "GLORY STARS 2019（昼）",
+   "missing": "venue differs between results page ('大阪・世界観') and calendar ('大阪・世界館'); results page used"
+  },
+  {
+   "date": "2019-04-29",
+   "show": "シンデレラ・トーナメント2019",
+   "missing": "'トーナメント2回戦': listed as a walkover (不戦勝) on the official results page with no opponent named; opponent left null"
+  },
+  {
+   "date": "2019-05-03",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "'コスチュームチェンジ・バトルロイヤル　30分勝負': the elimination order under the match uses shortened names ('➀夏②ルアカ③妃南④羽南⑤吏南⑥桃⑦花月⑧中野⑨小波⑩花⑪葉月⑫飯田⑬キッド⑭ナツコ⑮叫女⑯プレストリー⑰アンドラス'); not used as entrant names"
+  },
+  {
+   "date": "2019-05-03",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "'コスチュームチェンジ・バトルロイヤル　30分勝負': entrant billed as 'スターライト・キッド（岩谷麻優）' (costume name with the wrestler in brackets); kept as billed, en null"
+  },
+  {
+   "date": "2019-05-03",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "'コスチュームチェンジ・バトルロイヤル　30分勝負': entrant billed as '葉月（鹿島沙希）' (costume name with the wrestler in brackets); kept as billed, en null"
+  },
+  {
+   "date": "2019-05-03",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "'コスチュームチェンジ・バトルロイヤル　30分勝負': battle royal entrants may be incomplete (official summary lists only some participants)"
+  },
+  {
+   "date": "2019-05-04",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-05-05",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-05-06",
+   "show": "GOLDENWEEK STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-05-16",
+   "show": "GOLD MAY 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-05-25",
+   "show": "SHINING STARS 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-05-25",
+   "show": "SHINING STARS 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-05-26",
+   "show": "小波凱旋大会",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-01",
+   "show": "SHINING STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-02",
+   "show": "SHINING STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-09",
+   "show": "STARDOM WORLD in SAPPORO 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-09",
+   "show": "STARDOM WORLD in SAPPORO 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-16",
+   "show": "Shining Destiny 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-22",
+   "show": "SHINING STARS 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-22",
+   "show": "SHINING STARS 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-06-23",
+   "show": "鹿島沙希凱旋大会",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-07",
+   "show": "高岡５周年記念大会",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-13",
+   "show": "Shining Summer 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-14",
+   "show": "Shining Summer 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-15",
+   "show": "WORLD BIG SUMMER in NAGOYA",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-20",
+   "show": "WORLD BIG SUMMER in OSAKA",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-24",
+   "show": "WORLD BIG SUMMER in TOKYO",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-07-27",
+   "show": "Shining Summer 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-08-03",
+   "show": "Shining Summer 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-08-10",
+   "show": "STARDOM × STARDOM 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-08-17",
+   "show": "5★STAR GP 2019～開幕戦～",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-08-18",
+   "show": "5★STAR GP 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-08-25",
+   "show": "5★STAR GP 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-08-25",
+   "show": "5★STAR GP 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-01",
+   "show": "5★STAR GP 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-07",
+   "show": "5★STAR GP 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-08",
+   "show": "5★STAR GP 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-14",
+   "show": "5★STAR GP 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-14",
+   "show": "5★STAR GP 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-16",
+   "show": "5★STAR GP 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-16",
+   "show": "5★STAR GP 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-22",
+   "show": "5★STAR GP 2019～優勝決定戦～",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-09-29",
+   "show": "5★STAR GP2019 Special in Nagoya",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-10-14",
+   "show": "STARDOM WORLD CHAMPIONS WARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-10-19",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-10-19",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-10-20",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦～岡山プロレスフェスティバル～",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-10-27",
+   "show": "STARDOM MASK FIESTA 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-10-27",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-04",
+   "show": "STARDOM BEST OF GODDESS2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-09",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-09",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-15",
+   "show": "第9回GODDESS OF STARDOM タッグリーグ戦～優勝決定戦～",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-17",
+   "show": "イベント・プロレス",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-23",
+   "show": "GODDESS OF STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-11-24",
+   "show": "GODDESS OF STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-12-01",
+   "show": "GODDESS OF STARS 2019（夜）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-12-01",
+   "show": "GODDESS OF STARS 2019（昼）",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-12-08",
+   "show": "GODDESS OF STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-12-14",
+   "show": "GODDESS OF STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-12-15",
+   "show": "GODDESS OF STARS 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  },
+  {
+   "date": "2019-12-24",
+   "show": "YEAREND CLIMAX 2019",
+   "missing": "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+  }
+ ],
+ "blocked": [
+  {
+   "site": "www.cagematch.net",
+   "note": "Two requests (Stardom 2019 event list) returned HTTP 307 with an empty body; stopped using Cagematch for this job."
+  },
+  {
+   "site": "wwr-stardom.com",
+   "note": "Two errors on the official results page for 2019-02-24 (day show): URLError at 23:00:59Z, then IncompleteRead on the retry (request ~257 of the job, two capped sessions, 8-15s spacing; no 403). Stopped using the site for this job; 29 of 86 results pages had been read. Remaining shows taken from fallback sources."
+  },
+  {
+   "site": "battle-news.com",
+   "note": "HTTP 403 on the first request (2019 Stardom post lookup); stopped using Battle News for this job."
+  }
+ ]
+}
