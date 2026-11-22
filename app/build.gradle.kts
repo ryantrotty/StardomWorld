@@ -13,7 +13,7 @@ android {
         applicationId = "com.example.tvhub"
         minSdk = 26
         targetSdk = 34
-        versionCode = 610
+        versionCode = 611
         versionName = "2.116.0"
 
         val startUrl = (project.findProperty("tvhub.startUrl") as String?)
