@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.116.0
+
+- **iPhone card check: Fill venues for a whole year list.** A **Fill venues · N shows without one** button above a year's show list collects every show on the list (as filtered, from the shows read so far) that has no venue saved and whose venue on the site isn't in the library. Shows whose site venue already matches the library are left alone, since they fill in by themselves.
+- **Two ways to ask:** **Ask Gemini** sends them through the sheet script, up to 15 shows per request; **Copy the prompt** (or Copy prompt 1 of N for a long list) puts the same question on the clipboard for Gemini or any other AI, then **Paste an answer**, one part at a time. No site calls either way.
+- **No guesses.** The prompt asks for a venue only when a source names it for that show on that date, never one worked out from the town in the title. An answer with no venue or no source is shown as left out and can't be saved.
+- **You check before anything's saved.** Each show gets a row. A venue already in the library comes ticked under its library name. A new venue comes **unticked**: the AI's short name is in an editable box, with its full name, Japanese name, city and prefecture and source underneath. Fix the name, then tap to tick it. Typing a name that's already in the library offers that venue instead. **Save N venues** saves each one for its show (vi_show_venue, as the venue line does); two shows at the same new venue make one venue.
+- **New venues get their place:** country, prefecture and city (English and Japanese) from the confirmed answer fill the venues tab's empty cells; nothing already there is overwritten.
+- Show tiles show a venue saved from the phone.
+- **Sheet script: `cc_venue_place`**, allowed with the card check key. **Redeploy** the sheet script (without it, venues still save, just without city and prefecture, and card check says so).
+- Built on 2.115.1. Nothing changes on the TV. iPhone card check: published to GitHub Pages (cc.js).
+
 ## 2.115.1
 
 - **Fix: Confirm did nothing on a segment with no names.** The logger's People step still wanted at least one person in a segment, so card check's quick save stopped there without a word (Korakuen Nov. 2023, match 2). A segment with nobody in it now counts as ready and saves.
