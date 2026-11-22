@@ -424,7 +424,7 @@
   },
   {
    "site": "wwr-stardom.com",
-   "note": "Two errors on the official results page for 2019-02-24 (day show): URLError at 23:00:59Z, then IncompleteRead on the retry (request ~257 of the job, two capped sessions, 8-15s spacing; no 403). Stopped using the site for this job; 29 of 86 results pages had been read. Remaining shows taken from fallback sources."
+   "note": "Two errors on the official results page for 2019-02-24 (day show): URLError at 23:00:59Z, then IncompleteRead on the retry (request ~132 of this job's 133 wwr requests, over two sessions capped at 120 with a 60-minute pause, 8-15s spacing; no 403). Stopped using the site for this job; 29 of 86 results pages had been read. Remaining shows taken from fallback sources."
   },
   {
    "site": "battle-news.com",
