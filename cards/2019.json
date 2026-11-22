@@ -1,0 +1,7709 @@
+{
+ "year": 2019,
+ "generated": "2026-11-22",
+ "shows": [
+  {
+   "date": "2019-01-02",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190102/",
+    "https://wwr-stardom.com/archive/news/2019年1月2日%e3%80%80newyear-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "ハンディキャップマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "JAN vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       },
+       {
+        "en": null,
+        "ja": "セイディ・ギブス"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "大江戸隊 vs 多国籍軍 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs STARS　5対5 イリミネーションマッチ　30分勝負",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there",
+    "match 3: name printed as 'セイディ・ギブス' on the official page (other 2019 official pages print 'セイディ・キブス'); kept as printed, en null"
+   ]
+  },
+  {
+   "date": "2019-01-03",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190103/",
+    "https://wwr-stardom.com/archive/news/2019年1月3日%e3%80%80newyear-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "4vs2ハンディキャップマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       },
+       {
+        "en": null,
+        "ja": "セイディ・キブス"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs 多国籍軍　タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs STARS 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・ガルシア"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "JANｖｓ大江戸隊 8人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "フューチャー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Future of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "新春バトルロイヤル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "'新春バトルロイヤル': battle royal entrants may be incomplete (official summary lists only some participants)",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there",
+    "match 3: name printed as 'アレックス・ガルシア' on the official page (other 2019 official pages print 'アレックス・グラシア'); kept as printed, en null"
+   ]
+  },
+  {
+   "date": "2019-01-05",
+   "name_ja": "NEWYEAR STARS 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190105-2/",
+    "https://wwr-stardom.com/archive/news/2019年1月5日%e3%80%80newyear-stars-2019-2/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "セイディ・キブス"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント準決勝",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "準決勝",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント準決勝",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "準決勝",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント優勝決定戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "優勝決定戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-01-05",
+   "name_ja": "NEWYEAR STARS 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190105/",
+    "https://wwr-stardom.com/archive/news/2019年1月5日%e3%80%80newyear-stars-2019/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       },
+       {
+        "en": null,
+        "ja": "セイディ・キブス"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "新春6人タッグトーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "新春6人タッグトーナメント",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-01-06",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": null,
+    "ja": "大阪世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190106/",
+    "https://wwr-stardom.com/archive/news/2019年1月6日%e3%80%80newyear-stars-2019/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       },
+       {
+        "en": null,
+        "ja": "セイディ・キブス"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "大江戸隊 vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs JAN タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs STARS 8人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "ハイスピード選手権試合",
+     "stipulation": null,
+     "titles": [
+      "High Speed Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-01-14",
+   "name_ja": "スターダム8周年記念日",
+   "name_en": null,
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190114/",
+    "https://wwr-stardom.com/archive/news/2019年1月14日%e3%80%80スターダム8周年記念日/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "飯田沙耶デビュー戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "ガントレット・タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "ガントレット・タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "ガントレット・タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "マリー・アパッチェ"
+       },
+       {
+        "en": null,
+        "ja": "ナツミ"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "大江戸隊 vs 多国籍軍 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "セイディ・キブス"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "岩谷麻優8周年記念試合",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 7,
+     "kind": "match",
+     "type": "SWA世界＆EVEインターナショナル二冠選手権試合",
+     "stipulation": null,
+     "titles": [
+      "SWA世界選手権",
+      "EVEインターナショナル選手権"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 8,
+     "kind": "match",
+     "type": "ワンダー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Wonder of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ],
+      [
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 9,
+     "kind": "match",
+     "type": "ワールド・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "World of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "title 'SWA世界' (billed inside 'SWA世界＆EVEインターナショナル二冠選手権試合') is not in the app's title list; listed as SWA世界選手権",
+    "title 'EVEインターナショナル' (billed inside 'SWA世界＆EVEインターナショナル二冠選手権試合') is not in the app's title list; listed as EVEインターナショナル選手権",
+    "gauntlet match ('ガントレット') is listed on the official results page as 3 separate tables (one per fall); kept as 3 entries in that order",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-01-19",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190119/",
+    "https://wwr-stardom.com/archive/news/2019年1月19日%e3%80%80newyear-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYタッグバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs JAN 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "STARS vs 多国籍軍6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "セイディ・キブス"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "フューチャー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Future of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "大江戸隊スペシャル・タッグバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-01-27",
+   "name_ja": "スターダム8周年記念日in大阪",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "エディオンアリーナ大阪",
+    "country": "JP",
+    "prefecture": "Osaka",
+    "prefecture_ja": "大阪府",
+    "city": "Osaka",
+    "city_ja": "大阪市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190127/",
+    "https://wwr-stardom.com/archive/news/2019年1月27日%e3%80%80スターダム8周年記念日in大阪/",
+    "https://ja.wikipedia.org/wiki/%E5%A4%A7%E9%98%AA%E5%BA%9C%E7%AB%8B%E4%BD%93%E8%82%B2%E4%BC%9A%E9%A4%A8"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "JAN vs 羽南三姉妹 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "STARS vs 大江戸隊 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "STARS vs クイーンズ・クエスト タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "STARS vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "ゴッデス・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Goddess of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "ワールド・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "World of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       }
+      ],
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-02",
+   "name_ja": "STARDOM KYOTO MAX 2019",
+   "name_en": "STARDOM KYOTO MAX 2019",
+   "venue": {
+    "en": null,
+    "ja": "京都KBSホール",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190202/",
+    "https://wwr-stardom.com/archive/news/2019年2月2日%e3%80%80stardom-kyoto-max-2019/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs STARS タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "大江戸隊vs多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "フューチャー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Future of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "STARS vs JAN 8人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "ワンダー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Wonder of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ],
+      [
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-03",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": null,
+    "ja": "静岡・清水マリンビル多目的ホール",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190203/",
+    "https://wwr-stardom.com/archive/news/2019年2月3日%e3%80%80newyear-stars-2019/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "大江戸隊 vs STARS 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "JAN vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs STARS 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-09",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190209/",
+    "https://wwr-stardom.com/archive/news/2019年2月9日%e3%80%80newyear-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "STARS vs JAN 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs大江戸隊  6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-10",
+   "name_ja": "NEWYEAR STARS 2019",
+   "name_en": "NEWYEAR STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190210/",
+    "https://wwr-stardom.com/archive/news/2019年2月10日%e3%80%80newyear-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "大江戸隊 vs 羽南三姉妹 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs JAN イリミネーションマッチ　30分勝負",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-17",
+   "name_ja": "QUEEN’s FES 2019",
+   "name_en": "QUEEN’s FES 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190217/",
+    "https://wwr-stardom.com/archive/news/2019年2月17日%e3%80%80queens-fes-2019/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYタッグ・バトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "STARS vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "ハイスピード選手権試合",
+     "stipulation": null,
+     "titles": [
+      "High Speed Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "大江戸隊新メンバー登場 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "ゴッデス・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Goddess of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-24",
+   "name_ja": "NEWYEAR STARS 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190224-2/",
+    "https://wwr-stardom.com/archive/news/2019年2月24日%e3%80%80newyear-stars-2019（夜）/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "スターダム４WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "アレックス・グラシア"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "坂井澄江"
+       }
+      ],
+      [
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "STARS　vs　多国籍軍　タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs大江戸隊　6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "WOH世界選手権試合",
+     "stipulation": null,
+     "titles": [
+      "WOH世界選手権"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "title 'WOH世界選手権' is not in the app's title list; kept as billed",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-02-24",
+   "name_ja": "NEWYEAR STARS 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190224/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-03-03",
+   "name_ja": "STARDOM WORLD in NAGOYA",
+   "name_en": "STARDOM WORLD in NAGOYA",
+   "venue": {
+    "en": "Nagoya Congress Center",
+    "ja": "名古屋国際会議場",
+    "country": "JP",
+    "prefecture": "Aichi",
+    "prefecture_ja": "愛知県",
+    "city": "Nagoya",
+    "city_ja": "名古屋市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190303/",
+    "https://wwr-stardom.com/archive/news/2019年3月3日%e3%80%80stardom-world-in-nagoya/",
+    "https://ja.wikipedia.org/wiki/%E5%90%8D%E5%8F%A4%E5%B1%8B%E5%9B%BD%E9%9A%9B%E4%BC%9A%E8%AD%B0%E5%A0%B4"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "JAN　vs　双子姉妹　タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "クイーンズ・クエスト　vs　JAN　タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "EVEインターナショナル選手権試合",
+     "stipulation": null,
+     "titles": [
+      "EVEインターナショナル選手権"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "アーティスト・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Artist of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 7,
+     "kind": "match",
+     "type": "ワンダー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Wonder of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "title 'EVEインターナショナル選手権' is not in the app's title list; kept as billed",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-03-09",
+   "name_ja": "Grow up Stars 2019",
+   "name_en": "Grow up Stars 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190309/",
+    "https://wwr-stardom.com/archive/news/2019年3月9日%e3%80%80grow-up-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       }
+      ],
+      [
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "JAN vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "STARS vs JAN  6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": null,
+        "ja": "ザイヤ・ブルックサイド"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs 大江戸隊 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "ハイスピード選手権試合",
+     "stipulation": null,
+     "titles": [
+      "High Speed Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-03-10",
+   "name_ja": "Grow up Stars 2019",
+   "name_en": "Grow up Stars 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190310/",
+    "https://wwr-stardom.com/archive/news/2019年3月10日%e3%80%80grow-up-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "STARS vs 多国籍軍 ハンディキャップマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       }
+      ],
+      [
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "STARS vs JAN 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "米山香織"
+       }
+      ],
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "ザイヤ・ブルックサイド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "フューチャー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Future of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs 大江戸隊 8人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-03-21",
+   "name_ja": "Grow up Stars 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190321-2/",
+    "https://wwr-stardom.com/archive/news/2019年3月21日%e3%80%80grow-up-stars-2019（夜）/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "AZM",
+        "ja": "ＡＺＭ"
+       }
+      ],
+      [
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "ザイヤ・ブルックサイド"
+       },
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs JAN タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "STARS vs 大江戸隊 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "バトル・オブ・スーパー・ヘビー",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "ゴッデス・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Goddess of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-03-21",
+   "name_ja": "Grow up Stars 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190321/",
+    "https://wwr-stardom.com/archive/news/2019年3月21日%e3%80%80grow-up-stars-2019（昼）/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "STARS vs JAN タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "ザイヤ・ブルックサイド"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs 大江戸隊 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "大江戸隊 vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       },
+       {
+        "en": null,
+        "ja": "レベル・ケイ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "STARS vs クイーンズ・クエスト 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there",
+    "match 4: name printed as 'レベル・ケイ' on the official page (other 2019 official pages print 'レベル・ケル'); kept as printed, en null"
+   ]
+  },
+  {
+   "date": "2019-03-24",
+   "name_ja": "Grow up Stars 2019",
+   "name_en": "Grow up Stars 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190324/",
+    "https://wwr-stardom.com/archive/news/2019年3月21日%e3%80%80grow-up-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "3WAYタッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": null,
+        "ja": "ザイヤ・ブルックサイド"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs JAN  6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "林下歌美"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs 大江戸隊  6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "アーティスト・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Artist of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       },
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there",
+    "match 3: name printed as '林下歌美' on the official page (other 2019 official pages print '林下詩美'); kept as printed, en null"
+   ]
+  },
+  {
+   "date": "2019-03-28",
+   "name_ja": "DREAM SLAM 2019",
+   "name_en": "DREAM SLAM 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190328/",
+    "https://wwr-stardom.com/archive/news/2019年3月28日%e3%80%80dream-slam-2019/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "バトルロイヤル　20分勝負",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs STARS 8人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       },
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "SWA世界選手権試合",
+     "stipulation": null,
+     "titles": [
+      "SWA世界選手権"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "ハイスピード選手権試合",
+     "stipulation": null,
+     "titles": [
+      "High Speed Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ザイヤ・ブルックサイド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "WOH世界選手権試合",
+     "stipulation": null,
+     "titles": [
+      "WOH世界選手権"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "ワールド・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "World of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 7,
+     "kind": "match",
+     "type": "ワンダー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Wonder of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "'バトルロイヤル　20分勝負': the elimination order under the match uses shortened names ('➀小野崎②羽南③吏南＆妃南⑤叫女'); not used as entrant names",
+    "'バトルロイヤル　20分勝負': battle royal entrants may be incomplete (official summary lists only some participants)",
+    "title 'SWA世界選手権' is not in the app's title list; kept as billed",
+    "title 'WOH世界選手権' is not in the app's title list; kept as billed",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-03-30",
+   "name_ja": "Grow up Stars 2019",
+   "name_en": "Grow up Stars 2019",
+   "venue": {
+    "en": null,
+    "ja": "新潟市東区プラザ",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190330/",
+    "https://wwr-stardom.com/archive/news/2019年3月30日%e3%80%80grow-up-stars-2019/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "JAN vs 大江戸隊  6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs 多国籍軍 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "バイパー"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ゴジャ・コング"
+       },
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "STARS vs クイーンズ・クエスト 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-04-05",
+   "name_ja": "STARDOM America Dream 2019 in the Big Apple",
+   "name_en": "STARDOM America Dream 2019 in the Big Apple",
+   "venue": {
+    "en": null,
+    "ja": "米国ニューヨーク州クイーンズNYCアリーナ",
+    "country": "US",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190405/",
+    "https://wwr-stardom.com/archive/news/2019年4月5日%e3%80%80stardom-america-dream-2019-in-the-big-apple/"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ソニア・ストロング"
+       },
+       {
+        "en": null,
+        "ja": "バイオレット"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "3WAYタッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "ボビー・タイラー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ブリット・ベッカー"
+       },
+       {
+        "en": null,
+        "ja": "ブリットニー・ブレイク"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "ハイスピード選手権試合",
+     "stipulation": null,
+     "titles": [
+      "High Speed Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ダスト"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "ワンダー・オブ・スターダム選手権試合",
+     "stipulation": null,
+     "titles": [
+      "Wonder of Stardom Championship"
+     ],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ],
+      [
+       {
+        "en": "Utami Hayashishita",
+        "ja": "林下詩美"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "イリミネーションマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       },
+       {
+        "en": "Jamie Hayter",
+        "ja": "ジェイミー・ヘイター"
+       },
+       {
+        "en": null,
+        "ja": "セッションモス・マルティナ"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-04-13",
+   "name_ja": "GLORY STARS 2019",
+   "name_en": "GLORY STARS 2019",
+   "venue": {
+    "en": null,
+    "ja": "横浜ラジアントホール",
+    "country": "JP",
+    "prefecture": "Kanagawa",
+    "prefecture_ja": "神奈川県",
+    "city": "Yokohama",
+    "city_ja": "横浜市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190413/",
+    "https://wwr-stardom.com/archive/news/2019年4月13日%e3%80%80glory-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%82%B8%E3%82%A2%E3%83%B3%E3%83%88%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "南三姉妹 vs JAN 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "米山香織"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "STARS vs JAN タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs大江戸隊～マスカラ・コントラ・ダンス～",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-04-14",
+   "name_ja": "ドラフト会議2019",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190414/",
+    "https://wwr-stardom.com/archive/news/2019年4月14日%e3%80%80ドラフト会議2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       }
+      ],
+      [
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "3WAYバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "JAN vs 大江戸隊 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "STARS vs クイーンズ・クエスト 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "ドラフト会議2019 5WAYバトル　30分勝負",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       }
+      ],
+      [
+       {
+        "en": "Mayu Iwatani",
+        "ja": "岩谷麻優"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "'ドラフト会議2019 5WAYバトル　30分勝負': entrant 岩谷麻優 is not in the results table; taken from the elimination order (勝ち抜け順/退場順) under the match on the official page",
+    "'ドラフト会議2019 5WAYバトル　30分勝負': entrant 渡辺桃 is not in the results table; taken from the elimination order (勝ち抜け順/退場順) under the match on the official page",
+    "'ドラフト会議2019 5WAYバトル　30分勝負': entrant 花月 is not in the results table; taken from the elimination order (勝ち抜け順/退場順) under the match on the official page",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-04-21",
+   "name_ja": "GLORY STARS 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界観",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190421-2/",
+    "https://wwr-stardom.com/archive/news/2019年4月21日%e3%80%80glory-stars-2019（夜）/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "STARS vs クイーンズ・クエスト タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "STARS vs 大江戸隊 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "トウキョウ・サイバー・スクワット vs 大江戸隊 タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエスト vs トウキョウ・サイバー・スクワット タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "venue differs between results page ('大阪・世界観') and calendar ('大阪・世界館'); results page used",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-04-21",
+   "name_ja": "GLORY STARS 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界観",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190421/",
+    "https://wwr-stardom.com/archive/news/2019年4月21日%e3%80%80glory-stars-2019（昼）/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "STARS vs クイーンズ・クエスト 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "新ユニット vs 大江戸隊 6人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "venue differs between results page ('大阪・世界観') and calendar ('大阪・世界館'); results page used",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-04-29",
+   "name_ja": "シンデレラ・トーナメント2019",
+   "name_en": null,
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190429/",
+    "https://wwr-stardom.com/archive/news/2019年4月29日%e3%80%80シンデレラ・トーナメント2019/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "3WAYタッグバトル",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ルアカ"
+       },
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "AZM",
+        "ja": "AZM"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ],
+      [
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ],
+      [
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 7,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       }
+      ],
+      [
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 8,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 9,
+     "kind": "match",
+     "type": "トーナメント1回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "1回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 10,
+     "kind": "match",
+     "type": "トーナメント2回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "2回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ],
+      [
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 11,
+     "kind": "match",
+     "type": "トーナメント2回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "2回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": "AZM",
+        "ja": "ＡＺＭ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 12,
+     "kind": "match",
+     "type": "トーナメント2回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "2回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": null
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 13,
+     "kind": "match",
+     "type": "トーナメント2回戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "2回戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 14,
+     "kind": "match",
+     "type": "トーナメント準決勝",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "準決勝",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ],
+      [
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 15,
+     "kind": "match",
+     "type": "トーナメント準決勝",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "準決勝",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ],
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 16,
+     "kind": "match",
+     "type": "シンデレラトーナメント2019 優勝決定戦",
+     "stipulation": null,
+     "titles": [],
+     "tournament": "Cinderella Tournament",
+     "round": "優勝決定戦",
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       }
+      ],
+      [
+       {
+        "en": "Konami",
+        "ja": "小波"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "'トーナメント2回戦': listed as a walkover (不戦勝) on the official results page with no opponent named; opponent left null",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-05-03",
+   "name_ja": "GOLDENWEEK STARS 2019",
+   "name_en": "GOLDENWEEK STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190503/",
+    "https://wwr-stardom.com/archive/news/2019年5月3日%e3%80%80goldenweek-stars-2019/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [
+    {
+     "no": 1,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "夏すみれ"
+       }
+      ],
+      [
+       {
+        "en": "Rina",
+        "ja": "吏南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 2,
+     "kind": "match",
+     "type": "シングルマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Hanan",
+        "ja": "羽南"
+       }
+      ],
+      [
+       {
+        "en": null,
+        "ja": "ルアカ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 3,
+     "kind": "match",
+     "type": "大江戸隊 vs TCS 8人タッグマッチ",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "花月"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月"
+       },
+       {
+        "en": null,
+        "ja": "アンドラス宮城"
+       },
+       {
+        "en": "Natsuko Tora",
+        "ja": "刀羅ナツコ"
+       }
+      ],
+      [
+       {
+        "en": "Hana Kimura",
+        "ja": "木村花"
+       },
+       {
+        "en": "Jungle Kyona",
+        "ja": "ジャングル叫女"
+       },
+       {
+        "en": "Konami",
+        "ja": "小波"
+       },
+       {
+        "en": null,
+        "ja": "レベル・ケル"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 4,
+     "kind": "match",
+     "type": "トニー・ストーム ワールド・チャレンジI",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Toni Storm",
+        "ja": "トニー・ストーム"
+       }
+      ],
+      [
+       {
+        "en": "Tam Nakano",
+        "ja": "中野たむ"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 5,
+     "kind": "match",
+     "type": "クイーンズ・クエストvs STARS イリミネーションマッチ　30分勝負",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": null,
+        "ja": "星輝ありさ"
+       },
+       {
+        "en": "Saki Kashima",
+        "ja": "鹿島沙希"
+       },
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド"
+       },
+       {
+        "en": "Saya Iida",
+        "ja": "飯田沙耶"
+       }
+      ],
+      [
+       {
+        "en": "Momo Watanabe",
+        "ja": "渡辺桃"
+       },
+       {
+        "en": "Bea Priestley",
+        "ja": "ビー・プレストリー"
+       },
+       {
+        "en": null,
+        "ja": "小野崎玲皇"
+       },
+       {
+        "en": "Hina",
+        "ja": "妃南"
+       }
+      ]
+     ],
+     "source": null
+    },
+    {
+     "no": 6,
+     "kind": "match",
+     "type": "コスチュームチェンジ・バトルロイヤル　30分勝負",
+     "stipulation": null,
+     "titles": [],
+     "tournament": null,
+     "round": null,
+     "block": null,
+     "sides": [
+      [
+       {
+        "en": "Starlight Kid",
+        "ja": "スターライト・キッド（岩谷麻優）"
+       },
+       {
+        "en": "Hazuki",
+        "ja": "葉月（鹿島沙希）"
+       }
+      ]
+     ],
+     "source": null
+    }
+   ],
+   "gaps": [
+    "'コスチュームチェンジ・バトルロイヤル　30分勝負': the elimination order under the match uses shortened names ('➀夏②ルアカ③妃南④羽南⑤吏南⑥桃⑦花月⑧中野⑨小波⑩花⑪葉月⑫飯田⑬キッド⑭ナツコ⑮叫女⑯プレストリー⑰アンドラス'); not used as entrant names",
+    "'コスチュームチェンジ・バトルロイヤル　30分勝負': entrant billed as 'スターライト・キッド（岩谷麻優）' (costume name with the wrestler in brackets); kept as billed, en null",
+    "'コスチュームチェンジ・バトルロイヤル　30分勝負': entrant billed as '葉月（鹿島沙希）' (costume name with the wrestler in brackets); kept as billed, en null",
+    "'コスチュームチェンジ・バトルロイヤル　30分勝負': battle royal entrants may be incomplete (official summary lists only some participants)",
+    "running order taken from the results summary on the official page; segments (greetings, ceremonies) are not listed there"
+   ]
+  },
+  {
+   "date": "2019-05-04",
+   "name_ja": "GOLDENWEEK STARS 2019",
+   "name_en": "GOLDENWEEK STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190504/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-05-05",
+   "name_ja": "GOLDENWEEK STARS 2019",
+   "name_en": "GOLDENWEEK STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190505/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-05-06",
+   "name_ja": "GOLDENWEEK STARS 2019",
+   "name_en": "GOLDENWEEK STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190506/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-05-16",
+   "name_ja": "GOLD MAY 2019",
+   "name_en": "GOLD MAY 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190516/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-05-25",
+   "name_ja": "SHINING STARS 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190525-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-05-25",
+   "name_ja": "SHINING STARS 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190525/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-05-26",
+   "name_ja": "小波凱旋大会",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "広島県立ふくやま産業交流館 ビッグローズ",
+    "country": "JP",
+    "prefecture": "Hiroshima",
+    "prefecture_ja": "広島県",
+    "city": "Fukuyama",
+    "city_ja": "福山市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190526/",
+    "https://ja.wikipedia.org/wiki/%E5%BA%83%E5%B3%B6%E7%9C%8C%E7%AB%8B%E3%81%B5%E3%81%8F%E3%82%84%E3%81%BE%E7%94%A3%E6%A5%AD%E4%BA%A4%E6%B5%81%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-01",
+   "name_ja": "SHINING STARS 2019",
+   "name_en": "SHINING STARS 2019",
+   "venue": {
+    "en": null,
+    "ja": "横浜ラジアントホール",
+    "country": "JP",
+    "prefecture": "Kanagawa",
+    "prefecture_ja": "神奈川県",
+    "city": "Yokohama",
+    "city_ja": "横浜市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190601/",
+    "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%82%B8%E3%82%A2%E3%83%B3%E3%83%88%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-02",
+   "name_ja": "SHINING STARS 2019",
+   "name_en": "SHINING STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190602/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-09",
+   "name_ja": "STARDOM WORLD in SAPPORO 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "札幌ススキノ・マルスジム",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190609-2/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-09",
+   "name_ja": "STARDOM WORLD in SAPPORO 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "札幌ススキノ・マルスジム",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190609/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-16",
+   "name_ja": "Shining Destiny 2019",
+   "name_en": "Shining Destiny 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190616/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-22",
+   "name_ja": "SHINING STARS 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190622-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-22",
+   "name_ja": "SHINING STARS 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190622/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-06-23",
+   "name_ja": "鹿島沙希凱旋大会",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "島根・くにびきメッセ",
+    "country": "JP",
+    "prefecture": "Shimane",
+    "prefecture_ja": "島根県",
+    "city": "Matsue",
+    "city_ja": "松江市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190623/",
+    "https://ja.wikipedia.org/wiki/%E5%B3%B6%E6%A0%B9%E7%9C%8C%E7%AB%8B%E7%94%A3%E6%A5%AD%E4%BA%A4%E6%B5%81%E4%BC%9A%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-07",
+   "name_ja": "高岡５周年記念大会",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "富山・高岡エクール",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190707/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-13",
+   "name_ja": "Shining Summer 2019",
+   "name_en": "Shining Summer 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190713/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-14",
+   "name_ja": "Shining Summer 2019",
+   "name_en": "Shining Summer 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190714/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-15",
+   "name_ja": "WORLD BIG SUMMER in NAGOYA",
+   "name_en": "WORLD BIG SUMMER in NAGOYA",
+   "venue": {
+    "en": "Nagoya Congress Center",
+    "ja": "名古屋国際会議場",
+    "country": "JP",
+    "prefecture": "Aichi",
+    "prefecture_ja": "愛知県",
+    "city": "Nagoya",
+    "city_ja": "名古屋市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190715/",
+    "https://ja.wikipedia.org/wiki/%E5%90%8D%E5%8F%A4%E5%B1%8B%E5%9B%BD%E9%9A%9B%E4%BC%9A%E8%AD%B0%E5%A0%B4"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-20",
+   "name_ja": "WORLD BIG SUMMER in OSAKA",
+   "name_en": "WORLD BIG SUMMER in OSAKA",
+   "venue": {
+    "en": null,
+    "ja": "エディオンアリーナ大阪・第2競技場",
+    "country": "JP",
+    "prefecture": "Osaka",
+    "prefecture_ja": "大阪府",
+    "city": "Osaka",
+    "city_ja": "大阪市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190720/",
+    "https://ja.wikipedia.org/wiki/%E5%A4%A7%E9%98%AA%E5%BA%9C%E7%AB%8B%E4%BD%93%E8%82%B2%E4%BC%9A%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-24",
+   "name_ja": "WORLD BIG SUMMER in TOKYO",
+   "name_en": "WORLD BIG SUMMER in TOKYO",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190724/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-07-27",
+   "name_ja": "Shining Summer 2019",
+   "name_en": "Shining Summer 2019",
+   "venue": {
+    "en": null,
+    "ja": "石川・金沢勤労者プラザ",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190727/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-08-03",
+   "name_ja": "Shining Summer 2019",
+   "name_en": "Shining Summer 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190803/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-08-10",
+   "name_ja": "STARDOM × STARDOM 2019",
+   "name_en": "STARDOM × STARDOM 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190810/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-08-17",
+   "name_ja": "5★STAR GP 2019～開幕戦～",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190817/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-08-18",
+   "name_ja": "5★STAR GP 2019",
+   "name_en": "5★STAR GP 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190818/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-08-25",
+   "name_ja": "5★STAR GP 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190825-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-08-25",
+   "name_ja": "5★STAR GP 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190825/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-01",
+   "name_ja": "5★STAR GP 2019",
+   "name_en": "5★STAR GP 2019",
+   "venue": {
+    "en": null,
+    "ja": "仙台PIT",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190901/",
+    "https://ja.wikipedia.org/wiki/%E3%83%81%E3%83%BC%E3%83%A0%E3%82%B9%E3%83%9E%E3%82%A4%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-07",
+   "name_ja": "5★STAR GP 2019",
+   "name_en": "5★STAR GP 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190907/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-08",
+   "name_ja": "5★STAR GP 2019",
+   "name_en": "5★STAR GP 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190908/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-14",
+   "name_ja": "5★STAR GP 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190914-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-14",
+   "name_ja": "5★STAR GP 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190914/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-16",
+   "name_ja": "5★STAR GP 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "福岡・西鉄ホール",
+    "country": "JP",
+    "prefecture": "Fukuoka",
+    "prefecture_ja": "福岡県",
+    "city": "Fukuoka",
+    "city_ja": "福岡市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190916-2/",
+    "https://ja.wikipedia.org/wiki/%E3%82%BD%E3%83%A9%E3%83%AA%E3%82%A2%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-16",
+   "name_ja": "5★STAR GP 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "福岡・西鉄ホール",
+    "country": "JP",
+    "prefecture": "Fukuoka",
+    "prefecture_ja": "福岡県",
+    "city": "Fukuoka",
+    "city_ja": "福岡市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190916/",
+    "https://ja.wikipedia.org/wiki/%E3%82%BD%E3%83%A9%E3%83%AA%E3%82%A2%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-22",
+   "name_ja": "5★STAR GP 2019～優勝決定戦～",
+   "name_en": null,
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190922/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-09-29",
+   "name_ja": "5★STAR GP2019 Special in Nagoya",
+   "name_en": "5★STAR GP2019 Special in Nagoya",
+   "venue": {
+    "en": null,
+    "ja": "名古屋ダイアモンドホール",
+    "country": "JP",
+    "prefecture": "Aichi",
+    "prefecture_ja": "愛知県",
+    "city": "Nagoya",
+    "city_ja": "名古屋市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20190929/",
+    "https://ja.wikipedia.org/wiki/DIAMOND%20HALL"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-10-14",
+   "name_ja": "STARDOM WORLD CHAMPIONS WARS 2019",
+   "name_en": "STARDOM WORLD CHAMPIONS WARS 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191014/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-10-19",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191019-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-10-19",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191019/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-10-20",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦～岡山プロレスフェスティバル～",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "岡山市灘崎文化センター",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191020/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-10-27",
+   "name_ja": "STARDOM MASK FIESTA 2019",
+   "name_en": "STARDOM MASK FIESTA 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191027-2/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-10-27",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191027/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-04",
+   "name_ja": "STARDOM BEST OF GODDESS2019",
+   "name_en": "STARDOM BEST OF GODDESS2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191104/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-09",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191109-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-09",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191109/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-15",
+   "name_ja": "第9回GODDESS OF STARDOM タッグリーグ戦～優勝決定戦～",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "愛知・名古屋レジェンドホール",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191115/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-17",
+   "name_ja": "イベント・プロレス",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "埼玉・ボートレース戸田",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191117/"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-23",
+   "name_ja": "GODDESS OF STARS 2019",
+   "name_en": "GODDESS OF STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191123/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-11-24",
+   "name_ja": "GODDESS OF STARS 2019",
+   "name_en": "GODDESS OF STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191124/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-12-01",
+   "name_ja": "GODDESS OF STARS 2019（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191201-2/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-12-01",
+   "name_ja": "GODDESS OF STARS 2019（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191201/",
+    "https://ja.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E9%A4%A8"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-12-08",
+   "name_ja": "GODDESS OF STARS 2019",
+   "name_en": "GODDESS OF STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191208/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-12-14",
+   "name_ja": "GODDESS OF STARS 2019",
+   "name_en": "GODDESS OF STARS 2019",
+   "venue": {
+    "en": null,
+    "ja": "横浜ラジアントホール",
+    "country": "JP",
+    "prefecture": "Kanagawa",
+    "prefecture_ja": "神奈川県",
+    "city": "Yokohama",
+    "city_ja": "横浜市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191214/",
+    "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%82%B8%E3%82%A2%E3%83%B3%E3%83%88%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-12-15",
+   "name_ja": "GODDESS OF STARS 2019",
+   "name_en": "GODDESS OF STARS 2019",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191215/",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  },
+  {
+   "date": "2019-12-24",
+   "name_ja": "YEAREND CLIMAX 2019",
+   "name_en": "YEAREND CLIMAX 2019",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/event/20191224/",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "official results page not read: wwr-stardom.com was stopped for this job after two errors (see blocked); fallbacks gave no full card (Cagematch HTTP 307, Battle News HTTP 403, no per-show article on Japanese Wikipedia, Tokyo Sports reports cover headline matches only)"
+   ]
+  }
+ ]
+}
