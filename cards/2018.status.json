@@ -1,0 +1,164 @@
+{
+ "year": 2018,
+ "ok": true,
+ "generated": "2026-11-23",
+ "shows": 27,
+ "matches": 0,
+ "full_cards": 0,
+ "gaps": [
+  {
+   "date": null,
+   "show": null,
+   "missing": "the official calendar (wwr-stardom.com/schedule/?ym=2018MM) lists no shows for January to mid-August 2018 (first listed show: 2018-08-26); STARDOM shows held before 2018-08-26 are not in this file because no confirmable source listed them in this job"
+  },
+  {
+   "date": "2018-08-26",
+   "show": "5☆STAR GP2018（昼）",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-01",
+   "show": "5☆STAR GP2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-08",
+   "show": "5☆STAR GP2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-09",
+   "show": "5☆STAR GP2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-15",
+   "show": "5☆STAR GP2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-16",
+   "show": "5☆STAR GP2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-24",
+   "show": "5☆STAR GP2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-30",
+   "show": "5★STAR Grand Champion Carnival2018（昼）",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-09-30",
+   "show": "5★STAR Grand Champion Carnival2018（夜）",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-13",
+   "show": "第8回GODDESSES OF STARDOM～タッグリーグ戦～",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-14",
+   "show": "第8回GODDESSES OF STARDOM～タッグリーグ戦～",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-20",
+   "show": "第8回GODDESSES OF STARDOM～タッグリーグ戦～（昼）",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-20",
+   "show": "第8回GODDESSES OF STARDOM～タッグリーグ戦～（夜）",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-23",
+   "show": "TRUE FIGHT 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-28",
+   "show": "MASK FIESTA 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-10-28",
+   "show": "第8回 GODDESSES OF STARDOM～タッグリーグ戦～",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-11-03",
+   "show": "第8回 GODDESSES OF STARDOM～タッグリーグ戦～",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-11-04",
+   "show": "第8回 GODDESSES OF STARDOM～タッグリーグ戦～優勝決定戦",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-11-10",
+   "show": "GODDESSES OF STARS 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-11-23",
+   "show": "BEST OF GODDESSES 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-11-25",
+   "show": "GODDESSES OF STARS 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-12-02",
+   "show": "スターダム★アイドルズ旗揚げ公演",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-12-02",
+   "show": "GODDESSES OF STARS",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-12-07",
+   "show": "GODDESSES OF STARS 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-12-15",
+   "show": "GODDESSES OF STARS 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-12-16",
+   "show": "GODDESSES OF STARS 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  },
+  {
+   "date": "2018-12-24",
+   "show": "YEAREND CLIMAX 2018",
+   "missing": "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+  }
+ ],
+ "blocked": [
+  {
+   "site": "wwr-stardom.com",
+   "note": "HARD STOP: HTTP 403 at 2026-11-23 00:28Z on a request to the official archive's WordPress listing endpoint (/archive/wp-json/wp/v2/categories), made to find the 2018 results posts. Before that, all 12 official 2018 month calendars were read (HTTP 200); no 2018 event or results page was read. No further wwr-stardom.com requests were made for this job."
+  },
+  {
+   "site": "www.cagematch.net",
+   "note": "Two requests (Stardom 2018 event list) returned HTTP 307 with an empty body; stopped using Cagematch for this job."
+  },
+  {
+   "site": "battle-news.com",
+   "note": "Not tried for 2018 (403 in 2019; at most one try allowed)."
+  }
+ ]
+}
