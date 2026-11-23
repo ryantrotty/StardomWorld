@@ -22,7 +22,7 @@ Muse researches each older year's STARDOM shows from outside sources and publish
 
 - Anything a source doesn't state is `null`. An unknown wrestler is `null` in their slot, never `""`.
 - `kind` is `match` or `segment`. Card check uses only matches for line-ups.
-- `no` is the running order, 1 to N, counting segments. From 2.119.0 Muse lists every segment the official results page lists (greetings, speeches, ceremonies, announcements), as `kind: "segment"`. Files without them still work: card check sets segments aside on both sides (see below).
+- `no` is the running order, 1 to N. Muse works from the official results, not the site's videos, so its segments (when it lists any) won't always match the videos: a greeting may have no video, and a video may cover something the results don't list. Card check doesn't rely on them. It uses only the matches, sorted by `no`, and sets segment videos aside on its own side (see below).
 
 ## What card check does with it (2.117.0)
 
