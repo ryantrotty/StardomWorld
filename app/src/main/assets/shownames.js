@@ -88,6 +88,7 @@
     'アーティスト・オブ・スターダム': 'Artist of Stardom', 'ストロングウィメンズ': 'Strong Women\'s', 'ゴッデス・オブ・スターダム': 'Goddesses of Stardom',
     'トーナメント': 'Tournament', '準々決勝': 'Quarterfinal', '準決勝': 'Semifinal', '決勝戦': 'Final', '決勝': 'Final',
     '1回戦': 'Round 1', '2回戦': 'Round 2', '3回戦': 'Round 3', '一回戦': 'Round 1', '二回戦': 'Round 2',
+    'クイーンズ・クエスト': 'Queen\'s Quest', '大江戸隊': 'Oedo Tai', 'トーキョー・サイクロン': 'Tokyo Cyclone', 'ドンナ・デル・モンド': 'Donna Del Mondo', 'コズミック・エンジェルズ': 'Cosmic Angels',
     'メインイベント': 'Main Event', 'セミファイナル': 'Semi-Main Event', '試合': 'Match', 'マッチ': 'Match', 'タッグ': 'Tag', 'ブロック': 'Block'
   };
   try {
@@ -102,9 +103,11 @@
   var NUM = { 2: 'Two', 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six', 8: 'Eight', 10: 'Ten', 12: 'Twelve' };
   function matchEn(t) {
     var n = String(t || '').replace(/[！-～]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).replace(/　/g, ' ');
+    // 2.120.0: ＳＴＡＲＳｖｓ大江戸隊 → STARS vs 大江戸隊
+    n = n.replace(/([A-Z\s\u3000-\u30ff\u4e00-\u9fff])vs\.?(?=[\s\u3000-\u30ff\u4e00-\u9fff]|$)/g, '$1 vs ');
     // 6人タッグマッチ → Six-Woman Tag Match; 3WAYマッチ → 3-Way Match
     n = n.replace(/(\d+)\s*人\s*タッグ\s*(マッチ)?/g, function(_, d) { return ' ' + (NUM[+d] || d) + '-Woman Tag Match '; });
-    n = n.replace(/(\d+)\s*WAY\s*(マッチ)?/gi, function(_, d) { return ' ' + d + '-Way Match '; });
+    n = n.replace(/(\d+)\s*WAY\s*(マッチ|バトル)?/gi, function(_, d) { return ' ' + d + '-Way Match '; });   // 2.120.0: 4WAYバトル too
     n = n.replace(/第\s*(\d+)\s*試合/g, function(_, d) { return ' Match ' + d + ' '; });
     MKEYS.forEach(function(k) { if (n.indexOf(k) >= 0) n = n.split(k).join(' ' + MALL[k] + ' '); });
     n = n.replace(/[『「]/g, ' \u201c').replace(/[』」]/g, '\u201d ').replace(/・/g, ' ');
