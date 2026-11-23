@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.119.0
+
+- **iPhone card check: reference cards no longer shift after a segment.** Muse's cards (2019–2021) leave out greetings, speeches and ceremonies, and card check paired matches by number. So a segment video ahead of the matches put every line-up after it one match off (2020-09-28 Korakuen, Itsuki Hoshino's speech). Reference matches now line up with the show's match videos only. A video counts as a segment when it's marked or saved as one, or when its title says so (挨拶, スピーチ, Speech, Greeting, Ceremony…) and the site gives no line-up of two sides. A segment keeps its place when the card is reordered.
+- **Counts that still differ are flagged, not filled.** The Reference card button shows "⚠ 6 v 7" and the sheet explains. Only matches whose wrestlers the site names are paired. Mark the segment and open it again, or fill the rest by hand.
+- **Check logged shows against the reference cards**, on a year's list under "Reference cards: N shows". It uses the StarScope list already on the phone (no site calls). It lists matches whose saved wrestlers sit on another match of the card, matches with no one from the card, and shows whose match counts differ. Shifted shows come first. Tap one to open it.
+- Muse's instructions now ask for segments in the running order (`kind: "segment"`). See `docs/REFERENCE_CARDS.md`.
+
 ## 2.118.3
 
 - **Complete-career pages: choosing a filter goes to the results.** Picking a choice under More, or opening a matches tab (Singles Matches, Championship and so on), now puts focus on the first match card instead of leaving it on the filter or tab row.

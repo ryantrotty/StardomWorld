@@ -359,7 +359,8 @@
       var shown = all.filter(function(o) { return S.yf === 'all' || o.st === S.yf; });
       refLoad(S.year);
       var refY = refs[S.year];
-      if (refY && refY.data) h += '<div class="gl" style="margin:0 0 10px;color:#F4C242">Reference cards: ' + refY.data.shows.length + ' shows' + (refY.data.generated ? ' · ' + esc(refY.data.generated) : '') + '</div>';
+      if (refY && refY.data) h += '<div class="gl" style="margin:0 0 10px;color:#F4C242">Reference cards: ' + refY.data.shows.length + ' shows' + (refY.data.generated ? ' · ' + esc(refY.data.generated) : '') + '</div>' +
+        (kitReady && Object.keys(map).length ? '<button class="opt" data-refaudit="1" style="margin:0 0 12px">Check logged shows against the reference cards<small>Lists matches whose saved wrestlers sit on another match of the reference card · no site calls</small></button>' : '');
       else if (refY && refY.err) h += '<div class="gl" style="margin:0 0 10px">Reference cards couldn\'t be read (' + esc(refY.err) + ')</div>';
       // 2.116.0: venues for the shows on this list in one go (no site calls: the venue the list gives, else Gemini).
       var bvN = bvCands(shown.map(function(o) { return o.x; }), S.year).length;
@@ -901,7 +902,21 @@
   }
   // The answer, read: suggestions to approve. Names the site gave that the library doesn't know, paired with the AI's
   // people on the same side of the same match (matched by the wrestlers both already agree on); the venue.
-  function aiRead(text) {
+  // 2.119.0: a video that is a segment, not a match (a greeting, speech, ceremony, comment), by what's known of it:
+  // marked or saved as one, or a title that says so with no line-up of two sides. Reference cards line up their
+  // matches with the show's match videos only, so a segment the card leaves out no longer shifts every match after it.
+  var SEG_TITLE = /挨拶|あいさつ|スピーチ|セレモニー|入場式|開会式|閉会式|黙祷|調印式|会見|表彰|授賞|コメント|\bspeech|\bgreeting|ceremony|announcement|press conference|moment of silence|\bcomments?\b|\bpromo\b/i;
+  function segLike(v) {
+    if (isSeg(v.id) || segs[v.id]) return true;
+    var r = recs[v.id], c = map[v.id];
+    if (r && !r.failed && sides(r).A.length >= 2) return false;
+    if (c && c.s && c.s.length >= 2) return false;
+    var g = r && !r.failed ? segGuess(v, r) : null;
+    if (g && g.type) return true;
+    return SEG_TITLE.test(segText(v, r && !r.failed ? r : null));
+  }
+  function aiRead(text, opt) {
+    var refMode = !!(opt && opt.ref);
     var a = String(text || ''), i = a.indexOf('{'), j = a.lastIndexOf('}'), data = null;
     if (i >= 0 && j > i) { try { data = JSON.parse(a.slice(i, j + 1)); } catch (e) {} }
     if (data && !Array.isArray(data.matches) && (data.order != null || data.venue)) data.matches = [];   // 2.112.0: a venue-only answer
@@ -909,11 +924,17 @@
     var K = kit(), out = [], norm = function(x) { return String(x || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-]+/g, ''); };
     var aiId = function(p) { return p ? (K.resolve(p.en || '') || K.resolve(p.ja || '')) : ''; };
     var used = {}, newSeen = {}, same = data.matches.length === show.videos.length;
+    // 2.119.0: a reference card is lined up with the match videos only (segments set aside), by its matches' order.
+    var segV = {}, mvIds = [];
+    if (refMode) show.videos.forEach(function(v) { if (segLike(v)) segV[v.id] = 1; else mvIds.push(v.id); });
+    var sameM = refMode && data.matches.length === mvIds.length, nPos = refMode ? mvIds.length : show.videos.length;
+    var pos = function(vi) { return refMode ? mvIds.indexOf(show.videos[vi].id) : vi; };
     // 2.93.0: the card's order, checked by the wrestlers: each match the library knows two or more people in is found
     // in the answer; if the answer has them reversed or shuffled, its order is offered (and line-ups below follow it).
     var at = {}, pairs = [];
     show.videos.forEach(function(v, vi) {
       var r = recs[v.id], ids = {}, c = map[v.id];
+      if (segV[v.id]) return;
       if (r && !r.failed) { var sd = sides(r); sd.A.forEach(function(names, si) { names.forEach(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : '', id = K.resolve(rw) || K.resolve(o); if (id) ids[id] = 1; }); }); }
       else if (c && c.s) (c.s || []).forEach(function(x, si) { x.forEach(function(nm, k) { var id = K.resolve(nm) || K.resolve(((c.sj || [])[si] || [])[k]); if (id) ids[id] = 1; }); });   // logged: its saved names
       if (Object.keys(ids).length < 2) return;
@@ -921,7 +942,7 @@
       data.matches.forEach(function(m, mi) { var sc = 0; (m.sides || []).forEach(function(x) { (x || []).forEach(function(p) { if (ids[aiId(p)]) sc++; }); }); if (sc > bs) { bs = sc; best = mi; } });
       if (best >= 0 && bs >= 2) { at[v.id] = best; pairs.push([vi, best]); }
     });
-    var place = function(mi) { var m = data.matches[mi]; return Number(m.no) > 0 ? Number(m.no) : mi + 1; };
+    var place = function(mi) { var m = data.matches[mi]; return refMode ? mi + 1 : Number(m.no) > 0 ? Number(m.no) : mi + 1; };
     var orderNote = '', reorder = null, ord = data.order, nV = show.videos.length;
     // 2.96.3: the answer says the order outright: "same", "reversed", or the list numbers in the real order.
     if (ord === 'same' || ord === true) { orderNote = 'Gemini confirms this running order.'; pairs = []; }
@@ -932,16 +953,21 @@
       else { reorder = ord.map(function(x) { return show.videos[Number(x) - 1]; }); out.unshift({ k: 'order', vids: reorder.map(function(v) { return v.id; }), why: 'as the answer has it', text: 'Put the matches in the answer\'s order', on: true }); }
     }
     if (pairs.length >= 2) {
-      var ident = pairs.every(function(p) { return place(p[1]) === p[0] + 1; });
-      var rev = pairs.every(function(p) { return place(p[1]) === show.videos.length - p[0]; });
+      var ident = pairs.every(function(p) { return place(p[1]) === pos(p[0]) + 1; });
+      var rev = pairs.every(function(p) { return place(p[1]) === nPos - pos(p[0]); });
       if (ident) orderNote = 'The answer has the matches in this order.';
       else {
-        var key = {}; show.videos.forEach(function(v, vi) { key[v.id] = at[v.id] != null ? place(at[v.id]) : (rev ? show.videos.length - vi : vi + 1); });
-        reorder = show.videos.slice().sort(function(x, y) { return key[x.id] - key[y.id]; });
+        var key = {}; show.videos.forEach(function(v, vi) { if (segV[v.id]) return; key[v.id] = at[v.id] != null ? place(at[v.id]) : (rev ? nPos - pos(vi) : pos(vi) + 1); });
+        if (refMode) {   // the matches move; a segment keeps its place on the card
+          var mvs = show.videos.filter(function(v) { return !segV[v.id]; }).sort(function(x, y) { return key[x.id] - key[y.id]; }), mk = 0;
+          reorder = show.videos.map(function(v) { return segV[v.id] ? v : mvs[mk++]; });
+        } else reorder = show.videos.slice().sort(function(x, y) { return key[x.id] - key[y.id]; });
         out.unshift({ k: 'order', vids: reorder.map(function(v) { return v.id; }), why: rev ? 'reversed (the answer)' : 'as the answer has it', text: rev ? 'Reverse the card: the answer has these matches the other way round' : 'Put the matches in the answer\'s order', on: true });
       }
     }
     var cardPos = function(vi) { if (!reorder) return vi; var id = show.videos[vi].id; return reorder.map(function(v) { return v.id; }).indexOf(id); };
+    // 2.119.0: a match video's place among the match videos, in the card's (new) order
+    var matchPos = function(id) { return (reorder || show.videos).filter(function(v) { return !segV[v.id]; }).map(function(v) { return v.id; }).indexOf(id); };
     var addNew = function(p, v, no) {
       var key = norm(p.en || p.ja); if (!key || newSeen[key] || aiId(p)) return;
       newSeen[key] = 1;
@@ -950,7 +976,7 @@
     // 2.92.1: a match the site gave no line-up for takes the answer's, matched by its place on the card (when the
     // answer has as many matches as the site) and offered as a line-up to approve; its unknown wrestlers as new ones.
     show.videos.forEach(function(v, vi) {
-      var r = recs[v.id]; if (status(v)) return;
+      var r = recs[v.id]; if (status(v) || segV[v.id]) return;
       // 2.96.4: an answer about this one match whose sides hold a different number of people than the site's (two
       // names run together, a missing "&") replaces the line-up instead of fixing names one by one.
       var one = data.matches.filter(function(m) { return Number(m.listed) === vi + 1 && Array.isArray(m.sides); })[0];
@@ -958,8 +984,11 @@
       if (r && !r.failed && sides(r).A.length >= 2 && !(one && shape(one.sides) !== shape(sides(r).A))) return;
       var mi = -1;
       var cp = cardPos(vi);
-      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && Number(m.listed) === vi + 1) mi = k; });
-      data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && m.listed == null && (Number(m.no) === cp + 1 || (same && k === cp))) mi = k; });
+      if (refMode) { var rp = sameM ? matchPos(v.id) : -1; if (rp >= 0 && !used[rp]) mi = rp; }   // only when the counts agree
+      else {
+        data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && Number(m.listed) === vi + 1) mi = k; });
+        data.matches.forEach(function(m, k) { if (mi < 0 && !used[k] && m.listed == null && (Number(m.no) === cp + 1 || (same && k === cp))) mi = k; });
+      }
       var am = mi >= 0 ? data.matches[mi] : null;
       if (!am || !Array.isArray(am.sides) || am.sides.length < 2) return;
       used[mi] = 1;
@@ -970,7 +999,7 @@
       aS.forEach(function(x) { x.forEach(function(p) { addNew(p, v.id, vi + 1); }); });
     });
     show.videos.forEach(function(v, vi) {
-      var r = recs[v.id]; if (!r || r.failed || status(v)) return;
+      var r = recs[v.id]; if (!r || r.failed || status(v) || segV[v.id]) return;
       var sd = sides(r), mine = sd.A.map(function(names, si) { return names.map(function(rw, k) { var o = sd.B[si] && sd.B[si].length === names.length ? sd.B[si][k] : ''; return { raw: rw, other: o, id: K.resolve(rw) || K.resolve(o) }; }); });
       if (!mine.some(function(sd2) { return sd2.some(function(p) { return !p.id; }); })) return;
       // the AI's match: the most wrestlers in common, else the same place on the card
@@ -979,7 +1008,8 @@
         if (used[mi] || !Array.isArray(m.sides)) return;
         var ids = {}; m.sides.forEach(function(x) { (x || []).forEach(function(p) { var id = aiId(p); if (id) ids[id] = 1; }); });
         var sc = 0; mine.forEach(function(x) { x.forEach(function(p) { if (p.id && ids[p.id]) sc += 2; }); });
-        if (Number(m.listed) === vi + 1) sc += 3; else if (Number(m.no) === vi + 1 || (same && mi === vi)) sc += 1;
+        if (refMode) { if (sameM && mi === matchPos(v.id)) sc += 1; }
+        else if (Number(m.listed) === vi + 1) sc += 3; else if (Number(m.no) === vi + 1 || (same && mi === vi)) sc += 1;
         if (sc > bs) { bs = sc; best = mi; }
       });
       if (best == null || bs < 1) return;
@@ -1017,7 +1047,12 @@
       out.unshift(m2 ? { k: 'venue', id: m2.id, name: m2.name, on: true } : { k: 'venueNew', en: vv.en || vv.ja, ja: vv.ja || '', on: true });
     }
     var note = data.date && show.date && data.date !== show.date ? 'The answer gives the date as ' + data.date + ' (the site: ' + show.date + ').' : '';
-    return { list: out, note: note, info: orderNote };
+    if (refMode && !sameM) {   // 2.119.0: counts differ, so nothing is filled by place: flagged instead
+      var nSeg = show.videos.length - mvIds.length;
+      note = [note, '⚠ The reference card has ' + data.matches.length + ' match' + (data.matches.length === 1 ? '' : 'es') + ' and the site ' + mvIds.length + (nSeg ? ' (not counting ' + nSeg + ' segment' + (nSeg > 1 ? 's' : '') + ')' : '') +
+        ', so no line-ups were filled by place. Only matches whose wrestlers the site names are paired. Mark any segment (Segment…) and open the reference card again, or fill the rest by hand.'].filter(Boolean).join(' ');
+    }
+    return { list: out, note: note, info: orderNote, flag: refMode && !sameM };
   }
   function aiHtml() {
     var a = sheetOpen, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:8px">' + (a.ref ? 'Reference card' : 'AI answer') + '</div>';
@@ -1149,19 +1184,29 @@
     if (!show || !show.date) return '';
     refLoad(show.date.slice(0, 4));
     var C = refCands();
-    return C.map(function(o) { return '<button class="b on" data-ref="' + o.i + '">' + esc(C.length > 1 ? 'Reference: ' + (o.s.name_en || o.s.name_ja || 'show ' + (o.i + 1)) : 'Reference card') + '</button>'; }).join('');
+    // 2.119.0: a card whose match count differs from the site's match videos (segments aside) says so on its button
+    var nM = show.videos.filter(function(v) { return !segLike(v); }).length;
+    return C.map(function(o) {
+      var rn = refMatches(o.s).length, off = rn && rn !== nM ? ' ⚠ ' + rn + ' v ' + nM : '';
+      return '<button class="b on" data-ref="' + o.i + '">' + esc((C.length > 1 ? 'Reference: ' + (o.s.name_en || o.s.name_ja || 'show ' + (o.i + 1)) : 'Reference card') + off) + '</button>';
+    }).join('');
   }
-  // Videos to the reference card's matches: two or more wrestlers in common, else the same place when both have as
-  // many entries.
+  // Videos to the reference card's matches: two or more wrestlers in common, else the same place among the match
+  // videos when the card has as many matches (2.119.0: segments on either side are set aside, so one the card leaves
+  // out doesn't shift the rest).
+  function refMatches(rs) {
+    return (rs.matches || []).filter(function(m) { return m && m.kind !== 'segment' && Array.isArray(m.sides); }).slice()
+      .sort(function(a, b) { return (Number(a.no) || 0) - (Number(b.no) || 0); });
+  }
   function refMap(rs) {
-    var out = {}, used = {}, ms = rs.matches || [];
-    show.videos.forEach(function(v) {
+    var out = {}, used = {}, ms = refMatches(rs), mv = show.videos.filter(function(v) { return !segLike(v); });
+    mv.forEach(function(v) {
       var ids = vidIds(v); if (Object.keys(ids).length < 2) return;
       var best = -1, bs = 0;
       ms.forEach(function(m, mi) { if (used[mi]) return; var n = 0; Object.keys(refIds(m)).forEach(function(id) { if (ids[id]) n++; }); if (n > bs) { bs = n; best = mi; } });
       if (best >= 0 && bs >= 2) { used[best] = 1; out[v.id] = ms[best]; }
     });
-    if (ms.length === show.videos.length) show.videos.forEach(function(v, vi) { if (!out[v.id] && !used[vi]) out[v.id] = ms[vi]; });
+    if (ms.length === mv.length) mv.forEach(function(v, vi) { if (!out[v.id] && !used[vi]) out[v.id] = ms[vi]; });
     return out;
   }
   function refTagText(m) {
@@ -1173,13 +1218,13 @@
     var ans = {
       date: rs.date || '',
       venue: rs.venue && (rs.venue.en || rs.venue.ja) ? { en: rs.venue.en || '', ja: rs.venue.ja || '' } : null,
-      matches: (rs.matches || []).filter(function(m) { return m && m.kind !== 'segment' && Array.isArray(m.sides); }).map(function(m) {
+      matches: refMatches(rs).map(function(m) {
         return { no: m.no, type: m.type || '', sides: m.sides.map(function(sd) { return (sd || []).filter(function(p) { return p && (p.en || p.ja); }).map(function(p) { return { en: p.en || '', ja: p.ja || '' }; }); }) };
       })
     };
     var text = JSON.stringify(ans);
     sheetOpen = { ai: 1, ref: 1, text: text, sug: null, sources: (rs.sources || []).map(function(u) { return { title: u, uri: u }; }) };
-    var rd = aiRead(text);
+    var rd = aiRead(text, { ref: true });
     if (rd.err) { sheetOpen.err = rd.err; draw(); return; }
     var pairs = refMap(rs), tags = {}, n = 0;
     show.videos.forEach(function(v) { var m = pairs[v.id], t = m && refTagText(m); if (t && !status(v) && !isSeg(v.id)) { tags[v.id] = t; n++; } });
@@ -1187,6 +1232,57 @@
     sheetOpen.sug = rd.list; sheetOpen.info = rd.info;
     sheetOpen.note = [rd.note, (rs.gaps || []).length ? 'Gaps in the reference card: ' + rs.gaps.join('; ') : ''].filter(Boolean).join(' ');
     draw();
+  }
+  // ---- 2.119.0: a year's logged shows against its reference cards, from the StarScope list already on the phone (no
+  // site calls). Each logged match is paired with the reference match it shares the most wrestlers with; a match whose
+  // wrestlers belong to another place on the card (the shift a left-out segment caused before 2.119.0), or to no
+  // match of the card at all, is listed. Segments are set aside on both sides.
+  function refAudit(y) {
+    var K = kit(), R = refs[y]; if (!K || !R || !R.data) return null;
+    var ids = function(names) { var o = {}; (names || []).forEach(function(sd) { (sd || []).forEach(function(n) { var id = n && K.resolve(n); if (id) o[id] = 1; }); }); return o; };
+    var common = function(a, b) { var n = 0; Object.keys(a).forEach(function(k) { if (b[k]) n++; }); return n; };
+    var bySet = {};
+    Object.keys(map).forEach(function(vid) {
+      var c = map[vid]; if (!c || String(c.d || '').slice(0, 4) !== String(y) || (c.x && c.x.k === 'segment')) return;
+      var k = c.vs || c.sid; (bySet[k] = bySet[k] || []).push({ vid: vid, c: c });
+    });
+    var out = [], nShows = 0;
+    Object.keys(bySet).forEach(function(set) {
+      var L = bySet[set].sort(function(a, b) { return Number(a.c.n) - Number(b.c.n); }), d = L[0].c.d;
+      var cands = R.data.shows.filter(function(s) { return s && s.date === d; });
+      if (!cands.length) return;
+      nShows++;
+      var mine = L.map(function(o) { var a = ids(o.c.s), b = ids(o.c.sj); Object.keys(b).forEach(function(k) { a[k] = 1; }); return a; });
+      var best = null;
+      cands.forEach(function(s) {
+        var ms = refMatches(s), mi = ms.map(function(m) { var o = {}; (m.sides || []).forEach(function(sd) { (sd || []).forEach(function(p) { var id = p && (K.resolve(p.en || '') || K.resolve(p.ja || '')); if (id) o[id] = 1; }); }); return o; });
+        var sc = 0; mine.forEach(function(a) { mi.forEach(function(b) { sc += common(a, b); }); });
+        if (!best || sc > best.sc) best = { s: s, ms: ms, mi: mi, sc: sc };
+      });
+      var issues = [];
+      L.forEach(function(o, r) {
+        var a = mine[r]; if (Object.keys(a).length < 1) return;
+        var top = -1, ts = 0; best.mi.forEach(function(b, k) { var n = common(a, b); if (n > ts) { ts = n; top = k; } });
+        var here = best.mi[r] ? common(a, best.mi[r]) : 0, who = (o.c.s || []).map(function(sd) { return sd.join(' & '); }).join(' vs ');
+        if (top >= 0 && top !== r && ts > here) issues.push({ vid: o.vid, no: o.c.n, text: 'Match ' + (r + 1) + ' (' + who + ') is match ' + (top + 1) + ' on the reference card' + (best.mi[r] && Object.keys(best.mi[r]).length ? ', which has ' + refWho(best.ms[r]) + ' at ' + (r + 1) : '') });
+        else if (top < 0 && best.ms.length) issues.push({ vid: o.vid, no: o.c.n, text: 'Match ' + (r + 1) + ' (' + who + '): no one in it is on the reference card' });
+      });
+      if (L.length !== best.ms.length) issues.push({ text: L.length + ' match' + (L.length === 1 ? '' : 'es') + ' logged, ' + best.ms.length + ' on the reference card' });
+      if (issues.length) out.push({ set: set, d: d, name: showName(L[0].c.sh || best.s.name_en || best.s.name_ja || '', d) || best.s.name_en || best.s.name_ja || '', shifted: issues.filter(function(x) { return /on the reference card,|is match/.test(x.text); }).length, issues: issues });
+    });
+    out.sort(function(a, b) { return (b.shifted - a.shifted) || String(b.d).localeCompare(String(a.d)); });
+    return { y: y, shows: nShows, list: out };
+  }
+  function refWho(m) { var K = kit(); return (m.sides || []).map(function(sd) { return (sd || []).map(function(p) { var id = p && K && (K.resolve(p.en || '') || K.resolve(p.ja || '')); return id ? K.nameOf(id) : (p ? p.en || p.ja || '?' : '?'); }).join(' & '); }).join(' vs '); }
+  function auditHtml() {
+    var a = sheetOpen.audit, h = '<div class="shade" data-close="1"></div><div class="sheet"><div class="hd" style="margin-bottom:4px">' + esc(a.y) + ' against the reference cards</div>';
+    var sh = a.list.filter(function(x) { return x.shifted; }).length;
+    h += '<div class="sub" style="color:#9AA6B4;margin-bottom:10px">' + a.shows + ' logged show' + (a.shows === 1 ? '' : 's') + ' with a reference card. ' + (a.list.length ? sh + ' with matches on another place of the card' + (a.list.length > sh ? ', ' + (a.list.length - sh) + ' with other differences' : '') + '. Tap a show to open it.' : 'Every logged match sits where the reference card has it.') + '</div>';
+    a.list.forEach(function(x) {
+      h += '<button class="opt" data-auditgo="' + esc(x.set) + '" style="margin:0 0 8px;text-align:left">' + esc(dateText(x.d) + ' · ' + x.name) + (x.shifted ? ' <span style="color:#FFB347">⚠ ' + x.shifted + ' moved</span>' : '') +
+        x.issues.map(function(i) { return '<small>' + esc(i.text) + '</small>'; }).join('') + '</button>';
+    });
+    return h + '<div class="bt"><button class="b" data-close="1">Close</button></div></div>';
   }
   // ---- 2.116.0: venues for a year's list in one go. The shows read so far (as filtered) that have no venue saved and
   // whose venue on the site isn't in the library go to Gemini together, or as prompts to copy into any AI. Nothing is
@@ -1527,7 +1623,7 @@
       var title = S.screen === 'show' && show ? showName(show.name, show.date) + (show.date ? ' · ' + dateText(show.date) : '') : 'Log a show';
       h = '<div class="top">' + (S.screen === 'show' ? '<button class="ib" data-home="1">‹</button>' : '') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tt">' + esc(title) + '</span><button class="ib" data-relink="1" aria-label="Card check link">⚙</button><button class="ib" data-closeall="1">✕</button></div><div class="pad">' +
         (flash ? '<div class="msg' + (flashBad ? ' er' : '') + '" style="margin-bottom:10px">' + esc(flash) + '</div>' + (diag ? '<div style="font:600 13px system-ui;color:#C9D2DC;border:1px solid #3B4656;border-radius:10px;padding:8px 10px;margin-bottom:10px">' + esc(diag) + (report ? '<div class="bt"><button class="b on" data-copyrep="1">Copy page report</button></div>' : '') + '</div>' : '') + (flashKey ? '<div class="bt" style="margin-bottom:12px"><button class="b on" data-relink="1">Change the card check link</button></div>' : '') : '') +
-        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.bulk ? bvHtml() : sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : sheetOpen.man ? manHtml() : fixHtml()) : '');
+        (!kitReady ? '<div class="ld">Loading the library…</div>' : '') + (S.screen === 'show' ? showHtml() : homeHtml()) + '</div>' + (sheetOpen ? (sheetOpen.audit ? auditHtml() : sheetOpen.bulk ? bvHtml() : sheetOpen.ai ? aiHtml() : sheetOpen.seg ? segHtml() : sheetOpen.man ? manHtml() : fixHtml()) : '');
     }
     root.innerHTML = h; root.scrollTop = y;
     var vin = root.querySelector('#ccp-vin');
@@ -1616,6 +1712,8 @@
     if (d.vnew) { if (vs.text.trim()) venueNew(vs.text.trim()); return; }
     if (d.fix) { sheetOpen = { v: d.fix, raw: d.raw, other: d.other, now: d.now || '', q: d.now ? '' : d.raw, err: '', busy: false, focus: !!d.now }; draw(); return; }
     if (d.close) { sheetOpen = null; draw(); return; }
+    if (d.refaudit) { var au = refAudit(S.year); if (au) sheetOpen = { audit: au }; else note('The reference cards or the library aren\'t loaded yet.', true); draw(); return; }
+    if (d.auditgo) { sheetOpen = null; flash = ''; openShow(d.auditgo, 'y' + S.year); return; }
     if (d.split && sheetOpen && recs[sheetOpen.v]) {
       var fs = sheetOpen, K1 = kit(), ids = K1.inText([fs.raw, fs.other].filter(Boolean).join(' ')), rc = recs[fs.v], nm = ids.map(function(id) { return K1.nameOf(id); });
       ['sides_en', 'sides_ja'].forEach(function(k) { (rc[k] || []).forEach(function(side, i) { var j = side.indexOf(fs.raw); if (j < 0 && fs.other) j = side.indexOf(fs.other); if (j >= 0) rc[k][i] = side.slice(0, j).concat(nm, side.slice(j + 1)); }); });
@@ -1668,7 +1766,7 @@
     if (d.ref != null && d.ref !== '' && show) { refOpen(+d.ref); return; }
     if (d.aicopy) { copyText(aiPrompt(), b, 'Copied: paste it into Gemini'); return; }
     if (d.aipaste) { sheetOpen = { ai: 1, text: '', sug: null }; draw(); return; }
-    if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }
+    if (d.airead && sheetOpen) { sheetOpen.text = (root.querySelector('#ccp-ai') || {}).value || ''; var rd = aiRead(sheetOpen.text, { ref: sheetOpen.ref }); if (rd.err) sheetOpen.err = rd.err; else { sheetOpen.sug = rd.list; sheetOpen.note = rd.note; sheetOpen.info = rd.info; sheetOpen.err = ''; } draw(); return; }
     if (d.aitog && sheetOpen && sheetOpen.sug) { var it = sheetOpen.sug[+d.aitog]; it.on = !it.on; draw(); return; }
     if (d.aiapply && sheetOpen) { aiApply(); return; }
     if (d.aiask || d.aione || d.aiven) {
