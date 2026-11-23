@@ -150,7 +150,7 @@
  "blocked": [
   {
    "site": "wwr-stardom.com",
-   "note": "HARD STOP: HTTP 403 at 2026-11-23 00:28Z on a request to the official archive's WordPress listing endpoint (/archive/wp-json/wp/v2/categories), made to find the 2018 results posts. Before that, all 12 official 2018 month calendars were read (HTTP 200); no 2018 event or results page was read. No further wwr-stardom.com requests were made for this job."
+   "note": "HARD STOP (first pass): HTTP 403 at 2026-11-23 00:28Z on a request to the official archive's WordPress listing endpoint (/archive/wp-json/wp/v2/categories), made to find the 2018 results posts. Before that, all 12 official 2018 month calendars were read (HTTP 200); no 2018 event or results page was read. RESUME attempt 2026-11-23 ~14:05Z (after the 06:30 UTC daily build reached wwr cleanly, 60 requests, no blocks): 5 requests, 3 distinct event pages failed with IncompleteRead (truncated HTTP 200 responses) in one session (2018-08-26, 2018-09-01, 2018-09-08) -> HARD STOP per the 3+ distinct pages rule; no 2018 event or results page was read in the resume; the series stopped. No HTTP 403/429 from wwr in the resume."
   },
   {
    "site": "www.cagematch.net",
