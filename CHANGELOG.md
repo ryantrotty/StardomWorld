@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.119.2
+
+- **Kawaii of Kawaii: date fixed.** The one match on record, Maki Itoh vs Aya Sakura at Supreme Fight 2026 in Osaka, is now dated 7 Feb 2026 (it was 2 Jul 2026, day and month swapped). The reign's days count from 7 Feb and the lineage starts there. In the sheet, the match (m8318) now carries the title tag `kawaii`, and `kawaii` is a title in the lists tab, so its English and Japanese videos show under the title's matches.
+
 ## 2.119.1
 
 - **Docs: no segment rule for Muse.** Muse gathers the official card results, not the site's video list, so its "segments" wouldn't reliably match videos. The instruction for Muse to list segments in the running order is dropped. Card check never needed it: it pairs reference matches with match videos and sets segment videos aside on the site's side. No code change.
