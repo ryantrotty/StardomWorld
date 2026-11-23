@@ -261,6 +261,10 @@
   // Segments (2.96.0): cards you've marked as a retirement, homecoming, debut, return, award or announcement, by video:
   // { type, ids }. Kept for this visit; Confirm / Confirm all save them like any ready card.
   var segs = ssGet('ccPhoneSegs') || {};
+  // 2.119.0: matches logged from a thumbnail whose line-up you changed here: ready to save again (replacing the saved
+  // people) until the sheet takes it. Matches logged while watching are never re-saved from card check.
+  var redo = ssGet('ccPhoneRedo') || {};
+  function redoSet(id, on) { if (on) redo[id] = 1; else delete redo[id]; ssSet('ccPhoneRedo', redo); }
   function segSet(id, v) { if (v) segs[id] = v; else delete segs[id]; ssSet('ccPhoneSegs', segs); }
   var vs = { mode: 'view', text: '', busy: '', msg: '', err: '' };
   function kit() { return kitReady && window.__tvIndexKit; }
@@ -482,6 +486,7 @@
   function status(v) {
     if (sending[v.id]) return { k: 'saved', label: 'Saving to the sheet…' };
     if (saved[v.id]) return { k: 'saved', label: 'Logged' };
+    if (redo[v.id]) return null;   // 2.119.0: changed here, to save again
     var c = map[v.id];
     if (blank[v.id] && !c) return { k: 'thumb', label: 'Segment · no names' };
     if (c) return c.x && c.x.k === 'segment' ? { k: 'thumb', label: 'Segment' } : c.x && c.x.tb ? { k: 'thumb', label: 'Logged from thumbnail' } : { k: 'watched', label: 'Logged while watching' };
@@ -563,13 +568,18 @@
   // A line-up you type (2.108.0): for a card the site gives no line-up for (a sparring session, a debut), or one you
   // entered before. Sides of wrestlers from the library, or a new wrestler under the name you type. Used as the read
   // line-up, so Confirm saves it like any other card.
+  // 2.119.0: any match not saved yet, or one logged from a thumbnail, can have its line-up changed (people removed,
+  // added or moved). A thumbnail one is then saved again over what the sheet has.
+  function thumbLogged(v) { var c = map[v.id]; return !!(c && c.x && c.x.tb && !(c.x.k === 'segment')); }
+  function canEdit(v) { var r = recs[v.id]; if (segs[v.id] || isSeg(v.id)) return false; return status(v) ? thumbLogged(v) && !sending[v.id] : !!(r && !r.failed); }
   function manOpen(v) {
-    var r = recs[v.id], K = kit(), cur = [];
+    var r = recs[v.id], K = kit(), cur = [], c = map[v.id];
     if (r && r.manIds) cur = r.manIds.map(function(x) { return x.slice(); });
-    else if (r && !r.failed && K) cur = sides(r).A.map(function(names) { return names.map(function(n) { return K.resolve(n); }).filter(Boolean); });
+    else if (r && !r.failed && K && sides(r).A.length) cur = sides(r).A.map(function(names) { return names.map(function(n) { return K.resolve(n); }).filter(Boolean); });
+    else if (c && c.s && K) cur = c.s.map(function(names, si) { return names.map(function(n, k) { return K.resolve(n) || K.resolve(((c.sj || [])[si] || [])[k]); }).filter(Boolean); });
     while (cur.length < 2) cur.push([]);
     var at = 0; cur.some(function(x, i) { if (!x.length) { at = i; return true; } return false; });
-    sheetOpen = { man: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), sides: cur, at: at, q: '', err: '', busy: false }; draw();
+    sheetOpen = { man: 1, v: v.id, title: mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t), sides: cur, at: at, q: '', err: '', busy: false, logged: !!status(v), had: !!(r && !r.failed && sides(r).A.length) }; draw();
   }
   function manHtml() {
     var f = sheetOpen, K = kit(), L = K && f.q ? K.talents(f.q, 6) : [];
@@ -585,7 +595,8 @@
     if (f.err) h += '<div class="msg er">' + esc(f.err) + '</div>';
     if (f.busy) h += '<div class="msg">Adding…</div>';
     var ok = f.sides.filter(function(x) { return x.length; }).length >= 2;
-    h += '<div class="bt"><button class="b on wide" data-mok="1"' + (ok && !f.busy ? '' : ' disabled') + '>Use this line-up</button><button class="b" data-close="1">Cancel</button></div></div>';
+    if (f.logged) h += '<div class="sub" style="color:#9AA6B4;margin-top:8px">Logged from the thumbnail: Confirm saves this line-up over the saved one.</div>';
+    h += '<div class="bt"><button class="b on wide" data-mok="1"' + (ok && !f.busy ? '' : ' disabled') + '>Use this line-up</button>' + (!f.logged && f.had ? '<button class="b" data-mclear="1">Clear line-up</button>' : '') + '<button class="b" data-close="1">Cancel</button></div></div>';
     return h;
   }
   function manList(L) {
@@ -604,12 +615,24 @@
     f.q = ''; f.focus = true; draw();
   }
   function manUse() {
-    var f = sheetOpen, K = kit(), r = recs[f.v]; if (!r || !K) return;
+    var f = sheetOpen, K = kit(), r = recs[f.v], v = show && show.videos.filter(function(x) { return x.id === f.v; })[0];
+    if (!r && v && f.logged) r = recs[f.v] = { id: Number(f.v), set: Number(show.set), title_en: v.t, title_ja: '', sides_en: [], sides_ja: [], shows: [], lines: [], thumb: v.th, date: show.date };
+    if (!r || !K) return;
+    if (f.logged) { redoSet(f.v, true); delete saved[f.v]; }
+    openCards[f.v] = 1;   // keep the card open after the change
     var ids = f.sides.filter(function(x) { return x.length; }), names = ids.map(function(x) { return x.map(function(id) { return K.nameOf(id); }); });
     r.sides_en = names; r.sides_ja = names.map(function(x) { return x.slice(); }); r.manIds = ids;
     ['roles_en', 'roles_ja', 'teams_en', 'teams_ja'].forEach(function(k) { delete r[k]; });
     ssSet(REC_KEY + f.v, r); delete attn[f.v]; delete sendFail[f.v]; segSet(f.v, null);
     sheetOpen = null; draw();
+  }
+  // 2.119.0: back to no line-up (an AI or reference card line-up that was wrong): the card needs a look again.
+  function manClear() {
+    var f = sheetOpen, r = recs[f.v]; if (!r) return;
+    r.sides_en = []; r.sides_ja = []; delete r.manIds; delete r.fromAi;
+    ['roles_en', 'roles_ja', 'teams_en', 'teams_ja'].forEach(function(k) { delete r[k]; });
+    delete refTags[f.v]; delete r.ref; ssSet('ccPhoneRefTags', refTags);
+    ssSet(REC_KEY + f.v, r); delete sendFail[f.v]; openCards[f.v] = 1; sheetOpen = null; draw();
   }
   function cardHtml(v, i) {
     var r = recs[v.id], s = status(v), k = cls(v), title = mtEn((r && !r.failed && (r.title_en || r.title_ja)) || v.t);
@@ -631,7 +654,7 @@
     h += '<div class="bt">';
     if ((!s && k === 'ready') || k === 'renumber') h += '<button class="b on wide" data-confirm="' + esc(v.id) + '"' + (batch ? ' disabled' : '') + '>' + (batch && batch.at === v.id ? 'Saving…' : k === 'renumber' ? 'Save as match ' + placeOf(v) : 'Confirm') + '</button>';
     if (!s && k === 'attn' && !segs[v.id]) h += '<button class="b on" data-aione="' + esc(v.id) + '">Ask Gemini</button>';
-    if (!s && r && !r.failed && !segs[v.id] && (r.manIds || sides(r).A.length < 2)) h += '<button class="b" data-man="' + esc(v.id) + '">' + (r.manIds ? 'Edit line-up' : 'Match…') + '</button>';
+    if (canEdit(v)) h += '<button class="b" data-man="' + esc(v.id) + '">' + (s || r.manIds || sides(r).A.length >= 2 ? 'Edit line-up' : 'Match…') + '</button>';
     if (!s && r && !r.failed) h += '<button class="b" data-seg="' + esc(v.id) + '">' + (segs[v.id] ? 'Edit segment' : 'Segment…') + '</button>';
     h += '<a class="b" style="display:inline-flex;align-items:center;text-decoration:none" href="/contents/' + esc(v.id) + '">Watch</a>';
     var lt = later.ids && later.ids[v.id], lb = later.busy[v.id];   // 2.114.0
@@ -1507,7 +1530,7 @@
       if (!r || !r.ok) { ids.forEach(function(id) { sendFail[id] = String(r && r.error || 'no reply'); }); note('Not saved: ' + (r && r.error || 'no reply') + '. Confirm again to retry.', true); return; }
       var bad = 0;
       // a name or side the sheet won't take needs a look; anything else stays ready to confirm again
-      (r.results || []).forEach(function(x) { if (x.ok) saved[x.video] = 1; else { bad++; sendFail[x.video] = x.error || 'not saved'; if (/library|side/i.test(x.error || '')) attn[x.video] = 1; } });
+      (r.results || []).forEach(function(x) { if (x.ok) { saved[x.video] = 1; redoSet(x.video, false); } else { bad++; sendFail[x.video] = x.error || 'not saved'; if (/library|side/i.test(x.error || '')) attn[x.video] = 1; } });
       note(r.saved + ' saved to the sheet' + (bad ? ', ' + bad + ' turned down (see the match)' : '') + '.', !!bad);
       cards();
     });
@@ -1542,7 +1565,7 @@
     if (!re && !recs[id]) { want(id); draw(); setTimeout(function() { if (batch === b) step(); }, 700); return; }
     if (!re && cls(v) !== 'ready') { b.done++; draw(); step(); return; }
     if (re) { draw(); confirmOne(id, function(ok) { if (batch !== b) return; if (ok) b.saved++; b.done++; draw(); setTimeout(step, 300); }); return; }   // a new number: as before, reading the match first
-    collectOne(id, function(body) { if (batch !== b) return; if (body) b.bodies.push(body); b.done++; setTimeout(step, 0); });
+    collectOne(id, function(body) { if (batch !== b) return; if (body) { if (redo[id]) body.keep = false; b.bodies.push(body); } b.done++; setTimeout(step, 0); });   // 2.119.0: a changed line-up replaces the saved one
   }
 
   // ---- fixing a name: a wrestler from the library (the site's spelling becomes her alias), or a new one
@@ -1736,6 +1759,7 @@
       return;
     }
     if (d.mok && sheetOpen) { manUse(); return; }
+    if (d.mclear && sheetOpen) { manClear(); return; }
     if (d.seg && show) { var sv = show.videos.filter(function(x) { return x.id === d.seg; })[0]; if (sv) segOpen(sv); return; }
     if (d.segyes && show) { var yv = show.videos.filter(function(x) { return x.id === d.segyes; })[0], yg = yv && segGuess(yv, recs[yv.id]); if (yg && yg.type) { segSet(d.segyes, yg); delete attn[d.segyes]; delete sendFail[d.segyes]; } draw(); return; }
     if (d.segty && sheetOpen) { sheetOpen.type = d.segty; draw(); return; }
