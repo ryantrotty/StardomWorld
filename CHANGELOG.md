@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.119.3
+
+- **Wrestler pages: the date at the top reads STARDOM DEBUT** (スターダムデビュー in Japanese), since it's the date she started in Stardom. Roster file: Maki Itoh's debut is now 2026-01-10, so her page becomes a complete-career (StarScope) page.
+
 ## 2.119.2
 
 - **Kawaii of Kawaii: date fixed.** The one match on record, Maki Itoh vs Aya Sakura at Supreme Fight 2026 in Osaka, is now dated 7 Feb 2026 (it was 2 Jul 2026, day and month swapped). The reign's days count from 7 Feb and the lineage starts there. In the sheet, the match (m8318) now carries the title tag `kawaii`, and `kawaii` is a title in the lists tab, so its English and Japanese videos show under the title's matches.
