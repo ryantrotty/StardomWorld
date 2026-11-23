@@ -1,0 +1,593 @@
+{
+ "year": 2018,
+ "generated": "2026-11-23",
+ "shows": [
+  {
+   "date": "2018-08-26",
+   "name_ja": "5☆STAR GP2018（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201808"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-01",
+   "name_ja": "5☆STAR GP2018",
+   "name_en": "5☆STAR GP2018",
+   "venue": {
+    "en": null,
+    "ja": "横浜ラジアントホール",
+    "country": "JP",
+    "prefecture": "Kanagawa",
+    "prefecture_ja": "神奈川県",
+    "city": "Yokohama",
+    "city_ja": "横浜市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809",
+    "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%82%B8%E3%82%A2%E3%83%B3%E3%83%88%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-08",
+   "name_ja": "5☆STAR GP2018",
+   "name_en": "5☆STAR GP2018",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-09",
+   "name_ja": "5☆STAR GP2018",
+   "name_en": "5☆STAR GP2018",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場１stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-15",
+   "name_ja": "5☆STAR GP2018",
+   "name_en": "5☆STAR GP2018",
+   "venue": {
+    "en": null,
+    "ja": "高岡エクール",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-16",
+   "name_ja": "5☆STAR GP2018",
+   "name_en": "5☆STAR GP2018",
+   "venue": {
+    "en": null,
+    "ja": "大阪・生野区民センター",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-24",
+   "name_ja": "5☆STAR GP2018",
+   "name_en": "5☆STAR GP2018",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-30",
+   "name_ja": "5★STAR Grand Champion Carnival2018（昼）",
+   "name_en": null,
+   "venue": {
+    "en": "Nagoya Congress Center",
+    "ja": "名古屋国際会議場・イベントホール",
+    "country": "JP",
+    "prefecture": "Aichi",
+    "prefecture_ja": "愛知県",
+    "city": "Nagoya",
+    "city_ja": "名古屋市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809",
+    "https://ja.wikipedia.org/wiki/%E5%90%8D%E5%8F%A4%E5%B1%8B%E5%9B%BD%E9%9A%9B%E4%BC%9A%E8%AD%B0%E5%A0%B4"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-09-30",
+   "name_ja": "5★STAR Grand Champion Carnival2018（夜）",
+   "name_en": null,
+   "venue": {
+    "en": "Nagoya Congress Center",
+    "ja": "名古屋国際会議場・イベントホール",
+    "country": "JP",
+    "prefecture": "Aichi",
+    "prefecture_ja": "愛知県",
+    "city": "Nagoya",
+    "city_ja": "名古屋市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201809",
+    "https://ja.wikipedia.org/wiki/%E5%90%8D%E5%8F%A4%E5%B1%8B%E5%9B%BD%E9%9A%9B%E4%BC%9A%E8%AD%B0%E5%A0%B4"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-13",
+   "name_ja": "第8回GODDESSES OF STARDOM～タッグリーグ戦～",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-14",
+   "name_ja": "第8回GODDESSES OF STARDOM～タッグリーグ戦～",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-20",
+   "name_ja": "第8回GODDESSES OF STARDOM～タッグリーグ戦～（昼）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-20",
+   "name_ja": "第8回GODDESSES OF STARDOM～タッグリーグ戦～（夜）",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "大阪・世界館",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-23",
+   "name_ja": "TRUE FIGHT 2018",
+   "name_en": "TRUE FIGHT 2018",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-28",
+   "name_ja": "MASK FIESTA 2018",
+   "name_en": "MASK FIESTA 2018",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-10-28",
+   "name_ja": "第8回 GODDESSES OF STARDOM～タッグリーグ戦～",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201810",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-11-03",
+   "name_ja": "第8回 GODDESSES OF STARDOM～タッグリーグ戦～",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201811",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-11-04",
+   "name_ja": "第8回 GODDESSES OF STARDOM～タッグリーグ戦～優勝決定戦",
+   "name_en": null,
+   "venue": {
+    "en": null,
+    "ja": "博多スターレーン",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201811"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-11-10",
+   "name_ja": "GODDESSES OF STARS 2018",
+   "name_en": "GODDESSES OF STARS 2018",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201811",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-11-23",
+   "name_ja": "BEST OF GODDESSES 2018",
+   "name_en": "BEST OF GODDESSES 2018",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201811",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-11-25",
+   "name_ja": "GODDESSES OF STARS 2018",
+   "name_en": "GODDESSES OF STARS 2018",
+   "venue": {
+    "en": null,
+    "ja": "名古屋ダイアモンドホール",
+    "country": "JP",
+    "prefecture": "Aichi",
+    "prefecture_ja": "愛知県",
+    "city": "Nagoya",
+    "city_ja": "名古屋市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201811",
+    "https://ja.wikipedia.org/wiki/DIAMOND%20HALL"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-12-02",
+   "name_ja": "スターダム★アイドルズ旗揚げ公演",
+   "name_en": null,
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201812",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-12-02",
+   "name_ja": "GODDESSES OF STARS",
+   "name_en": "GODDESSES OF STARS",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201812",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-12-07",
+   "name_ja": "GODDESSES OF STARS 2018",
+   "name_en": "GODDESSES OF STARS 2018",
+   "venue": {
+    "en": null,
+    "ja": "大阪市立生野区民センター",
+    "country": "JP",
+    "prefecture": null,
+    "prefecture_ja": null,
+    "city": null,
+    "city_ja": null
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201812"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-12-15",
+   "name_ja": "GODDESSES OF STARS 2018",
+   "name_en": "GODDESSES OF STARS 2018",
+   "venue": {
+    "en": null,
+    "ja": "横浜ラジアントホール",
+    "country": "JP",
+    "prefecture": "Kanagawa",
+    "prefecture_ja": "神奈川県",
+    "city": "Yokohama",
+    "city_ja": "横浜市"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201812",
+    "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%82%B8%E3%82%A2%E3%83%B3%E3%83%88%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-12-16",
+   "name_ja": "GODDESSES OF STARS 2018",
+   "name_en": "GODDESSES OF STARS 2018",
+   "venue": {
+    "en": "Shin-Kiba 1st Ring",
+    "ja": "新木場1stRING",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Kōtō",
+    "city_ja": "江東区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201812",
+    "https://ja.wikipedia.org/wiki/%E6%96%B0%E6%9C%A8%E5%A0%B41stRING"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  },
+  {
+   "date": "2018-12-24",
+   "name_ja": "YEAREND CLIMAX 2018",
+   "name_en": "YEAREND CLIMAX 2018",
+   "venue": {
+    "en": "Korakuen Hall",
+    "ja": "後楽園ホール",
+    "country": "JP",
+    "prefecture": "Tokyo",
+    "prefecture_ja": "東京都",
+    "city": "Bunkyō",
+    "city_ja": "文京区"
+   },
+   "sources": [
+    "https://wwr-stardom.com/schedule/?ym=201812",
+    "https://ja.wikipedia.org/wiki/%E5%BE%8C%E6%A5%BD%E5%9C%92%E3%83%9B%E3%83%BC%E3%83%AB"
+   ],
+   "matches": [],
+   "gaps": [
+    "card not confirmed: wwr-stardom.com was hard-stopped for this job (HTTP 403) before this show's event and results pages were read; fallbacks gave no card (Cagematch HTTP 307 twice, no per-show article on Japanese Wikipedia); show name and venue are from the official calendar label only"
+   ]
+  }
+ ]
+}
