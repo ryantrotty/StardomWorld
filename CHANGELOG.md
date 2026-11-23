@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.119.1
+
+- **Docs: no segment rule for Muse.** Muse gathers the official card results, not the site's video list, so its "segments" wouldn't reliably match videos. The instruction for Muse to list segments in the running order is dropped. Card check never needed it: it pairs reference matches with match videos and sets segment videos aside on the site's side. No code change.
+
+## 2.119.0
+
+- **iPhone card check: reference cards no longer shift after a segment.** Muse's cards (2019–2021) leave out greetings, speeches and ceremonies, and card check paired matches by number. So a segment video ahead of the matches put every line-up after it one match off (2020-09-28 Korakuen, Itsuki Hoshino's speech). Reference matches now line up with the show's match videos only. A video counts as a segment when it's marked or saved as one, or when its title says so (挨拶, スピーチ, Speech, Greeting, Ceremony…) and the site gives no line-up of two sides. A segment keeps its place when the card is reordered.
+- **Counts that still differ are flagged, not filled.** The Reference card button shows "⚠ 6 v 7" and the sheet explains. Only matches whose wrestlers the site names are paired. Mark the segment and open it again, or fill the rest by hand.
+- **Check logged shows against the reference cards**, on a year's list under "Reference cards: N shows". It uses the StarScope list already on the phone (no site calls). It lists matches whose saved wrestlers sit on another match of the card, matches with no one from the card, and shows whose match counts differ. Shifted shows come first. Tap one to open it.
+- **Edit line-up on any match card.** It used to appear only on cards with no line-up. It now shows on every match not saved yet, whether the line-up came from the site, Gemini or a reference card. Tap a wrestler to remove her, add or move people, then Use this line-up. **Clear line-up** puts a wrongly filled card back to needing a look, with its reference tags dropped, so the reference card can fill it again.
+- **Fixing matches already logged from a thumbnail.** Edit line-up also shows on matches logged from a thumbnail (never on ones logged while watching). After a change, the card is ready to Confirm again, and saving replaces the saved people and tags. This is how to correct the shifted 2021 matches the check finds.
+
 ## 2.118.3
 
 - **Complete-career pages: choosing a filter goes to the results.** Picking a choice under More, or opening a matches tab (Singles Matches, Championship and so on), now puts focus on the first match card instead of leaving it on the filter or tab row.
