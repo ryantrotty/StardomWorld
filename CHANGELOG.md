@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.120.0
+
+- **iPhone card check: Japanese names on reference cards.** Muse copies names as billed, and before 2021 the official pages are Japanese only. Many older wrestlers have no Japanese spelling in the library, so card check offered 花月 as a "new wrestler" when she's Kagetsu. Now a built-in list of Japanese ring names (Kagetsu, Hina, Rina, Momo Watanabe, Utami Hayashishita, Leo Onozaki, Session Moth Martina, Andras Miyagi, Arisa Hoshiki and others) gives these names their English one before anything is matched. The roster file's new `jaNames` (`{"Japanese": "English library name"}`) adds names or changes them without a build.
+- **The Japanese spelling is learned.** When the list matches a name, the reference card also offers that spelling as hers (ticked), so the library knows it next time, on the TV too.
+- **Japanese-only names are never added on their own.** A name the list and the library don't know is still shown, but left **unticked** with a ⚠. After Apply, tap her on the match card to pick who she is. Tick it only if she's really new.
+- **Names in quotes are matched.** A billed name such as "セッションモス"マルティナ is matched without the quotes.
+- **Two wrestlers run together are split.** 吏南●妃南 becomes two people. In an N-way match listed with too few sides, they become separate sides, so 2019-11-17's 4WAYバトル has its four.
+- **Match types in English** on the reference card's line-ups: 4WAYバトル → 4-Way Match, and the faction names Queen's Quest, Oedo Tai, Tokyo Cyclone, Donna Del Mondo and Cosmic Angels. "ＳＴＡＲＳｖｓ大江戸隊" gets a space around vs. These words are also used in English match titles on the TV.
+
 ## 2.119.1
 
 - **Docs: no segment rule for Muse.** Muse gathers the official card results, not the site's video list, so its "segments" wouldn't reliably match videos. The instruction for Muse to list segments in the running order is dropped. Card check never needed it: it pairs reference matches with match videos and sets segment videos aside on the site's side. No code change.

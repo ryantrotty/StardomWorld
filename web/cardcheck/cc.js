@@ -133,7 +133,7 @@
   }
 
   // ---- the bridge the TV's scripts expect (AndroidHost), answered here
-  var FACT = '{"factions":[]}', MT = '{}', SW = '', MW = '';
+  var FACT = '{"factions":[]}', MT = '{}', SW = '', MW = '', JAN = null;
   function post(body, done) {
     body.key = cfg.k; body.device = 'iphone-cardcheck'; body.owner = true;
     fetch(cfg.u, { method: 'POST', body: JSON.stringify(body) })
@@ -222,6 +222,7 @@
       MT = JSON.stringify(mt);
       SW = a[2] && a[2].showWords ? JSON.stringify(a[2].showWords) : '';
       MW = a[2] && a[2].matchWords ? JSON.stringify(a[2].matchWords) : '';
+      JAN = a[2] && a[2].jaNames && typeof a[2].jaNames === 'object' ? a[2].jaNames : null;   // 2.120.0
       return ['shownames.js', 'setorder.js', 'videoindex.js', 'indexpanel.js'].reduce(function(p, n) { return p.then(function() { return loadScript(n); }); }, Promise.resolve());
     });
   }
@@ -994,7 +995,8 @@
     var addNew = function(p, v, no) {
       var key = norm(p.en || p.ja); if (!key || newSeen[key] || aiId(p)) return;
       newSeen[key] = 1;
-      out.push({ k: 'new', v: v, no: no, raw: p.ja || p.en, other: p.ja && p.en ? p.en : '', en: p.en || '', ja: p.ja || '', on: true });
+      var jo = jaOnly(p);   // 2.120.0: a Japanese-only name is never added on its own: pick who she is on the card
+      out.push({ k: 'new', v: v, no: no, raw: p.ja || p.en, other: p.ja && p.en ? p.en : '', en: p.en || '', ja: p.ja || '', jo: jo, on: !jo });
     };
     // 2.92.1: a match the site gave no line-up for takes the answer's, matched by its place on the card (when the
     // answer has as many matches as the site) and offered as a line-up to approve; its unknown wrestlers as new ones.
@@ -1059,7 +1061,7 @@
           if (!nm) return;
           if (id && badAlias(u.raw)) out.push({ k: 'use', v: v.id, no: vi + 1, raw: u.raw, other: u.other, id: id, name: K.nameOf(id), on: true });
           else if (id && !badAlias(u.raw)) out.push({ k: 'alias', v: v.id, no: vi + 1, raw: u.raw, other: badAlias(u.other) ? '' : u.other, id: id, name: K.nameOf(id), on: true });
-          else if (!newSeen[norm(p.en || p.ja)]) { newSeen[norm(p.en || p.ja)] = 1; out.push({ k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', on: true }); }
+          else if (!newSeen[norm(p.en || p.ja)]) { newSeen[norm(p.en || p.ja)] = 1; var jo2 = jaOnly(p); out.push({ k: 'new', v: v.id, no: vi + 1, raw: u.raw, other: u.other, en: p.en || '', ja: p.ja || '', jo: jo2, on: !jo2 }); }
         });
       });
     });
@@ -1091,7 +1093,7 @@
       a.sug.forEach(function(x, i) {
         var t = x.k === 'order' || x.k === 'reftags' ? x.text : x.k === 'lineup' ? 'Match ' + x.no + ' line-up → ' + x.text : x.k === 'alias' || x.k === 'use' ? personText(x.raw, x.other) + ' → ' + x.name : x.k === 'new' ? personText(x.raw, x.other) + ' → new wrestler ' + personText(x.en || x.ja, x.ja && x.en ? x.ja : '') :
           x.k === 'venue' ? 'Venue → ' + x.name : 'Venue → new venue ' + personText(x.en, x.ja && x.ja !== x.en ? x.ja : '');
-        var sub = x.k === 'reftags' ? 'Suggested on each match from the reference card; logged matches keep theirs' : x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? x.type + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? 'Match ' + x.no + ' · added to the library' : 'Set once for the whole show';
+        var sub = x.k === 'reftags' ? 'Suggested on each match from the reference card; logged matches keep theirs' : x.k === 'order' ? 'Logged matches with another number are marked to save again' : x.k === 'lineup' ? (x.type ? mtEn(x.type) + ' · ' : '') + 'the site gave none; used for this match' : x.k === 'alias' && !x.ref ? 'Match ' + x.no + ' · in the library; this spelling becomes hers' : x.k === 'use' ? 'Match ' + x.no + ' · in the library; used for this match only' : x.k === 'new' ? (x.jo ? 'Match ' + x.no + ' · ⚠ Japanese name only, so not in your library under this spelling. Left unticked: after Apply, tap her on the match card to pick who she is (the spelling is kept as hers). Tick only if she\'s really new' : 'Match ' + x.no + ' · added to the library') : x.k === 'alias' && x.ref ? 'Match ' + x.no + ' · the Japanese spelling becomes hers, so it\'s known next time' : 'Set once for the whole show';
         h += '<button class="sug' + (x.on ? ' on' : '') + '" data-aitog="' + i + '"><span class="bx">' + (x.on ? '✓' : '') + '</span><span>' + esc(t) + '<small>' + esc(sub) + '</small></span></button>';
       });
       var n = a.sug.filter(function(x) { return x.on; }).length;
@@ -1166,9 +1168,53 @@
     y = String(y || ''); if (!/^\d{4}$/.test(y) || refs[y]) return;
     refs[y] = { busy: true };
     getJson(REF_BASE + y + '.json')
-      .then(function(d) { refs[y] = d && Array.isArray(d.shows) ? { data: d } : { err: 'not a reference card file' }; })
+      .then(function(d) { if (d && Array.isArray(d.shows)) { d.shows.forEach(refFix); refs[y] = { data: d }; } else refs[y] = { err: 'not a reference card file' }; })
       .catch(function(e) { var m = String(e && e.message || e); refs[y] = /404/.test(m) ? { missing: true } : { err: m }; })
       .then(function() { draw(); });
+  }
+
+  // ---- 2.120.0: Japanese names on reference cards. Muse copies names as billed, and the official pages before 2021
+  // are Japanese only, so a card can hold 花月 for Kagetsu. The library has no Japanese spelling for many older
+  // wrestlers, so card check offered her as a new wrestler. Now: a list of Japanese ring names (the roster file's
+  // "jaNames" adds or changes them) gives such a name its English one before anything is matched; quotes around a
+  // nickname are ignored ("セッションモス"マルティナ); and two wrestlers run together with ● (吏南●妃南) are split.
+  var JA_NAMES = {
+    '花月': 'Kagetsu', '妃南': 'Hina', '吏南': 'Rina', '渡辺桃': 'Momo Watanabe', '林下詩美': 'Utami Hayashishita',
+    '小野崎玲皇': 'Leo Onozaki', 'セッションモスマルティナ': 'Session Moth Martina', 'マルティナ': 'Session Moth Martina',
+    'アンドラス宮城': 'Andras Miyagi', '星輝ありさ': 'Arisa Hoshiki', '木村響子': 'Kyoko Kimura', '米山香織': 'Kaori Yoneyama',
+    '夏すみれ': 'Natsu Sumire', '安川惡斗': 'Act Yasukawa', '宝城カイリ': 'Kairi Hane (KAIRI)', '稲葉ともか': 'Tomoka Inaba',
+    '小林香萌': 'Kaho Kobayashi', '雪妃真矢': 'Maya Yukihi', '高橋奈七永': 'Nanae Takahashi', '里村明衣子': 'Meiko Satomura',
+    '橋本千紘': 'Chihiro Hashimoto', '尾崎魔弓': 'Mayumi Ozaki', '世志琥': 'Yoshiko', 'ひめか': 'Himeka', 'コグマ': 'Koguma'
+  };
+  function jaKey(t) { return String(t || '').normalize('NFKC').toLowerCase().replace(/["'“”‘’「」『』《》〈〉\s・·.．★☆_\-]+/g, ''); }
+  var jaMap = null;
+  function jaLook(t) {
+    if (!jaMap) { jaMap = {}; Object.keys(JA_NAMES).forEach(function(k) { jaMap[jaKey(k)] = JA_NAMES[k]; }); if (JAN) Object.keys(JAN).forEach(function(k) { if (JAN[k]) jaMap[jaKey(k)] = String(JAN[k]); }); }
+    return jaMap[jaKey(t)] || '';
+  }
+  function jaOnly(p) { return !!(p && !p.en && hasJa(p.ja)); }
+  var SPLIT = /\s*[●○◯]\s*/;
+  function refFix(s) {
+    (s && s.matches || []).forEach(function(m) {
+      if (!m || !Array.isArray(m.sides)) return;
+      var nWay = +((/(\d+)\s*way/i.exec(String(m.type || '').normalize('NFKC')) || [])[1] || 0), ns = [];
+      m.sides.forEach(function(sd) {
+        var people = [], split = false;
+        (sd || []).forEach(function(p) {
+          if (!p) { people.push(p); return; }
+          var a = String(p.ja || '').split(SPLIT), b = String(p.en || '').split(SPLIT);
+          if (a.length < 2 && b.length < 2) { people.push(p); return; }
+          split = true;
+          var n = Math.max(a.length, b.length);
+          for (var k = 0; k < n; k++) people.push({ en: b.length === n ? b[k] : '', ja: a.length === n ? a[k] : '', split: 1 });
+        });
+        // a 4-way listed with 3 sides: the run-together pair were two sides, not partners
+        if (split && people.length > 1 && (sd || []).length === 1 && nWay && m.sides.length < nWay) people.forEach(function(p) { ns.push([p]); });
+        else ns.push(people);
+      });
+      m.sides = ns;
+      m.sides.forEach(function(sd) { sd.forEach(function(p) { if (p && !p.en && p.ja) { var en = jaLook(p.ja); if (en) { p.en = en; p.viaList = 1; } } }); });
+    });
   }
   function refNorm(t) { return String(t || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_\-『』「」]+/g, ''); }
   // The library ids on one video: its line-up as read from the site, else the names saved for it.
@@ -1242,15 +1288,26 @@
       date: rs.date || '',
       venue: rs.venue && (rs.venue.en || rs.venue.ja) ? { en: rs.venue.en || '', ja: rs.venue.ja || '' } : null,
       matches: refMatches(rs).map(function(m) {
-        return { no: m.no, type: m.type || '', sides: m.sides.map(function(sd) { return (sd || []).filter(function(p) { return p && (p.en || p.ja); }).map(function(p) { return { en: p.en || '', ja: p.ja || '' }; }); }) };
+        return { no: m.no, type: m.type || '', sides: m.sides.map(function(sd) { return (sd || []).filter(function(p) { return p && (p.en || p.ja); }).map(function(p) { return { en: p.en || '', ja: p.ja || '', viaList: p.viaList || 0 }; }); }) };
       })
     };
+    // 2.120.0: a billed name the library knows once its quotes are dropped is matched as that
+    var K0 = kit();
+    if (K0) ans.matches.forEach(function(m) { m.sides.forEach(function(sd) { sd.forEach(function(p) { ['en', 'ja'].forEach(function(f) { var bare = String(p[f] || '').replace(/["“”「」『』]/g, '').trim(); if (bare && bare !== p[f] && !K0.resolve(p[f]) && K0.resolve(bare)) p[f] = bare; }); }); }); });
     var text = JSON.stringify(ans);
     sheetOpen = { ai: 1, ref: 1, text: text, sug: null, sources: (rs.sources || []).map(function(u) { return { title: u, uri: u }; }) };
     var rd = aiRead(text, { ref: true });
     if (rd.err) { sheetOpen.err = rd.err; draw(); return; }
     var pairs = refMap(rs), tags = {}, n = 0;
     show.videos.forEach(function(v) { var m = pairs[v.id], t = m && refTagText(m); if (t && !status(v) && !isSeg(v.id)) { tags[v.id] = t; n++; } });
+    // 2.120.0: a Japanese spelling matched through the name list is offered as hers, so the library knows it next time
+    var K1 = kit(), aliasSeen = {};
+    if (K1) ans.matches.forEach(function(m) { m.sides.forEach(function(sd) { sd.forEach(function(p) {
+      if (!p.viaList || !p.ja || K1.resolve(p.ja) || aliasSeen[p.ja] || badAlias(p.ja)) return;
+      var id = K1.resolve(p.en); if (!id) return;
+      aliasSeen[p.ja] = 1;
+      rd.list.push({ k: 'alias', ref: 1, v: show.videos[0] ? show.videos[0].id : '', no: m.no, raw: p.ja, other: '', id: id, name: K1.nameOf(id), on: true });
+    }); }); });
     if (n) rd.list.push({ k: 'reftags', map: tags, text: 'Match type, title, tournament, round and block for ' + n + ' match' + (n > 1 ? 'es' : ''), on: true });
     sheetOpen.sug = rd.list; sheetOpen.info = rd.info;
     sheetOpen.note = [rd.note, (rs.gaps || []).length ? 'Gaps in the reference card: ' + rs.gaps.join('; ') : ''].filter(Boolean).join(' ');
