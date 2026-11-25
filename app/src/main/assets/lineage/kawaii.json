@@ -1,9 +1,10 @@
 {
- "_note": "Kawaii of Kawaii. One match on record, supplied by the app owner: Maki Itoh defended against Aya Sakura on 2026-07-02. The title win and its date are not known, so the page shows the defence only (noWin). Search words follow assets/championships.json (Cutest of Cute is searched too).",
+ "_note": "Kawaii of Kawaii. One match on record, supplied by the app owner: Maki Itoh defended against Aya Sakura on 2026-02-07. The title win and its date are not known, so the page shows the defence only (noWin). Search words follow assets/championships.json (Cutest of Cute is searched too).",
  "id": "kawaii",
+ "pinned": true,
  "title": "Kawaii of Kawaii Championship",
  "ja": "Kawaii of Kawaii",
- "since": "2026-07-02",
+ "since": "2026-02-07",
  "kind": "Singles",
  "search": "Kawaii of Kawaii",
  "alts": [
@@ -27,7 +28,7 @@
   {
    "n": 1,
    "champ": "Maki Itoh",
-   "won": "2026-07-02",
+   "won": "2026-02-07",
    "end": null,
    "endType": "",
    "vs": "",
@@ -35,7 +36,7 @@
    "noWin": true,
    "defences": [
     {
-     "d": "2026-07-02",
+     "d": "2026-02-07",
      "opp": "Aya Sakura",
      "venue": "",
      "note": "successful defence"

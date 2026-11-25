@@ -2,6 +2,48 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.121.5
+
+- Complete tag team histories and complete title histories draw their logged matches as StarScope video cards (event, names, footer), like complete-career wrestler pages. Matches not logged yet keep the site's card.
+
+## 2.121.4
+
+- Kawaii of Kawaii: the daily file still carried the old start date (2026-07-02) and replaced the built-in lineage (2026-02-07), so the reign's date range left out the Feb 7 defence and the page showed 0 videos. A lineage file marked `"pinned": true` now keeps its reigns unless the daily file has more of them; `kawaii.json` is pinned.
+
+## 2.121.3
+
+- The StarScope list is now kept in the app's own files instead of the page's storage, which was too small for it. Saves had been failing silently, so every page started from an old copy (or none) and flipped 10–15 seconds later when the sheet replied, then went back to the old copy on the next visit. One more full refresh (shape 6) fills the new file; after that pages open on the current list straight away.
+- Wrestler, title and faction pages redraw when a newer list arrives and their decision changes (a 2018–2019 debut now switches to the complete career page; a title redraws only when its logged title matches change).
+
+## 2.121.2
+
+Fixes for 2.121.1 (complete histories through 2018).
+- Complete years no longer drop to 2024–2026: the roster file is now downloaded to a temporary file and moved into place, a failed read keeps the last good copy, and the last complete-years list is remembered. A page that read the roster file mid-download fell back to 2024–2026, which hid the telescopes for 2019–2023 debuts (Suzu Suzuki) and kept older factions, titles and wrestlers off their complete pages.
+- StarScope list: one full refresh on every TV (shape 5), so the 2018 sweep's merges, billed names, tags and title links reach the TVs' copies; another full refresh whenever the roster file's `starscope.refresh` is newer than the last one. A list too big to save is no longer silently dropped: the old copy is cleared first, then it is saved without the site's own titles if needed; the outcome shows in the debug blocks.
+- Faction pages: cards load 24 at a time with More (the whole history drawn at once crashed the app), drawn as StarScope cards. A side counts as the faction's when nobody on it carries another faction and more than half (at least two) are members, counting wrestlers known for the faction from other logged matches or factions.json. On-screen debug block says why the page is or isn't a complete history.
+- Title pages: drawn again once the StarScope list is ready, so a complete title (Future of Stardom) flips without a revisit; the debug block's first line gives the decision and the logged title-match count.
+- Eras top rated: a logged match found by date and names now wins over top_matches' own video id, so the card keeps its picture and opens the StarScope video page.
+- StarScope Shows (and Recent, Top, All): drawn again when the newer list arrives, so 2018 from the Eras timeline lists every 2018 show.
+- Wrestler pages: the debug block starts with the complete-career decision (complete years, first day, debut).
+
+## 2.121.1
+
+- **Kawaii of Kawaii: date fixed** (from `fix/kawaii-date`, 2.119.2, which was never merged). The one match on record, Maki Itoh vs Aya Sakura at Supreme Fight 2026 in Osaka, is now dated 7 Feb 2026 (it was 2 Jul 2026, day and month swapped). The reign's days count from 7 Feb and the lineage starts there, so the complete title history page (2.121.0) shows the right reign length. In the sheet, the match (m8318) carries the title tag `kawaii`.
+- **Not taken from `fix/stardom-debut-label`:** the wrestler-page label stays "Debut", and the roster debuts are unchanged until all 15 years are logged.
+
+## 2.121.0
+
+StarScope now has every year from 2018 to 2026, so these pages fill in from it (private builds, as before). Nothing more is asked of the site; most of these pages now ask it less.
+
+- **Wrestler pages, Years and title histories: nothing to change.** They read the complete years from the roster file, which now lists 2018. Complete-career pages now include anyone whose debut is in 2018 or later, for example Utami Hayashishita, Hina, Rina, Yuna Mizumori, Mei Seira and Suzu Suzuki. Every title reign since 1 Jan 2018 loads from StarScope instead of searching the site. The 2018 Years entry opens StarScope Shows.
+- **Tag team pages: complete team history.** When both wrestlers debuted in 2018 or later, All Tag Matches lists every straight 2 v 2 match they had together from StarScope, with no site search and no saved team list. Each tab shows its count, and the title row carries "STARSCOPE · EVERY MATCH TOGETHER". Shows after the last logged one appear once they're logged.
+- **Faction pages: complete faction history.** For a faction founded in 2018 or later (STARS, J.A.N., Tokyo Cyber Squad, Donna Del Mondo, Cosmic Angels, God's Eye, Club Venus, NEO GENESIS, HATE, Empress Nexus Venus, Mi Vida Loca, Itoh Respect Gundan), the faction home lists every unit match from StarScope, with no site search. The header adds FIRST UNIT MATCH and UNIT MATCHES, and two new rows show TOP PAIRS (most 2 v 2 matches together) and RIVAL FACTIONS (most unit matches against). Choosing a member shows that member's unit matches from StarScope, instead of one site search per member. Members stay the ones in factions.json.
+- **A unit match is read from the sheet's faction column.** A side counts as a faction's when two or more of its wrestlers carry that faction and nobody on it carries another. So a 2018 STARS side counts even though factions.json lists today's STARS. Faction rivalries on the era pages and the StarScope "vs" lists use the same rule, with the old member-list test kept for sides with no faction data.
+- **Title pages: complete title history.** Future of Stardom (since 2018), IWGP Women's, STRONG Women's, NEW BLOOD Tag Team and Kawaii of Kawaii started inside the complete years. Their pages carry "STARSCOPE · EVERY TITLE MATCH", All matches opens StarScope's list of that title's matches (new: /mypage?tvscope=ti&a=<title id>), and a RECORDS row shows most defences, longest reign, most reigns and the number of title matches. STRONG's defences on NJPW shows are counted from the lineage file, not listed.
+- **Eras: the latest three eras use StarScope.** The Draft Years (Apr 2018 to 16 Oct 2019) and Arena Boom (17 Oct 2019 to Feb 2024) get the New Horizons layout: dominant reigns read from the lineage files, top rated matches as StarScope cards, rivalry match counts, three must-see shows as posters, top tag teams and the era in numbers. The era page now takes an end date (`scope.to` in eras.json), so a past era counts only its own matches, reigns and title changes, and shows no NOW tag.
+  - Draft Years picks: Kagetsu's World reign, Momo Watanabe's Wonder reign, Hazuki's High Speed reign, Momo & Utami's Goddess reign. Rivalries: Momo vs Io Shirai, Kagetsu vs Mayu Iwatani, STARS vs Oedo Tai, Arisa Hoshiki vs Tam Nakano. Shows: the 5★STAR GP 2018 final, the 2019 Draft, Midsummer Champions 2018.
+  - Arena Boom picks: Utami's World reign, Saya Kamitani's Wonder reign, AZM's High Speed reign, Giulia & Syuri's Goddess reign. Rivalries: Giulia vs Tam Nakano, Utami vs Syuri, Donna Del Mondo vs Cosmic Angels, AZM vs Starlight Kid. Shows: ALL STAR DREAM CINDERELLA (Budokan 2021), DREAM QUEENDOM 2022, ALLSTAR GRAND QUEENDOM 2023.
+
 ## 2.120.0
 
 - **iPhone card check: Japanese names on reference cards.** Muse copies names as billed, and before 2021 the official pages are Japanese only. Many older wrestlers have no Japanese spelling in the library, so card check offered 花月 as a "new wrestler" when she's Kagetsu. Now a built-in list of Japanese ring names (Kagetsu, Hina, Rina, Momo Watanabe, Utami Hayashishita, Leo Onozaki, Session Moth Martina, Andras Miyagi, Arisa Hoshiki and others) gives these names their English one before anything is matched. The roster file's new `jaNames` (`{"Japanese": "English library name"}`) adds names or changes them without a build.

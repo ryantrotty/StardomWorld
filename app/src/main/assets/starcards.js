@@ -12,7 +12,15 @@
   window.__tvStarCards = true;
   var KEY = 'tvVixCardsV4', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) map = c.map; } catch (e) {}
+  // 2.121.3: the list lives in the app's own files (AndroidHost.scopeListLoad / scopeListSave); the page's storage was
+  // too small for it. A copy still in the page's storage is moved over once and removed from there.
+  var NATIVE = !!(H.scopeListLoad && H.scopeListSave), KEPT = null;
+  try { if (NATIVE) { var raw0 = H.scopeListLoad(); if (raw0) KEPT = JSON.parse(raw0); } } catch (e) { KEPT = null; }
+  if (!KEPT || !KEPT.map) {
+    KEPT = null;
+    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) { KEPT = c; if (NATIVE && H.scopeListSave(JSON.stringify(c))) localStorage.removeItem(KEY); } } catch (e) {}
+  } else { try { localStorage.removeItem(KEY); } catch (e) {} }
+  if (KEPT) map = KEPT.map;
   var st = document.createElement('style');
   st.textContent = [
     '.tvsc-host{display:block !important;-webkit-line-clamp:unset !important;overflow:visible !important;padding:11px 14px 13px !important;box-sizing:border-box;}',
@@ -165,10 +173,44 @@
     sides.forEach(function(sd, i) { if (ia < 0 && sideHas(sd, ka)) ia = i; if (ib < 0 && sideHas(sd, kb)) ib = i; });
     return ia >= 0 && ib >= 0 && ia !== ib;
   }
+  // 2.121.0: a side is a faction's (a unit side) when two or more of its wrestlers carry that faction in the sheet's
+  // participants (shape 4, x.fa) and nobody on it carries another one. Without faction data for the side, it is the
+  // old test: two or more wrestlers, all on factions.json's member list. So a 2018 STARS side counts even though
+  // factions.json lists today's STARS.
+  // 2.121.2: older matches often carry the faction on only some of a side's wrestlers. A wrestler now also counts for
+  // the faction when she has no faction on that match but carries it on some other logged match, or is on factions.json's
+  // list. The side is the faction's when nobody on it carries another faction, two or more count, and they are more than
+  // half of the side.
+  var KNOWN = null, KNOWN_AT = null;
+  function knownKeys(id) {
+    if (!KNOWN || KNOWN_AT !== map) {
+      KNOWN = {}; KNOWN_AT = map;
+      Object.keys(map || {}).forEach(function(k) {
+        var v = map[k], fa = v && v.x && v.x.fa;
+        if (!fa) return;
+        (v.p || []).forEach(function(sd, i) { (sd || []).forEach(function(p, j) { var f = fa[i] && fa[i][j]; if (f && p[0] && p[0][0]) (KNOWN[f] = KNOWN[f] || {})[p[0][0]] = 1; }); });
+      });
+    }
+    var o = KNOWN[id] || {}, F = facMembers(id);
+    if (F && !o.__fj) { F.keys.forEach(function(k) { o[k] = 1; }); o.__fj = 1; KNOWN[id] = o; }
+    return o;
+  }
+  function unitSide(v, i, id) {
+    var sd = (v.p || [])[i] || [], fa = v.x && v.x.fa ? v.x.fa[i] : null;
+    if (sd.length < 2) return false;
+    var K = knownKeys(id), n = 0, other = false;
+    sd.forEach(function(p, j) {
+      var f = fa ? fa[j] : '';
+      if (f === id) n++;
+      else if (f) other = true;
+      else if ((p[0] || []).some(function(k) { return K[k]; })) n++;
+    });
+    return !other && n >= 2 && n * 2 > sd.length;
+  }
   function facVersus(v, fa, fb) {
     var A = facMembers(fa), B = facMembers(fb), sides = v.p || [], ia = -1, ib = -1;
     if (!A || !B) return false;
-    sides.forEach(function(sd, i) { if (ia < 0 && sideOf(sd, A.keys)) ia = i; else if (ib < 0 && sideOf(sd, B.keys)) ib = i; });
+    sides.forEach(function(sd, i) { if (ia < 0 && unitSide(v, i, fa)) ia = i; else if (ib < 0 && unitSide(v, i, fb)) ib = i; });
     return ia >= 0 && ib >= 0 && ia !== ib;
   }
   function pairList(kind, a, b, from, to) {
@@ -194,6 +236,11 @@
   function results(kind, a, b) {
     if (!map) return [];
     if (kind === 'v' || kind === 'f') return pairList(kind, a, b, (Q && Q.get('from')) || '', (Q && Q.get('to')) || '');
+    if (kind === 'ti') {   // 2.121.0: every logged match for title a (a lineage id), one per match, newest first
+      var tl = [];
+      Object.keys(map).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && (v.x.tv || []).indexOf(a) >= 0) tl.push({ id: id, v: v }); });
+      return oneEach(tl).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+    }
     var out = [];
     Object.keys(map).forEach(function(id) {
       var v = map[id], sides = v.p || [], hit = false;
@@ -261,7 +308,8 @@
     var head = scopeKind === 't' ? a + ' & ' + b : a;
     if (scopeKind === 'v') head = a + ' vs ' + b;
     if (scopeKind === 'f') { var fa = facMembers(a), fb = facMembers(b); head = (fa ? fa.name : a) + ' vs ' + (fb ? fb.name : b); }
-    if (scopeKind === 'v' || scopeKind === 'f') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
+    if (scopeKind === 'ti') { var tln = null; try { tln = JSON.parse(H.lineageJson(a)); } catch (e) { tln = null; } head = tln ? String((ja && tln.ja) || tln.title).replace(/ Championship$/, '') : a; }
+    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
@@ -894,6 +942,7 @@
     var qsy = Q.get('sy');
     if (scopeKind === 'shows' && /^\d{4}$/.test(qsy || '')) home.f.sy = qsy;
     homeRender('T' + scopeKind);
+    homeMap = map;
   }
   // For the Community menu: the newest StarScope matches, drawn as the same cards.
   window.__tvScope = {
@@ -919,7 +968,16 @@
   };
 
   // check: StarScope card check's own page (assets/cardcheck.js) draws itself.
-  function apply() { if (!map) return; if (scopeKind === 'check') return; if (scopeKind === 'recent' || scopeKind === 'top' || scopeKind === 'all' || scopeKind === 'shows' || scopeKind === 'next' || scopeKind === 'log') renderHome(); else if (scopeKind) renderScope(); else addButtons(); }
+  // 2.121.2: a Shows, Recent, Top or All page drawn from the TV's older copy is drawn again when the newer list arrives,
+  // keeping the focused control (the 2018 Shows page from the Eras timeline showed only the copy's one 2018 show).
+  var homeMap = null;
+  function homeAgain() {
+    if (!scopeDone || !home || !homeEl || homeMap === map || home.tab === 'check') return;
+    homeMap = map;
+    var ae = document.activeElement, k = ae && ae.getAttribute && ae.getAttribute('data-k');
+    try { homeRender(k || ('T' + home.tab)); } catch (e) {}
+  }
+  function apply() { if (!map) return; if (scopeKind === 'check') return; if (scopeDone && home) homeAgain(); if (scopeKind === 'recent' || scopeKind === 'top' || scopeKind === 'all' || scopeKind === 'shows' || scopeKind === 'next' || scopeKind === 'log') renderHome(); else if (scopeKind) renderScope(); else addButtons(); }
   var timer = 0;
   function soon() { if (timer) return; timer = setTimeout(function() { timer = 0; apply(); }, 350); }   // not a debounce: a page that keeps changing must still get its button
   // Pictures for card-check matches saved without one (2.84.6): card check keeps each show page it read on this TV
@@ -972,7 +1030,27 @@
   var ASK_KEY = 'tvVixCardsAsk', FAIL_KEY = 'tvVixCardsFail', FULL_AGE = 86400000, asking = false, again = false;
   function lsJ(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function lsPut(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function kept() { var c = lsJ(KEY); return c && c.map ? c : null; }
+  function kept() { return KEPT && KEPT.map ? KEPT : null; }
+  // 2.121.2: the list is big enough to hit the WebView's storage limit. A failed save used to be silent, so every later
+  // page read the old copy (stale cards, titles and factions). Now the old copy is dropped first, and if the new one
+  // still doesn't fit it is saved without the site's own titles (vt, vtj: rebuilt from the card when missing). The
+  // outcome is kept for the debug blocks (window.__tvScopeIdx.saveInfo()).
+  var SAVE_INFO = '';
+  try { SAVE_INFO = localStorage.getItem('tvVixCardsSave') || ''; } catch (e) {}
+  function saveList(c) {
+    KEPT = c;
+    var txt = JSON.stringify(c), kb = Math.round(txt.length / 1024), how = '';
+    if (NATIVE) { var okN = false; try { okN = H.scopeListSave(txt); } catch (e) { okN = false; } how = okN ? 'saved to the app' : 'NOT SAVED to the app'; }
+    else try { localStorage.setItem(KEY, txt); how = 'saved'; } catch (e) {
+      try { localStorage.removeItem(KEY); localStorage.setItem(KEY, txt); how = 'saved after dropping the old copy'; } catch (e2) {
+        var slim = {}; Object.keys(c.map).forEach(function(k) { var v = c.map[k], o = {}; Object.keys(v).forEach(function(f) { if (f !== 'vt' && f !== 'vtj') o[f] = v[f]; }); slim[k] = o; });
+        var t2 = JSON.stringify({ t: c.t, s: c.s, f: c.f, map: slim });
+        try { localStorage.setItem(KEY, t2); how = 'saved without site titles (' + Math.round(t2.length / 1024) + ' KB)'; } catch (e3) { how = 'NOT SAVED: too big for this TV (' + e3 + ')'; }
+      }
+    }
+    SAVE_INFO = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' \u00b7 ' + Object.keys(c.map).length + ' videos \u00b7 ' + kb + ' KB \u00b7 ' + how;
+    try { localStorage.setItem('tvVixCardsSave', SAVE_INFO); } catch (e) {}
+  }
   function ask(o) {
     o = o || {};
     if (asking) { again = true; return; }
@@ -1010,10 +1088,11 @@
       map = r.map; got = 1;
       c = { t: Date.now(), s: r.now || '', f: Date.now(), map: map };
     }
-    lsPut(KEY, c);
+    saveList(c);
     THRU = null;
     if (got) {
       try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
+      try { window.dispatchEvent(new Event('tvscopelist')); } catch (e) {}   // 2.121.3: app pages redraw if their decision changed
       soon();
     }
     setTimeout(fillThumbs, 3000);
@@ -1037,9 +1116,11 @@
     X.any = function(test) { var o = []; Object.keys(map || {}).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && test(v)) o.push({ id: id, v: v }); }); return o; };
     X.oneEach = oneEach;
     X.ready = function() { return !!map; };
+    X.saveInfo = function() { return 'list on this TV: ' + Object.keys(map || {}).length + ' videos \u00b7 last save ' + (SAVE_INFO || 'none recorded'); };
     X.vs = function(a, b, from) { return map ? pairList('v', a, b, from || '') : []; };
     X.fvs = function(a, b, from) { return map ? pairList('f', a, b, from || '') : []; };
     X.faction = facMembers;
+    X.unitSide = unitSide;   // 2.121.0: (v, side index, faction id)
     X.oneLine = oneLine;
     X.show = function(sid) { return map ? showsBy()[String(sid)] || null : null; };
     X.shows = function(from, to) { var o = []; if (!map) return o; var by = showsBy(); Object.keys(by).forEach(function(k) { var d = String(by[k].date || ''); if (d && d >= (from || '') && (!to || d <= to)) o.push(by[k]); }); return o; };
@@ -1053,8 +1134,14 @@
   // 2.97.0: once, the whole list, so the copy gets the complete-years fields (tournament, block and title ids, the
   // site's title) from the updated sheet script. An older script simply doesn't send them; the pages fall back.
   // 2.118.0: shape 4, each wrestler's faction (fa) and the match's moments (mo) for complete-career wrestler pages.
-  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '4'; } catch (e) {}
-  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '4'); } catch (e) {} ask({ full: true }); }
+  // 2.121.3: shape 6, the same once more now that the list is kept in the app's files (2.121.2's could not be saved).
+  // 2.121.2: shape 5, one more full list on every TV (the 2018 sweep's merges, billed names and tags never reached the
+  // TVs' copies), then a full list again whenever the roster file's starscope.refresh is newer than the last one.
+  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '6'; } catch (e) {}
+  var rf = ''; try { rf = String(H.scopeRefresh ? H.scopeRefresh() : '' || ''); } catch (e) { rf = ''; }
+  var rfAt = ''; try { rfAt = localStorage.getItem('tvVixCardsRefresh') || ''; } catch (e) {}
+  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '6'); localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
+  else if (SHEET && rf && rf > rfAt) { try { localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
   else if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);

@@ -54,14 +54,17 @@
   // Still waiting for assets/starcards.js (it loads after the Eras page script)?
   function scopePending(e) { return !!(e && e.scope && !idx() && H.scopeOn && call('scopeOn')); }
   function from(e) { return (e.scope && e.scope.from) || ''; }
+  // 2.121.0: the era's last day (scope.to) for an era that has ended; today for the current one.
+  function to(e) { return (e.scope && e.scope.to) || today(); }
+  function ended(e) { return !!(e.scope && e.scope.to); }
   var EL = { key: '', list: [], people: {}, at: 0 };
   function eraList(e) {
-    var X = idx(), f = from(e);
+    var X = idx(), f = from(e), t = ended(e) ? to(e) : '';
     if (!X) return [];
-    if (EL.key === f && Date.now() - EL.at < 2000) return EL.list;   // the same drawing: read once
+    if (EL.key === f + '|' + t && Date.now() - EL.at < 2000) return EL.list;   // the same drawing: read once
     // 2.111.2: one entry per match (a linked English video is the same match, it was counted twice).
-    var L = X.find(function(v) { return String(v.d || '') >= f; });
-    EL = { key: f, at: Date.now(), list: X.oneEach ? X.oneEach(L) : L, people: null };
+    var L = X.find(function(v) { var d = String(v.d || ''); return d >= f && (!t || d <= t); });
+    EL = { key: f + '|' + t, at: Date.now(), list: X.oneEach ? X.oneEach(L) : L, people: null };
     return EL.list;
   }
   // Matches per wrestler (by every name key), counted in one pass.
@@ -156,7 +159,7 @@
 
   // ---- title reigns (lineage files; every build)
   function reignsOf(b, e) {
-    var L = lineage(b), f = from(e), t = today();
+    var L = lineage(b), f = from(e), t = to(e);
     if (!L || !L.reigns) return null;
     var all = L.reigns.slice().sort(function(x, y) { return x.n - y.n; });
     var era = all.filter(function(r) { return String(r.won || '') <= t && String(r.end || '9999') >= f; });
@@ -184,13 +187,13 @@
       var holder = fr.champ + ' · ' + T(ord(no) + ' reign', no + '度目');
       var stat = T(d + ' days · ' + df + (df === 1 ? ' defence' : ' defences'), d + '日 · 防衛' + df + '回');
       var cuts = String(fr.champ).split(/\s*&\s*|\s*,\s*/).join('|');
-      return '<div class="tv-rc"><a class="tv-card tvn-rcard" tabindex="0" href="/mypage?tvch=' + esc(c.beltId) + '&tvrn=' + fr.n + '"><div class="tvn-rr" data-cuts="' + esc(cuts) + '"></div><div class="tv-rrow"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div class="notranslate" translate="no"><div class="tv-1">' + esc(R.L.title.replace(/ Championship$/, '')) + (old.belt ? ' <s>· ' + esc(old.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(holder) + (isNow(fr) ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</div><div class="tv-3">' + esc(stat) + '</div></div></div></a></div>';
+      return '<div class="tv-rc"><a class="tv-card tvn-rcard" tabindex="0" href="/mypage?tvch=' + esc(c.beltId) + '&tvrn=' + fr.n + '"><div class="tvn-rr" data-cuts="' + esc(cuts) + '"></div><div class="tv-rrow"><div class="tv-belt">' + beltPic(c.beltId) + '</div><div class="notranslate" translate="no"><div class="tv-1">' + esc(R.L.title.replace(/ Championship$/, '')) + (old.belt ? ' <s>· ' + esc(old.belt) + '</s>' : '') + '</div><div class="tv-2">' + esc(holder) + (isNow(fr) && !ended(e) ? '<span class="tvn-now">' + esc(T('NOW', '現王者')) + '</span>' : '') + '</div><div class="tv-3">' + esc(stat) + '</div></div></div></a></div>';
     }).join('') + '</div>';
   }
 
   // ---- the era in numbers (StarScope)
   function stats(e) {
-    var list = eraList(e), f = from(e), t = today(), m = {}, sh = {}, ti = {};
+    var list = eraList(e), f = from(e), t = to(e), m = {}, sh = {}, ti = {};
     list.forEach(function(x) { var k = (x.v.x && x.v.x.m) || x.id; m[k] = 1; if (x.v.sid) sh[x.v.sid] = 1; if ((x.v.x.tv || []).length || (x.v.x.ti || []).length) ti[k] = 1; });
     var ch = 0;
     BELTS.forEach(function(b) { var L = lineage(b); ((L && L.reigns) || []).forEach(function(r) { if (String(r.won) >= f && String(r.won) <= t) ch++; }); });
@@ -214,8 +217,10 @@
       if (w.d && String(w.d) !== String(m.d)) return false;
       return keys.every(function(k) { return (w.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); });
     }).forEach(function(x) { if (!best || (!best.v.th && x.v.th)) best = x; });
-    var bv = v || (best ? best.v : null);
-    return { id: id || (best ? best.id : ''), th: bv && bv.th ? bv.th : (best && best.v.th ? best.v.th : ''), v: bv };
+    // 2.121.2: a logged match found by date and names wins over top_matches' own video id when that id isn't logged
+    // (or is logged without a picture), so the card links to the logged video and keeps its thumbnail.
+    if (best && (!v || (!v.th && best.v.th))) return { id: best.id, th: best.v.th || '', v: best.v };
+    return { id: id, th: v && v.th ? v.th : '', v: v };
   }
   // 2.111.0: the StarScope video card (assets/starcards.js), the same block as on the StarScope pages; a match not in
   // StarScope gets the same layout from top_matches.json (names, date).
@@ -251,7 +256,7 @@
   function rivalries(e) {
     var X = idx(), f = from(e);
     return '<div class="tvn-rvs">' + (e.scope.rivalries || []).map(function(r) {
-      var rf = r.from || f, rt = r.to || '';
+      var rf = r.from || f, rt = r.to || (ended(e) ? to(e) : '');
       var fac = !!(r.a.f && r.b.f), list = (fac ? X.fvs(r.a.f, r.b.f, rf) : X.vs(r.a.t, r.b.t, rf)).filter(function(x) { return !rt || String(x.v.d) <= rt; });
       var ds = list.map(function(x) { return String(x.v.d); }).sort(), sg = list.filter(function(x) { return x.v.x && x.v.x.k === 'singles'; }).length;
       var cnt = list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合') + (fac ? '' : ' (' + sg + ' ' + T('singles', 'シングル') + ')');
@@ -275,11 +280,11 @@
   }
 
   // ---- wrestlers and rising stars
-  function beltsHeld(name, f) {
+  function beltsHeld(name, f, t) {
     var k = norm(name), out = [];
     BELTS.forEach(function(b) {
       var L = lineage(b);
-      if (((L && L.reigns) || []).some(function(r) { return String(r.end || '9999') >= f && champNames(r.champ).indexOf(k) >= 0; })) out.push(T(BELT_SHORT[b], BELT_SHORT[b]));
+      if (((L && L.reigns) || []).some(function(r) { return String(r.end || '9999') >= f && (!t || String(r.won || '') <= t) && champNames(r.champ).indexOf(k) >= 0; })) out.push(T(BELT_SHORT[b], BELT_SHORT[b]));
     });
     return out;
   }
@@ -290,11 +295,12 @@
   }
   function person(name, e, rising, withScope) {
     var f = from(e), n = withScope ? (peopleCount(e)[norm(name)] || 0) : 0;
-    var bl = beltsHeld(name, f), line = withScope ? n + ' ' + T('matches in this era', '試合（この時代）') : '';
+    var bl = beltsHeld(name, f, ended(e) ? to(e) : ''), line = withScope ? n + ' ' + T('matches in this era', '試合（この時代）') : '';
     if (rising) {
       var db = debuts()[norm(name)], ft = firstTitle(name);
-      if (db && db >= f) line = T('Debut ', 'デビュー ') + monY(db) + (line ? ' · ' + line : '');
-      else if (ft && ft.d >= f) line = T('First title ', '初戴冠 ') + monY(ft.d) + (line ? ' · ' + line : '');
+      var tt = to(e);
+      if (db && db >= f && db <= tt) line = T('Debut ', 'デビュー ') + monY(db) + (line ? ' · ' + line : '');
+      else if (ft && ft.d >= f && ft.d <= tt) line = T('First title ', '初戴冠 ') + monY(ft.d) + (line ? ' · ' + line : '');
     }
     return '<a class="tvn-pt notranslate" translate="no" tabindex="0" href="/mypage?tvwr=' + encodeURIComponent(name) + '"><div class="ph" data-star="' + esc(name) + '">' + esc(initials(name)) + '</div><div style="min-width:0"><div class="a">' + esc(name) + '</div><div class="b">' + esc(line) + '</div><div class="c">' + esc(bl.join(' · ')) + '</div></div></a>';
   }
@@ -325,11 +331,12 @@
     return (e.scope.factions || []).map(function(id) {
       var x = F[id];
       if (!x) return '';
-      var keys = (x.members || []).map(function(m) { return norm(m.search || m.name); });
-      var n = list.filter(function(it) { return (it.v.p || []).some(function(sd) { return sd.length >= 2 && sd.every(function(p) { return p[0].some(function(k) { return keys.indexOf(k) >= 0; }); }); }); }).length;
+      var keys = (x.members || []).map(function(m) { return norm(m.search || m.name); }), XI = idx();
+      // 2.121.0: a unit side by the sheet's faction column when it has one (X.unitSide), else by today's members
+      var n = list.filter(function(it) { return (it.v.p || []).some(function(sd, i) { return XI && XI.unitSide ? XI.unitSide(it.v, i, id) : sd.length >= 2 && sd.every(function(p) { return p[0].some(function(k) { return keys.indexOf(k) >= 0; }); }); }); }).length;
       var pic = call('factionLogo', id), nmx = String(x.name).replace(/ \(.*\)$/, '');
       var facts = [];
-      if (x.founded && String(x.founded) >= f.slice(0, 4)) facts.push(T('Formed ', '結成 ') + x.founded);
+      if (x.founded && String(x.founded) >= f.slice(0, 4) && String(x.founded) <= to(e).slice(0, 4)) facts.push(T('Formed ', '結成 ') + x.founded);
       if (x.former) facts.push(T('Disbanded ', '解散 ') + (x.disbanded || ''));
       if (withScope) facts.push(n + ' ' + T('unit matches', 'ユニット戦'));
       var path = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search || x.name) + '&tvfaction=' + encodeURIComponent(id);
@@ -350,7 +357,7 @@
       c[k] = (c[k] || 0) + 1; (rng[k] = rng[k] || []).push(String(v.d));
     });
     var top10 = Object.keys(c).sort(function(a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, 10);
-    return '<div class="tvn-dbg notranslate" translate="no"><div class="h">ERA PICKS · SINGLES MET MOST OFTEN SINCE ' + esc(from(e)) + '</div>' + top10.map(function(k) {
+    return '<div class="tvn-dbg notranslate" translate="no"><div class="h">ERA PICKS · SINGLES MET MOST OFTEN ' + esc(ended(e) ? from(e) + ' TO ' + to(e) : 'SINCE ' + from(e)) + '</div>' + top10.map(function(k) {
       var d = rng[k].sort(); return '<div class="r"><i>' + c[k] + '</i><span>' + esc(k) + '</span><span style="color:#9AA6B4">' + esc(d[0] + ' – ' + d[d.length - 1]) + '</span></div>';
     }).join('') + '</div>';
   }
