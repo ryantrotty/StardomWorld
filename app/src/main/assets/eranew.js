@@ -217,8 +217,10 @@
       if (w.d && String(w.d) !== String(m.d)) return false;
       return keys.every(function(k) { return (w.p || []).some(function(sd) { return sd.some(function(p) { return p[0].indexOf(k) >= 0; }); }); });
     }).forEach(function(x) { if (!best || (!best.v.th && x.v.th)) best = x; });
-    var bv = v || (best ? best.v : null);
-    return { id: id || (best ? best.id : ''), th: bv && bv.th ? bv.th : (best && best.v.th ? best.v.th : ''), v: bv };
+    // 2.121.2: a logged match found by date and names wins over top_matches' own video id when that id isn't logged
+    // (or is logged without a picture), so the card links to the logged video and keeps its thumbnail.
+    if (best && (!v || (!v.th && best.v.th))) return { id: best.id, th: best.v.th || '', v: best.v };
+    return { id: id, th: v && v.th ? v.th : '', v: v };
   }
   // 2.111.0: the StarScope video card (assets/starcards.js), the same block as on the StarScope pages; a match not in
   // StarScope gets the same layout from top_matches.json (names, date).

@@ -1213,7 +1213,7 @@
     if (WP.cc) {   // complete career: StarScope cards (2.118.0)
       var cnt = ccPaint(box);
       if (st) st.textContent = cnt + ' ' + T(cnt === 1 ? 'match' : 'matches', '試合');
-      if (dbg) dbg.textContent = [T('Complete career · tab: ', '全キャリア · タブ: ') + WP.tab + ' · debut ' + WP.api.debut + ' · ' + WP.cc.D.cards.length + ' videos, ' + WP.cc.St.total + ' matches'].concat(WP.log).join('\n');
+      if (dbg) dbg.textContent = [WP.ccWhy, T('Complete career · tab: ', '全キャリア · タブ: ') + WP.tab + ' · debut ' + WP.api.debut + ' · ' + WP.cc.D.cards.length + ' videos, ' + WP.cc.St.total + ' matches'].concat(WP.log).join('\n');
       if (had) { var f0 = had === 'top' ? box.querySelector('[data-top]') : had === 'more' ? box.querySelector('[data-wmore]') : box.querySelector('[data-vid="' + had + '"]'); if (f0) focusEl(f0); }
       return;
     }
@@ -1231,7 +1231,7 @@
     box.innerHTML = h;
     if (st) st.textContent = WP.busy ? (list.length ? list.length + ' · ' : '') + T('looking for videos', '動画を検索中') : (list.length + ' ' + T(list.length === 1 ? 'match' : 'matches', '試合') + (WP.done ? '' : ' ' + T('so far', 'まで')));
     if (dbg) {
-      dbg.textContent = [T('Tab: ', 'タブ: ') + WP.tab + ' · ' + T('searches: ', '検索: ') + WP.queries.join(' | ') + (WP.api.debut ? ' · debut ' + WP.api.debut : '')]
+      dbg.textContent = [WP.ccWhy || '', T('Tab: ', 'タブ: ') + WP.tab + ' · ' + T('searches: ', '検索: ') + WP.queries.join(' | ') + (WP.api.debut ? ' · debut ' + WP.api.debut : '')]
         .concat(WP.log)
         .concat(['Kept ' + WP.kept.length + ' · left out ' + WP.dropped.length + (SHEET_ON ? ' · sent to the sheet' : '')])
         .concat(WP.dropped.length ? ['Left out: ' + WP.dropped.slice(0, 8).join(' | ') + (WP.dropped.length > 8 ? ' …' : '')] : []).join('\n');
@@ -1263,6 +1263,13 @@
     var P0 = ccPlan(api);
     WP.cc = null;
     if (P0) { var D0 = ccData(api); if (D0.matches.length) WP.cc = { P: P0, D: D0, St: ccStats(D0) }; }
+    (function() {   // 2.121.2: the complete-career decision, for the debug block
+      var S = window.__tvScopeIdx, ys = '', fr = '';
+      try { ys = (S.years() || []).join(','); fr = S.from(); } catch (e) {}
+      WP.ccWhy = 'StarScope: complete years [' + ys + '] \u00b7 complete from ' + (fr || 'none') + ' \u00b7 debut ' + (api.debut || 'none') + ' \u00b7 ' +
+        (WP.cc ? 'complete career' : !P0 ? 'not complete (debut missing or before ' + (fr || '?') + ')' : 'not complete (no logged matches found under ' + [api.W.name, api.W.search].join(' / ') + ')') +
+        (S && S.saveInfo ? '\n' + S.saveInfo() : '');
+    })();
     var CC = WP.cc, cn = function(id) { var n = CC ? (id === 'all' ? CC.St.total : CC.St.tabs[id]) : null; return n != null ? '<em class="cc-n">' + n + '</em>' : ''; };
     var cats = api.cats || [], tab = Q.get('tvtab') || 'all', x = null;
     cats.forEach(function(c) { if (c.id === tab) x = c; });

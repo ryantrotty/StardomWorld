@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.121.2
+
+Fixes for 2.121.1 (complete histories through 2018).
+- Complete years no longer drop to 2024–2026: the roster file is now downloaded to a temporary file and moved into place, a failed read keeps the last good copy, and the last complete-years list is remembered. A page that read the roster file mid-download fell back to 2024–2026, which hid the telescopes for 2019–2023 debuts (Suzu Suzuki) and kept older factions, titles and wrestlers off their complete pages.
+- StarScope list: one full refresh on every TV (shape 5), so the 2018 sweep's merges, billed names, tags and title links reach the TVs' copies; another full refresh whenever the roster file's `starscope.refresh` is newer than the last one. A list too big to save is no longer silently dropped: the old copy is cleared first, then it is saved without the site's own titles if needed; the outcome shows in the debug blocks.
+- Faction pages: cards load 24 at a time with More (the whole history drawn at once crashed the app), drawn as StarScope cards. A side counts as the faction's when nobody on it carries another faction and more than half (at least two) are members, counting wrestlers known for the faction from other logged matches or factions.json. On-screen debug block says why the page is or isn't a complete history.
+- Title pages: drawn again once the StarScope list is ready, so a complete title (Future of Stardom) flips without a revisit; the debug block's first line gives the decision and the logged title-match count.
+- Eras top rated: a logged match found by date and names now wins over top_matches' own video id, so the card keeps its picture and opens the StarScope video page.
+- StarScope Shows (and Recent, Top, All): drawn again when the newer list arrives, so 2018 from the Eras timeline lists every 2018 show.
+- Wrestler pages: the debug block starts with the complete-career decision (complete years, first day, debut).
+
 ## 2.121.1
 
 - **Kawaii of Kawaii: date fixed** (from `fix/kawaii-date`, 2.119.2, which was never merged). The one match on record, Maki Itoh vs Aya Sakura at Supreme Fight 2026 in Osaka, is now dated 7 Feb 2026 (it was 2 Jul 2026, day and month swapped). The reign's days count from 7 Feb and the lineage starts there, so the complete title history page (2.121.0) shows the right reign length. In the sheet, the match (m8318) carries the title tag `kawaii`.

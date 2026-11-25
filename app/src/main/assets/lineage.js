@@ -545,6 +545,11 @@
   function debugHtml() {
     if (!SHOW_DEBUG) return '';
     var r = R[sel], lines = (dbg[sel] || []).slice();
+    (function() {   // 2.121.2: why the page is or isn't a complete title history
+      var S = window.__tvScopeIdx, from = '', rd = false, n = 0;
+      try { rd = !!(S && S.ready && S.ready()); from = S && S.from ? S.from() : ''; n = rd ? scTitleCount() : 0; } catch (e) {}
+      lines.unshift('STARSCOPE: list ' + (rd ? 'ready' : 'not ready') + ' \u00b7 complete from ' + (from || 'none') + ' \u00b7 title since ' + (D.since || '?') + ' \u00b7 complete history ' + (scComplete() ? 'YES' : 'no') + ' \u00b7 ' + n + ' logged title matches for ' + P);
+    })();
     if (waiting) lines.push('videos not loaded: press OK on this reign (no request made)');
     if (result) {
       result.rows.slice(0, 40).forEach(function(it) {
@@ -702,4 +707,15 @@
 
   render('sel');
   if (R.length) choose(start, true, start !== R.length - 1) || 0;
+  // 2.121.2: the StarScope list often arrives after the page is drawn. Once it is ready, draw again if the page should now
+  // be a complete title history (or the reign's cards can now come from the index), so it no longer needs a revisit.
+  (function scWatch(n, was) {
+    var S = window.__tvScopeIdx, ok = false;
+    try { ok = !!(S && S.ready && S.ready()); } catch (e) { ok = false; }
+    if (ok) {
+      if (R.length && scComplete() !== was) { result = null; render('sel'); choose(sel, true, true); }
+      return;
+    }
+    if (n < 120) setTimeout(function() { scWatch(n + 1, was); }, 250);
+  })(0, scComplete());
 })();
