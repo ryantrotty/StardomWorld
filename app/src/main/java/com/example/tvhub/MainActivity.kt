@@ -3370,7 +3370,11 @@ class MainActivity : Activity() {
             val t = dailyData()?.optJSONObject("lineage")?.optJSONObject("titles")?.optJSONObject(id) ?: return null
             val reigns = t.optJSONArray("reigns") ?: return null
             if (reigns.length() == 0 || t.optString("title").isEmpty()) return null
-            val have = if (bundled.isEmpty()) 0 else (org.json.JSONObject(bundled).optJSONArray("reigns")?.length() ?: 0)
+            val bj = if (bundled.isEmpty()) null else org.json.JSONObject(bundled)
+            val have = bj?.optJSONArray("reigns")?.length() ?: 0
+            // 2.121.4: a lineage file marked "pinned" (dates the app owner confirmed) keeps its reigns unless the daily
+            // file has more of them (the daily file still said Kawaii of Kawaii began 2026-07-02).
+            if (bj?.optBoolean("pinned") == true) return if (reigns.length() > have) t.toString() else null
             if (reigns.length() >= have) t.toString() else null
         } catch (_: Exception) { null }
     }

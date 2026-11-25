@@ -1,6 +1,6 @@
 # New Japan title checks (for the daily job)
 
-The app has two New Japan titles with lineage pages: IWGP Women's (`iwgp`) and STRONG Women's (`strong`). Their history is built into the app (`app/src/main/assets/lineage/iwgp.json` and `strong.json`). The daily job keeps them current the same way it keeps the Stardom titles: it writes the whole title to `daily.json` under `lineage.titles.<id>`, and the app uses that copy when it is complete and has at least as many reigns as the built-in one.
+The app has two New Japan titles with lineage pages: IWGP Women's (`iwgp`) and STRONG Women's (`strong`). Their history is built into the app (`app/src/main/assets/lineage/iwgp.json` and `strong.json`). The daily job keeps them current the same way it keeps the Stardom titles: it writes the whole title to `daily.json` under `lineage.titles.<id>`, and the app uses that copy when it is complete and has at least as many reigns as the built-in one. Since 2.121.4 a built-in file with `"pinned": true` (dates the app owner confirmed, e.g. `kawaii.json`) is used instead unless the daily copy has more reigns.
 
 ## Sources
 

@@ -1,6 +1,7 @@
 {
  "_note": "Kawaii of Kawaii. One match on record, supplied by the app owner: Maki Itoh defended against Aya Sakura on 2026-02-07. The title win and its date are not known, so the page shows the defence only (noWin). Search words follow assets/championships.json (Cutest of Cute is searched too).",
  "id": "kawaii",
+ "pinned": true,
  "title": "Kawaii of Kawaii Championship",
  "ja": "Kawaii of Kawaii",
  "since": "2026-02-07",

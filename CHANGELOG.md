@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.121.4
+
+- Kawaii of Kawaii: the daily file still carried the old start date (2026-07-02) and replaced the built-in lineage (2026-02-07), so the reign's date range left out the Feb 7 defence and the page showed 0 videos. A lineage file marked `"pinned": true` now keeps its reigns unless the daily file has more of them; `kawaii.json` is pinned.
+
 ## 2.121.3
 
 - The StarScope list is now kept in the app's own files instead of the page's storage, which was too small for it. Saves had been failing silently, so every page started from an old copy (or none) and flipped 10–15 seconds later when the sheet replied, then went back to the old copy on the next visit. One more full refresh (shape 6) fills the new file; after that pages open on the current list straight away.
