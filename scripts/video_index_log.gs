@@ -1024,6 +1024,7 @@ function viCards(b) {
     // match) carries that set's show, so StarScope lists it under its own show.
     var vset = String(v.set_id || ''), oss = vset && vset !== String(m.show_id || '') && shw[vset] ? shw[vset] : null;
     map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', she: (shw[m.show_id] || {}).ne || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, ne: oss.ne || '', vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    if (String(v.version) === 'en') map[v.video_id].lg = 'en';   // 2.122.0: the English version, for the cards' EN box
   });
   return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc, blank: blank } : { ok: true, map: map, now: now, full: true, venues: venLoc, blank: blank };
 }

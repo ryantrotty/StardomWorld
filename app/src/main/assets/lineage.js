@@ -512,9 +512,14 @@
   function videoHtml(it, idx) {
     var tag = it.inReign ? '<span class="ln-tg">' + esc(T('THIS REIGN', 'この王者期間')) + '</span>' : '';
     var bd = it.cd ? '<span class="ln-bd">' + esc((it.cdSrc === 'estimated' ? '~' : '') + fmtMD(it.cd) + (new Date(ms(it.cd)).getUTCFullYear() !== new Date(NOW).getUTCFullYear() ? ' ' + new Date(ms(it.cd)).getUTCFullYear() : '')) + '</span>' : '';
-    return '<a class="ln-c" tabindex="0" data-k="c" data-e="' + idx + '" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + tag + bd + PLAY + '</div>' + scBody(it) + '</a>';
+    return '<a class="ln-c" tabindex="0" data-k="c" data-e="' + idx + '" href="' + esc(it.h) + '"><div class="ln-im"' + (it.b ? ' style="background-image:url(' + esc(it.b) + ')"' : '') + '>' + tag + bd + PLAY + scEn(it) + '</div>' + scBody(it) + '</a>';
   }
   // 2.121.5: on a complete title history a logged match is drawn as the StarScope video card (event, names, footer)
+  // 2.122.0: the English version box, for any logged video (complete history or not)
+  function scEn(it) {
+    var S = window.__tvScopeIdx, C = window.__tvStarCard, id = it.id || cardId(it), v = id && S && S.get ? S.get(id) : null;
+    return v && C && C.en ? C.en(v) : '';
+  }
   function scBody(it) {
     var S = window.__tvScopeIdx, v = null;
     if (it.sc && window.__tvStarCard && S && S.get && scComplete()) { var id = it.id || cardId(it); v = id ? S.get(id) : null; }

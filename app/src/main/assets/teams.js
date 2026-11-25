@@ -949,7 +949,12 @@
     // title and picture, not its address: build the address from the number (2.72.1). Without it the card's link was
     // empty, so OK reloaded the team page and the Menu button found no video to offer.
     var href = it.h || (/^\d{1,9}$/.test(String(it.id)) ? absUrl('/contents/' + it.id) : '');
-    return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(href) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tt">' + esc(it.t) + '</div></a>';
+    return '<a class="tt-card" tabindex="0" data-vid="' + esc(it.id) + '" href="' + esc(href) + '"><div class="im" style="background-image:url(\'' + esc(it.b) + '\')">' + (it.ok ? '<span class="ok">' + esc(T('TEAMMATES', '同じチーム')) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + siteEn(it) + '</div><div class="tt">' + esc(it.t) + '</div></a>';
+  }
+  // 2.122.0: a site card for a logged video still gets the English version box
+  function siteEn(it) {
+    var S = window.__tvScopeIdx, C = window.__tvStarCard, id = String(it.id || ''), v = /^\d{1,9}$/.test(id) && S && S.get ? S.get(id) : null;
+    return v && C && C.en ? C.en(v) : '';
   }
   // One row of video cards: its grid, its More tile and the count beside its heading.
   function paintRow(box, st, list, done, ran, active, moreAttr, msgs) {
@@ -1479,7 +1484,7 @@
     var v = x.v, d = String(v.d || '');
     var card = window.__tvStarCard ? window.__tvStarCard.html(v) : '<div class="tt">' + esc(v.vt || '') + '</div>';
     return '<a class="tt-card cc-sc" tabindex="0" data-vid="' + esc(x.id) + '" href="' + esc(absUrl('/contents/' + x.id)) + '"><div class="im"' + (v.th ? ' data-bg="' + esc(v.th) + '"' : '') + '>' +
-      (badge ? '<span class="ok">' + esc(badge) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + '</div><div class="tvsc-host">' + card + '</div></a>';
+      (badge ? '<span class="ok">' + esc(badge) + '</span>' : '') + (d ? '<span class="dt">' + esc(fmtD(d)) + '</span>' : '') + (window.__tvStarCard && window.__tvStarCard.en ? window.__tvStarCard.en(v) : '') + '</div><div class="tvsc-host">' + card + '</div></a>';
   }
   // The career block, between the header and MATCHES.
   function ccHtml(api, D, St, P) {

@@ -237,7 +237,7 @@
     var h = list.slice(0, 5).map(function(m) {
       var lg = topLogged(m), vid = lg.id, th = lg.th;
       var tag = vid ? 'a tabindex="0" href="/contents/' + esc(vid) + '"' : 'div';
-      return '<' + tag + ' class="tvn-mc"><div class="im"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '></div><span class="bd notranslate" translate="no">★ ' + Number(m.r).toFixed(2) + '</span>' +
+      return '<' + tag + ' class="tvn-mc"><div class="im' + (lg.v && window.__tvStarCard && window.__tvStarCard.enCls ? window.__tvStarCard.enCls(lg.v) : '') + '"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '>' + (lg.v && window.__tvStarCard && window.__tvStarCard.en ? window.__tvStarCard.en(lg.v) : '') + '</div><span class="bd notranslate" translate="no">★ ' + Number(m.r).toFixed(2) + '</span>' +
         '<div class="tvsc-host">' + cardBody(m, lg.v) + '</div></' + (vid ? 'a' : 'div') + '>';
     }).join('');
     h += '<a class="tvn-mc tvn-all" tabindex="0" href="/mypage?tvtop=era&e=' + e.n + '">' + esc(T('All ' + list.length + ' matches', '全' + list.length + '試合')) + '<span>' + esc(T('in this era', 'この時代')) + '</span></a>';

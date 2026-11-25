@@ -8631,7 +8631,7 @@ class MainActivity : Activity() {
 
   function cardHtml(it) {
     var sc = it.v && window.__tvStarCard ? window.__tvStarCard.html(it.v) : '';   // 2.121.2: StarScope cards on a complete faction history
-    return '<a class="tv-fc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-fc-img" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '"></div>' + (sc ? '<div class="tvsc-host">' + sc + '</div>' : '<div class="tv-fc-t">' + esc(it.title) + '</div>') + '</a>';
+    return '<a class="tv-fc" tabindex="0" href="' + esc(it.href) + '"><div class="tv-fc-img' + (it.v && window.__tvStarCard && window.__tvStarCard.enCls ? window.__tvStarCard.enCls(it.v) : '') + '" style="' + (it.bgUrl ? 'background-image:url(' + esc(it.bgUrl) + ');' : '') + '">' + (it.v && window.__tvStarCard && window.__tvStarCard.en ? window.__tvStarCard.en(it.v) : '') + '</div>' + (sc ? '<div class="tvsc-host">' + sc + '</div>' : '<div class="tv-fc-t">' + esc(it.title) + '</div>') + '</a>';
   }
   function cards() { return Array.prototype.slice.call(grid.children); }
   function setStatus(i) {
