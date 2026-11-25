@@ -12,7 +12,15 @@
   window.__tvStarCards = true;
   var KEY = 'tvVixCardsV4', AGE = 1800000, map = null, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) map = c.map; } catch (e) {}
+  // 2.121.3: the list lives in the app's own files (AndroidHost.scopeListLoad / scopeListSave); the page's storage was
+  // too small for it. A copy still in the page's storage is moved over once and removed from there.
+  var NATIVE = !!(H.scopeListLoad && H.scopeListSave), KEPT = null;
+  try { if (NATIVE) { var raw0 = H.scopeListLoad(); if (raw0) KEPT = JSON.parse(raw0); } } catch (e) { KEPT = null; }
+  if (!KEPT || !KEPT.map) {
+    KEPT = null;
+    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) { KEPT = c; if (NATIVE && H.scopeListSave(JSON.stringify(c))) localStorage.removeItem(KEY); } } catch (e) {}
+  } else { try { localStorage.removeItem(KEY); } catch (e) {} }
+  if (KEPT) map = KEPT.map;
   var st = document.createElement('style');
   st.textContent = [
     '.tvsc-host{display:block !important;-webkit-line-clamp:unset !important;overflow:visible !important;padding:11px 14px 13px !important;box-sizing:border-box;}',
@@ -1022,7 +1030,7 @@
   var ASK_KEY = 'tvVixCardsAsk', FAIL_KEY = 'tvVixCardsFail', FULL_AGE = 86400000, asking = false, again = false;
   function lsJ(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function lsPut(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function kept() { var c = lsJ(KEY); return c && c.map ? c : null; }
+  function kept() { return KEPT && KEPT.map ? KEPT : null; }
   // 2.121.2: the list is big enough to hit the WebView's storage limit. A failed save used to be silent, so every later
   // page read the old copy (stale cards, titles and factions). Now the old copy is dropped first, and if the new one
   // still doesn't fit it is saved without the site's own titles (vt, vtj: rebuilt from the card when missing). The
@@ -1030,8 +1038,10 @@
   var SAVE_INFO = '';
   try { SAVE_INFO = localStorage.getItem('tvVixCardsSave') || ''; } catch (e) {}
   function saveList(c) {
+    KEPT = c;
     var txt = JSON.stringify(c), kb = Math.round(txt.length / 1024), how = '';
-    try { localStorage.setItem(KEY, txt); how = 'saved'; } catch (e) {
+    if (NATIVE) { var okN = false; try { okN = H.scopeListSave(txt); } catch (e) { okN = false; } how = okN ? 'saved to the app' : 'NOT SAVED to the app'; }
+    else try { localStorage.setItem(KEY, txt); how = 'saved'; } catch (e) {
       try { localStorage.removeItem(KEY); localStorage.setItem(KEY, txt); how = 'saved after dropping the old copy'; } catch (e2) {
         var slim = {}; Object.keys(c.map).forEach(function(k) { var v = c.map[k], o = {}; Object.keys(v).forEach(function(f) { if (f !== 'vt' && f !== 'vtj') o[f] = v[f]; }); slim[k] = o; });
         var t2 = JSON.stringify({ t: c.t, s: c.s, f: c.f, map: slim });
@@ -1082,6 +1092,7 @@
     THRU = null;
     if (got) {
       try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
+      try { window.dispatchEvent(new Event('tvscopelist')); } catch (e) {}   // 2.121.3: app pages redraw if their decision changed
       soon();
     }
     setTimeout(fillThumbs, 3000);
@@ -1123,12 +1134,13 @@
   // 2.97.0: once, the whole list, so the copy gets the complete-years fields (tournament, block and title ids, the
   // site's title) from the updated sheet script. An older script simply doesn't send them; the pages fall back.
   // 2.118.0: shape 4, each wrestler's faction (fa) and the match's moments (mo) for complete-career wrestler pages.
+  // 2.121.3: shape 6, the same once more now that the list is kept in the app's files (2.121.2's could not be saved).
   // 2.121.2: shape 5, one more full list on every TV (the 2018 sweep's merges, billed names and tags never reached the
   // TVs' copies), then a full list again whenever the roster file's starscope.refresh is newer than the last one.
-  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '5'; } catch (e) {}
+  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '6'; } catch (e) {}
   var rf = ''; try { rf = String(H.scopeRefresh ? H.scopeRefresh() : '' || ''); } catch (e) { rf = ''; }
   var rfAt = ''; try { rfAt = localStorage.getItem('tvVixCardsRefresh') || ''; } catch (e) {}
-  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '5'); localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
+  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '6'); localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
   else if (SHEET && rf && rf > rfAt) { try { localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
   else if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }

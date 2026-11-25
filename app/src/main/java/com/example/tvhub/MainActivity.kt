@@ -2667,6 +2667,8 @@ class MainActivity : Activity() {
     private fun scopeLogOn(): Boolean = BuildConfig.VIDEO_INDEX_DRYRUN && sheetOn()
     private fun scopeReadOn(): Boolean = sheetOn() || scopeFilePublic()
 
+    private val scopeListLock = Any()   // 2.121.3: the StarScope list file (scopeListLoad / scopeListSave)
+
     private fun scopeCompleteYears(): String {
         if (!sheetOn()) return "[]"
         // 2.106.0: 2025 fully logged; 2.109.0: 2024 too. 2.121.2: the last list read from the roster file is kept, so a
@@ -3858,6 +3860,24 @@ class MainActivity : Activity() {
                 else "{\"ok\":false,\"error\":\"not in this build\"}"
             pageReply("__tvStarCardsReply", reqId, out)
         }
+
+        // 2.121.3: the StarScope list is kept in the app's own files instead of the page's storage, which is too small for
+        // it (a failed save left every later page on an old copy, or none). The page reads it once when it starts and
+        // hands back each updated list; writes go to a temporary file first and are moved into place.
+        @android.webkit.JavascriptInterface
+        fun scopeListLoad(): String = try {
+            synchronized(scopeListLock) { java.io.File(filesDir, "scope_list.json").let { if (it.exists()) it.readText() else "" } }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun scopeListSave(json: String): Boolean = try {
+            synchronized(scopeListLock) {
+                val tmp = java.io.File(filesDir, "scope_list.json.tmp"); val f = java.io.File(filesDir, "scope_list.json")
+                tmp.writeText(json)
+                if (!tmp.renameTo(f)) { f.writeText(json); tmp.delete() }
+            }
+            true
+        } catch (_: Exception) { false }
 
         // StarScope is readable in this build (2.76.0): yours, from the sheet; any other, once the published file is
         // switched on for public builds.
@@ -8951,6 +8971,8 @@ class MainActivity : Activity() {
     if (n < 120) setTimeout(function() { scopeWait(n + 1); }, 250);
     else { SCOPE_WHY = 'the StarScope list never arrived on this page'; scopeDebug(); }
   }
+  // 2.121.3: a newer list can turn this page into a complete faction history after it was drawn the old way.
+  window.addEventListener('tvscopelist', function() { if (!SCOPE) scopeWait(0); });
 
   // ------------------------------------------------------------------ start
   if (HOME) buildHome();

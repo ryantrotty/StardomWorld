@@ -1248,6 +1248,14 @@
     if (!below) wpLoad();
   }
   scroller.addEventListener('focusin', function(e) { if (WP.api) wpNear(e.target); });
+  // 2.121.3: when a newer StarScope list arrives, a wrestler page that should now be (or stop being) a complete career is
+  // drawn again.
+  window.addEventListener('tvscopelist', function() {
+    var api = WP.api;
+    if (!api || api.missing || !document.getElementById('tv-wr')) return;
+    var P = ccPlan(api), now = !!(P && ccData(api).matches.length);
+    if (now !== !!WP.cc) { try { renderWrestler(); } catch (e) {} }
+  });
   function wpPath(tab) { return '/mypage?tvwr=' + encodeURIComponent(WP.api.W.name) + (tab && tab !== 'all' ? '&tvtab=' + encodeURIComponent(tab) : ''); }
   function renderWrestler(tries) {
     var api = window.__tvWrApi;

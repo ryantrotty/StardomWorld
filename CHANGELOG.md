@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.121.3
+
+- The StarScope list is now kept in the app's own files instead of the page's storage, which was too small for it. Saves had been failing silently, so every page started from an old copy (or none) and flipped 10–15 seconds later when the sheet replied, then went back to the old copy on the next visit. One more full refresh (shape 6) fills the new file; after that pages open on the current list straight away.
+- Wrestler, title and faction pages redraw when a newer list arrives and their decision changes (a 2018–2019 debut now switches to the complete career page; a title redraws only when its logged title matches change).
+
 ## 2.121.2
 
 Fixes for 2.121.1 (complete histories through 2018).

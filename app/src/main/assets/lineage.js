@@ -707,6 +707,8 @@
 
   render('sel');
   if (R.length) choose(start, true, start !== R.length - 1) || 0;
+  var scSeen = null;
+  try { if (window.__tvScopeIdx && window.__tvScopeIdx.ready()) scSeen = scComplete() + '|' + scTitleCount(); } catch (e) {}
   // 2.121.2: the StarScope list often arrives after the page is drawn. Once it is ready, draw again if the page should now
   // be a complete title history (or the reign's cards can now come from the index), so it no longer needs a revisit.
   (function scWatch(n, was) {
@@ -718,4 +720,12 @@
     }
     if (n < 120) setTimeout(function() { scWatch(n + 1, was); }, 250);
   })(0, scComplete());
+  // 2.121.3: a newer list (title tags fixed in the sheet) redraws the chosen reign's cards from the index.
+  window.addEventListener('tvscopelist', function() {
+    if (!document.getElementById('tv-ln') || !R.length) return;
+    var now = scComplete() + '|' + scTitleCount();
+    if (scSeen === null) scSeen = now;
+    else if (now === scSeen) return;
+    scSeen = now; result = null; render('sel'); choose(sel, true, true);
+  });
 })();
