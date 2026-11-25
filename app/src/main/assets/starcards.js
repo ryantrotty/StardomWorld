@@ -21,6 +21,9 @@
     try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) { KEPT = c; if (NATIVE && H.scopeListSave(JSON.stringify(c))) localStorage.removeItem(KEY); } } catch (e) {}
   } else { try { localStorage.removeItem(KEY); } catch (e) {} }
   if (KEPT) map = KEPT.map;
+  // 2.122.1: the other scripts (scopeplayer, setorder, cardcheck, shownames) read the list from here, not the page's storage.
+  window.__tvScopeList = KEPT;
+  window.__tvScopeMap = window.__tvScopeMap || function(){ var L = window.__tvScopeList; if (L && L.map) return L.map; try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); if (c && c.map) return c.map; } catch (e) {} try { var A = window.AndroidHost, r = A && A.scopeListLoad ? A.scopeListLoad() : ''; if (r) { var c2 = JSON.parse(r); if (c2 && c2.map) { window.__tvScopeList = c2; return c2.map; } } } catch (e) {} return null; };
   var st = document.createElement('style');
   st.textContent = [
     '.tvsc-host{display:block !important;-webkit-line-clamp:unset !important;overflow:visible !important;padding:11px 14px 13px !important;box-sizing:border-box;}',
@@ -1048,6 +1051,7 @@
   try { SAVE_INFO = localStorage.getItem('tvVixCardsSave') || ''; } catch (e) {}
   function saveList(c) {
     KEPT = c;
+    window.__tvScopeList = c;
     var txt = JSON.stringify(c), kb = Math.round(txt.length / 1024), how = '';
     if (NATIVE) { var okN = false; try { okN = H.scopeListSave(txt); } catch (e) { okN = false; } how = okN ? 'saved to the app' : 'NOT SAVED to the app'; }
     else try { localStorage.setItem(KEY, txt); how = 'saved'; } catch (e) {

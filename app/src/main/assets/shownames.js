@@ -122,7 +122,8 @@
     OVER = {};
     ['tvVixCardsV4', 'ccPhoneCards'].forEach(function(k) {
       try {
-        var m = (JSON.parse(localStorage.getItem(k) || 'null') || {}).map || {};
+        // 2.122.1: the TV's list is in the app's files since 2.121.3; read the shared copy for it.
+        var m = (k === 'tvVixCardsV4' ? (window.__tvScopeMap || (window.__tvScopeMap = function(){ var L = window.__tvScopeList; if (L && L.map) return L.map; try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); if (c && c.map) return c.map; } catch (e) {} try { var A = window.AndroidHost, r = A && A.scopeListLoad ? A.scopeListLoad() : ''; if (r) { var c2 = JSON.parse(r); if (c2 && c2.map) { window.__tvScopeList = c2; return c2.map; } } } catch (e) {} return null; }))() : null) || (JSON.parse(localStorage.getItem(k) || 'null') || {}).map || {};
         Object.keys(m).forEach(function(id) {
           var c = m[id];
           if (c && c.she && c.sh) OVER[c.sh] = c.she;

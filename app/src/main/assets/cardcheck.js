@@ -73,7 +73,8 @@
   // ---- what the TV already knows: the StarScope list (logged, and how) and Log next's watch history
   // The logger clears the TV's copy when it saves; the last one read stays here until the new list arrives.
   var lastMap = null;
-  function cardsMap() { var c = lsGet('tvVixCardsV4'); if (c && c.map) lastMap = c.map; return lastMap || {}; }
+  // 2.122.1: the shared StarScope list (app files since 2.121.3), not the page's storage.
+  function cardsMap() { var m = null; try { m = (window.__tvScopeMap || (window.__tvScopeMap = function(){ var L = window.__tvScopeList; if (L && L.map) return L.map; try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); if (c && c.map) return c.map; } catch (e) {} try { var A = window.AndroidHost, r = A && A.scopeListLoad ? A.scopeListLoad() : ''; if (r) { var c2 = JSON.parse(r); if (c2 && c2.map) { window.__tvScopeList = c2; return c2.map; } } } catch (e) {} return null; }))(); } catch (e) { m = null; } if (m) lastMap = m; return lastMap || {}; }
   var prevUpdate = window.__tvScopeUpdate;
   window.__tvScopeUpdate = function() { try { if (prevUpdate) prevUpdate(); } catch (e) {} if (show && !window.__tvIndexIsOpen) render(); };
   function watchInfo() {

@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.122.1
+
+- Fix: the StarScope video player page (title with show, date and venue, the telescope tag, the bell button and The card row) was missing for logged videos since 2.121.3. That version moved the StarScope list into the app's files and removed the page's storage copy, but the player still read the page's storage. `starcards.js` now shares the list it loads (`__tvScopeList` / `__tvScopeMap`), and the player, set order (match-number direction), TV card check and English show names (`name_en`) read it from there, falling back to the app's file.
+
 ## 2.122.0
 
 - English version cue: a logged English video (match_videos version "en") shows the player bar's EN box in the lower right of its thumbnail on every StarScope card, on site cards for logged videos (wrestler, team, title pages), and on a show card when the whole show is in English. The sheet script sends the new `lg` field; one full list refresh (shape 7) picks it up.
