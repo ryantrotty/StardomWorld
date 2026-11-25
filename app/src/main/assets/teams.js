@@ -939,6 +939,11 @@
     if (had) { var f = had === 'more' ? box.querySelector('.tt-more') : box.querySelector('[data-vid="' + had + '"]'); if (f) focusEl(f); }
   }
   function cardHtml(it) {
+    // 2.121.5: a complete team history draws its logged matches as StarScope video cards (the complete-career card)
+    if (TCC && it.sc && window.__tvScopeIdx && window.__tvScopeIdx.get) {
+      var sv = window.__tvScopeIdx.get(it.id);
+      if (sv) return ccCard({ id: String(it.id), v: sv }, it.ok ? T('TEAMMATES', '同じチーム') : '').replace(' data-bg="', ' style="background-image:url(\'' + esc(sv.th || '') + '\')" data-x="');
+    }
     var d = dateOfTitle(it.t);
     // Matches saved in the private sheet's team lists (and those waiting on the TV) keep only the video's number,
     // title and picture, not its address: build the address from the number (2.72.1). Without it the card's link was

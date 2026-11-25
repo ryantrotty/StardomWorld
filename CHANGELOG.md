@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.121.5
+
+- Complete tag team histories and complete title histories draw their logged matches as StarScope video cards (event, names, footer), like complete-career wrestler pages. Matches not logged yet keep the site's card.
+
 ## 2.121.4
 
 - Kawaii of Kawaii: the daily file still carried the old start date (2026-07-02) and replaced the built-in lineage (2026-02-07), so the reign's date range left out the Feb 7 defence and the page showed 0 videos. A lineage file marked `"pinned": true` now keeps its reigns unless the daily file has more of them; `kawaii.json` is pinned.
