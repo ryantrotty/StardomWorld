@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.122.0
+
+- English version cue: a logged English video (match_videos version "en") shows the player bar's EN box in the lower right of its thumbnail on every StarScope card, on site cards for logged videos (wrestler, team, title pages), and on a show card when the whole show is in English. The sheet script sends the new `lg` field; one full list refresh (shape 7) picks it up.
+
 ## 2.121.5
 
 - Complete tag team histories and complete title histories draw their logged matches as StarScope video cards (event, names, footer), like complete-career wrestler pages. Matches not logged yet keep the site's card.

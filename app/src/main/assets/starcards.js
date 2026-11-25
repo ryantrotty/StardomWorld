@@ -25,6 +25,9 @@
   st.textContent = [
     '.tvsc-host{display:block !important;-webkit-line-clamp:unset !important;overflow:visible !important;padding:11px 14px 13px !important;box-sizing:border-box;}',
     '.tvsc,.tvsc *{text-decoration:none !important;}',
+    // 2.122.0: English version cue, the player bar's EN box (outlined square, white) in the thumbnail's lower right
+    '.tv-enp{position:relative !important;}',
+    '.tv-en{position:absolute;right:8px;bottom:8px;z-index:2;display:flex;align-items:center;justify-content:center;min-width:34px;height:24px;padding:0 5px;box-sizing:border-box;border:2px solid #FFFFFF;border-radius:4px;background:rgba(11,17,24,.85);color:#FFFFFF;font:800 13px/1 Arial,Helvetica,sans-serif;letter-spacing:.5px;pointer-events:none;}',
     '.tvsc{font-family:Arial,Helvetica,sans-serif;color:#fff;font-weight:400;}',
     '.tvsc .ev{font-size:12px;font-weight:800;letter-spacing:1px;color:#F4C242;text-transform:uppercase;}',
     '.tvsc .nm{margin-top:7px;padding-bottom:8px;border-bottom:1px solid #2A323C;font-size:18px;font-weight:800;line-height:1.22;word-break:normal !important;overflow-wrap:break-word !important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;}',
@@ -69,7 +72,11 @@
     return '<div class="tvsc notranslate" translate="no"><div class="ev">' + esc(ja ? v.ej : v.e) + '</div><div class="nm' + (sm ? ' sm' : '') + '">' + lines + '</div><div class="ft"><span>' + esc(foot.join(' · ')) + '</span><b>' + esc(dateText(v.d)) + '</b></div></div>';
   }
   // The logger's Card tab draws its preview with the same card (2.61.0).
-  window.__tvStarCard = { html: block };
+  // 2.122.0: English version (match_videos version "en", sent as lg). en(v) is the box, enCls(v) the class its picture needs.
+  function isEn(v) { return !!(v && v.lg === 'en'); }
+  function enBox(v) { return isEn(v) ? '<span class="tv-en notranslate" translate="no" aria-label="English">EN</span>' : ''; }
+  function enCls(v) { return isEn(v) ? ' tv-enp' : ''; }
+  window.__tvStarCard = { html: block, en: enBox, enCls: enCls, isEn: isEn };
 
   // ---- Complete years (2.97.0): StarScope as the source for pages limited to a year whose every show is logged.
   // AndroidHost.scopeCompleteJson() lists those years ([2025, 2026] in your build since 2.106.0, none in others). A complete year is covered
@@ -314,7 +321,7 @@
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
     h += '<div class="hd">' + TEL + esc(head) + '</div><div class="gr">';
-    list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '></div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
+    list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
     d.innerHTML = h + '</div>';
     document.body.appendChild(d);
     d.addEventListener('focusin', function() { rowPictures(d, 'a.c'); });
@@ -373,7 +380,7 @@
   }
   function hcard(x, badge) {
     var th = esc(x.v.th || ''), X = x.v.x;
-    return '<a class="hc" data-f="1" data-k="v' + esc(x.id) + '" href="/contents/' + esc(x.id) + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '></div>' +
+    return '<a class="hc" data-f="1" data-k="v' + esc(x.id) + '" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (th ? ' data-bg="' + th + '"' : '') + '>' + enBox(x.v) + '</div>' +
       (badge && X.rc ? '<span class="bd">★ ' + X.r.toFixed(1) + ' · ' + X.rc + '</span>' : '') + '<div class="tvsc-host">' + block(x.v) + '</div></a>';
   }
   function chipH(k, label, on, extra) { return '<button type="button" class="ch' + (on ? ' on' : '') + '" data-f="1" data-k="' + k + '"' + (extra || '') + '>' + label + '</button>'; }
@@ -525,14 +532,16 @@
   // One show card (Shows and Log next): picture with the date stamp and count, name and venue, main event, the rest.
   function cardHtml(o) {
     var th = esc(o.th || ''), id = String(o.href).replace(/^.*\//, '');
-    return '<a class="sc" data-f="1" data-k="v' + esc(id) + '"' + (o.auto ? ' data-auto="1"' : '') + ' href="' + o.href + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '>' + stamp(o.date) +
+    return '<a class="sc" data-f="1" data-k="v' + esc(id) + '"' + (o.auto ? ' data-auto="1"' : '') + ' href="' + o.href + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '>' + stamp(o.date) + (o.en ? enBox({ lg: 'en' }) : '') +
       '<span class="cn' + (o.complete ? '' : ' part') + '">' + TEL18 + esc(o.count) + '</span></div>' +
       '<div class="bd"><div><div class="nm">' + esc(o.name) + '</div>' + (o.venue ? '<div class="vn">' + ico('pin', 14, '#C9D2DC') + esc(o.venue) + '</div>' : '') + '</div>' +
       o.main + o.rest + '</div></a>';
   }
+  // 2.122.0: a show is English when every logged video in it is the English version (an English-commentary set).
+  function showEn(s) { return !!(s && s.list && s.list.length && s.list.every(function(x) { return isEn(x.v); })); }
   function showCard(s, href) {
     var v = s.top.v;
-    return cardHtml({ href: href || '/contents/' + esc(s.first.id), th: s.top.v.th, date: s.date, count: countText(s), complete: s.complete, name: s.name, venue: s.venue,
+    return cardHtml({ href: href || '/contents/' + esc(s.first.id), th: s.top.v.th, date: s.date, en: showEn(s), count: countText(s), complete: s.complete, name: s.name, venue: s.venue,
       main: '<div class="me"><div class="eb' + (s.isMain ? '' : ' dim') + '">' + esc(mainLabel(s)) + '</div><div class="t">' + esc(oneLine(v)) + '</div><div class="s">' + esc(eventLine(v)) + '</div></div>',
       rest: (s.hl.length ? '<div class="lb">' + HT.alsoOn + '</div>' + s.hl.map(hlRow).join('') : '') + pips(s) });
   }
@@ -544,7 +553,7 @@
       var v = s.nums[n].v, main = n === s.mainN && s.isMain;
       rows += '<div class="ro' + (main ? ' mn' : '') + '"><span class="no">' + n + '</span><span class="ev">' + esc(main ? HT.main : eventLine(v)) + '</span><span class="rn">' + esc(oneLine(v)) + '</span></div>';
     });
-    return '<div class="fe"><div class="lb fl">' + HT.latest + '</div><a class="fc" data-f="1" data-k="v' + esc(s.first.id) + '" href="/contents/' + esc(s.first.id) + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '>' + stamp(s.date) +
+    return '<div class="fe"><div class="lb fl">' + HT.latest + '</div><a class="fc" data-f="1" data-k="v' + esc(s.first.id) + '" href="/contents/' + esc(s.first.id) + '"><div class="im"' + (th ? ' data-bg="' + th + '"' : '') + '>' + stamp(s.date) + (showEn(s) ? enBox({ lg: 'en' }) : '') +
       '<span class="cn">' + TEL18 + esc(countText(s)) + '</span></div><div class="bd"><div class="nm">' + esc(s.name) + '</div>' +
       (s.venue ? '<div class="vn">' + ico('pin', 14, '#C9D2DC') + esc(s.venue) + '</div>' : '') + '<div class="rl">' + rows + '</div></div></a></div>';
   }
@@ -1134,13 +1143,14 @@
   // 2.97.0: once, the whole list, so the copy gets the complete-years fields (tournament, block and title ids, the
   // site's title) from the updated sheet script. An older script simply doesn't send them; the pages fall back.
   // 2.118.0: shape 4, each wrestler's faction (fa) and the match's moments (mo) for complete-career wrestler pages.
+  // 2.122.0: shape 7, a full list once more for the English version field (lg).
   // 2.121.3: shape 6, the same once more now that the list is kept in the app's files (2.121.2's could not be saved).
   // 2.121.2: shape 5, one more full list on every TV (the 2018 sweep's merges, billed names and tags never reached the
   // TVs' copies), then a full list again whenever the roster file's starscope.refresh is newer than the last one.
-  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '6'; } catch (e) {}
+  var shapeOk = false; try { shapeOk = localStorage.getItem('tvVixCardsShape') === '7'; } catch (e) {}
   var rf = ''; try { rf = String(H.scopeRefresh ? H.scopeRefresh() : '' || ''); } catch (e) { rf = ''; }
   var rfAt = ''; try { rfAt = localStorage.getItem('tvVixCardsRefresh') || ''; } catch (e) {}
-  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '6'); localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
+  if (!shapeOk && SHEET) { try { localStorage.setItem('tvVixCardsShape', '7'); localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
   else if (SHEET && rf && rf > rfAt) { try { localStorage.setItem('tvVixCardsRefresh', rf); } catch (e) {} ask({ full: true }); }
   else if (Date.now() - fresh > AGE) ask();
   function start() { soon(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); }
