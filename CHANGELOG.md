@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.121.1
+
+- **Kawaii of Kawaii: date fixed** (from `fix/kawaii-date`, 2.119.2, which was never merged). The one match on record, Maki Itoh vs Aya Sakura at Supreme Fight 2026 in Osaka, is now dated 7 Feb 2026 (it was 2 Jul 2026, day and month swapped). The reign's days count from 7 Feb and the lineage starts there, so the complete title history page (2.121.0) shows the right reign length. In the sheet, the match (m8318) carries the title tag `kawaii`.
+- **Not taken from `fix/stardom-debut-label`:** the wrestler-page label stays "Debut", and the roster debuts are unchanged until all 15 years are logged.
+
 ## 2.121.0
 
 StarScope now has every year from 2018 to 2026, so these pages fill in from it (private builds, as before). Nothing more is asked of the site; most of these pages now ask it less.
