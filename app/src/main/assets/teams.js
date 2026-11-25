@@ -1018,6 +1018,30 @@
     }
     return true;
   }
+  // ---- Complete team history (2.121.0): both wrestlers debuted inside StarScope's run of complete years (match_types.json
+  // "debuts", plus the roster file's), so every straight 2 v 2 match they had together is in the index. The All Tag
+  // Matches tab then comes from the index alone (no site search, no saved team list), with counts on the tabs. Shows
+  // after the last logged one appear once they're logged. Nothing more is asked of the sheet or the site.
+  var TCC = null;
+  function teamCc() {
+    var S = SC(), t = TEAM;
+    if (!S || !CATS_ON || !t || !t.members || t.members.length !== 2) return null;
+    var ds = [];
+    try {
+      var deb = (parse(call('matchTypesJson')) || {}).debuts || {}, low = {};
+      Object.keys(deb).forEach(function(k) { low[k.toLowerCase()] = String(deb[k] || ''); });
+      t.members.forEach(function(m) { ds.push(low[String(m).toLowerCase()] || low[String(searchName(m)).toLowerCase()] || ''); });
+    } catch (e) { return null; }
+    if (ds.some(function(d) { return !d; })) return null;
+    ds.sort();
+    var P = S.plan(ds[0]);
+    if (!P.only) return null;
+    var all = S.find(function(v) { return S.twoOnTwo(v) && scWith(S, v, t.members); });
+    if (!all.length) return null;
+    var once = S.oneEach ? S.oneEach(all) : all;
+    var ch = once.filter(function(x) { return S.isTitle(x.v); }).length, tl = once.filter(function(x) { return S.inComp(x.v, 'tagleague'); }).length;
+    return { P: P, first: ds[0], all: all, n: once.length, ch: ch, tl: tl };
+  }
   function renderTeam() {
     var t = TEAM;
     if (!t) {
@@ -1027,7 +1051,9 @@
     var lgNow = t.league.slice().sort(function(a, b) { return b.year - a.year; })[0];
     var lgLine = lgNow ? ' · ' + esc(T((lgNow.bname ? blockName({ name: lgNow.bname }, true) + ' Goddesses, ' : '') + 'Tag League ' + lgNow.year + (t.league.length > 1 ? ' (' + t.league.length + ' entries)' : ''),
       (lgNow.bja ? lgNow.bja + '・' : '') + 'タッグリーグ' + lgNow.year)) : '';
+    TCC = teamCc();
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(t.display) + (t.league.length ? wings(24, '#F4C242', '#0B1118') : '') + '</div><div class="tt-note">' + esc(T('Tag team', 'タッグチーム')) + (t.sub ? ' · ' + esc(t.sub) : '') + lgLine + '</div></div>' +
+      (TCC ? '<div class="cc-badge notranslate" translate="no">' + CC_TEL + esc(T('STARSCOPE · EVERY MATCH TOGETHER', 'STARSCOPE · 全タッグマッチ')) + '</div>' : '') +
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
     var av = t.members.map(function(m) {
       var p = call('wrestlerPhoto', m) || call('wrestlerPhoto', siteName(m));
@@ -1060,8 +1086,10 @@
     if (TAB) {   // private builds: tabs, one grid
       var tabs = [['all', T('All Tag Matches', 'すべてのタッグマッチ')], ['ch', T('Championship', '王座戦')], ['tl', T('Tag League', 'タッグリーグ')]];
       var moreUrl = '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(searchName(t.members[0]) + ' Tag Team ' + searchName(t.members[1])) + '&activetab=contents&page=1&tvb=' + encodeURIComponent(searchName(t.members[0])) + '&tvmt=tag&tvco=' + encodeURIComponent(searchName(t.members[1])) + (CATS_ON ? '&q%5Btype%5D=single' : '');
-      h += '<div class="tt-chips" style="margin-top:26px" data-scope="t" data-scope-a="' + esc(t.members[0]) + '" data-scope-b="' + esc(t.members[1]) + '">' + tabs.map(function(x) {
-        return '<a class="tt-chip' + (x[0] === TAB ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(teamPath(t) + (x[0] === 'all' ? '' : '&tvtab=' + x[0]))) + '">' + (x[0] === 'tl' ? wings(16, x[0] === TAB ? '#1A1A1A' : '#F4C242', x[0] === TAB ? '#FFB347' : '#161F2A') : '') + esc(x[1]) + '</a>';
+      // complete team history (2.121.0): counts on the tabs, no StarScope button (the page is StarScope)
+      var tcn = function(id) { return TCC ? '<em class="cc-n">' + (id === 'all' ? TCC.n : id === 'ch' ? TCC.ch : TCC.tl) + '</em>' : ''; };
+      h += '<div class="tt-chips" style="margin-top:26px"' + (TCC ? '' : ' data-scope="t" data-scope-a="' + esc(t.members[0]) + '" data-scope-b="' + esc(t.members[1]) + '"') + '>' + tabs.map(function(x) {
+        return '<a class="tt-chip' + (x[0] === TAB ? ' tt-on' : '') + '" tabindex="0" href="' + esc(absUrl(teamPath(t) + (x[0] === 'all' ? '' : '&tvtab=' + x[0]))) + '">' + (x[0] === 'tl' ? wings(16, x[0] === TAB ? '#1A1A1A' : '#F4C242', x[0] === TAB ? '#FFB347' : '#161F2A') : '') + esc(x[1]) + tcn(x[0]) + '</a>';
       }).join('') + '<a class="tt-chip" style="margin-left:14px" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>';
       h += '<div class="tt-sec"><i></i><b>' + esc(T('MATCHES', '試合')) + '</b><span id="tt-vst"></span></div><div id="tt-vids"></div>' + (DEBUG_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');
     } else {
@@ -1093,6 +1121,14 @@
         // under an "after" cut the saved list's progress doesn't apply: the newest page is read once
         var lf = function() { if (SC_CUT && SC_CUT.after) { L.page = 1; L.done = false; leagueMore(function() { paintVids(); }); } else leagueFirst(function() { paintVids(); }); };
         if (SHEET_ON) fromSheet(lf); else lf();
+        return;
+      }
+      if (TAB === 'all' && TCC) {   // complete team history (2.121.0): the index alone
+        var tn = scAdd(V.kept, TCC.all, V.seen);
+        V.done = true; V.ran = true;
+        V.log.push('Complete team history: ' + tn + ' video' + (tn === 1 ? '' : 's') + ', ' + TCC.n + ' matches from the index (both debuts on or after ' + TCC.P.from + ', first ' + TCC.first + ', logged through ' + TCC.P.thru + ') · no site search' +
+          (TCC.P.recent ? ' · not logged yet: ' + TCC.P.unlogged.join(', ') : ''));
+        paintVids();
         return;
       }
       if (TAB === 'all') { if (SHEET_ON) fromSheet(function(main) { if (main) main(); else paintVids(); }); else loadMore(); return; }

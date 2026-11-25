@@ -513,7 +513,104 @@
           "sub": "Mayu Iwatani, Arisa Hoshiki, Tam Nakano",
           "mono": "ST"
         }
-      ]
+      ],
+      "scope": {
+        "_note": "2.121.0: the StarScope version of the Draft Years (assets/eranew.js), on once 2018 and 2019 are complete years. to = the era's last day (Bushiroad took over on 17 Oct 2019). Picks only; everything else is looked up when the page opens.",
+        "from": "2018-04-01",
+        "to": "2019-10-16",
+        "index": {
+          "years": [
+            "2018",
+            "2019"
+          ]
+        },
+        "reigns": [
+          {
+            "beltId": "world",
+            "feature": 10
+          },
+          {
+            "beltId": "wonder",
+            "feature": 12
+          },
+          {
+            "beltId": "highspeed",
+            "feature": 16
+          },
+          {
+            "beltId": "goddess",
+            "feature": 15
+          }
+        ],
+        "rivalries": [
+          {
+            "a": {
+              "t": "Momo Watanabe"
+            },
+            "b": {
+              "t": "Io Shirai"
+            },
+            "line": "The Queen's Quest succession",
+            "from": "2018-01-01"
+          },
+          {
+            "a": {
+              "t": "Kagetsu"
+            },
+            "b": {
+              "t": "Mayu Iwatani"
+            },
+            "line": "Oedo Tai against STARS for the Red Belt"
+          },
+          {
+            "a": {
+              "f": "stars"
+            },
+            "b": {
+              "f": "oedo-tai"
+            },
+            "line": "The draft-era unit war"
+          },
+          {
+            "a": {
+              "t": "Arisa Hoshiki"
+            },
+            "b": {
+              "t": "Tam Nakano"
+            },
+            "line": "A grudge inside STARS"
+          }
+        ],
+        "shows": [
+          {
+            "sid": "1678"
+          },
+          {
+            "sid": "314"
+          },
+          {
+            "sid": "1956"
+          }
+        ],
+        "wrestlers": [
+          "Kagetsu",
+          "Momo Watanabe",
+          "Arisa Hoshiki",
+          "Hana Kimura"
+        ],
+        "rising": [
+          "Utami Hayashishita",
+          "Tam Nakano",
+          "Saya Kamitani",
+          "AZM"
+        ],
+        "factions": [
+          "oedo-tai",
+          "stars",
+          "queens-quest",
+          "tokyo-cyber-squad"
+        ]
+      }
     },
     {
       "n": 4,
@@ -707,7 +804,107 @@
           "sub": "Utami Hayashishita, Saya Kamitani, AZM",
           "mono": "QQ"
         }
-      ]
+      ],
+      "scope": {
+        "_note": "2.121.0: the StarScope version of Arena Boom (assets/eranew.js), on once 2019 to 2024 are complete years. to = the day before New Horizons begins. Picks only; everything else is looked up when the page opens.",
+        "from": "2019-10-17",
+        "to": "2024-02-29",
+        "index": {
+          "years": [
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024"
+          ]
+        },
+        "reigns": [
+          {
+            "beltId": "world",
+            "feature": 13
+          },
+          {
+            "beltId": "wonder",
+            "feature": 16
+          },
+          {
+            "beltId": "highspeed",
+            "feature": 22
+          },
+          {
+            "beltId": "goddess",
+            "feature": 21
+          }
+        ],
+        "rivalries": [
+          {
+            "a": {
+              "t": "Giulia"
+            },
+            "b": {
+              "t": "Tam Nakano"
+            },
+            "line": "The blood feud of the boom"
+          },
+          {
+            "a": {
+              "t": "Utami Hayashishita"
+            },
+            "b": {
+              "t": "Syuri"
+            },
+            "line": "The workrate masterclass"
+          },
+          {
+            "a": {
+              "f": "donna-del-mondo"
+            },
+            "b": {
+              "f": "cosmic-angels"
+            },
+            "line": "Donna Del Mondo against Cosmic Angels"
+          },
+          {
+            "a": {
+              "t": "AZM"
+            },
+            "b": {
+              "t": "Starlight Kid"
+            },
+            "line": "Rivals since the dojo"
+          }
+        ],
+        "shows": [
+          {
+            "sid": "2632"
+          },
+          {
+            "sid": "4347"
+          },
+          {
+            "sid": "9148"
+          }
+        ],
+        "wrestlers": [
+          "Giulia",
+          "Utami Hayashishita",
+          "Syuri",
+          "Tam Nakano"
+        ],
+        "rising": [
+          "Maika",
+          "Hanan",
+          "Suzu Suzuki",
+          "Rina"
+        ],
+        "factions": [
+          "donna-del-mondo",
+          "cosmic-angels",
+          "gods-eye",
+          "queens-quest"
+        ]
+      }
     },
     {
       "n": 5,

@@ -165,10 +165,25 @@
     sides.forEach(function(sd, i) { if (ia < 0 && sideHas(sd, ka)) ia = i; if (ib < 0 && sideHas(sd, kb)) ib = i; });
     return ia >= 0 && ib >= 0 && ia !== ib;
   }
+  // 2.121.0: a side is a faction's (a unit side) when two or more of its wrestlers carry that faction in the sheet's
+  // participants (shape 4, x.fa) and nobody on it carries another one. Without faction data for the side, it is the
+  // old test: two or more wrestlers, all on factions.json's member list. So a 2018 STARS side counts even though
+  // factions.json lists today's STARS.
+  function unitSide(v, i, id) {
+    var sd = (v.p || [])[i] || [], fa = v.x && v.x.fa ? v.x.fa[i] : null;
+    if (sd.length < 2) return false;
+    if (fa && fa.some(Boolean)) {
+      var n = 0, other = false;
+      fa.forEach(function(f) { if (f === id) n++; else if (f) other = true; });
+      return n >= 2 && !other;
+    }
+    var F = facMembers(id);
+    return !!F && sideOf(sd, F.keys);
+  }
   function facVersus(v, fa, fb) {
     var A = facMembers(fa), B = facMembers(fb), sides = v.p || [], ia = -1, ib = -1;
     if (!A || !B) return false;
-    sides.forEach(function(sd, i) { if (ia < 0 && sideOf(sd, A.keys)) ia = i; else if (ib < 0 && sideOf(sd, B.keys)) ib = i; });
+    sides.forEach(function(sd, i) { if (ia < 0 && unitSide(v, i, fa)) ia = i; else if (ib < 0 && unitSide(v, i, fb)) ib = i; });
     return ia >= 0 && ib >= 0 && ia !== ib;
   }
   function pairList(kind, a, b, from, to) {
@@ -194,6 +209,11 @@
   function results(kind, a, b) {
     if (!map) return [];
     if (kind === 'v' || kind === 'f') return pairList(kind, a, b, (Q && Q.get('from')) || '', (Q && Q.get('to')) || '');
+    if (kind === 'ti') {   // 2.121.0: every logged match for title a (a lineage id), one per match, newest first
+      var tl = [];
+      Object.keys(map).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && (v.x.tv || []).indexOf(a) >= 0) tl.push({ id: id, v: v }); });
+      return oneEach(tl).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+    }
     var out = [];
     Object.keys(map).forEach(function(id) {
       var v = map[id], sides = v.p || [], hit = false;
@@ -261,7 +281,8 @@
     var head = scopeKind === 't' ? a + ' & ' + b : a;
     if (scopeKind === 'v') head = a + ' vs ' + b;
     if (scopeKind === 'f') { var fa = facMembers(a), fb = facMembers(b); head = (fa ? fa.name : a) + ' vs ' + (fb ? fb.name : b); }
-    if (scopeKind === 'v' || scopeKind === 'f') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
+    if (scopeKind === 'ti') { var tln = null; try { tln = JSON.parse(H.lineageJson(a)); } catch (e) { tln = null; } head = tln ? String((ja && tln.ja) || tln.title).replace(/ Championship$/, '') : a; }
+    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
@@ -1040,6 +1061,7 @@
     X.vs = function(a, b, from) { return map ? pairList('v', a, b, from || '') : []; };
     X.fvs = function(a, b, from) { return map ? pairList('f', a, b, from || '') : []; };
     X.faction = facMembers;
+    X.unitSide = unitSide;   // 2.121.0: (v, side index, faction id)
     X.oneLine = oneLine;
     X.show = function(sid) { return map ? showsBy()[String(sid)] || null : null; };
     X.shows = function(from, to) { var o = []; if (!map) return o; var by = showsBy(); Object.keys(by).forEach(function(k) { var d = String(by[k].date || ''); if (d && d >= (from || '') && (!to || d <= to)) o.push(by[k]); }); return o; };

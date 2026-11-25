@@ -398,7 +398,14 @@
     '.ln-sub{padding:0 12px 12px 12px;font-size:13px;font-weight:700;line-height:1.35;color:#9AA6B4;}',
     '.ln-note{padding:14px 6px;font-size:16px;color:#9AA6B4;}',
     '.ln-dbg{margin:28px 6px 0 6px;padding:14px 18px;border-radius:12px;background:#0F151C;border:2px solid #2A323C;font-size:13px;line-height:1.5;color:#9AA6B4;white-space:pre-wrap;word-break:break-all !important;overflow-wrap:anywhere !important;}',
-    '.ln-dbg b{color:#F4C242;}'
+    '.ln-dbg b{color:#F4C242;}',
+    // 2.121.0: complete title history (StarScope): badge and the short records row
+    '.ln-cc{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:6px 14px;border:2px solid #2A323C;border-radius:20px;font-size:13px;font-weight:800;letter-spacing:1px;color:#F4C242;}',
+    '.ln-rec{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:6px 6px 4px 6px;}',
+    '.ln-rec>div{background:#121922;border:2px solid #2A323C;border-radius:12px;padding:10px 14px;min-width:0;}',
+    '.ln-rec .k{font-size:12px;font-weight:800;letter-spacing:.1em;color:#F4C242;text-transform:uppercase;}',
+    '.ln-rec .v{font-size:20px;font-weight:900;color:#fff;line-height:1.15;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '.ln-rec .s{font-size:13px;font-weight:600;color:#9AA6B4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
 
@@ -434,6 +441,36 @@
     return T((D.promo || 'Stardom') + ' · ' + (D.kind || 'Singles') + ' · Since ' + fmtD(D.since) + ' · ' + R.length + (R.length === 1 ? ' reign' : ' reigns') + (years >= 1 ? ' · ' + years + ' years' : '') + ' · longest reign ' + longest.days + ' days (' + nm(longest) + ')',
       (D.promo_ja || 'スターダム') + ' · ' + fmtD(D.since) + '〜 · ' + R.length + '代' + (years >= 1 ? ' · ' + years + '年' : '') + ' · 最長 ' + longest.days + '日 (' + nm(longest) + ')');
   }
+  // ---- Complete title history (2.121.0): the title's first reign began on or after the first day of StarScope's run of
+  // complete years, so every title match on Stardom World is in the index. Each reign then loads from the index alone
+  // (scReign), All matches opens StarScope's list of this title's matches, and a short records row sits under the hero.
+  // Defences on other promotions' shows (STRONG's NJPW defences) are counted from the lineage file but not listed.
+  function scComplete() {
+    var S = window.__tvScopeIdx, from = '';
+    try { from = S && S.from ? S.from() : ''; } catch (e) { from = ''; }
+    return !!(from && D && D.since && String(D.since) >= from && R.length && S.isTitle);
+  }
+  function scTitleCount() {
+    var S = window.__tvScopeIdx;
+    if (!S || !S.find) return 0;
+    var L = S.find(function(v) { return S.isTitle(v, P); });
+    return (S.oneEach ? S.oneEach(L) : L).length;
+  }
+  function recordsHtml() {
+    var most = R[0], longest = R[0], cnt = {}, names = {};
+    R.forEach(function(r) {
+      if (dn(r) > dn(most)) most = r;
+      if (r.days > longest.days) longest = r;
+      var k = norm(nm(r)); cnt[k] = (cnt[k] || 0) + 1; names[k] = nm(r);
+    });
+    var topK = Object.keys(cnt).sort(function(a, b) { return cnt[b] - cnt[a]; })[0], tc = scTitleCount();
+    var box = function(k, v, sub) { return '<div><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>'; };
+    return '<div class="ln-h">' + esc(T('RECORDS', '記録')) + '<span>' + esc(T('from the lineage and every logged title match', '歴代王者と登録済みの全王座戦から')) + '</span></div><div class="ln-rec">' +
+      box(T('Most defences', '最多防衛'), nm(most), T(dn(most) + (dn(most) === 1 ? ' defence' : ' defences') + ' · ' + ord(most.n) + ' reign', '防衛' + dn(most) + '回 · 第' + most.n + '代')) +
+      box(T('Longest reign', '最長政権'), nm(longest), T(longest.days + ' days' + (longest.cur ? ' and counting' : ''), longest.days + '日' + (longest.cur ? '（継続中）' : ''))) +
+      box(T('Most reigns', '最多戴冠'), names[topK], T(cnt[topK] + (cnt[topK] === 1 ? ' reign' : ' reigns'), cnt[topK] + '回')) +
+      box(T('Title matches', '王座戦'), String(tc), T('on Stardom World, in StarScope', 'Stardom World · StarScope')) + '</div>';
+  }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';
     try { belt = H.beltDataUri ? H.beltDataUri(P) : ''; } catch (e) { belt = ''; }
@@ -441,10 +478,12 @@
     R.forEach(function(r) { if (r.days > longest.days) longest = r; });
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
     var pic = belt ? '<img src="' + belt + '" alt="">' : '<div class="ln-plate">' + STAR + '</div>';
-    var curLine = '<div id="ln-cur">' + curBox(sel) + '</div>';
+    var curLine = '<div id="ln-cur">' + curBox(sel) + '</div>', cc = scComplete();
+    var allHref = cc ? '/mypage?tvscope=ti&a=' + encodeURIComponent(P) : allMatchesPath();
     return '<div class="ln-hero"><div class="ln-belt">' + pic + '</div><div class="ln-hx">' + curLine +
-      '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(allMatchesPath())) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
-      '</div></div>';
+      (cc ? '<div class="ln-cc">STARSCOPE · ' + esc(T('EVERY TITLE MATCH', '全王座戦')) + '</div>' : '') +
+      '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(allHref)) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
+      '</div></div>' + (cc ? recordsHtml() : '');
   }
 
   function stripHtml() {

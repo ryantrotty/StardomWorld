@@ -8380,6 +8380,11 @@ class MainActivity : Activity() {
     '#tv-fac .tv-em{max-width:560px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 30px;}',
     '#tv-fac .tv-em-name{font-size:44px;font-weight:700;line-height:1.15;}',
     '#tv-fac .tv-em-text{font-size:24px;color:#c9d2dc;line-height:1.4;}',
+    // 2.121.0: complete faction history (StarScope)
+    '#tv-fac .tv-hm-badge{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:6px 14px;border:2px solid #2A323C;border-radius:20px;font-size:13px;font-weight:800;letter-spacing:1px;color:#F4C242;}',
+    '#tv-fac .tv-hm-pairs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 26px 0;}',
+    '#tv-fac .tv-hs{display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;min-height:66px;padding:8px 14px;border-radius:8px;background:#161f2a;border:3px solid #2a323c;color:#fff !important;text-decoration:none !important;outline:none !important;min-width:0;}',
+    '#tv-fac .tv-hs:focus{background:#172029;border-color:#F4C242;box-shadow:none !important;}',
     '#tv-fac .tv-em-hint{padding:10px 22px;border-radius:28px;background:#172029;border:2px solid #2a323c;font-size:18px;font-weight:700;color:#F4C242;}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(st);
@@ -8501,6 +8506,7 @@ class MainActivity : Activity() {
   function loadNext(i, done) {
     var s = S[i];
     if (s.loading) return;
+    if (SCOPE) { if (done) done([]); return; }   // 2.121.0: a complete faction history asks the site nothing
     if (busy) { setTimeout(function() { loadNext(i, done); }, 400); return; }
     if (!s.more && s.loaded && altsLeft(i)) { s.alt = (s.alt || 0) + 1; s.page = 0; s.more = true; }   // the main name is used up: the next spelling
     if (!s.more && s.loaded) { if (done) done([]); return; }
@@ -8710,7 +8716,7 @@ class MainActivity : Activity() {
     if (s.items.length < 12 && canMore(FI)) more(FI);
   }
   function homeFocusables() {
-    return Array.prototype.slice.call(homeEl.querySelectorAll('.tv-hb, #tv-hgrid .tv-fc'));
+    return Array.prototype.slice.call(homeEl.querySelectorAll('.tv-hb, .tv-hs, #tv-hgrid .tv-fc'));
   }
   // Straight across the row first, then the nearest item in that direction.
   function geoNext(cur, k, list) {
@@ -8813,8 +8819,99 @@ class MainActivity : Activity() {
     }
   }, true);
 
+  // ------------------------------------------------------------------ complete faction history (2.121.0, StarScope)
+  // A faction that started inside StarScope's run of complete years (factions.json "founded" in or after the first
+  // complete year, and its first unit match logged on or after that year's first day) has every unit match in the
+  // index. Its home then shows those matches (no site search), a header strip, the pairs that teamed most and the
+  // factions it faced most; choosing a member shows that member's unit matches. Members stay factions.json's own.
+  // A unit match: a side with two or more wrestlers carrying this faction (assets/starcards.js X.unitSide).
+  var SCOPE = null;
+  function scopeItem(X, x) { var it = X.item(x); return { href: it.h, title: it.t, bgUrl: it.b }; }
+  function scopePlan(X) {
+    var from = X.from ? X.from() : '';
+    if (!from || !X.unitSide) return null;
+    if (fac.founded && String(fac.founded) < from.slice(0, 4)) return null;
+    var U = X.find(function(v) { return (v.p || []).some(function(sd, i) { return X.unitSide(v, i, fac.id); }); });
+    if (!U.length) return null;
+    var once = X.oneEach ? X.oneEach(U) : U, first = '';
+    once.forEach(function(x) { var d = String(x.v.d || ''); if (d && (!first || d < first)) first = d; });
+    if (!first || first < from) return null;
+    return { from: from, thru: X.thru ? X.thru() : '', U: U, once: once, first: first };
+  }
+  // The wrestlers on this faction's side of a unit match (name keys), and the factions on the other unit sides.
+  function scopeSides(X, v) {
+    var mine = null, others = [];
+    (v.p || []).forEach(function(sd, i) {
+      if (!mine && X.unitSide(v, i, fac.id)) { mine = { i: i, sd: sd }; return; }
+      var fa = v.x && v.x.fa ? v.x.fa[i] : null, f0 = '';
+      if (fa && sd.length >= 2) { f0 = fa[0] || ''; if (!f0 || !fa.every(function(f) { return f === f0; })) f0 = ''; }
+      if (f0 && f0 !== fac.id) others.push(f0);
+    });
+    return { mine: mine, others: others };
+  }
+  function scopeApply(X, P) {
+    SCOPE = P;
+    function kk(k) { return String(k || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }   // as the index keys its names
+    var keysOf = members.map(function(m) { return [kk(m.name), kk(m.search)]; });
+    // the faction's own list
+    var sf = S[FI];
+    sf.items = []; sf.seen = {};
+    P.U.forEach(function(x) { var it = scopeItem(X, x); if (!sf.seen[it.href]) { sf.seen[it.href] = 1; sf.items.push(it); } });
+    sf.page = 1; sf.more = false; sf.loaded = true; sf.err = ''; sf.loading = false; sf.queued = false; sf.alt = (srcs[FI].alts || []).length;
+    // each member's unit matches
+    members.forEach(function(m, mi) {
+      var s = S[mi], want = keysOf[mi];
+      s.items = []; s.seen = {};
+      P.U.forEach(function(x) {
+        var sd = scopeSides(X, x.v).mine;
+        if (!sd || !sd.sd.some(function(pp) { return (pp[0] || []).some(function(k) { return want.indexOf(kk(k)) >= 0; }); })) return;
+        var it = scopeItem(X, x); if (!s.seen[it.href]) { s.seen[it.href] = 1; s.items.push(it); }
+      });
+      s.page = 1; s.more = false; s.loaded = true; s.err = ''; s.loading = false; s.queued = false;
+    });
+    // pairs that teamed most (2 v 2, both on this faction's side) and factions faced most
+    var pairs = {}, pairNames = {}, rivals = {};
+    P.once.forEach(function(x) {
+      var v = x.v, sides = scopeSides(X, v);
+      sides.others.forEach(function(f) { rivals[f] = (rivals[f] || 0) + 1; });
+      var M = sides.mine;
+      if (M && (v.p || []).length === 2 && (v.p[0] || []).length === 2 && (v.p[1] || []).length === 2) {
+        var nm = ((v.s || [])[M.i] || []).slice(0, 2);
+        if (nm.length === 2) { var k = nm.slice().sort().join(' & '); pairs[k] = (pairs[k] || 0) + 1; pairNames[k] = nm.slice().sort(); }
+      }
+    });
+    var F = {};
+    ((data && data.factions) || []).forEach(function(f) { F[f.id] = String(f.name || f.id).replace(/ \(.*\)$/, ''); });
+    var topPairs = Object.keys(pairs).sort(function(a, b) { return pairs[b] - pairs[a] || a.localeCompare(b); }).slice(0, 4);
+    var topRivals = Object.keys(rivals).filter(function(f) { return F[f]; }).sort(function(a, b) { return rivals[b] - rivals[a] || a.localeCompare(b); }).slice(0, 4);
+    var tile = function(href, a, b) { return '<a class="tv-hs" tabindex="0" href="' + esc(absUrl(href)) + '"><span class="tv-hb-1 notranslate" translate="no">' + esc(a) + '</span><span class="tv-hb-3">' + esc(b) + '</span></a>'; };
+    var extra = '';
+    if (topPairs.length) extra += '<div class="tv-hm-h">' + esc(T('TOP PAIRS', '\u30bf\u30c3\u30b0\u3067\u7d44\u3093\u3060\u56de\u6570')) + '</div><div class="tv-hm-pairs">' + topPairs.map(function(k) {
+      return tile('/mypage?tvscope=t&a=' + encodeURIComponent(pairNames[k][0]) + '&b=' + encodeURIComponent(pairNames[k][1]), k, T(pairs[k] + (pairs[k] === 1 ? ' match together' : ' matches together'), pairs[k] + '\u8a66\u5408'));
+    }).join('') + '</div>';
+    if (topRivals.length) extra += '<div class="tv-hm-h">' + esc(T('RIVAL FACTIONS', '\u5bfe\u6226\u304c\u591a\u3044\u30e6\u30cb\u30c3\u30c8')) + '</div><div class="tv-hm-pairs">' + topRivals.map(function(f) {
+      return tile('/mypage?tvscope=f&a=' + encodeURIComponent(fac.id) + '&b=' + encodeURIComponent(f), T('vs ', 'vs ') + F[f], T(rivals[f] + (rivals[f] === 1 ? ' unit match' : ' unit matches'), rivals[f] + '\u8a66\u5408'));
+    }).join('') + '</div>';
+    // header strip: first unit match and unit matches; the badge under it
+    var meta = homeEl.querySelector('.tv-hm-meta');
+    if (meta) {
+      meta.insertAdjacentHTML('beforeend', metaHtml(T('FIRST UNIT MATCH', '\u521d\u306e\u30e6\u30cb\u30c3\u30c8\u6226'), P.first) + metaHtml(T('UNIT MATCHES', '\u30e6\u30cb\u30c3\u30c8\u6226'), String(P.once.length)));
+      meta.insertAdjacentHTML('afterend', '<div class="tv-hm-badge notranslate" translate="no">STARSCOPE \u00b7 ' + esc(T('EVERY UNIT MATCH', '\u5168\u30e6\u30cb\u30c3\u30c8\u6226')) + '</div>');
+    }
+    var mh = homeEl.querySelector('#tv-hgrid');
+    if (mh && mh.previousElementSibling && extra) mh.previousElementSibling.insertAdjacentHTML('beforebegin', extra);
+    renderHomeGrid();
+    if (sel >= 0) renderGrid();
+  }
+  function scopeWait(n) {
+    var X = window.__tvScopeIdx;
+    if (X && X.ready && X.ready()) { var P = scopePlan(X); if (P) { try { scopeApply(X, P); } catch (e) { SCOPE = null; } } return; }
+    if (n < 40) setTimeout(function() { scopeWait(n + 1); }, 250);
+  }
+
   // ------------------------------------------------------------------ start
   if (HOME) buildHome();
+  if (HOME) scopeWait(0);
   markSel();
   // Watchdog for the faction home: if the first load never finished (a slow first visit), try it again; if it finished
   // short, go on to the next spelling. Stops after about 20 seconds or once a screen is filled.
@@ -8838,12 +8935,13 @@ class MainActivity : Activity() {
         // saved copy still fresh: no request at all
         var sc = S[FI]; c0.items.forEach(function(it) { if (titleOk(src, it.title) && !sc.seen[it.href]) { sc.seen[it.href] = 1; sc.items.push(it); } });
         sc.page = 1; sc.more = !!c0.more; sc.loaded = true;
-        renderHomeGrid();
+        if (!SCOPE) renderHomeGrid();
       }
       return;
     }
     var n = 0;
     (function poll() {
+      if (SCOPE) return;   // 2.121.0: the index already filled the page
       var items = [];
       try { items = parseCards(document); } catch (e) {}
       n++;
