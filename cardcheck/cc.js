@@ -395,9 +395,18 @@
     var c = lsGet(GAPS_KEY);
     gp = c && (c.items || []).length && Date.now() - (c.t || 0) < GAPS_AGE ? c : { items: [], page: 0, done: false, total: 0, t: Date.now() };
     gp.busy = false; gp.err = ''; gp.auto = false;
+    if (gp.page && gp.items.some(function(x) { return x.th; })) gapKeep();   // 2.126.1: a 2.125/2.126.0 copy with pictures, kept smaller
     if (!gp.page) gapPage();
   }
-  function gapKeep() { lsSet(GAPS_KEY, { t: gp.t, items: gp.items, page: gp.page, done: gp.done, total: gp.total }); }
+  // 2.126.1: kept without pictures, and never at the cost of anything else: lsSet makes room by dropping the year
+  // lists and then the StarScope list, which is what 2.125.0's full list did on a phone near its limit. If the list
+  // doesn't fit, it stays for this visit only. Pictures stay in memory for the visit (gapTh).
+  var gapTh = {};
+  function gapKeep() {
+    gp.items.forEach(function(x) { if (x.th) gapTh[x.set] = x.th; });
+    var v = JSON.stringify({ t: gp.t, items: gp.items.map(function(x) { return { set: x.set, name: x.name, pd: x.pd }; }), page: gp.page, done: gp.done, total: gp.total });
+    try { localStorage.setItem(GAPS_KEY, v); gp.mem = false; } catch (e) { try { localStorage.removeItem(GAPS_KEY); } catch (e2) {} gp.mem = true; }
+  }
   function gapPage() {
     if (!gp || gp.busy || gp.done) return;
     var mine = gp, n = gp.page + 1; gp.busy = true; gp.err = ''; draw();
@@ -462,7 +471,7 @@
     var h = '<div class="gl" style="margin:0 0 6px">Every show on the site against StarScope</div>' +
       '<div style="font-size:13px;color:#9AA6B4;margin-bottom:10px">Shows with nothing logged yet, including ones the year lists never offered. The site\'s whole list, 20 shows a request, 2 s apart.</div>';
     var read = gp.items.length, tot = gp.total;
-    h += '<div class="msg" style="color:#C9D2DC;margin-bottom:8px">Read ' + read + (tot ? ' of ' + tot : '') + ' shows on the site' + (gp.done ? ' · the whole list' : '') + '</div>';
+    h += '<div class="msg" style="color:#C9D2DC;margin-bottom:8px">Read ' + read + (tot ? ' of ' + tot : '') + ' shows on the site' + (gp.done ? ' · the whole list' : '') + (gp.mem ? ' · too big to keep on this phone, kept for this visit' : '') + '</div>';
     if (gp.err) h += '<div class="er">Couldn\'t read the list (' + esc(gp.err) + ')</div>';
     h += '<div class="bt" style="margin-bottom:12px">';
     if (gp.auto) h += '<button class="b on wide" disabled>Reading ' + read + (tot ? ' of ' + tot : '') + '…</button><button class="b" data-gapstop="1">Stop</button>';
@@ -476,7 +485,7 @@
     shown.forEach(function(o) {
       var yr = o.k ? o.k.slice(0, 4) : 'Date unknown';
       if (yr !== last) { last = yr; var cnt = shown.filter(function(z) { return (z.k ? z.k.slice(0, 4) : 'Date unknown') === yr; }).length; h += '<div class="fg" style="margin:14px 0 8px">' + esc(yr) + ' · ' + cnt + '</div>'; }
-      h += showTile(o.x, 'gaps');
+      h += showTile(o.x.th || !gapTh[o.x.set] ? o.x : { set: o.x.set, name: o.x.name, th: gapTh[o.x.set], pd: o.x.pd }, 'gaps');
       h += '<div class="bt" style="margin:-4px 0 14px;align-items:center"><span style="flex:1;min-width:0;font-size:12px;color:#9AA6B4">' +
         esc((o.yr ? 'In the ' + o.yr + ' list' : 'Not in a year list read on this phone') + (!o.d && o.x.pd ? ' · site date ' + o.x.pd : '') + ' · set ' + o.x.set) +
         '</span><button class="b" style="height:36px;font-size:13px" data-gaphide="' + esc(o.x.set) + '">' + (o.hid ? 'Unhide' : 'Hide') + '</button></div>';
@@ -1876,6 +1885,7 @@
     if (d.gf) { S.gf = d.gf; saveState(); draw(); return; }
     if (d.gapall) { gapOpen(); gp.auto = true; gp.err = ''; gapPage(); draw(); return; }
     if (d.gapcopy) {
+      if (!Object.keys(map).length) { note('The StarScope list is still loading. Try again in a moment.', true); return; }
       var txt = gapText(), ok2 = function() { b.textContent = 'Copied: paste it to Claude'; };
       var ta2 = document.createElement('textarea'); ta2.value = txt; ta2.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; root.appendChild(ta2);
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok2, function() { ta2.select(); document.execCommand('copy'); ok2(); });
