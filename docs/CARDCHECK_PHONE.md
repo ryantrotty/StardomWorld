@@ -51,3 +51,13 @@ People are paired by match (the most wrestlers in common, else the same place on
 - **Already logged:** a collected save carries `keep`: when the video turns out to be another version of a match already logged, the sheet only links it (match_videos, its show page) and leaves the match's people, results and tags as they are. A logged match whose number changed (card order) is still re-saved the old way, reading it first.
 - **The sheet reads each tab once per request** (and keeps the copy in step with what it writes), so single saves are quicker too, on the TV as well.
 - **The card at the top:** the venue (with its editing when it isn't set), then each match with its state, Confirm all and Next. Cards show only for matches that need a look; tap a row to open its card, or Show all cards. When everything is ready no card, and no picture, is shown.
+
+## Gaps (2.125.0)
+
+The **Gaps** tab (after Started) checks the site's whole list of shows against StarScope. It finds shows that have nothing logged, including ones no year tab offered because the site left them out of its year categories.
+
+- **Source:** `/user_api/contents?size=20&search[type]=set&sort=di_s&order=d&page=N`. This is the year tabs' list with no category, read one page at a time and at least 2 s apart. **Read the whole list** runs to the end, or until **Stop**. The total comes from the site's `x-total-count`.
+- **Kept on the phone:** the list (`ccPhoneGaps1`) for a week, and what you've hidden (`ccPhoneGapHide`). Nothing is written to the sheet.
+- **What counts as in StarScope:** any video of the set in the StarScope list (`vi_cards`), or a saved blank segment from it.
+- **Order:** grouped by year, by the show's date read from its name, else the upload date the site gives. Each row says whether the show was in a year list read on this phone, and gives its set number.
+- **Next show** from a show opened here goes to the next one on the Gaps list that isn't hidden.

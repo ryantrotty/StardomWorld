@@ -12,7 +12,7 @@
   var BASE = me ? me.replace(/[^\/]*$/, '') : 'https://ryantrotty.github.io/StardomWorld/cardcheck/';
   var VER = (/[?&]v=([^&]+)/.exec(me) || [])[1] || String(Date.now());
   var ROSTER = 'https://raw.githubusercontent.com/ryantrotty/StardomWorld/roster-data/roster.json';
-  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear2_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec3_';   // 2.91.7: new names, so lists read wrongly before are dropped
+  var CFG_KEY = 'ccPhoneCfg', STATE_KEY = 'ccPhoneState', CARDS_KEY = 'ccPhoneCards', YEAR_KEY = 'ccPhoneYear2_', SET_KEY = 'ccPhoneSet2_', REC_KEY = 'ccPhoneRec3_', GAPS_KEY = 'ccPhoneGaps1', GAPHIDE_KEY = 'ccPhoneGapHide';   // 2.91.7: new names, so lists read wrongly before are dropped
   var GAP = 2000, SET_AGE = 86400000, YEAR_AGE = 86400000, lastSetLook = null, report = '';
   // 2.91.5: the page the phone was sent, as text to copy and paste (the phone gets the site's mobile layout, which the
   // reader doesn't know yet): its size and title, then the first article cards and anything that looks like a link to a
@@ -257,7 +257,7 @@
   // ---- state
   var S = lsGet(STATE_KEY) || { screen: 'home', tab: 'started', year: '', set: '', from: '' };
   if (!S.yf) S.yf = 'all';   // 2.113.0: the year list's filter: all, logged, started, none
-  function saveState() { lsSet(STATE_KEY, { screen: S.screen, tab: S.tab, year: S.year, set: S.set, from: S.from, yf: S.yf, y: root.scrollTop }); }
+  function saveState() { lsSet(STATE_KEY, { screen: S.screen, tab: S.tab, year: S.year, set: S.set, from: S.from, yf: S.yf, gf: S.gf, y: root.scrollTop }); }
   var kitReady = false, show = null, recs = {}, saved = {}, attn = {}, reading = null, lastFetch = 0, readQ = [], sheetOpen = null, flash = '', flashBad = false, batch = null;
   // Segments (2.96.0): cards you've marked as a retirement, homecoming, debut, return, award or announcement, by video:
   // { type, ids }. Kept for this visit; Confirm / Confirm all save them like any ready card.
@@ -335,7 +335,7 @@
   }
   function tileState(set) { var sc = lsGet(SET_KEY + set), c = setCount(set, sc && sc.videos); return c.done ? 'logged' : c.n || c.sg ? 'started' : 'none'; }
   function showTile(x, from) {
-    var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, from.slice(1) || null) : { show: x.name, date: x.date || '' };
+    var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, from === 'gaps' ? null : from.slice(1) || null) : { show: x.name, date: x.date || '' };
     var sc = lsGet(SET_KEY + x.set), c = setCount(x.set, sc && sc.videos), date = sl.date || x.date || '';
     // 2.91.9: the state in words, so "0 logged" no longer reads like a logged tag.
     var segTxt = c.sg ? ' · ' + c.sg + ' segment' + (c.sg > 1 ? 's' : '') : '';
@@ -345,10 +345,12 @@
       esc(showName(sl.show || x.name, date) || x.name) + '</span><span class="sb">' + esc([dateText(date), bvSaved(x.set) || sl.venue || x.venue || ''].filter(Boolean).join(' · ')) + '</span><span class="cnt' + cls2 + '">' + esc(label) + '</span></span></button>';
   }
   function homeHtml() {
-    var h = '<div class="chips"><button class="chip' + (S.tab === 'started' ? ' on' : '') + '" data-tab="started">Started</button>';
+    var h = '<div class="chips"><button class="chip' + (S.tab === 'started' ? ' on' : '') + '" data-tab="started">Started</button>' +
+      '<button class="chip' + (S.tab === 'gaps' ? ' on' : '') + '" data-tab="gaps">Gaps</button>';
     years().forEach(function(y) { h += '<button class="chip' + (S.tab === 'year' && S.year === y ? ' on' : '') + '" data-year="' + y + '">' + y + '</button>'; });
     h += '</div>';
-    if (S.tab === 'started') {
+    if (S.tab === 'gaps') h += gapsHtml();
+    else if (S.tab === 'started') {
       var L = startedList();
       h += L.length ? L.map(function(g) { return showTile(g, 'started'); }).join('') : '<div class="ld">' + (Object.keys(map).length ? 'Nothing started and unfinished. Pick a year.' : 'Loading the StarScope list…') + '</div>';
     } else {
@@ -377,6 +379,97 @@
       else if (!yl.done) h += '<button class="b wide" data-more="1">Load more shows</button>';
       else h += '<div class="ld">That\'s every show for ' + esc(S.year) + '.</div>';
     }
+    return h;
+  }
+
+  // ---- Gaps (2.125.0): every show (set) on the site against the StarScope list, to find shows the year lists never
+  // offered (a set the site left out of its year category, like AGQ 2024) or that were passed over. The site's own list
+  // with no category (/user_api/contents, search[type]=set), 20 a page, newest first, one page at a time, 2 s apart;
+  // "Read the whole list" keeps going until the end or Stop. Kept on the phone for a week; nothing goes to the sheet.
+  // A show already in StarScope (any match or segment logged) drops off; Hide puts away what isn't a show to log
+  // (another promotion's upload, an interview), kept on this phone.
+  var gp = null, gapHide = lsGet(GAPHIDE_KEY) || {}, GAPS_AGE = 7 * 86400000;
+  if (!S.gf) S.gf = 'miss';
+  function gapOpen() {
+    if (gp) return;
+    var c = lsGet(GAPS_KEY);
+    gp = c && (c.items || []).length && Date.now() - (c.t || 0) < GAPS_AGE ? c : { items: [], page: 0, done: false, total: 0, t: Date.now() };
+    gp.busy = false; gp.err = ''; gp.auto = false;
+    if (!gp.page) gapPage();
+  }
+  function gapKeep() { lsSet(GAPS_KEY, { t: gp.t, items: gp.items, page: gp.page, done: gp.done, total: gp.total }); }
+  function gapPage() {
+    if (!gp || gp.busy || gp.done) return;
+    var mine = gp, n = gp.page + 1; gp.busy = true; gp.err = ''; draw();
+    var go = function() {
+      lastFetch = Date.now();
+      fetch('/user_api/contents?size=20&search%5Btype%5D=set&sort=di_s&order=d&page=' + n, { credentials: 'include', headers: { Accept: 'application/json' } })
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); mine.total = Number(r.headers.get('x-total-count')) || mine.total || 0; return r.json(); })
+        .then(function(list) {
+          var seen = {}, got = 0;
+          mine.items.forEach(function(x) { seen[x.set] = 1; });
+          (Array.isArray(list) ? list : []).forEach(function(x) {
+            if (!x || x.type !== 'set' || seen[x.id]) return;
+            seen[x.id] = 1; got++;
+            var pd = String(x.display_date || x.published_at || x.release_date || x.released_at || x.publish_start_at || x.created_at || '').slice(0, 10);
+            mine.items.push({ set: String(x.id), name: String(x.display_name || '').replace(/\s+/g, ' ').trim(), th: (x.thumbnails && (x.thumbnails.lg || x.thumbnails.md)) || '', pd: /^\d{4}-\d{2}-\d{2}$/.test(pd) ? pd : '' });
+          });
+          mine.page = n;
+          if (!got || (Array.isArray(list) && list.length < 20) || (mine.total && mine.items.length >= mine.total)) { mine.done = true; mine.auto = false; }
+          if (gp === mine) gapKeep();
+        })
+        .catch(function(e) { mine.err = String(e && e.message || e); mine.auto = false; })
+        .then(function() { mine.busy = false; if (gp === mine && mine.auto && !mine.done && S.screen === 'home' && S.tab === 'gaps') gapPage(); draw(); });
+    };
+    var wait = lastFetch + GAP - Date.now();
+    if (wait > 0) setTimeout(go, wait); else go();
+  }
+  function loggedSets() {
+    var s = {};
+    Object.keys(map).forEach(function(k) { var sid = String(map[k].vs || map[k].sid || ''); if (sid) s[sid] = 1; });
+    Object.keys(blank).forEach(function(k) { s[String(blank[k])] = 1; });
+    return s;
+  }
+  function yearOfList() {
+    var s = {};
+    years().forEach(function(y) { var c = lsGet(YEAR_KEY + y); ((c && c.items) || []).forEach(function(x) { s[x.set] = y; }); });
+    if (yl) yl.items.forEach(function(x) { s[x.set] = yl.y; });
+    return s;
+  }
+  // The shows still to look at, newest first by the show's own date (else the date the site gives the upload).
+  function gapRows() {
+    if (!gp) return [];
+    var L = loggedSets(), Y = yearOfList();
+    return gp.items.map(function(x, i) {
+      var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, null) : null, d = (sl && sl.date) || '';
+      return { x: x, d: d, k: d || x.pd || '', i: i, logged: !!L[x.set], hid: !!gapHide[x.set], yr: Y[x.set] || '' };
+    }).filter(function(o) { return !o.logged; }).sort(function(a, b) { return String(b.k).localeCompare(String(a.k)) || a.i - b.i; });
+  }
+  function gapsHtml() {
+    gapOpen();
+    var rows = gapRows(), miss = rows.filter(function(o) { return !o.hid; }), hid = rows.filter(function(o) { return o.hid; });
+    var h = '<div class="gl" style="margin:0 0 6px">Every show on the site against StarScope</div>' +
+      '<div style="font-size:13px;color:#9AA6B4;margin-bottom:10px">Shows with nothing logged yet, including ones the year lists never offered. The site\'s whole list, 20 shows a request, 2 s apart.</div>';
+    var read = gp.items.length, tot = gp.total;
+    h += '<div class="msg" style="color:#C9D2DC;margin-bottom:8px">Read ' + read + (tot ? ' of ' + tot : '') + ' shows on the site' + (gp.done ? ' · the whole list' : '') + '</div>';
+    if (gp.err) h += '<div class="er">Couldn\'t read the list (' + esc(gp.err) + ')</div>';
+    h += '<div class="bt" style="margin-bottom:12px">';
+    if (gp.auto) h += '<button class="b on wide" disabled>Reading ' + read + (tot ? ' of ' + tot : '') + '…</button><button class="b" data-gapstop="1">Stop</button>';
+    else if (!gp.done) h += '<button class="b on wide" data-gapall="1"' + (gp.busy ? ' disabled' : '') + '>' + (gp.err ? 'Try again' : 'Read the whole list') + '</button>';
+    else h += '<button class="b" data-gapreset="1">Read the list again</button>';
+    h += '</div>';
+    h += '<div class="chips sub">' + [['miss', 'Not in StarScope', miss.length], ['hid', 'Hidden', hid.length]].map(function(f) {
+      return '<button class="chip' + (S.gf === f[0] ? ' on' : '') + '" data-gf="' + f[0] + '">' + f[1] + ' <span class="cn">' + f[2] + '</span></button>'; }).join('') + '</div>';
+    var shown = S.gf === 'hid' ? hid : miss, last = null;
+    shown.forEach(function(o) {
+      var yr = o.k ? o.k.slice(0, 4) : 'Date unknown';
+      if (yr !== last) { last = yr; var cnt = shown.filter(function(z) { return (z.k ? z.k.slice(0, 4) : 'Date unknown') === yr; }).length; h += '<div class="fg" style="margin:14px 0 8px">' + esc(yr) + ' · ' + cnt + '</div>'; }
+      h += showTile(o.x, 'gaps');
+      h += '<div class="bt" style="margin:-4px 0 14px;align-items:center"><span style="flex:1;min-width:0;font-size:12px;color:#9AA6B4">' +
+        esc((o.yr ? 'In the ' + o.yr + ' list' : 'Not in a year list read on this phone') + (!o.d && o.x.pd ? ' · site date ' + o.x.pd : '') + ' · set ' + o.x.set) +
+        '</span><button class="b" style="height:36px;font-size:13px" data-gaphide="' + esc(o.x.set) + '">' + (o.hid ? 'Unhide' : 'Hide') + '</button></div>';
+    });
+    if (!shown.length) h += '<div class="ld">' + (S.gf === 'hid' ? 'Nothing hidden.' : gp.busy && !read ? 'Reading the site\'s list…' : read ? 'Every show read so far is in StarScope' + (gp.done ? '.' : '. Read the whole list to look further.') : '') + '</div>';
     return h;
   }
 
@@ -1540,6 +1633,7 @@
       list = items.map(function(x, i) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yy) : null; return { set: x.set, name: x.name, d: (sl && sl.date) || '', i: i }; })
         .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
     }
+    else if (S.from === 'gaps') list = gapRows().filter(function(o) { return !o.hid; }).map(function(o) { return { set: o.x.set, name: o.x.name }; });   // 2.125.0
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
     var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var st = tileState(x.set); return st !== 'logged' && !(yy && S.yf === 'none' && st === 'started') && !(yy && S.yf === 'started' && st === 'none'); });   // 2.113.0: the year filter too
     var nx = rest[0];
@@ -1766,7 +1860,12 @@
     if (d.unrelink) { cfg = oldCfg; oldCfg = null; flash = ''; draw(); return; }
     if (d.closeall) { saveState(); root.style.display = 'none'; document.documentElement.style.overflow = ''; return; }
     if (d.home) { S.screen = 'home'; show = null; flash = ''; saveState(); draw(); root.scrollTop = 0; return; }
-    if (d.tab) { S.tab = 'started'; saveState(); draw(); return; }
+    if (d.tab) { S.tab = d.tab === 'gaps' ? 'gaps' : 'started'; saveState(); draw(); return; }
+    if (d.gf) { S.gf = d.gf; saveState(); draw(); return; }
+    if (d.gapall) { gapOpen(); gp.auto = true; gp.err = ''; gapPage(); draw(); return; }
+    if (d.gapstop) { if (gp) gp.auto = false; draw(); return; }
+    if (d.gapreset) { gp = { items: [], page: 0, done: false, total: 0, t: Date.now(), busy: false, err: '', auto: false }; gapKeep(); gapPage(); return; }
+    if (d.gaphide) { if (gapHide[d.gaphide]) delete gapHide[d.gaphide]; else gapHide[d.gaphide] = 1; lsSet(GAPHIDE_KEY, gapHide); draw(); return; }
     if (d.yf) { S.yf = d.yf; saveState(); draw(); return; }
     if (d.year) { S.tab = 'year'; S.year = d.year; if (d.gohome) { S.screen = 'home'; show = null; flash = ''; root.scrollTop = 0; } saveState(); draw(); return; }
     if (d.nextmore) {   // 2.111.3: the next page of the year's shows (one site request), then on to the next show in it

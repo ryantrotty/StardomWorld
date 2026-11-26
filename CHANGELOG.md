@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.125.0
+
+- **iPhone card check: Gaps.** A new tab after Started lists every show on stardom-world.com that has nothing in StarScope yet. It catches shows the year lists never offered, such as a set the site left out of its year category (AGQ 2024 was one).
+  - It reads the site's own list of all shows: the same `/user_api/contents` list as the year tabs, without a category. That's 20 shows a request, newest first, 2 s apart. **Read the whole list** keeps going until the end (about 65 requests for some 1,300 shows) or **Stop**. The list is kept on the phone for a week, and **Read the list again** starts over.
+  - Shows are grouped by year from the show's own date, else the date the site gives the upload ("site date").
+  - Each show says whether it was in a year list read on this phone. It also gives its set number.
+  - A show drops off as soon as any match or segment from it is logged. Partly logged shows stay under Started.
+  - Tap a show to open it in card check as usual. Next show moves through the Gaps list.
+  - **Hide** puts away what isn't a show to log, such as another promotion's upload or an interview. Hidden shows are listed under **Hidden**, with **Unhide**. Both are kept on this phone only.
+  - No sheet script change. Nothing changes on the TV.
+- iPhone card check: published to GitHub Pages (cc.js, plus shownames.js and setorder.js from main). This also brings 2.120.0's Japanese names on reference cards to the phone: it was merged but not yet published.
+
 ## 2.124.3
 
 - Fix: the launch check's message still ran out unseen. The page is drawn behind the launch splash (and behind the transition screen or the cover over an app-drawn page), so 2.124.2 counted it as shown while it was hidden. The app now tells the pill whether the page is covered (`covered` in the status), and a finished message waits until the page can be seen before its time starts.
