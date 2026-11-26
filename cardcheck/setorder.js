@@ -53,7 +53,8 @@
   // way the list runs, for certain. Read from the StarScope list the TV keeps (assets/starcards.js); nothing is fetched.
   function scopeOrder(items) {
     var map = null;
-    try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); map = c && c.map; } catch (e) { map = null; }
+    // 2.122.1: the shared StarScope list (app files since 2.121.3), not the page's storage.
+    try { map = (window.__tvScopeMap || (window.__tvScopeMap = function(){ var L = window.__tvScopeList; if (L && L.map) return L.map; try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); if (c && c.map) return c.map; } catch (e) {} try { var A = window.AndroidHost, r = A && A.scopeListLoad ? A.scopeListLoad() : ''; if (r) { var c2 = JSON.parse(r); if (c2 && c2.map) { window.__tvScopeList = c2; return c2.map; } } } catch (e) {} return null; }))(); } catch (e) { map = null; }
     if (!map) return null;
     var seen = [];
     (items || []).forEach(function(x) {
