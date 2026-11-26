@@ -17,8 +17,10 @@
 
   var VID = M[1], KEY = 'tvVixCardsV4', LEAD = 8, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;
   var map = null, v = null;
+  var scopeMap = window.__tvScopeMap || (window.__tvScopeMap = function(){ var L = window.__tvScopeList; if (L && L.map) return L.map; try { var c = JSON.parse(localStorage.getItem('tvVixCardsV4') || 'null'); if (c && c.map) return c.map; } catch (e) {} try { var A = window.AndroidHost, r = A && A.scopeListLoad ? A.scopeListLoad() : ''; if (r) { var c2 = JSON.parse(r); if (c2 && c2.map) { window.__tvScopeList = c2; return c2.map; } } } catch (e) {} return null; });
   function load() {
-    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); map = (c && c.map) || null; } catch (e) { map = null; }
+    // 2.122.1: the list lives in the app's files since 2.121.3 (the page's storage copy is removed), so read the shared copy.
+    try { map = scopeMap(); } catch (e) { map = null; }
     v = (map && map[VID]) || null;
   }
   load();
