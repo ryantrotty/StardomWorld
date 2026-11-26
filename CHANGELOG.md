@@ -2,6 +2,19 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.124.3
+
+- Fix: the launch check's message still ran out unseen. The page is drawn behind the launch splash (and behind the transition screen or the cover over an app-drawn page), so 2.124.2 counted it as shown while it was hidden. The app now tells the pill whether the page is covered (`covered` in the status), and a finished message waits until the page can be seen before its time starts.
+
+## 2.124.2
+
+- Fix: the background activity pill missed the launch check. The schedule, roster and titles check runs as the app opens and usually finishes before the first page is drawn, so its 4 to 10 second message had run out by the time a page could show it. A finished message now counts its time from when a page first shows it (the app remembers that across pages); one left unseen for 2 minutes is dropped.
+- Includes 2.124.1 (no picture date on StarScope cards).
+
+## 2.124.1
+
+- StarScope match cards no longer show the date on the picture (top right): the card's footer already has it. Applies to complete-career wrestler pages, complete team histories and complete title histories. Site cards (matches not logged yet) keep the picture date, since they have no footer.
+
 ## 2.124.0
 
 - Background activity pill: a small status pill in the top right (gold telescope, 14 px text) shows when the app is fetching or saving something out of sight, so you can tell when new data has arrived.
