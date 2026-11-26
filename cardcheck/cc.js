@@ -445,6 +445,17 @@
       return { x: x, d: d, k: d || x.pd || '', i: i, logged: !!L[x.set], hid: !!gapHide[x.set], yr: Y[x.set] || '' };
     }).filter(function(o) { return !o.logged; }).sort(function(a, b) { return String(b.k).localeCompare(String(a.k)) || a.i - b.i; });
   }
+  // 2.126.0: the list as text to paste to Claude: one show a line, tab-separated (set, date, where the date came
+  // from, year list, hidden, name), Not in StarScope first, then Hidden.
+  function gapText() {
+    var rows = gapRows(), L = [], miss = rows.filter(function(o) { return !o.hid; });
+    L.push('StarScope Gaps · read ' + gp.items.length + (gp.total ? ' of ' + gp.total : '') + (gp.done ? ' (whole list)' : '') + ' · ' + miss.length + ' not in StarScope · ' + (rows.length - miss.length) + ' hidden · ' + new Date().toISOString().slice(0, 10));
+    L.push('set\tdate\tdate_from\tyear_list\thidden\tname');
+    miss.concat(rows.filter(function(o) { return o.hid; })).forEach(function(o) {
+      L.push([o.x.set, o.d || o.x.pd || '', o.d ? 'show' : o.x.pd ? 'site' : '', o.yr || '-', o.hid ? 'hidden' : '', o.x.name].join('\t'));
+    });
+    return L.join('\n');
+  }
   function gapsHtml() {
     gapOpen();
     var rows = gapRows(), miss = rows.filter(function(o) { return !o.hid; }), hid = rows.filter(function(o) { return o.hid; });
@@ -457,6 +468,7 @@
     if (gp.auto) h += '<button class="b on wide" disabled>Reading ' + read + (tot ? ' of ' + tot : '') + '…</button><button class="b" data-gapstop="1">Stop</button>';
     else if (!gp.done) h += '<button class="b on wide" data-gapall="1"' + (gp.busy ? ' disabled' : '') + '>' + (gp.err ? 'Try again' : 'Read the whole list') + '</button>';
     else h += '<button class="b" data-gapreset="1">Read the list again</button>';
+    if (rows.length) h += '<button class="b" data-gapcopy="1">Copy list for Claude</button>';   // 2.126.0
     h += '</div>';
     h += '<div class="chips sub">' + [['miss', 'Not in StarScope', miss.length], ['hid', 'Hidden', hid.length]].map(function(f) {
       return '<button class="chip' + (S.gf === f[0] ? ' on' : '') + '" data-gf="' + f[0] + '">' + f[1] + ' <span class="cn">' + f[2] + '</span></button>'; }).join('') + '</div>';
@@ -1863,6 +1875,14 @@
     if (d.tab) { S.tab = d.tab === 'gaps' ? 'gaps' : 'started'; saveState(); draw(); return; }
     if (d.gf) { S.gf = d.gf; saveState(); draw(); return; }
     if (d.gapall) { gapOpen(); gp.auto = true; gp.err = ''; gapPage(); draw(); return; }
+    if (d.gapcopy) {
+      var txt = gapText(), ok2 = function() { b.textContent = 'Copied: paste it to Claude'; };
+      var ta2 = document.createElement('textarea'); ta2.value = txt; ta2.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; root.appendChild(ta2);
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok2, function() { ta2.select(); document.execCommand('copy'); ok2(); });
+      else { ta2.select(); document.execCommand('copy'); ok2(); }
+      setTimeout(function() { ta2.remove(); }, 500);
+      return;
+    }
     if (d.gapstop) { if (gp) gp.auto = false; draw(); return; }
     if (d.gapreset) { gp = { items: [], page: 0, done: false, total: 0, t: Date.now(), busy: false, err: '', auto: false }; gapKeep(); gapPage(); return; }
     if (d.gaphide) { if (gapHide[d.gaphide]) delete gapHide[d.gaphide]; else gapHide[d.gaphide] = 1; lsSet(GAPHIDE_KEY, gapHide); draw(); return; }
