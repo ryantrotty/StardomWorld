@@ -1,10 +1,10 @@
 {
- "generated": "2026-11-25T06:32:25Z",
+ "generated": "2026-11-26T06:32:48Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-25T06:28:58Z",
-  "finished": "2026-11-25T06:32:25Z",
-  "requests": 35,
+  "started": "2026-11-26T06:29:03Z",
+  "finished": "2026-11-26T06:32:48Z",
+  "requests": 36,
   "schedule": {
    "ok": true,
    "events": 44,
@@ -19,37 +19,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-24T06:35:53Z)"
+     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
     },
     "kawaii": {
      "read": false,
@@ -71,7 +71,6 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: unknown match type kept in Japanese: 10人タッグマッチ",
     "schedule: unknown match type kept in Japanese: ＜参戦選手＞ リーグ戦出場全選手、朱里、壮麗亜美、浜辺纏、姫ゆりあ、ビー・プレストリー",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
@@ -87,7 +86,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-25T06:30:40Z",
+  "updated": "2026-11-26T06:30:37Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -1531,7 +1530,7 @@
       ]
      },
      {
-      "type": "10人タッグマッチ",
+      "type": "10-Person Tag Match",
       "sides": [
        "Syuri & Ami Sohrei & Kiyoka Kotatsu & Hazuki & Koguma",
        "Starlight Kid & Maki Itoh & Kikyo Furusawa & Yuna Mizumori & Anne Kanaya"
