@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.124.0
+
+- Background activity pill: a small status pill in the top right (gold telescope, 14 px text) shows when the app is fetching or saving something out of sight, so you can tell when new data has arrived.
+  - **Schedule, roster and titles check** (when the app comes to the front, at most every 6 hours, and on the first launch of a new version): "Checking schedule, roster and titles…", then "Updated roster: pages use it as they open" (gold border) or "…up to date". Pages already drawn keep what they had.
+  - **StarScope list** (your build, on any page load: changes at most every 30 minutes, the whole list once a day or when the roster file's `starscope.refresh` is newer): "Checking StarScope for changes…" or "Downloading the full StarScope list…", then "StarScope updated: N changes saved", "Full StarScope list saved: N videos" or "StarScope up to date", once the list is merged and saved on the TV.
+  - **Saves to the sheet**: match, new name, thumbnails, venue, favorites and team matches show "Saving…" then "Saved…". Quick reads (Recently Watched, Log next, the name library) stay silent.
+  - Running tasks are kept by the app, so a task started on one page still shows on the next. Finished messages stay 4 s (no change), 10 s (something changed) or 15 s (a failure, red border), with the time. A task with no answer after 2 minutes is dropped.
+  - Never focusable; hidden while a video plays, in full screen and under the reminder toast; sits below the PAGE chip on long lists.
+- Includes 2.123.0 (SWA World in Championships).
+
 ## 2.123.0
 
 - Championships: SWA World added to the Other Promotions group (menu and filter bar), after Sendai Girls. It searches "SWA", keeps titles that contain SWA (half- or full-width ＳＷＡ), and searches the full-width spelling once more when the first runs out. No lineage page (the belt has no lineage file), so it opens the filtered match list like AEW and CMLL.
