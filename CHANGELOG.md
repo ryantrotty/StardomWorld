@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.124.1
+
+- StarScope match cards no longer show the date on the picture (top right): the card's footer already has it. Applies to complete-career wrestler pages, complete team histories and complete title histories. Site cards (matches not logged yet) keep the picture date, since they have no footer.
+
 ## 2.124.0
 
 - Background activity pill: a small status pill in the top right (gold telescope, 14 px text) shows when the app is fetching or saving something out of sight, so you can tell when new data has arrived.
