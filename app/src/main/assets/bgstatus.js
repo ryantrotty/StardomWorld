@@ -72,10 +72,12 @@
       var keep = last.ok === false ? SHOW_FAIL : last.changed ? SHOW_CHANGED : SHOW_OK;
       // 2.124.2: the time on screen starts when a page first shows it (the app remembers that across pages), so the
       // launch check's result isn't missed while the first page is still loading. Older than 2 minutes unseen: dropped.
-      if (!last.shown && now - last.at < 120000 && !blocked()) {
+      // 2.124.3: and not while the app's splash, transition screen or page cover hides the page (S.covered).
+      if (!last.shown && now - last.at < 120000 && S.covered) { try { S = JSON.parse(H.bgStatusJson()); last = S.last; } catch (e) {} }
+      if (last && !last.shown && now - last.at < 120000 && !S.covered && !blocked()) {
         try { last.shown = +H.bgShown(last.at) || now; } catch (e) { last.shown = now; }
       }
-      if (last.shown && now - last.shown < keep) {
+      if (last && last.shown && now - last.shown < keep) {
         html = '<span class="ic">' + (last.ok === false ? '!' : TELE) + '</span><span class="tx">' + esc(ja ? last.ja : last.en) + '</span><span class="tm">' + hm(last.at) + '</span>';
         cls = last.ok === false ? 'bad' : last.changed ? 'new' : '';
       }

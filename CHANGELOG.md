@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.124.3
+
+- Fix: the launch check's message still ran out unseen. The page is drawn behind the launch splash (and behind the transition screen or the cover over an app-drawn page), so 2.124.2 counted it as shown while it was hidden. The app now tells the pill whether the page is covered (`covered` in the status), and a finished message waits until the page can be seen before its time starts.
+
 ## 2.124.2
 
 - Fix: the background activity pill missed the launch check. The schedule, roster and titles check runs as the app opens and usually finishes before the first page is drawn, so its 4 to 10 second message had run out by the time a page could show it. A finished message now counts its time from when a page first shows it (the app remembers that across pages); one left unseen for 2 minutes is dropped.

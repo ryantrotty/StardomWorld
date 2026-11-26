@@ -2692,8 +2692,13 @@ class MainActivity : Activity() {
         val now = System.currentTimeMillis()
         bgTasks.entries.removeAll { now - it.value.optLong("t") > 120_000L }   // a reply that never came back (page left mid-request)
         val run = org.json.JSONArray(); bgTasks.values.forEach { run.put(it) }
-        org.json.JSONObject().put("run", run).put("last", bgLast ?: org.json.JSONObject.NULL).put("now", now).toString()
+        org.json.JSONObject().put("run", run).put("last", bgLast ?: org.json.JSONObject.NULL).put("now", now).put("covered", bgCovered()).toString()
     }
+    // 2.124.3: the page can't be seen yet (launch splash, the transition screen, or the cover over an app-drawn page), so a
+    // finished message waits instead of running out behind it.
+    private fun bgCovered(): Boolean = try {
+        !splashDone || transitionShowing || appCover?.visibility == View.VISIBLE || (::splashView.isInitialized && splashView.parent != null)
+    } catch (_: Exception) { false }
     private fun bgPush() {
         if (!::webView.isInitialized) return
         val js = "window.__tvBgSet && window.__tvBgSet(" + org.json.JSONObject.quote(bgJson()) + ")"
