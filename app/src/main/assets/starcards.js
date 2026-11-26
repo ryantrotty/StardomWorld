@@ -1103,6 +1103,16 @@
     }
     saveList(c);
     THRU = null;
+    // 2.124.0: the status pill (assets/bgstatus.js): what this update brought, once it is saved on the TV.
+    try {
+      if (H.bgNote) {
+        var nv = Object.keys(c.map).length, bad = / NOT SAVED/.test(SAVE_INFO);
+        if (bad) H.bgNote('StarScope list could not be saved on this TV', 'StarScopeリストをこのテレビに保存できませんでした', false, false);
+        else if (!r.since) H.bgNote('Full StarScope list saved: ' + nv + ' videos', 'StarScopeリスト全件を保存：' + nv + '本', true, true);
+        else if (got) H.bgNote('StarScope updated: ' + got + (got === 1 ? ' change' : ' changes') + ' saved', 'StarScopeを更新：' + got + '件を保存', true, true);
+        else H.bgNote('StarScope up to date', 'StarScopeは最新です', true, false);
+      }
+    } catch (e) {}
     if (got) {
       try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}   // the video page's StarScope player (assets/scopeplayer.js)
       try { window.dispatchEvent(new Event('tvscopelist')); } catch (e) {}   // 2.121.3: app pages redraw if their decision changed

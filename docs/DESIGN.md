@@ -24,7 +24,7 @@ Visual versions: the published style guide page and the "Stardom TV App — Desi
 | Card / focused row | #161F2A, #141A22, #172029 | Rows, steps; focused fill |
 | Border / track | #2A323C, #3B4656 | Lines; progress track |
 | Text | #FFFFFF, #C9D2DC, #9AA6B4 | Title, description, fine print |
-| Error | #FF7A66 | Login failures |
+| Error | #FF7A66 | Login failures; background activity pill failures (2.124.0) |
 | Unavailable | #5A6472 | Player bar buttons that can't be used (greyed), StarScope shows' missing match squares (2.66.0) |
 | Logged square edge | #6B5A22 | Border of a logged match square on StarScope show cards, on the #2A2410 tint (2.66.0) |
 | Live red | #D62839 (hover #E8374A, text #FF6B78) | Live only |
@@ -334,3 +334,10 @@ Same switch as complete-career wrestler pages: everything the page covers falls 
 ## English version box (2.122.0, private builds)
 
 A logged video whose match_videos version is `en` shows the player bar's EN box in the lower right of its thumbnail, 8 px in from the right and bottom: outlined square, 2 px white border, radius 4, 34 min wide by 24 high, white 13/800 "EN", on rgba(11,17,24,.85) so it reads on any picture. Not focusable, excluded from translation. Shown on every StarScope card frame (StarScope pages, complete wrestler, team, title and faction pages, era top rated) and on the site's cards for a logged video on wrestler, team and title pages. A show card or featured show gets it when every logged video in the show is English. Nothing else sits in that corner on these cards. No new colours.
+
+## Background activity pill (2.124.0, all builds)
+
+- Top right, 18 px from the top and 24 px from the right (below the PAGE chip when that shows). Fill #11171E, 1 px #2A323C border, radius 20 (chip), padding 7 × 14, Arial 14 / 700 #C9D2DC; the time 600 #9AA6B4.
+- Gold telescope icon (16 px). Running: text white, icon pulses. Something changed: border gold. Failure: border and icon #FF7A66 (Error colour, used here as well as login).
+- Not focusable and never takes a key, so no focus look. Hidden while a video plays, in full screen and while the reminder toast shows.
+

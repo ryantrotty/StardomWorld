@@ -2669,6 +2669,48 @@ class MainActivity : Activity() {
 
     private val scopeListLock = Any()   // 2.121.3: the StarScope list file (scopeListLoad / scopeListSave)
 
+    // ---- Background activity (2.124.0, assets/bgstatus.js): what the app is fetching or saving out of sight, for the
+    // small status pill in the top right. Running tasks are kept here (not in the page), so a task started on one page
+    // still shows after moving to the next. Each change is pushed to the page; a page that opens reads it once.
+    private val bgLock = Any()
+    private val bgTasks = LinkedHashMap<String, org.json.JSONObject>()
+    private var bgLast: org.json.JSONObject? = null   // the last finished task worth showing: en, ja, ok, at, changed
+    private fun bgBegin(id: String, en: String, ja: String) {
+        synchronized(bgLock) { bgTasks[id] = org.json.JSONObject().put("en", en).put("ja", ja).put("t", System.currentTimeMillis()) }
+        bgPush()
+    }
+    // en == null: finish quietly (nothing to report), unless it failed.
+    private fun bgEnd(id: String, ok: Boolean, en: String?, ja: String?, changed: Boolean) {
+        synchronized(bgLock) {
+            val t = bgTasks.remove(id)
+            if (en != null) bgLast = org.json.JSONObject().put("en", en).put("ja", ja ?: en).put("ok", ok).put("at", System.currentTimeMillis()).put("changed", changed)
+            else if (!ok && t != null) bgLast = org.json.JSONObject().put("en", t.optString("en") + ": failed").put("ja", t.optString("ja") + "：失敗").put("ok", false).put("at", System.currentTimeMillis()).put("changed", false)
+        }
+        bgPush()
+    }
+    private fun bgJson(): String = synchronized(bgLock) {
+        val now = System.currentTimeMillis()
+        bgTasks.entries.removeAll { now - it.value.optLong("t") > 120_000L }   // a reply that never came back (page left mid-request)
+        val run = org.json.JSONArray(); bgTasks.values.forEach { run.put(it) }
+        org.json.JSONObject().put("run", run).put("last", bgLast ?: org.json.JSONObject.NULL).put("now", now).toString()
+    }
+    private fun bgPush() {
+        if (!::webView.isInitialized) return
+        val js = "window.__tvBgSet && window.__tvBgSet(" + org.json.JSONObject.quote(bgJson()) + ")"
+        runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (_: Exception) {} }
+    }
+    // What a sheet request is, for the pill: [English, Japanese], or null for quick reads that stay silent.
+    private fun bgLabel(action: String, body: org.json.JSONObject): Array<String>? = when (action) {
+        "vi_cards" -> if (body.has("since")) arrayOf("Checking StarScope for changes", "StarScopeの更新を確認中") else arrayOf("Downloading the full StarScope list", "StarScopeリストを全件ダウンロード中")
+        "vi_save" -> arrayOf("Saving match", "試合を保存中")
+        "vi_propose" -> arrayOf("Saving new name", "新しい名前を保存中")
+        "vi_thumbs" -> arrayOf("Saving thumbnails", "サムネイルを保存中")
+        "vi_show_venue" -> arrayOf("Saving venue", "会場を保存中")
+        "fav_put", "fav_replace" -> arrayOf("Saving favorites", "お気に入りを保存中")
+        "tm_put" -> arrayOf("Saving team matches", "タッグ試合を保存中")
+        else -> null
+    }
+
     private fun scopeCompleteYears(): String {
         if (!sheetOn()) return "[]"
         // 2.106.0: 2025 fully logged; 2.109.0: 2024 too. 2.121.2: the last list read from the roster file is kept, so a
@@ -2701,8 +2743,9 @@ class MainActivity : Activity() {
     // Downloads the StarScope file with the schedule check (when the app comes to the front, at most every six hours),
     // with the last ETag, so an unchanged file costs almost nothing. Keeps the last good copy on any problem. Your own
     // build reads the sheet instead and skips this.
-    private fun refreshScopeFile() {
-        if (BuildConfig.STARSCOPE_URL.isEmpty() || sheetOn()) return
+    private fun refreshScopeFile(): Boolean {
+        if (BuildConfig.STARSCOPE_URL.isEmpty() || sheetOn()) return false
+        var changed = false
         try {
             val prefs = getSharedPreferences("starscope", MODE_PRIVATE)
             val have = java.io.File(filesDir, "starscope.json")
@@ -2719,10 +2762,12 @@ class MainActivity : Activity() {
                     tmp.writeText(body)
                     tmp.renameTo(have)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
+                    changed = true
                 }
             }
             c.disconnect()
         } catch (_: Exception) {}
+        return changed
     }
 
     // An answer to a page script, the same way the sheet's answers are delivered.
@@ -3319,8 +3364,9 @@ class MainActivity : Activity() {
 
     // Downloads the roster file (one small request to GitHub, never to the Stardom sites), at most once per schedule
     // refresh. Sends the last ETag so an unchanged file comes back empty (304). The last good copy stays on any failure.
-    private fun refreshRoster() {
-        if (BuildConfig.ROSTER_URL.isEmpty()) return
+    private fun refreshRoster(): Boolean {
+        if (BuildConfig.ROSTER_URL.isEmpty()) return false
+        var changed = false
         try {
             val prefs = getSharedPreferences("roster", MODE_PRIVATE)
             val have = java.io.File(filesDir, "roster.json")
@@ -3336,14 +3382,17 @@ class MainActivity : Activity() {
                 if (rj.optJSONObject("tagTeams") != null || rj.optJSONObject("factions") != null || rj.optJSONObject("past") != null || rj.optJSONObject("tagLeague") != null || rj.optJSONObject("matchTypes") != null || rj.optJSONObject("ppv") != null || rj.optJSONObject("showWords") != null || rj.optJSONObject("matchWords") != null) {
                     // 2.121.2: written to a temporary file and moved into place, so a page reading the roster file while
                     // it downloads never sees half a file (StarScope's complete years then fell back to 2024 to 2026).
+                    val old = try { if (have.exists()) have.readText() else "" } catch (_: Exception) { "" }
                     val tmp = java.io.File(filesDir, "roster.json.tmp")
                     tmp.writeText(body)
                     if (!tmp.renameTo(have)) { have.writeText(body); tmp.delete() }
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
+                    changed = old != body
                 }
             }
             c.disconnect()
         } catch (_: Exception) {}
+        return changed
     }
 
     // The daily file (assets-independent copy in filesDir) published by the daily job: schedule, lineage.titles, status.
@@ -3467,10 +3516,15 @@ class MainActivity : Activity() {
         if (!due && postersChecked) return
         if (!scheduleRefreshing.compareAndSet(false, true)) return
         Thread {
+            var bgOn = false
+            val changes = ArrayList<String>()
+            val changesJa = ArrayList<String>()
             try {
                 var gotDaily = false
                 var gotSchedule = false
                 if (due) {
+                    bgOn = true
+                    bgBegin("data", "Checking schedule, roster and titles", "スケジュール・ロスター・王座を確認中")
                     // The daily file: it carries the schedule and the lineages.
                     try {
                         val dc = java.net.URL(BuildConfig.DAILY_URL).openConnection() as java.net.HttpURLConnection
@@ -3482,8 +3536,11 @@ class MainActivity : Activity() {
                         val okSched = (dj.optJSONObject("schedule")?.optJSONArray("events")?.length() ?: 0) > 0
                         val okLin = dj.optJSONObject("lineage")?.optJSONObject("titles") != null
                         if (okSched && okLin) {
-                            java.io.File(filesDir, "daily.json").writeText(dbody)
+                            val df = java.io.File(filesDir, "daily.json")
+                            val old = try { if (df.exists()) df.readText() else "" } catch (_: Exception) { "" }
+                            df.writeText(dbody)
                             gotDaily = true
+                            if (old != dbody) { changes.add("schedule and titles"); changesJa.add("スケジュール・王座") }
                         }
                     } catch (_: Exception) {}
                     // The schedule-only file is read too, so whichever job ran last (and fixed the most) wins.
@@ -3495,18 +3552,27 @@ class MainActivity : Activity() {
                         conn.disconnect()
                         val j = org.json.JSONObject(body)
                         if (j.optJSONArray("events") != null) {
-                            java.io.File(filesDir, "schedule.json").writeText(body)
+                            val sf = java.io.File(filesDir, "schedule.json")
+                            val old = try { if (sf.exists()) sf.readText() else "" } catch (_: Exception) { "" }
+                            sf.writeText(body)
                             gotSchedule = true
+                            if (old != body && "schedule and titles" !in changes) { changes.add("schedule"); changesJa.add("スケジュール") }
                         }
                     } catch (_: Exception) {}
-                    refreshRoster()
-                    refreshScopeFile()
+                    if (refreshRoster()) { changes.add("roster"); changesJa.add("ロスター") }
+                    if (refreshScopeFile()) { changes.add("StarScope file"); changesJa.add("StarScopeファイル") }
                     if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
+                    // Pages already drawn keep what they had; a page opened from now on reads the new files.
+                    if (!gotDaily && !gotSchedule) bgEnd("data", false, "Schedule check failed: keeping the last copy", "スケジュールの確認に失敗：前回のデータを使用中", false)
+                    else if (changes.isEmpty()) bgEnd("data", true, "Schedule, roster and titles up to date", "スケジュール・ロスター・王座は最新です", false)
+                    else bgEnd("data", true, "Updated " + changes.joinToString(", ") + ": pages use it as they open", changesJa.joinToString("・") + "を更新：次に開くページから反映", true)
+                    bgOn = false
                 }
                 try { if (BuildConfig.SHOW_POSTERS && (due || !postersChecked)) cacheSchedulePosters() } catch (_: Exception) {}
                 postersChecked = true
             } catch (_: Exception) {
             } finally {
+                if (bgOn) bgEnd("data", false, null, null, false)
                 scheduleRefreshing.set(false)
             }
         }.start()
@@ -3873,6 +3939,18 @@ class MainActivity : Activity() {
             synchronized(scopeListLock) { java.io.File(filesDir, "scope_list.json").let { if (it.exists()) it.readText() else "" } }
         } catch (_: Exception) { "" }
 
+        // 2.124.0: background activity for the status pill (assets/bgstatus.js).
+        @android.webkit.JavascriptInterface
+        fun bgStatusJson(): String = this@MainActivity.bgJson()
+
+        // A page reports a finished step worth showing (starcards.js: the StarScope list merged and saved).
+        @android.webkit.JavascriptInterface
+        fun bgNote(en: String, ja: String, ok: Boolean, changed: Boolean) {
+            // The list is merged and saved: that ends the StarScope request still showing as running.
+            synchronized(this@MainActivity.bgLock) { this@MainActivity.bgTasks.keys.removeAll { it.startsWith("sheet:vi_cards:") } }
+            this@MainActivity.bgEnd("note", ok, en.take(160), ja.take(160), changed)
+        }
+
         @android.webkit.JavascriptInterface
         fun scopeListSave(json: String): Boolean = try {
             synchronized(scopeListLock) {
@@ -3932,6 +4010,15 @@ class MainActivity : Activity() {
             val action = body.optString("action")
             if (action !in allowed) { reply("{\"ok\":false,\"error\":\"bad action\"}"); return }
             if (payload.length > 2_000_000) { reply("{\"ok\":false,\"error\":\"too big\"}"); return }
+            // 2.124.0: the status pill. vi_cards is finished by the page (starcards.js, bgNote) once the list is merged and saved.
+            val bgL = bgLabel(action, body)
+            val bgId = "sheet:" + action + ":" + reqId
+            if (bgL != null) bgBegin(bgId, bgL[0], bgL[1])
+            fun bgDone(ok: Boolean) {
+                if (bgL == null) return
+                if (action == "vi_cards") { if (!ok) bgEnd(bgId, false, "StarScope update failed: keeping the copy on this TV", "StarScopeの更新に失敗：このテレビのデータを使用中", false); return }   // ok: the page's bgNote ends it
+                if (ok) bgEnd(bgId, true, bgL[0].replace("Saving", "Saved"), bgL[1].replace("保存中", "保存しました"), false) else bgEnd(bgId, false, null, null, false)
+            }
             Thread {
                 try {
                     body.put("key", BuildConfig.VIDEO_INDEX_KEY).put("device", favSyncDevice())
@@ -3950,8 +4037,10 @@ class MainActivity : Activity() {
                     c.disconnect()
                     if (text.trimStart().startsWith("{")) reply(text)
                     else reply(org.json.JSONObject().put("ok", false).put("error", "HTTP " + code + " " + text.replace(Regex("(?is)<(script|style).*?</\\1>"), " ").replace(Regex("<[^>]+>"), " ").replace(Regex("\\s+"), " ").trim().take(120)).toString())
+                    bgDone(text.trimStart().startsWith("{") && !text.take(300).replace(" ", "").contains("\"ok\":false"))
                 } catch (e: Exception) {
                     reply(org.json.JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName).toString())
+                    bgDone(false)
                 }
             }.start()
         }
@@ -11640,6 +11729,7 @@ class MainActivity : Activity() {
         if (scopeLogOn()) view.evaluateJavascript(assetText("indexpanel.js"), null)   // StarScope logging: your build (2.76.0)
         if (BuildConfig.SHOW_POSTERS) view.evaluateJavascript(assetText("starback.js"), null)
         // StarScope cards, Shows and player: every build (2.76.0). They stay out of sight unless scopeOn() says yes.
+        view.evaluateJavascript(assetText("bgstatus.js"), null)   // 2.124.0: the background activity pill (before starcards.js)
         view.evaluateJavascript(assetText("shownames.js"), null)   // English show names (2.78.2), used by the next two
         view.evaluateJavascript(assetText("starcards.js"), null)
         // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
