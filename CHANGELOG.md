@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.123.0
+
+- Championships: SWA World added to the Other Promotions group (menu and filter bar), after Sendai Girls. It searches "SWA", keeps titles that contain SWA (half- or full-width ＳＷＡ), and searches the full-width spelling once more when the first runs out. No lineage page (the belt has no lineage file), so it opens the filtered match list like AEW and CMLL.
+
 ## 2.122.1
 
 - Fix: the StarScope video player page (title with show, date and venue, the telescope tag, the bell button and The card row) was missing for logged videos since 2.121.3. That version moved the StarScope list into the app's files and removed the page's storage copy, but the player still read the page's storage. `starcards.js` now shares the list it loads (`__tvScopeList` / `__tvScopeMap`), and the player, set order (match-number direction), TV card check and English show names (`name_en`) read it from there, falling back to the app's file.

@@ -156,6 +156,18 @@
      "name": "Sendai Girls",
      "ja": "センダイガールズ",
      "search": "Sendai Girls"
+    },
+    {
+     "id": "swa",
+     "name": "SWA World",
+     "ja": "SWA世界",
+     "search": "SWA",
+     "all": [
+      "\\bSWA\\b|ＳＷＡ"
+     ],
+     "alts": [
+      "ＳＷＡ"
+     ]
     }
    ]
   }
