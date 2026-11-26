@@ -1,6 +1,6 @@
 {
  "_note": "Edited by hand on the roster-data branch; read by the app (docs/ROSTER.md on main). Sections: tagTeams, factions (remove, set, members), past (add, remove), tagLeague (per year: blocks of teams), matchTypes, debuts. Use the app's spellings (assets/factions.json).",
- "updated": "2026-11-24",
+ "updated": "2026-11-26",
  "tagTeams": {
   "add": [
    {
@@ -375,7 +375,8 @@
   "2027-04-25": {}
  },
  "starscope": {
-  "_note": "Years fully logged in StarScope (your build only). 2023 added 21 Nov 2026 after the 2023 sweep; 2022 added 22 Nov 2026 after the 2022 sweep; 2021 added 22 Nov 2026 after the 2021 sweep; 2020 added 23 Nov 2026 after the 2020 sweep; 2019 added 23 Nov 2026 after the 2019 sweep.",
-  "completeYears": [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
+  "_note": "Years fully logged in StarScope (your build only). 2017 added 25 Nov 2026 after the 2017 sweep; 2023 added 21 Nov 2026 after the 2023 sweep; 2022 added 22 Nov 2026 after the 2022 sweep; 2021 added 22 Nov 2026 after the 2021 sweep; 2020 added 23 Nov 2026 after the 2020 sweep; 2019 added 23 Nov 2026 after the 2019 sweep.",
+  "completeYears": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+  "refresh": "2026-11-26T02:00:00Z"
  }
 }
