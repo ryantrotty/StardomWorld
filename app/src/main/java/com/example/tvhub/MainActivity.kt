@@ -2683,8 +2683,8 @@ class MainActivity : Activity() {
     private fun bgEnd(id: String, ok: Boolean, en: String?, ja: String?, changed: Boolean) {
         synchronized(bgLock) {
             val t = bgTasks.remove(id)
-            if (en != null) bgLast = org.json.JSONObject().put("en", en).put("ja", ja ?: en).put("ok", ok).put("at", System.currentTimeMillis()).put("changed", changed)
-            else if (!ok && t != null) bgLast = org.json.JSONObject().put("en", t.optString("en") + ": failed").put("ja", t.optString("ja") + "：失敗").put("ok", false).put("at", System.currentTimeMillis()).put("changed", false)
+            if (en != null) bgLast = org.json.JSONObject().put("en", en).put("ja", ja ?: en).put("ok", ok).put("at", System.currentTimeMillis()).put("changed", changed).put("shown", 0L)
+            else if (!ok && t != null) bgLast = org.json.JSONObject().put("en", t.optString("en") + ": failed").put("ja", t.optString("ja") + "：失敗").put("ok", false).put("at", System.currentTimeMillis()).put("changed", false).put("shown", 0L)
         }
         bgPush()
     }
@@ -3942,6 +3942,15 @@ class MainActivity : Activity() {
         // 2.124.0: background activity for the status pill (assets/bgstatus.js).
         @android.webkit.JavascriptInterface
         fun bgStatusJson(): String = this@MainActivity.bgJson()
+
+        // 2.124.2: a page has put the last finished message on screen. Its time on screen counts from here, not from
+        // when the task ended, so a result that comes in before the first page is drawn (the launch check) still shows.
+        @android.webkit.JavascriptInterface
+        fun bgShown(at: Double): Double = synchronized(this@MainActivity.bgLock) {
+            val l = this@MainActivity.bgLast
+            if (l != null && l.optLong("at") == at.toLong() && l.optLong("shown") == 0L) l.put("shown", System.currentTimeMillis())
+            (l?.optLong("shown") ?: 0L).toDouble()
+        }
 
         // A page reports a finished step worth showing (starcards.js: the StarScope list merged and saved).
         @android.webkit.JavascriptInterface

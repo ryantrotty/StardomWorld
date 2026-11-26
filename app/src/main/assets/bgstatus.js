@@ -1,5 +1,5 @@
 (function(){
-  // Background activity pill (2.124.0). A small status pill in the top right while the app fetches or saves something
+  // Background activity pill (2.124.0; 2.124.2: messages count their time from when first shown). A small status pill in the top right while the app fetches or saves something
   // out of sight: the schedule, roster and titles check, the StarScope list, and saves to the private sheet. The app keeps
   // the running tasks (MainActivity bgBegin / bgEnd), so a task started on one page still shows on the next one.
   // Not focusable and never takes a key. Hidden while a video plays, in full screen, and under the reminder toast.
@@ -70,7 +70,12 @@
       cls = 'run';
     } else if (last && last.at) {
       var keep = last.ok === false ? SHOW_FAIL : last.changed ? SHOW_CHANGED : SHOW_OK;
-      if (now - last.at < keep) {
+      // 2.124.2: the time on screen starts when a page first shows it (the app remembers that across pages), so the
+      // launch check's result isn't missed while the first page is still loading. Older than 2 minutes unseen: dropped.
+      if (!last.shown && now - last.at < 120000 && !blocked()) {
+        try { last.shown = +H.bgShown(last.at) || now; } catch (e) { last.shown = now; }
+      }
+      if (last.shown && now - last.shown < keep) {
         html = '<span class="ic">' + (last.ok === false ? '!' : TELE) + '</span><span class="tx">' + esc(ja ? last.ja : last.en) + '</span><span class="tm">' + hm(last.at) + '</span>';
         cls = last.ok === false ? 'bad' : last.changed ? 'new' : '';
       }
