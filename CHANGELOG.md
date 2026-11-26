@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.126.0
+
+- iPhone card check, Gaps: a new **Copy list for Claude** button copies the list as text to paste into a chat. Each show goes on one line, tab-separated: set, date, where the date came from (the show's name or the site's upload date), its year list, whether it's hidden, and the name. Shows not in StarScope come first, then hidden ones. Published to GitHub Pages (cc.js).
+
 ## 2.125.0
 
 - **iPhone card check: Gaps.** A new tab after Started lists every show on stardom-world.com that has nothing in StarScope yet. It catches shows the year lists never offered, such as a set the site left out of its year category (AGQ 2024 was one).

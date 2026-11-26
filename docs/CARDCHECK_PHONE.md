@@ -61,3 +61,4 @@ The **Gaps** tab (after Started) checks the site's whole list of shows against S
 - **What counts as in StarScope:** any video of the set in the StarScope list (`vi_cards`), or a saved blank segment from it.
 - **Order:** grouped by year, by the show's date read from its name, else the upload date the site gives. Each row says whether the show was in a year list read on this phone, and gives its set number.
 - **Next show** from a show opened here goes to the next one on the Gaps list that isn't hidden.
+- **Copy list for Claude** (2.126.0) copies the list as tab-separated text: set, date, date_from, year_list, hidden, name.
