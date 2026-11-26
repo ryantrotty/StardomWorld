@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.126.1
+
+- Fix: iPhone card check's Gaps list could push out the StarScope list. Saving the full list of about 1,200 shows, pictures included, filled Safari's storage. Card check then made room by dropping the year lists and the StarScope list, so every show read as "not in StarScope" until the list came back.
+  - The Gaps list is now kept without pictures (they stay for the visit), and it never makes room by dropping anything else. If it still doesn't fit, it's kept for that visit only, and the counter says so.
+  - A copy saved by 2.125.0 or 2.126.0 is made smaller when it's opened.
+  - **Copy list for Claude** waits until the StarScope list is back.
+  - Published to GitHub Pages (cc.js).
+
 ## 2.126.0
 
 - iPhone card check, Gaps: a new **Copy list for Claude** button copies the list as text to paste into a chat. Each show goes on one line, tab-separated: set, date, where the date came from (the show's name or the site's upload date), its year list, whether it's hidden, and the name. Shows not in StarScope come first, then hidden ones. Published to GitHub Pages (cc.js).
