@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.126.0
+
+App-drawn only, phase 1 (your build): one match card, and no StarScope branding outside StarScope's own pages and the player.
+- One match card everywhere (new assets/sitecards.js): site video cards in search results, category pages, the home page rows (Recently Watched and Watch Later included) and the related row under the player are now drawn as the StarScope card: picture, then event, names and footer with the date. The card size and focus look don't change. A video the index doesn't have (an extra, a show not logged yet, a set) keeps its own title in the same block, in the names type, with its date moved to the footer. The cards redraw once the StarScope list arrives.
+- StarScope branding removed from regular pages: no telescope button on the wrestler and team filter rows, no telescope after names in the Wrestlers lists, no "STARSCOPE · EVERY MATCH…" badge on wrestler and team pages, and the title page's count reads "on Stardom World". The StarScope menu entry, its shelf and page, card check and the player's telescope stay.
+- Includes 2.125.0 (phase 0: earliest match on career pages, series in the export, no collections or extras in Shows).
+
 ## 2.125.0
 
 App-drawn only, phase 0 (your build). Every year is now logged, so the index can stand in for the site everywhere.

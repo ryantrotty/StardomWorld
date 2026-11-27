@@ -269,6 +269,7 @@
     return out.sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
   }
   function addButtons() {
+    return;   // 2.126.0: no StarScope button on the wrestler and team filter rows (their pages list every match now)
     Array.prototype.forEach.call(document.querySelectorAll('[data-scope="w"],[data-scope="t"]'), function(row) {
       if (row.querySelector('.tvsp-btn')) return;
       var kind = row.getAttribute('data-scope'), a = row.getAttribute('data-scope-a'), b = row.getAttribute('data-scope-b');

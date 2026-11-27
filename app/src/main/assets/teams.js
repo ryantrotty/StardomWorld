@@ -1063,7 +1063,7 @@
       (lgNow.bja ? lgNow.bja + '・' : '') + 'タッグリーグ' + lgNow.year)) : '';
     TCC = teamCc();
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(t.display) + (t.league.length ? wings(24, '#F4C242', '#0B1118') : '') + '</div><div class="tt-note">' + esc(T('Tag team', 'タッグチーム')) + (t.sub ? ' · ' + esc(t.sub) : '') + lgLine + '</div></div>' +
-      (TCC ? '<div class="cc-badge notranslate" translate="no">' + CC_TEL + esc(T('STARSCOPE · EVERY MATCH TOGETHER', 'STARSCOPE · 全タッグマッチ')) + '</div>' : '') +
+      // 2.126.0: no StarScope badge (every page lists every match now)
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
     var av = t.members.map(function(m) {
       var p = call('wrestlerPhoto', m) || call('wrestlerPhoto', siteName(m));
@@ -1303,7 +1303,7 @@
       (CC ? '<a class="wr-tab wr-tab-more" tabindex="0" data-ccmore="1">' + esc(T('More', '詳細')) + ' ▾</a></div><div id="cc-fil"></div>' :
       '<a class="wr-tab wr-tab-more" tabindex="0" href="' + esc(absUrl(moreUrl)) + '">' + esc(T('More', '詳細')) + ' ▸</a></div>');
     var h = '<div class="tt-head"><div class="tt-bar"></div><div><div class="tt-h1 notranslate" translate="no">' + esc(api.W.name) + '</div><div class="tt-note">' + esc(T('Wrestler', '選手')) + '</div></div>' +
-      (CC ? '<div class="cc-badge notranslate" translate="no">' + CC_TEL + esc(T('STARSCOPE · EVERY MATCH SINCE DEBUT', 'STARSCOPE · デビュー以来の全試合')) + '</div>' : '') +
+      // 2.126.0: no StarScope badge (every page lists every match now)
       '<div class="tt-instr">' + esc(T('Up and Down move between rows. OK opens. Back returns.', '上下で移動、OKで開く、戻るで戻ります。')) + '</div></div>';
     h += '<div id="tv-wr" class="notranslate" translate="no" style="margin-top:18px;padding-right:0">' + api.header(tabs) + '</div>';
     h += '<div id="tt-vids"></div>' + (DEBUG_ON ? '<div class="tt-dbg notranslate" translate="no" id="tt-dbg"></div>' : '');

@@ -6849,7 +6849,7 @@ class MainActivity : Activity() {
             return function(r) { var d = deb[low(r[0])] || deb[low(SEARCH_AS[r[0]])] || ''; return !!d && d >= from; };
           }
           function wrRowsHtml(rows, mark) {
-            var cc = mark ? wrComplete() : null;
+            var cc = null;   // 2.126.0: no telescope in the Wrestlers lists (every career is in the index)
             return rows.map(function(r) {
               var c = cc && cc(r) ? '<span class="tv-wr-c tv-wr-cc" aria-label="StarScope">' + TELE_SM + '</span>' : '';
               return '<a class="tv-sm-fi' + (c ? ' tv-wr-n' : '') + '" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + (c ? '<span class="tv-wr-l">' : '') + esc(isJa() && r[2] ? r[2] : r[0]) + (c ? '</span>' + c : '') + '</a>';
@@ -11746,6 +11746,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(assetText("bgstatus.js"), null)   // 2.124.0: the background activity pill (before starcards.js)
         view.evaluateJavascript(assetText("shownames.js"), null)   // English show names (2.78.2), used by the next two
         view.evaluateJavascript(assetText("starcards.js"), null)
+        view.evaluateJavascript(assetText("sitecards.js"), null)   // 2.126.0: one match card everywhere (your build)
         // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
         view.evaluateJavascript(assetText("scopeplayer.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)

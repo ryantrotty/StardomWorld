@@ -469,7 +469,7 @@
       box(T('Most defences', '最多防衛'), nm(most), T(dn(most) + (dn(most) === 1 ? ' defence' : ' defences') + ' · ' + ord(most.n) + ' reign', '防衛' + dn(most) + '回 · 第' + most.n + '代')) +
       box(T('Longest reign', '最長政権'), nm(longest), T(longest.days + ' days' + (longest.cur ? ' and counting' : ''), longest.days + '日' + (longest.cur ? '（継続中）' : ''))) +
       box(T('Most reigns', '最多戴冠'), names[topK], T(cnt[topK] + (cnt[topK] === 1 ? ' reign' : ' reigns'), cnt[topK] + '回')) +
-      box(T('Title matches', '王座戦'), String(tc), T('on Stardom World, in StarScope', 'Stardom World · StarScope')) + '</div>';
+      box(T('Title matches', '王座戦'), String(tc), T('on Stardom World', 'Stardom World')) + '</div>';
   }
   function heroHtml() {
     var cur = R[R.length - 1], belt = '';
