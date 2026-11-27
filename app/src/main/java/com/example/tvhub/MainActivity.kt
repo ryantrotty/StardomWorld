@@ -2618,6 +2618,13 @@ class MainActivity : Activity() {
     private fun isShellUrl(url: String?): Boolean {
         if (!SHELL_ON || url == null || !isSiteHost(url)) return false
         val u = try { android.net.Uri.parse(url) } catch (_: Exception) { return false }
+        // 2.127.0: a faction page in your build (every unit match is in the index) is drawn on the empty page too,
+        // not on top of a site search the page never uses. 2.130.0: the Eras page (all of it comes from eras.json).
+        if (u.path == "/contents/search") {
+            val q0 = u.encodedQuery ?: return false
+            val sheet0 = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+            return sheet0 && Regex("(^|&)tv(faction|era)=").containsMatchIn(q0)   // 2.130.0: the Eras page too
+        }
         if (u.path != "/mypage") return false
         val q = u.encodedQuery ?: return false
         if (Regex("(^|&)tv(b|real)=").containsMatchIn(q)) return false
@@ -4724,7 +4731,7 @@ class MainActivity : Activity() {
           window.__tvYearUrl = function(y) {
             y = String(y);
             if (CY === null) { CY = []; try { CY = (JSON.parse(window.AndroidHost && AndroidHost.scopeCompleteJson ? AndroidHost.scopeCompleteJson() : '[]') || []).map(String); } catch (e) { CY = []; } }
-            if (CY.indexOf(y) >= 0) return '/mypage?tvscope=shows&sy=' + y;
+            if (CY.indexOf(y) >= 0) return '/mypage?tvscope=shows&sh=1&sy=' + y;   // 2.129.0: the Shows page, not StarScope's
             return '/contents/category/' + (y === '2020' ? '_2020' : y);
           };
         })();
@@ -5431,7 +5438,20 @@ class MainActivity : Activity() {
             return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
           }
           // Shows: the big shows, the same list as the Show filter (assets/event_filters.json).
+          // 2.129.0: your build's Shows menu opens the Shows page (StarScope show cards): All shows (the landing page),
+          // then each brand; the shelf adds All shows by year.
+          function showsScope() { try { return !!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }
+          function showYears() {
+            var out = [];
+            for (var y = new Date().getFullYear(); y >= 2011; y--) out.push([String(y), '/mypage?tvscope=shows&sh=1&sy=' + y, String(y)]);
+            return out;
+          }
           function showsList() {
+            if (showsScope()) {
+              var so = [['All Shows', '/mypage?tvscope=shows&sh=1', 'すべての大会']];
+              try { (JSON.parse(AndroidHost.eventFiltersJson()).shows || []).forEach(function(x) { so.push([x.name, '/mypage?tvscope=shows&sh=1&sb=' + encodeURIComponent(x.name), x.name]); }); } catch (e) {}
+              return [so[0]].concat(so.slice(1).sort(function(a, b) { return String(a[0]).localeCompare(String(b[0]), 'en', { sensitivity: 'base' }); }));
+            }
             var out = [[SHOWS[0][0], SHOWS[0][1], SHOWS[0][2]]];
             try {
               var d = JSON.parse(AndroidHost.eventFiltersJson());
@@ -6107,7 +6127,10 @@ class MainActivity : Activity() {
           }
           // private builds: q[type]=single leaves out sets (whole shows) from the searches the menu opens
           function singleOnly() { try { return AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : ''; } catch (e) { return ''; } }
+          // 2.128.0: your build lists a match type from the index (every match is logged): /mypage?tvscope=mt.
+          function scopeMenus() { try { return !!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }
           function matchTypePath(x) {
+            if (scopeMenus() && x.id) return '/mypage?tvscope=mt&a=' + encodeURIComponent(x.id) + '&n=' + encodeURIComponent(isJa() && x.ja ? x.ja : x.name);
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id) + singleOnly();
           }
           function matchTypeRows() {
@@ -6127,8 +6150,11 @@ class MainActivity : Activity() {
             if (!(id in LN_HAS)) { try { LN_HAS[id] = !!AndroidHost.lineageJson(id); } catch (e) { LN_HAS[id] = false; } }
             return LN_HAS[id];
           }
+          // 2.128.0: in your build a title with no lineage page lists its matches from the index by its title tag.
+          var CHAMP_TAG = { any: '*any', other: '*other', cmll: 'cmll-japan', pop: 'pop', regina: 'regina', roh: 'roh-women', sendai: 'sendai-world', swa: 'swa-world' };
           function champPath(x) {
             if (x.id && x.id !== 'any' && x.id !== 'other' && hasLineage(x.id)) return '/mypage?tvch=' + encodeURIComponent(x.id);
+            if (x.id && CHAMP_TAG[x.id] && scopeMenus()) return '/mypage?tvscope=ti&a=' + encodeURIComponent(CHAMP_TAG[x.id]) + '&n=' + encodeURIComponent(isJa() && x.ja ? x.ja : x.name);
             if (x.path) return x.path;
             if (x.category && singleOnly()) return '/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(x.category) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
@@ -6849,7 +6875,7 @@ class MainActivity : Activity() {
             return function(r) { var d = deb[low(r[0])] || deb[low(SEARCH_AS[r[0]])] || ''; return !!d && d >= from; };
           }
           function wrRowsHtml(rows, mark) {
-            var cc = mark ? wrComplete() : null;
+            var cc = null;   // 2.126.0: no telescope in the Wrestlers lists (every career is in the index)
             return rows.map(function(r) {
               var c = cc && cc(r) ? '<span class="tv-wr-c tv-wr-cc" aria-label="StarScope">' + TELE_SM + '</span>' : '';
               return '<a class="tv-sm-fi' + (c ? ' tv-wr-n' : '') + '" tabindex="0" data-go="' + esc(r[1]) + '" href="' + esc(absUrl(r[1])) + '">' + (c ? '<span class="tv-wr-l">' : '') + esc(isJa() && r[2] ? r[2] : r[0]) + (c ? '</span>' + c : '') + '</a>';
@@ -6945,13 +6971,14 @@ class MainActivity : Activity() {
             if (key === 'shows') {
               var sl = showsList();
               var upList = schedUpcoming();
+              var yrBlock = showsScope() ? '<div class="tv-shl-t" style="margin-top:12px">' + esc(T('ALL SHOWS BY YEAR', '年別の大会')) + '</div><div style="column-count:4;column-gap:8px;">' + rowsHtml(showYears()) + '</div>' : '';   // 2.129.0
               var past = '<div class="tv-shl-t">' + esc(T('PAST SHOWS', '過去の大会')) + '</div>' + ppvReplayBox() +
                 '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
-                '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>';
+                '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>' + yrBlock;
               if (!upList.length) {
                 h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
                   '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
-                  '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
+                  '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>' + yrBlock;
               } else {
                 w = 1200;
                 h = '<div class="tv-sch-wrap"><div class="tv-sch-up"><div class="tv-shl-t">' + esc(T('UPCOMING SHOWS', '今後の大会')) + '</div>' +
@@ -8320,7 +8347,7 @@ class MainActivity : Activity() {
       var wd = widen(s.search, s.year, s.dead, 'show'), semp = wd.step === 2, shref = wd.url;
       return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : (wd.step === 1 ? ' · ' + esc(T('all years', '全年')) : '')) + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
-    if (NS) fc = N.factions(e, SC);
+    if (NS) { var fcN = N.factions(e, SC); if (fcN) fc = fcN; }   // 2.130.0: an era with no faction picks keeps its own tiles
     if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e) + '<div class="tv-sec">' + N.stats(e) + '</div>';   // 2.110.0: the era in numbers at the very bottom
     else h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
@@ -11746,6 +11773,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(assetText("bgstatus.js"), null)   // 2.124.0: the background activity pill (before starcards.js)
         view.evaluateJavascript(assetText("shownames.js"), null)   // English show names (2.78.2), used by the next two
         view.evaluateJavascript(assetText("starcards.js"), null)
+        view.evaluateJavascript(assetText("sitecards.js"), null)   // 2.126.0: one match card everywhere (your build)
         // Before the title bar (playerPageJs), so a StarScope video gets its StarScope title straight away.
         view.evaluateJavascript(assetText("scopeplayer.js"), null)
         view.evaluateJavascript(stage1TestGridJs, null)

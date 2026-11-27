@@ -234,8 +234,13 @@
   function top(e) {
     var list = topList().filter(function(m) { return m.e === e.n; });
     if (!list.length) return '';
-    var h = list.slice(0, 5).map(function(m) {
-      var lg = topLogged(m), vid = lg.id, th = lg.th;
+    // 2.130.1: the row shows the five best-rated matches that are on Stardom World (a logged video), not the five
+    // best overall: in the early eras most of those aren't on the site, so the row was cards with no picture and no
+    // link, and nothing in view to move to. The All N matches tile still lists every match.
+    var avail = [];
+    list.forEach(function(m) { if (avail.length >= 5) return; var lg = topLogged(m); if (lg.id && lg.v) avail.push({ m: m, lg: lg }); });
+    var h = avail.map(function(a) {
+      var m = a.m, lg = a.lg, vid = lg.id, th = lg.th;
       var tag = vid ? 'a tabindex="0" href="/contents/' + esc(vid) + '"' : 'div';
       return '<' + tag + ' class="tvn-mc"><div class="im' + (lg.v && window.__tvStarCard && window.__tvStarCard.enCls ? window.__tvStarCard.enCls(lg.v) : '') + '"' + (th ? ' style="background-image:url(\'' + esc(th) + '\')"' : '') + '>' + (lg.v && window.__tvStarCard && window.__tvStarCard.en ? window.__tvStarCard.en(lg.v) : '') + '</div><span class="bd notranslate" translate="no">★ ' + Number(m.r).toFixed(2) + '</span>' +
         '<div class="tvsc-host">' + cardBody(m, lg.v) + '</div></' + (vid ? 'a' : 'div') + '>';

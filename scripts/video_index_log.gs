@@ -974,7 +974,9 @@ function viCards(b) {
     ven[x.venue_id] = { en: x.name_en, ja: x.name_ja || x.name_en };
     if (viTrue(x.active) && !x.merged_into) venLoc[x.venue_id] = { en: x.name_en || x.name_ja, ja: x.name_ja || x.name_en, c: x.country || '', p: x.prefecture || '', pj: x.prefecture_ja || '', ci: x.city || '', cj: x.city_ja || '', a: x.area || '' };
   });
-  viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, ne: String(x.name_en || '').trim(), v: ven[x.venue_id] || null, vid: x.venue_id || '' }; });
+  // 2.125.0: sr = the show's series (other-promotion, collection, extra), so StarScope Shows and Years can leave out
+  // what isn't a show.
+  viRows('shows').forEach(function(x) { shw[x.show_id] = { n: x.name, ne: String(x.name_en || '').trim(), v: ven[x.venue_id] || null, vid: x.venue_id || '', sr: String(x.series || '').trim() }; });
   var map = {}, all = [], mvRows = viRows('match_videos'), hot = null, hotShow = {};
   if (since) {
     hot = {};
@@ -1016,14 +1018,16 @@ function viCards(b) {
       // matches from the index (Tag League, 5★STAR GP, Cinderella, title tabs and title histories).
       cv: t.competition ? String(t.competition[0]) : '', bk: t.block ? String(t.block[0]) : '', tv: (t.title || []).map(String),
       // 2.118.0: complete-career wrestler pages: each wrestler's faction (same order as the sides) and the moments.
-      mo: (t.moment || []).map(String), fa: facSides(p)
+      mo: (t.moment || []).map(String), fa: facSides(p),
+      // 2.128.0: every special rule as logged (st above leaves some out), for the Matches menu's types from the index.
+      sp: (t.stipulation || []).map(String)
     };
     var sv = seen[String(v.video_id)] || {};
     var mu = multi(en, t.stipulation);
     // 2.105.0: a video published in another set than its match's show (an English-commentary set linked to the Japanese
     // match) carries that set's show, so StarScope lists it under its own show.
     var vset = String(v.set_id || ''), oss = vset && vset !== String(m.show_id || '') && shw[vset] ? shw[vset] : null;
-    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sh: (shw[m.show_id] || {}).n || '', she: (shw[m.show_id] || {}).ne || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, ne: oss.ne || '', vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
+    map[v.video_id] = { x: extra, s: en, sj: ja, e: event(m, t, en, 'en'), ej: event(m, t, ja, 'ja'), f: foot(t, 'en', en), fj: foot(t, 'ja', ja), tn: mu ? teamNames(p, 'en') : null, tnj: mu ? teamNames(p, 'ja') : null, n: m.card_no, t: m.card_total, d: m.date, sid: String(m.show_id || ''), vs: String(v.set_id || ''), sr: (shw[m.show_id] || {}).sr || '', sh: (shw[m.show_id] || {}).n || '', she: (shw[m.show_id] || {}).ne || '', vid: (shw[m.show_id] || {}).vid || '', vn: ((shw[m.show_id] || {}).v || {}).en || '', vnj: ((shw[m.show_id] || {}).v || {}).ja || '', bl: v.bell_sec === '' ? '' : Number(v.bell_sec), ed: v.end_sec === '' ? '' : Number(v.end_sec), th: (seen[String(v.video_id)] || {}).th || v.thumb || '', ss: oss ? { n: oss.n, ne: oss.ne || '', vn: (oss.v || {}).en || '', vnj: (oss.v || {}).ja || '' } : null, vt: sv.en || '', vtj: sv.ja || '', p: people(p, (seen[String(v.video_id)] || (v.site_text ? { text: viNorm(v.site_text) } : null) || {}).text || '') };
     if (String(v.version) === 'en') map[v.video_id].lg = 'en';   // 2.122.0: the English version, for the cards' EN box
   });
   return since ? { ok: true, map: map, now: now, since: since, all: all, venues: venLoc, blank: blank } : { ok: true, map: map, now: now, full: true, venues: venLoc, blank: blank };

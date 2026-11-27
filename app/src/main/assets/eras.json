@@ -186,7 +186,101 @@
           "sub": "Hiroyo Matsumoto, Mayu Iwatani, Miho Wakizawa",
           "mono": "TW"
         }
-      ]
+      ],
+      "scope": {
+        "_note": "2.130.0: the StarScope version of Genesis & the Idols (assets/eranew.js), drafted by Claude for Ryan to approve. to = the day before Threedom begins. Picks only; everything else is looked up when the page opens. No faction picks: the era's units (Kawasaki Katsushika Saikyou Densetsu, Planet and the rest) aren't in factions.json.",
+        "from": "2011-01-01",
+        "to": "2015-03-31",
+        "index": {
+          "years": [
+            "2011",
+            "2012",
+            "2013",
+            "2014",
+            "2015"
+          ]
+        },
+        "reigns": [
+          {
+            "beltId": "world",
+            "feature": 1
+          },
+          {
+            "beltId": "wonder",
+            "feature": 1
+          },
+          {
+            "beltId": "highspeed",
+            "feature": 5
+          },
+          {
+            "beltId": "goddess",
+            "feature": 1
+          }
+        ],
+        "rivalries": [
+          {
+            "a": {
+              "t": "Nanae Takahashi"
+            },
+            "b": {
+              "t": "Yuzuki Aikawa"
+            },
+            "line": "Veteran and idol, the first Red and White Belts"
+          },
+          {
+            "a": {
+              "t": "Io Shirai"
+            },
+            "b": {
+              "t": "Natsuki Taiyo"
+            },
+            "line": "Speed against speed"
+          },
+          {
+            "a": {
+              "t": "Yoshiko"
+            },
+            "b": {
+              "t": "Act Yasukawa"
+            },
+            "line": "The delinquent and the rebel"
+          },
+          {
+            "a": {
+              "t": "Io Shirai"
+            },
+            "b": {
+              "t": "Nanae Takahashi"
+            },
+            "line": "The new Ace takes the Red Belt"
+          }
+        ],
+        "shows": [
+          {
+            "sid": "13"
+          },
+          {
+            "sid": "165"
+          },
+          {
+            "sid": "621"
+          }
+        ],
+        "wrestlers": [
+          "Nanae Takahashi",
+          "Yuzuki Aikawa",
+          "Io Shirai",
+          "Yoko Bito"
+        ],
+        "rising": [
+          "Mayu Iwatani",
+          "Kairi Hojo",
+          "Act Yasukawa",
+          "Takumi Iroha"
+        ],
+        "factions": []
+      }
     },
     {
       "n": 2,
@@ -353,7 +447,104 @@
         "2016",
         "2017",
         "2018"
-      ]
+      ],
+      "scope": {
+        "_note": "2.130.0: the StarScope version of Threedom & the Rebuild (assets/eranew.js), drafted by Claude for Ryan to approve. to = the day before the Draft Years begin. Picks only; everything else is looked up when the page opens.",
+        "from": "2015-04-01",
+        "to": "2018-03-31",
+        "index": {
+          "years": [
+            "2015",
+            "2016",
+            "2017",
+            "2018"
+          ]
+        },
+        "reigns": [
+          {
+            "beltId": "world",
+            "feature": 7
+          },
+          {
+            "beltId": "wonder",
+            "feature": 8
+          },
+          {
+            "beltId": "highspeed",
+            "feature": 12
+          },
+          {
+            "beltId": "goddess",
+            "feature": 8
+          }
+        ],
+        "rivalries": [
+          {
+            "a": {
+              "t": "Io Shirai"
+            },
+            "b": {
+              "t": "Mayu Iwatani"
+            },
+            "line": "Best friends turned rivals"
+          },
+          {
+            "a": {
+              "t": "Io Shirai"
+            },
+            "b": {
+              "t": "Kairi Hojo"
+            },
+            "line": "The Ace against the Heart"
+          },
+          {
+            "a": {
+              "t": "Io Shirai"
+            },
+            "b": {
+              "t": "Toni Storm"
+            },
+            "line": "The international showcase"
+          },
+          {
+            "a": {
+              "f": "queens-quest"
+            },
+            "b": {
+              "f": "oedo-tai"
+            },
+            "line": "Queen's Quest against the reformed Oedo Tai"
+          }
+        ],
+        "shows": [
+          {
+            "sid": "1661"
+          },
+          {
+            "sid": "1444"
+          },
+          {
+            "sid": "1647"
+          }
+        ],
+        "wrestlers": [
+          "Io Shirai",
+          "Kairi Hojo",
+          "Mayu Iwatani",
+          "Toni Storm"
+        ],
+        "rising": [
+          "Momo Watanabe",
+          "Jungle Kyona",
+          "Hazuki",
+          "Starlight Kid"
+        ],
+        "factions": [
+          "queens-quest",
+          "oedo-tai",
+          "stars"
+        ]
+      }
     },
     {
       "n": 3,

@@ -243,13 +243,54 @@
     });
     return out;
   }
+  // 2.128.0: the Matches menu's types worked out from the index: side counts, the special rules and the tournaments.
+  function stips(v) { var X = v.x || {}; return (X.sp || X.st || []).map(String); }
+  function isType(v, id) {
+    var p = v.p || [], n = p.length, sz = p.map(function(s) { return s.length; }), even = function(k) { return sz.every(function(x) { return x === k; }); };
+    var sp = stips(v), lab = String(v.e || '') + ' ' + String(v.ej || '');
+    function rule(k, re) { return sp.indexOf(k) >= 0 || re.test(lab); }
+    switch (id) {
+      case 'single': return n === 2 && even(1) && !rule('royal', /battle\s*royal|バトルロイヤル/i);
+      case 'tag': return n === 2 && even(2);
+      case 'way3': return n === 3 && even(1); case 'way3tag': return n === 3 && even(2); case 'way3trio': return n === 3 && even(3);
+      case 'way4': return n === 4 && even(1); case 'way4tag': return n === 4 && even(2); case 'way4trio': return n === 4 && even(3);
+      case 'way5': return n === 5; case 'way6': return n === 6;
+      case 'six': return n === 2 && even(3); case 'eight': return n === 2 && even(4); case 'ten': return n === 2 && even(5);
+      case 'twelve': return n === 2 && even(6); case 'fourteen': return n === 2 && even(7);
+      case 'royal': return rule('royal', /battle\s*royal|バトルロイヤル/i);
+      case 'cage': return rule('cage', /cage|ケージ/i);
+      case 'gauntlet': return rule('gauntlet', /gauntlet|ガントレット/i);
+      case 'highspeed': return rule('highspeed', /high[\s-]*speed|ハイスピード/i) || isTitle(v, 'highspeed');
+      case 'ladder': return rule('ladder', /ladder|ラダー/i);
+      case 'rumble': return rule('rumble', /rumble|ランブル/i);
+      case 'handicap': return rule('handicap', /handicap|ハンディキャップ|ハンデ/i) || (n === 2 && sz[0] !== sz[1]);
+      case 'champ': return isTitle(v);
+      case 'stargp': return inComp(v, 'stargp');
+      case 'cinderella': return inComp(v, 'cinderella');
+      case 'tagleague': return inComp(v, 'tagleague');
+    }
+    return false;
+  }
   function results(kind, a, b) {
     if (!map) return [];
     if (kind === 'v' || kind === 'f') return pairList(kind, a, b, (Q && Q.get('from')) || '', (Q && Q.get('to')) || '');
     if (kind === 'ti') {   // 2.121.0: every logged match for title a (a lineage id), one per match, newest first
+      // 2.128.0: also a title tag id (swa-world, roh-women…), '*any' (every title match) and '*other' (titles that
+      // aren't Stardom's own belts), for the Championships menu entries with no lineage page.
+      var OWN = ['artist', 'future', 'goddess', 'highspeed', 'kawaii', 'newblood', 'wonder', 'world'];
       var tl = [];
-      Object.keys(map).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && (v.x.tv || []).indexOf(a) >= 0) tl.push({ id: id, v: v }); });
+      Object.keys(map).forEach(function(id) {
+        var v = map[id], tv = (v && v.x && v.x.tv) || [];
+        if (!v || !v.x || v.x.k === 'segment') return;
+        var hit = a === '*any' ? tv.length > 0 : a === '*other' ? tv.some(function(t) { return OWN.indexOf(t) < 0; }) : tv.indexOf(a) >= 0;
+        if (hit) tl.push({ id: id, v: v });
+      });
       return oneEach(tl).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+    }
+    if (kind === 'mt') {   // 2.128.0: a match type from the Matches menu (match_types.json id), from the index
+      var ml = [];
+      Object.keys(map).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && isType(v, a)) ml.push({ id: id, v: v }); });
+      return oneEach(ml).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
     }
     var out = [];
     Object.keys(map).forEach(function(id) {
@@ -269,6 +310,7 @@
     return out.sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
   }
   function addButtons() {
+    return;   // 2.126.0: no StarScope button on the wrestler and team filter rows (their pages list every match now)
     Array.prototype.forEach.call(document.querySelectorAll('[data-scope="w"],[data-scope="t"]'), function(row) {
       if (row.querySelector('.tvsp-btn')) return;
       var kind = row.getAttribute('data-scope'), a = row.getAttribute('data-scope-a'), b = row.getAttribute('data-scope-b');
@@ -319,15 +361,26 @@
     if (scopeKind === 'v') head = a + ' vs ' + b;
     if (scopeKind === 'f') { var fa = facMembers(a), fb = facMembers(b); head = (fa ? fa.name : a) + ' vs ' + (fb ? fb.name : b); }
     if (scopeKind === 'ti') { var tln = null; try { tln = JSON.parse(H.lineageJson(a)); } catch (e) { tln = null; } head = tln ? String((ja && tln.ja) || tln.title).replace(/ Championship$/, '') : a; }
-    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
+    if (Q.get('n')) head = Q.get('n');   // 2.128.0: the menu entry's own name (titles with no lineage file, match types)
+    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti' || scopeKind === 'mt') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
-    h += '<div class="hd">' + TEL + esc(head) + '</div><div class="gr">';
-    list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
+    h += '<div class="hd"><span style="display:block;flex:none;width:10px;height:36px;background:#F4C242"></span>' + esc(head) + '</div><div class="gr">';   // 2.127.0: the page title's gold bar, no telescope
+    // 2.128.0: a long list (a match type has thousands) is drawn 48 cards at a time; the next 48 come when focus
+    // reaches the last two rows.
+    function cardHtml(x) { return '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; }
+    var shown = Math.min(48, list.length);
+    list.slice(0, shown).forEach(function(x) { h += cardHtml(x); });
     d.innerHTML = h + '</div>';
     document.body.appendChild(d);
-    d.addEventListener('focusin', function() { rowPictures(d, 'a.c'); });
+    var grid = d.querySelector('.gr');
+    function more() { if (shown >= list.length) return; var nx = list.slice(shown, shown + 48); shown += nx.length; grid.insertAdjacentHTML('beforeend', nx.map(cardHtml).join('')); }
+    d.addEventListener('focusin', function(e) {
+      var cs = grid.querySelectorAll('a.c'), at = Array.prototype.indexOf.call(cs, e.target);
+      if (at >= 0 && at >= cs.length - 8) more();
+      rowPictures(d, 'a.c');
+    });
     var first = d.querySelector('a.c'); if (first) first.focus();
     rowPictures(d, 'a.c');
     window.addEventListener('keydown', function(e) {
@@ -389,6 +442,10 @@
   function chipH(k, label, on, extra) { return '<button type="button" class="ch' + (on ? ' on' : '') + '" data-f="1" data-k="' + k + '"' + (extra || '') + '>' + label + '</button>'; }
   function homeHtml() {
     var list = homeList(), f = home.f, t = home.tab, ppl = {};
+    if (SHMODE && t === 'shows') {   // 2.129.0: the global nav's Shows page: its own title, no StarScope header or tabs
+      var stl = f.sb || (f.sy ? (ja ? f.sy + '年の大会' : 'Shows of ' + f.sy) : (ja ? '大会' : 'Shows'));
+      return '<div class="hd"><span class="bar"></span><span class="wm">' + esc(stl) + '</span></div>' + showsHtml() + (home.pop ? popHtml(list) : '');
+    }
     list.forEach(function(x) { people(x.v).forEach(function(n) { ppl[n] = 1; }); });
     var h = '<div class="hd"><span class="bar"></span>' + TEL.replace('width="30" height="30"', 'width="40" height="40"') + '<span class="wm">STAR<b>SCOPE</b></span><span class="tg">' + HT.tag + '</span><span class="ct">' + (t === 'shows' || t === 'next' || t === 'log' ? '' : list.length + ' ' + HT.matches + ' · ' + Object.keys(ppl).length + ' ' + HT.wrestlers) + '</span></div>';
     h += '<div class="row">' + chipH('Trecent', HT.recent, t === 'recent', ' style="border-radius:22px"') + chipH('Ttop', HT.top, t === 'top', ' style="border-radius:22px"') + chipH('Tall', HT.all, t === 'all', ' style="border-radius:22px"') + chipH('Tshows', HT.shows, t === 'shows', ' style="border-radius:22px"') + (SHEET ? chipH('Tnext', nextLabel(), t === 'next', ' style="border-radius:22px"') : '') + (logOn() ? chipH('Tlog', HT.log, t === 'log', ' style="border-radius:22px"') : '') + '</div>';
@@ -448,6 +505,7 @@
       // listed under its own set's show, so each set stays its own show here while the match is kept once.
       var sid = String(x.v.ss && x.v.vs ? x.v.vs : (x.v.sid || ''));
       if (!sid) return;
+      if (/^(collection|extra)$/.test(String(x.v.sr || ''))) return;   // 2.125.0: Kairi Collection, interviews: not shows
       var g = by[sid] = by[sid] || { sid: sid, seen: {}, list: [] }, mid = x.v.x.m || x.id;
       // One entry per match (a match can have several videos, e.g. English commentary): keep one with a picture.
       if (g.seen[mid]) { if (!g.seen[mid].v.th && x.v.th) { g.list[g.list.indexOf(g.seen[mid])] = x; g.seen[mid] = x; } return; }
@@ -560,9 +618,42 @@
       '<span class="cn">' + TEL18 + esc(countText(s)) + '</span></div><div class="bd"><div class="nm">' + esc(s.name) + '</div>' +
       (s.venue ? '<div class="vn">' + ico('pin', 14, '#C9D2DC') + esc(s.venue) + '</div>' : '') + '<div class="rl">' + rows + '</div></div></a></div>';
   }
+  // ---- Shows from the global nav (2.129.0, your build): /mypage?tvscope=shows&sh=1 is the Shows page without the
+  // StarScope header and tabs. With no filter it is a landing page: the latest shows, then a row per brand (the brands
+  // are the Shows list in event_filters.json, matched on the show's name). &sb=<brand> lists one brand, &sy=<year> a year.
+  var SHMODE = !!(Q && Q.get('sh') === '1');
+  var BRANDS = null, BRAND_JA = { 'Cinderella': 'シンデレラ', 'Golden Week': 'ゴールデンウ', 'Climax': 'イヤーエンド', 'Triangle': 'トライアングル', 'NEW YEAR DREAM': 'ニューイヤードリーム' };
+  function bnorm(t) { return String(t || '').normalize('NFKC').toUpperCase().replace(/[\s\-‐・_☆★]+/g, ''); }
+  function brands() {
+    if (BRANDS) return BRANDS;
+    BRANDS = [];
+    try { ((JSON.parse(H.eventFiltersJson()) || {}).shows || []).forEach(function(x) { var k = [bnorm(x.search || x.name)]; if (BRAND_JA[x.search]) k.push(bnorm(BRAND_JA[x.search])); BRANDS.push({ name: x.name, keys: k }); }); } catch (e) {}
+    return BRANDS;
+  }
+  function brandOf(s) {
+    var v0 = s.list[0].v, txt = bnorm([s.name, v0.sh, v0.she, v0.ss ? v0.ss.n : ''].join(' '));
+    var b = brands().filter(function(x) { return x.keys.some(function(k) { return k && txt.indexOf(k) >= 0; }); })[0];
+    return b ? b.name : '';
+  }
+  function landingHtml(all) {
+    var byDate = all.slice().sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
+    function sec(title, count, href, list) {
+      return '<div class="sbh"><span class="bar"></span><span class="sbt">' + esc(title) + '</span><span class="ct">' + count + ' ' + HT.showsN + '</span>' +
+        (href ? '<a class="ch sba" tabindex="0" data-f="1" data-k="vb" href="' + esc(href) + '">' + esc(ja ? 'すべて' : 'All') + ' ▸</a>' : '') + '</div><div class="sgr">' + list.map(function(s) { return showCard(s); }).join('') + '</div>';
+    }
+    var h = sec(ja ? '最新の大会' : 'Latest shows', all.length, '', byDate.slice(0, 6));
+    var groups = {};
+    byDate.forEach(function(s) { var b = brandOf(s); if (b) (groups[b] = groups[b] || []).push(s); });
+    Object.keys(groups).sort(function(a, b) { return String(groups[b][0].date).localeCompare(String(groups[a][0].date)); }).forEach(function(b) {
+      h += sec(b, groups[b].length, '/mypage?tvscope=shows&sh=1&sb=' + encodeURIComponent(b), groups[b].slice(0, 3));
+    });
+    return h;
+  }
   function showsHtml() {
     var f = home.f, all = showsList();
+    if (SHMODE && !f.sy && !f.sv && !f.sb && !f.sc && (f.ss || 'date') === 'date') return landingHtml(all);
     var shown = all.filter(function(s) {
+      if (f.sb && brandOf(s) !== f.sb) return false;
       if (f.sy && String(s.date).slice(0, 4) !== f.sy) return false;
       if (f.sv && s.venue !== f.sv) return false;
       if (f.sc && !s.complete) return false;
@@ -831,6 +922,7 @@
     '#tvsh .ph{font:800 15px Arial;letter-spacing:.14em;color:#F4C242;margin-bottom:12px;text-transform:uppercase}#tvsh .pg{display:flex;flex-wrap:wrap;gap:8px}' +
     // Shows (2.66.0): poster cards, three to a row, and the featured show
     '#tvsh .sgr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start}' +
+    '#tvsh .sbh{display:flex;align-items:center;gap:14px;margin:28px 0 14px}#tvsh .sbh .bar{width:8px;height:26px}#tvsh .sbh .sbt{font:700 22px Arial;color:#fff}#tvsh .sbh .ct{margin-left:0}#tvsh a.sba{display:inline-flex;align-items:center;margin-left:auto;text-decoration:none}#tvsh a.sba:focus{border-color:#F4C242;color:#fff}' +
     '#tvsh .sc,#tvsh .fc{position:relative;display:block;border-radius:8px;overflow:hidden;background:#1A1A1A;text-decoration:none;color:#fff;outline:none;border:3px solid transparent}' +
     '#tvsh .sc:focus,#tvsh .fc:focus{border-color:#F4C242}' +
     '#tvsh .sc .im{position:relative;height:0;padding-top:56.25%;background:#172029 center/cover no-repeat}' +
@@ -947,12 +1039,13 @@
     if (scopeDone || !map || !document.body) return;
     scopeDone = true;
     askSuggest();
-    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sc: false, ss: 'date' }, more: false, pop: null, lf: '', ly: '' };
+    home = { tab: scopeKind, f: { k: '', w: '', g: '', y: '', c: '', ti: '', r: 0, sort: 'date', sy: '', sv: '', sb: '', sc: false, ss: 'date' }, more: false, pop: null, lf: '', ly: '' };
     var qy = Q.get('y');
     if (scopeKind === 'log' && qy && yearCats()[qy]) { home.lf = 'year'; home.ly = qy; yearLoad(qy); }
     // A complete year from the Years menu or the Eras page (2.101.0): Shows, filtered to that year.
     var qsy = Q.get('sy');
     if (scopeKind === 'shows' && /^\d{4}$/.test(qsy || '')) home.f.sy = qsy;
+    if (scopeKind === 'shows' && Q.get('sb')) home.f.sb = Q.get('sb');   // 2.129.0: one brand from the Shows menu
     homeRender('T' + scopeKind);
     homeMap = map;
   }

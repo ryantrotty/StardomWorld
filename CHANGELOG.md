@@ -2,6 +2,67 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.130.1
+
+- Fix: the era page's Top rated row showed cards with no picture that couldn't be reached. The row took the five best-rated matches of the era from top_matches.json, but in the early eras most of them aren't on Stardom World (Genesis & the Idols: none of its 7; Threedom: the top 4 of 31), so they were drawn as cards with no picture and no link, and the All N matches tile sat off screen where focus couldn't reach it. The row now shows the five best-rated matches that have a logged video, then the All N matches tile, which still lists every match. An era with none on the site shows just the tile.
+- Includes 2.130.0.
+
+## 2.130.0
+
+App-drawn only, phases 5 to 7 (your build): home, My Favorites, Recently Watched and the first two eras.
+- Home, Recently Watched page, My Favorites: the video cards on the Recently Watched page (`tvrecent`) and in My Favorites (watch later, favourite matches and videos, playlists) are now StarScope cards too, like the home rows (2.126.0).
+- Fix (2.126.0): on the home and related rows the new card text sat against the card's edges (the card's own title box padding was turned off along with its line limit). Each card's own title box now stays in place, hidden, with the StarScope block drawn after it at the StarScope card's padding. Other scripts that read a card's title (favourites, Watch Later, set order) read the original title as before.
+- Eras: Genesis & the Idols and Threedom & the Rebuild get StarScope versions (eras.json `scope`, picks drafted by Claude for Ryan to approve).
+  - Genesis & the Idols (2011 to Mar 2015): reigns Nanae Takahashi (World 1), Yuzuki Aikawa (Wonder 1), Natsuki Taiyo (High Speed 5), Yuzuki Aikawa & Yoko Bito (Goddess 1). Rivalries Takahashi vs Aikawa, Shirai vs Taiyo, Yoshiko vs Yasukawa, Shirai vs Takahashi. Must-see shows: the first show (Jan 23 2011), The Highest 2013 and Yearend Stars 2011. No faction picks (the era's units aren't in factions.json), so it keeps its own faction tiles.
+  - Threedom & the Rebuild (Apr 2015 to Mar 2018): reigns Io Shirai (World 7), Kairi Hojo (Wonder 8), Mayu Iwatani (High Speed 12), Io Shirai & Mayu Iwatani (Goddess 8). Rivalries Shirai vs Iwatani, Shirai vs Hojo, Shirai vs Storm, Queen's Quest vs Oedo Tai. Must-see shows: Galaxy Stars 2017, 5★STAR GP 2017 in Nagoya and the 5★STAR GP 2016 final. Factions Queen's Quest, Oedo Tai, STARS.
+- The Eras page is drawn on the app's empty page in your build (no site search underneath).
+- Data, outside the app: ROH Bound By Honor 2019 Night 2's Women of Honor title match (Mayu Iwatani) is tagged ROH Women's World, so ROH lists 2 matches.
+- Includes 2.129.0 back to 2.125.0.
+
+## 2.129.0
+
+App-drawn only, phase 4 (your build): Shows from StarScope show cards.
+- Shows menu: All Shows, then each brand (5★STAR GP, All Star Grand Queendom, Cinderella Tournament … Year-End Climax), A to Z, then a new ALL SHOWS BY YEAR block (2026 to 2011) in the shelf. The upcoming shows column stays as it is.
+- Shows page (`/mypage?tvscope=shows&sh=1`): the StarScope Shows poster cards under a plain "Shows" title, with no StarScope header or tabs.
+  - All Shows is a landing page: Latest shows (the six newest), then a row per brand with its three newest shows, the brand's show count and an All ▸ link. Brands are ordered by their newest show.
+  - A brand (`&sb=`) or a year (`&sy=`) lists all of its shows with the usual Year, Venue, Complete and Sort chips. The title reads the brand, or "Shows of 2024".
+  - A show's brand comes from its name, matched against the Shows list (event_filters.json), with Japanese spellings for Cinderella, Golden Week, Year-End, Triangle and New Year Dream. Collections and extras stay out.
+- Years menu: a complete year now opens that year on the Shows page instead of the StarScope page.
+- Includes 2.128.0, 2.127.0, 2.126.0 and 2.125.0.
+
+## 2.128.0
+
+App-drawn only, phase 3 (your build): Championships and match types from the index.
+- Matches menu: every match type (Single match, Tag team, the 3-, 4-, 5- and 6-Ways, 6- to 14-person, Battle royal, Cage, Gauntlet, High Speed, Ladder, Rumble, Handicap, Championship, 5★STAR GP, Cinderella, Tag League) opens a list of StarScope cards from the index instead of a site search. Types come from the number of sides and wrestlers, the logged special rules and the tournament tags. Newest first, 48 cards at a time (the next 48 load as focus reaches the last rows).
+- Championships menu: titles with a lineage page keep it (their title matches already come from the index). Any championship match, Other title matches, CMLL Japan, POP, Regina di WAVE, ROH, Sendai Girls and SWA now open their title matches from the index by title tag. AEW and RPW have no tagged title matches yet, so they keep the site search.
+- The results page heading uses the menu entry's own name, with the match count.
+- Sheet script: each card now carries all of its logged special rules (`sp`), so Battle royal, Gauntlet, Rumble and Handicap are found exactly. Until the script is redeployed those types fall back to the card's event line.
+- Includes 2.127.0, 2.126.0 and 2.125.0.
+
+## 2.127.0
+
+App-drawn only, phase 2 (your build): wrestlers, tag teams and factions from the index.
+- Wrestlers: every wrestler with logged matches gets the full career page (from 2.125.0, now that 2011 to 2016 are complete years): StarScope cards by year, counts on the tabs, partners, rivals and factions, spoilers included. No site search on these pages except shows newer than the last logged one.
+- Tag teams: a team whose partner has no debut date on file now counts from the first complete day, so every two-member team gets the complete team history (every straight 2 v 2 match together) instead of site searches.
+- Factions: the faction page is drawn on the app's empty page instead of on top of a site search, since its unit matches all come from the index (every faction now falls in the complete years). Public builds keep the site page.
+- The pair and rivalry results page (from the era and faction pages' top pairs) has the page title's gold bar instead of the telescope.
+- Includes 2.126.0 and 2.125.0.
+
+## 2.126.0
+
+App-drawn only, phase 1 (your build): one match card, and no StarScope branding outside StarScope's own pages and the player.
+- One match card everywhere (new assets/sitecards.js): site video cards in search results, category pages, the home page rows (Recently Watched and Watch Later included) and the related row under the player are now drawn as the StarScope card: picture, then event, names and footer with the date. The card size and focus look don't change. A video the index doesn't have (an extra, a show not logged yet, a set) keeps its own title in the same block, in the names type, with its date moved to the footer. The cards redraw once the StarScope list arrives.
+- StarScope branding removed from regular pages: no telescope button on the wrestler and team filter rows, no telescope after names in the Wrestlers lists, no "STARSCOPE · EVERY MATCH…" badge on wrestler and team pages, and the title page's count reads "on Stardom World". The StarScope menu entry, its shelf and page, card check and the player's telescope stay.
+- Includes 2.125.0 (phase 0: earliest match on career pages, series in the export, no collections or extras in Shows).
+
+## 2.125.0
+
+App-drawn only, phase 0 (your build). Every year is now logged, so the index can stand in for the site everywhere.
+- Wrestler pages: a wrestler with no debut date on file now gets the full career page too, starting from her earliest logged match. When that first match isn't her debut (not tagged as one and not on her debut date), the section, its card and the career strip read **Earliest Stardom World Match** instead of Debut. The small print under the career block no longer says "StarScope".
+- StarScope Shows (and the Years pages built on it) leave out what isn't a show: sets the sheet marks as a collection (Kairi Collection) or an extra (interviews).
+- Sheet script: each card now carries its show's series (`sr`: other-promotion, collection, extra). Redeploy the script for it to reach the app.
+- Data, outside the app: roster.json now lists 2011 to 2016 as complete years (all of 2011 to 2026), with a StarScope refresh so each TV pulls the whole list again. The sheet has POP and Regina di WAVE title tags (3 matches).
+
 ## 2.124.3
 
 - Fix: the launch check's message still ran out unseen. The page is drawn behind the launch splash (and behind the transition screen or the cover over an app-drawn page), so 2.124.2 counted it as shown while it was hidden. The app now tells the pill whether the page is covered (`covered` in the status), and a finished message waits until the page can be seen before its time starts.
