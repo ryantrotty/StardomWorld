@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.129.0
+
+App-drawn only, phase 4 (your build): Shows from StarScope show cards.
+- Shows menu: All Shows, then each brand (5★STAR GP, All Star Grand Queendom, Cinderella Tournament … Year-End Climax), A to Z, then a new ALL SHOWS BY YEAR block (2026 to 2011) in the shelf. The upcoming shows column stays as it is.
+- Shows page (`/mypage?tvscope=shows&sh=1`): the StarScope Shows poster cards under a plain "Shows" title, with no StarScope header or tabs.
+  - All Shows is a landing page: Latest shows (the six newest), then a row per brand with its three newest shows, the brand's show count and an All ▸ link. Brands are ordered by their newest show.
+  - A brand (`&sb=`) or a year (`&sy=`) lists all of its shows with the usual Year, Venue, Complete and Sort chips. The title reads the brand, or "Shows of 2024".
+  - A show's brand comes from its name, matched against the Shows list (event_filters.json), with Japanese spellings for Cinderella, Golden Week, Year-End, Triangle and New Year Dream. Collections and extras stay out.
+- Years menu: a complete year now opens that year on the Shows page instead of the StarScope page.
+- Includes 2.128.0, 2.127.0, 2.126.0 and 2.125.0.
+
 ## 2.128.0
 
 App-drawn only, phase 3 (your build): Championships and match types from the index.

@@ -4731,7 +4731,7 @@ class MainActivity : Activity() {
           window.__tvYearUrl = function(y) {
             y = String(y);
             if (CY === null) { CY = []; try { CY = (JSON.parse(window.AndroidHost && AndroidHost.scopeCompleteJson ? AndroidHost.scopeCompleteJson() : '[]') || []).map(String); } catch (e) { CY = []; } }
-            if (CY.indexOf(y) >= 0) return '/mypage?tvscope=shows&sy=' + y;
+            if (CY.indexOf(y) >= 0) return '/mypage?tvscope=shows&sh=1&sy=' + y;   // 2.129.0: the Shows page, not StarScope's
             return '/contents/category/' + (y === '2020' ? '_2020' : y);
           };
         })();
@@ -5438,7 +5438,20 @@ class MainActivity : Activity() {
             return [['New', lsGet(NEW_KEY) || '/', '新着']].concat(SHOWS.slice(1));
           }
           // Shows: the big shows, the same list as the Show filter (assets/event_filters.json).
+          // 2.129.0: your build's Shows menu opens the Shows page (StarScope show cards): All shows (the landing page),
+          // then each brand; the shelf adds All shows by year.
+          function showsScope() { try { return !!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }
+          function showYears() {
+            var out = [];
+            for (var y = new Date().getFullYear(); y >= 2011; y--) out.push([String(y), '/mypage?tvscope=shows&sh=1&sy=' + y, String(y)]);
+            return out;
+          }
           function showsList() {
+            if (showsScope()) {
+              var so = [['All Shows', '/mypage?tvscope=shows&sh=1', 'すべての大会']];
+              try { (JSON.parse(AndroidHost.eventFiltersJson()).shows || []).forEach(function(x) { so.push([x.name, '/mypage?tvscope=shows&sh=1&sb=' + encodeURIComponent(x.name), x.name]); }); } catch (e) {}
+              return [so[0]].concat(so.slice(1).sort(function(a, b) { return String(a[0]).localeCompare(String(b[0]), 'en', { sensitivity: 'base' }); }));
+            }
             var out = [[SHOWS[0][0], SHOWS[0][1], SHOWS[0][2]]];
             try {
               var d = JSON.parse(AndroidHost.eventFiltersJson());
@@ -6958,13 +6971,14 @@ class MainActivity : Activity() {
             if (key === 'shows') {
               var sl = showsList();
               var upList = schedUpcoming();
+              var yrBlock = showsScope() ? '<div class="tv-shl-t" style="margin-top:12px">' + esc(T('ALL SHOWS BY YEAR', '年別の大会')) + '</div><div style="column-count:4;column-gap:8px;">' + rowsHtml(showYears()) + '</div>' : '';   // 2.129.0
               var past = '<div class="tv-shl-t">' + esc(T('PAST SHOWS', '過去の大会')) + '</div>' + ppvReplayBox() +
                 '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
-                '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>';
+                '<div class="tv-sch-pastcols">' + rowsHtml(sl.slice(1)) + '</div>' + yrBlock;
               if (!upList.length) {
                 h = '<div class="tv-shl-t">' + esc(T('SHOWS', '番組')) + '</div>' +
                   '<div class="tv-shl-top">' + fiHtml(isJa() && sl[0][2] ? sl[0][2] : sl[0][0], sl[0][1]) + '</div>' +
-                  '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>';
+                  '<div style="column-count:3;column-gap:8px;">' + rowsHtml(sl.slice(1)) + '</div>' + yrBlock;
               } else {
                 w = 1200;
                 h = '<div class="tv-sch-wrap"><div class="tv-sch-up"><div class="tv-shl-t">' + esc(T('UPCOMING SHOWS', '今後の大会')) + '</div>' +
