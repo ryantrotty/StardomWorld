@@ -448,6 +448,7 @@
       // listed under its own set's show, so each set stays its own show here while the match is kept once.
       var sid = String(x.v.ss && x.v.vs ? x.v.vs : (x.v.sid || ''));
       if (!sid) return;
+      if (/^(collection|extra)$/.test(String(x.v.sr || ''))) return;   // 2.125.0: Kairi Collection, interviews: not shows
       var g = by[sid] = by[sid] || { sid: sid, seen: {}, list: [] }, mid = x.v.x.m || x.id;
       // One entry per match (a match can have several videos, e.g. English commentary): keep one with a picture.
       if (g.seen[mid]) { if (!g.seen[mid].v.th && x.v.th) { g.list[g.list.indexOf(g.seen[mid])] = x; g.seen[mid] = x; } return; }

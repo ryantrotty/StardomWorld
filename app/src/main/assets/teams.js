@@ -1280,7 +1280,7 @@
     WP.api = api;
     var P0 = ccPlan(api);
     WP.cc = null;
-    if (P0) { var D0 = ccData(api); if (D0.matches.length) WP.cc = { P: P0, D: D0, St: ccStats(D0) }; }
+    if (P0) { var D0 = ccData(api); if (D0.matches.length) WP.cc = { P: P0, D: D0, St: ccStats(D0, api) }; }
     (function() {   // 2.121.2: the complete-career decision, for the debug block
       var S = window.__tvScopeIdx, ys = '', fr = '';
       try { ys = (S.years() || []).join(','); fr = S.from(); } catch (e) {}
@@ -1351,11 +1351,24 @@
   var CC_TEL = '<svg width="18" height="18" viewBox="0 -13 60 60" aria-hidden="true"><g transform="rotate(-32 24 20)"><rect x="9" y="15" width="24" height="10" rx="1.5" fill="currentColor"/><rect x="3" y="17.5" width="6" height="5" rx="1" fill="currentColor"/><path d="M33 12.5H40V27.5H33Z" fill="currentColor"/></g><path d="M23 25L14 45M25 25L34 45M24 25V44" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/></svg>';
   function ccNorm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
   // Whether this wrestler's page is a complete career, and the plan for it (from, thru, unlogged shows).
+  // 2.125.0: with every year logged, a wrestler with no debut date on file starts from her earliest logged match
+  // (api.earliest), shown as "Earliest Stardom World Match" instead of Debut.
   function ccPlan(api) {
     var S = SC();
-    if (!S || !api || !api.debut) return null;
+    if (!S || !api) return null;
+    if (!api.debut) {
+      var ds = ccData(api).matches.map(function(x) { return String(x.v.d || ''); }).filter(function(d) { return d.length === 10; }).sort();
+      if (!ds.length) return null;
+      api.debut = ds[0]; api.earliest = true;
+    }
     var P = S.plan(api.debut);
     return P.only ? P : null;
+  }
+  // DEBUT when her first logged match is her debut (tagged as one, or on her debut date); otherwise the earliest match.
+  function ccDebTag(api, x) {
+    var v = x && x.v, mo = (v && v.x && v.x.mo) || [];
+    var deb = mo.indexOf('debut') >= 0 || (!api.earliest && v && String(v.d) === String(api.debut));
+    return deb ? T('DEBUT', 'デビュー') : T('EARLIEST STARDOM WORLD MATCH', 'スターダムワールド最古の試合');
   }
   // Every video with her in it (both versions of a linked match), her own place in each, and the matches counted once.
   function ccData(api) {
@@ -1384,7 +1397,7 @@
     if (n === 2 && sz[0] === 3 && sz[1] === 3) return 'six';
     return 'multi';
   }
-  function ccStats(D) {
+  function ccStats(D, api) {
     var S = SC(), M = D.matches, out = { total: M.length, years: {}, kinds: { multi: 0, tag: 0, six: 0, singles: 0 }, tabs: { champ: 0, stargp: 0, cinderella: 0, tagleague: 0 }, partners: {}, rivals: {}, fac: [], miles: [] };
     var byDate = M.slice().sort(function(a, b) { return String(a.v.d).localeCompare(String(b.v.d)) || ((+a.v.n || 0) - (+b.v.n || 0)); });
     function person(v, i, j) { return { k: v.p[i][j][0][0], n: ccSide(v, i)[j] || '' }; }
@@ -1423,7 +1436,7 @@
     function opp(x) { var v = x.v, at = x.at; return (v.p || []).map(function(sd, i) { return i === at[0] ? null : ccSide(v, i).join(' & '); }).filter(Boolean).join(isJa() ? '、' : ' · '); }
     function mates(x) { var s = ccSide(x.v, x.at[0]).filter(function(n, j) { return j !== x.at[1]; }); return s.join(' & '); }
     function showOf(v) { var n = v.sh || ''; if (window.__tvShowName && !isJa()) { try { n = window.__tvShowName.en(n, v.d, true) || n; } catch (e) {} } return n; }
-    if (first) miles.push({ pr: 1, d: first.v.d, x: first, tag: T('DEBUT', 'デビュー'), c: 'or', t: T('vs ', 'vs ') + opp(first), s: showOf(first.v) });
+    if (first) miles.push({ pr: 1, d: first.v.d, x: first, tag: ccDebTag(api, first), c: 'or', t: T('vs ', 'vs ') + opp(first), s: showOf(first.v) });
     var titles = {};
     byDate.forEach(function(x) {
       var X = x.v.x;
@@ -1493,7 +1506,8 @@
     if (St.first) {
       var lim = new Date(Date.parse(St.first.v.d) + 60 * 86400000).toISOString().slice(0, 10);
       var intro = D.segs.filter(function(x) { return String(x.v.d) <= lim; }).slice(-1)[0];   // newest first: the earliest
-      h += '<div class="cc-col">' + ccSec(T('DEBUT', 'デビュー'), fmtD(St.first.v.d)) + '<div class="cc-deb">' + ccCard(St.first, T('DEBUT', 'デビュー')) + '</div>' +
+      var dTag = ccDebTag(api, St.first);
+      h += '<div class="cc-col">' + ccSec(dTag, fmtD(St.first.v.d)) + '<div class="cc-deb">' + ccCard(St.first, dTag) + '</div>' +
         (intro ? '<div class="cc-fine">' + esc(T('Also logged: ', '登録済み: ') + ((isJa() ? intro.v.ej : intro.v.e) || '') + ' · ' + fmtD(intro.v.d)) + '</div>' : '') + '</div>';
     }
     h += '<div class="cc-col cc-grow">' + ccSec(T('CAREER', 'キャリア'), T('Newest on the left', '左が最新')) + '<div class="cc-miles">' + St.miles.map(function(m) {
@@ -1517,7 +1531,7 @@
     }
     var K = St.kinds, kinds = [['multi', T('Multi', '3チーム以上'), '#F4C242'], ['tag', T('Tag', 'タッグ'), '#FFB347'], ['six', T('6-person', '6人タッグ'), '#C9D2DC'], ['singles', T('Singles', 'シングル'), '#FFFFFF']].filter(function(k) { return K[k[0]]; });
     h += '<div>' + ccSec(T('MATCH TYPES', '試合形式')) + '<div class="cc-types">' + kinds.map(function(k) { return '<div style="flex:' + K[k[0]] + ';background:' + k[2] + '">' + esc(k[1]) + ' ' + K[k[0]] + '</div>'; }).join('') + '</div></div>';
-    h += '<div class="cc-fine">' + esc(T('StarScope: every match from ', 'StarScope: ') + fmtD(api.debut) + T(' to ', '〜') + fmtD(P.thru) + T(' (last logged show).', '（最新の登録済み大会）のすべての試合。') +
+    h += '<div class="cc-fine">' + esc(T('Every match from ', '') + fmtD(api.debut) + T(' to ', '〜') + fmtD(P.thru) + T(' (last logged show).', '（最新の登録済み大会）のすべての試合。') +
       (P.recent ? T(' Newer shows come from the site’s search until they’re logged.', ' それ以降の大会は登録されるまでサイトの検索から表示します。') : '')) + '</div>';
     return h;
   }

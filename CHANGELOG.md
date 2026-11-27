@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.125.0
+
+App-drawn only, phase 0 (your build). Every year is now logged, so the index can stand in for the site everywhere.
+- Wrestler pages: a wrestler with no debut date on file now gets the full career page too, starting from her earliest logged match. When that first match isn't her debut (not tagged as one and not on her debut date), the section, its card and the career strip read **Earliest Stardom World Match** instead of Debut. The small print under the career block no longer says "StarScope".
+- StarScope Shows (and the Years pages built on it) leave out what isn't a show: sets the sheet marks as a collection (Kairi Collection) or an extra (interviews).
+- Sheet script: each card now carries its show's series (`sr`: other-promotion, collection, extra). Redeploy the script for it to reach the app.
+- Data, outside the app: roster.json now lists 2011 to 2016 as complete years (all of 2011 to 2026), with a StarScope refresh so each TV pulls the whole list again. The sheet has POP and Regina di WAVE title tags (3 matches).
+
 ## 2.124.3
 
 - Fix: the launch check's message still ran out unseen. The page is drawn behind the launch splash (and behind the transition screen or the cover over an app-drawn page), so 2.124.2 counted it as shown while it was hidden. The app now tells the pill whether the page is covered (`covered` in the status), and a finished message waits until the page can be seen before its time starts.
