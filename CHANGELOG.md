@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.127.0
+
+- iPhone card check, Gaps: a new **Same date as a logged show** chip. Some sets fall on the same day as a show already in StarScope. These are usually another upload of it: an English Commentary set, a subtitled copy or an older upload. Their videos are linked to the logged show, so the set itself never appears in the StarScope list, and they used to fill **Not in StarScope** (the Oct 11 2026 English Korakuen set opened as all logged).
+  - These sets now sit under their own chip, each with "Logged that day: …" so a real second show on the same day (for example a day and night pair) can be spotted by eye.
+  - **Not in StarScope** keeps only sets with no logged show on their date.
+  - Next show follows whichever chip the show was opened from.
+  - **Copy list for Claude** adds a state column (missing, same-date, hidden) and the name of the show logged that day.
+  - Published to GitHub Pages (cc.js).
+
 ## 2.126.1
 
 - Fix: iPhone card check's Gaps list could push out the StarScope list. Saving the full list of about 1,200 shows, pictures included, filled Safari's storage. Card check then made room by dropping the year lists and the StarScope list, so every show read as "not in StarScope" until the list came back.
