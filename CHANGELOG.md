@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.130.1
+
+- Fix: the era page's Top rated row showed cards with no picture that couldn't be reached. The row took the five best-rated matches of the era from top_matches.json, but in the early eras most of them aren't on Stardom World (Genesis & the Idols: none of its 7; Threedom: the top 4 of 31), so they were drawn as cards with no picture and no link, and the All N matches tile sat off screen where focus couldn't reach it. The row now shows the five best-rated matches that have a logged video, then the All N matches tile, which still lists every match. An era with none on the site shows just the tile.
+- Includes 2.130.0.
+
 ## 2.130.0
 
 App-drawn only, phases 5 to 7 (your build): home, My Favorites, Recently Watched and the first two eras.
