@@ -446,28 +446,37 @@
     return s;
   }
   // The shows still to look at, newest first by the show's own date (else the date the site gives the upload).
+  // 2.127.0: dates with a logged show, and that show's name. A set on such a date is usually another upload of it
+  // (English Commentary, subtitled, an older copy): the StarScope list links those videos to the logged show, so the
+  // set itself isn't named in it. They go under their own chip with the logged show beside them, to check by eye.
+  function loggedDates() {
+    var o = {};
+    Object.keys(map).forEach(function(k) { var c = map[k]; if (c.d && !o[c.d]) o[c.d] = c.sh || ''; });
+    return o;
+  }
   function gapRows() {
     if (!gp) return [];
-    var L = loggedSets(), Y = yearOfList();
+    var L = loggedSets(), Y = yearOfList(), D = loggedDates();
     return gp.items.map(function(x, i) {
       var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, null) : null, d = (sl && sl.date) || '';
-      return { x: x, d: d, k: d || x.pd || '', i: i, logged: !!L[x.set], hid: !!gapHide[x.set], yr: Y[x.set] || '' };
+      var tw = D[d] != null ? D[d] : null;
+      return { x: x, d: d, k: d || x.pd || '', i: i, logged: !!L[x.set], hid: !!gapHide[x.set], yr: Y[x.set] || '', tw: tw };
     }).filter(function(o) { return !o.logged; }).sort(function(a, b) { return String(b.k).localeCompare(String(a.k)) || a.i - b.i; });
   }
   // 2.126.0: the list as text to paste to Claude: one show a line, tab-separated (set, date, where the date came
   // from, year list, hidden, name), Not in StarScope first, then Hidden.
   function gapText() {
-    var rows = gapRows(), L = [], miss = rows.filter(function(o) { return !o.hid; });
-    L.push('StarScope Gaps · read ' + gp.items.length + (gp.total ? ' of ' + gp.total : '') + (gp.done ? ' (whole list)' : '') + ' · ' + miss.length + ' not in StarScope · ' + (rows.length - miss.length) + ' hidden · ' + new Date().toISOString().slice(0, 10));
-    L.push('set\tdate\tdate_from\tyear_list\thidden\tname');
-    miss.concat(rows.filter(function(o) { return o.hid; })).forEach(function(o) {
-      L.push([o.x.set, o.d || o.x.pd || '', o.d ? 'show' : o.x.pd ? 'site' : '', o.yr || '-', o.hid ? 'hidden' : '', o.x.name].join('\t'));
+    var rows = gapRows(), L = [], miss = rows.filter(function(o) { return !o.hid && o.tw == null; }), twin = rows.filter(function(o) { return !o.hid && o.tw != null; });
+    L.push('StarScope Gaps · read ' + gp.items.length + (gp.total ? ' of ' + gp.total : '') + (gp.done ? ' (whole list)' : '') + ' · ' + miss.length + ' not in StarScope · ' + twin.length + ' same date as a logged show · ' + (rows.length - miss.length - twin.length) + ' hidden · ' + new Date().toISOString().slice(0, 10));
+    L.push('set\tdate\tdate_from\tyear_list\tstate\tname\tlogged_that_day');
+    miss.concat(twin, rows.filter(function(o) { return o.hid; })).forEach(function(o) {
+      L.push([o.x.set, o.d || o.x.pd || '', o.d ? 'show' : o.x.pd ? 'site' : '', o.yr || '-', o.hid ? 'hidden' : o.tw != null ? 'same-date' : 'missing', o.x.name, o.tw || ''].join('\t'));
     });
     return L.join('\n');
   }
   function gapsHtml() {
     gapOpen();
-    var rows = gapRows(), miss = rows.filter(function(o) { return !o.hid; }), hid = rows.filter(function(o) { return o.hid; });
+    var rows = gapRows(), miss = rows.filter(function(o) { return !o.hid && o.tw == null; }), twin = rows.filter(function(o) { return !o.hid && o.tw != null; }), hid = rows.filter(function(o) { return o.hid; });
     var h = '<div class="gl" style="margin:0 0 6px">Every show on the site against StarScope</div>' +
       '<div style="font-size:13px;color:#9AA6B4;margin-bottom:10px">Shows with nothing logged yet, including ones the year lists never offered. The site\'s whole list, 20 shows a request, 2 s apart.</div>';
     var read = gp.items.length, tot = gp.total;
@@ -479,18 +488,18 @@
     else h += '<button class="b" data-gapreset="1">Read the list again</button>';
     if (rows.length) h += '<button class="b" data-gapcopy="1">Copy list for Claude</button>';   // 2.126.0
     h += '</div>';
-    h += '<div class="chips sub">' + [['miss', 'Not in StarScope', miss.length], ['hid', 'Hidden', hid.length]].map(function(f) {
+    h += '<div class="chips sub">' + [['miss', 'Not in StarScope', miss.length], ['twin', 'Same date as a logged show', twin.length], ['hid', 'Hidden', hid.length]].map(function(f) {
       return '<button class="chip' + (S.gf === f[0] ? ' on' : '') + '" data-gf="' + f[0] + '">' + f[1] + ' <span class="cn">' + f[2] + '</span></button>'; }).join('') + '</div>';
-    var shown = S.gf === 'hid' ? hid : miss, last = null;
+    var shown = S.gf === 'hid' ? hid : S.gf === 'twin' ? twin : miss, last = null;
     shown.forEach(function(o) {
       var yr = o.k ? o.k.slice(0, 4) : 'Date unknown';
       if (yr !== last) { last = yr; var cnt = shown.filter(function(z) { return (z.k ? z.k.slice(0, 4) : 'Date unknown') === yr; }).length; h += '<div class="fg" style="margin:14px 0 8px">' + esc(yr) + ' · ' + cnt + '</div>'; }
       h += showTile(o.x.th || !gapTh[o.x.set] ? o.x : { set: o.x.set, name: o.x.name, th: gapTh[o.x.set], pd: o.x.pd }, 'gaps');
       h += '<div class="bt" style="margin:-4px 0 14px;align-items:center"><span style="flex:1;min-width:0;font-size:12px;color:#9AA6B4">' +
-        esc((o.yr ? 'In the ' + o.yr + ' list' : 'Not in a year list read on this phone') + (!o.d && o.x.pd ? ' · site date ' + o.x.pd : '') + ' · set ' + o.x.set) +
+        esc((o.tw != null ? 'Logged that day: ' + (showName(o.tw, o.d) || o.tw || 'a show') : o.yr ? 'In the ' + o.yr + ' list' : 'Not in a year list read on this phone') + (!o.d && o.x.pd ? ' · site date ' + o.x.pd : '') + ' · set ' + o.x.set) +
         '</span><button class="b" style="height:36px;font-size:13px" data-gaphide="' + esc(o.x.set) + '">' + (o.hid ? 'Unhide' : 'Hide') + '</button></div>';
     });
-    if (!shown.length) h += '<div class="ld">' + (S.gf === 'hid' ? 'Nothing hidden.' : gp.busy && !read ? 'Reading the site\'s list…' : read ? 'Every show read so far is in StarScope' + (gp.done ? '.' : '. Read the whole list to look further.') : '') + '</div>';
+    if (!shown.length) h += '<div class="ld">' + (S.gf === 'hid' ? 'Nothing hidden.' : S.gf === 'twin' ? 'None.' : gp.busy && !read ? 'Reading the site\'s list…' : read ? 'Every show read so far is in StarScope' + (gp.done ? '.' : '. Read the whole list to look further.') : '') + '</div>';
     return h;
   }
 
@@ -1654,7 +1663,7 @@
       list = items.map(function(x, i) { var sl = window.__tvVixSetOf ? window.__tvVixSetOf(+x.set, x.name, yy) : null; return { set: x.set, name: x.name, d: (sl && sl.date) || '', i: i }; })
         .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)) || a.i - b.i; });   // the same order as the list on screen
     }
-    else if (S.from === 'gaps') list = gapRows().filter(function(o) { return !o.hid; }).map(function(o) { return { set: o.x.set, name: o.x.name }; });   // 2.125.0
+    else if (S.from === 'gaps') list = gapRows().filter(function(o) { return !o.hid && (S.gf === 'twin' ? o.tw != null : o.tw == null); }).map(function(o) { return { set: o.x.set, name: o.x.name }; });   // 2.125.0
     else list = startedList().map(function(g) { return { set: g.set, name: g.name }; });
     var at = list.map(function(x) { return x.set; }).indexOf(S.set), rest = list.slice(at + 1).filter(function(x) { var st = tileState(x.set); return st !== 'logged' && !(yy && S.yf === 'none' && st === 'started') && !(yy && S.yf === 'started' && st === 'none'); });   // 2.113.0: the year filter too
     var nx = rest[0];
