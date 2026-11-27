@@ -1,15 +1,17 @@
 {
- "generated": "2026-11-26T06:32:48Z",
+ "generated": "2026-11-27T06:32:44Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-26T06:29:03Z",
-  "finished": "2026-11-26T06:32:48Z",
-  "requests": 36,
+  "started": "2026-11-27T06:29:11Z",
+  "finished": "2026-11-27T06:32:44Z",
+  "requests": 38,
   "schedule": {
    "ok": true,
-   "events": 44,
+   "events": 47,
    "changed": [
-    "20261128-okazaki"
+    "20261205-roh",
+    "20261206-aew",
+    "20261207-judo"
    ],
    "error": ""
   },
@@ -19,37 +21,37 @@
     "world": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "wonder": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "future": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "artist": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "goddess": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "highspeed": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "newblood": {
      "read": false,
      "changed": false,
-     "note": "Skipped: No show since last run (2026-11-25T06:32:25Z)"
+     "note": "Skipped: Champion not in any title bout since last run"
     },
     "kawaii": {
      "read": false,
@@ -71,6 +73,12 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
+    "schedule: new event 20261205-roh takes its Japanese title (no English title available): 【海外遠征】ROH Final Battle",
+    "schedule: new event 20261205-roh takes its Japanese venue string: Boeing Center at Tech Port",
+    "schedule: new event 20261206-aew takes its Japanese title (no English title available): 【海外遠征】AEW Collision",
+    "schedule: new event 20261206-aew takes its Japanese venue string: Boeing Center at Tech Port",
+    "schedule: new event 20261207-judo takes its Japanese venue string: 川崎・POST DI AMISTAD",
+    "schedule: new event 20261207-judo title translated from Japanese: [Participation from another organization] プロレスリング柔道",
     "schedule: unknown match type kept in Japanese: ＜参戦選手＞ リーグ戦出場全選手、朱里、壮麗亜美、浜辺纏、姫ゆりあ、ビー・プレストリー",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
@@ -86,7 +94,7 @@
   "errors": []
  },
  "schedule": {
-  "updated": "2026-11-26T06:30:37Z",
+  "updated": "2026-11-27T06:31:06Z",
   "note": "Times are Japan time (+09:00). own = a Stardom show.",
   "posters": {
    "202611": "https://wwr-stardom.com/wp/wp-content/uploads/2026/09/pos_fix-1.jpg",
@@ -132,7 +140,10 @@
    "20261117-cmll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261117_JST_CMLL_LuchaKingdom_%E7%8F%BE%E5%9C%B01116.jpg",
    "20261204-ryukyu": "https://wwr-stardom.com/wp/wp-content/uploads/2026/10/1204poi_anne.jpg",
    "20261126-lll": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261126_JST_LLL_%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC_%E7%8F%BE%E5%9C%B01125.jpg",
-   "20261203-battleclubpro": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261203_JST_BCP_%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC_%E7%8F%BE%E5%9C%B01202.jpg"
+   "20261203-battleclubpro": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261203_JST_BCP_%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC_%E7%8F%BE%E5%9C%B01202.jpg",
+   "20261205-roh": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261205_ROH_%E5%A4%A7%E4%BC%9A%E3%83%9D%E3%82%B9%E3%82%BF%E3%83%BC.jpg",
+   "20261206-aew": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261206_AEW_Collision_AZM_%E5%A5%B3%E5%AD%90%E4%B8%96%E7%95%8C%E7%8E%8B%E5%BA%A7%E6%88%A6_%E5%85%AC%E5%BC%8F%E5%AF%BE%E6%88%A6%E3%82%AB%E3%83%BC%E3%83%89.jpg",
+   "20261207-judo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261207_%E6%9F%94%E9%81%93_%E6%B5%9C%E8%BE%BA%E5%AF%BE%E7%AC%B9%E6%9D%91.jpeg"
   },
   "ppv_seen": {},
   "events": [
@@ -1646,6 +1657,16 @@
     "venue": "アクリエひめじ 展示場A"
    },
    {
+    "id": "20261205-roh",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261205_roh/",
+    "poster": "20261205-roh",
+    "title": "【海外遠征】ROH Final Battle",
+    "short": "【海外遠征】ROH Final Battle",
+    "start": "2026-12-05T18:00:00+09:00",
+    "venue": "Boeing Center at Tech Port"
+   },
+   {
     "id": "20261206-kobe",
     "own": true,
     "url": "https://wwr-stardom.com/schedule/20261206_kobe/",
@@ -1656,6 +1677,26 @@
     "fc": "2026-12-06T12:00:00+09:00",
     "doors": "2026-12-06T12:15:00+09:00",
     "venue": "神戸サンボーホール 2F大展示場"
+   },
+   {
+    "id": "20261206-aew",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261206_aew/",
+    "poster": "20261206-aew",
+    "title": "【海外遠征】AEW Collision",
+    "short": "【海外遠征】AEW Collision",
+    "start": "2026-12-06T18:00:00+09:00",
+    "venue": "Boeing Center at Tech Port"
+   },
+   {
+    "id": "20261207-judo",
+    "own": false,
+    "url": "https://wwr-stardom.com/schedule/20261207_judo/",
+    "poster": "20261207-judo",
+    "title": "[Participation from another organization] プロレスリング柔道",
+    "short": "[Participation from another organization] プロレスリング柔道",
+    "start": "2026-12-07T19:30:00+09:00",
+    "venue": "川崎・POST DI AMISTAD"
    },
    {
     "id": "20261210-korakuen",
