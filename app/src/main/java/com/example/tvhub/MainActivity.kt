@@ -6114,7 +6114,10 @@ class MainActivity : Activity() {
           }
           // private builds: q[type]=single leaves out sets (whole shows) from the searches the menu opens
           function singleOnly() { try { return AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : ''; } catch (e) { return ''; } }
+          // 2.128.0: your build lists a match type from the index (every match is logged): /mypage?tvscope=mt.
+          function scopeMenus() { try { return !!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }
           function matchTypePath(x) {
+            if (scopeMenus() && x.id) return '/mypage?tvscope=mt&a=' + encodeURIComponent(x.id) + '&n=' + encodeURIComponent(isJa() && x.ja ? x.ja : x.name);
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id) + singleOnly();
           }
           function matchTypeRows() {
@@ -6134,8 +6137,11 @@ class MainActivity : Activity() {
             if (!(id in LN_HAS)) { try { LN_HAS[id] = !!AndroidHost.lineageJson(id); } catch (e) { LN_HAS[id] = false; } }
             return LN_HAS[id];
           }
+          // 2.128.0: in your build a title with no lineage page lists its matches from the index by its title tag.
+          var CHAMP_TAG = { any: '*any', other: '*other', cmll: 'cmll-japan', pop: 'pop', regina: 'regina', roh: 'roh-women', sendai: 'sendai-world', swa: 'swa-world' };
           function champPath(x) {
             if (x.id && x.id !== 'any' && x.id !== 'other' && hasLineage(x.id)) return '/mypage?tvch=' + encodeURIComponent(x.id);
+            if (x.id && CHAMP_TAG[x.id] && scopeMenus()) return '/mypage?tvscope=ti&a=' + encodeURIComponent(CHAMP_TAG[x.id]) + '&n=' + encodeURIComponent(isJa() && x.ja ? x.ja : x.name);
             if (x.path) return x.path;
             if (x.category && singleOnly()) return '/contents/search?q%5Bkeyword%5D=&q%5Bcategory_id%5D=' + encodeURIComponent(x.category) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvch=' + encodeURIComponent(x.id) + singleOnly();

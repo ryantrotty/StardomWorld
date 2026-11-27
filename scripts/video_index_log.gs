@@ -1018,7 +1018,9 @@ function viCards(b) {
       // matches from the index (Tag League, 5★STAR GP, Cinderella, title tabs and title histories).
       cv: t.competition ? String(t.competition[0]) : '', bk: t.block ? String(t.block[0]) : '', tv: (t.title || []).map(String),
       // 2.118.0: complete-career wrestler pages: each wrestler's faction (same order as the sides) and the moments.
-      mo: (t.moment || []).map(String), fa: facSides(p)
+      mo: (t.moment || []).map(String), fa: facSides(p),
+      // 2.128.0: every special rule as logged (st above leaves some out), for the Matches menu's types from the index.
+      sp: (t.stipulation || []).map(String)
     };
     var sv = seen[String(v.video_id)] || {};
     var mu = multi(en, t.stipulation);

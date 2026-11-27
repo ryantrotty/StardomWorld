@@ -232,6 +232,8 @@ One match card everywhere (2.126.0, private builds, assets/sitecards.js): the St
 
 Pair and rivalry results page (2.127.0): the `/mypage?tvscope=t|v|f` heading uses the page title's 10 x 36 gold bar instead of the telescope. Faction pages in private builds are drawn on the app's empty page (no site search underneath); no look changes.
 
+Match type and title lists (2.128.0, private builds): `/mypage?tvscope=mt|ti&a=…&n=…` reuse the pair results page (gold title bar, four-across StarScope cards, look C focus), with the menu entry's name and the match count as the heading; 48 cards are drawn at a time. No new looks.
+
 StarScope filter (2.56.0, private builds): icon-only telescope at the end of the wrestler and tag team quick filter rows, in that row's chip style, shown only when there are results. Results page `/mypage?tvscope=w|t`: navy, 30/900 heading with the telescope, four-across StarScope cards, look C focus, newest first.
 
 Player controls (2.59.0): every control-bar button (under the picture, full screen and PPV) is an icon with no box or outline: white, #F4C242 when focused, #5A6472 when not available. Icons are drawn from one set (assets/baricons.js for the page bars, BarIconDrawable for the full screen bar), 28 px in a 44 px button; numbers sit inside the skip arrows and settings show as a small badge at the top right. Order: Previous, Back, Play, Forward, Next, then a 14 px gap and the settings. Previous and Next stay in place and grey out instead of hiding; PPV has neither. Exception to look B Fill: the bar's progress fill stays #FFB347.

@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.128.0
+
+App-drawn only, phase 3 (your build): Championships and match types from the index.
+- Matches menu: every match type (Single match, Tag team, the 3-, 4-, 5- and 6-Ways, 6- to 14-person, Battle royal, Cage, Gauntlet, High Speed, Ladder, Rumble, Handicap, Championship, 5★STAR GP, Cinderella, Tag League) opens a list of StarScope cards from the index instead of a site search. Types come from the number of sides and wrestlers, the logged special rules and the tournament tags. Newest first, 48 cards at a time (the next 48 load as focus reaches the last rows).
+- Championships menu: titles with a lineage page keep it (their title matches already come from the index). Any championship match, Other title matches, CMLL Japan, POP, Regina di WAVE, ROH, Sendai Girls and SWA now open their title matches from the index by title tag. AEW and RPW have no tagged title matches yet, so they keep the site search.
+- The results page heading uses the menu entry's own name, with the match count.
+- Sheet script: each card now carries all of its logged special rules (`sp`), so Battle royal, Gauntlet, Rumble and Handicap are found exactly. Until the script is redeployed those types fall back to the card's event line.
+- Includes 2.127.0, 2.126.0 and 2.125.0.
+
 ## 2.127.0
 
 App-drawn only, phase 2 (your build): wrestlers, tag teams and factions from the index.

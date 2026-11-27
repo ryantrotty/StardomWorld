@@ -243,13 +243,54 @@
     });
     return out;
   }
+  // 2.128.0: the Matches menu's types worked out from the index: side counts, the special rules and the tournaments.
+  function stips(v) { var X = v.x || {}; return (X.sp || X.st || []).map(String); }
+  function isType(v, id) {
+    var p = v.p || [], n = p.length, sz = p.map(function(s) { return s.length; }), even = function(k) { return sz.every(function(x) { return x === k; }); };
+    var sp = stips(v), lab = String(v.e || '') + ' ' + String(v.ej || '');
+    function rule(k, re) { return sp.indexOf(k) >= 0 || re.test(lab); }
+    switch (id) {
+      case 'single': return n === 2 && even(1) && !rule('royal', /battle\s*royal|バトルロイヤル/i);
+      case 'tag': return n === 2 && even(2);
+      case 'way3': return n === 3 && even(1); case 'way3tag': return n === 3 && even(2); case 'way3trio': return n === 3 && even(3);
+      case 'way4': return n === 4 && even(1); case 'way4tag': return n === 4 && even(2); case 'way4trio': return n === 4 && even(3);
+      case 'way5': return n === 5; case 'way6': return n === 6;
+      case 'six': return n === 2 && even(3); case 'eight': return n === 2 && even(4); case 'ten': return n === 2 && even(5);
+      case 'twelve': return n === 2 && even(6); case 'fourteen': return n === 2 && even(7);
+      case 'royal': return rule('royal', /battle\s*royal|バトルロイヤル/i);
+      case 'cage': return rule('cage', /cage|ケージ/i);
+      case 'gauntlet': return rule('gauntlet', /gauntlet|ガントレット/i);
+      case 'highspeed': return rule('highspeed', /high[\s-]*speed|ハイスピード/i) || isTitle(v, 'highspeed');
+      case 'ladder': return rule('ladder', /ladder|ラダー/i);
+      case 'rumble': return rule('rumble', /rumble|ランブル/i);
+      case 'handicap': return rule('handicap', /handicap|ハンディキャップ|ハンデ/i) || (n === 2 && sz[0] !== sz[1]);
+      case 'champ': return isTitle(v);
+      case 'stargp': return inComp(v, 'stargp');
+      case 'cinderella': return inComp(v, 'cinderella');
+      case 'tagleague': return inComp(v, 'tagleague');
+    }
+    return false;
+  }
   function results(kind, a, b) {
     if (!map) return [];
     if (kind === 'v' || kind === 'f') return pairList(kind, a, b, (Q && Q.get('from')) || '', (Q && Q.get('to')) || '');
     if (kind === 'ti') {   // 2.121.0: every logged match for title a (a lineage id), one per match, newest first
+      // 2.128.0: also a title tag id (swa-world, roh-women…), '*any' (every title match) and '*other' (titles that
+      // aren't Stardom's own belts), for the Championships menu entries with no lineage page.
+      var OWN = ['artist', 'future', 'goddess', 'highspeed', 'kawaii', 'newblood', 'wonder', 'world'];
       var tl = [];
-      Object.keys(map).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && (v.x.tv || []).indexOf(a) >= 0) tl.push({ id: id, v: v }); });
+      Object.keys(map).forEach(function(id) {
+        var v = map[id], tv = (v && v.x && v.x.tv) || [];
+        if (!v || !v.x || v.x.k === 'segment') return;
+        var hit = a === '*any' ? tv.length > 0 : a === '*other' ? tv.some(function(t) { return OWN.indexOf(t) < 0; }) : tv.indexOf(a) >= 0;
+        if (hit) tl.push({ id: id, v: v });
+      });
       return oneEach(tl).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
+    }
+    if (kind === 'mt') {   // 2.128.0: a match type from the Matches menu (match_types.json id), from the index
+      var ml = [];
+      Object.keys(map).forEach(function(id) { var v = map[id]; if (v && v.x && v.x.k !== 'segment' && isType(v, a)) ml.push({ id: id, v: v }); });
+      return oneEach(ml).sort(function(x, y) { return String(y.v.d).localeCompare(String(x.v.d)); });
     }
     var out = [];
     Object.keys(map).forEach(function(id) {
@@ -320,15 +361,26 @@
     if (scopeKind === 'v') head = a + ' vs ' + b;
     if (scopeKind === 'f') { var fa = facMembers(a), fb = facMembers(b); head = (fa ? fa.name : a) + ' vs ' + (fb ? fb.name : b); }
     if (scopeKind === 'ti') { var tln = null; try { tln = JSON.parse(H.lineageJson(a)); } catch (e) { tln = null; } head = tln ? String((ja && tln.ja) || tln.title).replace(/ Championship$/, '') : a; }
-    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
+    if (Q.get('n')) head = Q.get('n');   // 2.128.0: the menu entry's own name (titles with no lineage file, match types)
+    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti' || scopeKind === 'mt') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
     h += '<div class="hd"><span style="display:block;flex:none;width:10px;height:36px;background:#F4C242"></span>' + esc(head) + '</div><div class="gr">';   // 2.127.0: the page title's gold bar, no telescope
-    list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
+    // 2.128.0: a long list (a match type has thousands) is drawn 48 cards at a time; the next 48 come when focus
+    // reaches the last two rows.
+    function cardHtml(x) { return '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; }
+    var shown = Math.min(48, list.length);
+    list.slice(0, shown).forEach(function(x) { h += cardHtml(x); });
     d.innerHTML = h + '</div>';
     document.body.appendChild(d);
-    d.addEventListener('focusin', function() { rowPictures(d, 'a.c'); });
+    var grid = d.querySelector('.gr');
+    function more() { if (shown >= list.length) return; var nx = list.slice(shown, shown + 48); shown += nx.length; grid.insertAdjacentHTML('beforeend', nx.map(cardHtml).join('')); }
+    d.addEventListener('focusin', function(e) {
+      var cs = grid.querySelectorAll('a.c'), at = Array.prototype.indexOf.call(cs, e.target);
+      if (at >= 0 && at >= cs.length - 8) more();
+      rowPictures(d, 'a.c');
+    });
     var first = d.querySelector('a.c'); if (first) first.focus();
     rowPictures(d, 'a.c');
     window.addEventListener('keydown', function(e) {
