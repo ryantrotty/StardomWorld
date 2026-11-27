@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.127.1
+
+- Fix: tapping the iPhone card check bookmark reopened the copy already loaded on the page, so a new version only arrived after reloading the page. A newer copy now replaces the open one. The same copy still just reopens.
+  - From the next tap of the bookmark on, the newest card check is always loaded.
+  - Published to GitHub Pages (cc.js).
+
 ## 2.127.0
 
 - iPhone card check, Gaps: a new **Same date as a logged show** chip. Some sets fall on the same day as a show already in StarScope. These are usually another upload of it: an English Commentary set, a subtitled copy or an older upload. Their videos are linked to the logged show, so the set itself never appears in the StarScope list, and they used to fill **Not in StarScope** (the Oct 11 2026 English Korakuen set opened as all logged).

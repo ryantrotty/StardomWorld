@@ -6,7 +6,14 @@
   // The TV's own scripts do the work underneath: videoindex.js (match page reader), indexpanel.js (library, name and
   // venue matching, faction pre-fill, and the save itself), shownames.js and setorder.js, with a small stand-in for the
   // TV app's bridge (AndroidHost). docs/CARDCHECK_PHONE.md has the setup.
-  if (window.__ccPhone) { window.__ccPhone.open(); return; }
+  // 2.127.1: a newer copy of this file replaces the one already open (the bookmark used to reopen the old copy until
+  // the page was reloaded). The same copy just opens again.
+  var CODE = '2.127.1';
+  if (window.__ccPhone) {
+    if (window.__ccPhone.code === CODE) { window.__ccPhone.open(); return; }
+    try { window.__ccPhone.retire(); } catch (e) {}
+    var oldRoot = document.getElementById('ccp'); if (oldRoot) oldRoot.remove();   // copies before 2.127.1 have no retire()
+  }
   if (!/(^|\.)stardom-world\.com$/.test(location.hostname)) { alert('Open www.stardom-world.com in Safari first, then tap the bookmark.'); return; }
   var me = document.currentScript && document.currentScript.src || '';
   var BASE = me ? me.replace(/[^\/]*$/, '') : 'https://ryantrotty.github.io/StardomWorld/cardcheck/';
@@ -1817,7 +1824,8 @@
 
   // ---- drawing
   var drawT = 0;
-  function draw() { if (drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
+  var retired = false;
+  function draw() { if (retired || drawT) return; drawT = setTimeout(function() { drawT = 0; paint(); }, 30); }
   function paint() {
     var ae = document.activeElement;
     if (ae && (ae.id === 'ccp-vin' || ae.id === 'ccp-fin' || ae.id === 'ccp-sin' || ae.id === 'ccp-min' || ae.id === 'ccp-ai' || ae.id === 'ccp-bvt' || (ae.classList && ae.classList.contains('bvin')))) return;   // typing: the lists under the box update by themselves
@@ -2045,7 +2053,7 @@
       else draw();
     }).catch(function(e) { note('Couldn\'t start: ' + (e && e.message || e), true); });
   }
-  window.__ccPhone = { open: function() { root.style.display = 'block'; document.documentElement.style.overflow = 'hidden'; draw(); if (cards && cfg) cards(); } };
+  window.__ccPhone = { code: CODE, retire: function() { retired = true; root.remove(); st.remove(); }, open: function() { root.style.display = 'block'; document.documentElement.style.overflow = 'hidden'; draw(); if (cards && cfg) cards(); } };
   document.body.appendChild(root);
   document.documentElement.style.overflow = 'hidden';
   if (cfg) start(); else draw();

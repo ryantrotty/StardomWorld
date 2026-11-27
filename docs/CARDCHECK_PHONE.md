@@ -63,3 +63,4 @@ The **Gaps** tab (after Started) checks the site's whole list of shows against S
 - **Next show** from a show opened here goes to the next one on the Gaps list that isn't hidden.
 - **Copy list for Claude** (2.126.0) copies the list as tab-separated text: set, date, date_from, year_list, hidden, name.
 - **Same date as a logged show** (2.127.0): sets whose date has a logged show, usually English or older uploads whose videos are linked to that show. Kept apart from Not in StarScope, with the logged show's name beside each.
+- **Updates** (2.127.1): tapping the bookmark loads the newest `cc.js` and replaces an older copy already open on the page (`CODE` in cc.js, compared on each tap).
