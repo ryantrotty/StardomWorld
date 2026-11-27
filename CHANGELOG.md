@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.130.0
+
+App-drawn only, phases 5 to 7 (your build): home, My Favorites, Recently Watched and the first two eras.
+- Home, Recently Watched page, My Favorites: the video cards on the Recently Watched page (`tvrecent`) and in My Favorites (watch later, favourite matches and videos, playlists) are now StarScope cards too, like the home rows (2.126.0).
+- Fix (2.126.0): on the home and related rows the new card text sat against the card's edges (the card's own title box padding was turned off along with its line limit). Each card's own title box now stays in place, hidden, with the StarScope block drawn after it at the StarScope card's padding. Other scripts that read a card's title (favourites, Watch Later, set order) read the original title as before.
+- Eras: Genesis & the Idols and Threedom & the Rebuild get StarScope versions (eras.json `scope`, picks drafted by Claude for Ryan to approve).
+  - Genesis & the Idols (2011 to Mar 2015): reigns Nanae Takahashi (World 1), Yuzuki Aikawa (Wonder 1), Natsuki Taiyo (High Speed 5), Yuzuki Aikawa & Yoko Bito (Goddess 1). Rivalries Takahashi vs Aikawa, Shirai vs Taiyo, Yoshiko vs Yasukawa, Shirai vs Takahashi. Must-see shows: the first show (Jan 23 2011), The Highest 2013 and Yearend Stars 2011. No faction picks (the era's units aren't in factions.json), so it keeps its own faction tiles.
+  - Threedom & the Rebuild (Apr 2015 to Mar 2018): reigns Io Shirai (World 7), Kairi Hojo (Wonder 8), Mayu Iwatani (High Speed 12), Io Shirai & Mayu Iwatani (Goddess 8). Rivalries Shirai vs Iwatani, Shirai vs Hojo, Shirai vs Storm, Queen's Quest vs Oedo Tai. Must-see shows: Galaxy Stars 2017, 5★STAR GP 2017 in Nagoya and the 5★STAR GP 2016 final. Factions Queen's Quest, Oedo Tai, STARS.
+- The Eras page is drawn on the app's empty page in your build (no site search underneath).
+- Data, outside the app: ROH Bound By Honor 2019 Night 2's Women of Honor title match (Mayu Iwatani) is tagged ROH Women's World, so ROH lists 2 matches.
+- Includes 2.129.0 back to 2.125.0.
+
 ## 2.129.0
 
 App-drawn only, phase 4 (your build): Shows from StarScope show cards.

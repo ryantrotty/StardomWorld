@@ -14,12 +14,11 @@
   function map() { try { return window.__tvScopeMap ? window.__tvScopeMap() : null; } catch (e) { return null; } }
   var st = document.createElement('style');
   st.textContent = [
-    // the site's own title box, emptied and given the StarScope card's padding
-    '.tv-sc1 .content-info-box{display:block !important;-webkit-line-clamp:unset !important;min-height:0 !important;max-height:none !important;padding:0 !important;overflow:visible !important;}',
-    '.tv-sc1 .content-info-box > *:not(.tvsc-host){display:none !important;}',
-    '.tv-sc1 .tvsc-host{pointer-events:none;}',
-    // the app's own card title (home and related rows), the same
-    '.tv-sc1 > .tv-sc1t{display:block !important;-webkit-line-clamp:unset !important;min-height:0 !important;max-height:none !important;padding:0 !important;overflow:visible !important;}',
+    // the card's own title box stays in place (other scripts read its text) but hidden; the StarScope block is drawn
+    // next to it with the StarScope card's padding
+    '.tv-sc1 .content-info-box{display:none !important;}',
+    '.tv-sc1 > .tv-sc1o{display:none !important;}',
+    '.tv-sc1 .tv-sch{pointer-events:none;}',
     // a site title in the names style
     '.tvsc.tvsc-site .nm{font-size:16px;line-height:1.26;}'
   ].join('');
@@ -59,18 +58,22 @@
       if (!box || !link) return;
       var t = art.querySelector('h3, .ttl-xs'), b = body(link.getAttribute('href') || link.href, t ? t.textContent : box.textContent);
       art.classList.add('tv-sc1');
-      box.insertAdjacentHTML('beforeend', '<div class="tvsc-host notranslate" translate="no">' + b.html + '</div>');
+      box.insertAdjacentHTML('afterend', '<div class="tvsc-host tv-sch notranslate" translate="no">' + b.html + '</div>');
       enBox(art.querySelector('.content-thumbnail-box-inner, .content-thumbnail-box'), b.v);
     });
-    // the app's own cards: a.tv-card with a picture and a title box (home rows, the related row)
-    Array.prototype.forEach.call(document.querySelectorAll('a.tv-card'), function(a) {
-      if (a.classList.contains('tv-sc1') || skip(a) || a.children.length !== 2) return;
+    // the app's own cards: a picture and a title box. a.tv-card (home rows, the related row), a.tv-rc (Recently
+    // Watched page), a.tv-fp-t (My Favorites, 2.130.0)
+    Array.prototype.forEach.call(document.querySelectorAll('a.tv-card, a.tv-rc, a.tv-fp-t'), function(a) {
+      if (a.classList.contains('tv-sc1') || skip(a)) return;
       var href = a.getAttribute('href') || '';
       if (!/\/(contents\/\d+|set\/\d+)/.test(href)) return;
-      var tb = a.lastElementChild, t0 = tb.getAttribute('data-t') || tb.textContent, b = body(href, t0);
+      var tb = a.classList.contains('tv-card') ? (a.children.length === 2 ? a.lastElementChild : null) : a.querySelector(':scope > .tv-rc-t, :scope > .tv-fp-tt');
+      if (!tb) return;
+      var b = body(href, tb.textContent), old = a.querySelector(':scope > .tv-sch');
+      if (old) old.remove();
       a.classList.add('tv-sc1', 'notranslate'); a.classList.remove('tv-scr'); a.setAttribute('translate', 'no');
-      tb.classList.add('tv-sc1t', 'tvsc-host'); tb.setAttribute('data-t', t0);
-      tb.innerHTML = b.html;
+      tb.classList.add('tv-sc1o');
+      tb.insertAdjacentHTML('afterend', '<div class="tvsc-host tv-sch">' + b.html + '</div>');
       enBox(a.firstElementChild, b.v);
     });
   }
@@ -83,7 +86,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tv-sc1'), function(el) {
       if (!el.querySelector('.tvsc-site')) return;
       el.classList.remove('tv-sc1'); el.classList.add('tv-scr');
-      var h = el.querySelector('.content-info-box > .tvsc-host'); if (h) h.remove();
+      var h = el.querySelector('.tv-sch'); if (h) h.remove();
     });
     soon();
   });

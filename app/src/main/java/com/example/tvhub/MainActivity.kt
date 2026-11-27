@@ -2619,11 +2619,11 @@ class MainActivity : Activity() {
         if (!SHELL_ON || url == null || !isSiteHost(url)) return false
         val u = try { android.net.Uri.parse(url) } catch (_: Exception) { return false }
         // 2.127.0: a faction page in your build (every unit match is in the index) is drawn on the empty page too,
-        // not on top of a site search the page never uses.
+        // not on top of a site search the page never uses. 2.130.0: the Eras page (all of it comes from eras.json).
         if (u.path == "/contents/search") {
             val q0 = u.encodedQuery ?: return false
             val sheet0 = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
-            return sheet0 && Regex("(^|&)tvfaction=").containsMatchIn(q0)
+            return sheet0 && Regex("(^|&)tv(faction|era)=").containsMatchIn(q0)   // 2.130.0: the Eras page too
         }
         if (u.path != "/mypage") return false
         val q = u.encodedQuery ?: return false
@@ -8347,7 +8347,7 @@ class MainActivity : Activity() {
       var wd = widen(s.search, s.year, s.dead, 'show'), semp = wd.step === 2, shref = wd.url;
       return '<a class="tv-tile tv-show" tabindex="0" href="' + esc(shref) + '"><div><div style="font-size:17px;font-weight:700">' + esc(s.name) + '</div><div class="b" style="font-size:12px;font-weight:600;color:#9AA6B4;margin-top:2px">' + esc(s.sub || '') + (semp ? ' · ' + esc(T('year page', '年別ページ')) : (wd.step === 1 ? ' · ' + esc(T('all years', '全年')) : '')) + '</div></div><div class="w">' + esc(s.when || '') + '</div></a>';
     }).join('');
-    if (NS) fc = N.factions(e, SC);
+    if (NS) { var fcN = N.factions(e, SC); if (fcN) fc = fcN; }   // 2.130.0: an era with no faction picks keeps its own tiles
     if (SC) h += '<div class="tv-cols"><div class="tv-col" style="flex:2 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div></div>' + N.picks(e) + '<div class="tv-sec">' + N.stats(e) + '</div>';   // 2.110.0: the era in numbers at the very bottom
     else h += '<div class="tv-cols"><div class="tv-col" style="flex:1.45 1 0">' + left + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Impactful factions', '主なユニット'), '', fc) + '</div><div class="tv-col" style="flex:1 1 0">' + sec(T('Must-see shows', '必見の大会'), '', sh) + '</div></div>';
     scroller.innerHTML = h;
