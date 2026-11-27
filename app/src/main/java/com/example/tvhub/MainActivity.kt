@@ -2618,6 +2618,13 @@ class MainActivity : Activity() {
     private fun isShellUrl(url: String?): Boolean {
         if (!SHELL_ON || url == null || !isSiteHost(url)) return false
         val u = try { android.net.Uri.parse(url) } catch (_: Exception) { return false }
+        // 2.127.0: a faction page in your build (every unit match is in the index) is drawn on the empty page too,
+        // not on top of a site search the page never uses.
+        if (u.path == "/contents/search") {
+            val q0 = u.encodedQuery ?: return false
+            val sheet0 = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
+            return sheet0 && Regex("(^|&)tvfaction=").containsMatchIn(q0)
+        }
         if (u.path != "/mypage") return false
         val q = u.encodedQuery ?: return false
         if (Regex("(^|&)tv(b|real)=").containsMatchIn(q)) return false

@@ -324,7 +324,7 @@
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
-    h += '<div class="hd">' + TEL + esc(head) + '</div><div class="gr">';
+    h += '<div class="hd"><span style="display:block;flex:none;width:10px;height:36px;background:#F4C242"></span>' + esc(head) + '</div><div class="gr">';   // 2.127.0: the page title's gold bar, no telescope
     list.forEach(function(x) { h += '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; });
     d.innerHTML = h + '</div>';
     document.body.appendChild(d);

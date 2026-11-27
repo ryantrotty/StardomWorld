@@ -1042,6 +1042,9 @@
       Object.keys(deb).forEach(function(k) { low[k.toLowerCase()] = String(deb[k] || ''); });
       t.members.forEach(function(m) { ds.push(low[String(m).toLowerCase()] || low[String(searchName(m)).toLowerCase()] || ''); });
     } catch (e) { return null; }
+    // 2.127.0: every year is logged, so a partner with no debut date on file counts from the first complete day.
+    var fr0 = ''; try { fr0 = S.from ? S.from() : ''; } catch (e) { fr0 = ''; }
+    ds = ds.map(function(d) { return d || fr0; });
     if (ds.some(function(d) { return !d; })) return null;
     ds.sort();
     var P = S.plan(ds[0]);

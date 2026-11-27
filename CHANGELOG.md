@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.127.0
+
+App-drawn only, phase 2 (your build): wrestlers, tag teams and factions from the index.
+- Wrestlers: every wrestler with logged matches gets the full career page (from 2.125.0, now that 2011 to 2016 are complete years): StarScope cards by year, counts on the tabs, partners, rivals and factions, spoilers included. No site search on these pages except shows newer than the last logged one.
+- Tag teams: a team whose partner has no debut date on file now counts from the first complete day, so every two-member team gets the complete team history (every straight 2 v 2 match together) instead of site searches.
+- Factions: the faction page is drawn on the app's empty page instead of on top of a site search, since its unit matches all come from the index (every faction now falls in the complete years). Public builds keep the site page.
+- The pair and rivalry results page (from the era and faction pages' top pairs) has the page title's gold bar instead of the telescope.
+- Includes 2.126.0 and 2.125.0.
+
 ## 2.126.0
 
 App-drawn only, phase 1 (your build): one match card, and no StarScope branding outside StarScope's own pages and the player.
