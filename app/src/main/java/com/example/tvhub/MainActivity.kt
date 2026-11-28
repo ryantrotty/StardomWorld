@@ -6733,7 +6733,11 @@ class MainActivity : Activity() {
               searchOrigin = { parent: f.parentNode, next: f.nextSibling, form: f };
               host.appendChild(f);
             } else {
-              host.innerHTML = '<input id="tv-sm-q" type="text" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '">';
+              // 3.0.1: app-drawn pages have no site form to borrow, so the box gets its own form. Enter or the
+              // keyboard's Go key submits it, and submitSearch() opens the site's search for what was typed.
+              host.innerHTML = '<form id="tv-sm-qf" action="/contents/search" method="get"><input id="tv-sm-q" name="q[keyword]" type="text" enterkeyhint="search" autocomplete="off" placeholder="' + esc(T('Search videos or wrestlers', '動画・選手を検索')) + '"></form>';
+              var qf = host.querySelector('#tv-sm-qf');
+              if (qf) qf.addEventListener('submit', function(e) { e.preventDefault(); submitSearch(); });
             }
           }
           function unmountSearch() {
@@ -6838,10 +6842,13 @@ class MainActivity : Activity() {
             window.location.href = /^https?:/.test(rel) ? rel : (BASE + rel);
           }
 
+          var searchSent = 0;
           function submitSearch() {
             var q = searchInput();
             var v = q ? q.value.trim() : '';
             if (!v) return false;
+            if (Date.now() - searchSent < 1500) return true;   // Enter and the form's submit can both arrive
+            searchSent = Date.now();
             closeMenu();
             window.location.href = BASE + '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(v);
             return true;
@@ -7498,6 +7505,8 @@ class MainActivity : Activity() {
             }
             if (k === 27) { stop(e); closeMenu(); return; }
             if (k === 13 || k === 23 || k === 32 && !inInput) {
+              // the app's own box (app-drawn pages): Enter searches here
+              if (inInput && ae.id === 'tv-sm-q' && k === 13) { stop(e); submitSearch(); return; }
               if (inInput) return;   // the site's own search box: OK opens the keyboard, Enter searches, as it always did
               if (ae && panel && panel.contains(ae)) { stop(e); activate(ae); }
             }

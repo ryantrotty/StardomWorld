@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 3.0.1
+
+- **Fix: searching from the menu did nothing on app-drawn pages** (Tag League, wrestler, team, faction, title, Eras and the other pages the app draws itself). Those pages have no site search form for the menu to borrow, so the menu's own box was used, and nothing listened for Enter on it. The box now sits in its own small form: Enter or the keyboard's Go key opens the site's search for what was typed. On site pages the site's own box works as before.
+
 ## 3.0.0
 
 Major release 3.0: every match catalogued with rich match cards, complete wrestler & team histories, real show line-ups and filters that show match counts.
