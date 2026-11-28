@@ -261,7 +261,8 @@
       var meta = document.createElement('span');
       meta.className = 'tv-sc-meta notranslate';
       meta.setAttribute('translate', 'no');
-      meta.innerHTML = TEL + esc(ja ? '全' + total + '試合 · 大会の順番 · ' + logged.length + '試合登録済み' : total + ' matches · show order · ' + logged.length + ' logged');
+      // 2.131.1: no telescope and no "logged" count (StarScope branding stays off regular pages)
+      meta.textContent = ja ? '全' + total + '試合 · 大会の順番' : total + ' matches · show order';
       h2.appendChild(meta);
       if (!barEl) h2.insertBefore(document.createElement('span'), h2.firstChild);
     }

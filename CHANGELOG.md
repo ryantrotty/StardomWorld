@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.131.1
+
+- Fix: the video page's card row heading still had a telescope and a "7 logged" count. It now reads "7 matches · show order".
+- Menu: the entries fill the menu's height again (spare height shared evenly between them, as before 2.131.0, which grouped them in the middle), and are a touch bigger again: 28 px, 52 high.
+- Includes 2.131.0.
+
 ## 2.131.0
 
 Release tweaks (your build): one filter bar, menu and player clean-up.

@@ -47,7 +47,7 @@ Arial for everything the app draws; Roboto on login and in native views. Scale (
 | Display (JP login title) | 54 / 900 gold |
 | Page title | 26 to 30 / 700 to 900 |
 | Row heading | 22 / 700 |
-| Nav item / sub-item | 27 / 600 (2.131.0); 23 / 500 |
+| Nav item / sub-item | 28 / 600 (2.131.1); 23 / 500 |
 | Thumbnail card title | 15 / 700, max 4 lines |
 | Show tile title | 19 / 700, max 2 lines |
 | Button | 15 to 21 / 600 to 700 |
@@ -269,7 +269,7 @@ Wrestlers menu tabs (2.64.0): Current, Past and Guests in the existing rounded t
 - Bell button: in the player bar after Next (both bars), same icon button rules as the others: white at rest, gold focused, grey (#5A6472) when this video has no StarScope bell time. Outline = Off, filled = Skip entrances, filled with a small arrow = Bell to bell. Up / Down on it opens the skip-size pop-up listing Off / Skip entrances / Bell to bell (orange fill on the current one, like the skip sizes).
 - Card on the video: a native card over the full screen picture, bottom left (the match) or bottom right (Up next): #0F151C at 90 %, 2 px #2A323C border, radius 12, 440 dp wide; gold 12/800 uppercase eyebrow, white 20/700 names, #C9D2DC 14 sub line, #9AA6B4 13 hint, 4 dp orange countdown strip. Never shown with the button bar up. Up next also shows over the page.
 - Title bar on a logged video: the gold bar grows to 70 px; a gold 13/800 uppercase line (match number, show, date, venue) above the 32/400 names with a gold 22 px "vs"; pills on the right (2 px #2A323C border, radius 20): the event in #C9D2DC 15/700 and a gold STARSCOPE mark with the telescope.
-- Card row: when the show is in StarScope the row heading reads "Show · The card" with a grey right-aligned count; tiles keep their thumbnails and get a gold MATCH n badge (#0B1118 at 90 %, radius 4) top left and a tag top right: Now playing (orange fill), Up next (gold outline), Not logged (grey, tile at 85 % opacity). Logged tiles use the same StarScope card as the StarScope pages (assets/starcards.js: event, names, footer), without the date, which the page already shows. In English, Japanese parts of the show name (a 〜subtitle〜) are left out of the title and row heading.
+- Card row: when the show is in StarScope the row heading reads "Show · The card" with a grey right-aligned count (2.131.1: "N matches · show order", no telescope or logged count); tiles keep their thumbnails and get a gold MATCH n badge (#0B1118 at 90 %, radius 4) top left and a tag top right: Now playing (orange fill), Up next (gold outline), Not logged (grey, tile at 85 % opacity). Logged tiles use the same StarScope card as the StarScope pages (assets/starcards.js: event, names, footer), without the date, which the page already shows. In English, Japanese parts of the show name (a 〜subtitle〜) are left out of the title and row heading.
 
 ## StarScope Shows (2.66.0, private builds)
 
@@ -356,5 +356,5 @@ One filter bar over every match grid drawn from the index: match type pages, Any
 - Bar: buttons "Name: choice ▾" (19/700, 2 px rgba(255,255,255,.45) border, radius 10; a set filter gold border and text; focus or open: look B fill). Match count right-aligned (15/700 #9AA6B4). A "Showing" row under it when something is set: chips (17/700, radius 20, #172029, 2 px #3B4656; focus look B) with ×, and Clear all (gold text) for two or more.
 - Shelf under the button (#121922, 2 px #2A323C, radius 14): items 17/600 #C9D2DC, the chosen one gold, focus look A; each with its count (13/700 at 75 %) on the right. Every choice only offers values in the list the other filters leave. Match type and Championship in group columns (four across); Year, Show and Tournament in two or three columns; long lists (wrestlers, teams, opponent factions, venues over 24) open on MOST MATCHES (top 30, three columns) with an A–Z tab (four columns, gold 13/800 letter headings).
 - Wrestler choices are the Wrestlers menu's names only (the sheet's active talent), so joke and billed-only names stay out.
-- Main menu (2.131.0): entries 48 high at 27/600, 4 px apart, the block centred in the height between the search box and the language toggle; the account group 12 px above with its divider. The StarScope entry is off (SCOPE_NAV in the menu script); the player telescope is off (PLAYER_TELESCOPE).
+- Main menu (2.131.1): entries 52 high at 28/600, spare height shared evenly above, between and below them (as before 2.131.0) so they fill the menu's height. The StarScope entry is off (SCOPE_NAV in the menu script); the player telescope is off (PLAYER_TELESCOPE).
 - Unlogged video cards (sitecards.js): English titles only in English; a whole show in one clip reads FULL SHOW, the short English show name, its series bottom left (Goddess League for Tag League shows) and the date bottom right.

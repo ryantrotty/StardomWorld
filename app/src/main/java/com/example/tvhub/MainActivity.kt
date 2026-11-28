@@ -6302,16 +6302,14 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
             '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:4px 0 8px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
-            // 2.131.0: the entries sit together, centred in the height between the search box and the language toggle
-            // (spare height above and below them, a fixed 4 px between); auto margins are 0 when the list is full, so it
-            // still scrolls from the top. (Was: spare height shared above, between and below every entry.)
-            '#tv-sm .tv-sm-list > *{margin-top:4px !important;}',
-            '#tv-sm .tv-sm-list > *:first-child{margin-top:auto !important;}',
+            // Spare height is shared evenly above, between and below the entries, so they fill the height between the
+            // search box and the language toggle (auto margins are 0 when the list is full, so it still scrolls from the top).
+            // 2.131.1: back to this after 2.131.0 grouped them in the middle, which left the area looking empty.
+            '#tv-sm .tv-sm-list > *{margin-top:auto !important;}',
             '#tv-sm .tv-sm-list > *:last-child{margin-bottom:auto !important;}',
-            '#tv-sm .tv-sm-list > .tv-sm-acctgrp{margin-top:12px !important;padding-top:8px !important;}',
             '#tv-sm .tv-sm-logorow{margin:0;padding:4px 0;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
-            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;font-size:27px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:1px 0;width:100%;}',
+            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:52px;padding:0 14px;font-size:28px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:1px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
             '#tv-sm *:focus, #tv-sm-shelf *:focus{box-shadow:none !important;outline:none !important;}',
             '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:42px;}',
