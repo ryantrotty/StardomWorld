@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.132.1
+
+- Home, public builds: no next-live, after-that or PPV tiles under the banner (without the show posters they were plain text boxes). A show that is live right now still gets its live card. Your build is unchanged.
+- Home, all builds: no Return to Top button at the bottom of the page.
+
 ## 2.132.0
 
 StarScope for public builds: everything that reads StarScope now follows the StarScope switch instead of "your build", so public builds get it once the published file says `"public": true` (the script's `STARSCOPE_PUBLIC`). Logging, sheet sync, translated captions, debug output, era picks and private images stay yours only.
