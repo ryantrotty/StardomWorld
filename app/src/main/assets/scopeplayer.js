@@ -261,7 +261,8 @@
       var meta = document.createElement('span');
       meta.className = 'tv-sc-meta notranslate';
       meta.setAttribute('translate', 'no');
-      meta.innerHTML = TEL + esc(ja ? '全' + total + '試合 · 大会の順番 · ' + logged.length + '試合登録済み' : total + ' matches · show order · ' + logged.length + ' logged');
+      // 2.131.1: no telescope and no "logged" count (StarScope branding stays off regular pages)
+      meta.textContent = ja ? '全' + total + '試合 · 大会の順番' : total + ' matches · show order';
       h2.appendChild(meta);
       if (!barEl) h2.insertBefore(document.createElement('span'), h2.firstChild);
     }
@@ -280,6 +281,9 @@
         (tag ? '<span class="tv-sc-tg ' + tag[0] + ' notranslate" translate="no">' + esc(tag[1]) + '</span>' : ''));
       if (ok && window.__tvStarCard) {
         // The same StarScope card as on the StarScope pages (assets/starcards.js), less the date: the page has it.
+        // 2.131.0: the one-card script (sitecards.js) may have drawn its own block here first; this row draws its own,
+        // so that copy goes (the names were shown twice).
+        Array.prototype.forEach.call(a.querySelectorAll(':scope > .tv-sch'), function(el) { el.remove(); });
         var y = {}; for (var k in x) y[k] = x[k];
         y.d = '';
         text.removeAttribute('style');

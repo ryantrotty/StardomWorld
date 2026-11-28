@@ -2,6 +2,30 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.131.1
+
+- Fix: the video page's card row heading still had a telescope and a "7 logged" count. It now reads "7 matches · show order".
+- Menu: the entries fill the menu's height again (spare height shared evenly between them, as before 2.131.0, which grouped them in the middle), and are a touch bigger again: 28 px, 52 high.
+- Includes 2.131.0.
+
+## 2.131.0
+
+Release tweaks (your build): one filter bar, menu and player clean-up.
+- One filter bar over every match grid drawn from the index (`window.__tvScopeFilter`, assets/starcards.js): the old drop-down bar's look, filled from StarScope, every choice showing how many matches it leaves and only offering what is in the list on screen. Long lists (wrestlers, teams, venues, opponent factions) open on MOST MATCHES with an A–Z tab. Nothing is asked of the site.
+  - Match type pages: Championship, Wrestler, Team or faction, Year, Show, Venue, Tournament, Sort. The Match type shelf also offers StarScope rules the Matches menu has no room for (No DQ, Loser's haircut, Strap match, Mixed martial arts, Sparring session).
+  - All championship matches: Championship, Match type, Wrestler, Year, Show, Venue, Sort.
+  - A title page's All matches opens every championship match with that title's chip already chosen.
+  - Faction pages (faction matches and a member's matches): Year, Match type, Championship, Opponent faction, Sort. It replaces the old keyword bar there, which searched the site.
+  - Pair and rivalry results get the bar too. The match count moves from the title to the bar.
+- Title page: no STARSCOPE pill between the champion box and All matches. Faction page: no STARSCOPE badge under the facts.
+- Main page and the Home flyout: a video not logged yet shows an English title in English (Japanese words translated, the rest left out; a match whose names were all Japanese reads as the match type and the show). A whole show in one clip reads FULL SHOW, the short show name, the series bottom left (Goddess League for Tag League shows) and the date bottom right. Recently Watched, Watch Later and New in the Home flyout show the StarScope names. "Video rows on the site" is now Featured, and its Japanese row names are turned into English.
+- Shows: Latest shows is one row of three with All ▸, which lists every show with the Year, Venue, Complete and Sort chips. The Shows page keeps its own address when redrawn.
+- Top Rated Matches: a match with no confirmed address in top_matches.json is found in StarScope (same date, every wrestler), so it gets its Watch button. The page draws again once the list arrives.
+- Wrestlers: joke names from one-off shows are inactive in the sheet's talent tab (all the Super Strong Stardom Machines, Zombies A–C, Reapers A–C, The Grim Reaper, both Sexy Dynamite Princesses, Captain Stardom), so they leave the Wrestlers menu and search; their matches keep the billed names. The filter bar's wrestler list uses the same names.
+- StarScope: the global nav entry is off (`SCOPE_NAV` in the menu script brings it back; the page, flyout and card check are untouched). Menu entries are slightly bigger (27 px, 48 high) and sit together, centred in the menu's height.
+- Player: the StarScope telescope is off on both bars (`PLAYER_TELESCOPE` in MainActivity brings it back; the logger is still in the app).
+- Fix: on the video page's card rail each logged card showed its names twice (the one-card script and the rail both drew a block). The rail's own block is the one kept.
+
 ## 2.130.1
 
 - Fix: the era page's Top rated row showed cards with no picture that couldn't be reached. The row took the five best-rated matches of the era from top_matches.json, but in the early eras most of them aren't on Stardom World (Genesis & the Idols: none of its 7; Threedom: the top 4 of 31), so they were drawn as cards with no picture and no link, and the All N matches tile sat off screen where focus couldn't reach it. The row now shows the five best-rated matches that have a logged video, then the All N matches tile, which still lists every match. An era with none on the site shows just the tile.

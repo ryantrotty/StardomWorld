@@ -84,13 +84,32 @@
     if (s.length === 1) return s[0];
     return s.slice(0, -1).join(', ') + ' & ' + s[s.length - 1];
   }
+  // 2.131.0: every year is logged, so a top rated match without a confirmed address in top_matches.json is looked up in
+  // the StarScope index (assets/starcards.js): a logged video on the same date with every wrestler in it, a copy with a
+  // picture and Stardom's own (not the English) first. Found once per page.
+  var SU = {};
+  function nk(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s・·.．★☆_-]+/g, ''); }
+  function scopeUrl(m) {
+    if (SU[m.id] !== undefined) return SU[m.id];
+    var X = window.__tvScopeIdx, out = '';
+    if (X && X.any && X.ready && X.ready()) {
+      var keys = [].concat.apply([], m.s).map(nk), best = null;
+      X.any(function(w) {
+        if (String(w.d || '') !== String(m.d)) return false;
+        return keys.every(function(k) { return (w.p || []).some(function(sd) { return sd.some(function(p) { return (p[0] || []).indexOf(k) >= 0; }); }); });
+      }).forEach(function(x) { if (!best || (best.v.lg === 'en' && x.v.lg !== 'en') || (!best.v.th && x.v.th)) best = x; });
+      if (best) out = '/contents/' + best.id;
+      SU[m.id] = out;
+    }
+    return out;
+  }
   window.__tvTopRow = function(i, m) {
     if (!TNAME) {
       TNAME = { other: 'Handicap match' };
       try { (JSON.parse(window.AndroidHost.matchTypesJson()).groups || []).forEach(function(g) { (g.items || []).forEach(function(x) { TNAME[x.id] = x.name; }); }); } catch (e) {}
     }
-    var lk = !!m.u, note = NOTE[m.n] || m.n || '';
-    var h = '<' + (lk ? 'a href="' + esc(absUrl(m.u)) + '" tabindex="0"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" data-id="' + esc(m.id) + '">';
+    var u = m.u || scopeUrl(m), lk = !!u, note = NOTE[m.n] || m.n || '';   // 2.131.0: a match with no address in the list is found in StarScope
+    var h = '<' + (lk ? 'a href="' + esc(absUrl(u)) + '" tabindex="0"' : 'div') + ' class="tp-row' + (lk ? ' tp-lk' : '') + '" data-id="' + esc(m.id) + '">';
     h += '<div class="tp-rk notranslate" translate="no">' + i + '</div>';
     h += '<div class="tp-sm"><span>★★★★★</span><b style="width:' + (m.r * 10).toFixed(1) + '%">★★★★★</b></div>';
     h += window.__tvMatchIcon(m.t);
@@ -306,4 +325,18 @@
 
   render(null);
   if (scope === 1) focusEl(scroller.querySelector('[data-era="' + curEra + '"]'));
+  // 2.131.0: StarScope's list (assets/starcards.js) comes after this script; once it is there, draw again so matches
+  // found in it get their Watch button, keeping the focused control.
+  var redrawn = false;
+  function again() {
+    if (redrawn || !(window.__tvScopeIdx && window.__tvScopeIdx.ready && window.__tvScopeIdx.ready())) return false;
+    redrawn = true;
+    var ae = document.activeElement, sel = null;
+    if (ae && scroller.contains(ae)) { ['data-scope', 'data-era', 'data-type', 'data-group', 'data-id'].forEach(function(a) { if (!sel && ae.getAttribute(a) != null) sel = '[' + a + '="' + String(ae.getAttribute(a)).replace(/"/g, '\\"') + '"]'; }); }
+    var y = scroller.scrollTop;
+    render(sel); scroller.scrollTop = y;
+    return true;
+  }
+  var tries = 0, tm = setInterval(function() { if (again() || ++tries > 40) clearInterval(tm); }, 300);
+  window.addEventListener('tvscopelist', function() { redrawn = false; again(); });
 })();

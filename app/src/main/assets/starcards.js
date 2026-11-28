@@ -269,7 +269,7 @@
       case 'cinderella': return inComp(v, 'cinderella');
       case 'tagleague': return inComp(v, 'tagleague');
     }
-    return false;
+    return stips(v).indexOf(id) >= 0;   // 2.131.0: any other StarScope rule by its id (no-dq, loser-haircut, sparring…)
   }
   function results(kind, a, b) {
     if (!map) return [];
@@ -362,11 +362,11 @@
     if (scopeKind === 'f') { var fa = facMembers(a), fb = facMembers(b); head = (fa ? fa.name : a) + ' vs ' + (fb ? fb.name : b); }
     if (scopeKind === 'ti') { var tln = null; try { tln = JSON.parse(H.lineageJson(a)); } catch (e) { tln = null; } head = tln ? String((ja && tln.ja) || tln.title).replace(/ Championship$/, '') : a; }
     if (Q.get('n')) head = Q.get('n');   // 2.128.0: the menu entry's own name (titles with no lineage file, match types)
-    if (scopeKind === 'v' || scopeKind === 'f' || scopeKind === 'ti' || scopeKind === 'mt') head += ' \u00b7 ' + list.length + ' ' + (ja ? '試合' : (list.length === 1 ? 'match' : 'matches'));
+    // 2.131.0: the count sits at the right of the filter bar (it follows the filters), not in the title
     var d = document.createElement('div');
     d.id = 'tvsp'; d.className = 'notranslate'; d.setAttribute('translate', 'no');
     var h = '<style>#tvsp{position:fixed;inset:0;z-index:99000;background:#0B1118;overflow:auto;box-sizing:border-box;padding:28px 40px;font-family:Arial,Helvetica,sans-serif;color:#fff}#tvsp .hd{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900;margin-bottom:20px}#tvsp .gr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:stretch}#tvsp a.c{display:block;background:#1a1a1a;border-radius:8px;overflow:hidden;text-decoration:none;outline:none}#tvsp a.c:focus{outline:3px solid #F4C242;outline-offset:2px;box-shadow:0 0 16px rgba(244,194,66,.8)}#tvsp .im{aspect-ratio:16/9;background:#172029 center/cover no-repeat}</style>';
-    h += '<div class="hd"><span style="display:block;flex:none;width:10px;height:36px;background:#F4C242"></span>' + esc(head) + '</div><div class="gr">';   // 2.127.0: the page title's gold bar, no telescope
+    h += '<div class="hd"><span style="display:block;flex:none;width:10px;height:36px;background:#F4C242"></span>' + esc(head) + '</div><div class="fbh"></div><div class="gr">';   // 2.127.0: the page title's gold bar, no telescope
     // 2.128.0: a long list (a match type has thousands) is drawn 48 cards at a time; the next 48 come when focus
     // reaches the last two rows.
     function cardHtml(x) { return '<a class="c" tabindex="0" href="/contents/' + esc(x.id) + '"><div class="im' + enCls(x.v) + '"' + (x.v.th ? ' data-bg="' + esc(x.v.th) + '"' : '') + '>' + enBox(x.v) + '</div><div class="tvsc-host">' + block(x.v) + '</div></a>'; }
@@ -376,6 +376,20 @@
     document.body.appendChild(d);
     var grid = d.querySelector('.gr');
     function more() { if (shown >= list.length) return; var nx = list.slice(shown, shown + 48); shown += nx.length; grid.insertAdjacentHTML('beforeend', nx.map(cardHtml).join('')); }
+    // 2.131.0: the filter bar (window.__tvScopeFilter) over every one of these grids. Which filters depends on the list:
+    // a match type page doesn't offer match types, a title's own list doesn't offer titles. All matches from a title
+    // page (&fti=) opens every championship match with that title already chosen.
+    var KINDS = { mt: ['ch', 'wr', 'fa', 'yr', 'sh', 'vn', 'tr', 'sort'], v: ['yr', 'mt', 'ch', 'sh', 'tr', 'sort'], t: ['yr', 'mt', 'ch', 'fa', 'sh', 'tr', 'sort'], f: ['yr', 'mt', 'ch', 'wr', 'sh', 'sort'], w: ['yr', 'mt', 'ch', 'wr', 'sh', 'sort'] };
+    var kinds = scopeKind === 'ti' ? (a === '*any' || a === '*other' ? ['ch', 'mt', 'wr', 'yr', 'sh', 'vn', 'sort'] : ['mt', 'wr', 'yr', 'sh', 'vn', 'sort']) : (KINDS[scopeKind] || ['yr', 'mt', 'ch', 'wr', 'sort']);
+    var pre = {}; if (Q.get('fti')) pre.ch = Q.get('fti');
+    var FB = SF.mount(d.querySelector('.fbh'), null, list, {
+      kinds: kinds, pre: pre,
+      onChange: function(L2) { list = L2; shown = Math.min(48, list.length); grid.innerHTML = list.slice(0, shown).map(cardHtml).join('') + (list.length ? '' : '<div style="grid-column:1/-1;font:700 17px Arial;color:#9AA6B4">' + esc(HT.none) + '</div>'); rowPictures(d, 'a.c'); },
+      onDown: function() { var c0 = grid.querySelector('a.c'); if (c0) { c0.focus({ preventScroll: true }); c0.scrollIntoView({ block: 'nearest' }); } },
+      onLeft: function() { if (window.__tvOpenMenu) window.__tvOpenMenu(); }
+    });
+    if (pre.ch) FB.items(list);   // a title chosen up front: draw its list (and count) now
+
     d.addEventListener('focusin', function(e) {
       var cs = grid.querySelectorAll('a.c'), at = Array.prototype.indexOf.call(cs, e.target);
       if (at >= 0 && at >= cs.length - 8) more();
@@ -385,9 +399,11 @@
     rowPictures(d, 'a.c');
     window.addEventListener('keydown', function(e) {
       if (e.defaultPrevented || document.documentElement.classList.contains('tv-sm-open') || document.getElementById('tv-fp-pop')) return;   // the menu and the video options pop-up handle their own keys
+      if (FB.owns(document.activeElement)) return;   // 2.131.0: the filter bar moves its own focus
       var c = e.keyCode, step = { 37: -1, 39: 1, 38: -4, 40: 4 }[c], all = Array.prototype.slice.call(d.querySelectorAll('a.c')), i = all.indexOf(document.activeElement);
       if (c === 13 || c === 23) { if (i >= 0) { e.preventDefault(); e.stopImmediatePropagation(); location.href = all[i].href; } return; }
       if (!step) return;
+      if (c === 38 && i >= 0 && i < 4) { e.preventDefault(); e.stopImmediatePropagation(); FB.focus(); d.scrollTop = 0; return; }   // the top row's Up: the filter bar
       if (c === 37 && (i % 4 === 0 || !all.length)) { e.preventDefault(); e.stopImmediatePropagation(); if (window.__tvOpenMenu) window.__tvOpenMenu(); return; }   // Left at the edge opens the menu, as elsewhere
       e.preventDefault(); e.stopImmediatePropagation();
       var n = all[i + step] || (c === 40 ? all[all.length - 1] : null);
@@ -443,7 +459,7 @@
   function homeHtml() {
     var list = homeList(), f = home.f, t = home.tab, ppl = {};
     if (SHMODE && t === 'shows') {   // 2.129.0: the global nav's Shows page: its own title, no StarScope header or tabs
-      var stl = f.sb || (f.sy ? (ja ? f.sy + '年の大会' : 'Shows of ' + f.sy) : (ja ? '大会' : 'Shows'));
+      var stl = f.sb || (f.sy ? (ja ? f.sy + '年の大会' : 'Shows of ' + f.sy) : f.sa ? (ja ? 'すべての大会' : 'All shows') : (ja ? '大会' : 'Shows'));
       return '<div class="hd"><span class="bar"></span><span class="wm">' + esc(stl) + '</span></div>' + showsHtml() + (home.pop ? popHtml(list) : '');
     }
     list.forEach(function(x) { people(x.v).forEach(function(n) { ppl[n] = 1; }); });
@@ -641,7 +657,8 @@
       return '<div class="sbh"><span class="bar"></span><span class="sbt">' + esc(title) + '</span><span class="ct">' + count + ' ' + HT.showsN + '</span>' +
         (href ? '<a class="ch sba" tabindex="0" data-f="1" data-k="vb" href="' + esc(href) + '">' + esc(ja ? 'すべて' : 'All') + ' ▸</a>' : '') + '</div><div class="sgr">' + list.map(function(s) { return showCard(s); }).join('') + '</div>';
     }
-    var h = sec(ja ? '最新の大会' : 'Latest shows', all.length, '', byDate.slice(0, 6));
+    // 2.131.0: one row of the latest shows, with All ▸ to every show (the year filter is there)
+    var h = sec(ja ? '最新の大会' : 'Latest shows', all.length, '/mypage?tvscope=shows&sh=1&all=1', byDate.slice(0, 3));
     var groups = {};
     byDate.forEach(function(s) { var b = brandOf(s); if (b) (groups[b] = groups[b] || []).push(s); });
     Object.keys(groups).sort(function(a, b) { return String(groups[b][0].date).localeCompare(String(groups[a][0].date)); }).forEach(function(b) {
@@ -651,7 +668,7 @@
   }
   function showsHtml() {
     var f = home.f, all = showsList();
-    if (SHMODE && !f.sy && !f.sv && !f.sb && !f.sc && (f.ss || 'date') === 'date') return landingHtml(all);
+    if (SHMODE && !f.sa && !f.sy && !f.sv && !f.sb && !f.sc && (f.ss || 'date') === 'date') return landingHtml(all);
     var shown = all.filter(function(s) {
       if (f.sb && brandOf(s) !== f.sb) return false;
       if (f.sy && String(s.date).slice(0, 4) !== f.sy) return false;
@@ -973,7 +990,7 @@
     homeEl.innerHTML = homeHtml();
     var el = homeEl.querySelector('[data-k="' + (keep || '') + '"]') || (home.pop ? homeEl.querySelector('.pp .ch.on') || homeEl.querySelector('.pp .ch') : homeEl.querySelector('.ch.on'));
     if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); }
-    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '') + (home.tab === 'shows' && home.f.sy ? '&sy=' + home.f.sy : '')); } catch (e) {}
+    try { history.replaceState(null, '', '/mypage?tvscope=' + home.tab + (home.tab === 'log' && home.lf === 'year' && home.ly ? '&y=' + home.ly : '') + (home.tab === 'shows' && home.f.sy ? '&sy=' + home.f.sy : '') + (home.tab === 'shows' && SHMODE ? '&sh=1' + (home.f.sb ? '&sb=' + encodeURIComponent(home.f.sb) : '') + (home.f.sa ? '&all=1' : '') : '')); } catch (e) {}   // 2.131.0: the Shows page keeps its own address
     loadPictures();
   }
   function openPop(key) {
@@ -1046,6 +1063,7 @@
     var qsy = Q.get('sy');
     if (scopeKind === 'shows' && /^\d{4}$/.test(qsy || '')) home.f.sy = qsy;
     if (scopeKind === 'shows' && Q.get('sb')) home.f.sb = Q.get('sb');   // 2.129.0: one brand from the Shows menu
+    if (scopeKind === 'shows' && Q.get('all') === '1') home.f.sa = true;   // 2.131.0: every show (Latest shows' All)
     homeRender('T' + scopeKind);
     homeMap = map;
   }
@@ -1243,6 +1261,279 @@
     X.showCard = function(sid) { var s = X.show(sid); return s ? showCard(s) : ''; };
     X.showCss = scopedCss;
   })(window.__tvScopeIdx);
+
+  // ---- One filter bar for every match grid (2.131.0). The old drop-down bar's look (buttons that open a shelf of
+  // choices under them, then a "Showing" row of chips to clear), filled from the index: every choice only offers
+  // what is in the list on screen once the other filters are applied, with its count. Nothing is asked of the site.
+  // Long lists (wrestlers, venues, teams) open on MOST MATCHES, with A-Z (letter headings) one tab over.
+  // window.__tvScopeFilter.mount(parent, before, items, cfg) -> controller. items: objects with .v (an index entry).
+  // cfg: kinds ['mt','ch','wr','fa','op','yr','sh','vn','tr','sort'], pre {kind: value}, extra {kind: {label, vals}},
+  // onChange(list, f), onDown(), onUp(), onLeft(), arrows (false: the page moves focus between the buttons itself).
+  var SF = (function() {
+    var MTJ = null, CHJ = null, TAGID = { 'cmll-japan': 'cmll', 'roh-women': 'roh', 'sendai-world': 'sendai', 'swa-world': 'swa' };
+    function mtGroups() {
+      if (MTJ) return MTJ;
+      MTJ = [];
+      try { (JSON.parse(H.matchTypesJson()).groups || []).forEach(function(g) { var it = (g.items || []).filter(function(x) { return x.id && x.id !== 'champ'; }); if (it.length) MTJ.push({ name: ja && g.ja ? g.ja : g.name, items: it.map(function(x) { return { id: x.id, name: ja && x.ja ? x.ja : x.name }; }) }); }); } catch (e) {}
+      // Rules StarScope logs that the Matches menu doesn't list (the menu has no room left): offered here only, and
+      // only when the list on screen has one. Ids as in the sheet's lists tab (stipulation).
+      MTJ.push({ name: ja ? 'その他のルール' : 'More rules', items: [['no-dq', 'No DQ', '反則裁定なし'], ['loser-haircut', "Loser's haircut", '敗者髪切り'], ['indian-strap', 'Strap match', 'インディアン・ストラップ'], ['mixed-martial-arts', 'Mixed martial arts', '異種格闘技戦'], ['sparring', 'Sparring session', '公開スパーリング']].map(function(r) { return { id: r[0], name: ja ? r[2] : r[1] }; }) });
+      return MTJ;
+    }
+    function chGroups() {
+      if (CHJ) return CHJ;
+      CHJ = [];
+      try { (JSON.parse(H.championshipsJson()).groups || []).forEach(function(g) { CHJ.push({ name: ja && g.ja ? g.ja : g.name, items: (g.items || []).filter(function(x) { return x.id !== 'any' && x.id !== 'other'; }).map(function(x) { return { id: x.id, name: String(ja && x.ja ? x.ja : x.name).replace(/ Championship$/, '') }; }) }); }); } catch (e) {}
+      return CHJ;
+    }
+    function chName(tag) {
+      var id = TAGID[tag] || tag, out = '';
+      chGroups().forEach(function(g) { g.items.forEach(function(x) { if (x.id === id) out = x.name; }); });
+      return out || String(tag).replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+    var ROS = null;
+    function roster() {   // the Wrestlers menu's own names (active only): joke and billed-only names stay out of the list
+      if (ROS !== null) return ROS;
+      ROS = false;
+      try { var r = JSON.parse(localStorage.getItem('tvRosterV1') || 'null'); if (r && r.talent && r.talent.length) { ROS = {}; r.talent.forEach(function(t) { ROS[String(t.en || '').toLowerCase()] = 1; }); } } catch (e) {}
+      return ROS;
+    }
+    function venueOf(v) { var S0 = v.ss || v; return String((ja ? (S0.vnj || S0.vn || v.vnj || v.vn) : (S0.vn || v.vn)) || ''); }
+    function brandOfV(v) {
+      var txt = bnorm([v.sh, v.she, v.ss ? v.ss.n : ''].join(' '));
+      var b = brands().filter(function(x) { return x.keys.some(function(k) { return k && txt.indexOf(k) >= 0; }); })[0];
+      return b ? b.name : '';
+    }
+    var L = ja ? { mt: '試合形式', ch: '王座', wr: '選手', fa: 'チーム・ユニット', op: '対戦ユニット', yr: '年', sh: '大会', vn: '会場', tr: 'トーナメント', sort: '並び順', all: 'すべて', showing: '絞り込み', clear: 'すべて解除', most: '試合数順', az: 'A–Z', m: '試合', sDate: '新しい順', sOld: '古い順', sTop: '高評価順' }
+      : { mt: 'Match type', ch: 'Championship', wr: 'Wrestler', fa: 'Team or faction', op: 'Opponent faction', yr: 'Year', sh: 'Show', vn: 'Venue', tr: 'Tournament', sort: 'Sort', all: 'All', showing: 'Showing', clear: 'Clear all', most: 'MOST MATCHES', az: 'A–Z', m: 'matches', sDate: 'Newest', sOld: 'Oldest', sTop: 'Top rated' };
+    var LONG = { wr: 1, fa: 1, op: 1, vn: 1 };
+    // The values an item has for a filter, as [value, label] pairs.
+    function vals(kind, x, cfg) {
+      var v = x.v, X = v.x || {};
+      if (cfg.extra && cfg.extra[kind]) return cfg.extra[kind].vals(x).map(function(s) { return [s, s]; });
+      switch (kind) {
+        case 'mt': var o = []; mtGroups().forEach(function(g) { g.items.forEach(function(t) { if (isType(v, t.id)) o.push([t.id, t.name]); }); }); return o;
+        case 'ch': return (X.tv || []).map(function(t) { return [t, chName(t)]; });
+        case 'wr': var R = roster(); return people(v).filter(function(n) { return !R || R[String(n).toLowerCase()]; }).map(function(n) { return [n, n]; });
+        case 'fa': return (X.g || []).map(function(n) { return [n, n]; });
+        case 'yr': var y = String(v.d || '').slice(0, 4); return y ? [[y, y]] : [];
+        case 'sh': var b = brandOfV(v); return b ? [[b, b]] : [];
+        case 'vn': var vn = venueOf(v); return vn ? [[vn, vn]] : [];
+        case 'tr': return X.c ? [[X.c, X.c]] : [];
+      }
+      return [];
+    }
+    function mount(parent, before, items, cfg) {
+      cfg = cfg || {};
+      var f = {}, kinds = cfg.kinds || [], el = document.createElement('div'), panel = null, openK = '', prevClose = null, tab = 0, lastK = '';
+      Object.keys(cfg.pre || {}).forEach(function(k) { f[k] = cfg.pre[k]; });
+      f.sort = f.sort || 'date';
+      el.className = 'tv-sf notranslate'; el.setAttribute('translate', 'no');
+      parent.insertBefore(el, before || null);
+      function passes(x, skip) {
+        for (var i = 0; i < kinds.length; i++) {
+          var k = kinds[i];
+          if (k === 'sort' || k === skip || !f[k]) continue;
+          if (!vals(k, x, cfg).some(function(p) { return String(p[0]) === String(f[k]); })) return false;
+        }
+        return true;
+      }
+      function options(k) {
+        var c = {}, lab = {};
+        items.forEach(function(x) { if (!passes(x, k)) return; var seen = {}; vals(k, x, cfg).forEach(function(p) { if (seen[p[0]]) return; seen[p[0]] = 1; c[p[0]] = (c[p[0]] || 0) + 1; lab[p[0]] = p[1]; }); });
+        return Object.keys(c).map(function(v) { return { v: v, label: lab[v], n: c[v] }; });
+      }
+      function labelOf(k, v) {
+        if (k === 'sort') return ({ date: L.sDate, old: L.sOld, top: L.sTop })[v] || L.sDate;
+        var o = null; items.some(function(x) { var p = vals(k, x, cfg).filter(function(q) { return String(q[0]) === String(v); })[0]; if (p) { o = p[1]; return true; } return false; });
+        return o || (k === 'ch' ? chName(v) : v);
+      }
+      function nameOf(k) { return (cfg.extra && cfg.extra[k] && cfg.extra[k].label) || L[k]; }
+      function list() {
+        var out = items.filter(function(x) { return passes(x, ''); });
+        var s = f.sort;
+        out.sort(s === 'old' ? function(a, b) { return String(a.v.d).localeCompare(String(b.v.d)); }
+          : s === 'top' ? function(a, b) { var A = a.v.x || {}, B = b.v.x || {}; return ((B.rc ? B.r : 0) - (A.rc ? A.r : 0)) || String(b.v.d).localeCompare(String(a.v.d)); }
+          : function(a, b) { return String(b.v.d).localeCompare(String(a.v.d)); });
+        return out;
+      }
+      function draw(keep) {
+        var shown = list(), h = '<div class="tv-sfr">';
+        kinds.forEach(function(k) {
+          if (k !== 'sort' && !f[k] && !options(k).length) return;   // nothing in this list for it
+          var on = k === 'sort' ? f.sort !== 'date' : !!f[k];
+          h += '<div class="tv-sfb' + (on ? ' on' : '') + '" tabindex="0" role="button" data-k="' + k + '">' + esc(nameOf(k) + (k === 'sort' || f[k] ? ': ' + labelOf(k, k === 'sort' ? f.sort : f[k]) : '')) + ' ▾</div>';
+        });
+        h += '<span class="tv-sfn">' + shown.length + ' ' + esc(L.m) + '</span></div>';
+        var set = kinds.filter(function(k) { return k !== 'sort' && f[k]; });
+        if (set.length) {
+          h += '<div class="tv-sfc"><span class="tv-sfl">' + esc(L.showing) + '</span>' + set.map(function(k) { return '<div class="tv-sfx" tabindex="0" role="button" data-x="' + k + '">' + esc(labelOf(k, f[k])) + ' ×</div>'; }).join('') +
+            (set.length > 1 ? '<div class="tv-sfx clr" tabindex="0" role="button" data-x="*">' + esc(L.clear) + '</div>' : '') + '</div>';
+        }
+        el.innerHTML = h;
+        var fo = keep ? el.querySelector(keep) : null;
+        if (fo) { try { fo.focus({ preventScroll: true }); } catch (e) { fo.focus(); } }
+        return shown;
+      }
+      function changed(keep) { var shown = draw(keep); if (cfg.onChange) cfg.onChange(shown, f); }
+      // ---- the shelf of choices under a button
+      function item(v, label, n, cur, extraCls) { return '<div class="tv-sfi' + (cur ? ' cur' : '') + (extraCls || '') + '" tabindex="-1" data-v="' + esc(v) + '">' + esc(label) + (n != null ? '<span class="n">' + n + '</span>' : '') + '</div>'; }
+      function openPanel(k) {
+        closePanel(false);
+        openK = k; lastK = k;
+        var cur = k === 'sort' ? f.sort : (f[k] || ''), h = '', wide = false;
+        if (k === 'sort') h = [['date', L.sDate], ['old', L.sOld], ['top', L.sTop]].map(function(o) { return item(o[0], o[1], null, cur === o[0]); }).join('');
+        else {
+          var opts = options(k), by = {}; opts.forEach(function(o) { by[o.v] = o; });
+          h = item('', L.all, null, !cur);
+          if (k === 'mt' || k === 'ch') {   // grouped in columns, as the old bar
+            var groups = k === 'mt' ? mtGroups() : chGroups(), used = {}, cols = '';
+            groups.forEach(function(g) {
+              var its = g.items.map(function(t) { var tag = k === 'ch' ? Object.keys(TAGID).filter(function(z) { return TAGID[z] === t.id; })[0] || t.id : t.id; return by[tag] ? { v: tag, o: by[tag] } : null; }).filter(Boolean);
+              if (!its.length) return;
+              cols += '<div class="tv-sfcol"><div class="tv-sfh">' + esc(String(g.name).toUpperCase()) + '</div>' + its.map(function(t) { used[t.v] = 1; return item(t.v, t.o.label, t.o.n, String(cur) === String(t.v)); }).join('') + '</div>';
+            });
+            var rest = opts.filter(function(o) { return !used[o.v]; });
+            if (rest.length) cols += '<div class="tv-sfcol"><div class="tv-sfh">' + esc(ja ? 'その他' : 'OTHER') + '</div>' + rest.map(function(o) { return item(o.v, o.label, o.n, String(cur) === String(o.v)); }).join('') + '</div>';
+            h += '<div class="tv-sfcols">' + cols + '</div>'; wide = true;
+          } else if (k === 'yr' || k === 'tr' || k === 'sh') {
+            opts.sort(k === 'yr' ? function(a, b) { return b.v.localeCompare(a.v); } : function(a, b) { return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }); });
+            h += '<div class="tv-sfgrid c' + (opts.length > 12 ? 3 : 2) + '">' + opts.map(function(o) { return item(o.v, o.label, o.n, String(cur) === String(o.v)); }).join('') + '</div>';
+          } else if (LONG[k] && opts.length > 24) {
+            // Long lists: the most matches first (three columns), A-Z with letter headings on the next tab
+            var top = opts.slice().sort(function(a, b) { return b.n - a.n || a.label.localeCompare(b.label); }).slice(0, 30);
+            var az = opts.slice().sort(function(a, b) { return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }); }), lastL = '', azh = '';
+            az.forEach(function(o) { var l0 = String(o.label).charAt(0).toUpperCase(); if (!/[A-Z]/.test(l0)) l0 = '#'; if (l0 !== lastL) { azh += '<div class="tv-sflt">' + esc(l0) + '</div>'; lastL = l0; } azh += item(o.v, o.label, o.n, String(cur) === String(o.v)); });
+            tab = cur && !top.some(function(o) { return String(o.v) === String(cur); }) ? 1 : 0;
+            h += '<div class="tv-sftabs">' + item('#t0', L.most, null, false, ' tv-sftab' + (tab === 0 ? ' on' : '')) + item('#t1', L.az, null, false, ' tv-sftab' + (tab === 1 ? ' on' : '')) + '</div>' +
+              '<div class="tv-sfbody b0 tv-sfgrid c3"' + (tab === 0 ? '' : ' style="display:none"') + '>' + top.map(function(o) { return item(o.v, o.label, o.n, String(cur) === String(o.v)); }).join('') + '</div>' +
+              '<div class="tv-sfbody b1 tv-sfaz"' + (tab === 1 ? '' : ' style="display:none"') + '>' + azh + '</div>';
+            wide = true;
+          } else {
+            opts.sort(function(a, b) { return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }); });
+            h += '<div class="tv-sfgrid c' + (opts.length > 16 ? 3 : opts.length > 8 ? 2 : 1) + '">' + opts.map(function(o) { return item(o.v, o.label, o.n, String(cur) === String(o.v)); }).join('') + '</div>';
+          }
+        }
+        panel = document.createElement('div');
+        panel.id = 'tv-sfp'; panel.className = 'notranslate' + (wide ? ' wide' : ''); panel.setAttribute('translate', 'no');
+        panel.innerHTML = '<div class="tv-sfph">' + esc(nameOf(k).toUpperCase()) + '</div>' + h;
+        document.body.appendChild(panel);
+        var btn = el.querySelector('.tv-sfb[data-k="' + k + '"]');
+        if (btn) btn.classList.add('open');
+        var r = btn ? btn.getBoundingClientRect() : { left: 40, bottom: 120, top: 100 }, vw = window.innerWidth, vh = window.innerHeight, pw = panel.offsetWidth, ph = panel.offsetHeight;
+        var top0 = r.bottom + 8; if (top0 + ph > vh - 20) top0 = Math.max(20, vh - 20 - ph);
+        panel.style.left = Math.max(20, Math.min(r.left, vw - pw - 20)) + 'px'; panel.style.top = top0 + 'px';
+        prevClose = window.__tvMenuClose || null;
+        window.__tvMenuClose = function() { closePanel(true); return true; };
+        try { if (H && H.setSideMenuOpen) H.setSideMenuOpen(true); } catch (e) {}   // Back closes the shelf, not the page
+        var first = panel.querySelector('.tv-sfbody:not([style*="none"]) .tv-sfi.cur') || panel.querySelector('.tv-sfi.cur:not(.tv-sftab)') || panel.querySelector('.tv-sftab.on') || panel.querySelector('.tv-sfi');
+        if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ block: 'nearest' }); }
+      }
+      function closePanel(refocus) {
+        if (!panel) return;
+        panel.remove(); panel = null;
+        var b = el.querySelector('.tv-sfb.open'); if (b) b.classList.remove('open');
+        window.__tvMenuClose = prevClose; prevClose = null;
+        try { if (H && H.setSideMenuOpen) H.setSideMenuOpen(false); } catch (e) {}
+        if (refocus && b) b.focus({ preventScroll: true });
+        openK = '';
+      }
+      function showTab(t) {
+        if (!panel) return; tab = t;
+        Array.prototype.forEach.call(panel.querySelectorAll('.tv-sftab'), function(e, i) { e.classList.toggle('on', i === t); });
+        Array.prototype.forEach.call(panel.querySelectorAll('.tv-sfbody'), function(e) { e.style.display = e.classList.contains('b' + t) ? '' : 'none'; });
+      }
+      function press(e0) {
+        if (!e0) return;
+        if (e0.classList.contains('tv-sfb')) { openPanel(e0.getAttribute('data-k')); return; }
+        if (e0.classList.contains('tv-sfx')) { var x = e0.getAttribute('data-x'); if (x === '*') kinds.forEach(function(k) { if (k !== 'sort') f[k] = ''; }); else f[x] = ''; changed('.tv-sfb'); return; }
+        if (e0.classList.contains('tv-sftab')) { showTab(e0.getAttribute('data-v') === '#t1' ? 1 : 0); return; }
+        if (e0.classList.contains('tv-sfi') && panel) { var k = openK, v = e0.getAttribute('data-v'); closePanel(false); if (k === 'sort') f.sort = v || 'date'; else f[k] = v; changed('.tv-sfb[data-k="' + k + '"]'); }
+      }
+      // nearest focusable in the arrow's direction (a shelf: inside it; the bar: its buttons and chips)
+      function near(list, ae, dir) {
+        var a = ae.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2, best = null, bs = Infinity;
+        list.forEach(function(e1) {
+          if (e1 === ae || !e1.offsetParent) return;
+          var r = e1.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, main, side;
+          if (dir === 'l') { if (r.right > a.left + 2) return; main = ax - x; side = Math.abs(y - ay); }
+          else if (dir === 'r') { if (r.left < a.right - 2) return; main = x - ax; side = Math.abs(y - ay); }
+          else if (dir === 'u') { if (r.bottom > a.top + 2) return; main = ay - y; side = Math.abs(x - ax); }
+          else { if (r.top < a.bottom - 2) return; main = y - ay; side = Math.abs(x - ax); }
+          var sc = main + side * (dir === 'l' || dir === 'r' ? 3 : 0.6);
+          if (sc < bs) { bs = sc; best = e1; }
+        });
+        return best;
+      }
+      function onKey(e) {
+        if (e.defaultPrevented || !el.isConnected) return;
+        var ae = document.activeElement, inP = panel && panel.contains(ae), inB = el.contains(ae);
+        if (!inP && !inB) return;
+        if (!inP && document.documentElement.classList.contains('tv-sm-open')) return;
+        var c = e.keyCode, dir = { 37: 'l', 38: 'u', 39: 'r', 40: 'd' }[c];
+        if (c === 13 || c === 23) { e.preventDefault(); e.stopImmediatePropagation(); press(ae); return; }
+        if (!dir) return;
+        if (inB && cfg.arrows === false) return;
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (inP) {
+          var n = near(Array.prototype.slice.call(panel.querySelectorAll('.tv-sfi')), ae, dir);
+          if (n) { n.focus({ preventScroll: true }); n.scrollIntoView({ block: 'nearest' }); if (n.classList.contains('tv-sftab')) showTab(n.getAttribute('data-v') === '#t1' ? 1 : 0); }
+          return;
+        }
+        var m = near(Array.prototype.slice.call(el.querySelectorAll('.tv-sfb, .tv-sfx')), ae, dir);
+        if (m) { m.focus({ preventScroll: true }); return; }
+        if (dir === 'd' && cfg.onDown) cfg.onDown();
+        else if (dir === 'u' && cfg.onUp) cfg.onUp();
+        else if (dir === 'l' && cfg.onLeft) cfg.onLeft();
+      }
+      window.addEventListener('keydown', onKey, true);
+      el.addEventListener('click', function(e) { var t = e.target.closest('.tv-sfb, .tv-sfx'); if (t) press(t); });
+      document.addEventListener('click', function(e) { if (panel && panel.contains(e.target)) { var t = e.target.closest('.tv-sfi'); if (t) press(t); } });
+      var first = draw();
+      return {
+        el: el, list: list, filters: f, items: function(it) { items = it; changed(); },
+        owns: function(x) { return !!x && (el.contains(x) || (panel && panel.contains(x))); },
+        focus: function() { var b = el.querySelector('.tv-sfb[data-k="' + lastK + '"]') || el.querySelector('.tv-sfb'); if (b) { b.focus({ preventScroll: true }); return true; } return false; },
+        first: first
+      };
+    }
+    var css = document.createElement('style');
+    css.textContent = [
+      '.tv-sf{font-family:Arial,Helvetica,sans-serif;margin:0 0 18px 0;}',
+      '.tv-sf .tv-sfr{display:flex;flex-wrap:wrap;align-items:center;gap:12px 10px;}',
+      '.tv-sf .tv-sfb{box-sizing:border-box;padding:10px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.45);color:#FFFFFF;font-size:19px;font-weight:700;line-height:1.2;white-space:nowrap;background:transparent;cursor:pointer;outline:none !important;}',
+      '.tv-sf .tv-sfb.on{border-color:#F4C242;color:#F4C242;}',
+      '.tv-sf .tv-sfb:focus,.tv-sf .tv-sfb.open{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}',
+      '.tv-sf .tv-sfn{margin-left:auto;font-size:15px;font-weight:700;color:#9AA6B4;white-space:nowrap;}',
+      '.tv-sf .tv-sfc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin-top:12px;}',
+      '.tv-sf .tv-sfl{font-size:17px;color:#9AA6B4;}',
+      '.tv-sf .tv-sfx{box-sizing:border-box;padding:7px 14px;border-radius:20px;background:#172029;border:2px solid #3B4656;color:#FFFFFF;font-size:17px;font-weight:700;white-space:nowrap;outline:none !important;cursor:pointer;}',
+      '.tv-sf .tv-sfx.clr{background:transparent;border-color:transparent;color:#F4C242;}',
+      '.tv-sf .tv-sfx:focus{background:#FFB347;border-color:#FFB347;color:#1A1A1A;box-shadow:none !important;}',
+      '#tv-sfp{position:fixed;z-index:99300;box-sizing:border-box;padding:12px;border-radius:14px;background:#121922;border:2px solid #2A323C;font-family:Arial,Helvetica,sans-serif;color:#FFFFFF;max-height:calc(100vh - 40px);max-width:calc(100vw - 40px);overflow-y:auto;scrollbar-width:none;min-width:260px;}',
+      '#tv-sfp::-webkit-scrollbar{display:none;}',
+      '#tv-sfp.wide{width:1100px;}',
+      '#tv-sfp .tv-sfph{padding:2px 6px 8px 6px;font-size:13px;font-weight:700;letter-spacing:1px;color:#F4C242;}',
+      '#tv-sfp .tv-sfi{display:flex;align-items:baseline;gap:10px;box-sizing:border-box;padding:8px 12px;margin:2px 0;border-radius:8px;border:2px solid transparent;font-size:17px;font-weight:600;color:#C9D2DC;outline:none !important;cursor:pointer;break-inside:avoid;min-width:0;}',
+      '#tv-sfp .tv-sfi .n{margin-left:auto;font-size:13px;font-weight:700;opacity:.75;}',
+      '#tv-sfp .tv-sfi.cur{color:#F4C242;}',
+      '#tv-sfp .tv-sfi:focus{background:#172029;border-color:#F4C242;color:#FFFFFF;font-weight:700;box-shadow:none !important;}',
+      '#tv-sfp .tv-sfcols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 10px;align-items:start;}',
+      '#tv-sfp .tv-sfcol{min-width:0;}',
+      '#tv-sfp .tv-sfh{padding:8px 6px 4px 6px;font-size:13px;font-weight:700;color:#F4C242;white-space:nowrap;}',
+      '#tv-sfp .tv-sfgrid{display:grid;gap:0 10px;}',
+      '#tv-sfp .tv-sfgrid.c1{grid-template-columns:minmax(0,1fr);}#tv-sfp .tv-sfgrid.c2{grid-template-columns:repeat(2,minmax(0,1fr));}#tv-sfp .tv-sfgrid.c3{grid-template-columns:repeat(3,minmax(0,1fr));}',
+      '#tv-sfp .tv-sftabs{display:flex;gap:10px;margin:6px 0 10px 0;}',
+      '#tv-sfp .tv-sftabs .tv-sfi{font-weight:700;padding:8px 26px;}',
+      '#tv-sfp .tv-sftabs .tv-sfi.on{color:#F4C242;}',
+      '#tv-sfp .tv-sfaz{column-count:4;column-gap:10px;}',
+      '#tv-sfp .tv-sfaz .tv-sfi{font-size:15px;padding:6px 8px;}',
+      '#tv-sfp .tv-sflt{padding:8px 8px 2px 8px;font-size:13px;font-weight:800;color:#F4C242;break-after:avoid;}'
+    ].join('\n');
+    (document.head || document.documentElement).appendChild(css);
+    return { mount: mount };
+  })();
+  window.__tvScopeFilter = SF;
 
   if (map) setTimeout(fillThumbs, 5000);
   var fresh = 0;

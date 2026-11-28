@@ -479,9 +479,10 @@
     var years = Math.floor((NOW - ms(D.since)) / (365.25 * 86400000));
     var pic = belt ? '<img src="' + belt + '" alt="">' : '<div class="ln-plate">' + STAR + '</div>';
     var curLine = '<div id="ln-cur">' + curBox(sel) + '</div>', cc = scComplete();
-    var allHref = cc ? '/mypage?tvscope=ti&a=' + encodeURIComponent(P) : allMatchesPath();
+    // 2.131.0: All matches opens every championship match with this title's chip already chosen in the filter bar
+    // (assets/starcards.js), so the other titles are one change away. No STARSCOPE pill under the champion box.
+    var allHref = cc ? '/mypage?tvscope=ti&a=*any&fti=' + encodeURIComponent(P) + '&n=' + encodeURIComponent(T('All championship matches', 'すべての王座戦')) : allMatchesPath();
     return '<div class="ln-hero"><div class="ln-belt">' + pic + '</div><div class="ln-hx">' + curLine +
-      (cc ? '<div class="ln-cc">STARSCOPE · ' + esc(T('EVERY TITLE MATCH', '全王座戦')) + '</div>' : '') +
       '<a class="ln-btn" tabindex="0" data-k="a" href="' + esc(absUrl(allHref)) + '">' + esc(T('All ' + D.title + ' matches ›', 'すべての' + (D.ja || D.title) + 'の動画 ›')) + '</a>' +
       '</div></div>' + (cc ? recordsHtml() : '');
   }

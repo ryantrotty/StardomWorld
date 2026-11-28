@@ -122,6 +122,9 @@ class MainActivity : Activity() {
         private val BAR_IDS = listOf("prev", "back", "play", "fwd", "next", "mute", "cc", "quality", "speed", "full")
         // Not offered in the bar under the picture: the app draws its own EN / 日本語 captions in full screen only.
         private val BAR_FULLSCREEN_ONLY = setOf("cc")
+        // 2.131.0: the player's StarScope telescope (the logging panel, assets/indexpanel.js) is off on both bars;
+        // logging moved to the phone companion app. Everything behind it is still in the app: true brings it back.
+        private const val PLAYER_TELESCOPE = false
         private const val BAR_ACCENT = "#FFB347"
         private const val BAR_TEXT_ON_ACCENT = "#1A1A1A"
         private const val BAR_RADIUS_DP = 10
@@ -4302,7 +4305,7 @@ class MainActivity : Activity() {
         }
 
         @android.webkit.JavascriptInterface
-        fun barIds(): String = org.json.JSONArray(barIdList().filter { it !in BAR_FULLSCREEN_ONLY } + (if (videoIndexOn()) listOf("index") else emptyList())).toString()
+        fun barIds(): String = org.json.JSONArray(barIdList().filter { it !in BAR_FULLSCREEN_ONLY } + (if (PLAYER_TELESCOPE && videoIndexOn()) listOf("index") else emptyList())).toString()
 
         @android.webkit.JavascriptInterface
         fun barLabels(statusJson: String): String {
@@ -5406,7 +5409,11 @@ class MainActivity : Activity() {
                   if (dm) en = dm[1] + 's';
                   var ym = /^(\d{4})年$/.exec(en);
                   if (ym) en = ym[1];
-                  if (hasJa(en)) en = titleXl(en);
+                  // 2.131.0: the app's own word lists first (assets/shownames.js: show and match words), then the
+                  // translator's answer; a title the translator never answered loses its Japanese rather than showing it.
+                  if (hasJa(en) && window.__tvShowName) { var w1 = window.__tvShowName.match(en); if (w1 && !hasJa(w1)) en = w1; }
+                  if (hasJa(en)) { var x1 = titleXl(en); if (x1 && !hasJa(x1)) en = x1; }
+                  if (hasJa(en) && window.__tvShowName) { var w2 = window.__tvShowName.en(en, '', false); if (w2 && !hasJa(w2) && /[A-Za-z0-9]{2}/.test(w2)) en = w2; }
                 }
                 return [en, r[1], ja];
               });
@@ -6295,12 +6302,14 @@ class MainActivity : Activity() {
             '#tv-sm, #tv-sm *{word-break:normal !important;overflow-wrap:normal !important;hyphens:none !important;}',
             '#tv-sm .tv-sm-item > span{white-space:normal;min-width:0;padding-right:8px;line-height:1.25;}',
             '#tv-sm .tv-sm-list{flex:1 1 auto;overflow-y:auto;min-height:0;margin:4px 0 8px 0;padding:2px 0;scrollbar-width:none;display:flex;flex-direction:column;}',
-            // Spare height is shared evenly above, between and below the entries (auto margins are 0 when the list is full, so it still scrolls from the top).
+            // Spare height is shared evenly above, between and below the entries, so they fill the height between the
+            // search box and the language toggle (auto margins are 0 when the list is full, so it still scrolls from the top).
+            // 2.131.1: back to this after 2.131.0 grouped them in the middle, which left the area looking empty.
             '#tv-sm .tv-sm-list > *{margin-top:auto !important;}',
             '#tv-sm .tv-sm-list > *:last-child{margin-bottom:auto !important;}',
             '#tv-sm .tv-sm-logorow{margin:0;padding:4px 0;}',
             '#tv-sm .tv-sm-list::-webkit-scrollbar{display:none;}',
-            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;font-size:25px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:1px 0;width:100%;}',
+            '#tv-sm .tv-sm-item{display:flex !important;align-items:center;justify-content:space-between;min-height:52px;padding:0 14px;font-size:28px;font-weight:600;color:#ffffff !important;background:transparent !important;border:3px solid transparent !important;border-radius:8px;box-sizing:border-box;text-decoration:none !important;cursor:pointer;outline:none !important;margin:1px 0;width:100%;}',
             '#tv-sm .tv-sm-item:focus{border-color:#F4C242 !important;background:#172029 !important;}',
             '#tv-sm *:focus, #tv-sm-shelf *:focus{box-shadow:none !important;outline:none !important;}',
             '#tv-sm .tv-sm-sub{font-size:23px;font-weight:500;color:#c9d2dc !important;min-height:42px;}',
@@ -6638,7 +6647,10 @@ class MainActivity : Activity() {
               acctRemember(an, links);
               // StarScope, My Favorites, then the account; the divider sits above the first of them. (2.83.0: StarScope
               // takes Community's place; Community's two charts are links in the Matches flyout.)
-              var scopeGrp = window.__tvScope ? group('StarScope', [[T('Recently added', '新着'), '/mypage?tvscope=recent', '新着']], 'starscope') : '';
+              // 2.131.0: the StarScope entry is off (logging and corrections now go through the phone companion app). Its
+              // flyout, page and card check are all still in the app: SCOPE_NAV = true brings the entry back as it was.
+              var SCOPE_NAV = false;
+              var scopeGrp = SCOPE_NAV && window.__tvScope ? group('StarScope', [[T('Recently added', '新着'), '/mypage?tvscope=recent', '新着']], 'starscope') : '';
               if (scopeGrp) h += scopeGrp.replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
               var favGrp = group(T('My Favorites', 'お気に入り'), FAVS, 'favs');
               h += scopeGrp ? favGrp : favGrp.replace('class="tv-sm-grp', 'class="tv-sm-grp tv-sm-acctgrp');
@@ -6931,7 +6943,7 @@ class MainActivity : Activity() {
             list.forEach(function(it) {
               h += '<a class="tv-sm-fi tv-hs-v" tabindex="0" data-go="' + esc(relHref(it.href)) + '" href="' + esc(absUrl(it.href)) + '">' +
                 '<span class="tv-hs-im" style="' + (it.bg ? 'background-image:url(' + esc(it.bg) + ');' : '') + '"></span>' +
-                '<span class="tv-hs-tt">' + esc(it.title || 'Stardom World Video') + '</span></a>';
+                '<span class="tv-hs-tt">' + esc((window.__tvVideoLine ? window.__tvVideoLine(it.href, it.title) : it.title) || 'Stardom World Video') + '</span></a>';   // 2.131.0: the StarScope names, or the English title
             });
             if (allPath) h += '<a class="tv-sm-fi tv-hs-all" tabindex="0" data-go="' + esc(allPath) + '" href="' + esc(absUrl(allPath)) + '">' + esc(T('View all', 'すべて見る')) + '</a>';
             return h + '</div>';
@@ -6957,7 +6969,7 @@ class MainActivity : Activity() {
               hsCol(T('WATCH LATER', 'あとで見る'), 'later', '/mypage?tvfav=later', T('Nothing saved yet.', 'まだありません。')) +
               '</div>';
             var siteRows = rows.filter(function(r) { return hrefPath(r[1]) !== hrefPath(newAll); });
-            if (siteRows.length) h += '<div class="tv-shl-t tv-hs-rowsh">' + esc(T('VIDEO ROWS ON THE SITE', 'サイトの動画一覧')) + '</div><div class="tv-hs-rows">' + rowsHtml(siteRows) + '</div>';
+            if (siteRows.length) h += '<div class="tv-shl-t tv-hs-rowsh">' + esc(T('FEATURED', '特集')) + '</div><div class="tv-hs-rows">' + rowsHtml(siteRows) + '</div>';
             return h;
           }
           function fiHtml(label, path) {
@@ -8533,6 +8545,9 @@ class MainActivity : Activity() {
     '#tv-fac .tv-hm-meta{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:14px;}',
     '#tv-fac .tv-hm-k{font-size:13px;font-weight:700;letter-spacing:1px;color:#9aa6b4;}',
     '#tv-fac .tv-hm-v{font-size:22px;font-weight:700;color:#fff;margin-top:2px;}',
+    '#tv-fac.tv-scope #tv-fb, #tv-fac.tv-scope #tv-fbc{display:none !important;}',
+    '#tv-fac-main > .tv-sf{margin:6px 40px 12px 30px;}',
+    '#tv-fac.tv-empty #tv-fac-main > .tv-sf{display:none;}',
     '#tv-fac .tv-hm-h{font-size:15px;font-weight:800;letter-spacing:.14em;color:#F4C242;margin:6px 0 12px 2px;}',
     '#tv-fac #tv-hm-titles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 26px 0;}',
     '#tv-fac .tv-hb{display:flex;align-items:center;gap:14px;box-sizing:border-box;padding:8px 12px;border-radius:8px;background:#161f2a;border:3px solid #2a323c;color:#fff !important;text-decoration:none !important;outline:none !important;min-width:0;}',
@@ -8894,7 +8909,7 @@ class MainActivity : Activity() {
     if (s.items.length < 12 && canMore(FI)) more(FI);
   }
   function homeFocusables() {
-    return Array.prototype.slice.call(homeEl.querySelectorAll('.tv-hb, .tv-hs, #tv-hgrid .tv-fc'));
+    return Array.prototype.slice.call(homeEl.querySelectorAll('.tv-hb, .tv-hs, .tv-sfb, .tv-sfx, #tv-hgrid .tv-fc'));
   }
   // Straight across the row first, then the nearest item in that direction.
   function geoNext(cur, k, list) {
@@ -8926,6 +8941,7 @@ class MainActivity : Activity() {
     sel = i;
     markSel();
     var s = S[i];
+    if (SCOPE && FBM && s.base) FBM.items(s.base);   // 2.131.0: this member's matches through the filters already chosen
     if (s.err && !s.loaded) { s.err = ''; }
     if (s.loaded) {
       renderGrid();
@@ -9078,12 +9094,43 @@ class MainActivity : Activity() {
     var meta = homeEl.querySelector('.tv-hm-meta');
     if (meta) {
       meta.insertAdjacentHTML('beforeend', metaHtml(T('FIRST UNIT MATCH', '\u521d\u306e\u30e6\u30cb\u30c3\u30c8\u6226'), P.first) + metaHtml(T('UNIT MATCHES', '\u30e6\u30cb\u30c3\u30c8\u6226'), String(P.once.length)));
-      meta.insertAdjacentHTML('afterend', '<div class="tv-hm-badge notranslate" translate="no">STARSCOPE \u00b7 ' + esc(T('EVERY UNIT MATCH', '\u5168\u30e6\u30cb\u30c3\u30c8\u6226')) + '</div>');
+      // 2.131.0: no STARSCOPE badge under the facts (as the title page's pill)
     }
     var mh = homeEl.querySelector('#tv-hgrid');
     if (mh && mh.previousElementSibling && extra) mh.previousElementSibling.insertAdjacentHTML('beforebegin', extra);
+    scopeFilters(X);
     renderHomeGrid();
     if (sel >= 0) renderGrid();
+  }
+  // 2.131.0: the filter bar (assets/starcards.js window.__tvScopeFilter) over the faction's matches and over a member's:
+  // Year, Match type, Championship and Opponent faction, each choice with its count, nothing asked of the site. It takes
+  // the place of the old keyword filter bar (which searched the site) on a complete faction history.
+  var FBH = null, FBM = null;
+  function scopeFilters(X) {
+    var SFm = window.__tvScopeFilter;
+    if (!SFm || !homeEl) return;
+    var F2 = {};
+    ((data && data.factions) || []).forEach(function(f) { F2[f.id] = String(f.name || f.id).replace(/ \(.*\)\x24/, ''); });
+    var cfg = function(src, home) {
+      return {
+        kinds: ['yr', 'mt', 'ch', 'op', 'sort'], arrows: !home,
+        extra: { op: { label: T('Opponent faction', '\u5bfe\u6226\u30e6\u30cb\u30c3\u30c8'), vals: function(x) { return scopeSides(X, x.v).others.map(function(id) { return F2[id]; }).filter(Boolean); } } },
+        onChange: function(list) {
+          var i = home ? FI : sel; if (i < 0 && !home) return;
+          var s = S[i]; s.all = list; s.items = list.slice(0, 24); s.more = s.items.length < list.length;
+          if (home) renderHomeGrid(); else renderGrid();
+        },
+        onDown: function() { var c0 = home ? hgrid.querySelector('.tv-fc') : grid.firstElementChild; if (c0) focusEl(c0, 'nearest'); },
+        onLeft: function() { focusNav(); }
+      };
+    };
+    S.forEach(function(s) { s.base = (s.all || []).slice(); });
+    root.classList.add('tv-scope');
+    if (!FBH) { var hh = homeEl.querySelector('#tv-hgrid'); if (hh) FBH = SFm.mount(hh.parentNode, hh, S[FI].base, cfg(S[FI], true)); }
+    else FBH.items(S[FI].base);
+    if (!FBM) { var sc0 = root.querySelector('#tv-fac-scroll'); if (sc0) FBM = SFm.mount(sc0.parentNode, sc0, sel >= 0 ? S[sel].base : [], cfg(null, false)); }
+    window.__tvFacScopeBar = true;
+    window.__tvFacFocusBar = function() { if (sel >= 0 && FBM) return FBM.focus(); if (sel < 0 && FBH) return FBH.focus(); return false; };
   }
   // On-screen debug (private builds): stays at the bottom of the faction home so it can be photographed.
   function scopeDebug() {
@@ -9621,7 +9668,7 @@ class MainActivity : Activity() {
     refreshLabels();
     anchor.parentNode.insertBefore(bar, anchor);
     if (FAC_MODE) {
-      window.__tvFacFocusBar = function() { var b0 = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (b0) { b0.focus(); return true; } return false; };
+      if (!window.__tvFacScopeBar) window.__tvFacFocusBar = function() { var b0 = btns[Math.min(lastBtn, btns.length - 1)] || btns[0]; if (b0) { b0.focus(); return true; } return false; };   // 2.131.0: not over the faction page's own filter bar
       return true;
     }
     buildChips();
@@ -12044,7 +12091,7 @@ class MainActivity : Activity() {
             // A little more room between the video buttons (previous to next) and the settings.
             if (id == (if ("bell" in ids) "bell" else "next")) (b.layoutParams as android.widget.LinearLayout.LayoutParams).rightMargin = (20 * density).toInt()
         }
-        if (BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()) {
+        if (PLAYER_TELESCOPE && BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()) {
             val b = fsButton("index") { barAction("index") }
             fsBtns["index"] = b
             add(b)

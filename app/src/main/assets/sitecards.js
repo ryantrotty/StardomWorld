@@ -30,13 +30,47 @@
       .replace(/(登録日|Registration date)\s*[:：]?\s*\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2}/gi, '').replace(/\s+/g, ' ').trim();
   }
   // A video the index doesn't have: its title, with a leading date ("2024/3/20_…") moved to the footer.
-  function siteBlock(title, isSet) {
-    var t = cleanTitle(title), date = '';
-    var m = /^\s*(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})[_\s]*/.exec(t);
-    if (m) { date = dateText(m[1], m[2], m[3]); t = t.slice(m[0].length); }
-    else { m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t); if (m) date = dateText(m[1], m[2], m[3]); }
-    return '<div class="tvsc tvsc-site"><div class="ev">' + esc(isSet ? (ja ? 'セット' : 'Show') : 'Stardom World') + '</div><div class="nm">' + esc(t || 'Stardom World') + '</div><div class="ft"><span></span><b>' + esc(date) + '</b></div></div>';
+  // 2.131.0: in English, a Japanese title is turned into English (assets/shownames.js), never shown as it is. A whole
+  // show in one clip (a title with no match in it) is drawn as the show: FULL SHOW, the short English show name (the
+  // schedule's, by date), its series bottom left and the date bottom right.
+  var JP = /[぀-ヿ㐀-鿿ｦ-ﾟ]/, MATCHY = /マッチ|試合|ＶＳ|\bvs\b|シングル|選手権|公式戦|バトル|ランブル|WAY|match|battle|rumble|six[- ]woman|tag team/i;
+  var SERIES = null;
+  function seriesOf(t) {
+    var n = String(t || '').normalize('NFKC').toUpperCase();
+    if (/タッグリーグ|TAG\s*LEAGUE|ゴッデス.?オブ.?スターダム|GODDESSES OF STARDOM/.test(n)) return ja ? 'タッグリーグ' : 'Goddess League';
+    if (!SERIES) { SERIES = []; try { (JSON.parse(H.eventFiltersJson()).shows || []).forEach(function(x) { SERIES.push([String(x.search || x.name).normalize('NFKC').toUpperCase(), x.name]); }); } catch (e) {} }
+    var hit = SERIES.filter(function(x) { return x[0] && n.indexOf(x[0]) >= 0; })[0];
+    if (hit) return hit[1];
+    if (/シンデレラ/.test(n)) return 'Cinderella Tournament';
+    if (/5\s*★?\s*STAR/.test(n)) return '5★STAR GP';
+    return '';
   }
+  function siteInfo(title, isSet) {
+    var t = cleanTitle(title), date = '', iso = '';
+    var m = /^\s*(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})[_\s]*/.exec(t);
+    if (m) t = t.slice(m[0].length); else { m = /(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/.exec(t); if (m) t = t.replace(m[0], ' ').replace(/\s+/g, ' ').trim(); }
+    if (m) { date = dateText(m[1], m[2], m[3]); iso = m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2); }
+    var SN = window.__tvShowName, show = isSet || (!MATCHY.test(t) && !!(seriesOf(t) || /STARDOM|スターダム|\bin\s+[A-Z]/i.test(t)));   // a show's name, not an interview or extra
+    var name = t;
+    if (!ja && SN) name = show ? SN.en(t, iso, true) : SN.match(t);
+    if (!ja && JP.test(name)) {
+      name = name.replace(/[　-〿぀-ヿ㐀-鿿＀-￯]+/g, ' ').replace(/\s+/g, ' ').trim();   // whatever is still Japanese goes
+      // Japanese names gone from a match title ("Tag League & vs &"): the show's English name by date says more
+      if (!show && SN && (/(^|\s)&(\s|$)|(^|\s)vs(\s|$)/.test(name) || name.length < 4)) { var sn = SN.en('', iso, true); if (sn) name = (name.replace(/[&]|\bvs\b/g, ' ').replace(/\s+/g, ' ').trim() || (ja ? '試合' : 'Match')) + ' \u00b7 ' + sn; }
+    }
+    return { show: show, name: name || 'Stardom World', date: date, series: show ? seriesOf(t) : '' };
+  }
+  function siteBlock(title, isSet) {
+    var i = siteInfo(title, isSet);
+    return '<div class="tvsc tvsc-site"><div class="ev">' + esc(i.show ? (ja ? '大会まるごと' : 'Full show') : 'Stardom World') + '</div><div class="nm">' + esc(i.name) + '</div><div class="ft"><span>' + esc(i.series) + '</span><b>' + esc(i.date) + '</b></div></div>';
+  }
+  // For the menu's lists (2.131.0): one line for a video, the StarScope names when it is logged, else the English title.
+  window.__tvVideoLine = function(href, title) {
+    var M = map(), id = idOf(href), v = id && M ? M[id] : null;
+    if (v && v.x && window.__tvScopeIdx && window.__tvScopeIdx.oneLine) return window.__tvScopeIdx.oneLine(v);
+    var i = siteInfo(title, /\/set\/\d+/.test(href || '') && !id);
+    return i.name + (i.date ? ' · ' + i.date : '');
+  };
   function idOf(href) { var m = /\/contents\/(\d+)(?:[\/?#]|$)/.exec(href || ''); return m ? m[1] : ''; }
   function body(href, title) {
     var M = map(), id = idOf(href), v = id && M ? M[id] : null;
@@ -48,7 +82,7 @@
     thumb.classList.add('tv-enp');
     thumb.insertAdjacentHTML('beforeend', SC.en(v));
   }
-  function skip(el) { return el.closest('#tvsh, #tvsp, #tv-sm-shelf, .tv-ppv') || (!el.classList.contains('tv-scr') && el.querySelector('.tvsc')); }
+  function skip(el) { return (el.classList.contains('tv-sc-card') && el.querySelector(':scope > .tvsc-host:not(.tv-sch)')) || el.closest('#tvsh, #tvsp, #tv-sm-shelf, .tv-ppv, #tv-sfp') || (!el.classList.contains('tv-scr') && el.querySelector('.tvsc')); }
   function run() {
     // site cards: an article with the site's title box
     Array.prototype.forEach.call(document.querySelectorAll('article'), function(art) {
