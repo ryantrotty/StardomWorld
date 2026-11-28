@@ -25,6 +25,11 @@
       H.shellLearn(JSON.stringify({ css: css, trSrc: src, trInit: init }));
     } catch (e) {}
   }
+  // 3.1.0: learned as soon as the page's markup is in (its style sheets and translator are in the markup), so on a new
+  // install the very first site page teaches the app its empty page, and the next app page skips the site's page.
+  // Learned again once the page has loaded, as before, in case something arrived late.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', learn);
+  else learn();
   if (document.readyState === 'complete') setTimeout(learn, 800);
   else window.addEventListener('load', function() { setTimeout(learn, 800); });
 })();

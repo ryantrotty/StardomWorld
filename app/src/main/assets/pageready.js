@@ -57,15 +57,29 @@
     }
     return ok;
   }
-  function finish() {
+  // 3.1.0: how long this page took, for the usage stats (AndroidHost.pagePerf, Metrics.kt "page_ready"): milliseconds
+  // from the start of the page to the app's page being on screen (drawn_ms, app pages) and to the first screenful being
+  // ready (ready_ms), the StarScope list read (scopestore.js), and the page's memory in use.
+  var drawnAt = 0;
+  function perf(timedOut) {
+    if (!H.pagePerf) return;
+    var o = { ready_ms: Math.round(performance.now()) }, P = window.__tvScopePerf;
+    if (timedOut) o.timed_out = true;
+    if (drawnAt) o.drawn_ms = drawnAt;
+    if (P) { o.scope_ms = P.ms; o.scope_kb = P.kb; o.scope_read = P.how; }
+    try { var m = performance.memory; if (m && m.usedJSHeapSize) o.heap_mb = Math.round(m.usedJSHeapSize / 1048576); } catch (e) {}
+    try { H.pagePerf(seq, JSON.stringify(o)); } catch (e) {}
+  }
+  function finish(timedOut) {
     if (done) return;
     done = true;
     clearInterval(tm);
+    perf(timedOut);
     try { H.pageReady(seq); } catch (e) {}
   }
   function check() {
     var now = Date.now();
-    if (now - t0 > 4800) { finish(); return; }
+    if (now - t0 > 4800) { finish(true); return; }
     if (document.readyState === 'loading' || !document.body || !document.getElementById('tv-app-style') || jumping() || !translated()) { stableAt = 0; return; }
     var s = sig();
     if (s !== lastSig || !stableAt) { lastSig = s; stableAt = now; return; }
@@ -86,7 +100,7 @@
       var hit = el && el.closest ? el.closest('[id^="tv"]') : null;
       if (hit || Date.now() - d0 > 3000) {
         clearInterval(dm);
-        if (hit) { try { H.appPageDrawn(seq); } catch (e) {} }
+        if (hit) { drawnAt = Math.round(performance.now()); try { H.appPageDrawn(seq); } catch (e) {} }
       }
     }, 50);
   }

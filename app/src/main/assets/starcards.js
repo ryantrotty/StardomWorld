@@ -15,7 +15,8 @@
   // 2.121.3: the list lives in the app's own files (AndroidHost.scopeListLoad / scopeListSave); the page's storage was
   // too small for it. A copy still in the page's storage is moved over once and removed from there.
   var NATIVE = !!(H.scopeListLoad && H.scopeListSave), KEPT = null;
-  try { if (NATIVE) { var raw0 = H.scopeListLoad(); if (raw0) KEPT = JSON.parse(raw0); } } catch (e) { KEPT = null; }
+  // 3.1.0: read through the shared reader (assets/scopestore.js): the compact copy, once per page for every script.
+  try { if (NATIVE) { if (window.__tvScopeLoad) KEPT = window.__tvScopeLoad(); else { var raw0 = H.scopeListLoad(); if (raw0) KEPT = JSON.parse(raw0); } } } catch (e) { KEPT = null; }
   if (!KEPT || !KEPT.map) {
     KEPT = null;
     try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && c.map) { KEPT = c; if (NATIVE && H.scopeListSave(JSON.stringify(c))) localStorage.removeItem(KEY); } } catch (e) {}
@@ -333,13 +334,16 @@
     if (!cards.length) return;
     var base = root.getBoundingClientRect().top - root.scrollTop, tops = [];
     function top(el) { return Math.round(el.getBoundingClientRect().top - base); }
-    cards.forEach(function(c) { var t = top(c); if (tops.indexOf(t) < 0) tops.push(t); });
+    // 3.1.0: every card is measured once, before any picture changes, so the page is laid out once, not once per card
+    var ts = cards.map(top);
+    ts.forEach(function(t) { if (tops.indexOf(t) < 0) tops.push(t); });
     tops.sort(function(a, b) { return a - b; });
     var ae = document.activeElement, fi = 0;
-    if (ae) { var own = cards.filter(function(c) { return c === ae || c.contains(ae); })[0]; if (own) fi = tops.indexOf(top(own)); }
+    if (ae) { var oi = -1; cards.some(function(c, i) { if (c === ae || c.contains(ae)) { oi = i; return true; } return false; }); if (oi >= 0) fi = tops.indexOf(ts[oi]); }
     var lo = fi - 1, hi = Math.max(fi + 1, 1);
-    cards.forEach(function(c) {
-      var r = tops.indexOf(top(c));
+    var rows = ts.map(function(t) { return tops.indexOf(t); });
+    cards.forEach(function(c, ci) {
+      var r = rows[ci];
       Array.prototype.forEach.call(c.querySelectorAll('.im'), function(im) {
         if (r >= lo && r <= hi) {
           var u = im.getAttribute('data-bg');
@@ -1164,7 +1168,7 @@
     KEPT = c;
     window.__tvScopeList = c;
     var txt = JSON.stringify(c), kb = Math.round(txt.length / 1024), how = '';
-    if (NATIVE) { var okN = false; try { okN = H.scopeListSave(txt); } catch (e) { okN = false; } how = okN ? 'saved to the app' : 'NOT SAVED to the app'; }
+    if (NATIVE) { var okN = false; try { okN = H.scopeListSave(txt); } catch (e) { okN = false; } txt = ''; how = okN ? 'saved to the app' : 'NOT SAVED to the app'; if (okN && window.__tvScopeSaveCompact && !window.__tvScopeSaveCompact(c)) how += ' (no compact copy)'; }
     else try { localStorage.setItem(KEY, txt); how = 'saved'; } catch (e) {
       try { localStorage.removeItem(KEY); localStorage.setItem(KEY, txt); how = 'saved after dropping the old copy'; } catch (e2) {
         var slim = {}; Object.keys(c.map).forEach(function(k) { var v = c.map[k], o = {}; Object.keys(v).forEach(function(f) { if (f !== 'vt' && f !== 'vtj') o[f] = v[f]; }); slim[k] = o; });
@@ -1205,7 +1209,7 @@
     // newer than this page's copy (the whole list is never sent through the reply).
     if (r.native) {
       var fresh2 = null;
-      if (!c || !c.map || c.s !== r.at) { try { var raw2 = H.scopeListLoad(); if (raw2) fresh2 = JSON.parse(raw2); } catch (e) { fresh2 = null; } }
+      if (!c || !c.map || c.s !== r.at) { try { if (window.__tvScopeLoad) fresh2 = window.__tvScopeLoad(true); else { var raw2 = H.scopeListLoad(); if (raw2) fresh2 = JSON.parse(raw2); } } catch (e) { fresh2 = null; } }
       if (fresh2 && fresh2.map) { KEPT = c = fresh2; window.__tvScopeList = c; map = c.map; got = 1; THRU = null; }
       else if (!map) { loadFailed('the StarScope list is not on this TV yet'); return; }
       if (got) {

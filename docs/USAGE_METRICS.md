@@ -48,6 +48,7 @@ Only to the PostHog host. Never to stardom-world.com or Stagecrowd, and no extra
 | --- | --- |
 | `$pageview` | The WebView moves to a new address (a reload of the same page is not counted again). |
 | `$pageleave` | The app goes to the background (Home, TV off, another app). |
+| `page_ready` | 3.1.0: once per page, when its first screenful is ready (assets/pageready.js). |
 
 Each event carries:
 
@@ -60,6 +61,16 @@ Each event carries:
 - `page_section` (home, video, faction, era, …), `search_term` on search pages, `build_type` (private or public),
   `device_kind` (Fire TV or Google TV), `app_language` (the app's EN / JA switch), app version, Android version
   and TV model.
+- 3.1.0: `ram_mb` (the TV's total memory) and `low_ram` (Android's own low-memory-device flag).
+
+`page_ready` adds (3.1.0), to compare page speed across versions and TVs:
+
+- `ready_ms`: milliseconds from the start of the page to its first screenful being ready (`timed_out` when the
+  page never settled and the 4.8 s limit was used); `drawn_ms`: to the app's own page being on screen (app pages).
+- `app_drawn`: whether the page is one the app draws itself.
+- `scope_ms`, `scope_kb`, `scope_read`: reading the StarScope list on that page (time, size, `compact` or `full`;
+  missing when the page didn't need it).
+- `heap_mb`: memory the page's scripts use.
 
 ## Error tracking
 

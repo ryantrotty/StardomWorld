@@ -1,5 +1,5 @@
 {
- "_note": "Past wrestlers for the filter bar's wrestler lists (the menu keeps its own copy of the same list).",
+ "_note": "Past wrestlers for the filter bar's wrestler lists (the menu keeps its own copy of the same list). aka: other names she was billed under; pages, links and pictures for those names go to this one wrestler (3.0.1).",
  "past": [
   {
    "name": "Giulia",
@@ -27,9 +27,10 @@
    "ja": "ジャングル叫女"
   },
   {
-   "name": "Kairi Hane (KAIRI)",
+   "name": "Kairi",
    "search": "KAIRI",
-   "ja": "カイリ・セイン"
+   "ja": "カイリ・セイン",
+   "aka": ["Kairi Hojo", "Kairi Hane (KAIRI)", "Kairi Sane", "Hojo Kairi", "宝城カイリ"]
   },
   {
    "name": "Kris Wolf",

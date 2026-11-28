@@ -2,6 +2,35 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 3.1.1
+
+- **No focus glow on Google TV either:** the soft blurred glow around the gold focus ring, dropped on Fire TV in 3.1.0, is now gone on every TV. The ring, its lift and the hero's solid ring stay (docs/DESIGN.md, Focus looks).
+
+## 3.1.0
+
+Lighter, faster pages, mainly for Fire TV sticks (a 3.0 tester found pages slower to respond and scrolling hitchy; usage stats showed Android ending the page's process for low memory on StarScope builds).
+- **StarScope list, compact and read once:** every page used to read the whole StarScope list (about 8 MB) from the TV's storage and unpack all of it, once for each script that needed it. The app now also keeps a compact copy (about 4.5 MB: each wrestler's search names kept once, the thumbnail address prefix and the empty values most cards share left out). One shared reader (assets/scopestore.js) reads it once per page, only when a script asks, and unpacks it to exactly the same cards. Public builds make the compact copy when the published file is downloaded; your build makes it each time it saves a new list. A TV with no compact copy yet reads the full list once and writes one.
+- **Page-only scripts only on their pages:** the championship history page (lineage.js), wrestler page (wrestler.js) and set order card (setcard.js) scripts now go only into their own pages. Every other page used to read about 95 KB of script it never ran.
+- **Smoother scrolling on StarScope pages:** loading pictures by row used to make the page lay itself out again for every card on each focus move. It now measures all the cards once, then changes the pictures.
+- **Fire TV focus without the glow:** on Fire TV, the gold focus ring keeps its look and lift but drops the soft blurred glow around it, which had to be repainted on every move (docs/DESIGN.md, Exceptions). Google TV is unchanged.
+- **First pages after a new install:** the app learns its empty page for app-drawn pages as soon as the first site page's markup is in, instead of a second after it finishes loading. So the next app page no longer shows the site's page (and the loading screen) first.
+- **Usage stats, page speed:** a new `page_ready` event per page with how long it took to be drawn and ready, the StarScope list read (time, size, compact or full) and the page's memory. Every event now also carries the TV's total memory (`ram_mb`, `low_ram`). README and docs/USAGE_METRICS.md updated.
+
+## 3.0.2
+
+Kairi is one wrestler everywhere.
+- Her name is now **Kairi** (was "Kairi Hane (KAIRI)") on her page, in the Wrestlers menu's Past list and on her 2022–23 match cards. The site search still uses KAIRI, so My Favorites keep her.
+- **Kairi Hojo** (and Kairi Hane (KAIRI), Kairi Sane, Hojo Kairi, 宝城カイリ) open her page instead of "Wrestler not found": Eras Top wrestlers, rivalries, and any other link with an older name. These names are listed as `aka` in past_wrestlers.json; another wrestler can be given an `aka` list the same way.
+- Her render shows wherever one of those names is used (Eras Top wrestlers, rivalry cards, title reign cards): the app looks up the picture under her main name when the billed name has none.
+- Her page also counts title reigns and StarScope matches recorded under any of those names.
+- Any name the sheet merged into another wrestler (talent `merged_into`) opens that wrestler's page.
+- Sheet (done directly, no script change): her talent name is Kairi; her 2012–17 participant rows have role `billed`, so those cards still say Kairi Hojo; aliases added for Kairi Hane (KAIRI) and Kairi Sane. TVs pick these up with their next full StarScope list (daily); public builds with the next publish.
+- Card check (iPhone): 宝城カイリ reads as Kairi.
+
+## 3.0.1
+
+- **Fix: searching from the menu did nothing on app-drawn pages** (Tag League, wrestler, team, faction, title, Eras and the other pages the app draws itself). Those pages have no site search form for the menu to borrow, so the menu's own box was used, and nothing listened for Enter on it. The box now sits in its own small form: Enter or the keyboard's Go key opens the site's search for what was typed. On site pages the site's own box works as before.
+
 ## 3.0.0
 
 Major release 3.0: every match catalogued with rich match cards, complete wrestler & team histories, real show line-ups and filters that show match counts.

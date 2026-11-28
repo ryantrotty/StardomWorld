@@ -38,6 +38,19 @@ class Metrics(context: Context) {
 
     private val prefs = context.getSharedPreferences("metrics", Context.MODE_PRIVATE)
 
+    // 3.1.0: total memory (MB) and Android's own low-memory-device flag, read once.
+    private val ramMb: Long
+    private val lowRam: Boolean
+    init {
+        var mb = 0L; var low = false
+        try {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            val mi = android.app.ActivityManager.MemoryInfo(); am.getMemoryInfo(mi)
+            mb = mi.totalMem / (1024L * 1024L); low = am.isLowRamDevice
+        } catch (_: Exception) {}
+        ramMb = mb; lowRam = low
+    }
+
     /** Collecting now: configured, and not switched off in Account > Anonymous usage stats. */
     @Volatile var enabled = configured && !prefs.getBoolean("off", false)
         private set
@@ -233,6 +246,26 @@ class Metrics(context: Context) {
         return out
     }
 
+    /**
+     * 3.1.0: how long the page now on screen took, and the memory it uses (assets/pageready.js). One "page_ready" per page,
+     * so pages, versions and devices can be compared. Only known numbers, true/false and the read type are kept.
+     */
+    fun pagePerf(json: String, appDrawn: Boolean) {
+        if (!enabled) return
+        val path = curPath ?: return
+        val o = try { JSONObject(json) } catch (_: Exception) { return }
+        val props = baseProps(curUrl ?: "", curHost ?: "", path)
+        for (k in listOf("ready_ms", "drawn_ms", "scope_ms", "scope_kb", "heap_mb")) {
+            val v = o.optDouble(k, Double.NaN)
+            if (!v.isNaN() && v >= 0 && v < 1e7) props.put(k, v.toLong())
+        }
+        if (o.optBoolean("timed_out", false)) props.put("timed_out", true)
+        val how = o.optString("scope_read", "")
+        if (how == "compact" || how == "full" || how == "none") props.put("scope_read", how)
+        props.put("app_drawn", appDrawn)
+        enqueue("page_ready", props, System.currentTimeMillis())
+    }
+
     /** A remote key was pressed: keeps the session alive while someone is using the app on one page. */
     fun touch() {
         if (!enabled) return
@@ -365,6 +398,8 @@ class Metrics(context: Context) {
         put("\$device_manufacturer", Build.MANUFACTURER ?: "")
         put("device_kind", if ((Build.MANUFACTURER ?: "").equals("Amazon", true)) "Fire TV" else "Google TV")
         put("build_type", if (BuildConfig.SHOW_POSTERS) "private" else "public")
+        if (ramMb > 0) put("ram_mb", ramMb)   // 3.1.0: the device's memory, to tell the low-memory TVs apart
+        put("low_ram", lowRam)
         put("app_language", appLanguage)
         put("\$process_person_profile", false)   // anonymous events only: no person profiles are created
     }
