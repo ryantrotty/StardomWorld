@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 3.0.0
+
+Major release 3.0: every match catalogued with rich match cards, complete wrestler & team histories, real show line-ups and filters that show match counts.
+- **Every match, properly labelled:** New match cards everywhere with tournament, block, round, date and English titles.
+- **Watching:** Redesigned player controls, running order card below player, reverse order playback, TV screensaver support.
+- **Wrestlers:** Rebuilt wrestler pages with header, tab counts, career timeline, year chips, and Current/Past/Guests menu.
+- **Tag Teams & Factions:** Tag Teams section grouped by era, side-by-side Tag League page, home pages for current & former factions.
+- **Championships & Matches:** Title history pages with reign timelines & records, Matches menu for every match type, Top Rated Matches.
+- **Filters & Navigation:** Single filter bar on every match list with counts, 5 Stardom eras, cleaner faster home page, and flyout menu.
+- **Under the hood:** Smooth long lists, background activity pill, low-memory recovery, anonymous stats toggle.
+
 ## 2.132.1
 
 - Home, public builds: no next-live, after-that or PPV tiles under the banner (without the show posters they were plain text boxes). A show that is live right now still gets its live card. Your build is unchanged.
