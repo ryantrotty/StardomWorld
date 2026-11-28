@@ -40,14 +40,14 @@ Fallback for anything not covered above: a single 3 px #F4C242 outline, 2 px off
 
 ## Type
 
-Arial for everything the app draws; Roboto on login and in native views. Scale (px): 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 28 30 40 54. Weight carries hierarchy: 600 items, 700 buttons and titles, 800 to 900 emphasis. Labels are uppercase with 1 px spacing.
+Arial for everything the app draws; Roboto on login and in native views. Scale (px): 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 30 40 54. Weight carries hierarchy: 600 items, 700 buttons and titles, 800 to 900 emphasis. Labels are uppercase with 1 px spacing.
 
 | Role | Size / weight |
 | --- | --- |
 | Display (JP login title) | 54 / 900 gold |
 | Page title | 26 to 30 / 700 to 900 |
 | Row heading | 22 / 700 |
-| Nav item / sub-item | 25 / 600; 23 / 500 |
+| Nav item / sub-item | 27 / 600 (2.131.0); 23 / 500 |
 | Thumbnail card title | 15 / 700, max 4 lines |
 | Show tile title | 19 / 700, max 2 lines |
 | Button | 15 to 21 / 600 to 700 |
@@ -296,7 +296,7 @@ Long lists, windowed scroll (2.75.0): PAGE chip fixed top 18 px / right 24 px, #
 
 Home page rows (2.77.0): banner, live / PPV row, New, Recently Watched, Watch Later. The site's other home rows are listed in the menu's Home list only.
 
-Home shelf (2.78.0): width 1100. Main page item (19 px) on top; three equal columns (20 px gap) headed NEW / RECENTLY WATCHED / WATCH LATER in the shelf heading style, gold; each up to three video items (112 x 63 picture, radius 6, title 14/600 clamped to three lines, item padding 6, same shelf focus A Border) and a View all item (14 px, grey); then VIDEO ROWS ON THE SITE heading and the site's rows in three text columns.
+Home shelf (2.78.0): width 1100. Main page item (19 px) on top; three equal columns (20 px gap) headed NEW / RECENTLY WATCHED / WATCH LATER in the shelf heading style, gold; each up to three video items (112 x 63 picture, radius 6, title 14/600 clamped to three lines, item padding 6, same shelf focus A Border) and a View all item (14 px, grey); then FEATURED heading (VIDEO ROWS ON THE SITE until 2.131.0) and the site's rows in three text columns. From 2.131.0 a video item's title is the StarScope names, or the English title for a video not logged yet.
 
 
 ## StarScope card check: venue line and end of the card (2.87.0, 2.89.0, private builds)
@@ -334,7 +334,7 @@ For a wrestler whose debut is in StarScope's complete years (app-drawn page, ass
 Same switch as complete-career wrestler pages: everything the page covers falls in StarScope's run of complete years. No new colours or focus looks.
 - Tag team page (both wrestlers debuted in the complete years): the wrestler page's title-row pill, "STARSCOPE · EVERY MATCH TOGETHER". Each tab chip carries its count (14/700 at 75 %, `.cc-n`). No StarScope telescope chip.
 - Faction page (founded in or after the first complete year): under the header facts, the same pill shape (2 px #2A323C, radius 20, 13/800 gold), "STARSCOPE · EVERY UNIT MATCH". Two more header facts in the existing style: FIRST UNIT MATCH and UNIT MATCHES. TOP PAIRS and RIVAL FACTIONS use the home's section heading and the title tiles' box (#161F2A, 3 px #2A323C, radius 8, two across, 66 high), with the 19/700 name and 13/700 gold count; focus is the gold border, as on the title tiles.
-- Title page (first reign in the complete years): the pill under the champion box, "STARSCOPE · EVERY TITLE MATCH", and a RECORDS row under the hero (the LINEAGE heading's style): four boxes across, #121922, 2 px #2A323C, radius 12; 12/800 gold uppercase label, 20/900 white value, 13/600 grey line. Not focusable.
+- Title page (first reign in the complete years): a RECORDS row (2.131.0: the "STARSCOPE · EVERY TITLE MATCH" pill under the champion box is gone, and so is the faction page's "STARSCOPE · EVERY UNIT MATCH" badge) under the hero (the LINEAGE heading's style): four boxes across, #121922, 2 px #2A323C, radius 12; 12/800 gold uppercase label, 20/900 white value, 13/600 grey line. Not focusable.
 - Eras: Draft Years and Arena Boom use the New Horizons StarScope layout as is. An era that has ended shows no NOW tag.
 - 2.121.2: a complete faction history's match cards are the StarScope video card (picture, then event, names and footer) inside the faction page's own card frame (tv-fc), 24 at a time with the page's More. Its StarScope debug block (why the page is or isn't a complete history) uses the debug panel style at the bottom of the faction home and stays on screen. The title and wrestler pages add the same reason as the first line of their existing debug blocks.
 - 2.121.5: complete team and title histories draw each logged match as the StarScope video card inside their own card frame (team: the complete-career card, `.cc-sc`; title: `.ln-c` with the picture, badges and play icon kept, the StarScope card in place of the site title). Matches not logged yet keep the site's card.
@@ -349,3 +349,12 @@ A logged video whose match_videos version is `en` shows the player bar's EN box 
 - Gold telescope icon (16 px). Running: text white, icon pulses. Something changed: border gold. Failure: border and icon #FF7A66 (Error colour, used here as well as login).
 - Not focusable and never takes a key, so no focus look. Hidden while a video plays, in full screen and while the reminder toast shows.
 
+
+## Filter bar (2.131.0, your build)
+
+One filter bar over every match grid drawn from the index: match type pages, Any championship / title results (All championship matches, a title page's All matches with that title chosen), pair and rivalry results, faction pages (faction and member matches). `window.__tvScopeFilter` in assets/starcards.js. No new colours or focus looks: it is the old drop-down bar's look.
+- Bar: buttons "Name: choice ▾" (19/700, 2 px rgba(255,255,255,.45) border, radius 10; a set filter gold border and text; focus or open: look B fill). Match count right-aligned (15/700 #9AA6B4). A "Showing" row under it when something is set: chips (17/700, radius 20, #172029, 2 px #3B4656; focus look B) with ×, and Clear all (gold text) for two or more.
+- Shelf under the button (#121922, 2 px #2A323C, radius 14): items 17/600 #C9D2DC, the chosen one gold, focus look A; each with its count (13/700 at 75 %) on the right. Every choice only offers values in the list the other filters leave. Match type and Championship in group columns (four across); Year, Show and Tournament in two or three columns; long lists (wrestlers, teams, opponent factions, venues over 24) open on MOST MATCHES (top 30, three columns) with an A–Z tab (four columns, gold 13/800 letter headings).
+- Wrestler choices are the Wrestlers menu's names only (the sheet's active talent), so joke and billed-only names stay out.
+- Main menu (2.131.0): entries 48 high at 27/600, 4 px apart, the block centred in the height between the search box and the language toggle; the account group 12 px above with its divider. The StarScope entry is off (SCOPE_NAV in the menu script); the player telescope is off (PLAYER_TELESCOPE).
+- Unlogged video cards (sitecards.js): English titles only in English; a whole show in one clip reads FULL SHOW, the short English show name, its series bottom left (Goddess League for Tag League shows) and the date bottom right.

@@ -280,6 +280,9 @@
         (tag ? '<span class="tv-sc-tg ' + tag[0] + ' notranslate" translate="no">' + esc(tag[1]) + '</span>' : ''));
       if (ok && window.__tvStarCard) {
         // The same StarScope card as on the StarScope pages (assets/starcards.js), less the date: the page has it.
+        // 2.131.0: the one-card script (sitecards.js) may have drawn its own block here first; this row draws its own,
+        // so that copy goes (the names were shown twice).
+        Array.prototype.forEach.call(a.querySelectorAll(':scope > .tv-sch'), function(el) { el.remove(); });
         var y = {}; for (var k in x) y[k] = x[k];
         y.d = '';
         text.removeAttribute('style');
