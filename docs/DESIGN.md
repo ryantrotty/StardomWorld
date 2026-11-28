@@ -290,7 +290,7 @@ Transition screen between pages (2.70.0): not shown for app-drawn pages; for sit
 App-drawn page cover (2.70.1): while the site's own page is underneath and the app's page isn't drawn yet, a plain #0B1118 cover (no wand, no strip) is held over the page; it goes with a 0.12 s fade once the app's page is on screen, 2 s at most.
 
 Home live row (2.75.0): the next-live / live and PPV tiles get their own row directly under the hero banner, no h2, same row spacing (35 px below, 24 px gap); the first video row follows with its heading. Removed when empty.
-Home live row slots (2.79.0): slot 1 is the live card or NEXT LIVE tile; slot 2 is the PPV tile (purple) when there is one, otherwise a second gold next-live tile labelled AFTER THAT (`#tv-next-live-2`, same size and look as slot 1). A PPV show not yet on Stagecrowd shows PPV · ON SALE SOON with "Not on Stagecrowd yet".
+Home live row slots (2.79.0; from 2.132.1 public builds show only the live card, no next-live, after-that or PPV tiles): slot 1 is the live card or NEXT LIVE tile; slot 2 is the PPV tile (purple) when there is one, otherwise a second gold next-live tile labelled AFTER THAT (`#tv-next-live-2`, same size and look as slot 1). A PPV show not yet on Stagecrowd shows PPV · ON SALE SOON with "Not on Stagecrowd yet".
 
 Long lists, windowed scroll (2.75.0): PAGE chip fixed top 18 px / right 24 px, #11171E fill, 1 px #2A323C edge, fully rounded, 13/800 letter-spaced, "PAGE" in #9AA6B4 and the number in gold #F4C242; not focusable; shown from page 2, hidden while the menu is open. Cards more than two pages from the page in view lose their pictures (light placeholders) once more than four pages are loaded.
 

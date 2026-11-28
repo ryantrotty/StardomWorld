@@ -5917,8 +5917,11 @@ class MainActivity : Activity() {
             var r = document.getElementById('tv-live-row');
             if (r && !r.querySelector('a.tv-card')) { var w = r.parentNode; if (w && w.parentNode) w.parentNode.removeChild(w); }
           }
+          // 2.132.1: public builds (no show posters) leave out the next-live, after-that and PPV tiles: without the poster
+          // art they were plain text boxes. A show that is live right now still gets its live card.
+          function homePromoOff() { try { return !(AndroidHost.showPosters && AndroidHost.showPosters()); } catch (e) { return true; } }
           function ensureHomeTile() {
-            if (!isHome()) return;
+            if (!isHome() || homePromoOff()) return;
             if (!contentRow() || document.getElementById('tv-next-live')) return;
             var up = schedUpcoming().filter(function(e) { return !e.ppv; })[0];   // a pay-per-view show has its own tile
             if (!up) return;
@@ -5932,7 +5935,7 @@ class MainActivity : Activity() {
             var firstEl = document.getElementById('tv-live-card') || document.getElementById('tv-next-live');
             var first = firstEl ? (firstEl.id === 'tv-live-card' ? schedUpcoming()[0] : schedById(firstEl.getAttribute('data-ev'))) : null;
             var e = null;
-            if (isHome() && contentRow() && first && !ppvHomeEvent())
+            if (isHome() && contentRow() && first && !ppvHomeEvent() && !homePromoOff())
               e = schedUpcoming().filter(function(x) { return !x.ppv && x.id !== first.id && x._t >= first._t; })[0] || null;
             if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); liveRowTidy(); return; }
             if (a && a.getAttribute('data-ev') === e.id && a.previousSibling === firstEl) return;
@@ -5984,7 +5987,7 @@ class MainActivity : Activity() {
           }
           function ensurePpvTile() {
             var a = document.getElementById('tv-ppv-home');
-            var e = isHome() && contentRow() ? ppvHomeEvent() : null;
+            var e = isHome() && contentRow() && !homePromoOff() ? ppvHomeEvent() : null;
             if (!e) { if (a && a.parentNode) a.parentNode.removeChild(a); liveRowTidy(); return; }
             var row = liveRow(true);
             if (!row) return;
@@ -11236,10 +11239,8 @@ class MainActivity : Activity() {
               });
             }
 
-            // 3. Return To Top Button at bottom of home grid
-            html += '<div style="text-align:center; margin:40px 0 60px 0;">' +
-              '<button id="tv-return-to-top-btn" class="tv-card notranslate" tabindex="0" style="background:#1a1a1a; color:#FFB347; border:2px solid #FFB347; border-radius:6px; padding:12px 28px; font-size:18px; font-weight:bold; cursor:pointer; outline:none;">▲ Return to Top</button>' +
-              '</div>';
+            // 2.132.1: no Return to Top button at the bottom of the home page (Up from the rows already gets back to the top)
+            html += '<div style="height:60px"></div>';
 
             html += '</div>';
 
