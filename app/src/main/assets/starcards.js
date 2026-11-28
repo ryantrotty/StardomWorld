@@ -1201,6 +1201,22 @@
     lsPut(FAIL_KEY, null);
     var fail = document.getElementById('tvsc-fail'); if (fail) fail.remove();
     var c = kept(), got = 0;
+    // 2.132.0: public builds. The app has already put the published list in its list file: read it from there when it is
+    // newer than this page's copy (the whole list is never sent through the reply).
+    if (r.native) {
+      var fresh2 = null;
+      if (!c || !c.map || c.s !== r.at) { try { var raw2 = H.scopeListLoad(); if (raw2) fresh2 = JSON.parse(raw2); } catch (e) { fresh2 = null; } }
+      if (fresh2 && fresh2.map) { KEPT = c = fresh2; window.__tvScopeList = c; map = c.map; got = 1; THRU = null; }
+      else if (!map) { loadFailed('the StarScope list is not on this TV yet'); return; }
+      if (got) {
+        try { if (H.bgNote) H.bgNote('StarScope list ready: ' + Object.keys(c.map).length + ' videos', 'StarScopeリストの準備完了：' + Object.keys(c.map).length + '本', true, true); } catch (e) {}
+        try { if (window.__tvScopeUpdate) window.__tvScopeUpdate(); } catch (e) {}
+        try { window.dispatchEvent(new Event('tvscopelist')); } catch (e) {}
+        soon();
+      }
+      if (again) { again = false; setTimeout(ask, 300); }
+      return;
+    }
     if (r.since && c && c.map) {
       // Changes only: merged into the copy this TV has; cards the sheet no longer has go.
       var m = c.map;

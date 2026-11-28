@@ -35,6 +35,20 @@ Set `STARSCOPE_PUBLIC` to `true` and run `publishStarscope` (or wait for the nex
 at their next schedule check (when the app comes to the front, at most every six hours). Set it back to `false` to hide
 StarScope again.
 
+## On the TV (2.132.0)
+
+- A new install downloads the file first thing, in the background during the launch splash (the status pill shows
+  "Getting StarScope"); after that it is checked with the schedule (at most every six hours, unchanged files cost almost
+  nothing).
+- The file (about 9 MB, under 1 MB over the network) is split once per download into what pages read: the card list
+  (`scope_list.json`, the same list file your build's pages keep) and the roster (`scope_roster.json`). Pages read the
+  list from there; the whole list is never handed to a page through a reply, which low-memory devices (Fire TV) struggled with.
+- Once it is on, public builds get everything that reads StarScope: the one match card, app-drawn faction and era pages,
+  the Matches, Championships and Shows menus from the index, complete histories on wrestler, team and title pages, and
+  the filter bar. Still yours only: logging (telescope, card check, phone link), sheet sync (favorites, Recently
+  Watched, team lists), translated captions, debug output, era picks, and your private images.
+- The file keeps each card's last change to the day (`x.u`), not the time.
+
 ## The three switches in the app
 
 | Switch | What it covers | Who has it |

@@ -2625,8 +2625,8 @@ class MainActivity : Activity() {
         // not on top of a site search the page never uses. 2.130.0: the Eras page (all of it comes from eras.json).
         if (u.path == "/contents/search") {
             val q0 = u.encodedQuery ?: return false
-            val sheet0 = BuildConfig.VIDEO_INDEX_URL.isNotEmpty() && BuildConfig.VIDEO_INDEX_KEY.isNotEmpty()
-            return sheet0 && Regex("(^|&)tv(faction|era)=").containsMatchIn(q0)   // 2.130.0: the Eras page too
+            // 2.132.0: every build where StarScope is on (yours, and public builds once the published file is switched on)
+            return scopeReadOn() && Regex("(^|&)tv(faction|era)=").containsMatchIn(q0)   // 2.130.0: the Eras page too
         }
         if (u.path != "/mypage") return false
         val q = u.encodedQuery ?: return false
@@ -2727,7 +2727,7 @@ class MainActivity : Activity() {
     }
 
     private fun scopeCompleteYears(): String {
-        if (!sheetOn()) return "[]"
+        if (!scopeReadOn()) return "[]"   // 2.132.0: public builds too, once the published StarScope file is switched on
         // 2.106.0: 2025 fully logged; 2.109.0: 2024 too. 2.121.2: the last list read from the roster file is kept, so a
         // missing or unreadable roster file no longer drops the earlier complete years.
         val prefs = getSharedPreferences("roster", MODE_PRIVATE)
@@ -2736,23 +2736,44 @@ class MainActivity : Activity() {
         return prefs.getString("scopeYears", null) ?: "[2018,2019,2020,2021,2022,2023,2024,2025,2026]"
     }
 
-    // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV; null when there isn't one yet.
-    @Volatile private var scopeCache: org.json.JSONObject? = null
-    @Volatile private var scopeStamp = 0L
-    private fun scopeFile(): org.json.JSONObject? {
-        return try {
+    // The published StarScope file (docs/STARSCOPE_PUBLIC.md), kept on the TV as starscope.json.
+    // 2.132.0: it is about 9 MB, so it is no longer held in memory or handed to a page whole. Once per download it is split
+    // into what pages read: the card list (scope_list.json, the same file your build's pages keep, read with scopeListLoad)
+    // and the roster (scope_roster.json); whether it is switched on for public builds is kept as a setting.
+    private val scopeSplitLock = Any()
+    private fun scopePrefs() = getSharedPreferences("starscope", MODE_PRIVATE)
+    private fun scopeSplit(): Boolean = synchronized(scopeSplitLock) {
+        if (sheetOn()) return false   // your build keeps its own list from the sheet
+        try {
             val f = java.io.File(filesDir, "starscope.json")
-            if (!f.exists() || f.length() == 0L) return null
-            if (f.lastModified() != scopeStamp || scopeCache == null) {
-                scopeCache = org.json.JSONObject(f.readText())
-                scopeStamp = f.lastModified()
+            if (!f.exists() || f.length() == 0L) return false
+            val p = scopePrefs()
+            if (p.getLong("splitFrom", -1L) == f.lastModified()) return true
+            val d = org.json.JSONObject(f.readText())
+            val at = d.optString("at")
+            val cards = d.optJSONObject("cards")
+            val pub = d.optBoolean("public", false) && d.optInt("schema", 0) == 1 && cards != null
+            if (pub) {
+                val now = System.currentTimeMillis()
+                val list = "{\"t\":" + now + ",\"s\":" + org.json.JSONObject.quote(at) + ",\"f\":" + now + ",\"pub\":true,\"map\":" + cards!!.toString() + "}"
+                synchronized(scopeListLock) {
+                    val tmp = java.io.File(filesDir, "scope_list.json.tmp"); val lf = java.io.File(filesDir, "scope_list.json")
+                    tmp.writeText(list)
+                    if (!tmp.renameTo(lf)) { lf.writeText(list); tmp.delete() }
+                }
+                val ro = d.optJSONObject("roster") ?: org.json.JSONObject()
+                java.io.File(filesDir, "scope_roster.json").writeText(ro.toString())
             }
-            scopeCache
-        } catch (_: Exception) { null }
+            p.edit().putBoolean("public", pub).putString("at", at).putLong("splitFrom", f.lastModified()).apply()
+            true
+        } catch (_: Exception) { false }
     }
     private fun scopeFilePublic(): Boolean {
-        val d = scopeFile() ?: return false
-        return d.optBoolean("public", false) && d.optInt("schema", 0) == 1 && d.optJSONObject("cards") != null
+        val f = java.io.File(filesDir, "starscope.json")
+        if (!f.exists() || f.length() == 0L) return false
+        val p = scopePrefs()
+        if (p.getLong("splitFrom", -1L) != f.lastModified()) scopeSplit()   // a file from before 2.132.0: split it once
+        return p.getBoolean("public", false)
     }
 
     // Downloads the StarScope file with the schedule check (when the app comes to the front, at most every six hours),
@@ -2778,6 +2799,7 @@ class MainActivity : Activity() {
                     tmp.renameTo(have)
                     prefs.edit().putString("etag", c.getHeaderField("ETag") ?: "").apply()
                     changed = true
+                    scopeSplit()   // 2.132.0: the list and roster pages read, made once here in the background
                 }
             }
             c.disconnect()
@@ -3527,7 +3549,9 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("sched", MODE_PRIVATE)
         val now = System.currentTimeMillis()
         val newVersion = prefs.getInt("ver", -1) != BuildConfig.VERSION_CODE
-        val due = newVersion || now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
+        // 2.132.0: a TV with no StarScope file yet (a new install) gets it first, straight away, during the launch splash.
+        val scopeMissing = BuildConfig.STARSCOPE_URL.isNotEmpty() && !sheetOn() && !java.io.File(filesDir, "starscope.json").exists()
+        val due = newVersion || scopeMissing || now - prefs.getLong("last", 0L) >= 6L * 3600L * 1000L
         if (!due && postersChecked) return
         if (!scheduleRefreshing.compareAndSet(false, true)) return
         Thread {
@@ -3537,6 +3561,14 @@ class MainActivity : Activity() {
             try {
                 var gotDaily = false
                 var gotSchedule = false
+                var scopeFirst = false
+                if (scopeMissing) {
+                    scopeFirst = true
+                    bgBegin("scope", "Getting StarScope", "StarScopeを取得中")
+                    val ok = refreshScopeFile()
+                    bgEnd("scope", ok, if (ok) "StarScope ready" else null, if (ok) "StarScopeの準備ができました" else null, ok)
+                    if (ok) runOnUiThread { try { webView.evaluateJavascript("window.__tvCardsRefresh && window.__tvCardsRefresh()", null) } catch (_: Exception) {} }
+                }
                 if (due) {
                     bgOn = true
                     bgBegin("data", "Checking schedule, roster and titles", "スケジュール・ロスター・王座を確認中")
@@ -3575,7 +3607,7 @@ class MainActivity : Activity() {
                         }
                     } catch (_: Exception) {}
                     if (refreshRoster()) { changes.add("roster"); changesJa.add("ロスター") }
-                    if (refreshScopeFile()) { changes.add("StarScope file"); changesJa.add("StarScopeファイル") }
+                    if (!scopeFirst && refreshScopeFile()) { changes.add("StarScope file"); changesJa.add("StarScopeファイル") }
                     if (gotDaily || gotSchedule) prefs.edit().putLong("last", now).putInt("ver", BuildConfig.VERSION_CODE).apply()
                     // Pages already drawn keep what they had; a page opened from now on reads the new files.
                     if (!gotDaily && !gotSchedule) bgEnd("data", false, "Schedule check failed: keeping the last copy", "スケジュールの確認に失敗：前回のデータを使用中", false)
@@ -3940,8 +3972,9 @@ class MainActivity : Activity() {
             if (sheetOn()) { sheetCall(reqId, payload, setOf("vi_cards", "vi_suggest"), "__tvStarCardsReply"); return }
             // Other builds (2.76.0): the cards come from the published StarScope file; Log next is sheet-only.
             val action = try { org.json.JSONObject(payload).optString("action") } catch (_: Exception) { "" }
-            val d = scopeFile()
-            val out = if (action == "vi_cards" && d != null && scopeFilePublic()) org.json.JSONObject().put("ok", true).put("map", d.optJSONObject("cards") ?: org.json.JSONObject()).toString()
+            // 2.132.0: the list is already in the app's list file (scopeSplit); the page reads it from there (native) instead
+            // of being sent the whole 9 MB list.
+            val out = if (action == "vi_cards" && scopeFilePublic()) org.json.JSONObject().put("ok", true).put("native", true).put("at", scopePrefs().getString("at", "") ?: "").toString()
                 else "{\"ok\":false,\"error\":\"not in this build\"}"
             pageReply("__tvStarCardsReply", reqId, out)
         }
@@ -4014,7 +4047,7 @@ class MainActivity : Activity() {
         fun starRoster(reqId: String, payload: String) {
             if (sheetOn()) { sheetCall(reqId, payload, setOf("vi_roster"), "__tvRosterReply"); return }
             // Other builds (2.76.0): Current, Past and Guests from the published StarScope file.
-            val r = if (scopeFilePublic()) scopeFile()?.optJSONObject("roster") else null
+            val r = if (scopeFilePublic()) try { org.json.JSONObject(java.io.File(filesDir, "scope_roster.json").readText()) } catch (_: Exception) { null } else null
             pageReply("__tvRosterReply", reqId, if (r != null) org.json.JSONObject(r.toString()).put("ok", true).toString() else "{\"ok\":false,\"error\":\"not in this build\"}")
         }
 
@@ -5447,7 +5480,7 @@ class MainActivity : Activity() {
           // Shows: the big shows, the same list as the Show filter (assets/event_filters.json).
           // 2.129.0: your build's Shows menu opens the Shows page (StarScope show cards): All shows (the landing page),
           // then each brand; the shelf adds All shows by year.
-          function showsScope() { try { return !!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }
+          function showsScope() { try { return !!(AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }   // 2.132.0: wherever StarScope is on
           function showYears() {
             var out = [];
             for (var y = new Date().getFullYear(); y >= 2011; y--) out.push([String(y), '/mypage?tvscope=shows&sh=1&sy=' + y, String(y)]);
@@ -6135,7 +6168,7 @@ class MainActivity : Activity() {
           // private builds: q[type]=single leaves out sets (whole shows) from the searches the menu opens
           function singleOnly() { try { return AndroidHost.categoriesOn && AndroidHost.categoriesOn() ? '&q%5Btype%5D=single' : ''; } catch (e) { return ''; } }
           // 2.128.0: your build lists a match type from the index (every match is logged): /mypage?tvscope=mt.
-          function scopeMenus() { try { return !!(AndroidHost.videoIndexOn && AndroidHost.videoIndexOn() && AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }
+          function scopeMenus() { try { return !!(AndroidHost.scopeOn && AndroidHost.scopeOn()); } catch (e) { return false; } }   // 2.132.0: wherever StarScope is on
           function matchTypePath(x) {
             if (scopeMenus() && x.id) return '/mypage?tvscope=mt&a=' + encodeURIComponent(x.id) + '&n=' + encodeURIComponent(isJa() && x.ja ? x.ja : x.name);
             return '/contents/search?q%5Bkeyword%5D=' + encodeURIComponent(x.search) + '&activetab=contents&page=1&tvb=&tvmt=' + encodeURIComponent(x.id) + singleOnly();
