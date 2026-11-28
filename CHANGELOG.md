@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 3.1.1
+
+- **No focus glow on Google TV either:** the soft blurred glow around the gold focus ring, dropped on Fire TV in 3.1.0, is now gone on every TV. The ring, its lift and the hero's solid ring stay (docs/DESIGN.md, Focus looks).
+
 ## 3.1.0
 
 Lighter, faster pages, mainly for Fire TV sticks (a 3.0 tester found pages slower to respond and scrolling hitchy; usage stats showed Android ending the page's process for low memory on StarScope builds).

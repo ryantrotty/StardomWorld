@@ -66,9 +66,9 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 | --- | --- | --- |
 | A Border | Menus, shelf, drop-down items, details buttons | Border to #F4C242, fill #172029 |
 | B Fill | Player bar, filters, chips | Fill and border #FFB347, text #1A1A1A |
-| C Ring | Video cards, hero, home tiles, My Favorites faction bands and reminder tickets | 3 px #F4C242 outline, 2 px offset, glow, 1.03 lift |
+| C Ring | Video cards, hero, home tiles, My Favorites faction bands and reminder tickets | 3 px #F4C242 outline, 2 px offset, 1.03 lift (no glow since 3.1.1) |
 | D Form | Login | Input 6 px gold border; button orange fill, white border, no halo |
-| E Gold frame | Wrestler cards (My Favorites) | Dark frame at rest; whole frame turns solid #F4C242, lifts 1.06, glows |
+| E Gold frame | Wrestler cards (My Favorites) | Dark frame at rest; whole frame turns solid #F4C242, lifts 1.06 (no glow since 3.1.1) |
 
 ## Exceptions (do not "fix" these without deciding)
 
@@ -79,7 +79,7 @@ Radius (px): 4 tags, 8 small buttons and list items, 10 player and filter button
 - Video cards have no hover look (no dimming, no lift): a resting pointer left an unfocused card darkened (2.45.0). Focus is the gold ring only.
 - Live and PPV tiles show the gold ring on focus with no lift; the related-videos row has no lift; the hero is never dimmed.
 - Wrestler cards use look E (the old rainbow border hid the gold focus).
-- Fire TV (3.1.0): focus looks C and E drop their soft glow; the gold ring, the lift and every other focus look stay. The hero keeps its solid black-and-gold ring and the language switch its solid orange ring, without the blur. A blurred glow is repainted on every move and scroll step, which the Fire TV sticks struggle with (MainActivity.kt fireTvLiteJs).
+- No focus glow (3.1.0 Fire TV, 3.1.1 every TV): focus looks C and E drop their soft glow; the gold ring, the lift and every other focus look stay. The hero keeps its solid black-and-gold ring and the language switch its solid orange ring, without the blur. A blurred glow is repainted on every move and scroll step (MainActivity.kt fireTvLiteJs). The glow rules are still in the styles; this sheet overrides them.
 - My Favorites top: "My Faction" shows one to six faction bands on white logo tiles (1 faction full width, 2 half, 3 to 6 a third each, two rows at most; the Open pill is shown for 1 and 2). "My Reminders" shows two paper tickets: a stub (purple PPV days left, red for the last 24 hours or live, gold for a show date) beside cream paper with the time in local time. An owned PPV comes first, then reminders; one ticket is topped up with the next show that has no reminder. A PPV counts as owned once the app has seen its replay play for 5 seconds on this TV.
 - Shelf Left/Right goes straight across a row first, then falls back to the nearest item.
 - Account menu has an Instructions link that reopens the first-run guide (buttons read Close and Done), and, in builds with a PostHog key, an "Anonymous usage stats: On / Off" entry that OK switches in place (look A, like the other Account entries).

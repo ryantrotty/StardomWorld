@@ -1638,7 +1638,8 @@ class MainActivity : Activity() {
     // re-encoded 28 KB of CSS on every injection.
     private var tvStylesJs = ""
     private var tvStylesLang = ""
-    // 3.1.0, Fire TV only (docs/DESIGN.md, Exceptions): the same single gold focus ring, without the soft glow around it.
+    // 3.1.0 (Fire TV), 3.1.1 every TV (docs/DESIGN.md, Focus looks): the same single gold focus ring, without the soft glow
+    // around it.
     // A 16 px blurred glow is one of the costliest things to paint, and it is painted again on every focus move and scroll
     // step; the Fire TV sticks have the weakest graphics of the TVs in use. The selector carries the page's id three times so it outranks every
     // focus rule in the app's and the site's styles; the hero and the language switch keep their solid rings.
@@ -12068,7 +12069,7 @@ class MainActivity : Activity() {
         view.evaluateJavascript(autoNextJs, null)
         view.evaluateJavascript(playerControlsJs, null)
         injectCustomTvStyles(view)
-        if (isFireTv()) view.evaluateJavascript(fireTvLiteJs, null)   // 3.1.0: the gold focus without its glow on Fire TV
+        view.evaluateJavascript(fireTvLiteJs, null)   // 3.1.0: the gold focus without its glow (every TV since 3.1.1)
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
         // Every script above is in this page now (2.73.0): onPageFinished then skips the second round.
         view.evaluateJavascript("window.__tvInjectedAll = true;", null)
