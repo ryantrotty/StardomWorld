@@ -1,17 +1,15 @@
 {
- "generated": "2026-11-27T06:32:44Z",
+ "generated": "2026-11-28T06:34:24Z",
  "status": {
   "result": "partial",
-  "started": "2026-11-27T06:29:11Z",
-  "finished": "2026-11-27T06:32:44Z",
+  "started": "2026-11-28T06:30:54Z",
+  "finished": "2026-11-28T06:34:24Z",
   "requests": 38,
   "schedule": {
    "ok": true,
    "events": 47,
    "changed": [
-    "20261205-roh",
-    "20261206-aew",
-    "20261207-judo"
+    "20261129-hamamatsu"
    ],
    "error": ""
   },
@@ -73,12 +71,6 @@
    "warnings": [
     "Daily job switched Nov 8, 2026 to the Japanese wwr-stardom.com pages (the /en/ section returns 404) using the user's Japanese name map plus the verified supplement (Dark Silueta, Valkyria, Julia Hart, Skye Blue).",
     "Event URLs in the schedule now point at the Japanese /schedule/ pages; the /en/ URLs are dead.",
-    "schedule: new event 20261205-roh takes its Japanese title (no English title available): 【海外遠征】ROH Final Battle",
-    "schedule: new event 20261205-roh takes its Japanese venue string: Boeing Center at Tech Port",
-    "schedule: new event 20261206-aew takes its Japanese title (no English title available): 【海外遠征】AEW Collision",
-    "schedule: new event 20261206-aew takes its Japanese venue string: Boeing Center at Tech Port",
-    "schedule: new event 20261207-judo takes its Japanese venue string: 川崎・POST DI AMISTAD",
-    "schedule: new event 20261207-judo title translated from Japanese: [Participation from another organization] プロレスリング柔道",
     "schedule: unknown match type kept in Japanese: ＜参戦選手＞ リーグ戦出場全選手、朱里、壮麗亜美、浜辺纏、姫ゆりあ、ビー・プレストリー",
     "Kawaii title has no public source and was copied unchanged from the baseline per spec.",
     "Cagematch cross-checks for the New Japan titles were dropped Nov 12, 2026 (user decision); Wikipedia is the sole source for IWGP Women's and STRONG Women's."
@@ -89,6 +81,27 @@
    "updated": "2026-11-23",
    "source": "official",
    "note": "Skipped: no league show finished since 2026-11-23; league unchanged."
+  },
+  "ppv": {
+   "ok": true,
+   "listed": 1,
+   "read": [
+    "i10418"
+   ],
+   "skipped_seen": [],
+   "matched": [
+    {
+     "id": "i10418",
+     "event": "20261129-hamamatsu",
+     "by": "date"
+    }
+   ],
+   "unmatched": [],
+   "changed": [
+    "20261129-hamamatsu"
+   ],
+   "block": null,
+   "note": "1 listed, 1 read, 0 already seen, 1 matched, 0 unmatched"
   },
   "blocks": [],
   "errors": []
@@ -145,7 +158,16 @@
    "20261206-aew": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261206_AEW_Collision_AZM_%E5%A5%B3%E5%AD%90%E4%B8%96%E7%95%8C%E7%8E%8B%E5%BA%A7%E6%88%A6_%E5%85%AC%E5%BC%8F%E5%AF%BE%E6%88%A6%E3%82%AB%E3%83%BC%E3%83%89.jpg",
    "20261207-judo": "https://wwr-stardom.com/wp/wp-content/uploads/2026/11/20261207_%E6%9F%94%E9%81%93_%E6%B5%9C%E8%BE%BA%E5%AF%BE%E7%AC%B9%E6%9D%91.jpeg"
   },
-  "ppv_seen": {},
+  "ppv_seen": {
+   "i10418": {
+    "source": "stagecrowd",
+    "event": "20261129-hamamatsu",
+    "date": "2026-11-29",
+    "matched_by": "date",
+    "read": "2026-11-28T06:33:19Z",
+    "list": "a5ee44df32943a57"
+   }
+  },
   "events": [
    {
     "id": "20261029-otaku",
@@ -1602,7 +1624,17 @@
        "ブルーゴッデス代表"
       ]
      }
-    ]
+    ],
+    "ppv": {
+     "page": "https://intl.stagecrowd.live/s/scint/group/detail/i10418",
+     "url": null,
+     "price": 3300,
+     "total": 3520,
+     "sale_start": "2026-11-25T12:00:00+09:00",
+     "sale_end": "2026-12-16T19:00:00+09:00",
+     "replay_end": "2026-12-16T23:59:00+09:00",
+     "watch_url": null
+    }
    },
    {
     "id": "20261130-spark",
