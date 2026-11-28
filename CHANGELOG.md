@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 3.1.0
+
+Lighter, faster pages, mainly for Fire TV sticks (a 3.0 tester found pages slower to respond and scrolling hitchy; usage stats showed Android ending the page's process for low memory on StarScope builds).
+- **StarScope list, compact and read once:** every page used to read the whole StarScope list (about 8 MB) from the TV's storage and unpack all of it, once for each script that needed it. The app now also keeps a compact copy (about 4.5 MB: each wrestler's search names kept once, the thumbnail address prefix and the empty values most cards share left out). One shared reader (assets/scopestore.js) reads it once per page, only when a script asks, and unpacks it to exactly the same cards. Public builds make the compact copy when the published file is downloaded; your build makes it each time it saves a new list. A TV with no compact copy yet reads the full list once and writes one.
+- **Page-only scripts only on their pages:** the championship history page (lineage.js), wrestler page (wrestler.js) and set order card (setcard.js) scripts now go only into their own pages. Every other page used to read about 95 KB of script it never ran.
+- **Smoother scrolling on StarScope pages:** loading pictures by row used to make the page lay itself out again for every card on each focus move. It now measures all the cards once, then changes the pictures.
+- **Fire TV focus without the glow:** on Fire TV, the gold focus ring keeps its look and lift but drops the soft blurred glow around it, which had to be repainted on every move (docs/DESIGN.md, Exceptions). Google TV is unchanged.
+- **First pages after a new install:** the app learns its empty page for app-drawn pages as soon as the first site page's markup is in, instead of a second after it finishes loading. So the next app page no longer shows the site's page (and the loading screen) first.
+- **Usage stats, page speed:** a new `page_ready` event per page with how long it took to be drawn and ready, the StarScope list read (time, size, compact or full) and the page's memory. Every event now also carries the TV's total memory (`ram_mb`, `low_ram`). README and docs/USAGE_METRICS.md updated.
+
 ## 3.0.2
 
 Kairi is one wrestler everywhere.

@@ -84,6 +84,7 @@ The site can change at any time, so things may break; please open an issue when 
 The app sends **anonymous usage stats and error reports** to [PostHog](https://posthog.com), so the developer can see which pages get used and fix what breaks:
 
 - which app pages are opened and for how long, the app version, the TV model and the app language
+- how quickly each page shows, how much memory it uses and the TV's total memory (to find slow pages and TVs)
 - app crashes and errors in the app's own page scripts
 
 The app also downloads a public StarScope match index (who is in each logged video) from GitHub, at most every six hours. That download carries no account or viewing details.

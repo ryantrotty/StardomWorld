@@ -1638,6 +1638,27 @@ class MainActivity : Activity() {
     // re-encoded 28 KB of CSS on every injection.
     private var tvStylesJs = ""
     private var tvStylesLang = ""
+    // 3.1.0, Fire TV only (docs/DESIGN.md, Exceptions): the same single gold focus ring, without the soft glow around it.
+    // A 16 px blurred glow is one of the costliest things to paint, and it is painted again on every focus move and scroll
+    // step; the Fire TV sticks have the weakest graphics of the TVs in use. The selector carries the page's id three times so it outranks every
+    // focus rule in the app's and the site's styles; the hero and the language switch keep their solid rings.
+    private val fireTvLiteJs = """
+        (function(){
+          var d = document.documentElement;
+          if (!d || document.getElementById('tv-lite-style')) return;
+          if (d.id && d.id !== 'tvlite') return;
+          d.id = 'tvlite';
+          var R = '#tvlite#tvlite#tvlite ';
+          var st = document.createElement('style');
+          st.id = 'tv-lite-style';
+          st.textContent =
+            R + ':focus, ' + R + ':focus *, ' + R + 'article:focus-within, ' + R + '.tile-inner:focus-within{box-shadow:none !important;}' +
+            R + 'a.tv-hero-card:focus{box-shadow:0 0 0 2px #000000, 0 0 0 5px #F4C242 !important;}' +
+            R + '#tv-lang-toggle-btn:focus{box-shadow:0 0 0 3px rgba(255, 179, 71, 0.55) !important;}';
+          (document.head || d).appendChild(st);
+        })();
+    """.trimIndent()
+
     private fun injectCustomTvStyles(view: WebView) {
         val lang = getSavedLanguage()
         if (tvStylesJs.isEmpty() || tvStylesLang != lang) {
@@ -2740,6 +2761,85 @@ class MainActivity : Activity() {
     // 2.132.0: it is about 9 MB, so it is no longer held in memory or handed to a page whole. Once per download it is split
     // into what pages read: the card list (scope_list.json, the same file your build's pages keep, read with scopeListLoad)
     // and the roster (scope_roster.json); whether it is switched on for public builds is kept as a setting.
+    // 3.1.0: the compact StarScope list (assets/scopestore.js unpacks it). Same cards, with
+    //  - each wrestler's search keys ("p") kept once in a shared table (A) and referred to by number (negative: flagged)
+    //  - the site's thumbnail address prefix (TP) left off ("~" + the rest)
+    //  - the empty values most cards share (D for the card, XD for its "x" block) left out, put back when unpacked.
+    // The page unpacks it to exactly the cards the full list has. Keep in step with compact() in assets/scopestore.js.
+    private val SCOPE_COMPACT = "scope_list_c.json"
+    private val SCOPE_TP = "https://www.stardom-world.com/storage/generated/images/thumbnail/960x540/content-"
+    private fun scopeDefaults(): org.json.JSONObject = org.json.JSONObject()
+        .put("sr", "").put("she", "").put("bl", "").put("ed", "").put("ss", org.json.JSONObject.NULL)
+        .put("vt", "").put("vtj", "").put("tn", org.json.JSONObject.NULL).put("tnj", org.json.JSONObject.NULL)
+    private fun scopeXDefaults(): org.json.JSONObject = org.json.JSONObject()
+        .put("sg", "").put("sgj", "").put("c", "").put("r", 0).put("rc", 0).put("dk", false).put("cv", "").put("bk", "")
+    private fun sameJsonValue(a: Any?, b: Any?): Boolean {
+        val an = a == null || a == org.json.JSONObject.NULL; val bn = b == null || b == org.json.JSONObject.NULL
+        if (an || bn) return an && bn
+        if (a is Boolean || b is Boolean) return a == b
+        if (a is Number && b is Number) return a.toDouble() == b.toDouble()
+        if (a is String && b is String) return a == b
+        return false
+    }
+    private fun scopeCompact(cards: org.json.JSONObject, t: Long, at: String): String {
+        val d = scopeDefaults(); val xd = scopeXDefaults()
+        val aliasIdx = HashMap<String, Int>(); val aliases = org.json.JSONArray()
+        val out = StringBuilder(cards.length() * 700)
+        var first = true
+        val ids = cards.keys()
+        while (ids.hasNext()) {
+            val id = ids.next()
+            val src = cards.optJSONObject(id) ?: continue
+            val v = org.json.JSONObject()
+            val ks = src.keys()
+            while (ks.hasNext()) {
+                val k = ks.next(); val x = src.opt(k)
+                if (d.has(k) && sameJsonValue(x, d.opt(k))) continue
+                v.put(k, x)
+            }
+            val xo = src.optJSONObject("x")
+            if (xo != null) {
+                val x2 = org.json.JSONObject(); val xk = xo.keys()
+                while (xk.hasNext()) { val k = xk.next(); val x = xo.opt(k); if (xd.has(k) && sameJsonValue(x, xd.opt(k))) continue; x2.put(k, x) }
+                v.put("x", x2)
+            }
+            val p = src.optJSONArray("p")
+            if (p != null) {
+                // only when every entry is [keys, true|false]; anything else stays as it is
+                var ok = true
+                for (i in 0 until p.length()) { val sd = p.optJSONArray(i); if (sd == null) { ok = false; break }
+                    for (j in 0 until sd.length()) { val e = sd.optJSONArray(j); if (e == null || e.length() != 2 || e.optJSONArray(0) == null || e.opt(1) !is Boolean) { ok = false; break } }
+                    if (!ok) break }
+                if (ok) {
+                    val p2 = org.json.JSONArray()
+                    for (i in 0 until p.length()) {
+                        val sd = p.getJSONArray(i); val s2 = org.json.JSONArray()
+                        for (j in 0 until sd.length()) {
+                            val e = sd.getJSONArray(j); val keyArr = e.getJSONArray(0); val key = keyArr.toString()
+                            val n = aliasIdx.getOrPut(key) { aliases.put(keyArr); aliases.length() - 1 }
+                            s2.put(if (e.getBoolean(1)) -1 - n else n)
+                        }
+                        p2.put(s2)
+                    }
+                    v.put("p", p2)
+                }
+            }
+            val th = src.optString("th", "")
+            if (th.startsWith(SCOPE_TP)) v.put("th", "~" + th.substring(SCOPE_TP.length))
+            if (!first) out.append(',')
+            first = false
+            out.append(org.json.JSONObject.quote(id)).append(':').append(v.toString())
+        }
+        val head = org.json.JSONObject().put("z", 1).put("t", t).put("s", at).put("f", t).put("pub", true)
+            .put("D", d).put("XD", xd).put("TP", SCOPE_TP).put("A", aliases)
+        val h = head.toString()
+        return h.substring(0, h.length - 1) + ",\"map\":{" + out.toString() + "}}"
+    }
+    private fun writeScopeCompact(json: String) {
+        val tmp = java.io.File(filesDir, SCOPE_COMPACT + ".tmp"); val f = java.io.File(filesDir, SCOPE_COMPACT)
+        tmp.writeText(json)
+        if (!tmp.renameTo(f)) { f.writeText(json); tmp.delete() }
+    }
     private val scopeSplitLock = Any()
     private fun scopePrefs() = getSharedPreferences("starscope", MODE_PRIVATE)
     private fun scopeSplit(): Boolean = synchronized(scopeSplitLock) {
@@ -2760,6 +2860,9 @@ class MainActivity : Activity() {
                     val tmp = java.io.File(filesDir, "scope_list.json.tmp"); val lf = java.io.File(filesDir, "scope_list.json")
                     tmp.writeText(list)
                     if (!tmp.renameTo(lf)) { lf.writeText(list); tmp.delete() }
+                    java.io.File(filesDir, SCOPE_COMPACT).delete()
+                    // 3.1.0: the compact copy pages read (assets/scopestore.js), made here once per download
+                    try { writeScopeCompact(scopeCompact(cards!!, now, at)) } catch (_: Throwable) {}
                 }
                 val ro = d.optJSONObject("roster") ?: org.json.JSONObject()
                 java.io.File(filesDir, "scope_roster.json").writeText(ro.toString())
@@ -4041,9 +4144,27 @@ class MainActivity : Activity() {
                 val tmp = java.io.File(filesDir, "scope_list.json.tmp"); val f = java.io.File(filesDir, "scope_list.json")
                 tmp.writeText(json)
                 if (!tmp.renameTo(f)) { f.writeText(json); tmp.delete() }
+                java.io.File(filesDir, SCOPE_COMPACT).delete()   // 3.1.0: the compact copy is out of date now; the page writes a new one
             }
             true
         } catch (_: Exception) { false }
+
+        // 3.1.0: the compact copy of the list (assets/scopestore.js): about 45% smaller, so each page reads, receives and
+        // unpacks far less (the Fire TV's page process was being ended for low memory). Empty when there is none yet, or
+        // when it is older than the full list; the page then reads the full list and writes a new compact copy.
+        @android.webkit.JavascriptInterface
+        fun scopeListLoadC(): String = try {
+            synchronized(scopeListLock) {
+                val c = java.io.File(filesDir, SCOPE_COMPACT); val f = java.io.File(filesDir, "scope_list.json")
+                if (c.exists() && (!f.exists() || c.lastModified() >= f.lastModified())) c.readText() else ""
+            }
+        } catch (_: Exception) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun scopeListSaveC(json: String): Boolean = try {
+            synchronized(scopeListLock) { this@MainActivity.writeScopeCompact(json) }
+            true
+        } catch (_: Throwable) { false }
 
         // StarScope is readable in this build (2.76.0): yours, from the sheet; any other, once the published file is
         // switched on for public builds.
@@ -4441,6 +4562,13 @@ class MainActivity : Activity() {
         @android.webkit.JavascriptInterface
         fun pageReady(seq: Int) {
             handler.post { onTransitionReady(seq) }
+        }
+
+        // 3.1.0: the page's timings and memory (assets/pageready.js), sent with the usage stats as "page_ready".
+        @android.webkit.JavascriptInterface
+        fun pagePerf(seq: Int, json: String) {
+            if (json.length > 2000) return
+            handler.post { if (seq == navSeq) metrics.pagePerf(json, isAppDrawnUrl(lastNavigatedUrl)) }
         }
 
         @android.webkit.JavascriptInterface
@@ -11855,6 +11983,8 @@ class MainActivity : Activity() {
         view.evaluateJavascript("if(!window.__tvRest){window.__tvRest=function(){return document.hidden||window.__tvFs===true;};}", null)
         // Before every script that asks the site for a page: the shared request gate (assets/sitegate.js, 2.69.0).
         if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("sitegate.js"), null)
+        // 3.1.0: the one shared reader of the StarScope list (before every script that reads it).
+        if (!isPpvFlow(view.url)) view.evaluateJavascript(assetText("scopestore.js"), null)
         // The page-ready report for the transition screen (2.70.0). The page keeps the number of the visit it belongs to.
         if (!isPpvFlow(view.url)) {
             view.evaluateJavascript("if(window.__tvNavSeq==null)window.__tvNavSeq=" + navSeq + ";", null)
@@ -11907,9 +12037,15 @@ class MainActivity : Activity() {
         view.evaluateJavascript(stage1TestGridJs, null)
         view.evaluateJavascript(cardFavoriteToggleJs, null)
         view.evaluateJavascript(assetText("favorites.js"), null)
-        view.evaluateJavascript(assetText("lineage.js"), null)
+        // 3.1.0: page-only scripts go only into their own pages (each one used to stop at once everywhere else, but the
+        // TV still had to read it on every page).
+        val pu = try { android.net.Uri.parse(view.url ?: "") } catch (_: Exception) { null }
+        val pPath = pu?.path ?: ""
+        val pQuery = pu?.encodedQuery ?: ""
+        if (pPath == "/mypage" && Regex("(^|&)tvch=").containsMatchIn(pQuery)) view.evaluateJavascript(assetText("lineage.js"), null)
         view.evaluateJavascript(assetText("teams.js"), null)
-        view.evaluateJavascript(assetText("wrestler.js"), null)
+        if (pPath == "/contents/search" || (pPath == "/mypage" && Regex("(^|&)tvwr=").containsMatchIn(pQuery))) view.evaluateJavascript(assetText("wrestler.js"), null)
+        else view.evaluateJavascript("window.__tvWrReady = true;", null)
         view.evaluateJavascript(assetText("wrspot.js"), null)
         view.evaluateJavascript(assetText("community.js"), null)
         view.evaluateJavascript(listNavJs, null)
@@ -11926,12 +12062,13 @@ class MainActivity : Activity() {
         view.evaluateJavascript(assetText("baricons.js"), null)
         view.evaluateJavascript(playerBarJs, null)
         view.evaluateJavascript(hideBodySearchJs, null)
-        view.evaluateJavascript(assetText("setcard.js"), null)
+        if (Regex("^/set/[0-9]+/contents/[0-9]+").containsMatchIn(pPath)) view.evaluateJavascript(assetText("setcard.js"), null)
         view.evaluateJavascript(autoFullScreenJs, null)
         view.evaluateJavascript(playerNavJs, null)
         view.evaluateJavascript(autoNextJs, null)
         view.evaluateJavascript(playerControlsJs, null)
         injectCustomTvStyles(view)
+        if (isFireTv()) view.evaluateJavascript(fireTvLiteJs, null)   // 3.1.0: the gold focus without its glow on Fire TV
         if (!cursorMode) view.evaluateJavascript(focusJs, null)
         // Every script above is in this page now (2.73.0): onPageFinished then skips the second round.
         view.evaluateJavascript("window.__tvInjectedAll = true;", null)
