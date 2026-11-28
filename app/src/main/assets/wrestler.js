@@ -37,7 +37,27 @@
   var PAST = ((parse(call('pastWrestlersJson')) || {}).past) || [];
   var W = null;
   FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name, ja: m.ja || '' }; }); });
-  PAST.forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name }; });
+  PAST.forEach(function(m) { if (!W && m && (low(m.search || m.name) === low(base) || low(m.name) === low(base))) W = { name: m.name, search: m.search || m.name, aka: m.aka || [] }; });
+  // 3.0.1: a name she was also billed under (past_wrestlers.json "aka": Kairi Hojo, Kairi Hane (KAIRI)) opens her one page.
+  PAST.forEach(function(m) { if (!W && m && (m.aka || []).some(function(a) { return low(a) === low(base); })) W = { name: m.name, search: m.search || m.name, aka: m.aka || [] }; });
+  // 3.0.1: a name the sheet merged into someone else (the roster's "merged" list: [name, search, merged into id])
+  // opens the page of the wrestler it was merged into.
+  if (!W) {
+    try {
+      var ros = JSON.parse(localStorage.getItem('tvRosterV1') || 'null');
+      if (ros && ros.merged && ros.talent) {
+        var into = '';
+        ros.merged.forEach(function(r) { if (!into && r && (low(r[0]) === low(base) || low(r[1]) === low(base))) into = r[2]; });
+        var t0 = into ? ros.talent.filter(function(t) { return t.id === into; })[0] : null;
+        if (t0) {
+          var tn = low(t0.en), ts = low(t0.s || t0.en);
+          FACS.forEach(function(f) { (f.members || []).forEach(function(m) { if (!W && m && (low(m.name) === tn || low(m.search) === ts)) W = { name: m.name, search: m.search || m.name, ja: m.ja || '' }; }); });
+          PAST.forEach(function(m) { if (!W && m && (low(m.name) === tn || low(m.search || m.name) === ts)) W = { name: m.name, search: m.search || m.name, aka: m.aka || [] }; });
+          if (!W) W = { name: t0.en, search: t0.s || t0.en, ja: t0.ja || '' };
+        }
+      }
+    } catch (e) {}
+  }
   // Private builds (2.59.3): past and guest names from the match index (the logger's saved library on this TV).
   if (!W) {
     try {
@@ -66,6 +86,7 @@
     if (!L || !L.reigns) return;
     var names = {};
     names[low(W.name)] = 1; names[low(W.search)] = 1;
+    (W.aka || []).forEach(function(n) { names[low(n)] = 1; });   // 3.0.1
     Object.keys(L.alias || {}).forEach(function(k) {
       var all = [k].concat(L.alias[k] || []), hit = all.some(function(n) { return names[low(n)]; });
       if (hit) all.forEach(function(n) { names[low(n)] = 1; });
