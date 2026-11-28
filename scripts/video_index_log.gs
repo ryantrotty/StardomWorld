@@ -1074,6 +1074,9 @@ function viSuggest() {
 function viPublicFile() {
   var props = PropertiesService.getScriptProperties();
   var cards = viCards(), roster = viRoster();
+  // 2.132.0: when a card was last changed is kept to the day (the app only sorts "Recently added" by it), so the public
+  // file doesn't show the times of day you log.
+  Object.keys(cards.map || {}).forEach(function(k) { var x = cards.map[k] && cards.map[k].x; if (x && x.u) x.u = String(x.u).slice(0, 10); });
   return {
     schema: 1,
     at: new Date().toISOString(),

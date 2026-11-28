@@ -6,7 +6,7 @@
   // Pages that already draw StarScope cards (#tvsh, #tvsp, the app-drawn pages' .tvsc) are left alone.
   if (window.__tvSiteCards) return;
   var H = window.AndroidHost;
-  if (!H || !H.videoIndexOn || !H.videoIndexOn()) return;   // your build only (public builds switch at 3.0)
+  if (!H || !H.scopeOn || !H.scopeOn()) return;   // 2.132.0: wherever StarScope is on (public builds once the published file is switched on)
   if (!window.__tvStarCard || !window.__tvStarCard.html) return;
   window.__tvSiteCards = true;
   var SC = window.__tvStarCard, ja = document.cookie.indexOf('googtrans=/ja/ja') !== -1;

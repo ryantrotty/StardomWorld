@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 2.132.0
+
+StarScope for public builds: everything that reads StarScope now follows the StarScope switch instead of "your build", so public builds get it once the published file says `"public": true` (the script's `STARSCOPE_PUBLIC`). Logging, sheet sync, translated captions, debug output, era picks and private images stay yours only.
+- Public builds, once switched on: the one match card everywhere (sitecards.js), app-drawn faction and era pages (no site page underneath), Matches, Championships and Shows-by-year menus from the index, complete years (complete-career wrestler pages, complete team, title and faction histories, the filter bar).
+- The published file (about 9 MB) is split once per download into the card list and the roster, in the background. Pages read the list from the app's list file; it is no longer parsed and handed to each page whole, which was heavy for Fire TV. The app no longer keeps the whole file in memory.
+- A new install downloads the StarScope file first, in the background during the launch splash ("Getting StarScope" in the status pill), instead of after the schedule, roster and titles. A page already open asks for the list again once it is there.
+- Sheet script: the public file keeps each card's last change to the day, not the time. Save the script (the daily publish uses it); the next publish rewrites the file once.
+- Includes 2.131.1 and 2.131.0.
+
 ## 2.131.1
 
 - Fix: the video page's card row heading still had a telescope and a "7 logged" count. It now reads "7 matches · show order".
