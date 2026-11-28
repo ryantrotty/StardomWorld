@@ -1335,7 +1335,7 @@
     var S = SC();
     WP.cut = null;
     if (!S || !(SC_TABS[tab] || (WP.cc && (tab === 'all' || tab === 'singles')))) return;
-    var names = [api.W.name, api.W.search].concat(ALIAS[String(api.W.name).toLowerCase()] || []);
+    var names = [api.W.name, api.W.search].concat(ALIAS[String(api.W.name).toLowerCase()] || [], api.W.aka || []);
     var found = S.find(function(v) { return (tab === 'all' ? true : tab === 'singles' ? ccKind(v) === 'singles' : tab === 'champ' ? S.isTitle(v) : S.inComp(v, tab)) && names.some(function(n) { return S.hasName(v, n); }); });
     var n = scAdd(WP.kept, found, WP.seen), P = S.plan(api.debut), ys = S.years();
     WP.cut = P.only ? (P.recent ? { after: P.thru } : null) : { skip: 1 };
@@ -1375,7 +1375,7 @@
   }
   // Every video with her in it (both versions of a linked match), her own place in each, and the matches counted once.
   function ccData(api) {
-    var S = SC(), names = [api.W.name, api.W.search].concat(ALIAS[String(api.W.name).toLowerCase()] || []), want = names.map(ccNorm);
+    var S = SC(), names = [api.W.name, api.W.search].concat(ALIAS[String(api.W.name).toLowerCase()] || [], api.W.aka || []), want = names.map(ccNorm);
     function mine(p) { return p[0].some(function(k) { return want.indexOf(k) >= 0; }); }
     function where(v) { var at = null; (v.p || []).forEach(function(sd, i) { sd.forEach(function(p, j) { if (!at && mine(p)) at = [i, j]; }); }); return at; }
     var vids = S.find(function(v) { return !!where(v); }, true), seen = {}, matches = [], segs = [];

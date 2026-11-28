@@ -3382,6 +3382,33 @@ class MainActivity : Activity() {
         } catch (_: Exception) { bundled }
     }
 
+    // 3.0.1: the names to try for a wrestler's picture: the name asked for, then, when it is one of the other names a
+    // past wrestler was billed under (past_wrestlers.json "aka", e.g. Kairi Hojo), her shown name and search name.
+    // The aka list is read again only when the past list changes.
+    @Volatile private var akaCache: Pair<String, Map<String, List<String>>>? = null
+    // A sequence, so the aka list is only looked at when the name itself has no picture.
+    private fun photoNames(name: String): Sequence<String> = sequence { yield(name); yieldAll(akaNames(name)) }
+    private fun akaNames(name: String): List<String> {
+        val out = ArrayList<String>()
+        try {
+            val txt = rosterPast()
+            val c = akaCache
+            val map = if (c != null && c.first == txt) c.second else {
+                val m = HashMap<String, List<String>>()
+                val arr = org.json.JSONObject(txt).optJSONArray("past") ?: org.json.JSONArray()
+                for (i in 0 until arr.length()) {
+                    val o = arr.optJSONObject(i) ?: continue
+                    val aka = o.optJSONArray("aka") ?: continue
+                    val main = listOf(o.optString("name"), o.optString("search")).filter { it.isNotBlank() }
+                    for (j in 0 until aka.length()) { val a = aka.optString(j).trim().lowercase(); if (a.isNotEmpty()) m[a] = main }
+                }
+                akaCache = Pair(txt, m); m
+            }
+            map[name.trim().lowercase()]?.let { l -> l.forEach { if (!it.equals(name, true)) out.add(it) } }
+        } catch (_: Exception) {}
+        return out
+    }
+
     // For the roster line: [factions set or removed, member changes, past added, past removed] in the roster file.
     private fun rosterFactionsStats(): IntArray {
         val r = IntArray(4)
@@ -4287,11 +4314,17 @@ class MainActivity : Activity() {
         fun wrestlerPhoto(name: String): String {
             if (!BuildConfig.SHOW_POSTERS) return ""
             return try {
-                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
                 val res = this@MainActivity.resources
                 val pkg = this@MainActivity.packageName
-                var resId = res.getIdentifier("wspot_" + slug, "drawable", pkg)
-                if (resId == 0) resId = res.getIdentifier("wrestler_" + slug, "drawable", pkg)
+                // 3.0.1: a name she was also billed under ("Kairi Hojo") finds her picture (past_wrestlers.json "aka").
+                var resId = 0
+                for (n in this@MainActivity.photoNames(name)) {
+                    val slug = n.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+                    if (slug.isEmpty()) continue
+                    resId = res.getIdentifier("wspot_" + slug, "drawable", pkg)
+                    if (resId == 0) resId = res.getIdentifier("wrestler_" + slug, "drawable", pkg)
+                    if (resId != 0) break
+                }
                 if (resId == 0) return ""
                 val bytes = res.openRawResource(resId).use { it.readBytes() }
                 val mime = if (bytes.size > 3 && bytes[0] == 0x89.toByte()) "image/png" else "image/jpeg"
@@ -4304,9 +4337,14 @@ class MainActivity : Activity() {
         fun wrestlerCutout(name: String): String {
             if (!BuildConfig.SHOW_POSTERS) return ""
             return try {
-                val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
                 val res = this@MainActivity.resources
-                val resId = res.getIdentifier("wcut_" + slug, "drawable", this@MainActivity.packageName)
+                var resId = 0
+                for (n in this@MainActivity.photoNames(name)) {
+                    val slug = n.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+                    if (slug.isEmpty()) continue
+                    resId = res.getIdentifier("wcut_" + slug, "drawable", this@MainActivity.packageName)
+                    if (resId != 0) break
+                }
                 if (resId == 0) return ""
                 val bytes = res.openRawResource(resId).use { it.readBytes() }
                 "data:image/png;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
@@ -6242,8 +6280,8 @@ class MainActivity : Activity() {
           }
           // [English name, Japanese name]
           var CURRENT_W = [['AZM', 'AZM'], ['Fuwa Chan', 'フワちゃん'], ['Hanan', '羽南'], ['Hazuki', '葉月'], ['Hime Yuria', '姫ゆりあ'], ['Hina', '妃南'], ['Kiyoka Kotatsu', '虎龍清花'], ['Maki Itoh', '伊藤麻希'], ['Natsupoi', 'なつぽい'], ['Rina', '吏南'], ['Sakura Aya', 'さくらあや'], ['Saori Anou', '安納サオリ'], ['Saya Iida', '飯田沙耶'], ['Saya Kamitani', '上谷沙弥'], ['Sayaka Kurara', '玖麗さやか'], ['Starlight Kid', 'スターライト・キッド'], ['Suzu Suzuki', '鈴季すず'], ['Syuri', '朱里'], ['Tomoka Inaba', '稲葉ともか'], ['Utami Hayashishita', '林下詩美']];
-          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi Hane (KAIRI)', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Takumi Iroha', '彩羽匠'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
-          var SEARCH_AS = { 'Kairi Hane (KAIRI)': 'KAIRI' };   // what to search for when the shown name is not what the site knows
+          var PAST_W = [['Giulia', 'ジュリア'], ['Hana Kimura', '木村花'], ['Io Shirai', '紫雷イオ'], ['Jamie Hayter', 'ジェイミー・ヘイター'], ['Jungle Kyona', 'ジャングル叫女'], ['Kairi', 'カイリ・セイン'], ['Kris Wolf', 'クリス・ウルフ'], ['Mariah May', 'マライア・メイ'], ['Mayu Iwatani', '岩谷麻優'], ['Mina Shirakawa', '白川未奈'], ['Saki Kashima', '鹿島沙希'], ['Sareee', 'Sareee'], ['Takumi Iroha', '彩羽匠'], ['Tam Nakano', '中野たむ'], ['Thekla', 'テクラ'], ['Toni Storm', 'トニー・ストーム']];
+          var SEARCH_AS = { 'Kairi': 'KAIRI' };   // what to search for when the shown name is not what the site knows
           // The past list comes from the app's past_wrestlers.json (with the roster file's changes); the list above is
           // only used if that can't be read.
           try {

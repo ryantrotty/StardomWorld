@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions match `versionName` in `app/build.gradle.kts`.
 
+## 3.0.2
+
+Kairi is one wrestler everywhere.
+- Her name is now **Kairi** (was "Kairi Hane (KAIRI)") on her page, in the Wrestlers menu's Past list and on her 2022–23 match cards. The site search still uses KAIRI, so My Favorites keep her.
+- **Kairi Hojo** (and Kairi Hane (KAIRI), Kairi Sane, Hojo Kairi, 宝城カイリ) open her page instead of "Wrestler not found": Eras Top wrestlers, rivalries, and any other link with an older name. These names are listed as `aka` in past_wrestlers.json; another wrestler can be given an `aka` list the same way.
+- Her render shows wherever one of those names is used (Eras Top wrestlers, rivalry cards, title reign cards): the app looks up the picture under her main name when the billed name has none.
+- Her page also counts title reigns and StarScope matches recorded under any of those names.
+- Any name the sheet merged into another wrestler (talent `merged_into`) opens that wrestler's page.
+- Sheet (done directly, no script change): her talent name is Kairi; her 2012–17 participant rows have role `billed`, so those cards still say Kairi Hojo; aliases added for Kairi Hane (KAIRI) and Kairi Sane. TVs pick these up with their next full StarScope list (daily); public builds with the next publish.
+- Card check (iPhone): 宝城カイリ reads as Kairi.
+
 ## 3.0.1
 
 - **Fix: searching from the menu did nothing on app-drawn pages** (Tag League, wrestler, team, faction, title, Eras and the other pages the app draws itself). Those pages have no site search form for the menu to borrow, so the menu's own box was used, and nothing listened for Enter on it. The box now sits in its own small form: Enter or the keyboard's Go key opens the site's search for what was typed. On site pages the site's own box works as before.

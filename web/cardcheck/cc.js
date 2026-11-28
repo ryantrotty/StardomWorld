@@ -1182,7 +1182,7 @@
     '花月': 'Kagetsu', '妃南': 'Hina', '吏南': 'Rina', '渡辺桃': 'Momo Watanabe', '林下詩美': 'Utami Hayashishita',
     '小野崎玲皇': 'Leo Onozaki', 'セッションモスマルティナ': 'Session Moth Martina', 'マルティナ': 'Session Moth Martina',
     'アンドラス宮城': 'Andras Miyagi', '星輝ありさ': 'Arisa Hoshiki', '木村響子': 'Kyoko Kimura', '米山香織': 'Kaori Yoneyama',
-    '夏すみれ': 'Natsu Sumire', '安川惡斗': 'Act Yasukawa', '宝城カイリ': 'Kairi Hane (KAIRI)', '稲葉ともか': 'Tomoka Inaba',
+    '夏すみれ': 'Natsu Sumire', '安川惡斗': 'Act Yasukawa', '宝城カイリ': 'Kairi', '稲葉ともか': 'Tomoka Inaba',
     '小林香萌': 'Kaho Kobayashi', '雪妃真矢': 'Maya Yukihi', '高橋奈七永': 'Nanae Takahashi', '里村明衣子': 'Meiko Satomura',
     '橋本千紘': 'Chihiro Hashimoto', '尾崎魔弓': 'Mayumi Ozaki', '世志琥': 'Yoshiko', 'ひめか': 'Himeka', 'コグマ': 'Koguma'
   };
